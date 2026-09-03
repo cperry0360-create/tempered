@@ -7,12 +7,18 @@ criteria pass. Commit at the end of each phase with the phase number in the mess
 
 ## Phase 0 — Skeleton
 
-Vite + TypeScript project. Directory structure per `CLAUDE.md`. Vitest wired.
-PWA manifest and service worker. Deploys to GitHub Pages.
+Plain ES modules, no build step. Directory structure per `CLAUDE.md`. `node --test`
+wired. PWA manifest and service worker. GitHub Pages serves the repo root.
 
-**Acceptance:** `npm run dev` serves a blank shell. `npm run build` produces static
-output. `npm test` runs and passes zero tests. The app installs to an iPhone home
-screen and opens offline.
+**Acceptance:**
+- `index.html` opens in a browser with no build step.
+- `node --test` runs and passes.
+- The app installs to an iPhone home screen from the Pages URL and opens offline.
+
+> Serve the directory to open it — `python3 -m http.server` from the repo root is
+> enough. Browsers block `<script type="module">` over `file://` as a cross-origin
+> request, so opening `index.html` by double-clicking it will load the page but never
+> run the script. This is a browser rule, not a build step.
 
 ---
 

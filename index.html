@@ -8,16 +8,19 @@
     <meta name="theme-color" content="#0a0c10" />
     <meta name="color-scheme" content="dark" />
 
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/png" href="/icons/icon-512.png" />
+    <!-- Every path here is relative, so the app runs unchanged from the repo
+         root, from a /tempered/ project page, or from a custom domain. -->
+    <link rel="stylesheet" href="./src/style.css" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./icons/icon-512.png" />
 
     <!-- iOS ignores the manifest for home-screen installs; these drive it. -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tempered" />
-    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
 
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="./src/main.js"></script>
   </head>
   <body>
     <main id="app" class="shell">

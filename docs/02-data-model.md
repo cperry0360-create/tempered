@@ -1,6 +1,6 @@
 # 02 — Data model
 
-All types live in `src/domain/types.ts`. Storage is IndexedDB behind an adapter; the
+All types live in `src/domain/types.js` as JSDoc `@typedef`s. Storage is IndexedDB behind an adapter; the
 shapes below are what the adapter persists and what export/import round-trips.
 
 ## Object stores

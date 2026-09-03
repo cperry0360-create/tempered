@@ -1,11 +1,6 @@
-node_modules/
-dist/
 .DS_Store
 .env
-
-# art/dist is a build output directory, but the empty dir itself is tracked
-!art/dist/
-art/dist/*
-!art/dist/.gitkeep
-coverage/
 *.local
+
+# Guards against a stray npm install: this project has no dependencies.
+node_modules/

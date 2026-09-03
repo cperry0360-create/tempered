@@ -113,3 +113,82 @@ valid JSON; the workflow is valid YAML; icon dimensions are confirmed 180/512/10
 locally and confirm. That install also produces the first `package-lock.json`, after which
 `.github/workflows/deploy.yml` should switch `npm install` to `npm ci` and re-add
 `cache: npm`.
+
+## 2026-09-03 — Stack change: no build step, no dependencies
+**Phase:** 0
+**Decision:** Removed Vite, TypeScript, Vitest, `package.json`, `tsconfig.json` and the
+GitHub Actions deploy workflow. The app is now plain ES modules loaded natively by the
+browser, typed with JSDoc, tested with `node --test`, and served by GitHub Pages straight
+from the repository root.
+**Reasoning:** Cory's instruction, 2026-09-03, and the reason stands on its own: this app
+is forms and lists over a numeric engine, so a bundler earns nothing — no dependency tree
+to resolve, no JSX to compile, and every target browser loads ES modules natively. The
+decisive argument is that `registry.npmjs.org` is not reachable from the environment this
+project is built in (`x-deny-reason: host_not_allowed`), and a toolchain that cannot be
+run means code that is never executed. Phase 0 previously shipped unverified for exactly
+that reason. Everything now runs with a browser and the `node` binary alone.
+**Confidence:** specified
+**Needs Cory:** no — but the Pages source must be set to "Deploy from a branch: `main`,
+`/(root)`". Cory is doing this.
+
+## 2026-09-03 — ES modules do not load over file://
+**Phase:** 0
+**Decision:** Phase 0's first acceptance criterion is kept as written — "`index.html`
+opens in a browser with no build step" — with a note that the directory must be served,
+e.g. `python3 -m http.server`.
+**Reasoning:** Verified in Chromium 141: a page opened as `file://` with
+`<script type="module">` loads but never runs the script, because the module fetch is
+cross-origin from an opaque `null` origin. The identical page over `http://` runs it.
+This is a browser security rule, not a build step, and it applies to any bundler-free
+setup. Service workers also require a secure context, which `file://` is not, so offline
+support could not work there either.
+**Confidence:** specified (measured, not recalled)
+**Needs Cory:** no
+
+## 2026-09-03 — Service worker is hand-maintained, stale-while-revalidate
+**Phase:** 0
+**Decision:** `sw.js` sits at the repo root with a hand-written precache list and a
+`VERSION` constant. Navigations are network-first with a cached-shell fallback; all other
+same-origin GETs are stale-while-revalidate.
+**Reasoning:** Without a build step there are no content-hashed filenames, so nothing can
+generate the precache list and nothing busts the cache automatically. Cache-first would
+pin users to old code until someone remembered to bump `VERSION` — and forgetting is the
+obvious failure mode. Stale-while-revalidate makes a missed bump cost one stale load
+rather than a stuck app, while a deliberate bump still forces a clean sweep. `sw.js` must
+stay at the root: a worker's scope cannot rise above its own directory.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-03 — Correction: art/dist/ is committed, not ignored
+**Phase:** 0
+**Decision:** Removed the `art/dist/*` ignore rule added earlier today. Processed sprites
+are now tracked.
+**Reasoning:** My earlier rule treated `art/dist/` as build output. Under root-serving
+Pages that is wrong: `docs/08-art.md` says `art/dist/` holds "processed sprites the app
+loads", and what is not committed is not served. The rule would have broken the battle
+screen in Phase 6. `art/import_art.py` still owns the contents — never hand-edit them.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-03 — jsconfig.json, .nojekyll, and a test/ directory
+**Phase:** 0
+**Decision:** Three small additions. `jsconfig.json` enables `checkJs` so the JSDoc
+annotations are actually enforced; it installs nothing, since editors ship their own
+TypeScript. `.nojekyll` stops GitHub Pages running Jekyll over a branch deploy. `test/`
+holds tests that are not domain logic — currently one asserting every file in `data/`
+parses as JSON.
+**Reasoning:** Without `checkJs` the JSDoc types are decorative. `sw.js` is excluded from
+it because service worker globals need the `WebWorker` lib, which collides with `DOM`.
+`test/` is a small addition to the repository map: `CLAUDE.md` requires domain tests to
+live beside domain code, and this is not domain code.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-03 — Spec paths updated off TypeScript
+**Phase:** 0
+**Decision:** `docs/02-data-model.md` now points at `src/domain/types.js` (JSDoc
+`@typedef`s) and `docs/BALANCE-PROJECTION.md` at `src/domain/balance.projection.test.js`.
+**Reasoning:** Both named `.ts` files that can no longer exist. Left alone they would have
+misdirected Phase 1. Paths only — no specified behaviour was touched.
+**Confidence:** inferred
+**Needs Cory:** no

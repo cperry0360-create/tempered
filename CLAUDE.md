@@ -57,15 +57,35 @@ that could be awarded for doing the work.
 
 ## Stack
 
-- Vanilla TypeScript, Vite, no UI framework. No runtime dependencies beyond dev tooling.
+No build step. No dependencies. Nothing to install.
+
+- Plain ES modules (`.js`), loaded natively by the browser via
+  `<script type="module">`. No bundler, no transpiler, no framework.
+- **JSDoc type annotations instead of TypeScript.** Types are checked by the editor
+  (`jsconfig.json`, `checkJs`), never by a compiler in the loop.
+- `node --test` for domain tests. Built into Node since v18, so nothing to install.
+- No `package.json`, no lockfile, no `node_modules`.
 - IndexedDB via a thin wrapper in `src/adapters/storage/`.
-- Vitest for domain tests.
-- PWA: manifest + service worker, installable, works offline.
-- Deploys as static files to GitHub Pages.
+- PWA: manifest + hand-maintained `sw.js` at the repo root, installable, works offline.
+- GitHub Pages serves the **repository root** directly (Deploy from a branch: `main`,
+  `/(root)`). What is committed is what is served.
 
 Rationale: this app is a few dozen screens of forms and lists over a numeric engine.
-A framework would add more weight than it removes, and the domain layer must stay
-portable if a native wrapper is added later.
+A bundler earns nothing here — there is no dependency tree to resolve, no JSX to
+compile, and every browser this targets loads ES modules natively. A framework would
+add more weight than it removes, and the domain layer must stay portable if a native
+wrapper is added later.
+
+The stronger reason is this: **a toolchain we cannot run is worse than no toolchain,
+because it means code that is never executed.** Everything in this repo can be run,
+tested and deployed with nothing but a browser and the `node` binary.
+
+Two consequences worth remembering:
+
+- **Relative paths everywhere.** Nothing rewrites URLs at build time. `./src/main.js`,
+  not `/src/main.js`, or the app breaks under the `/tempered/` project-page path.
+- **Import extensions are mandatory.** `./pwa/register.js`, never `./pwa/register`.
+  The browser does not resolve extensions.
 
 ## Repository map
 

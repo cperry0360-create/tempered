@@ -34,7 +34,7 @@ which is correct for a training app.
 
 Re-run this simulation in Phase 1 as a test, not as a script. If a change to
 `data/balance.json` breaks any of the three checks above, the test fails. The simulation
-harness belongs in `src/domain/__tests__/balance.projection.test.ts`.
+harness belongs in `src/domain/balance.projection.test.js`.
 
 These numbers are a considered starting point, not scripture. Retune freely — but
 regenerate this table whenever you do.

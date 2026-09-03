@@ -1,0 +1,18 @@
+{
+  "_comment": "Permanent awards. Flavour only, no mechanical effect. Language follows the tempering theme: load and recovery, never punishment.",
+  "titles": [
+    {"id":"first_load","name":"First Load","condition":"Complete your first session","attribute":null},
+    {"id":"tempered","name":"Tempered","condition":"Log a rest day after three consecutive training days","attribute":"vitality"},
+    {"id":"returned","name":"Returned","condition":"Train again after four or more days away","attribute":"grit"},
+    {"id":"heavy_resistance","name":"Master of Heavy Resistance","condition":"Reach Might level 6","attribute":"might"},
+    {"id":"unhurried","name":"The Unhurried","condition":"Sleep in the seven-to-nine band twenty times","attribute":"vitality"},
+    {"id":"long_road","name":"The Long Road","condition":"Accumulate 100 miles","attribute":"wind"},
+    {"id":"hundred_hours","name":"Hundred Hours Under Load","condition":"Reach 100 training hours","attribute":"grit"},
+    {"id":"quiet_mind","name":"Quiet Mind","condition":"Reach Mind level 5","attribute":"mind"},
+    {"id":"ironclad","name":"Ironclad","condition":"Reach Grit level 7","attribute":"grit"},
+    {"id":"three_plates","name":"Three Plates","condition":"Deadlift 315 lbs","attribute":"might"},
+    {"id":"carried","name":"Carried the Weight","condition":"Farmer's carry 200 lbs total load","attribute":"might"},
+    {"id":"balanced","name":"Well-Tempered","condition":"Reach level 4 in all five attributes","attribute":null},
+    {"id":"one_year","name":"A Year Under Load","condition":"Train across 365 days from first session","attribute":"grit"}
+  ]
+}

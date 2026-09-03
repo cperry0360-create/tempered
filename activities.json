@@ -1,0 +1,22 @@
+{
+  "_comment": "Non-workout trackable activities. kind: derived reads a value, marked is a toggle.",
+  "activities": [
+    {"id":"sleep","name":"Sleep","attribute":"vitality","kind":"derived","unit":"hours","band":[7,9],
+     "help":"Scored highest between seven and nine hours. More is not better."},
+    {"id":"water","name":"Water","attribute":"vitality","kind":"derived","unit":"oz","dailyCap":120},
+    {"id":"nutrition_logged","name":"Logged your food","attribute":"vitality","kind":"marked",
+     "help":"Rewards the honesty of logging, not the numbers."},
+    {"id":"protein_target","name":"Hit protein target","attribute":"vitality","kind":"derived","unit":"g"},
+    {"id":"rest_day","name":"Took a rest day","attribute":"vitality","kind":"marked",
+     "help":"Recovery is training. This is a rewarded action, not an absence."},
+    {"id":"body_metrics","name":"Logged body metrics","attribute":"vitality","kind":"marked",
+     "help":"The habit is scored. The number never is."},
+    {"id":"steps","name":"Steps","attribute":"wind","kind":"derived","unit":"steps","dailyCap":15000},
+    {"id":"mobility","name":"Mobility work","attribute":"wind","kind":"derived","unit":"min"},
+    {"id":"read","name":"Read","attribute":"mind","kind":"derived","unit":"min"},
+    {"id":"study","name":"Study or practice","attribute":"mind","kind":"derived","unit":"min"},
+    {"id":"meditate","name":"Meditate","attribute":"mind","kind":"derived","unit":"min"},
+    {"id":"journal","name":"Journal","attribute":"mind","kind":"marked"},
+    {"id":"instrument","name":"Practice an instrument","attribute":"mind","kind":"derived","unit":"min"}
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "_comment": "Every tunable number. Claude Code must NOT hard-code any of these. Starting values are a considered first guess; Phase 1 requires simulating them and retuning until the projection in docs/01 holds.",
+  "schemaVersion": 1,
+  "levelCurve": {
+    "_comment": "xpForLevel(n) = base * n^exponent. Level 1 reachable in one session; level 10 near a year of consistency.",
+    "base": 260,
+    "exponent": 1.85,
+    "maxLevel": 10
+  },
+  "might": {
+    "_comment": "Volume is the base signal. Compound counts fully, isolation reduced. Soft cap stops junk volume outscoring hard work.",
+    "xpPerThousandLbsVolume": 80,
+    "isolationMultiplier": 0.45,
+    "volumeSoftCapLbs": 14000,
+    "volumeCurveBeyondCap": 0.25,
+    "weightPrBonus": 420,
+    "volumePrBonus": 230,
+    "e1rmGainXpPerLb": 17,
+    "carryXpPerLbPerHundredFeet": 1.7
+  },
+  "wind": {
+    "xpPerMile": 58,
+    "mileSoftCapPerDay": 6,
+    "mileCurveBeyondCap": 0.3,
+    "xpPerCardioMinute": 4.5,
+    "xpPerThousandSteps": 6.5,
+    "stepsDailyCap": 15000,
+    "paceImprovementBonus": 170,
+    "paceBaselineDays": 30
+  },
+  "grit": {
+    "_comment": "No streak multiplier anywhere. Deliberate.",
+    "xpPerSession": 115,
+    "xpPerTrainingHour": 78,
+    "weekMetPlanBonus": 230,
+    "returnAfterGapBonus": 240,
+    "returnGapDaysThreshold": 4
+  },
+  "vitality": {
+    "sleepBandHours": [
+      7,
+      9
+    ],
+    "sleepXpInBand": 72,
+    "sleepXpNearBand": 38,
+    "sleepXpOutOfBand": 14,
+    "xpPerOunceWater": 0.65,
+    "waterDailyCapOz": 120,
+    "proteinTargetBonus": 60,
+    "nutritionLoggedXp": 48,
+    "restDayXp": 190,
+    "bodyMetricsLoggedXp": 30,
+    "_bodyMetricsNote": "Awarded for the act of logging only. The recorded value must never influence XP in any direction."
+  },
+  "mind": {
+    "xpPerReadingMinute": 3.0,
+    "xpPerStudyMinute": 3.6,
+    "xpPerMeditationMinute": 4.8,
+    "journalXp": 55,
+    "dailyMindCapXp": 420
+  },
+  "rank": {
+    "_comment": "Total of the five attribute levels maps to a rank letter.",
+    "thresholds": {
+      "F": 0,
+      "E": 5,
+      "D": 11,
+      "C": 19,
+      "B": 29,
+      "A": 40,
+      "S": 48
+    }
+  },
+  "directive": {
+    "maxActive": 1,
+    "targetDaysToComplete": 14,
+    "neverRequireConsecutiveDays": true
+  },
+  "battle": {
+    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate.",
+    "healthFromVitality": 14,
+    "healthFromGrit": 6,
+    "healthBase": 60,
+    "damageFromMight": 1.6,
+    "damageBase": 5,
+    "attackSpeedFromWind": 0.012,
+    "attackSpeedBase": 1.15,
+    "critFromMind": 0.9,
+    "defenceFromGrit": 1.1,
+    "enemiesPerGauntlet": 6,
+    "goldPerEnemy": 14,
+    "itemDropChance": 0.22
+  },
+  "progressionDefaults": {
+    "linearIncrementUpperLbs": 5,
+    "linearIncrementLowerLbs": 10,
+    "repsProgressionTarget": 12,
+    "timeProgressionIncrementSec": 10,
+    "carryLoadIncrementLbs": 5
+  }
+}

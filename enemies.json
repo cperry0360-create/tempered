@@ -1,0 +1,13 @@
+{
+  "_comment": "Battle roster. Tier scales with rank. Sprites are the only art the product requires beyond icons.",
+  "enemies": [
+    {"id":"slime","name":"Green Slime","tier":1,"hp":14,"damage":3,"speed":1.0},
+    {"id":"rat","name":"Cellar Rat","tier":1,"hp":18,"damage":4,"speed":1.2},
+    {"id":"mushroom","name":"Mad Mushroom","tier":2,"hp":33,"damage":6,"speed":0.9},
+    {"id":"orc","name":"Orc Brute","tier":2,"hp":25,"damage":8,"speed":0.85},
+    {"id":"wight","name":"Barrow Wight","tier":3,"hp":48,"damage":11,"speed":1.0},
+    {"id":"golem","name":"Cinder Golem","tier":3,"hp":74,"damage":14,"speed":0.7},
+    {"id":"rhino","name":"Devil Rhino","tier":4,"hp":96,"damage":19,"speed":0.8,"boss":true},
+    {"id":"wyrm","name":"Elder Wyrm","tier":5,"hp":140,"damage":26,"speed":0.9,"boss":true}
+  ]
+}

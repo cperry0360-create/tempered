@@ -1,0 +1,99 @@
+/* Design tokens — docs/04-design-system.md. The only place these are defined. */
+:root {
+  --bg: #0a0c10;
+  --surface: #12151c;
+  --surface-2: #1a1f28;
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #e6eaf2;
+  --text-2: rgba(230, 234, 242, 0.6);
+  --text-3: rgba(230, 234, 242, 0.34);
+
+  /* One accent per attribute. Never used for anything else. */
+  --might: #f0803c;
+  --wind: #4fc9a0;
+  --grit: #d8b23c;
+  --vitality: #e05a6a;
+  --mind: #7b7bf0;
+
+  --good: #4fc9a0;
+  --warn: #e0a94a;
+  --bad: #e05a6a;
+
+  /* Type scale — five steps, no others. */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 20px;
+  --text-xl: 32px;
+
+  /* 4px rhythm — no other values. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 20px;
+  --space-5: 32px;
+  --space-6: 52px;
+
+  /* Motion. 400ms is reserved for the level-up moment. */
+  --motion-state: 120ms;
+  --motion-screen: 220ms;
+
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-ui);
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-state: 0ms;
+    --motion-screen: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: 1.4;
+  /* Weights and reps must not reflow as they change. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Respect the iPhone safe area once installed to the home screen. */
+.shell {
+  min-height: 100%;
+  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4)
+    max(var(--space-4), env(safe-area-inset-bottom));
+  display: grid;
+  place-items: center;
+}
+
+.shell__wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  color: var(--text-3);
+}

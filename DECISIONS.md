@@ -75,7 +75,9 @@ stack). No web font is loaded.
 local-first and offline rules, so it has to be vendored into the repo as woff2. That is a
 file-adding decision, not a code one.
 **Confidence:** guessed
-**Needs Cory:** yes — which display face, and may I vendor its woff2 into the repo?
+**Needs Cory:** no — reclassified 2026-09-04 as a Phase 8 polish item. It blocks nothing:
+the system stack renders every screen correctly today. Recorded in `docs/07-build-plan.md`
+under Phase 8.
 
 ## 2026-09-03 — Node types are project-wide rather than split by tsconfig
 **Phase:** 0
@@ -190,5 +192,94 @@ live beside domain code, and this is not domain code.
 `@typedef`s) and `docs/BALANCE-PROJECTION.md` at `src/domain/balance.projection.test.js`.
 **Reasoning:** Both named `.ts` files that can no longer exist. Left alone they would have
 misdirected Phase 1. Paths only — no specified behaviour was touched.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 1: balance retuned from simulation, not guessed
+**Phase:** 1
+**Decision:** `levelCurve.base` 260 -> 400 and `exponent` 1.85 -> 2.45. Might's rates cut
+to roughly a third; the other four attributes moved by under 35% either way.
+**Reasoning:** The shipped values had never been run. Simulated, Might hit the level 10 cap
+by day 60 and every attribute by day 180, ending the year at rank S with all five maxed.
+Two anchors in `docs/01` pin the curve completely — level 1 inside the first session, level
+10 near a year — and their ratio is roughly the number of sessions in a year (~180), which
+forces an exponent near 2.45, not 1.85. `base` 400 is one honest first session (435 XP).
+Might needed cutting because volume XP scales with load moved, and load moved is a large
+number: it outscored the other attributes five to one. It still leads, by two levels rather
+than by a cap. Year-end is now Might 9, Grit 8, Vitality 8, Wind 7, Mind 7 — rank B, 39
+levels, spread 2.
+**Confidence:** specified (the checks), inferred (the target level profile)
+**Needs Cory:** no
+
+## 2026-09-04 — First performance sets a baseline; it is not a PR
+**Phase:** 1
+**Decision:** A weight/volume/e1RM record must be *beaten*. The first time an exercise is
+performed it establishes the record and earns no PR bonus.
+**Reasoning:** Otherwise a first session pays a weight PR for every movement in the routine
+at once — seven bonuses for showing up once. That distorts early balance and cheapens the
+moment a PR is supposed to mark.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Bodyweight exercises earn no Might volume
+**Phase:** 1
+**Decision:** A set with `weight: null` (pull-up, single-leg calf raise, plank) contributes
+nothing to Might volume. It still earns Grit through the session and can still set rep
+records later.
+**Reasoning:** The alternative is scoring them at the user's body weight, which the hard
+rule in `docs/01` forbids — and rightly: it would mean a heavier user earns more Might, and
+losing weight costs it. No notional load was invented because that is a new scoring
+mechanism rather than a tuning value.
+**Confidence:** guessed
+**Needs Cory:** yes — pull-ups currently earn no Might at all. Options: a per-exercise
+notional load in `data/exercises.json`, or Might credit from a reps PR. Neither is invented
+without your call.
+
+## 2026-09-04 — Interpretations where docs/01 left room
+**Phase:** 1
+**Decision:** Six readings, each the simplest defensible one.
+1. `xpForLevel(n)` is the *cumulative* XP to stand at level n, not that level's incremental
+   cost. Plainest reading of the name, and still superlinear per level.
+2. The isolation multiplier applies to every Might source for that exercise (volume, PRs,
+   e1RM), not volume alone — "isolation counts at a reduced rate", full stop.
+3. Grit's training hours accrue smoothly (`duration x rate`) rather than firing at whole-hour
+   thresholds. Same lifetime total, no cliff.
+4. Sleep "near" the 7-9 band means within one hour of an edge.
+5. Cardio logged with a distance is scored by distance; cardio logged only as time is scored
+   by time. A run with both is never paid twice — its minutes feed pace only.
+6. Instrument practice and mobility have no rate of their own in `balance.json`; they score
+   at the study and cardio-minute rates respectively.
+**Reasoning:** Each is the reading that avoids double-paying or inventing a mechanism.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Each attribute is fed from exactly one place
+**Phase:** 1
+**Decision:** A session feeds Might and Grit. A day feeds Wind, Vitality and Mind. A cardio
+session is still a session (it earns Grit for showing up) while the distance it covered is
+logged against the day and earns Wind there.
+**Reasoning:** Legibility, per non-negotiable 3. One input, one attribute, no route by which
+the same effort is counted twice. `SessionInput` no longer carries a `cardio` field so the
+double-count is not merely avoided but unrepresentable.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Bug found by the projection: the first session is not a "return"
+**Phase:** 1
+**Decision:** The return-after-a-gap bonus now requires a finite `daysSinceLastSession`.
+**Reasoning:** `daysSinceLastSession` is `Infinity` before any session exists, so the very
+first session ever collected the "back after time away" bonus. There was no absence to
+return from. Caught while tuning, when day-1 Grit came out implausibly high.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Projection harness split from its assertions
+**Phase:** 1
+**Decision:** `docs/BALANCE-PROJECTION.md` said the harness belongs in
+`src/domain/balance.projection.test.js`. The simulation lives in
+`src/domain/balance-projection.js` and the test asserts against it.
+**Reasoning:** `tools/regenerate-projection.js` regenerates the doc from the same module the
+test checks, so the published table and the enforced checks cannot drift. The test also
+compares the committed table against a fresh run, which makes a stale doc a test failure.
 **Confidence:** inferred
 **Needs Cory:** no

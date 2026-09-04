@@ -142,6 +142,12 @@ reading documentation.
 Only after everything above passes. Motion, empty states, error states, accessibility,
 reduced-motion, dynamic type.
 
+- **Display typeface.** `docs/04-design-system.md` asks for a condensed geometric sans
+  (Chakra Petch, Rajdhani, or Barlow Condensed). A font CDN would break the offline and
+  local-first rules, so the chosen face must be vendored into the repo as woff2 and
+  `--font-display` pointed at it. Until then it aliases the system stack, which renders
+  every screen correctly — this blocks nothing.
+
 ---
 
 ## What is explicitly out of scope for V1

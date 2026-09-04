@@ -141,6 +141,30 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     ])
   }
 
+  /**
+   * Editing set 1 fills the rest of that exercise's unlogged sets — `docs/11` F2.
+   *
+   * The single biggest tap saving available: a prescription of four sets is one
+   * weight typed four times otherwise. Only the first set cascades, because
+   * that is the one that means "this is what I am doing today"; editing set
+   * three is a correction to set three.
+   *
+   * **Already-logged sets are never touched.** They are what happened, and a
+   * cascade that rewrote them would silently falsify history — and with it the
+   * volume the XP was computed from.
+   *
+   * @param {any} entry
+   * @param {string} key   'weight' | 'reps' | 'timeSec'
+   * @param {number|null} value
+   */
+  function cascade(entry, key, value) {
+    if (value === null) return
+    for (const [index, other] of entry.sets.entries()) {
+      if (index === 0 || other.logged === true) continue
+      other[key] = value
+    }
+  }
+
   // --- set row -------------------------------------------------------------
 
   function setRow(entry, set, index) {
@@ -156,7 +180,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         oninput: (event) => { set[field.key] = numberOrNull(event.target.value) },
         onfocus: (event) => markColumn(event.target, true),
         onblur: (event) => markColumn(event.target, false),
-        onchange: (event) => { set[field.key] = numberOrNull(event.target.value); if (field.key === 'weight') render() },
+        onchange: (event) => {
+          set[field.key] = numberOrNull(event.target.value)
+          if (index === 0) cascade(entry, field.key, set[field.key])
+          render()
+        },
       })
     })
 
@@ -179,7 +207,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           setIndex: index,
         }
         const log = await workout.logSet(session, logged)
-        loggedHere.push(logged)
+        // The stored record, not the object we sent: it carries `completedAt`,
+        // which is what docs/11 F1 measures the session's duration from.
+        loggedHere.push(log)
         set.logged = true
         set.logId = log.id
         render()

@@ -1239,3 +1239,203 @@ Settings screen so it travels with the images. `README.md` says this plainly.
 build that paid for empty sessions. The cache key derives from this.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 E: the backdrop is Cory's own work, and the palette comes from it
+**Phase:** 4.5 E
+**Decision:** `art/source/bg-night-forest.jpg` is committed, and the colour scheme —
+ground gradient, surfaces, and all five attribute colours — is derived from it. Credited
+in `README.md`; `docs/04`'s colour section is superseded and says so.
+**Reasoning:** Provenance is clear and first-party: Cory confirmed the artwork is his own
+original work. `docs/11 E` says "do not commit the image until its provenance is
+established… the image layer goes behind a flag until cleared" — that condition is met, so
+the flag was never built. Recording it because the doc reads as an unconditional
+instruction and someone will otherwise wonder why the flag is missing.
+
+This is the opposite situation to the exercise photographs, and worth naming as such: there
+the chain of licences was three deep and the images had to be attributed defensively; here
+there is no chain at all, and nothing to attribute except authorship.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 E: four of the five attribute colours had to be lifted
+**Phase:** 4.5 E
+**Decision:** The art's sampled accents are kept as `--lantern`, `--wisp`, `--moss`,
+`--cap` and `--stone`. The five attribute tokens are those colours raised in HSL
+lightness — hue and saturation held — until each clears 4.5:1 as text on `--surface` and
+3:1 for a `--canopy` glyph on it as a tile fill.
+
+| Attribute | Sampled | Shipped | Lift |
+|---|---|---|---|
+| Might | `#d2a44d` | `#d2a44d` | none needed |
+| Wind | `#3798a8` | `#3ba4b5` | +4% L |
+| Grit | `#4a7890` | `#6f9db5` | +14% L |
+| Vitality | `#306c59` | `#4ba88a` | +17% L |
+| Mind | `#755e98` | `#a190ba` | +16% L |
+
+**Reasoning:** Measured before building anything. At the raw sampled values only Might
+passed: Wind read 3.91:1, Grit 2.76:1, Mind 2.40:1 and Vitality 2.15:1 as text on a card.
+Section A puts these colours on every row of the densest screen in the app and section C
+floats XP in them, so unlifted they would have shipped a list nobody could read at arm's
+length in bad light — the exact failure `docs/04` was rewritten to fix.
+
+Lifting is not a departure from the doc: `docs/11 E` already does it once itself, mapping
+Grit to "`--stone` lifted to `#4a7890`". That lift was simply not far enough. Hue and
+saturation are held so each colour still reads as the thing it came from — the lantern is
+still lantern-light, the caps still violet.
+
+Proven load-bearing rather than assumed: reverting Vitality to the sampled `#306c59` turns
+three assertions in `structure-and-feel.html` red at 2.15:1.
+**Confidence:** inferred (the values are measured; the decision to lift is a judgement)
+**Needs Cory:** no — but if the palette should match the picture exactly at the cost of
+legibility, that is a call only you can make, and it reverses this.
+
+## 2026-09-04 — Phase 4.5 B: steps and mobility live in RECOVER
+**Phase:** 4.5 B
+**Decision:** TRAIN holds the program slots and nothing else. The two Wind activities,
+steps and mobility, go at the end of RECOVER.
+**Reasoning:** `docs/11 B` names three sections and assigns every Vitality activity to
+RECOVER and every Mind activity to SHARPEN, leaving the Wind pair unnamed. Putting them in
+TRAIN was tried first and broke two things: it made steps the first daily action on the
+screen where `docs/03` requires rest day to be — `daily.html` caught it — and it stretched
+"today's program slots" to mean something it does not. Incidental daily movement sits more
+honestly with the things that keep the body going than with the prescription.
+**Confidence:** guessed — the doc does not place them, and either home is arguable.
+**Needs Cory:** yes, but trivially. If steps belongs under TRAIN, the section list at the
+top of `today.js` is a one-line change, and rest day's primacy would then need re-solving.
+
+## 2026-09-04 — Phase 4.5 A: the glyphs are Phosphor's idiom, not Phosphor's files
+**Phase:** 4.5 A
+**Decision:** Thirteen activity glyphs drawn by hand in `src/ui/icons.js`, matched to
+Phosphor's proportions — even strokes on a 24 grid, round caps, geometry over illustration.
+**Reasoning:** `docs/11 A` names the Phosphor set. The stack forbids dependencies, there is
+no build step to subset an icon font, and a CDN would break the offline rule — so the
+actual Phosphor files cannot ship. Copying its path data from memory would be worse than
+drawing: it would claim to be Phosphor while being an approximation of it. Hand-drawn in
+the same idiom is the honest version of the instruction.
+**Confidence:** inferred
+**Needs Cory:** no — but if the real set matters, vendoring the handful of SVGs used here
+is small and legitimate, since Phosphor is MIT.
+
+## 2026-09-04 — Phase 4.5 C: the logged row holds its place for one render
+**Phase:** 4.5 C
+**Decision:** The activity just logged stays in its section for the render immediately
+after logging, then moves to the collapsed "worked" list on the next refresh.
+**Reasoning:** Found by the acceptance harness, not by reading the code. Section C puts the
+acknowledgement ON the row — the ring completing, the XP floating up — but logging moves
+that row out of Outstanding in the same beat, so the row carrying the animation was gone
+before it could play. The screen acknowledged a completion by making the evidence vanish,
+which is the opposite of what C is for.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 F1: duration is time under load, not wall clock
+**Phase:** 4.5 F1
+**Decision:** New pure module `src/domain/duration.js`. Set logs are grouped into
+**sittings** — runs of sets no more than `session.sittingGapMinutes` apart — and each
+sitting counts for its span plus `session.minutesPerSet` for the set that ends it. Both
+constants live in `data/balance.json`. Gaps between sittings count for nothing.
+**Reasoning:** This is the one Cory called out as mattering most, and the cause is exactly
+as diagnosed: `docs/10` makes the slot the unit, so every slot completed in a day joins one
+session record, and the gap between the first and last log measures the day rather than the
+work. A five-minute session reported 2h 30m. It also fed `grit.hours` directly, so the day
+was paid XP for the hours it spent not training.
+
+Two details worth recording. The trailing `minutesPerSet` is not decoration: without it a
+single-set sitting is zero minutes, and a slot completed on its own is the commonest shape
+in the app. And the sitting boundary is exclusive — a gap exactly at the threshold stays one
+sitting — because rest between heavy triples is genuinely long and an inclusive boundary
+would split one visit into two.
+
+Fixing it exposed a second bug at both call sites: the session screen and `completeSlot`
+were both keeping the object they *sent* to `logSet` rather than the record that came back,
+so the settled sets carried no `completedAt` at all. Time under load would have measured
+nothing. That is now the written record in both places.
+**Confidence:** specified (the rule) and inferred (the two constants)
+**Needs Cory:** no — but 45 minutes and 2 minutes per set are guesses at your training, and
+they are one line each in `balance.json`.
+
+## 2026-09-04 — Phase 4.5 F2: only the first set cascades
+**Phase:** 4.5 F2
+**Decision:** Editing set 1's weight or reps fills every later unlogged set of that
+exercise. Editing any other set changes only that set. Logged sets are never touched.
+**Reasoning:** `docs/11 F2` specifies the first set and the protection of logged ones. The
+restriction to set 1 is the part worth stating: set 1 means "this is what I am doing today",
+where an edit to set 3 is a correction to set 3. Rewriting logged sets would falsify history
+and, worse, the volume the XP was already computed from.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5: Today runs a tighter rhythm than the other screens
+**Phase:** 4.5 A–D
+**Decision:** `.screen--today` uses a 12px gap and 8px block gaps against the app's 20px;
+rows are 44px, their height set by the 44px action button and no vertical padding.
+**Reasoning:** Phase 4's one-view rule — the whole outstanding day fits a 6.1" phone
+without scrolling — is a hard acceptance criterion, and tiles plus three section headings
+cost height. First build came to 1196px against an 844px budget. Every value above was
+trimmed to pay for the structure docs/11 asks for, and nothing else was allowed to give:
+the tile stays 32px as specified, and the action button stays 44px because that is the
+minimum honest touch target. Today is the only screen with a height budget, so it is the
+only screen whose rhythm was tightened.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5: two acceptance assertions had quietly stopped meaning anything
+**Phase:** 4.5
+**Decision:** Rewrote two checks in `task-model.html` rather than deleting or pinning them.
+**Reasoning:** Both were found by this phase breaking them, and neither was really testing
+what it claimed.
+
+The first read the border colour of `.task__mark` and compared it to one hex — the old
+vitality red. The redesign removed that element, but the deeper problem was that the hex no
+longer existed anywhere in the palette, so the check could not have failed whatever the UI
+did. It now states the rule instead: nothing in an outstanding row may be red-dominant,
+judged by both other channels being far below red so that Might's lantern gold keeps
+passing.
+
+The second asserted the version string contained `(5)`. That needs editing every phase, and
+an edit that can only ever be made to agree with what the code already says tests nothing.
+It now checks the shape — that a phase is named at all.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 D: a session records what it paid
+**Phase:** 4.5 D
+**Decision:** Sessions gained an optional `xpBySource`, written when the session settles.
+`CURRENT_SCHEMA_VERSION` 3 -> 4 with a migration that transforms nothing.
+**Reasoning:** The summary strip has to show what moved today, and the day log only records
+what the day's own activities paid — a lifting day would have shown an empty strip. The
+alternative was re-deriving today's session awards from history, which would quietly
+disagree with the XP the person was actually given, because awards depend on records and
+context at the moment of finishing. Recording what was paid is the same reasoning that
+already governs `dayLogs.awarded`. A version 3 session carries no record and counts as
+nothing, which is the truthful answer for a session finished before the app kept it.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.7.0 (4.5)
+**Phase:** 4.5
+**Decision:** `src/version.js` carries `0.7.0 (4.5)`, up from main's `0.6.0 (5)`.
+**Reasoning:** A new phase, so the minor moves; the parenthetical names the phase as the
+convention requires, even though 4.5 was built after 5. The cache key derives from this and
+the whole surface changed, so an installed phone must not keep the old one.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 F3: a piecewise activity is never finished for the day
+**Phase:** 4.5 F3
+**Decision:** Quick-add buttons and a typed-amount field stay on the row after it has been
+logged, rather than leaving with it.
+**Reasoning:** Found by the acceptance harness. Logging any water at all moves the row out
+of Outstanding — Phase 4's rule, which `daily.html` enforces — and the first `+8` therefore
+took the buttons off screen with it. You could log one glass a day and no more without
+going hunting. The row still leaves the outstanding list, as required; it keeps its
+controls, because "arrives in pieces" means there is always another piece.
+
+**What this does not yet do: correct a total downwards.** The field adds, because the
+activity's spec says `mode: 'add'` and the daily service has no way to override that per
+call. Typing 23 adds 23 ounces; it cannot say "actually the day's total is 40". `docs/11 F3`
+asks for "a manual field for correction", and this is the adding half of it.
+**Confidence:** inferred
+**Needs Cory:** yes — small, and worth knowing about. Correcting downwards needs either a
+"set to" mode on the daily service or an edit control on the worked row. Neither is hard;
+neither is in this phase.

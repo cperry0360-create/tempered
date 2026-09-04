@@ -62,6 +62,7 @@ const PRECACHE = [
   './src/domain/activities.js',
   './src/domain/curves.js',
   './src/domain/directive.js',
+  './src/domain/duration.js',
   './src/domain/e1rm.js',
   './src/domain/grit.js',
   './src/domain/levels.js',
@@ -90,6 +91,9 @@ const PRECACHE = [
   './src/ui/screens/settings.js',
   './src/ui/screens/today.js',
   './src/ui/screens/train.js',
+
+  // The backdrop. Referenced from CSS, so no import graph can find it.
+  './art/dist/bg-night-forest.jpg',
 
   // Exercise art, referenced from data/exercises.json rather than imported,
   // so no import graph can find it. Reference imagery is useless if it only

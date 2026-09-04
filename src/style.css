@@ -1,16 +1,34 @@
 /* ---------------------------------------------------------------------------
-   Design tokens — docs/04-design-system.md. The only place these are defined.
+   Design tokens — docs/04-design-system.md and docs/11-structure-and-feel.md E.
+   The only place these are defined.
 
-   The values below are sampled from the reference, not estimated. The previous
-   system was muted and hairline-thin and could not be read in a gym; this one is
-   a black ground, three surface steps, one loud accent and heavy type.
+   The colour scheme is derived from art/source/bg-night-forest.jpg, sampled
+   from the file rather than estimated. Jet black was austere and joyless; this
+   is a night-forest ground, lit through the middle, with every accent drawn
+   from something actually in the picture.
+
+   Two systems, doing different jobs and never competing: the five attribute
+   colours identify attributes, and acid marks action. See docs/11 A and E.
    --------------------------------------------------------------------------- */
 :root {
-  /* Three surfaces, no more. */
-  --bg: #1c1c1e;          /* page ground */
-  --surface: #2f2f2f;     /* cards */
-  --raised: #413f40;      /* pills, secondary controls */
-  --well: #000000;        /* input wells and the active field */
+  /* Ground — a vertical gradient, deep at both ends, lit through the middle. */
+  --bg-0: #0b1e31;        /* top of screen, night sky */
+  --bg-1: #133249;
+  --bg-2: #1e5376;
+  --bg-3: #237494;        /* the lit horizon, roughly 55% down */
+  --bg-4: #20394d;
+  --bg-5: #0f1b30;        /* foot of screen */
+  --canopy: #071524;      /* darkest frame — nav bar, scrims, glyphs on tiles */
+
+  /* The flat fallback wherever one colour has to stand for the ground. */
+  --bg: var(--bg-0);
+
+  /* Surfaces. */
+  --surface: #16324a;     /* cards */
+  --surface-2: #1d4260;   /* raised */
+  --raised: var(--surface-2);
+  --well: #0c1c2e;        /* input wells and the active field */
+  --stone: #274257;       /* the path — dividers, inactive fills */
 
   /* One accent carries the app. It marks exactly three things: the single
      primary action, the active state, and a value worth noticing. Nothing
@@ -33,14 +51,29 @@
      enough that blue prescribed-versus-actual text still clears AA on it. */
   --active-tint: #3e4034;
 
-  /* The five attribute colours survive, but only where attributes are the
-     subject — the Character surface and the post-session attribute readout.
-     They never appear in the tracker. */
-  --might: #f0803c;
-  --wind: #4fc9a0;
-  --grit: #d8b23c;
-  --vitality: #e05a6a;
-  --mind: #7b7bf0;
+  /* The art's own accents, at the values sampled from the file. These are the
+     palette; the attribute roles below are derived from them. */
+  --lantern: #d2a44d;     /* lantern and window light — warm */
+  --wisp: #3798a8;        /* moon glow and drifting wisps — cyan */
+  --moss: #306c59;        /* foliage — green */
+  --cap: #755e98;         /* mushroom caps — violet */
+
+  /* The five attribute colours, re-derived from the art so the palette is one
+     family rather than two systems bolted together (docs/11 E).
+
+     Each is its source colour raised in HSL lightness — hue and saturation
+     held — until it clears 4.5:1 as text on --surface AND 3:1 for a --canopy
+     glyph sitting on it as a tile fill. The ratios are measured, not judged,
+     and `surface.html` asserts them. Unlifted, four of the five failed: moss
+     read at 2.15:1 and would have been unreadable as a number.
+
+     docs/11 A lifts the old restriction: these identify attributes wherever an
+     item belongs to one, not only on Character. */
+  --might: #d2a44d;       /* --lantern, no lift needed   5.76:1 on surface */
+  --wind: #3ba4b5;        /* --wisp,    +4% L            4.51:1 */
+  --grit: #6f9db5;        /* --stone,   +14% L           4.51:1 */
+  --vitality: #4ba88a;    /* --moss,    +17% L           4.57:1 */
+  --mind: #a190ba;        /* --cap,     +16% L           4.54:1 */
 
   /* Type scale — six steps. The old five had no room for a number to dominate. */
   --text-xs: 11px;
@@ -100,7 +133,18 @@ body {
 }
 
 body {
-  background: var(--bg);
+  /* The gradient IS the ground. The artwork sits behind it at low opacity, so
+     the scheme still reads correctly if the image never loads. */
+  background: linear-gradient(
+    180deg,
+    var(--bg-0) 0%,
+    var(--bg-1) 22%,
+    var(--bg-2) 42%,
+    var(--bg-3) 55%,
+    var(--bg-4) 74%,
+    var(--bg-5) 100%
+  );
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--text-md);
@@ -108,6 +152,42 @@ body {
   /* Weights and reps must not reflow as they change. */
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------------
+   The backdrop — docs/11 E.
+
+   Cory's own artwork, fixed rather than scrolling, anchored to the bottom so
+   the path and lanterns land under the tab bar: that is where the picture is
+   busiest and where the content is not.
+
+   It is a decorative layer and nothing but. Held at 15% with a 2.5px blur, it
+   gives the ground depth without competing with a single number on screen —
+   and because the gradient underneath carries the scheme on its own, the app
+   looks right even if the image never arrives.
+   --------------------------------------------------------------------------- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url('../art/dist/bg-night-forest.jpg');
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  opacity: 0.15;
+  filter: blur(2.5px);
+  /* The blur samples past the viewport edge, so grow the layer to keep the
+     blurred edge off screen rather than showing a soft grey border. */
+  transform: scale(1.04);
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+
+/* Decoration only: it must never be announced, and it must never be the reason
+   a number is hard to read. */
+@media (prefers-reduced-transparency: reduce) {
+  body::before { opacity: 0.08; }
 }
 
 /* Respect the iPhone safe area once installed to the home screen. */
@@ -879,42 +959,164 @@ input.setrow__num[readonly] { color: var(--text); }
 
 .today__frame { margin: 0; font-size: var(--text-md); color: var(--text-2); }
 
-.tasks { display: grid; gap: var(--s1); }
+/* Today is the one screen with a hard height budget: Phase 4 requires the whole
+   outstanding day to fit a 6.1" phone without scrolling, and docs/11 adds tiles
+   and section headings on top of that. It therefore runs a tighter rhythm than
+   the other screens, which have no such constraint. */
+.screen--today { gap: var(--s3); }
+.screen--today .block { gap: var(--s2); }
 
-.task {
+/* ---------------------------------------------------------------------------
+   D — the summary strip. How today is going, before a single row is read.
+   --------------------------------------------------------------------------- */
+
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--s1) var(--s4);
+}
+.strip__head { display: flex; flex-direction: column; gap: 2px; }
+.strip__label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.16em; color: var(--text-2); }
+.strip__xp { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+
+/* Five bars, scaled to the largest of them. There is no daily quota in this
+   app, so there is nothing to draw a bar against except the day's own shape. */
+.strip__bars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--s2);
+  height: 34px;
+  width: 40%;
+  max-width: 168px;
+  align-items: end;
+  justify-items: center;
+}
+.strip__bar {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 34px;
+  height: 100%;
+  border-radius: var(--r-sm);
+  /* Tinted with its own attribute even when empty: five identical dark slots
+     would say nothing about which attribute is which. */
+  background: color-mix(in srgb, currentColor 16%, var(--well));
+  overflow: hidden;
+}
+.strip__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 3px;
+  border-radius: var(--r-sm);
+  background: var(--stone);
+  transition: height var(--motion-screen) ease-out;
+}
+.strip__bar[data-moved='true'] .strip__fill { background: currentColor; }
+.strip__bar[data-attribute='might'] { color: var(--might); }
+.strip__bar[data-attribute='wind'] { color: var(--wind); }
+.strip__bar[data-attribute='grit'] { color: var(--grit); }
+.strip__bar[data-attribute='vitality'] { color: var(--vitality); }
+.strip__bar[data-attribute='mind'] { color: var(--mind); }
+
+/* ---------------------------------------------------------------------------
+   B — named sections, each carrying its own count.
+   --------------------------------------------------------------------------- */
+
+.sect__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--text-md);
+  letter-spacing: 0.14em;
+}
+.sect__count {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.sect__title[data-complete='true'] .sect__count { color: var(--acid); }
+
+/* C — a section finishing gets one brief acid flash, then nothing. */
+@keyframes sect-flash {
+  0% { color: var(--text); }
+  30% { color: var(--acid); }
+  100% { color: var(--text); }
+}
+.sect__title[data-flash='true'] { animation: sect-flash 380ms ease-out; }
+
+/* ---------------------------------------------------------------------------
+   A — the row, and the tile that opens it.
+
+   One object, whatever it tracks: a tile in the attribute's colour, a name, an
+   optional value or field, and the control that completes it wrapped in a ring.
+   --------------------------------------------------------------------------- */
+
+/* Grid and flex children default to `min-width: auto`, which means "never
+   narrower than my content" — so one long movement name silently widened the
+   whole column past the phone and `.app__body` absorbed it as a sideways
+   scroll. Every link in the chain from screen to row has to be allowed to
+   shrink, or the ellipsis on .row__name can never take effect. */
+.screen > *, .block, .rows, .row { min-width: 0; }
+
+.rows { display: grid; gap: 3px; }
+
+.row {
+  position: relative;
   appearance: none;
   border: 0;
   background: var(--surface);
   border-radius: var(--r-md);
   color: var(--text);
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
-  gap: var(--s3);
+  display: flex;
+  gap: var(--s2);
   align-items: center;
+  /* No vertical padding: the 44px action button sets the row's height, which is
+     the iOS minimum target and the smallest a row may honestly be. Phase 4's
+     one-view rule and docs/11's tiles both have to fit on one 6.1" screen. */
   padding: 0 var(--s3);
   text-align: left;
-  cursor: pointer;
-  min-height: 46px;
+  min-height: 44px;
+  width: 100%;
 }
+/* The name is the only part that may take the slack, and the only part that may
+   be cut short. Everything else keeps its size. */
+.row > * { flex: none; }
+/* `min-width: 0` is what actually lets a long movement name ellipsize instead
+   of forcing the row wider than the phone. Without it a flex item refuses to
+   shrink below its content, and the whole screen scrolls sideways. */
+.row .row__name { flex: 1 1 auto; min-width: 0; }
+button.row { cursor: pointer; }
 
-.task__mark {
+.tile {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--edge);
-  border-radius: var(--r-sm);
-  color: var(--bg);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  /* The glyph is the darkest thing in the palette, which clears 6.2:1 or better
+     on every one of the five tiles. Measured, not judged — see surface.html. */
+  color: var(--canopy);
+  background: var(--stone);
+  flex: none;
 }
-.task__mark .icon { width: 14px; height: 14px; }
+.tile .icon { width: 18px; height: 18px; stroke-width: 1.9; }
+.tile[data-attribute='might'] { background: var(--might); }
+.tile[data-attribute='wind'] { background: var(--wind); }
+.tile[data-attribute='grit'] { background: var(--grit); }
+.tile[data-attribute='vitality'] { background: var(--vitality); }
+.tile[data-attribute='mind'] { background: var(--mind); }
 
-/* Done is marked. Outstanding is marked in nothing at all — it is not a problem
-   state, so it gets no colour and no emphasis. */
-.task[data-done='true'] .task__mark { background: var(--text); border-color: var(--text); }
-.task[data-started='true'] .task__mark { border-color: var(--edge-strong); }
-
-.task__name {
+.row__name {
   font-size: var(--text-md);
   font-weight: 600;
   min-width: 0;
@@ -922,108 +1124,149 @@ input.setrow__num[readonly] { color: var(--text); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.task__pres { font-size: var(--text-sm); color: var(--blue); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.task[data-done='true'] .task__pres { color: var(--text-3); }
+.row__value {
+  font-size: var(--text-sm);
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.row[data-done='true'] .row__value { color: var(--text-3); }
 
-/* ---------------------------------------------------------------------------
-   Daily tracking — Phase 4.
-
-   A mark is one tap. A measurement is one number and one tap, which is why the
-   field is already on screen: nothing to open, nothing to expand, no menu
-   between you and the number you came to record.
-   --------------------------------------------------------------------------- */
-
-.marks { display: flex; flex-wrap: wrap; gap: var(--s2); }
-
-.mark {
+/* The control that completes the row, with its progress drawn around it. */
+.row__act {
+  position: relative;
   appearance: none;
   border: 0;
-  background: var(--surface);
-  border-radius: var(--r-full);
+  background: none;
   color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 0 var(--s4) 0 var(--s3);
-  min-height: 44px;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: var(--s2);
-  white-space: nowrap;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
 }
-.mark .icon { width: 16px; height: 16px; color: var(--text-3); }
+button.row__act { cursor: pointer; }
+.row__act .icon { width: 17px; height: 17px; position: relative; }
 
-/* Rest is an action that earns, so it reads as one — never a greyed-out row at
-   the bottom of a list of things you failed to do. */
-.mark[data-rest='true'] { background: var(--raised); }
-.mark[data-rest='true'] .icon { color: var(--text); }
-
-/* On the daily list a chip is a choice rather than an action: on is filled, off
-   is quiet. It sits ON a card, so `on` needs the raised step — the default
-   surface would be the same colour as the card behind it and read as nothing. */
-.mark[data-on='true'] { background: var(--raised); }
-.mark[data-on='true'] .icon { color: var(--text); }
-.mark[data-on='false'] { background: none; box-shadow: inset 0 0 0 1px var(--edge); color: var(--text-2); }
-
-.entries {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: var(--s2);
+.ring { position: absolute; inset: 5px; width: 34px; height: 34px; overflow: visible; }
+.ring__track, .ring__fill { fill: none; stroke-width: 2.5; }
+.ring__track { stroke: var(--edge); }
+.ring__fill {
+  stroke: var(--acid);
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset var(--motion-screen) ease-out;
 }
 
-.entry {
-  background: var(--surface);
-  border-radius: var(--r-md);
-  padding: var(--s2) var(--s2) var(--s1);
-  display: grid;
-  gap: 2px;
-  min-width: 0;
+/* C — the ring completing, with a short spring. Under 400ms, and the global
+   reduced-motion rule flattens it to nothing. */
+@keyframes ring-spring {
+  0% { transform: rotate(-90deg) scale(0.82); }
+  55% { transform: rotate(-90deg) scale(1.12); }
+  100% { transform: rotate(-90deg) scale(1); }
 }
-.entry__label {
+.row[data-justlogged='true'] .ring__fill { animation: ring-spring 340ms cubic-bezier(0.22, 1.2, 0.36, 1); }
+
+/* C — the XP floats up in the attribute's colour, beside the thing that earned
+   it. Every attribute colour clears 4.5:1 on --surface; that is why they were
+   lifted from the raw art values. */
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(4px); }
+  25% { opacity: 1; transform: translateY(-2px); }
+  75% { opacity: 1; transform: translateY(-10px); }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+.float {
+  position: absolute;
+  right: 52px;
+  top: 6px;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0;
+  animation: float-up 900ms ease-out;
+}
+.float[data-attribute='might'] { color: var(--might); }
+.float[data-attribute='wind'] { color: var(--wind); }
+.float[data-attribute='grit'] { color: var(--grit); }
+.float[data-attribute='vitality'] { color: var(--vitality); }
+.float[data-attribute='mind'] { color: var(--mind); }
+
+/* F3 — things that arrive in pieces get quick-add buttons. */
+.quick { display: flex; gap: 3px; flex: none; }
+.quick__add {
+  appearance: none;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--edge);
+  background: none;
+  color: var(--text-2);
+  border-radius: var(--r-full);
   font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 5px;
+  cursor: pointer;
 }
-.entry__row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: var(--s1); align-items: center; }
+.quick__add:active { background: var(--raised); color: var(--text); }
+
+.entry__field { display: block; min-width: 0; flex: 0 1 auto; }
 .entry__value {
-  background: var(--bg);
+  width: 100%;
+  min-width: 46px;
+  max-width: 66px;
+  appearance: none;
   border: 1px solid var(--edge);
-  border-radius: var(--r-sm);
+  background: var(--well);
   color: var(--text);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  min-height: 38px;
+  padding: 0 var(--s1);
+}
+.entry__value:focus { border-color: var(--acid); outline: none; }
+.entry__unit { font-size: 9px; color: var(--text-3); letter-spacing: 0; margin-left: 3px; }
+
+/* A row already worked is evidence, not a control. */
+.row--worked .row__act { color: var(--text-3); }
+
+/* C — the day finishing is one beat over the whole screen, not a modal. It
+   fades on its own; there is nothing to dismiss. */
+@keyframes day-beat {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.daybeat {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(237, 254, 115, 0.10), transparent 60%);
+  animation: day-beat 1400ms ease-out forwards;
+}
+.daybeat__word {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  min-height: 44px;
-  min-width: 0;
-  padding: 0 2px;
-  width: 100%;
+  letter-spacing: 0.34em;
+  color: var(--acid);
 }
-.entry__confirm {
-  appearance: none;
-  border: 1px solid var(--edge);
-  background: var(--raised);
-  border-radius: var(--r-sm);
-  color: var(--text-2);
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-.entry__value:focus { background: var(--well); border-color: var(--edge-strong); outline: none; }
-.entry__confirm .icon { width: 18px; height: 18px; }
-.entry__unit { font-size: 9px; color: var(--text-3); letter-spacing: 0; margin-left: 3px; }
 
 /* What the last entry earned, said once, then gone. */
 .earned { margin: 0; display: flex; align-items: baseline; gap: var(--s2); min-height: 21px; }
-.earned__xp { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; }
+.earned__xp { font-size: var(--text-md); font-weight: 800; font-variant-numeric: tabular-nums; }
 .earned__what { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
 
 /* Everything off the daily list. One control, never a menu. */

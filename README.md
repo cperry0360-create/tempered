@@ -57,6 +57,16 @@ behind every file, so any picture can be traced back to its origin.
 [everkinetic]: https://github.com/everkinetic/data
 [ccbysa]: https://creativecommons.org/licenses/by-sa/4.0/
 
+## The backdrop
+
+The night-forest artwork behind every screen — `art/source/bg-night-forest.jpg` — is
+**Cory's own original work**, and the app's colour scheme is sampled from it: the ground
+gradient, the card surfaces, and all five attribute colours. See
+`docs/11-structure-and-feel.md` section E.
+
+Unlike the exercise photographs, there is no third-party licence question here. It is
+first-party art, and the palette derived from it is first-party too.
+
 ## Deployment
 
 The live app is served by **Netlify**, from the repository root. There is no build step,

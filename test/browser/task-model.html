@@ -124,10 +124,24 @@
           offenders.length === 0, offenders.join('; ') || 'checked today, train, history')
 
         const outstanding = (await (async () => { await tempered.app.show('today'); await settle(); return qa('[data-task][data-done="false"]') })())
-        const reds = outstanding.filter((node) => {
-          const colour = getComputedStyle(node.querySelector('.task__mark')).borderColor
-          return /rgb\(224, 90, 106\)/.test(colour)
-        })
+
+        // An outstanding task must not be painted as a problem. This used to
+        // pin one hex — the old vitality red — which quietly stopped meaning
+        // anything when docs/11 replaced the palette and no red survived. So
+        // the rule is stated as a rule: nothing in an outstanding row may be
+        // red-dominant. Amber and gold are not alarm colours, and Might's
+        // lantern gold has to keep passing, so red is judged by BOTH other
+        // channels being far below it rather than by red merely leading.
+        const alarming = (css) => {
+          const [r, g, b] = (String(css).match(/\d+/g) ?? []).map(Number)
+          if ([r, g, b].some((n) => n === undefined)) return false
+          return r - g > 60 && r - b > 60
+        }
+        const reds = outstanding.filter((node) =>
+          [node, ...node.querySelectorAll('*')].some((n) => {
+            const cs = getComputedStyle(n)
+            return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke].some(alarming)
+          }))
         check('no outstanding task is rendered in a problem colour', reds.length === 0,
           `${outstanding.length} outstanding tasks checked`)
 
@@ -138,7 +152,10 @@
           q('[data-version]')?.textContent)
         check('the last-updated date is shown beside it', (q('[data-builddate]')?.textContent ?? '').length > 5,
           q('[data-builddate]')?.textContent)
-        check('the version names its phase', /\(5\)/.test(VERSION), VERSION)
+        // The shape, not the number. Pinning the phase meant editing this line
+        // every phase, which is an edit that can only ever be made to agree with
+        // whatever the code already said — it tested nothing.
+        check('the version names its phase', /\(\d+(\.\d+)?\)$/.test(VERSION), VERSION)
 
         const registration = await navigator.serviceWorker?.getRegistration?.().catch(() => null)
         check('the service worker cache key derives from the version',

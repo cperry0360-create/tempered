@@ -222,6 +222,31 @@ reading documentation.
 
 ---
 
+## Phase 4.5 — Structure and feel
+
+`docs/11-structure-and-feel.md`, written after real use. The tracker read as a
+spreadsheet: everything on Today carried equal visual weight, and nothing acknowledged a
+completion. Six changes — four structural, one background, one set of bugs.
+
+- **A.** A 32px icon tile in the attribute's colour opens every row.
+- **B.** Today is divided into TRAIN, RECOVER and SHARPEN, each heading carrying a count.
+- **C.** Logging is acknowledged: the ring completes, the XP floats up in the attribute's
+  colour, the phone ticks, a finished section flashes, a finished day gets one beat.
+- **D.** A summary strip answers "how is today going" before the first row.
+- **E.** The colour scheme is derived from the night-forest artwork, which also becomes a
+  fixed, dimmed, blurred backdrop. Replaces the colour half of `docs/04`.
+- **F.** Three bugs: session duration measured as time under load rather than wall clock,
+  the first set cascading into the rest, and incremental entry for water.
+
+**Acceptance:** `test/browser/structure-and-feel.html` passes; Phase 4's one-view rule
+still holds with tiles and section headings on the screen; every attribute colour clears
+4.5:1 as text on a card, asserted rather than judged.
+
+Numbered 4.5 because it reshapes the Phase 4 daily surface, though it was built after
+Phase 5.
+
+---
+
 ## Phase 8 — Polish pass
 
 Only after everything above passes. Motion, empty states, error states, accessibility,

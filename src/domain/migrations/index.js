@@ -15,7 +15,7 @@
  * 2 — programs and programState added.
  * 3 — set logs may carry programDayId and slotIndex.
  */
-export const CURRENT_SCHEMA_VERSION = 3
+export const CURRENT_SCHEMA_VERSION = 4
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -44,6 +44,17 @@ export const MIGRATIONS = Object.freeze({
    * so a future reader knows when the fields appeared.
    */
   2: (data) => data,
+
+  /**
+   * 3 -> 4: a session records what it paid (docs/11 D).
+   *
+   * Sessions gained an optional `xpBySource`, so "what moved today" can be read
+   * back from storage instead of re-derived from history that has since moved
+   * on. Nothing needs rewriting: a version 3 session simply carries no record,
+   * which reads as "unknown" — and the summary strip counts it as nothing,
+   * which is the truthful answer for a session finished before the app kept it.
+   */
+  3: (data) => data,
 })
 
 /**

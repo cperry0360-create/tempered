@@ -342,3 +342,49 @@ test('abandoning one slot never destroys the day the other slots built', async (
   assert.equal((await storage.getAll('sessions')).length, 1, 'the day was deleted')
   assert.equal((await storage.getAll('setLogs')).length, 1, 'the day lost its logged work')
 })
+
+// --- docs/11 F1: duration is time under load, not wall clock ---------------
+
+test('THE BUG: a five-minute session across the day does not report hours', async () => {
+  // Cory's report: a five-minute session showed 2h 30m. The session record is
+  // the DAY's under the micro-set model, so wall clock measured the day.
+  const { clock, workout } = await freshApp('2026-09-04T07:00:00.000Z')
+  const session = await workout.startSession('lower')
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+  clock.set(clock.now() + 5 * 60000)
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+
+  // Two and a half hours pass with nothing logged, then the session is settled.
+  clock.set(clock.now() + 150 * 60000)
+  const summary = await workout.finishSession(session)
+
+  assert.ok(summary.durationMinutes <= 10,
+    `a five-minute session reported ${summary.durationMinutes} minutes`)
+})
+
+test('two sittings hours apart are two sittings, not one long session', async () => {
+  const { clock, workout } = await freshApp('2026-09-04T07:00:00.000Z')
+  const { session } = await workout.openDaySession()
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+
+  // The same day's session, revisited in the evening.
+  clock.set(clock.now() + 6 * 60 * 60000)
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+
+  const summary = await workout.finishSession(session)
+  assert.ok(summary.durationMinutes < 30,
+    `a morning and an evening set reported ${summary.durationMinutes} minutes`)
+})
+
+test('Grit pays for the work, not for the gap between sittings', async () => {
+  // The duration fed grit.hours directly, so the day was paid for waiting.
+  const { clock, workout } = await freshApp('2026-09-04T07:00:00.000Z')
+  const session = await workout.startSession('lower')
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+  clock.set(clock.now() + 3 * 60 * 60000)
+  const summary = await workout.finishSession(session)
+
+  const hoursXp = summary.xpBySource['grit.hours'] ?? 0
+  assert.ok(hoursXp < balance.grit.xpPerTrainingHour * 0.2,
+    `three idle hours paid ${hoursXp} XP for time under load`)
+})

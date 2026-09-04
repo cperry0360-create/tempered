@@ -36,6 +36,11 @@
     "returnAfterGapBonus": 290,
     "returnGapDaysThreshold": 4
   },
+  "session": {
+    "_comment": "What counts as one visit to the gym. A session record spans the whole day under the micro-set model, so duration is measured as time under load rather than wall-clock. See docs/11 F1 and src/domain/duration.js.",
+    "sittingGapMinutes": 45,
+    "minutesPerSet": 2
+  },
   "vitality": {
     "sleepBandHours": [
       7,

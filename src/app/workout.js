@@ -6,7 +6,7 @@
  * still knows nothing about storage, and storage still knows nothing about XP.
  */
 
-import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource } from '../domain/xp-engine.js'
+import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource, totalsByAttributeFromSources } from '../domain/xp-engine.js'
 import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
 import { proposeNext } from '../domain/progression.js'
 import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets } from '../domain/programs.js'
@@ -16,6 +16,7 @@ import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
 import { generateDirective } from '../domain/directive.js'
 import { daysBetween } from '../adapters/clock/clock.js'
+import { timeUnderLoad } from '../domain/duration.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
 function weekStart(date) {
@@ -195,6 +196,25 @@ export function createWorkoutService({ storage, clock, balance }) {
     return log
   }
 
+  /**
+   * What training paid today, per attribute.
+   *
+   * Read back from the sessions themselves rather than recomputed: the awards
+   * depend on records and context at the moment of finishing, and re-deriving
+   * them later would quietly disagree with the XP the person was actually given.
+   */
+  async function xpToday() {
+    const today = clock.today()
+    const sources = {}
+    for (const session of await storage.getAll('sessions')) {
+      if (session.date !== today) continue
+      for (const [source, xp] of Object.entries(session.xpBySource ?? {})) {
+        sources[source] = (sources[source] ?? 0) + xp
+      }
+    }
+    return totalsByAttributeFromSources(sources)
+  }
+
   /** @param {string} sessionId */
   async function setsFor(sessionId) {
     const logs = await storage.getAllByIndex('setLogs', 'sessionId', sessionId)
@@ -239,8 +259,12 @@ export function createWorkoutService({ storage, clock, balance }) {
     const records = await recordMap()
 
     const endedAt = clock.nowIso()
+    // docs/11 F1. Wall-clock from `startedAt` measured the day, not the work:
+    // under the micro-set model this record is the DAY's, so a set at seven and
+    // another at half past nine read as a two-and-a-half hour session. Duration
+    // is the time under load implied by when the sets were actually logged.
     const durationMinutes = options.durationMinutes
-      ?? Math.max(1, Math.round((clock.now() - Date.parse(session.startedAt)) / 60000))
+      ?? Math.max(1, timeUnderLoad(sets.map((log) => log.completedAt), balance))
 
     // Context the domain needs but cannot look up for itself.
     const finished = (await storage.getAll('sessions'))
@@ -300,7 +324,18 @@ export function createWorkoutService({ storage, clock, balance }) {
     const updatedRecords = applyRecords(records, input.sets, session.date, exercises)
     await storage.putAll('records', [...updatedRecords.values()])
 
-    const completed = { ...session, endedAt, durationMinutes }
+    // What this settlement paid, kept on the session. `docs/11 D` needs "what
+    // moved today" and the day log only records the day's own activities; a
+    // lifting day would otherwise show an empty strip. Recording what was
+    // actually awarded beats recomputing it later from history that has moved
+    // on — the same reasoning as `dayLogs.awarded`.
+    const paidNow = totalsBySource(awards)
+    const xpBySourceTotal = { ...(session.xpBySource ?? {}) }
+    for (const [source, xp] of Object.entries(paidNow)) {
+      xpBySourceTotal[source] = (xpBySourceTotal[source] ?? 0) + xp
+    }
+
+    const completed = { ...session, endedAt, durationMinutes, xpBySource: xpBySourceTotal }
     await storage.put('sessions', completed)
 
     const volumes = volumeByExercise(input.sets, exercises)
@@ -406,26 +441,30 @@ export function createWorkoutService({ storage, clock, balance }) {
    */
   async function completeSlot(slot, sets, options = {}) {
     const { session, isFirstOfDay } = await openDaySession()
+    /** The written records, which carry the timestamps duration is measured from. */
+    const logs = []
     for (const [index, set] of sets.entries()) {
-      await logSet(session, {
+      logs.push(await logSet(session, {
         ...set,
         exerciseId: slot.exerciseId,
         programDayId: slot.dayId,
         slotIndex: slot.slotIndex,
         setIndex: index,
-      })
+      }))
     }
     return finishSession(session, {
-      durationMinutes: options.durationMinutes ?? Math.max(1, sets.length * 2),
+      // No duration is passed: the sets carry their own timestamps and
+      // `timeUnderLoad` is a better answer than any guess made here.
+      ...(options.durationMinutes ? { durationMinutes: options.durationMinutes } : {}),
       isFirstOfDay,
-      onlySets: sets.map((set) => ({ ...set, exerciseId: slot.exerciseId })),
+      onlySets: logs,
     })
   }
 
   return {
     exerciseMap, recordMap, lastPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide,
-    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession,
+    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday,
     startSession, logSet, setsFor, finishSession,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },

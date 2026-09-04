@@ -1439,3 +1439,32 @@ asks for "a manual field for correction", and this is the adding half of it.
 **Needs Cory:** yes — small, and worth knowing about. Correcting downwards needs either a
 "set to" mode on the daily service or an edit control on the worked row. Neither is hard;
 neither is in this phase.
+
+## 2026-09-05 — F3 revised: the field corrects, the buttons accumulate
+**Phase:** 4.5 F3 (revision)
+**Decision:** `applyActivity` takes a per-entry `options.mode` that overrides the
+activity's own mode; `daily.log` threads it through. The typed field on any activity that
+also offers quick-add sends `{mode: 'set'}`, so it makes the day's total what you typed.
+The quick-add buttons keep the spec's `add`. The logged row's field gained a real confirm
+button.
+**Reasoning:** Cory corrected my earlier reading, and the correction is right. I had shipped
+a "manual field for correction" that could only add, which makes a mistyped entry
+*uncorrectable*: every attempt to fix 400 ounces makes it larger. That contradicts the
+Phase 4 high-water ledger, where `dayLogs.awarded` keeps XP already paid and a correction
+therefore costs nothing in either direction. An app that cannot take a number back is
+punishing a typo, which non-negotiable 4 forbids as plainly as it forbids losing a level.
+
+The override is per call rather than per activity because both behaviours are correct for
+the same activity at the same moment: the buttons mean "another glass", the field means
+"the day's total is this". One mode could not express both.
+
+Applied to every add-mode activity with a field, not just water — read, study, meditate,
+instrument and mobility all have quick-adds and all had the same trap.
+
+Two things worth recording beyond the ask. `'set'` and the spec's own `'replace'` both mean
+the same thing and are both accepted, because anything that is not `add` replaces; a second
+vocabulary for one behaviour would be a trap of its own. And the logged row's field had no
+confirm button at all — only Enter committed it, which on a numeric keypad is a field you
+can type into but not submit. The acceptance harness found that, not review.
+**Confidence:** specified
+**Needs Cory:** no

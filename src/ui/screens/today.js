@@ -236,14 +236,25 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   function amountField(activity) {
     const input = el('input.entry__value', {
       type: 'text', inputmode: 'decimal',
-      'aria-label': `Add to ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+      // It sets the day's total, so say so: "add to" would be a lie about what
+      // pressing it does, and this is the control people reach for when a
+      // number is already wrong.
+      'aria-label': `${activity.name} total for today${activity.unit ? `, ${activity.unit}` : ''}`,
+      placeholder: 'total',
       dataset: { entry: activity.id },
       onkeydown: (event) => {
-        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value) }
+        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value, { mode: 'set' }) }
       },
     })
     return el('span.entry__field', {}, [input])
   }
+
+  /**
+   * How a typed entry combines. A field is a correction wherever the activity
+   * also offers quick-add: the buttons are how you accumulate, so the number
+   * you type is the total you mean. Everything else keeps its own mode.
+   */
+  const entryMode = (activity) => (quickAddFor(activity) ? { mode: 'set' } : {})
 
   /** The quick-add strip: `docs/11 F3`, for anything that arrives in pieces. */
   function quickAdd(activity) {
@@ -287,7 +298,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       'aria-label': `${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
       onkeydown: (event) => {
-        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value) }
+        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value, entryMode(activity)) }
       },
     })
 
@@ -312,7 +323,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       el('button.row__act.entry__confirm', {
         type: 'button', 'aria-label': `Log ${activity.name}`,
         dataset: { log: activity.id, kind: 'number' },
-        onclick: () => record(activity, input.value),
+        onclick: () => record(activity, input.value, entryMode(activity)),
       }, [ring(fillOf(activity)), icon('check')]),
       floatFor(activity.id),
     ])
@@ -329,29 +340,48 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
    */
   function workedRow(activity) {
     const justLogged = justEarned?.id === activity.id
+    // A thing that arrives in pieces is never finished for the day: you drink
+    // another glass. Keeping quick-add and the field on the logged row is what
+    // makes that possible without hunting for the row again — otherwise the
+    // first +8 takes the controls off screen with it.
+    const piecewise = quickAddFor(activity)
+    const field = piecewise ? amountField(activity) : null
+    const input = field?.querySelector('input')
+
     return el('div.row.row--worked', {
       dataset: { worked: activity.id, justlogged: String(justLogged) },
     }, [
       tile(activity.attribute, iconForActivity(activity.id)),
       el('span.row__name', { text: activity.name }),
       el('span.row__value', { text: valueLabel(activity, activity.value) }),
-      // A thing that arrives in pieces is never finished for the day: you drink
-      // another glass. Keeping quick-add on the logged row is what makes that
-      // possible without hunting for the row again — otherwise the first +8
-      // takes the buttons off screen with it.
-      ...(quickAddFor(activity) ? [quickAdd(activity), amountField(activity)] : []),
-      el('span.row__act', {}, [ring(1), icon('check')]),
+      ...(piecewise ? [quickAdd(activity), field] : []),
+      // The correction needs a real button. A numeric keypad has no Enter key
+      // worth relying on, and a field you can type into but not commit is a
+      // control that only works on a desktop keyboard.
+      piecewise
+        ? el('button.row__act', {
+            type: 'button', 'aria-label': `Set ${activity.name} total for today`,
+            dataset: { log: activity.id, kind: 'correction' },
+            onclick: () => record(activity, input.value, { mode: 'set' }),
+          }, [ring(1), icon('check')])
+        : el('span.row__act', {}, [ring(1), icon('check')]),
       justLogged && floatFor(activity.id),
     ])
   }
 
-  async function record(activity, value) {
+  /**
+   * @param {any} activity
+   * @param {string|number|null} value
+   * @param {{mode?: 'add'|'set'}} [options] `{mode:'set'}` corrects a total
+   *   rather than adding to it — the typed field, never the quick-add buttons.
+   */
+  async function record(activity, value, options = {}) {
     const id = typeof activity === 'string' ? activity : activity.id
     const attribute = typeof activity === 'string' ? null : activity.attribute
     const before = sectionCompletion()
     const wasDayDone = dayIsWorked()
 
-    const result = await daily.log(id, value)
+    const result = await daily.log(id, value, options)
     const earned = Object.values(result.xpByAttribute ?? {}).reduce((sum, n) => sum + n, 0)
     justEarned = {
       id,

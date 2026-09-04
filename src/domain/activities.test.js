@@ -246,3 +246,60 @@ test('the daily flag has nothing to do with what anything is worth', () => {
   const totals = totalsByAttribute(awardsForDay(day, {}, balance))
   assert.ok(totals.mind > 0, 'an activity off the daily list still earns exactly the same')
 })
+
+// --- a correction, not just an addition -----------------------------------
+// docs/11 F3, revised: the quick-add buttons accumulate, the typed field
+// corrects. Add-only made a mistyped entry uncorrectable, which contradicts the
+// Phase 4 high-water ledger where a correction costs nothing in either
+// direction — you can put a number right without losing what it already paid.
+
+test('an explicit entry can replace an add-mode total rather than appending', () => {
+  const day = applyActivity({ date: 'd' }, 'water', 8)
+  const corrected = applyActivity(day, 'water', 40, { mode: 'set' })
+  assert.equal(corrected.waterOz, 40, 'the correction was appended instead of applied')
+})
+
+test('without the override an add-mode activity still accumulates', () => {
+  // The buttons must not start replacing: that is the whole point of +8.
+  let day = applyActivity({ date: 'd' }, 'water', 8)
+  day = applyActivity(day, 'water', 8)
+  assert.equal(day.waterOz, 16)
+})
+
+test('a correction can lower a total, which is the case add-only could not reach', () => {
+  const day = applyActivity({ date: 'd' }, 'water', 400)
+  assert.equal(applyActivity(day, 'water', 40, { mode: 'set' }).waterOz, 40)
+})
+
+test('the override applies to every add-mode activity, not just water', () => {
+  for (const [id, field] of [['read', 'readingMinutes'], ['study', 'studyMinutes'],
+    ['meditate', 'meditationMinutes'], ['instrument', 'instrumentMinutes'],
+    ['mobility', 'mobilityMinutes']]) {
+    const day = applyActivity({ date: 'd' }, id, 90)
+    assert.equal(applyActivity(day, id, 20, { mode: 'set' })[field], 20, `${id} did not correct`)
+  }
+})
+
+test('the override cannot turn a mark into a number', () => {
+  // A mark has no value to set. Asking it to be one must not invent a field.
+  const day = applyActivity({ date: 'd' }, 'rest_day', null, { mode: 'set' })
+  assert.equal(day.restDay, true)
+})
+
+test('a replace-mode activity is unaffected by the override', () => {
+  const day = applyActivity({ date: 'd' }, 'sleep', 8, { mode: 'set' })
+  assert.equal(day.sleepHours, 8)
+  assert.equal(applyActivity(day, 'sleep', 7, { mode: 'set' }).sleepHours, 7)
+})
+
+test('a correction to zero is honoured, not read as "no value"', () => {
+  // Logging 40oz by mistake when you have drunk none is exactly the case that
+  // needs this, and `positiveNumber` would otherwise discard the zero.
+  const day = applyActivity({ date: 'd' }, 'water', 40)
+  assert.equal(applyActivity(day, 'water', 0, { mode: 'set' }).waterOz, 0)
+})
+
+test('rubbish in a correction leaves the last good value alone', () => {
+  const day = applyActivity({ date: 'd' }, 'water', 40)
+  assert.equal(applyActivity(day, 'water', 'abc', { mode: 'set' }).waterOz, 40)
+})

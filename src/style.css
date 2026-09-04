@@ -1094,6 +1094,10 @@ input.setrow__num[readonly] { color: var(--text); }
    of forcing the row wider than the phone. Without it a flex item refuses to
    shrink below its content, and the whole screen scrolls sideways. */
 .row .row__name { flex: 1 1 auto; min-width: 0; }
+/* The name may shrink, but not to an initial. Below this it stops being a
+   label; the row would rather drop a pixel elsewhere. */
+.row:has(.quick) .row__name { min-width: 52px; }
+.row:has(.quick) .entry__value { max-width: 54px; }
 button.row { cursor: pointer; }
 
 .tile {
@@ -1197,6 +1201,7 @@ button.row__act { cursor: pointer; }
 .float[data-attribute='mind'] { color: var(--mind); }
 
 /* F3 — things that arrive in pieces get quick-add buttons. */
+.row:has(.quick) { gap: 6px; }
 .quick { display: flex; gap: 3px; flex: none; }
 .quick__add {
   appearance: none;
@@ -1208,9 +1213,9 @@ button.row__act { cursor: pointer; }
   font-size: var(--text-xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  min-width: 34px;
+  min-width: 30px;
   min-height: 34px;
-  padding: 0 5px;
+  padding: 0 3px;
   cursor: pointer;
 }
 .quick__add:active { background: var(--raised); color: var(--text); }
@@ -1218,8 +1223,8 @@ button.row__act { cursor: pointer; }
 .entry__field { display: block; min-width: 0; flex: 0 1 auto; }
 .entry__value {
   width: 100%;
-  min-width: 46px;
-  max-width: 66px;
+  min-width: 44px;
+  max-width: 62px;
   appearance: none;
   border: 1px solid var(--edge);
   background: var(--well);

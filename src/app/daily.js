@@ -159,7 +159,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
    * @param {string} activityId
    * @param {number|string|null} [value]
    */
-  async function log(activityId, value = null) {
+  async function log(activityId, value = null, options = {}) {
     const date = clock.today()
     const day = await dayLog(date)
     if (!ACTIVITY_FIELDS[activityId]) {
@@ -167,7 +167,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       // in a caller, not something to throw in a user's face mid-day.
       return { day, awards: [], xpByAttribute: totalsByAttribute([]), xpBySource: {}, levelledUp: [], levels: {}, rank: null }
     }
-    return settleDay(applyActivity(day, activityId, value))
+    return settleDay(applyActivity(day, activityId, value, options))
   }
 
   /**

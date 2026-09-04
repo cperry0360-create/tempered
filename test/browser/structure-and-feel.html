@@ -195,6 +195,32 @@
         check('F3 a manual field is still there for correction',
           q('[data-entry="water"]') !== null)
 
+        // The field corrects; it does not append. Add-only left a mistyped
+        // total uncorrectable, which the Phase 4 high-water ledger says it
+        // must not be — a correction costs nothing in either direction.
+        const totalBefore = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
+        const field = q('[data-entry="water"]')
+        field.value = '40'
+        q('[data-log="water"]').click()
+        await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
+        const totalAfter = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
+        check('F3 the typed field sets the total rather than adding to it',
+          totalAfter === 40, `${totalBefore} oz then typed 40 -> ${totalAfter} oz`)
+
+        const vitalityBeforeFix = (await tempered.storage.getAll('attributeState'))
+          .find((r) => r.attribute === 'vitality')?.xp ?? 0
+        const lower = q('[data-entry="water"]')
+        lower.value = '8'
+        q('[data-log="water"]').click()
+        await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
+        const afterLower = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
+        const vitalityAfterFix = (await tempered.storage.getAll('attributeState'))
+          .find((r) => r.attribute === 'vitality')?.xp ?? 0
+        check('F3 a correction can lower the total', afterLower === 8, `${totalAfter} -> ${afterLower} oz`)
+        check('F3 and correcting downwards costs no XP',
+          vitalityAfterFix >= vitalityBeforeFix,
+          `vitality ${vitalityBeforeFix} -> ${vitalityAfterFix}`)
+
         // ===================================================================
         // F2 — editing the first set cascades
         // ===================================================================

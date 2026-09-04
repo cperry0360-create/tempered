@@ -446,3 +446,98 @@ shell later. An empty screen reads as broken; a screen that says what it is wait
 not. Nothing is faked — Character does not show invented numbers.
 **Confidence:** inferred
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 3.5 A: program slots carry an explicit exerciseId
+**Phase:** 3.5
+**Decision:** Added an `exerciseId` to every slot in `data/programs.json`, and added the
+13 movements the program needs that the library lacked. Four were mapped to existing
+exercises (Lat Pulldown, Seated Cable Row, Cable Triceps Pushdown, Romanian Deadlift).
+**Reasoning:** The uploaded `programs.json` identified movements by name only, and the XP
+engine needs an id to resolve class and notional load. Deriving ids by slugifying names at
+load time would have silently invented exercise records with guessed classifications, and
+class changes Might scoring. Putting the mapping in data keeps it visible and lets Cory
+correct it. Mapping the four rather than creating near-duplicates keeps existing PR history
+attached to the movement it belongs to.
+**Confidence:** inferred
+**Needs Cory:** yes — please sanity-check two mappings. "Lat Pulldown" was mapped to the
+existing wide-grip entry and "Seated Cable Row" to the existing close-grip one; the program
+does not specify a grip, so those add specificity the spec did not state. Everything else
+is a clean match.
+
+## 2026-09-04 — Phase 3.5 A: schema 2, and the first real migration
+**Phase:** 3.5
+**Decision:** Added `programs` and `programState` stores. `DATABASE_VERSION` 1 -> 2,
+`CURRENT_SCHEMA_VERSION` 1 -> 2, with migration `1 -> 2` adding the empty collections.
+**Reasoning:** Programs are stored state, not seed data — a program has a start date, and
+the week index rolls over from it on the calendar. `docs/02` requires a migration per
+schema change, tested against a fixture of the previous version; there is now a genuine v1
+to fixture against, which is what the machinery built in Phase 2 was for. The whole change
+was a handful of lines because it was not written in an emergency.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.5 A: double progression for rep ranges
+**Phase:** 3.5
+**Decision:** Within a program, hitting the top of the range on *every* set proposes one
+increment more and resets reps to the bottom. Short of that, the weight holds and the rep
+target climbs by one. A deload week holds weight outright.
+**Reasoning:** `docs/09` says the range is the prescription and where you land inside it is
+the performance, which is double progression by another name. It is the standard reading
+and the only one that makes a range mean anything. Still a proposal, never applied.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.5 D: the art file is one exercise, not a frame sheet
+**Phase:** 3.5
+**Decision:** Built the slicing pipeline (`tools/slice-exercise-art.js`, pure Node PNG
+decode/encode) and wired the art mechanism into the session screen, with one exercise
+covered. Section D is otherwise **blocked**.
+**Reasoning:** `art/source/exercise-frames.png` is described in `docs/09` as a sheet of
+movement frames to slice per exercise. It is not: it is a single 1302x1325 illustration of
+one movement, an incline barbell bench press, watermarked "STRENGTH LEVEL". Checked
+programmatically as well as by eye — there are no interior gutters anywhere in the image.
+Slicing it would produce seventeen crops of the same bench press, so I did not pretend to.
+The pipeline is real and tested against the one asset; adding entries to its manifest is
+all a proper sheet would need.
+**Confidence:** specified (measured)
+**Needs Cory:** yes — two things. The remaining 16 movements need real source art. And
+that image carries a third-party watermark; this repository is public and served on GitHub
+Pages, so whether it may be published is a rights question I should not decide.
+
+## 2026-09-04 — Phase 3.5 E: the guide is derived, not transcribed
+**Phase:** 3.5
+**Decision:** Weekly hard-set targets are computed from the program's own slots, weighted
+by each movement's activation map, rather than copied from the source app.
+**Reasoning:** I do not have `november_physique_tracker_v10_OFFLINE.html`, so its numbers
+were not available to transcribe. Deriving them is better anyway: a transcribed table drifts
+the moment the program changes, and a derived one cannot. The output matches what docs/09
+describes — upper-body-biased, with legs a distant last.
+**Confidence:** inferred
+**Needs Cory:** no — but compare it against the source app's numbers when convenient.
+
+## 2026-09-04 — Phase 3.5 F: Might's accent, and logged sets stay bright
+**Phase:** 3.5
+**Decision:** The session screen carries one accent — Might's orange — on the active set
+row, the running rest timer and the primary action. Logged set numbers keep full `--text`
+contrast; the check button carries the done state instead of dimming the numbers.
+**Reasoning:** `docs/04` allows exactly one accent per screen and one per attribute. A
+lifting session feeds Might, so Might's colour is the honest choice. Dimming a logged set
+is the obvious way to show completion and it is wrong here: those numbers are what you read
+to decide the next set, at arm's length in bad light. Contrast is asserted computationally
+at 4.5:1 rather than judged.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — A CSS-only sabotage was not enough to falsify one assertion
+**Phase:** 3.5
+**Decision:** Kept the FINISH separation assertion, after proving it fails when FINISH is
+actually moved among the set controls.
+**Reasoning:** Following the rule in `CLAUDE.md`, I sabotaged each section F criterion.
+Removing the finish zone's spacing did NOT fail the separation check — the button stayed far
+from set controls in document flow regardless. That looked like another test that cannot
+fail, so I sabotaged it properly by rendering FINISH inside the exercise card, and it failed
+as it should. Worth recording: a sabotage that does not fail may mean a weak test, or may
+mean the wrong thing was sabotaged, and the two are worth telling apart before deleting an
+assertion.
+**Confidence:** specified
+**Needs Cory:** no

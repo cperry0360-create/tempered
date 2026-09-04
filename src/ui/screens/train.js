@@ -19,6 +19,9 @@ import { lbs, since } from '../format.js'
 export function createTrainScreen({ workout, storage, clock, onStart }) {
   const root = el('div.screen.screen--train')
   let query = ''
+  /** @type {{program: any, week: number, deload: boolean}|null} */ let active = null
+  /** @type {any} */ let guide = null
+  let guideOpen = false
   /** @type {any[]} */ let routines = []
   /** @type {any[]} */ let exercises = []
   /** @type {Map<string, any>} */ let records = new Map()
@@ -63,6 +66,48 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     ])
   }
 
+  /** The active program: its days, the week it is on, and the derived guide. */
+  function programBlock() {
+    if (!active) return null
+    const { program, week, deload } = active
+    return el('section.block', { dataset: { program: program.id } }, [
+      el('h2.block__title', { text: 'Active program' }),
+      el('section.card.program', {}, [
+        el('div.program__head', {}, [
+          el('h3.program__name', { text: program.name }),
+          el('span.program__week', { text: `Week ${week} / ${program.weeks}` }),
+        ]),
+        el('p.program__note', { text: program.note }),
+        deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the process.' }),
+
+        ...program.days.map((day) => el('button.programday', {
+          type: 'button', dataset: { programday: day.id },
+          onclick: () => onStart({ programDay: day }),
+        }, [
+          el('span.programday__main', {}, [
+            el('span.programday__name', { text: day.name }),
+            el('span.programday__focus', { text: day.focus }),
+          ]),
+          el('span.programday__count', { text: `${day.exercises.length}` }),
+        ])),
+
+        el('button.tool', {
+          type: 'button', dataset: { guide: 'toggle' },
+          onclick: () => { guideOpen = !guideOpen; render() },
+        }, [guideOpen ? 'HIDE GUIDE' : 'GUIDE']),
+
+        guideOpen && guide && el('div.panel', {}, [
+          el('p.panel__note', { text: 'Weekly hard sets per muscle group, counted from the program itself.' }),
+          el('div.guide', {}, guide.hardSets.map((row) => el('div.guide__row', {}, [
+            el('span.guide__group', { text: row.group.replace(/_/g, ' ') }),
+            el('span.guide__bar', { style: `--fill:${Math.round((row.sets / guide.hardSets[0].sets) * 100)}%` }),
+            el('span.guide__sets', { text: `${row.sets}` }),
+          ]))),
+        ]),
+      ]),
+    ])
+  }
+
   function render() {
     const filtered = query
       ? exercises.filter((e) => `${e.name} ${e.group ?? ''} ${e.pattern ?? ''}`.toLowerCase().includes(query))
@@ -70,6 +115,8 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
 
     replace(root, [
       el('h1.screen__title', { text: 'Train' }),
+
+      programBlock(),
 
       el('section.block', {}, [
         el('h2.block__title', { text: 'Routines' }),
@@ -93,6 +140,8 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   return {
     root,
     async refresh() {
+      active = await workout.activeProgram()
+      guide = await workout.programGuide()
       routines = await storage.getAll('routines')
       exercises = (await storage.getAll('exercises')).sort((a, b) => a.name.localeCompare(b.name))
       records = await workout.recordMap()

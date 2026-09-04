@@ -9,6 +9,7 @@
 import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource } from '../domain/xp-engine.js'
 import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
 import { proposeNext } from '../domain/progression.js'
+import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets } from '../domain/programs.js'
 import { levelFromXp, levelProgress } from '../domain/levels.js'
 import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
@@ -79,6 +80,74 @@ export function createWorkoutService({ storage, clock, balance }) {
   }
 
   /**
+   * The active program, its current week, and whether that week is a deload.
+   * @returns {Promise<{program: any, week: number, deload: boolean}|null>}
+   */
+  async function activeProgram() {
+    const state = (await storage.getAll('programState')).find((row) => row.active)
+    if (!state) return null
+    const program = await storage.get('programs', state.programId)
+    if (!program) return null
+    const week = weekFromStart(daysBetween(state.startedOn, clock.today()), program.weeks)
+    return { program, state, week, deload: isDeloadWeek(week, program) }
+  }
+
+  /**
+   * Prepares one program slot: history, PR, and the week's prescription.
+   * @param {object} slot
+   * @param {number} week
+   * @param {any} program
+   */
+  async function prepareSlot(slot, week, program) {
+    const exercises = await exerciseMap()
+    const exercise = exercises.get(slot.exerciseId)
+    const last = await lastPerformance(slot.exerciseId)
+    const record = (await recordMap()).get(slot.exerciseId) ?? null
+    const proposal = prescribeFromProgram({ slot, week, program, last, exercise }, balance)
+    return { exercise, last, record, proposal, slot }
+  }
+
+  /**
+   * Recent sessions for one exercise, for the in-session history button.
+   * @param {string} exerciseId
+   * @param {number} [limit]
+   */
+  async function exerciseHistory(exerciseId, limit = 6) {
+    const logs = await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId)
+    const sessions = new Map((await storage.getAll('sessions')).map((s) => [s.id, s]))
+
+    /** @type {Map<string, any[]>} */
+    const byDate = new Map()
+    for (const log of logs) {
+      if (log.isWarmup) continue
+      const date = sessions.get(log.sessionId)?.date
+      if (!date) continue
+      if (!byDate.has(date)) byDate.set(date, [])
+      byDate.get(date).push(log)
+    }
+    return [...byDate.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, limit)
+      .map(([date, sets]) => ({
+        date,
+        sets: sets.sort((a, b) => (a.setIndex ?? 0) - (b.setIndex ?? 0)),
+        volume: sets.reduce((sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0), 0),
+      }))
+  }
+
+  /** The guide: weekly hard-set targets, derived from the program itself. */
+  async function programGuide() {
+    const active = await activeProgram()
+    if (!active) return null
+    return {
+      program: active.program,
+      week: active.week,
+      deload: active.deload,
+      hardSets: weeklyHardSets(active.program, await exerciseMap()),
+    }
+  }
+
+  /**
    * @param {string|null} routineId
    * @returns {Promise<object>} the open session
    */
@@ -110,6 +179,11 @@ export function createWorkoutService({ storage, clock, balance }) {
       timeSec: set.timeSec ?? null,
       distance: set.distance ?? null,
       isWarmup: set.isWarmup === true,
+      // Set when this exercise stood in for another: the rack was taken, the
+      // cable station was busy. Keeping it means history says what was actually
+      // done, not what was planned.
+      substitutedFor: set.substitutedFor ?? null,
+      perSide: set.perSide === true,
       completedAt: clock.nowIso(),
     }
     await storage.put('setLogs', log)
@@ -230,7 +304,10 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   return {
     exerciseMap, recordMap, lastPerformance, prepareExercise,
+    activeProgram, prepareSlot, exerciseHistory, programGuide,
     startSession, logSet, setsFor, finishSession,
+    /** Removing a logged set, for the mistake that is currently unfixable. */
+    async removeSet(logId) { await storage.delete('setLogs', logId) },
     async attributeSummary() {
       const stored = await storage.getAll('attributeState')
       return ATTRIBUTE_IDS.map((id) => {

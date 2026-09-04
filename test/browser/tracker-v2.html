@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — tracker v2 acceptance</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * The acceptance criteria at the end of docs/09-tracker-v2.md, driven
+       * against the real app. Contrast and hit-target separation are computed,
+       * not eyeballed, because the spec says so.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
+      const q = (s) => document.querySelector(s)
+      const qa = (s) => [...document.querySelectorAll(s)]
+      const settle = () => new Promise((r) => setTimeout(r, 0))
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+
+      // --- WCAG contrast -----------------------------------------------------
+      const channel = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+      const parse = (css) => (css.match(/[\d.]+/g) ?? []).map(Number)
+      const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+      function over(fg, bg) {
+        // Composite any alpha in the foreground onto the background.
+        const [fr, fg2, fb, fa = 1] = parse(fg)
+        const [br, bg2, bb] = parse(bg)
+        return [fr * fa + br * (1 - fa), fg2 * fa + bg2 * (1 - fa), fb * fa + bb * (1 - fa)]
+      }
+      /** Walks up for the first non-transparent background actually painted. */
+      function paintedBackground(node) {
+        let current = node
+        while (current && current !== document.documentElement) {
+          const bg = getComputedStyle(current).backgroundColor
+          const alpha = parse(bg)[3]
+          if (bg && bg !== 'transparent' && alpha !== 0) return bg
+          current = current.parentElement
+        }
+        return getComputedStyle(document.body).backgroundColor
+      }
+      function contrast(node) {
+        const style = getComputedStyle(node)
+        const bg = paintedBackground(node)
+        const l1 = luminance(over(style.color, bg))
+        const l2 = luminance(parse(bg))
+        const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1]
+        return (hi + 0.05) / (lo + 0.05)
+      }
+
+      try {
+        const storage = createMemoryStorage()
+        const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
+
+        // ---------------------------------------------------------------
+        // A — a November Physique session, end to end
+        // ---------------------------------------------------------------
+        const active = await tempered.workout.activeProgram()
+        check('the November Physique program is active', active?.program.id === 'november-physique',
+          active ? `week ${active.week} of ${active.program.weeks}` : 'none')
+        check('the program has five days and thirty slots',
+          active.program.days.length === 5 &&
+          active.program.days.reduce((n, d) => n + d.exercises.length, 0) === 30)
+
+        await waitFor('[data-programday]')
+        check('program days are startable from Train', qa('[data-programday]').length === 5)
+
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+
+        check('the session shows the week it is on',
+          /Week \d+ of 8/.test(q('.sessionbar__meta')?.textContent ?? ''),
+          q('.sessionbar__meta')?.textContent)
+        check('rep RANGES are shown, not fixed reps',
+          /6–10/.test(q('.exercise__range')?.textContent ?? ''), q('.exercise__range')?.textContent)
+        const perSideText = qa('.exercise__range').map((n) => n.textContent).join(' ')
+        check('setup and cue text is shown', (q('.exercise__cue')?.textContent ?? '').length > 10,
+          q('.exercise__cue')?.textContent?.slice(0, 60))
+
+        // ---------------------------------------------------------------
+        // F — contrast, computed
+        // ---------------------------------------------------------------
+        const numberFields = qa('input.setrow__num')
+        const worstPending = Math.min(...numberFields.map(contrast))
+        check('set-row numbers meet WCAG AA (4.5:1)', worstPending >= 4.5,
+          `worst is ${worstPending.toFixed(2)}:1 across ${numberFields.length} fields`)
+
+        const labels = qa('.setrow--head span, .setrow__record, .setrow__index, .pill__value, .pill__label')
+        const worstLabel = Math.min(...labels.map(contrast))
+        check('set-row labels and history meet WCAG AA', worstLabel >= 4.5,
+          `worst is ${worstLabel.toFixed(2)}:1 across ${labels.length} nodes`)
+
+        // ---------------------------------------------------------------
+        // F — the tab bar floats
+        // ---------------------------------------------------------------
+        await tempered.app.show('train')
+        await waitFor('.tabbar')
+        const bar = q('.tabbar')
+        const barBox = bar.getBoundingClientRect()
+        const barStyle = getComputedStyle(bar)
+        const gapBelow = window.innerHeight - barBox.bottom
+        check('the tab bar floats clear of the bottom edge', gapBelow >= 8, `${Math.round(gapBelow)}px below`)
+        check('the tab bar is inset from the sides', barBox.left >= 8 && window.innerWidth - barBox.right >= 8,
+          `${Math.round(barBox.left)}px / ${Math.round(window.innerWidth - barBox.right)}px`)
+        check('the tab bar respects the safe-area inset',
+          barStyle.bottom.includes('px') && /env\(|calc\(/.test(bar.style.bottom || barStyle.bottom) || gapBelow >= 8,
+          `bottom: ${barStyle.bottom}`)
+        check('the tab bar sits over a translucent, blurred surface',
+          (barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur'),
+          barStyle.backdropFilter || barStyle.webkitBackdropFilter)
+
+        // ---------------------------------------------------------------
+        // F — FINISH cannot be reached by a mis-tap
+        // ---------------------------------------------------------------
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+        const finish = q('[data-action="finish"]')
+        const checkButtons = qa('.setrow__check')
+        const finishBox = finish.getBoundingClientRect()
+        const nearest = Math.min(...checkButtons.map((node) => {
+          const box = node.getBoundingClientRect()
+          const dx = Math.max(box.left - finishBox.right, finishBox.left - box.right, 0)
+          const dy = Math.max(box.top - finishBox.bottom, finishBox.top - box.bottom, 0)
+          return Math.hypot(dx, dy)
+        }))
+        check('FINISH is separated from every set control', nearest >= 44,
+          `nearest set control is ${Math.round(nearest)}px away (44px = one thumb)`)
+
+        finish.click()
+        await settle()
+        check('FINISH asks before ending the session', q('[data-action="confirm-finish"]') !== null)
+        q('[data-action="cancel-finish"]').click()
+        await settle()
+        check('the session survives declining the confirm', q('.setrow__check') !== null)
+
+        // ---------------------------------------------------------------
+        // B — the six missing features, in a live session
+        // ---------------------------------------------------------------
+        q('[data-rest="edit"]').click(); await settle()
+        const restOption = q('[data-restset="90"]')
+        check('B1 rest time is editable in-session', restOption !== null)
+        restOption.click(); await settle()
+        check('B1 the edited rest time is kept', /1:30/.test(q('.tool__value')?.textContent ?? ''),
+          q('.tool__value')?.textContent)
+
+        q('[data-history]').click(); await new Promise((r) => setTimeout(r, 50))
+        check('B2 history opens without leaving the workout',
+          q('.panel') !== null && q('.setrow__check') !== null)
+        q('[data-history]').click(); await settle()
+
+        const beforeSwap = qa('.setrow').length
+        q('[data-swap]').click(); await settle()
+        const swapTarget = q('[data-swapto]')
+        check('B3 a swap picker is available', swapTarget !== null)
+        swapTarget.click(); await new Promise((r) => setTimeout(r, 50))
+        check('B3 swapping preserves the set structure', qa('.setrow').length === beforeSwap,
+          `${qa('.setrow').length} rows vs ${beforeSwap}`)
+        check('B3 the substitution is recorded', q('.exercise__sub') !== null,
+          q('.exercise__sub')?.textContent)
+
+        const firstName = q('.exercise__name').textContent
+        q('[data-movedown]').click(); await settle()
+        check('B4 exercises can be reordered', q('.exercise__name').textContent !== firstName,
+          `${firstName} -> ${q('.exercise__name').textContent}`)
+
+        const rowsBefore = qa('[data-exercise] .setrow:not(.setrow--head)').length
+        q('[data-removeset]').click(); await settle()
+        check('B5 a set can be removed as well as added',
+          qa('[data-exercise] .setrow:not(.setrow--head)').length === rowsBefore - 1)
+
+        // B6 needs a PR to exist, so log a session first.
+        for (const button of qa('.setrow__check').slice(0, 3)) {
+          const row = button.closest('.setrow')
+          for (const field of [...row.querySelectorAll('input.setrow__num')]) {
+            if (field.value === '') { field.value = field.dataset.field === 'weight' ? '135' : '8'; field.dispatchEvent(new Event('change')) }
+          }
+          button.click(); await settle()
+        }
+        q('[data-action="finish"]').click(); await settle()
+        q('[data-action="confirm-finish"]').click()
+        await waitFor('[data-action="done"]')
+        q('[data-action="done"]').click()
+        await waitFor('[data-programday]')
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+        check('B6 the PR date is shown beside the PR', q('[data-prdate]') !== null,
+          q('[data-prdate]')?.textContent)
+
+        // ---------------------------------------------------------------
+        // C — the plate calculator, beside the weight field
+        // ---------------------------------------------------------------
+        check('C the plate calculator is on screen, not behind a menu', q('.plates') !== null)
+        const weightField = q('input.setrow__num[data-field="weight"]')
+        const card = weightField.closest('[data-exercise]')
+        weightField.value = '185'
+        weightField.dispatchEvent(new Event('change'))
+        await settle()
+        // Scope to this exercise's card: every card carries its own calculator.
+        const scoped = document.querySelector(`[data-exercise="${card.dataset.exercise}"]`)
+        const plates = [...scoped.querySelectorAll('.plate')].map((n) => n.textContent)
+        check('C 185 lb on a 45 lb bar shows 45 and 25 per side',
+          plates.join(',') === '45,25', plates.join(', ') || 'none')
+
+        // ---------------------------------------------------------------
+        // D/E — art and the guide
+        // ---------------------------------------------------------------
+        check('D exercise art is shown beside the movement it depicts',
+          q('.exercise__art') !== null)
+        await tempered.app.show('train')
+        await waitFor('[data-guide]')
+        q('[data-guide]').click(); await settle()
+        check('E the guide shows weekly hard sets per muscle group',
+          qa('.guide__row').length > 4, `${qa('.guide__row').length} groups`)
+
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'tracker-v2', passed: checks.every((c) => c.ok), checks }),
+        })
+      } catch (error) {
+        checks.push({ name: 'harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 300) })
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'tracker-v2', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

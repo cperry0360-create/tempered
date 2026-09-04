@@ -4,13 +4,17 @@
  * Every schema change bumps `CURRENT_SCHEMA_VERSION` and adds a pure function
  * here, keyed by the version it upgrades FROM. `migrate` composes them in order.
  *
- * There are no migrations yet — version 1 is the first schema. The machinery is
- * built and tested now because the alternative is writing it under pressure, in
- * the same change that first needs it, against real user data.
+ * Version 1 was the first schema; version 2 adds time-boxed programs. The
+ * machinery was built before the first migration needed it, which is why this
+ * change was a handful of lines rather than an emergency.
  */
 
-/** The schema version this build reads and writes. */
-export const CURRENT_SCHEMA_VERSION = 1
+/**
+ * The schema version this build reads and writes.
+ *
+ * 2 — programs and programState added.
+ */
+export const CURRENT_SCHEMA_VERSION = 2
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -18,7 +22,17 @@ export const CURRENT_SCHEMA_VERSION = 1
  *
  * @type {Readonly<Record<number, (data: any) => any>>}
  */
-export const MIGRATIONS = Object.freeze({})
+export const MIGRATIONS = Object.freeze({
+  /**
+   * 1 -> 2: time-boxed programs (docs/09).
+   *
+   * A version 1 backup predates programs entirely, so it carries none. The
+   * upgrade adds the empty collections rather than leaving them undefined, so
+   * downstream code never has to ask which schema a value came from. Nothing
+   * existing is touched: no session, set log or attribute state changes shape.
+   */
+  1: (data) => ({ ...data, programs: data.programs ?? [], programState: data.programState ?? [] }),
+})
 
 /**
  * Walks data from one schema version up to another.

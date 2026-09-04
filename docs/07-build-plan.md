@@ -80,6 +80,27 @@ The deepest feature. Build before the RPG surface.
 
 ---
 
+## Phase 3.5 — Tracker v2
+
+Revises Phase 3 after real gym use. Full specification in `docs/09-tracker-v2.md`;
+work sections A through F in order. Not a rewrite — the domain layer, XP engine and
+persistence are correct and stay.
+
+- **A** Programs: a week index, rep ranges, per-side sets, a deload week. A routine is a
+  program of one week with fixed reps, so the session logic is not forked.
+- **B** Six tracker features from real use: editable rest, in-session history, exercise
+  swap, reorder, remove a set, PR date.
+- **C** Plate calculator, beside the weight field.
+- **D** Exercise art, sliced per exercise.
+- **E** The guide: weekly hard-set targets per muscle group.
+- **F** UI corrections against `docs/04-design-system.md`: contrast, a floating tab bar,
+  FINISH separation, accent colour, density.
+
+**Acceptance:** the criteria at the end of `docs/09-tracker-v2.md`. Contrast and
+hit-target separation are computed and asserted, never eyeballed.
+
+---
+
 ## Phase 4 — Daily tracking
 
 The habit and metric surface: today's activities, quick completion, manual numeric

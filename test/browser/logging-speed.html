@@ -91,7 +91,7 @@
 
           // Immediately after logging: is rest counting down, and is the next
           // set still tappable while it does?
-          const countdown = document.querySelector('.exercise__rest[data-active="true"]')
+          const countdown = document.querySelector('.tool__value[data-active="true"]')
           if (countdown) {
             restWasRunning = true
             const remaining = qa('.setrow__check').filter((b) => !b.disabled)
@@ -106,6 +106,7 @@
           'the following set was still tappable while rest counted down')
 
         tap(await waitFor('[data-action="finish"]'), 'FINISH')
+        tap(await waitFor('[data-action="confirm-finish"]'), 'confirm FINISH')
         await waitFor('[data-action="done"]')
 
         const lowerTaps = taps
@@ -137,12 +138,13 @@
           if (!button.disabled) { tap(button, 'log set'); await settle() }
         }
         tap(await waitFor('[data-action="finish"]'), 'FINISH')
+        tap(await waitFor('[data-action="confirm-finish"]'), 'confirm FINISH')
         await waitFor('[data-action="done"]')
 
         const warmTaps = taps
         check('repeating a session is one tap per set, plus start and finish',
-          warmTaps === warmRows + 2,
-          `${warmTaps} taps for ${warmRows} sets (start + ${warmRows} sets + finish)`)
+          warmTaps === warmRows + 3,
+          `${warmTaps} taps for ${warmRows} sets (start + ${warmRows} sets + finish + confirm)`)
         check('the common case is far inside 90s', warmTaps * SECONDS_PER_TAP < 90,
           `${warmTaps * SECONDS_PER_TAP}s at ${SECONDS_PER_TAP}s/tap`)
         tap(q('[data-action="done"]'), 'DONE')

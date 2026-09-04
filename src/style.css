@@ -110,33 +110,56 @@ body {
   grid-template-rows: 1fr auto;
 }
 
-.app__body {
-  overflow-y: auto;
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) var(--space-5);
+.app {
+  position: relative;
 }
 
+.app__body {
+  overflow-y: auto;
+  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4);
+  /* Room for the floating bar, so content never hides beneath it. */
+  padding-bottom: calc(var(--space-6) + var(--space-6) + env(safe-area-inset-bottom));
+}
+
+/* Floats, inset from every edge, over a blurred translucent surface — not a bar
+   welded to the bottom of the screen. */
 .tabbar {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-  padding-bottom: env(safe-area-inset-bottom);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
 .tabbar__tab {
   appearance: none;
   background: none;
   border: 0;
-  color: var(--text-3);
+  border-radius: 6px;
+  /* --text-2, not --text-3: an inactive tab is still a label to be read. */
+  color: var(--text-2);
   font-family: var(--font-display);
   font-size: var(--text-xs);
   letter-spacing: 0.12em;
   padding: var(--space-3) var(--space-1);
+  min-height: 44px;
   cursor: pointer;
-  transition: color var(--motion-state) ease;
+  transition: color var(--motion-state) ease, background var(--motion-state) ease;
 }
 
-.tabbar__tab[data-active='true'] { color: var(--text); }
+.tabbar__tab[data-active='true'] {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
 
 .screen { display: grid; gap: var(--space-4); }
 
@@ -244,15 +267,14 @@ body {
 
 .exercise__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
 .exercise__name { margin: 0; font-family: var(--font-display); font-size: var(--text-md); }
-.exercise__meta { margin: 0; font-size: var(--text-xs); color: var(--text-3); }
-.exercise__proposal { margin: 0; font-size: var(--text-xs); color: var(--text-2); }
+.exercise__meta { margin: 0; font-size: var(--text-xs); color: var(--text-2); }
+.exercise__proposal { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+.exercise__range { margin: 0; font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.exercise__cue { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+.exercise__sub { margin: 0; font-size: var(--text-xs); color: var(--warn); }
 
-.exercise__rest {
-  font-size: var(--text-xs);
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-.exercise__rest[data-active='true'] { color: var(--wind); }
+/* The rest timer carries the accent while it runs, and nothing else does. */
+.tool__value[data-active='true'] { color: var(--might); }
 
 .exercise__history { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
@@ -264,55 +286,98 @@ body {
   border-radius: 4px;
   padding: var(--space-1) var(--space-2);
 }
-.pill__label { font-size: 9px; letter-spacing: 0.16em; color: var(--text-3); }
-.pill__value { font-size: var(--text-sm); }
-.pill__aside { font-size: var(--text-xs); color: var(--text-3); }
-.pill[data-kind='pr'] .pill__value { color: var(--might); }
+.pill__label { font-size: var(--text-xs); letter-spacing: 0.16em; color: var(--text-2); }
+.pill__value { font-size: var(--text-md); color: var(--text); font-variant-numeric: tabular-nums; }
+.pill__aside { font-size: var(--text-xs); color: var(--text-2); }
 
+/* Density: the --space-3 rhythm. A cramped row is a mis-tap. */
 .setrow {
   display: grid;
-  grid-template-columns: 24px 1fr 64px 56px 48px;
-  gap: var(--space-2);
+  grid-template-columns: 20px minmax(0, 1fr) 68px 60px 48px 32px;
+  gap: var(--space-3);
   align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
 }
 
-.setrow--head { color: var(--text-3); font-size: 9px; letter-spacing: 0.14em; }
+.setrow:last-of-type { border-bottom: 0; }
+
+/* One accent on this screen, and it is Might's — this is a lifting session. */
+.setrow[data-active='true'] {
+  box-shadow: inset 3px 0 0 var(--might);
+  padding-left: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+}
+
+.setrow--head {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--space-2);
+}
 .setrow--head .setrow__num { text-align: center; }
 
-.setrow__index { font-size: var(--text-sm); color: var(--text-3); }
-.setrow__record { font-size: var(--text-xs); color: var(--text-3); }
+.setrow__index { font-size: var(--text-sm); color: var(--text-2); }
+.setrow__record { font-size: var(--text-sm); color: var(--text-2); }
 
+/* Numbers are the primary content of this screen and the brightest thing on it.
+   They are read at arm's length in bad gym lighting, mid-set. */
 input.setrow__num {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 4px;
   color: var(--text);
-  font-size: var(--text-md);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
   padding: var(--space-2);
-  min-height: 44px;
+  min-height: 48px;
   width: 100%;
 }
 
-input.setrow__num:disabled { color: var(--text-3); background: transparent; }
+/* A logged set is not a dimmed set. Its numbers are still what you read to
+   decide the next one, so they keep full contrast; the check carries the state. */
+input.setrow__num[readonly] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text);
+}
 
 .setrow__check {
   appearance: none;
   border: 1px solid var(--line);
   background: var(--surface-2);
-  color: var(--text-2);
+  color: var(--text);
   border-radius: 4px;
-  min-height: 44px;
+  min-height: 48px;
   font-size: var(--text-md);
   cursor: pointer;
   transition: background var(--motion-state) ease, color var(--motion-state) ease;
+}
+
+.setrow[data-active='true'] .setrow__check {
+  border-color: var(--might);
+  color: var(--might);
 }
 
 .setrow[data-done='true'] .setrow__check {
   background: var(--good);
   border-color: var(--good);
   color: var(--bg);
+}
+
+.setrow__remove {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+  line-height: 1;
+  min-height: 44px;
+  cursor: pointer;
 }
 
 .addset {
@@ -387,3 +452,190 @@ input.setrow__num:disabled { color: var(--text-3); background: transparent; }
 .historyrow__meta { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 .recordrow__stats { display: flex; gap: var(--space-4); flex-wrap: wrap; }
 .spark { width: 96px; height: 24px; color: var(--might); }
+
+/* ---------------------------------------------------------------------------
+   docs/09 — programs, tools, plates, guide
+   --------------------------------------------------------------------------- */
+
+.program__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+.program__name { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); }
+.program__week { font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.program__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+
+.deload {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text);
+  border-left: 3px solid var(--vitality);
+  padding-left: var(--space-3);
+}
+
+.programday {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  text-align: left;
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.programday__main { display: grid; gap: 2px; }
+.programday__name { font-family: var(--font-display); font-size: var(--text-md); }
+.programday__focus { font-size: var(--text-xs); color: var(--text-2); }
+.programday__count { font-size: var(--text-lg); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.exercise__title { flex: 1; display: grid; gap: 2px; }
+.exercise__order { display: flex; gap: var(--space-1); }
+
+.iconbutton {
+  appearance: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  min-width: 36px;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+.iconbutton:disabled { color: var(--text-3); cursor: default; }
+
+.exercise__art {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-2);
+  padding: 0;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  cursor: pointer;
+  flex: none;
+}
+.exercise__thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.exercise__full { width: 100%; border-radius: 4px; background: #fff; }
+.panel--art { padding: 0; }
+
+.exercise__tools { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+.tool {
+  appearance: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  padding: var(--space-2) var(--space-3);
+  min-height: 40px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tool__value { font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.panel__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+
+.restedit { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.restedit__option {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-2) var(--space-3);
+  min-height: 44px;
+  cursor: pointer;
+}
+.restedit__option[data-active='true'] { border-color: var(--might); color: var(--might); }
+
+.historyline { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
+.historyline__date { color: var(--text-2); white-space: nowrap; }
+.historyline__sets { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+
+.swaplist { display: grid; gap: 1px; max-height: 240px; overflow-y: auto; }
+.swaplist__option {
+  appearance: none;
+  background: var(--surface);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  text-align: left;
+  padding: var(--space-3);
+  min-height: 44px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+/* The plate calculator sits beside the weight field, not behind a menu. */
+.plates {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+.plates__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.plates__label { font-size: var(--text-xs); letter-spacing: 0.14em; color: var(--text-2); }
+.plates__bar { font-size: var(--text-xs); color: var(--text-2); display: inline-flex; align-items: center; gap: var(--space-2); }
+.plates__barinput {
+  width: 56px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: var(--space-1);
+  min-height: 36px;
+}
+.plates__stack { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.plate {
+  border: 1px solid var(--text-2);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-1) var(--space-3);
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.plates__empty, .plates__note { font-size: var(--text-sm); color: var(--text-2); margin: 0; }
+.plates__note[data-exact='false'] { color: var(--warn); }
+
+/* FINISH is separated from every set control by its own zone. */
+.finishzone {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: var(--space-3);
+}
+.finishzone__ask { margin: 0; font-size: var(--text-md); }
+.finishzone__pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.finishzone__confirm { display: grid; gap: var(--space-3); }
+
+.guide { display: grid; gap: var(--space-2); }
+.guide__row { display: grid; grid-template-columns: 96px 1fr 32px; gap: var(--space-3); align-items: center; }
+.guide__group { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
+.guide__bar { height: 4px; background: var(--line); position: relative; }
+.guide__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-2); }
+.guide__sets { font-size: var(--text-sm); text-align: right; font-variant-numeric: tabular-nums; }

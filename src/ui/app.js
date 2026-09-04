@@ -48,6 +48,7 @@ export function createApp({ mount, workout, storage, clock }) {
     ])
   }
 
+  /** @param {{routine?: any, programDay?: any, exerciseId?: string}} options */
   async function startSession(options) {
     session?.destroy()
     session = createSessionScreen({

@@ -46,3 +46,32 @@ export async function ensureProfile(storage, clock, defaults = {}) {
   await storage.put('profile', profile)
   return profile
 }
+
+/**
+ * Seeds programs, and starts the first one if nothing is active.
+ *
+ * Programs are time-boxed, so one has to know when it began: the week index
+ * rolls over on the calendar from `startedOn`, not per session.
+ *
+ * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} storage
+ * @param {{programs: any[]}} catalogue
+ * @param {import('../adapters/clock/clock.js').Clock} clock
+ * @returns {Promise<{programs: number, started: string|null}>}
+ */
+export async function seedPrograms(storage, catalogue, clock) {
+  const existing = new Set((await storage.getAll('programs')).map((p) => p.id))
+  const fresh = catalogue.programs.filter((p) => !existing.has(p.id))
+  await storage.putAll('programs', fresh)
+
+  const state = await storage.getAll('programState')
+  if (state.some((row) => row.active)) return { programs: fresh.length, started: null }
+
+  const first = catalogue.programs[0]
+  if (!first) return { programs: fresh.length, started: null }
+  await storage.put('programState', {
+    programId: first.id,
+    startedOn: clock.today(),
+    active: true,
+  })
+  return { programs: fresh.length, started: first.id }
+}

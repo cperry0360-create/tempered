@@ -24,6 +24,8 @@ export const STORES = Object.freeze({
   records: { keyPath: 'exerciseId' },
   titles: { keyPath: 'id' },
   battles: { keyPath: 'date' },
+  programs: { keyPath: 'id' },
+  programState: { keyPath: 'programId' },
   directive: { keyPath: 'id' },
 })
 
@@ -35,8 +37,10 @@ export const DATABASE_NAME = 'tempered'
 /**
  * Bumped only when the store layout changes. Distinct from the export document's
  * `schemaVersion`, which describes the data rather than the database.
+ *
+ * 2 — added `programs` and `programState` for docs/09 time-boxed programs.
  */
-export const DATABASE_VERSION = 1
+export const DATABASE_VERSION = 2
 
 /**
  * @param {string} store

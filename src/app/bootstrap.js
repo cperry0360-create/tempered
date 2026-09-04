@@ -7,7 +7,7 @@ import { createIndexedDbStorage } from '../adapters/storage/indexeddb-storage.js
 import { createMemoryStorage } from '../adapters/storage/memory-storage.js'
 import { systemClock } from '../adapters/clock/clock.js'
 import { createWorkoutService } from './workout.js'
-import { seedLibrary, ensureProfile } from './seed.js'
+import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
@@ -32,12 +32,14 @@ export async function bootstrap(options = {}) {
     ?? (globalThis.indexedDB ? createIndexedDbStorage() : createMemoryStorage())
   await storage.open()
 
-  const [balance, library] = await Promise.all([
+  const [balance, library, catalogue] = await Promise.all([
     loadJson('data/balance.json', base),
     loadJson('data/exercises.json', base),
+    loadJson('data/programs.json', base),
   ])
 
   await seedLibrary(storage, library)
+  await seedPrograms(storage, catalogue, clock)
   await ensureProfile(storage, clock)
 
   const workout = createWorkoutService({ storage, clock, balance })
@@ -46,6 +48,6 @@ export async function bootstrap(options = {}) {
 
   // Exposed for the browser test harnesses, which drive the real app rather
   // than a copy of it. Harmless in production and useful in the console.
-  globalThis.tempered = { storage, clock, workout, balance, library, app }
+  globalThis.tempered = { storage, clock, workout, balance, library, catalogue, app }
   return globalThis.tempered
 }

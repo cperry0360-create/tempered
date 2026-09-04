@@ -15,7 +15,7 @@
  * Bumping VERSION still forces an immediate clean sweep of every old cache.
  */
 
-const VERSION = '0.3.0'
+const VERSION = '0.3.5'
 const CACHE = `tempered-${VERSION}`
 
 // Resolved against this file's own URL, so the app works at any base path —
@@ -37,6 +37,7 @@ const PRECACHE = [
   // it from — if you add a module, add it here or the app breaks offline.
   './data/balance.json',
   './data/exercises.json',
+  './data/programs.json',
   './src/app/bootstrap.js',
   './src/app/seed.js',
   './src/app/workout.js',
@@ -51,6 +52,8 @@ const PRECACHE = [
   './src/domain/levels.js',
   './src/domain/might.js',
   './src/domain/mind.js',
+  './src/domain/plates.js',
+  './src/domain/programs.js',
   './src/domain/progression.js',
   './src/domain/rank.js',
   './src/domain/records.js',

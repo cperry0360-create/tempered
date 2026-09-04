@@ -14,6 +14,7 @@
           "focus": "Upper chest \u2022 chest \u2022 delts \u2022 triceps",
           "exercises": [
             {
+              "exerciseId": "incline_bench_bb",
               "name": "Incline Barbell Bench Press",
               "sets": 4,
               "repMin": 6,
@@ -27,6 +28,7 @@
               "cue": "Lower to the upper chest. Press up and slightly back."
             },
             {
+              "exerciseId": "flat_bench_db",
               "name": "Flat Dumbbell Bench Press",
               "sets": 3,
               "repMin": 8,
@@ -40,6 +42,7 @@
               "cue": "Lower into a comfortable chest stretch, then press smoothly."
             },
             {
+              "exerciseId": "shoulder_press_db",
               "name": "Seated Dumbbell Shoulder Press",
               "sets": 3,
               "repMin": 8,
@@ -53,6 +56,7 @@
               "cue": "Press overhead without excessively arching the lower back."
             },
             {
+              "exerciseId": "lateral_raise_db",
               "name": "Dumbbell Lateral Raise",
               "sets": 4,
               "repMin": 12,
@@ -66,6 +70,7 @@
               "cue": "Lead with the elbows and stop around shoulder height."
             },
             {
+              "exerciseId": "cable_fly",
               "name": "Cable Fly",
               "sets": 3,
               "repMin": 12,
@@ -79,6 +84,7 @@
               "cue": "Bring the hands together in a wide arc and squeeze the chest."
             },
             {
+              "exerciseId": "tricep_push",
               "name": "Cable Triceps Pushdown",
               "sets": 3,
               "repMin": 10,
@@ -100,6 +106,7 @@
           "focus": "Lats \u2022 upper back \u2022 rear delts \u2022 biceps",
           "exercises": [
             {
+              "exerciseId": "lat_pulldown",
               "name": "Lat Pulldown",
               "sets": 4,
               "repMin": 6,
@@ -113,6 +120,7 @@
               "cue": "Drive the elbows down. Control the stretch at the top."
             },
             {
+              "exerciseId": "seated_row_close",
               "name": "Seated Cable Row",
               "sets": 4,
               "repMin": 8,
@@ -126,6 +134,7 @@
               "cue": "Pull to the torso, squeeze, then reach forward under control."
             },
             {
+              "exerciseId": "one_arm_row_db",
               "name": "One-Arm Dumbbell Row",
               "sets": 3,
               "repMin": 8,
@@ -139,6 +148,7 @@
               "cue": "Pull the elbow toward the hip while keeping the torso stable."
             },
             {
+              "exerciseId": "rear_delt_fly_db",
               "name": "Dumbbell Rear-Delt Fly",
               "sets": 3,
               "repMin": 12,
@@ -152,6 +162,7 @@
               "cue": "Open the arms wide without shrugging."
             },
             {
+              "exerciseId": "incline_curl_db",
               "name": "Incline Dumbbell Curl",
               "sets": 3,
               "repMin": 8,
@@ -165,6 +176,7 @@
               "cue": "Let the biceps stretch, curl without swinging, and lower slowly."
             },
             {
+              "exerciseId": "hammer_curl_db",
               "name": "Dumbbell Hammer Curl",
               "sets": 2,
               "repMin": 10,
@@ -186,6 +198,7 @@
           "focus": "One short lower-body maintenance day",
           "exercises": [
             {
+              "exerciseId": "front_squat",
               "name": "Front Squat",
               "sets": 3,
               "repMin": 6,
@@ -199,6 +212,7 @@
               "cue": "Stay tall with elbows up and drive through the whole foot."
             },
             {
+              "exerciseId": "rdl",
               "name": "Romanian Deadlift",
               "sets": 3,
               "repMin": 8,
@@ -212,6 +226,7 @@
               "cue": "Push the hips back and keep the bar close to the legs."
             },
             {
+              "exerciseId": "crunch",
               "name": "Crunch",
               "sets": 3,
               "repMin": 12,
@@ -233,6 +248,7 @@
           "focus": "Main physique day",
           "exercises": [
             {
+              "exerciseId": "incline_bench_db",
               "name": "Incline Dumbbell Bench Press",
               "sets": 3,
               "repMin": 8,
@@ -246,6 +262,7 @@
               "cue": "Use a full comfortable upper-chest stretch and smooth press."
             },
             {
+              "exerciseId": "cable_fly",
               "name": "Cable Fly",
               "sets": 3,
               "repMin": 12,
@@ -259,6 +276,7 @@
               "cue": "Keep constant tension on the chest."
             },
             {
+              "exerciseId": "lat_pulldown",
               "name": "Lat Pulldown",
               "sets": 3,
               "repMin": 8,
@@ -272,6 +290,7 @@
               "cue": "Think elbows toward pockets and control the return."
             },
             {
+              "exerciseId": "seated_row_close",
               "name": "Seated Cable Row",
               "sets": 3,
               "repMin": 8,
@@ -285,6 +304,7 @@
               "cue": "Reach, pull, then squeeze the middle back."
             },
             {
+              "exerciseId": "lateral_raise_db",
               "name": "Dumbbell Lateral Raise",
               "sets": 4,
               "repMin": 15,
@@ -298,6 +318,7 @@
               "cue": "Smooth reps with tension on the side delts."
             },
             {
+              "exerciseId": "rear_delt_fly_db",
               "name": "Dumbbell Rear-Delt Fly",
               "sets": 3,
               "repMin": 15,
@@ -311,6 +332,7 @@
               "cue": "Open wide without shrugging."
             },
             {
+              "exerciseId": "incline_curl_db",
               "name": "Incline Dumbbell Curl",
               "sets": 2,
               "repMin": 10,
@@ -324,6 +346,7 @@
               "cue": "Keep the upper arm behind the torso and control the stretch."
             },
             {
+              "exerciseId": "tricep_push",
               "name": "Cable Triceps Pushdown",
               "sets": 2,
               "repMin": 10,
@@ -345,6 +368,7 @@
           "focus": "No leg work",
           "exercises": [
             {
+              "exerciseId": "lateral_raise_db",
               "name": "Dumbbell Lateral Raise",
               "sets": 4,
               "repMin": 15,
@@ -358,6 +382,7 @@
               "cue": "Keep the side delts loaded throughout the set."
             },
             {
+              "exerciseId": "rear_delt_fly_db",
               "name": "Dumbbell Rear-Delt Fly",
               "sets": 3,
               "repMin": 15,
@@ -371,6 +396,7 @@
               "cue": "Rear delts and upper back. Avoid shrugging."
             },
             {
+              "exerciseId": "incline_curl_db",
               "name": "Incline Dumbbell Curl",
               "sets": 3,
               "repMin": 8,
@@ -384,6 +410,7 @@
               "cue": "Control the stretch and avoid swinging."
             },
             {
+              "exerciseId": "hammer_curl_db",
               "name": "Dumbbell Hammer Curl",
               "sets": 2,
               "repMin": 10,
@@ -397,6 +424,7 @@
               "cue": "Neutral grip with controlled reps."
             },
             {
+              "exerciseId": "close_grip_bench_bb",
               "name": "Close-Grip Barbell Bench Press",
               "sets": 3,
               "repMin": 6,
@@ -410,6 +438,7 @@
               "cue": "Use a grip just inside normal bench width and press through the triceps."
             },
             {
+              "exerciseId": "tricep_push",
               "name": "Cable Triceps Pushdown",
               "sets": 2,
               "repMin": 12,
@@ -423,6 +452,7 @@
               "cue": "Finish with a hard lockout."
             },
             {
+              "exerciseId": "shoulder_press_db",
               "name": "Seated Dumbbell Shoulder Press",
               "sets": 2,
               "repMin": 10,

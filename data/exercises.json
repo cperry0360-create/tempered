@@ -1,83 +1,744 @@
 {
   "_comment": "Seed library. Weights are Cory's actual working numbers as of Sep 2026. class drives Might XP weighting: compound counts fully, isolation at a reduced rate. notionalLoad is the load in lbs credited to a bodyweight rep: a FIXED per-exercise constant, never the user's body weight and never derived from it. A weighted variant adds the logged weight on top. Users can add exercises; these ship as the default.",
-
   "routines": [
     {
       "id": "lower",
       "name": "Lower Body",
-      "plan": "Protocol: Balanced — Upper/Lower",
+      "plan": "Protocol: Balanced \u2014 Upper/Lower",
       "exercises": [
-        {"id":"deadlift_bb",       "sets":3, "reps":8, "weight":160, "rest":210},
-        {"id":"squat_bb",          "sets":3, "reps":8, "weight":145, "rest":210},
-        {"id":"calf_raise",        "sets":3, "reps":8, "weight":130, "rest":150},
-        {"id":"calf_raise_single", "sets":1, "reps":12,"weight":null,"rest":90},
-        {"id":"farmers_carry",     "sets":3, "reps":null,"distance":40,"weight":null,"rest":150},
-        {"id":"rdl",               "sets":3, "reps":8, "weight":null,"rest":180},
-        {"id":"split_squat",       "sets":3, "reps":8, "weight":null,"rest":150}
+        {
+          "id": "deadlift_bb",
+          "sets": 3,
+          "reps": 8,
+          "weight": 160,
+          "rest": 210
+        },
+        {
+          "id": "squat_bb",
+          "sets": 3,
+          "reps": 8,
+          "weight": 145,
+          "rest": 210
+        },
+        {
+          "id": "calf_raise",
+          "sets": 3,
+          "reps": 8,
+          "weight": 130,
+          "rest": 150
+        },
+        {
+          "id": "calf_raise_single",
+          "sets": 1,
+          "reps": 12,
+          "weight": null,
+          "rest": 90
+        },
+        {
+          "id": "farmers_carry",
+          "sets": 3,
+          "reps": null,
+          "distance": 40,
+          "weight": null,
+          "rest": 150
+        },
+        {
+          "id": "rdl",
+          "sets": 3,
+          "reps": 8,
+          "weight": null,
+          "rest": 180
+        },
+        {
+          "id": "split_squat",
+          "sets": 3,
+          "reps": 8,
+          "weight": null,
+          "rest": 150
+        }
       ]
     },
     {
       "id": "upper",
       "name": "Upper Body",
-      "plan": "Protocol: Balanced — Upper/Lower",
+      "plan": "Protocol: Balanced \u2014 Upper/Lower",
       "exercises": [
-        {"id":"chest_press_bb",  "sets":3, "reps":6, "weight":140, "rest":210},
-        {"id":"seated_row_close","sets":3, "reps":8, "weight":null,"rest":210},
-        {"id":"ohp_db",          "sets":3, "reps":8, "weight":57,  "rest":150},
-        {"id":"lat_pulldown",    "sets":3, "reps":8, "weight":90,  "rest":210},
-        {"id":"hyperextension",  "sets":3, "reps":8, "weight":25,  "rest":150},
-        {"id":"lateral_raise",   "sets":3, "reps":12,"weight":null,"rest":120},
-        {"id":"reverse_curl",    "sets":2, "reps":8, "weight":25,  "rest":150},
-        {"id":"tricep_push",     "sets":1, "reps":12,"weight":null,"rest":150}
+        {
+          "id": "chest_press_bb",
+          "sets": 3,
+          "reps": 6,
+          "weight": 140,
+          "rest": 210
+        },
+        {
+          "id": "seated_row_close",
+          "sets": 3,
+          "reps": 8,
+          "weight": null,
+          "rest": 210
+        },
+        {
+          "id": "ohp_db",
+          "sets": 3,
+          "reps": 8,
+          "weight": 57,
+          "rest": 150
+        },
+        {
+          "id": "lat_pulldown",
+          "sets": 3,
+          "reps": 8,
+          "weight": 90,
+          "rest": 210
+        },
+        {
+          "id": "hyperextension",
+          "sets": 3,
+          "reps": 8,
+          "weight": 25,
+          "rest": 150
+        },
+        {
+          "id": "lateral_raise",
+          "sets": 3,
+          "reps": 12,
+          "weight": null,
+          "rest": 120
+        },
+        {
+          "id": "reverse_curl",
+          "sets": 2,
+          "reps": 8,
+          "weight": 25,
+          "rest": 150
+        },
+        {
+          "id": "tricep_push",
+          "sets": 1,
+          "reps": 12,
+          "weight": null,
+          "rest": 150
+        }
       ]
     },
     {
       "id": "cardio",
       "name": "Cardio",
-      "plan": "Protocol: Balanced — Upper/Lower",
+      "plan": "Protocol: Balanced \u2014 Upper/Lower",
       "exercises": []
     }
   ],
-
   "exercises": [
-    {"id":"deadlift_bb","name":"Deadlift (Barbell)","variant":"Barbell","group":"posterior","class":"compound","pattern":"Hip Hinge","unit":"lbs","progression":"531","activation":{"erector_spinae":2,"hamstrings":1,"glutes":0.5}},
-    {"id":"squat_bb","name":"Squat (Barbell)","variant":"Barbell","group":"legs","class":"compound","pattern":"Knee Bending","unit":"lbs","progression":"531","activation":{"quads":1,"glutes":1}},
-    {"id":"chest_press_bb","name":"Chest Press (Barbell)","variant":"Barbell","group":"chest","class":"compound","pattern":"Horizontal Pushing","unit":"lbs","progression":"531","activation":{"pecs":1,"front_delts":0.5,"triceps":0.5}},
-    {"id":"ohp_db","name":"Overhead Press (Dumbbell)","variant":"Dumbbell","group":"shoulders","class":"compound","pattern":"Vertical Pushing","unit":"lbs","progression":"531","activation":{"mid_delts":1,"front_delts":1,"triceps":0.5}},
-    {"id":"seated_row_close","name":"Seated Row (Cable, Close Grip)","variant":"Cable","group":"back","class":"compound","pattern":"Horizontal Pulling","unit":"lbs","progression":"linear","activation":{"lats":1,"rear_delts":1,"traps":0.5,"biceps":0.5}},
-    {"id":"lat_pulldown","name":"Lat Pulldown (Cable, Wide Grip)","variant":"Cable","group":"back","class":"compound","pattern":"Vertical Pulling","unit":"lbs","progression":"linear","activation":{"lats":1,"biceps":0.5}},
-    {"id":"rdl","name":"Romanian Deadlift","variant":"Barbell","group":"posterior","class":"compound","pattern":"Hip Hinge","unit":"lbs","progression":"linear","activation":{"hamstrings":1.5,"glutes":1,"erector_spinae":0.5}},
-    {"id":"split_squat","name":"Bulgarian Split Squat","variant":"Dumbbell","group":"legs","class":"compound","pattern":"Knee Bending","unit":"lbs","progression":"linear","activation":{"quads":1,"glutes":1}},
-
-    {"id":"farmers_carry","name":"Farmer's Carry","variant":"Dumbbell","group":"legs","class":"compound","pattern":"Loaded Carry","unit":"lbs","metric":"distance","progression":"load","activation":{"traps":1,"forearms":1.5,"core":1,"glutes":0.5},
-     "note":"Lower-body and grip accessory. Logged as load plus distance carried. Counts toward Might via load-distance, and toward Grit as a session component."},
-    {"id":"hip_thrust","name":"Hip Thrust","variant":"Barbell","group":"posterior","class":"compound","pattern":"Hip Extension","unit":"lbs","progression":"linear","activation":{"glutes":2,"hamstrings":0.5}},
-    {"id":"walking_lunge","name":"Walking Lunge","variant":"Dumbbell","group":"legs","class":"compound","pattern":"Knee Bending","unit":"lbs","progression":"linear","activation":{"quads":1,"glutes":1}},
-    {"id":"goblet_squat","name":"Goblet Squat","variant":"Dumbbell","group":"legs","class":"compound","pattern":"Knee Bending","unit":"lbs","progression":"linear","activation":{"quads":1,"glutes":0.5,"core":0.5}},
-    {"id":"step_up","name":"Step-up","variant":"Dumbbell","group":"legs","class":"compound","pattern":"Knee Bending","unit":"lbs","progression":"linear","activation":{"quads":1,"glutes":1}},
-    {"id":"leg_curl","name":"Leg Curl","variant":"Machine","group":"legs","class":"isolation","pattern":"Knee Flexion","unit":"lbs","progression":"linear","activation":{"hamstrings":1}},
-    {"id":"leg_extension","name":"Leg Extension","variant":"Machine","group":"legs","class":"isolation","pattern":"Knee Extension","unit":"lbs","progression":"linear","activation":{"quads":1}},
-    {"id":"calf_raise","name":"Calf Raise (Standing)","variant":"Machine","group":"legs","class":"isolation","pattern":"Ankle Extension","unit":"lbs","progression":"linear","activation":{"calves":1}},
-    {"id":"calf_raise_single","name":"Single-Leg Calf Raise","variant":"Bodyweight","group":"legs","class":"isolation","pattern":"Ankle Extension","unit":"bodyweight","notionalLoad":40,"progression":"reps","activation":{"calves":1}},
-
-    {"id":"hyperextension","name":"Hyperextension","variant":"Bodyweight","group":"posterior","class":"isolation","pattern":"Hip Extension","unit":"lbs","progression":"linear","activation":{"erector_spinae":1,"glutes":0.5}},
-    {"id":"lateral_raise","name":"Lateral Raise (Cable)","variant":"Cable","group":"shoulders","class":"isolation","pattern":"Shoulder Abduction","unit":"lbs","progression":"linear","activation":{"mid_delts":1}},
-    {"id":"reverse_curl","name":"Reverse Bicep Curl (Cable)","variant":"Cable","group":"arms","class":"isolation","pattern":"Elbow Flexion","unit":"lbs","progression":"linear","activation":{"biceps":1,"forearms":1}},
-    {"id":"tricep_push","name":"Tricep Pushdown (Cable)","variant":"Cable","group":"arms","class":"isolation","pattern":"Arm Extension","unit":"lbs","progression":"linear","activation":{"triceps":1}},
-    {"id":"curl_db","name":"Dumbbell Curl","variant":"Dumbbell","group":"arms","class":"isolation","pattern":"Elbow Flexion","unit":"lbs","progression":"linear","activation":{"biceps":1}},
-    {"id":"face_pull","name":"Face Pull","variant":"Cable","group":"back","class":"isolation","pattern":"Horizontal Pulling","unit":"lbs","progression":"linear","activation":{"rear_delts":1,"traps":0.5}},
-    {"id":"pullup","name":"Pull-up","variant":"Bodyweight","group":"back","class":"compound","pattern":"Vertical Pulling","unit":"bodyweight","notionalLoad":120,"progression":"reps","activation":{"lats":1.5,"biceps":0.5}},
-    {"id":"dip","name":"Dip","variant":"Bodyweight","group":"chest","class":"compound","pattern":"Vertical Pushing","unit":"bodyweight","notionalLoad":100,"progression":"reps","activation":{"pecs":1,"triceps":1.5,"front_delts":0.5}},
-    {"id":"hanging_leg_raise","name":"Hanging Leg Raise","variant":"Bodyweight","group":"core","class":"isolation","pattern":"Hip Flexion","unit":"bodyweight","notionalLoad":60,"progression":"reps","activation":{"core":1.5,"forearms":0.5}},
-    {"id":"plank","name":"Plank","variant":"Bodyweight","group":"core","class":"isolation","pattern":"Anti-Extension","unit":"time","progression":"time","activation":{"core":1}}
+    {
+      "id": "deadlift_bb",
+      "name": "Deadlift (Barbell)",
+      "variant": "Barbell",
+      "group": "posterior",
+      "class": "compound",
+      "pattern": "Hip Hinge",
+      "unit": "lbs",
+      "progression": "531",
+      "activation": {
+        "erector_spinae": 2,
+        "hamstrings": 1,
+        "glutes": 0.5
+      }
+    },
+    {
+      "id": "squat_bb",
+      "name": "Squat (Barbell)",
+      "variant": "Barbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "531",
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
+    },
+    {
+      "id": "chest_press_bb",
+      "name": "Chest Press (Barbell)",
+      "variant": "Barbell",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "531",
+      "activation": {
+        "pecs": 1,
+        "front_delts": 0.5,
+        "triceps": 0.5
+      }
+    },
+    {
+      "id": "ohp_db",
+      "name": "Overhead Press (Dumbbell)",
+      "variant": "Dumbbell",
+      "group": "shoulders",
+      "class": "compound",
+      "pattern": "Vertical Pushing",
+      "unit": "lbs",
+      "progression": "531",
+      "activation": {
+        "mid_delts": 1,
+        "front_delts": 1,
+        "triceps": 0.5
+      }
+    },
+    {
+      "id": "seated_row_close",
+      "name": "Seated Row (Cable, Close Grip)",
+      "variant": "Cable",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Horizontal Pulling",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "lats": 1,
+        "rear_delts": 1,
+        "traps": 0.5,
+        "biceps": 0.5
+      }
+    },
+    {
+      "id": "lat_pulldown",
+      "name": "Lat Pulldown (Cable, Wide Grip)",
+      "variant": "Cable",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Vertical Pulling",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "lats": 1,
+        "biceps": 0.5
+      }
+    },
+    {
+      "id": "rdl",
+      "name": "Romanian Deadlift",
+      "variant": "Barbell",
+      "group": "posterior",
+      "class": "compound",
+      "pattern": "Hip Hinge",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "hamstrings": 1.5,
+        "glutes": 1,
+        "erector_spinae": 0.5
+      }
+    },
+    {
+      "id": "split_squat",
+      "name": "Bulgarian Split Squat",
+      "variant": "Dumbbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
+    },
+    {
+      "id": "farmers_carry",
+      "name": "Farmer's Carry",
+      "variant": "Dumbbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Loaded Carry",
+      "unit": "lbs",
+      "metric": "distance",
+      "progression": "load",
+      "activation": {
+        "traps": 1,
+        "forearms": 1.5,
+        "core": 1,
+        "glutes": 0.5
+      },
+      "note": "Lower-body and grip accessory. Logged as load plus distance carried. Counts toward Might via load-distance, and toward Grit as a session component."
+    },
+    {
+      "id": "hip_thrust",
+      "name": "Hip Thrust",
+      "variant": "Barbell",
+      "group": "posterior",
+      "class": "compound",
+      "pattern": "Hip Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "glutes": 2,
+        "hamstrings": 0.5
+      }
+    },
+    {
+      "id": "walking_lunge",
+      "name": "Walking Lunge",
+      "variant": "Dumbbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
+    },
+    {
+      "id": "goblet_squat",
+      "name": "Goblet Squat",
+      "variant": "Dumbbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "quads": 1,
+        "glutes": 0.5,
+        "core": 0.5
+      }
+    },
+    {
+      "id": "step_up",
+      "name": "Step-up",
+      "variant": "Dumbbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
+    },
+    {
+      "id": "leg_curl",
+      "name": "Leg Curl",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Knee Flexion",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "hamstrings": 1
+      }
+    },
+    {
+      "id": "leg_extension",
+      "name": "Leg Extension",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Knee Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "quads": 1
+      }
+    },
+    {
+      "id": "calf_raise",
+      "name": "Calf Raise (Standing)",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Ankle Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "calves": 1
+      }
+    },
+    {
+      "id": "calf_raise_single",
+      "name": "Single-Leg Calf Raise",
+      "variant": "Bodyweight",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Ankle Extension",
+      "unit": "bodyweight",
+      "notionalLoad": 40,
+      "progression": "reps",
+      "activation": {
+        "calves": 1
+      }
+    },
+    {
+      "id": "hyperextension",
+      "name": "Hyperextension",
+      "variant": "Bodyweight",
+      "group": "posterior",
+      "class": "isolation",
+      "pattern": "Hip Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "erector_spinae": 1,
+        "glutes": 0.5
+      }
+    },
+    {
+      "id": "lateral_raise",
+      "name": "Lateral Raise (Cable)",
+      "variant": "Cable",
+      "group": "shoulders",
+      "class": "isolation",
+      "pattern": "Shoulder Abduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "mid_delts": 1
+      }
+    },
+    {
+      "id": "reverse_curl",
+      "name": "Reverse Bicep Curl (Cable)",
+      "variant": "Cable",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Flexion",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "biceps": 1,
+        "forearms": 1
+      }
+    },
+    {
+      "id": "tricep_push",
+      "name": "Tricep Pushdown (Cable)",
+      "variant": "Cable",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Arm Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "triceps": 1
+      }
+    },
+    {
+      "id": "curl_db",
+      "name": "Dumbbell Curl",
+      "variant": "Dumbbell",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Flexion",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "biceps": 1
+      }
+    },
+    {
+      "id": "face_pull",
+      "name": "Face Pull",
+      "variant": "Cable",
+      "group": "back",
+      "class": "isolation",
+      "pattern": "Horizontal Pulling",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "rear_delts": 1,
+        "traps": 0.5
+      }
+    },
+    {
+      "id": "pullup",
+      "name": "Pull-up",
+      "variant": "Bodyweight",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Vertical Pulling",
+      "unit": "bodyweight",
+      "notionalLoad": 120,
+      "progression": "reps",
+      "activation": {
+        "lats": 1.5,
+        "biceps": 0.5
+      }
+    },
+    {
+      "id": "dip",
+      "name": "Dip",
+      "variant": "Bodyweight",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Vertical Pushing",
+      "unit": "bodyweight",
+      "notionalLoad": 100,
+      "progression": "reps",
+      "activation": {
+        "pecs": 1,
+        "triceps": 1.5,
+        "front_delts": 0.5
+      }
+    },
+    {
+      "id": "hanging_leg_raise",
+      "name": "Hanging Leg Raise",
+      "variant": "Bodyweight",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Hip Flexion",
+      "unit": "bodyweight",
+      "notionalLoad": 60,
+      "progression": "reps",
+      "activation": {
+        "core": 1.5,
+        "forearms": 0.5
+      }
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "variant": "Bodyweight",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Anti-Extension",
+      "unit": "time",
+      "progression": "time",
+      "activation": {
+        "core": 1
+      }
+    },
+    {
+      "id": "incline_bench_bb",
+      "name": "Incline Barbell Bench Press",
+      "variant": "Barbell",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "pecs": 1.5,
+        "front_delts": 1,
+        "triceps": 0.5
+      },
+      "art": "incline_bench_bb.png"
+    },
+    {
+      "id": "flat_bench_db",
+      "name": "Flat Dumbbell Bench Press",
+      "variant": "Dumbbell",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "pecs": 1.5,
+        "front_delts": 0.5,
+        "triceps": 0.5
+      }
+    },
+    {
+      "id": "incline_bench_db",
+      "name": "Incline Dumbbell Bench Press",
+      "variant": "Dumbbell",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "pecs": 1.5,
+        "front_delts": 1,
+        "triceps": 0.5
+      }
+    },
+    {
+      "id": "close_grip_bench_bb",
+      "name": "Close-Grip Barbell Bench Press",
+      "variant": "Barbell",
+      "group": "chest",
+      "class": "compound",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "triceps": 1.5,
+        "pecs": 1,
+        "front_delts": 0.5
+      }
+    },
+    {
+      "id": "shoulder_press_db",
+      "name": "Seated Dumbbell Shoulder Press",
+      "variant": "Dumbbell",
+      "group": "shoulders",
+      "class": "compound",
+      "pattern": "Vertical Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "front_delts": 1.5,
+        "mid_delts": 1,
+        "triceps": 0.5
+      }
+    },
+    {
+      "id": "lateral_raise_db",
+      "name": "Dumbbell Lateral Raise",
+      "variant": "Dumbbell",
+      "group": "shoulders",
+      "class": "isolation",
+      "pattern": "Shoulder Abduction",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "mid_delts": 1.5
+      }
+    },
+    {
+      "id": "rear_delt_fly_db",
+      "name": "Dumbbell Rear-Delt Fly",
+      "variant": "Dumbbell",
+      "group": "shoulders",
+      "class": "isolation",
+      "pattern": "Horizontal Pulling",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "rear_delts": 1.5,
+        "traps": 0.5
+      }
+    },
+    {
+      "id": "cable_fly",
+      "name": "Cable Fly",
+      "variant": "Cable",
+      "group": "chest",
+      "class": "isolation",
+      "pattern": "Horizontal Pushing",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "pecs": 1.5
+      }
+    },
+    {
+      "id": "one_arm_row_db",
+      "name": "One-Arm Dumbbell Row",
+      "variant": "Dumbbell",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Horizontal Pulling",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "lats": 1.5,
+        "rear_delts": 0.5,
+        "biceps": 0.5,
+        "traps": 0.5
+      }
+    },
+    {
+      "id": "incline_curl_db",
+      "name": "Incline Dumbbell Curl",
+      "variant": "Dumbbell",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Flexion",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "biceps": 1.5
+      }
+    },
+    {
+      "id": "hammer_curl_db",
+      "name": "Dumbbell Hammer Curl",
+      "variant": "Dumbbell",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Flexion",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "biceps": 1,
+        "forearms": 1
+      }
+    },
+    {
+      "id": "front_squat",
+      "name": "Front Squat",
+      "variant": "Barbell",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "quads": 1.5,
+        "glutes": 0.5,
+        "core": 0.5
+      }
+    },
+    {
+      "id": "crunch",
+      "name": "Crunch",
+      "variant": "Bodyweight",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Trunk Flexion",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "core": 1.5
+      }
+    }
   ],
-
   "cardio": [
-    {"id":"run","name":"Run","metric":"distance","unit":"mi"},
-    {"id":"walk","name":"Walk","metric":"distance","unit":"mi"},
-    {"id":"cycle","name":"Cycle","metric":"distance","unit":"mi"},
-    {"id":"heavy_bag","name":"Heavy Bag","metric":"time","unit":"min"},
-    {"id":"jump_rope","name":"Jump Rope","metric":"time","unit":"min"},
-    {"id":"row_erg","name":"Row (Erg)","metric":"time","unit":"min"}
+    {
+      "id": "run",
+      "name": "Run",
+      "metric": "distance",
+      "unit": "mi"
+    },
+    {
+      "id": "walk",
+      "name": "Walk",
+      "metric": "distance",
+      "unit": "mi"
+    },
+    {
+      "id": "cycle",
+      "name": "Cycle",
+      "metric": "distance",
+      "unit": "mi"
+    },
+    {
+      "id": "heavy_bag",
+      "name": "Heavy Bag",
+      "metric": "time",
+      "unit": "min"
+    },
+    {
+      "id": "jump_rope",
+      "name": "Jump Rope",
+      "metric": "time",
+      "unit": "min"
+    },
+    {
+      "id": "row_erg",
+      "name": "Row (Erg)",
+      "metric": "time",
+      "unit": "min"
+    }
   ]
 }

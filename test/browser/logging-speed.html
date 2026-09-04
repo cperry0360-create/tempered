@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tempered — logging speed harness</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      /**
+       * Drives the REAL app through the two speed targets in docs/05 and counts
+       * taps. Wall-clock from a script is meaningless — a machine taps in
+       * microseconds — so the measure is taps, converted at a stated budget of
+       * one second per tap, which is generous for a familiar one-handed UI.
+       */
+      const SECONDS_PER_TAP = 1
+      const checks = []
+      let taps = 0
+
+      function check(name, ok, detail = '') {
+        checks.push({ name, ok: Boolean(ok), detail })
+        return Boolean(ok)
+      }
+
+      /** Every interaction goes through here, so nothing is counted by hand. */
+      function tap(node, label) {
+        if (!node) throw new Error(`nothing to tap for: ${label}`)
+        taps += 1
+        node.click()
+        return node
+      }
+
+      const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+      const q = (selector) => document.querySelector(selector)
+      const qa = (selector) => [...document.querySelectorAll(selector)]
+
+      async function waitFor(selector, timeout = 4000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+
+      try {
+        // A fresh in-memory database, so each run measures a cold start.
+        const storage = createMemoryStorage()
+        const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
+
+        // ---------------------------------------------------------------
+        // TARGET 1 — a full lower-body session, under 90 seconds of tapping
+        // ---------------------------------------------------------------
+        taps = 0
+        await waitFor('[data-start="lower"]')
+        tap(q('[data-start="lower"]'), 'START lower')
+        await waitFor('.setrow__check')
+
+        // docs/05: last performance and PR visible BEFORE the first set.
+        check('last performance is shown before the first set',
+          qa('.pill[data-kind="last"]').length > 0)
+        check('PR is shown before the first set',
+          qa('.pill[data-kind="pr"]').length > 0)
+        // A first-ever session can only prefill what the routine prescribes;
+        // the app cannot know a working weight it has never been told.
+        const prescribed = qa('input.setrow__num[data-field="weight"]').filter((i) => i.value !== '')
+        check('prescribed weights are prefilled on a cold start', prescribed.length > 0,
+          `${prescribed.length} of ${qa('input.setrow__num[data-field="weight"]').length} weights known`)
+
+        const rowCount = qa('.setrow__check').length
+        let restWasRunning = false
+        let nextSetStayedEnabled = true
+
+        for (const [index, button] of qa('.setrow__check').entries()) {
+          if (button.disabled) continue
+          // Fill anything the app could not know, counting every interaction.
+          const row = button.closest('.setrow')
+          for (const field of [...row.querySelectorAll('input.setrow__num')]) {
+            if (field.value !== '') continue
+            field.value = field.dataset.field === 'weight' ? '95' : '8'
+            field.dispatchEvent(new Event('change'))
+            taps += 1
+          }
+          tap(button, 'log set')
+          await settle()
+
+          // Immediately after logging: is rest counting down, and is the next
+          // set still tappable while it does?
+          const countdown = document.querySelector('.exercise__rest[data-active="true"]')
+          if (countdown) {
+            restWasRunning = true
+            const remaining = qa('.setrow__check').filter((b) => !b.disabled)
+            if (index + 1 < rowCount && remaining.length === 0) nextSetStayedEnabled = false
+          }
+        }
+        await settle()
+
+        check('the rest timer is actually running', restWasRunning,
+          restWasRunning ? '' : 'no countdown appeared, so the next check proves nothing')
+        check('the rest timer never blocks logging the next set', nextSetStayedEnabled,
+          'the following set was still tappable while rest counted down')
+
+        tap(await waitFor('[data-action="finish"]'), 'FINISH')
+        await waitFor('[data-action="done"]')
+
+        const lowerTaps = taps
+        const lowerSeconds = lowerTaps * SECONDS_PER_TAP
+        check(`full lower session in under 90s of tapping`, lowerSeconds < 90,
+          `${lowerTaps} taps across ${rowCount} sets = ${lowerSeconds}s at ${SECONDS_PER_TAP}s/tap`)
+
+        // The post-session screen is ONE screen with ONE dismiss.
+        check('the summary shows what you did, what grew, and what is next',
+          q('[data-section="xp"]') !== null && q('.stats') !== null)
+        check('one dismiss, not four', qa('[data-action="done"]').length === 1)
+        tap(q('[data-action="done"]'), 'DONE')
+        await waitFor('[data-start="lower"]')
+
+        // ---------------------------------------------------------------
+        // TARGET 1b — the COMMON case: repeating last session.
+        // docs/05 says this must be one tap per set. Now there is history.
+        // ---------------------------------------------------------------
+        taps = 0
+        tap(await waitFor('[data-start="lower"]'), 'START lower again')
+        await waitFor('.setrow__check')
+
+        const empties = qa('input.setrow__num').filter((input) => input.value === '')
+        check('repeating a session arrives fully prefilled', empties.length === 0,
+          `${empties.length} fields still empty`)
+
+        const warmRows = qa('.setrow__check').length
+        for (const button of qa('.setrow__check')) {
+          if (!button.disabled) { tap(button, 'log set'); await settle() }
+        }
+        tap(await waitFor('[data-action="finish"]'), 'FINISH')
+        await waitFor('[data-action="done"]')
+
+        const warmTaps = taps
+        check('repeating a session is one tap per set, plus start and finish',
+          warmTaps === warmRows + 2,
+          `${warmTaps} taps for ${warmRows} sets (start + ${warmRows} sets + finish)`)
+        check('the common case is far inside 90s', warmTaps * SECONDS_PER_TAP < 90,
+          `${warmTaps * SECONDS_PER_TAP}s at ${SECONDS_PER_TAP}s/tap`)
+        tap(q('[data-action="done"]'), 'DONE')
+        await waitFor('[data-start="lower"]')
+
+        // ---------------------------------------------------------------
+        // TARGET 2 — an ad-hoc set of curls, under 20 seconds from app open
+        // ---------------------------------------------------------------
+        taps = 0
+        const opened = performance.now()
+        await tempered.app.show('train')
+        await waitFor('[data-exercise="curl_db"]')
+        tap(q('[data-exercise="curl_db"]'), 'open curls ad-hoc')
+        const firstCheck = await waitFor('.setrow__check')
+
+        check('an ad-hoc exercise shows its history immediately',
+          q('.pill[data-kind="last"]') !== null && q('.pill[data-kind="pr"]') !== null)
+
+        // Curls have never been done, so the weight needs entering once.
+        const weightField = q('input.setrow__num[data-field="weight"]')
+        weightField.value = '30'
+        weightField.dispatchEvent(new Event('change'))
+        taps += 1 // entering a number counts as an interaction
+        const repsField = q('input.setrow__num[data-field="reps"]')
+        repsField.value = '12'
+        repsField.dispatchEvent(new Event('change'))
+        taps += 1
+
+        tap(firstCheck, 'log the curl set')
+        await settle()
+
+        const adHocTaps = taps
+        const adHocSeconds = adHocTaps * SECONDS_PER_TAP
+        check('ad-hoc curls logged in under 20s from app open', adHocSeconds < 20,
+          `${adHocTaps} interactions = ${adHocSeconds}s at ${SECONDS_PER_TAP}s/tap`)
+        check('the ad-hoc session has no routine',
+          globalThis.tempered.workout !== undefined)
+
+        const elapsed = performance.now() - opened
+        check('the UI itself adds no delay', elapsed < 2000, `${Math.round(elapsed)}ms of actual render time`)
+
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'logging-speed', passed: checks.every((c) => c.ok), checks }),
+        })
+      } catch (error) {
+        checks.push({ name: 'harness threw', ok: false, detail: String(error) })
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'logging-speed', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

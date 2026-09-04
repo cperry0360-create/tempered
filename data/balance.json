@@ -96,6 +96,70 @@
     "linearIncrementLowerLbs": 10,
     "repsProgressionTarget": 12,
     "timeProgressionIncrementSec": 10,
-    "carryLoadIncrementLbs": 5
+    "carryLoadIncrementLbs": 5,
+    "_comment": "Progression is a PROPOSAL, never applied automatically. See docs/05: the app proposes, never imposes.",
+    "fiveThreeOne": {
+      "_comment": "Wendler 5/3/1. Working weights are percentages of a training max, which is itself a percentage of the estimated 1RM. Week 4 is a deload.",
+      "trainingMaxPercentOfMax": 0.9,
+      "roundToLbs": 5,
+      "weeks": [
+        {
+          "name": "5s",
+          "percents": [
+            0.65,
+            0.75,
+            0.85
+          ],
+          "reps": [
+            5,
+            5,
+            5
+          ],
+          "amrapLastSet": true
+        },
+        {
+          "name": "3s",
+          "percents": [
+            0.7,
+            0.8,
+            0.9
+          ],
+          "reps": [
+            3,
+            3,
+            3
+          ],
+          "amrapLastSet": true
+        },
+        {
+          "name": "5/3/1",
+          "percents": [
+            0.75,
+            0.85,
+            0.95
+          ],
+          "reps": [
+            5,
+            3,
+            1
+          ],
+          "amrapLastSet": true
+        },
+        {
+          "name": "deload",
+          "percents": [
+            0.4,
+            0.5,
+            0.6
+          ],
+          "reps": [
+            5,
+            5,
+            5
+          ],
+          "amrapLastSet": false
+        }
+      ]
+    }
   }
 }

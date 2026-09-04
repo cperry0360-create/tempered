@@ -53,6 +53,11 @@ that could be awarded for doing the work.
 - **Never invent product philosophy.** If a rule is genuinely ambiguous, implement the
   simplest defensible version, write it in `DECISIONS.md` under "Needs Cory", and move
   on. Do not stall.
+- **A test that cannot fail is not evidence.** When you write a test for something that
+  already works, prove it can fail — point it at broken or empty state and confirm it
+  reports failure — before trusting a pass. The Phase 2 persistence harness is the
+  example: it reported three green passes while asserting nothing, because the DOM was
+  snapshotted before any of the asynchronous work had run.
 - **Commit per phase**, with the phase number in the message.
 
 ## Stack
@@ -93,5 +98,7 @@ Two consequences worth remembering:
 - `data/` — seed content and balance config. JSON, hand-editable.
 - `src/domain/` — pure logic. No I/O, no DOM. Fully tested.
 - `src/adapters/` — storage, health, clock.
+- `src/app/` — wiring. Services that join domain to adapters, and bootstrap.
+  Knows about both sides; neither side knows about it.
 - `src/ui/` — screens and components.
 - `DECISIONS.md` — your running log.

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tempered — boot harness</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * Boots the app exactly as index.html does — real IndexedDB, real fetch of
+       * data/*.json, no injected test doubles — and reports what rendered.
+       *
+       * The speed harness injects memory storage, so it would not catch a broken
+       * default wiring. This is the check that the shipped entry path works.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return ok }
+
+      try {
+        const tempered = await bootstrap({ mount: document.getElementById('app') })
+
+        check('storage opened', tempered.storage.isOpen, tempered.storage.kind)
+        check('the real adapter is IndexedDB, not the memory fallback',
+          tempered.storage.kind === 'indexeddb', tempered.storage.kind)
+        check('balance.json loaded over the network', typeof tempered.balance?.levelCurve?.base === 'number',
+          `base ${tempered.balance?.levelCurve?.base}`)
+        check('the exercise library loaded', tempered.library?.exercises?.length > 20,
+          `${tempered.library?.exercises?.length} exercises`)
+        check('the library was seeded into storage',
+          (await tempered.storage.count('exercises')) > 20,
+          `${await tempered.storage.count('exercises')} stored`)
+        check('a profile exists', (await tempered.storage.get('profile', 'profile')) !== undefined)
+
+        check('the tab bar rendered', document.querySelectorAll('.tabbar__tab').length === 4,
+          `${document.querySelectorAll('.tabbar__tab').length} tabs`)
+        check('the Train screen rendered its routines',
+          document.querySelectorAll('[data-start]').length >= 2,
+          `${document.querySelectorAll('[data-start]').length} routines`)
+        check('the exercise library rendered',
+          document.querySelectorAll('.libraryrow').length > 20,
+          `${document.querySelectorAll('.libraryrow').length} rows`)
+        check('the pre-boot placeholder was replaced',
+          document.querySelector('.shell__wordmark') === null)
+
+        // Cheap guards against gross CSS failure. A DOM assertion passes happily
+        // on a completely unstyled page, so check the design system applied.
+        const bodyStyle = getComputedStyle(document.body)
+        check('the dark ground is painted', bodyStyle.backgroundColor === 'rgb(10, 12, 16)',
+          bodyStyle.backgroundColor)
+        check('numbers are tabular, so weights do not shift as they change',
+          bodyStyle.fontVariantNumeric.includes('tabular-nums'), bodyStyle.fontVariantNumeric)
+
+        const tabbar = document.querySelector('.tabbar')
+        check('the tab bar has real height', tabbar.getBoundingClientRect().height > 30,
+          `${Math.round(tabbar.getBoundingClientRect().height)}px`)
+
+        const startButton = document.querySelector('[data-start]')
+        check('primary actions are thumb-sized', startButton.getBoundingClientRect().height >= 44,
+          `${Math.round(startButton.getBoundingClientRect().height)}px tall`)
+
+        check('the page does not scroll sideways',
+          document.documentElement.scrollWidth <= window.innerWidth + 1,
+          `${document.documentElement.scrollWidth}px content in ${window.innerWidth}px viewport`)
+
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'boot', passed: checks.every((c) => c.ok), checks }),
+        })
+      } catch (error) {
+        checks.push({ name: 'bootstrap threw', ok: false, detail: String(error?.stack ?? error) })
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'boot', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

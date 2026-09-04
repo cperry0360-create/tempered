@@ -15,7 +15,7 @@
  * Bumping VERSION still forces an immediate clean sweep of every old cache.
  */
 
-const VERSION = '0.1.0'
+const VERSION = '0.3.0'
 const CACHE = `tempered-${VERSION}`
 
 // Resolved against this file's own URL, so the app works at any base path —
@@ -32,6 +32,39 @@ const PRECACHE = [
   './icons/icon-180.png',
   './icons/icon-512.png',
   './icons/icon-1024.png',
+
+  // The app itself. Hand-maintained, because there is no build step to derive
+  // it from — if you add a module, add it here or the app breaks offline.
+  './data/balance.json',
+  './data/exercises.json',
+  './src/app/bootstrap.js',
+  './src/app/seed.js',
+  './src/app/workout.js',
+  './src/adapters/clock/clock.js',
+  './src/adapters/storage/indexeddb-storage.js',
+  './src/adapters/storage/memory-storage.js',
+  './src/adapters/storage/stores.js',
+  './src/domain/curves.js',
+  './src/domain/directive.js',
+  './src/domain/e1rm.js',
+  './src/domain/grit.js',
+  './src/domain/levels.js',
+  './src/domain/might.js',
+  './src/domain/mind.js',
+  './src/domain/progression.js',
+  './src/domain/rank.js',
+  './src/domain/records.js',
+  './src/domain/tiers.js',
+  './src/domain/vitality.js',
+  './src/domain/wind.js',
+  './src/domain/xp-engine.js',
+  './src/ui/app.js',
+  './src/ui/dom.js',
+  './src/ui/format.js',
+  './src/ui/screens/history.js',
+  './src/ui/screens/session.js',
+  './src/ui/screens/summary.js',
+  './src/ui/screens/train.js',
 ]
 
 self.addEventListener('install', (event) => {

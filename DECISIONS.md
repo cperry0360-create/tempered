@@ -299,16 +299,17 @@ exercise carrying a notional load.
 **Confidence:** specified
 **Needs Cory:** no
 
-## 2026-09-04 — The plank still earns no Might
+## 2026-09-04 — Isometric holds do not feed Might — DECIDED
 **Phase:** 1 (follow-up)
-**Decision:** Time-under-tension is not scored for Might. The plank earns Grit through the
-session and nothing else.
-**Reasoning:** "Scored by time not load" settles that it gets no notional load. Actually
-paying Might for held seconds needs a rate that does not exist in `data/balance.json`, and
-inventing one is a new scoring mechanism rather than a tuning value.
-**Confidence:** inferred
-**Needs Cory:** yes — low priority. If planks should feed Might, it needs an
-`xpPerMinuteUnderTension` in `balance.json`. Nothing is blocked either way.
+**Decision:** Time under tension is not scored for Might, and will not be. The plank earns
+Grit through session time and nothing else. Closed by Cory, 2026-09-04.
+**Reasoning:** Cory's ruling: scoring held seconds would make Might two-mode — load for
+every other movement, time for one accessory — and isometrics already feed Grit through
+session duration, so the work is not unrewarded. My earlier reasoning stands as far as it
+went (no rate exists in `balance.json` and inventing one is a new mechanism), but the
+deciding argument is the one about keeping Might single-mode.
+**Confidence:** specified
+**Needs Cory:** no — decided, not open.
 
 ## 2026-09-04 — Phase 2: the storage contract, and two implementations
 **Phase:** 2
@@ -384,4 +385,64 @@ the load event, before any asynchronous storage work has finished; that cost an 
 worth writing down. The harness was checked against an empty profile and correctly failed
 8 of 9 checks, so it is not vacuous.
 **Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3: src/app/ added to the repository map
+**Phase:** 3
+**Decision:** New `src/app/` layer holding `workout.js` (the session service), `seed.js` and
+`bootstrap.js`. `CLAUDE.md`'s repository map updated to name it.
+**Reasoning:** Something has to join the pure domain to the adapters — read records, ask the
+domain what a session earned, write the results back. It is not domain (it does I/O), not an
+adapter (it implements no boundary), and not a screen. Putting it in `src/ui/` would have
+meant view code owning persistence, which is the thing the adapter rule exists to prevent.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Speed targets measured in taps, not wall-clock
+**Phase:** 3
+**Decision:** `tools/verify-logging-speed.js` drives the real UI and counts interactions,
+converting at a stated one second per tap. Full lower session: 34 taps cold, 21 taps warm.
+Ad-hoc curls: 4 interactions.
+**Reasoning:** A script taps in microseconds, so its wall clock proves nothing about a human
+in a gym. Taps are the honest proxy and the thing the design actually controls. One second
+per tap is deliberately generous for a familiar one-handed UI; the numbers clear 90s and 20s
+with room to spare even at that budget. Both the cold case (first ever session, working
+weights unknown) and the warm case (repeating last session, which docs/05 calls the common
+case) are measured, because only the warm case can be one tap per set.
+**Confidence:** inferred
+**Needs Cory:** no — but these are proxies. A real timed session on a phone would be worth
+doing before Phase 8.
+
+## 2026-09-04 — Set rows follow the exercise's metric
+**Phase:** 3
+**Decision:** A set row renders the two numbers the exercise actually has: weight and reps
+normally, weight and distance for a loaded carry, seconds for a hold.
+**Reasoning:** Found by the speed harness, which reported three fields still empty when
+repeating a session. They were the reps boxes on farmer's carries — a number that does not
+exist for that movement. An empty box invites the user to fill in nothing and costs a tap to
+skip past, which is exactly the kind of friction the speed target exists to prevent.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — The precache list is tested, not trusted
+**Phase:** 3
+**Decision:** `test/precache.test.js` walks the import graph from `src/main.js` and asserts
+every module it reaches is in `sw.js`'s PRECACHE, and that PRECACHE carries nothing the app
+never loads.
+**Reasoning:** The list is hand-written because there is no build step to derive it from,
+which makes it exactly the kind of thing that rots — and it rots invisibly, breaking the app
+only offline and only for people who already installed it. Walking the import graph rather
+than globbing `src/**/*.js` is deliberate: globbing would demand precaching type-only
+declaration modules and the projection harness, none of which the browser fetches.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Today and Character are honest placeholders
+**Phase:** 3
+**Decision:** All four tabs from `docs/03-screens.md` exist. Today and Character say plainly
+that they arrive in Phases 4 and 5.
+**Reasoning:** The four-tab shape is specified, and building it now avoids re-laying the
+shell later. An empty screen reads as broken; a screen that says what it is waiting for does
+not. Nothing is faked — Character does not show invented numbers.
+**Confidence:** inferred
 **Needs Cory:** no

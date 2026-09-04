@@ -15,6 +15,7 @@
     <link rel="icon" type="image/png" href="./icons/icon-512.png" />
 
     <!-- iOS ignores the manifest for home-screen installs; these drive it. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tempered" />
@@ -23,8 +24,8 @@
     <script type="module" src="./src/main.js"></script>
   </head>
   <body>
-    <main id="app" class="shell">
+    <div id="app" class="app">
       <p class="shell__wordmark">TEMPERED</p>
-    </main>
+    </div>
   </body>
 </html>

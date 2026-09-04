@@ -41,6 +41,9 @@ export async function ensureProfile(storage, clock, defaults = {}) {
     createdAt: clock.nowIso(),
     units: defaults.units ?? 'imperial',
     planTargetSessionsPerWeek: defaults.planTargetSessionsPerWeek ?? 4,
+    // Which activities Today shows. Absent means "the seed's defaults", which is
+    // what an older profile gets — see daily.js.
+    ...(defaults.dailyActivityIds ? { dailyActivityIds: defaults.dailyActivityIds } : {}),
     schemaVersion: 1,
   }
   await storage.put('profile', profile)

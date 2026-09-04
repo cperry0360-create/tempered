@@ -23,13 +23,27 @@ Opens here. Answers one question: what is outstanding right now.
 2. **Next session card** — if a session is due per the plan: routine name, exercise
    count, the primary lift and its working weight, and one primary button, `START`.
    If a session was already completed today, this becomes a summary instead.
-3. **Outstanding** — activities not yet logged today. Each row: icon, name, the unit it
-   wants, and either a toggle or a number field plus confirm. **One tap or one number
-   plus one tap.** Never more.
-4. **Logged** — collapsed by default, showing what is already done.
-5. **Rest day** — always available as an explicit action, never buried.
+3. **Outstanding** — the **daily** activities not yet logged today. Each row: icon, name,
+   the unit it wants, and either a toggle or a number field plus confirm. **One tap or
+   one number plus one tap.** Never more.
+4. **Log something else** — one control, opening the rest of the catalogue in the same
+   chips and tiles. Not a menu, not a settings screen: the same controls, logged the same
+   way, worth exactly the same.
+5. **Logged** — collapsed by default, showing what is already done.
+6. **Rest day** — always available as an explicit action, never buried. It is on the
+   daily list by default and taking it off should be as deliberate as any other choice.
 
-**Rules.** Everything outstanding fits in one view without scrolling on a 6.1" phone.
+**The daily list.** Every activity carries a `daily` flag, set during setup and editable
+after. Only daily activities appear on Today. The seed defaults to what a normal person
+tracks every day — sleep, water, steps, nutrition, rest day — and everything else starts
+off.
+
+**Rules.** **Everything outstanding fits in one view without scrolling on a 6.1" phone —
+the day's training slots and the daily activities.** That is the whole rule and it is
+deliberately about the daily list rather than the catalogue: a promise that gets harder
+to keep every time an activity is added is not a promise. Anything not on the daily list
+is one control away and does not count against the fit.
+
 Sort by what is most likely next, not alphabetically. Never show a red state for
 something merely not done yet — absence is not failure.
 

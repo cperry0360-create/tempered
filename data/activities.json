@@ -1,11 +1,12 @@
 {
-  "_comment": "Non-workout trackable activities. kind: derived reads a value, marked is a toggle. short is the one-word label a compact tile uses; name is the prose one.",
+  "_comment": "Non-workout trackable activities. kind: derived reads a value, marked is a toggle. short is the one-word label a compact tile uses; name is the prose one. daily is the DEFAULT for whether this appears on Today \u2014 the user's own list lives on the profile and is set during setup.",
   "activities": [
     {
       "id": "sleep",
       "name": "Sleep",
       "short": "Sleep",
       "attribute": "vitality",
+      "daily": true,
       "kind": "derived",
       "unit": "hours",
       "band": [
@@ -19,6 +20,7 @@
       "name": "Water",
       "short": "Water",
       "attribute": "vitality",
+      "daily": true,
       "kind": "derived",
       "unit": "oz",
       "dailyCap": 120
@@ -28,6 +30,7 @@
       "name": "Logged your food",
       "short": "Food",
       "attribute": "vitality",
+      "daily": true,
       "kind": "marked",
       "help": "Rewards the honesty of logging, not the numbers."
     },
@@ -36,6 +39,7 @@
       "name": "Hit protein target",
       "short": "Protein",
       "attribute": "vitality",
+      "daily": false,
       "kind": "derived",
       "unit": "g"
     },
@@ -44,6 +48,7 @@
       "name": "Took a rest day",
       "short": "Rest",
       "attribute": "vitality",
+      "daily": true,
       "kind": "marked",
       "help": "Recovery is training. This is a rewarded action, not an absence."
     },
@@ -52,6 +57,7 @@
       "name": "Logged body metrics",
       "short": "Body",
       "attribute": "vitality",
+      "daily": false,
       "kind": "marked",
       "help": "The habit is scored. The number never is."
     },
@@ -60,6 +66,7 @@
       "name": "Steps",
       "short": "Steps",
       "attribute": "wind",
+      "daily": true,
       "kind": "derived",
       "unit": "steps",
       "dailyCap": 15000
@@ -69,6 +76,7 @@
       "name": "Mobility work",
       "short": "Mobility",
       "attribute": "wind",
+      "daily": false,
       "kind": "derived",
       "unit": "min"
     },
@@ -77,6 +85,7 @@
       "name": "Read",
       "short": "Read",
       "attribute": "mind",
+      "daily": false,
       "kind": "derived",
       "unit": "min"
     },
@@ -85,6 +94,7 @@
       "name": "Study or practice",
       "short": "Study",
       "attribute": "mind",
+      "daily": false,
       "kind": "derived",
       "unit": "min"
     },
@@ -93,6 +103,7 @@
       "name": "Meditate",
       "short": "Meditate",
       "attribute": "mind",
+      "daily": false,
       "kind": "derived",
       "unit": "min"
     },
@@ -101,6 +112,7 @@
       "name": "Journal",
       "short": "Journal",
       "attribute": "mind",
+      "daily": false,
       "kind": "marked"
     },
     {
@@ -108,6 +120,7 @@
       "name": "Practice an instrument",
       "short": "Music",
       "attribute": "mind",
+      "daily": false,
       "kind": "derived",
       "unit": "min"
     }

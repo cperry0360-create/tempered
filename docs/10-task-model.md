@@ -49,6 +49,13 @@ punishment pattern `CLAUDE.md` forbids.
 nothing accrues a penalty. An unfinished slot is neutral until the week ends, and then
 it simply disappears.
 
+**Today's one-view rule covers the day's slots and the daily activities, and nothing
+else.** Slots are the day's prescription, so all of them are on the screen; activities are
+a catalogue that grows, so only the ones flagged daily are, with the rest one control
+away. See `docs/03-screens.md`. The rule then holds by construction rather than by shaving
+labels off a crowded screen, which means adding a fourteenth activity — or a fortieth —
+cannot break it.
+
 **XP is unchanged.** A slot completed alone earns exactly what it earns inside a block.
 Volume is volume. The path does not change the reward.
 

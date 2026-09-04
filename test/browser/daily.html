@@ -14,6 +14,7 @@
        * against the real app:
        *
        *   - Today loads in one view with no scrolling to see what is outstanding
+       *     (the day's slots and the DAILY activities — docs/03 and docs/10)
        *   - any single item completes in one tap, or one number plus one tap
        *   - rest day is a first-class rewarded action
        *   - a body metric shows its number back and awards XP only for logging
@@ -82,10 +83,31 @@
           needed <= PHONE.height,
           `needs ${Math.round(needed)}px of ${PHONE.height}px (bar is ${Math.round(barBox.height)}px, reserved)`)
 
-        const outstandingCount = qa('[data-task][data-done="false"]').length + qa('[data-log]').length
+        const slots = qa('[data-task][data-done="false"]').length
         check('1 and it is the whole day that fits, not a truncated list',
-          outstandingCount >= 17,
-          `${qa('[data-task][data-done="false"]').length} training slots and ${qa('[data-log]').length} activities`)
+          slots === 6 && qa('[data-log]').length === (await tempered.daily.dailyIds()).length,
+          `all ${slots} training slots and all ${qa('[data-log]').length} daily activities`)
+
+        // The structural half of the rule: the fit is about the daily list, so
+        // the catalogue can grow without the screen degrading.
+        const catalogue = tempered.daily.activities.length
+        const dailyCount = (await tempered.daily.dailyIds()).length
+        check('1 the fit is about the daily list, not the catalogue',
+          dailyCount < catalogue && q('[data-other="toggle"]') !== null,
+          `${dailyCount} of ${catalogue} activities are daily; the rest are one control away`)
+
+        check('1 rest day is on the daily list, never behind that control',
+          (await tempered.daily.dailyIds()).includes('rest_day'))
+
+        // Nothing is lost by the split: everything else is still loggable.
+        tap(q('[data-other="toggle"]'), 'log something else')
+        await settle()
+        const reachable = new Set(qa('[data-log]').map((node) => node.dataset.log))
+        check('1 and every other activity is reachable through it',
+          tempered.daily.activities.every((activity) => reachable.has(activity.id)),
+          `${reachable.size} of ${catalogue} reachable in one tap`)
+        tap(q('[data-other="toggle"]'), 'close')
+        await settle()
 
         // Nothing may be hidden under the floating bar.
         const lastOutstanding = qa('[data-log]').at(-1)
@@ -115,12 +137,12 @@
         // ---------------------------------------------------------------
         // 2 — one tap, or one number plus one tap
         // ---------------------------------------------------------------
-        const mind = await xpOf('mind')
+        const vitalityBeforeFood = await xpOf('vitality')
         taps = 0
-        tap(q('[data-log="journal"]'), 'journal')
+        tap(q('[data-log="nutrition_logged"]'), 'food logged')
         await settle()
         check('2 ACCEPTANCE: a marked activity completes in exactly one tap',
-          taps === 1 && await xpOf('mind') > mind, `${taps} tap`)
+          taps === 1 && await xpOf('vitality') > vitalityBeforeFood, `${taps} tap`)
 
         // The field is already on screen: nothing to open first, which is what
         // makes the cost a number plus one tap rather than a tap, a number and
@@ -159,8 +181,14 @@
 
         // ---------------------------------------------------------------
         // 4 — a body metric shows the number back, and scores only the act
+        //
+        // Body metrics are not on the daily list by default — weighing yourself
+        // every day is not something the app should assume — so this also
+        // exercises logging from behind the one control.
         // ---------------------------------------------------------------
         const beforeMetric = await xpOf('vitality')
+        tap(q('[data-other="toggle"]'), 'log something else')
+        await settle()
         q('[data-entry="body_metrics"]').value = '184.2'
         tap(q('.entry [data-log="body_metrics"]'), 'body metrics')
         await settle()
@@ -203,6 +231,21 @@
         check('correcting a number downwards never takes XP back',
           await xpOf('wind') === paid && paid > beforeCorrection,
           `${paid} XP, kept`)
+
+        // The list is the user's: turning one on puts it on Today, and turning
+        // it off takes it away without touching anything already logged.
+        await tempered.daily.setDaily('read', true)
+        await tempered.app.show('today')
+        await waitFor('[data-log]')
+        check('the daily list is editable, and Today follows it',
+          q('[data-log="read"]') !== null && q('[data-entry="read"]') !== null,
+          'reading is on the daily list now')
+
+        const loggedBefore = (await tempered.daily.today()).logged.length
+        await tempered.daily.setDaily('water', false)
+        check('taking one off the list never unlogs anything',
+          (await tempered.daily.today()).logged.length === loggedBefore,
+          `${loggedBefore} entries, untouched`)
 
         await fetch('/__report', {
           method: 'POST', headers: { 'content-type': 'application/json' },

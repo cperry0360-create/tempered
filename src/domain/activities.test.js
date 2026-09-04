@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs'
 import { loadBalance } from '../../test/helpers/balance.js'
 import {
   ACTIVITY_FIELDS, applyActivity, activityValue, isLogged, splitActivities, sortActivities,
+  defaultDailyIds, partitionByDaily,
 } from './activities.js'
 import { awardsForDay, totalsByAttribute } from './xp-engine.js'
 
@@ -181,4 +182,67 @@ test('every activity states how it is entered, so no screen has to guess', () =>
       assert.ok(spec.mode === 'add' || spec.mode === 'replace', `${activity.id} has no update mode`)
     }
   }
+})
+
+// --- the daily list --------------------------------------------------------
+//
+// The one-view rule in docs/03 is a promise about a phone, and a promise that
+// gets harder to keep every time an activity is added is not one. So Today
+// shows the DAILY list — what this person actually tracks every day — and
+// everything else is one control away. The rule then holds by construction
+// rather than by shaving labels off the screen.
+
+test('the seed says which activities are daily by default', () => {
+  const defaults = defaultDailyIds(ACTIVITIES)
+  assert.deepEqual([...defaults].sort(),
+    ['nutrition_logged', 'rest_day', 'sleep', 'steps', 'water'].sort(),
+    'what a normal person tracks every day, and nothing else')
+})
+
+test('the defaults are a minority of the catalogue, or the flag buys nothing', () => {
+  assert.ok(defaultDailyIds(ACTIVITIES).length < ACTIVITIES.length / 2)
+})
+
+test('rest day is daily by default — it is never one control away', () => {
+  assert.ok(defaultDailyIds(ACTIVITIES).includes('rest_day'))
+})
+
+test('the daily list partitions the catalogue, losing nothing', () => {
+  const { daily, other } = partitionByDaily(ACTIVITIES, defaultDailyIds(ACTIVITIES))
+  assert.equal(daily.length + other.length, ACTIVITIES.length)
+  assert.deepEqual(
+    [...daily, ...other].map((a) => a.id).sort(),
+    ACTIVITIES.map((a) => a.id).sort(),
+    'everything is still reachable, just not all in the same place',
+  )
+})
+
+test('both halves keep the likely-next order', () => {
+  const { daily, other } = partitionByDaily(ACTIVITIES, defaultDailyIds(ACTIVITIES))
+  assert.equal(daily[0].id, 'rest_day')
+  assert.ok(other.map((a) => a.id).indexOf('body_metrics') < other.map((a) => a.id).indexOf('journal'))
+})
+
+test('the list is the user\'s, not the seed\'s', () => {
+  // Turning one on is all it takes; the seed only supplies the starting point.
+  const { daily } = partitionByDaily(ACTIVITIES, ['read'])
+  assert.deepEqual(daily.map((a) => a.id), ['read'])
+})
+
+test('an empty daily list is allowed and is not an error state', () => {
+  const { daily, other } = partitionByDaily(ACTIVITIES, [])
+  assert.equal(daily.length, 0)
+  assert.equal(other.length, ACTIVITIES.length)
+})
+
+test('an unknown id in the list is ignored rather than inventing an activity', () => {
+  const { daily } = partitionByDaily(ACTIVITIES, ['sleep', 'astral_projection'])
+  assert.deepEqual(daily.map((a) => a.id), ['sleep'])
+})
+
+test('the daily flag has nothing to do with what anything is worth', () => {
+  // It is a placement rule for one screen. Scoring never sees it.
+  const day = applyActivity({ date: '2026-09-04' }, 'read', 30)
+  const totals = totalsByAttribute(awardsForDay(day, {}, balance))
+  assert.ok(totals.mind > 0, 'an activity off the daily list still earns exactly the same')
 })

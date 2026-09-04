@@ -17,7 +17,9 @@
  *   - re-raising it to a figure already paid for pays nothing a second time
  */
 
-import { applyActivity, activityValue, isLogged, splitActivities, ACTIVITY_FIELDS } from '../domain/activities.js'
+import {
+  applyActivity, activityValue, isLogged, splitActivities, defaultDailyIds, ACTIVITY_FIELDS,
+} from '../domain/activities.js'
 import {
   awardsForDay, totalsByAttribute, totalsBySource, createInitialState, applyAwards,
 } from '../domain/xp-engine.js'
@@ -41,6 +43,41 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   /** @param {string} date */
   async function dayLog(date) {
     return (await storage.get('dayLogs', date)) ?? { date }
+  }
+
+  /**
+   * The activities this person tracks every day, which is what Today shows.
+   *
+   * Falls back to the seed's defaults when the profile carries no list — a
+   * profile created before the flag existed, or one whose setup has not run
+   * yet. Storing nothing until the user changes something means the defaults
+   * can be retuned later without stale copies of them sitting in every profile.
+   */
+  async function dailyIds() {
+    const profile = await storage.get('profile', 'profile')
+    return profile?.dailyActivityIds ?? defaultDailyIds(activities)
+  }
+
+  /**
+   * Puts an activity on the daily list, or takes it off.
+   *
+   * Taking one off never removes anything already logged and never costs XP;
+   * it is a decision about one screen's contents, not about the day.
+   *
+   * @param {string} activityId
+   * @param {boolean} on
+   */
+  async function setDaily(activityId, on) {
+    if (!ACTIVITY_FIELDS[activityId]) return dailyIds()
+    const current = new Set(await dailyIds())
+    if (on) current.add(activityId)
+    else current.delete(activityId)
+    // Stored in the catalogue's own order, so the list reads the same wherever
+    // it is shown.
+    const next = activities.map((a) => a.id).filter((id) => current.has(id))
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    await storage.put('profile', { ...profile, dailyActivityIds: next })
+    return next
   }
 
   /** The XP state, as the engine wants it. */
@@ -153,8 +190,10 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   async function today() {
     const date = clock.today()
     const day = await dayLog(date)
+    const wanted = new Set(await dailyIds())
     const { outstanding, logged } = splitActivities(activities, day)
     const decorate = (activity) => ({
+      daily: wanted.has(activity.id),
       ...activity,
       spec: ACTIVITY_FIELDS[activity.id],
       // A body metric's reading is read HERE and only here. The domain may not
@@ -169,6 +208,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return {
       date,
       day,
+      dailyIds: [...wanted],
       outstanding: outstanding.map(decorate),
       logged: logged.map(decorate),
     }
@@ -179,5 +219,5 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return health ? health.read(date) : null
   }
 
-  return { activities, today, log, settle, dayLog, sample }
+  return { activities, today, log, settle, dayLog, sample, dailyIds, setDaily }
 }

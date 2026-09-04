@@ -50,7 +50,7 @@ export function createApp({ mount, workout, daily, storage, clock }) {
     onStart: (options) => startSession(options),
   })
   const history = createHistoryScreen({ storage, workout })
-  const settings = createSettingsScreen({ storage })
+  const settings = createSettingsScreen({ storage, daily })
   const today = createTodayScreen({
     workout, daily, clock,
     onStart: (options) => startSession(options),

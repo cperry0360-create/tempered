@@ -156,6 +156,42 @@ export function applyActivity(day, activityId, value = null) {
 }
 
 /**
+ * The ids seeded as daily — what a normal person tracks every day.
+ *
+ * This is a starting point, not the answer: the list belongs to the user and is
+ * set during setup. It exists so a first run has a sensible Today rather than
+ * either an empty one or all thirteen.
+ *
+ * @param {{id: string, daily?: boolean}[]} activities
+ * @returns {string[]}
+ */
+export function defaultDailyIds(activities) {
+  return activities.filter((activity) => activity.daily === true).map((activity) => activity.id)
+}
+
+/**
+ * The catalogue split into what Today shows and what lives one control away.
+ *
+ * This is the structural half of the one-view rule in `docs/03-screens.md`.
+ * Today fits a phone because it shows the daily list, not because the daily
+ * list happens to be short today — which means the rule survives a fourteenth
+ * activity, and a fortieth. Nothing is lost by the split: everything off the
+ * list is still loggable, still earns exactly the same, and still shows up in
+ * what was worked.
+ *
+ * @param {{id: string}[]} activities
+ * @param {string[]} dailyIds  The user's list.
+ */
+export function partitionByDaily(activities, dailyIds) {
+  const wanted = new Set(dailyIds ?? [])
+  const sorted = sortActivities(activities)
+  return {
+    daily: sorted.filter((activity) => wanted.has(activity.id)),
+    other: sorted.filter((activity) => !wanted.has(activity.id)),
+  }
+}
+
+/**
  * @param {{id: string}[]} activities
  * @returns {{id: string}[]} A new array, in the order a day happens.
  */

@@ -5,8 +5,14 @@
  *
  *   - **Training**, from `docs/10-task-model.md`: the day's prescribed exercise
  *     slots, each independently completable without starting a session.
- *   - **Daily**, from Phase 4 and `docs/03-screens.md`: sleep, fuel, movement,
- *     stillness. One tap for a mark, one number plus one tap for a measurement.
+ *   - **Daily**, from Phase 4 and `docs/03-screens.md`: the activities this
+ *     person tracks every day. One tap for a mark, one number plus one tap for
+ *     a measurement.
+ *
+ * Only the daily list is on the screen. Everything else in the catalogue is
+ * behind one control, which is what makes the one-view rule structural: Today
+ * fits a phone because of what it shows, not because the catalogue happens to
+ * be short. Adding a fortieth activity cannot break it.
  *
  * There is no overdue state anywhere in here, and there must never be one.
  * Outstanding is outstanding: nothing is late, nothing is missed, nothing turns
@@ -55,6 +61,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   /** What the last entry earned, shown once beside the thing that earned it. */
   /** @type {{id: string, xp: number, levelled: string|null}|null} */ let justEarned = null
   let workedOpen = false
+  let otherOpen = false
 
   // --- training -------------------------------------------------------------
 
@@ -145,12 +152,23 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
 
   // --- screen ---------------------------------------------------------------
 
+  /** Marks first, then measurements — one tap before one number plus one tap. */
+  function activityControls(list) {
+    const marks = list.filter((activity) => activity.spec.entry === 'mark')
+    const entries = list.filter((activity) => activity.spec.entry === 'number')
+    return [
+      marks.length > 0 && el('div.marks', {}, marks.map(markChip)),
+      entries.length > 0 && el('div.entries', {}, entries.map(entryTile)),
+    ]
+  }
+
   function render() {
     const tasks = today?.tasks ?? []
     const outstandingSlots = tasks.filter((task) => !task.done)
     const workedSlots = tasks.filter((task) => task.done)
-    const marks = (day?.outstanding ?? []).filter((activity) => activity.spec.entry === 'mark')
-    const entries = (day?.outstanding ?? []).filter((activity) => activity.spec.entry === 'number')
+    const outstanding = day?.outstanding ?? []
+    const daily = outstanding.filter((activity) => activity.daily)
+    const other = outstanding.filter((activity) => !activity.daily)
     const done = day?.logged ?? []
     const workedCount = workedSlots.length + done.length
 
@@ -175,19 +193,25 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
               : 'No program is active. Start one from Train.',
           }),
 
-      // No "OUTSTANDING" heading: everything above the worked toggle is
-      // outstanding by construction, and on a 6.1" screen a 28px heading is
-      // two activity tiles' worth of room spent saying what the screen already
-      // says. Sectioning that costs you the thing it labels is not sectioning.
       el('section.block', {}, [
+        el('h2.block__title', { text: 'Outstanding' }),
+
         outstandingSlots.length > 0 && el('div.tasks', {},
           outstandingSlots.map((task) => slotRow(task, today.day))),
 
-        marks.length > 0 && el('div.marks', {}, marks.map(markChip)),
-        entries.length > 0 && el('div.entries', {}, entries.map(entryTile)),
+        ...activityControls(daily),
 
-        outstandingSlots.length === 0 && marks.length === 0 && entries.length === 0
+        outstandingSlots.length === 0 && daily.length === 0
           && el('p.block__hint', { text: 'Nothing outstanding. The day is yours.' }),
+
+        // Everything off the daily list, one control away. Not a menu of
+        // settings — the same chips and tiles, logged the same way.
+        other.length > 0 && el('button.elsewhere__toggle', {
+          type: 'button', dataset: { other: 'toggle', open: String(otherOpen) },
+          onclick: () => { otherOpen = !otherOpen; render() },
+        }, [icon(otherOpen ? 'up' : 'down'), 'LOG SOMETHING ELSE']),
+
+        otherOpen && el('div.elsewhere', {}, activityControls(other)),
       ]),
 
       workedCount > 0 && el('section.block', {}, [

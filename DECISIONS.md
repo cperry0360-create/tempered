@@ -882,3 +882,59 @@ default. There is now an assertion for the mid-day state too.
 cache, which matters this time because `data/activities.json` is newly fetched at boot.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the daily flag, and where it lives
+**Phase:** 4.1
+**Decision:** Every activity carries a `daily` flag. The seed supplies the default — sleep,
+water, steps, nutrition, rest day on; everything else off — and the user's own list lives
+on the profile as `dailyActivityIds`. Today renders the daily list; the rest is behind one
+"log something else" control that opens the same chips and tiles. A profile with no list
+falls back to the seed defaults rather than having a copy written into it.
+**Reasoning:** Cory's call, and the right one: Phase 4 met its one-view criterion by
+shaving labels and had 10px left, which meant the fourteenth activity would have broken it.
+Now the rule holds by construction. The fallback matters because the defaults can then be
+retuned later without every existing profile carrying a stale copy of the old ones, and
+because a profile created before the flag existed still works. Measured after the change:
+736px of 844px with the section heading and the wider spacing restored, against 834px
+before it.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the flag is placement, never scoring
+**Phase:** 4.1
+**Decision:** `daily` affects one screen's contents and nothing else. An activity off the
+list earns exactly the same XP, logs the same way, and appears in the same worked list.
+Taking one off never unlogs anything. Both are asserted.
+**Reasoning:** The obvious way for this to rot is for "not on my daily list" to quietly
+become "worth less" or "not really tracked". `CLAUDE.md` is clear that nothing is punished
+and that measurement is what earns; a placement preference is not a measurement.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the list is editable in Settings until setup exists
+**Phase:** 4.1
+**Decision:** Settings gains a Daily list card — one chip per activity, tap to toggle.
+`docs/03` says the flag is set during setup, which is Phase 7.
+**Reasoning:** A default nobody can change is not a default, and shipping the flag with no
+way to edit it for three phases would mean the defaults were never tested against a real
+preference. Setup will take this over rather than duplicate it.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: protein stays a mark
+**Phase:** 4.1
+**Decision:** Cory answered the open question from Phase 4: no gram target. `protein_target`
+stays a one-tap mark, and `data/activities.json` keeps its `unit: g` as description rather
+than as something the app asks for.
+**Reasoning:** His words: that is programming advice he is not going to invent. Recorded so
+the question does not get reopened by the next person who notices the unit.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.5.1 (4.1)
+**Phase:** 4.1
+**Decision:** `src/version.js` carries `0.5.1 (4.1)`, built 2026-09-04.
+**Reasoning:** A correction inside the Phase 4 group, so the patch version moves, matching
+how 3.7 was handled.
+**Confidence:** specified
+**Needs Cory:** no

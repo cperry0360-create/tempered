@@ -159,6 +159,25 @@ entry, sleep, water, nutrition, rest day, body metrics.
 
 ---
 
+## Phase 4.1 — The daily list
+
+Phase 4 met its one-view criterion with 10px to spare, by shaving labels. That is not a
+fix — it is a promise that gets harder to keep every time an activity is added.
+
+Every activity carries a `daily` flag, defaulted from the seed and stored on the profile.
+Today shows the daily list; everything else is behind one control. See `docs/03-screens.md`
+and the rule restated in `docs/10-task-model.md`.
+
+- Seeded daily: sleep, water, steps, nutrition, rest day. Everything else starts off.
+- The list is editable — Settings for now, setup in Phase 7.
+- The flag is a placement rule for one screen. It never changes what anything is worth.
+
+**Acceptance:** the Phase 4 criteria, with the one-view rule now asserted against the
+daily list and the day's slots, plus: every other activity reachable in one tap, rest day
+never behind that control, and editing the list changing Today without unlogging anything.
+
+---
+
 ## Phase 5 — Character surface
 
 The five attributes with levels, tiers, progress bars and their XP sources made visible.

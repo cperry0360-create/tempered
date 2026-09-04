@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tempered — persistence harness</title>
+    <style>
+      body { font: 14px system-ui; background: #0a0c10; color: #e6eaf2; padding: 20px; }
+      .check[data-ok="true"]::before { content: "PASS  "; color: #4fc9a0; }
+      .check[data-ok="false"]::before { content: "FAIL  "; color: #e05a6a; }
+      code { color: rgba(230,234,242,.6); }
+    </style>
+  </head>
+  <body>
+    <h1 id="phase">starting</h1>
+    <div id="results"></div>
+    <script type="module">
+      import { createIndexedDbStorage } from '../../src/adapters/storage/indexeddb-storage.js'
+      import { readSnapshot, exportSnapshot, applyImportPlan } from '../../src/adapters/storage/snapshot.js'
+      import { toBlob, exportFilename, readFileAsText } from '../../src/adapters/storage/file-transfer.js'
+      import { prepareImport } from '../../src/domain/transfer.js'
+      import { systemClock } from '../../src/adapters/clock/clock.js'
+
+      const results = document.getElementById('results')
+      const params = new URLSearchParams(location.search)
+      const phase = params.get('phase') ?? 'write'
+
+      /** @type {{name: string, ok: boolean, detail: string}[]} */
+      const collected = []
+
+      function check(name, ok, detail = '') {
+        collected.push({ name, ok: Boolean(ok), detail })
+        const row = document.createElement('div')
+        row.className = 'check'
+        row.dataset.ok = String(Boolean(ok))
+        row.textContent = `${name}${detail ? ` — ${detail}` : ''}`
+        results.append(row)
+        return Boolean(ok)
+      }
+
+      /**
+       * The page tells the driver when it is genuinely finished. A DOM snapshot
+       * cannot: it is taken when the document loads, and everything interesting
+       * here happens asynchronously after that.
+       */
+      async function finish(label, passed) {
+        results.dataset.status = passed ? 'pass' : 'fail'
+        await fetch('/__report', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label, passed, checks: collected }),
+        })
+      }
+
+      /** The data written in phase one and expected back in every later phase. */
+      const FIXTURE = {
+        profile: { id: 'profile', name: 'Cory', units: 'imperial', planTargetSessionsPerWeek: 4 },
+        sessions: [
+          { id: 's1', routineId: 'lower', startedAt: '2026-09-04T18:00:00.000Z' },
+          { id: 's2', routineId: 'upper', startedAt: '2026-09-06T18:00:00.000Z' },
+        ],
+        setLogs: [
+          { id: 'sl1', sessionId: 's1', exerciseId: 'squat_bb', weight: 145, reps: 8 },
+          { id: 'sl2', sessionId: 's1', exerciseId: 'deadlift_bb', weight: 160, reps: 8 },
+          { id: 'sl3', sessionId: 's2', exerciseId: 'pullup', weight: null, reps: 10 },
+        ],
+        dayLogs: [{ date: '2026-09-04', steps: 8200, sleepHours: 7.8, bodyMetrics: { weight: 197.4 } }],
+        attributeState: [
+          { attribute: 'might', xp: 1240, level: 1, lifetimeSources: { 'might.volume': 1240 } },
+          { attribute: 'grit', xp: 480, level: 1, lifetimeSources: { 'grit.session': 140 } },
+        ],
+        records: [{ exerciseId: 'squat_bb', bestWeight: { weight: 145, reps: 8, date: '2026-09-04' } }],
+        titles: [{ id: 'first_load', earnedAt: '2026-09-04' }],
+      }
+
+      async function write(storage) {
+        for (const key of Object.keys(FIXTURE)) await storage.clear(key)
+        await storage.put('profile', FIXTURE.profile)
+        for (const key of ['sessions', 'setLogs', 'dayLogs', 'attributeState', 'records', 'titles']) {
+          await storage.putAll(key, FIXTURE[key])
+        }
+      }
+
+      async function verify(storage, label) {
+        let ok = true
+        const snapshot = await readSnapshot(storage)
+        ok = check(`${label}: profile survived`, snapshot.profile?.name === 'Cory',
+          JSON.stringify(snapshot.profile?.name)) && ok
+        ok = check(`${label}: all ${FIXTURE.sessions.length} sessions survived`,
+          snapshot.sessions.length === FIXTURE.sessions.length, `got ${snapshot.sessions.length}`) && ok
+        ok = check(`${label}: all ${FIXTURE.setLogs.length} set logs survived`,
+          snapshot.setLogs.length === FIXTURE.setLogs.length, `got ${snapshot.setLogs.length}`) && ok
+        ok = check(`${label}: numeric values survived exactly`,
+          snapshot.setLogs.find((s) => s.id === 'sl1')?.weight === 145) && ok
+        ok = check(`${label}: nulls survived as nulls, not undefined`,
+          snapshot.setLogs.find((s) => s.id === 'sl3')?.weight === null) && ok
+        ok = check(`${label}: nested objects survived`,
+          snapshot.attributeState.find((a) => a.attribute === 'might')?.lifetimeSources['might.volume'] === 1240) && ok
+        ok = check(`${label}: floats survived without drift`,
+          snapshot.dayLogs[0]?.sleepHours === 7.8) && ok
+
+        const bySession = await storage.getAllByIndex('setLogs', 'sessionId', 's1')
+        ok = check(`${label}: indexes still resolve`, bySession.length === 2, `got ${bySession.length}`) && ok
+        return ok
+      }
+
+      /**
+       * Export to a real file, read it back, import it, and confirm the database
+       * is byte-for-byte what it was. This is the acceptance criterion "export
+       * produces a file; import restores it exactly", exercised end to end.
+       */
+      async function roundTripThroughFile(storage) {
+        const clock = systemClock()
+        let ok = true
+
+        const before = await readSnapshot(storage)
+        const doc = await exportSnapshot(storage, clock)
+        const blob = toBlob(doc)
+        ok = check('export produces a file', blob.size > 0 && blob.type === 'application/json',
+          `${blob.size} bytes`) && ok
+        ok = check('the file is named for its day',
+          /^tempered-backup-\d{4}-\d{2}-\d{2}\.json$/.test(exportFilename(clock)),
+          exportFilename(clock)) && ok
+
+        const text = await readFileAsText(blob)
+        const plan = prepareImport(text)
+        ok = check('the exported file validates on the way back in', plan.ok === true,
+          plan.ok ? '' : plan.message) && ok
+
+        // Wipe first, so a passing round trip cannot be the old data lingering.
+        for (const key of ['profile', 'sessions', 'setLogs', 'dayLogs', 'attributeState', 'records', 'titles']) {
+          await storage.clear(key)
+        }
+        ok = check('database emptied before restoring', (await storage.count('sessions')) === 0) && ok
+
+        await applyImportPlan(storage, plan, { confirm: 'replace' })
+        const after = await readSnapshot(storage)
+        ok = check('import restored the data exactly',
+          JSON.stringify(after) === JSON.stringify(before)) && ok
+
+        // And the confirmation rule holds in a real browser too.
+        let refused = false
+        try { await applyImportPlan(storage, plan) } catch { refused = true }
+        ok = check('import without confirmation is refused', refused) && ok
+
+        return ok
+      }
+
+      try {
+        const storage = createIndexedDbStorage()
+        await storage.open()
+        check('IndexedDB opened', storage.isOpen)
+
+        if (phase === 'write') {
+          // Write, then reload this very page and read it back, so a reload is
+          // tested inside one browser session rather than inferred from a restart.
+          if (sessionStorage.getItem('tempered-reloaded') === '1') {
+            document.getElementById('phase').textContent = 'phase: write + reload'
+            const ok = await verify(storage, 'after reload')
+            const roundTripped = await roundTripThroughFile(storage)
+            await finish('write+reload', ok && roundTripped)
+          } else {
+            await write(storage)
+            check('fixture written', true)
+            sessionStorage.setItem('tempered-reloaded', '1')
+            location.reload()
+          }
+        } else {
+          document.getElementById('phase').textContent = `phase: ${phase}`
+          const ok = await verify(storage, phase)
+          await finish(phase, ok)
+        }
+      } catch (error) {
+        check('harness threw', false, String(error))
+        await finish(phase, false)
+      }
+    </script>
+  </body>
+</html>

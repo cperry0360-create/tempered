@@ -309,3 +309,79 @@ inventing one is a new scoring mechanism rather than a tuning value.
 **Confidence:** inferred
 **Needs Cory:** yes — low priority. If planks should feed Might, it needs an
 `xpPerMinuteUnderTension` in `balance.json`. Nothing is blocked either way.
+
+## 2026-09-04 — Phase 2: the storage contract, and two implementations
+**Phase:** 2
+**Decision:** `storage-adapter.js` declares the contract; `memory-storage.js` and
+`indexeddb-storage.js` both implement it fully. The store layout lives once in
+`stores.js` and is shared by both.
+**Reasoning:** Non-negotiable 5 requires persistence behind an adapter so cloud sync can
+arrive without touching domain logic. The memory adapter is not a stub — the import,
+export and confirmation tests run against a real implementation of the same contract,
+under plain `node --test`, with no browser. One shared store definition means the two
+cannot drift.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Import confirmation is enforced by the signature, not by convention
+**Phase:** 2
+**Decision:** `prepareImport` (pure, domain) validates and returns a *plan*, applying
+nothing. `applyImportPlan` (adapter) throws unless called with `{ confirm: 'replace' }`.
+**Reasoning:** "Import never silently overwrites; it asks first" is a rule that a caller
+can forget. Splitting proposal from application means the only way to import is to have
+asked, and forgetting to ask is a thrown error rather than lost data. Validation order is
+`app`, then `schemaVersion`, then payload — exactly as `docs/02` requires, so a foreign or
+future file is refused before anything tries to interpret it.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Export carries every store, including directive
+**Phase:** 2
+**Decision:** The export payload includes `directive`, which the format block in
+`docs/02-data-model.md` does not list.
+**Reasoning:** "Import restores it exactly" is an acceptance criterion, and a store left
+out of the document cannot round-trip. The documented list is otherwise unchanged; this is
+a superset, so any file matching the documented shape still imports.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Migration machinery built before the first migration
+**Phase:** 2
+**Decision:** `src/domain/migrations/` ships with an empty registry at schema 1, a
+`migrate` that composes steps and refuses gaps and downgrades, and tests that prove the
+composition using an injected registry.
+**Reasoning:** `docs/02` requires migrations tested against a fixture of the previous
+version, and there is no previous version yet. Inventing a fake v0 would test a fiction.
+Injecting a registry proves the machinery for real without one. The alternative — writing
+this the first time it is needed, under pressure, against live user data — is how people
+lose data.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — The purity test reads source, and also removes the platform
+**Phase:** 2
+**Decision:** `src/domain/purity.test.js` scans every domain module for browser globals,
+clock reads, `Math.random`, adapter imports and bare specifiers — then additionally
+imports the engine with `indexedDB`, `localStorage`, `fetch` and friends deleted from
+`globalThis` and runs it.
+**Reasoning:** A source scan alone can be fooled and a runtime check alone can miss an
+unexercised path, so it does both. Comments and string literals are stripped before
+scanning, so prose mentioning `indexedDB` cannot fail the build. It caught a real problem
+immediately: `transfer.js` had a local variable named `document`, shadowing a browser
+global in the one layer forbidden to touch one. Renamed rather than exempted.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Browser persistence proven by driving a real browser
+**Phase:** 2
+**Decision:** `tools/verify-persistence.js` serves the repo and drives Chromium through
+three passes against one profile: write-then-reload, restart, relaunch. The page posts its
+results back to the driver.
+**Reasoning:** "Data survives reload, browser restart and app relaunch" cannot be shown by
+a Node test — Node has no IndexedDB, and a fake one would only prove the fake works. The
+page reports over HTTP rather than through a DOM snapshot because `--dump-dom` captures at
+the load event, before any asynchronous storage work has finished; that cost an hour and is
+worth writing down. The harness was checked against an empty profile and correctly failed
+8 of 9 checks, so it is not vacuous.
+**Confidence:** specified
+**Needs Cory:** no

@@ -10,7 +10,7 @@ real `data/balance.json`.
 
 | Day | Might | Wind | Grit | Vitality | Mind |
 |---|---|---|---|---|---|
-| 30 | 2 | 2 | 2 | 2 | 2 |
+| 30 | 3 | 2 | 2 | 2 | 2 |
 | 60 | 4 | 3 | 4 | 4 | 3 |
 | 90 | 5 | 4 | 4 | 4 | 4 |
 | 180 | 7 | 5 | 6 | 6 | 5 |
@@ -43,6 +43,14 @@ near 2.45, not 1.85. `base` is now 400, which is one honest first session.
 load moved is a big number. Might's rates came down to roughly a third; the other four
 moved by less than 35% in either direction. Might still leads, which is correct for a
 training app, but by two levels rather than by a cap.
+
+**Bodyweight movements now carry load.** Each has a fixed `notionalLoad` in
+`data/exercises.json` — pull-up 120, dip 100, hanging leg raise 60, single-leg calf
+raise 40 — credited per rep, with any added weight stacked on top. The plank is scored by
+time, not load, so it has none. The constant belongs to the exercise and not to the
+person: it is never the user's body weight and never derived from it, which is what keeps
+a heavier lifter from earning more Might than a lighter one. This lifted Might slightly in
+the early weeks without moving the year-end profile.
 
 ## For Claude Code
 

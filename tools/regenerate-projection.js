@@ -71,6 +71,14 @@ load moved is a big number. Might's rates came down to roughly a third; the othe
 moved by less than 35% in either direction. Might still leads, which is correct for a
 training app, but by two levels rather than by a cap.
 
+**Bodyweight movements now carry load.** Each has a fixed \`notionalLoad\` in
+\`data/exercises.json\` — pull-up 120, dip 100, hanging leg raise 60, single-leg calf
+raise 40 — credited per rep, with any added weight stacked on top. The plank is scored by
+time, not load, so it has none. The constant belongs to the exercise and not to the
+person: it is never the user's body weight and never derived from it, which is what keeps
+a heavier lifter from earning more Might than a lighter one. This lifted Might slightly in
+the early weeks without moving the year-end profile.
+
 ## For Claude Code
 
 The checks above are enforced by \`src/domain/balance.projection.test.js\`, which also

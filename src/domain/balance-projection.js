@@ -161,7 +161,7 @@ export function simulateYear(balance, library, options = {}) {
         planTargetSessionsPerWeek: planTarget,
       }
       state = applyAwards(state, awardsForSession(session, context, balance), balance)
-      records = applyRecords(records, sets, `d${day}`)
+      records = applyRecords(records, sets, `d${day}`, exercises)
       lastSessionDay = day
       sessionDays.add(day)
     }

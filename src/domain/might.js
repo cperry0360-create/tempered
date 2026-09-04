@@ -45,7 +45,7 @@ export function mightAwards(session, context, balance) {
   // Working volume, class-weighted, then softly capped so junk volume cannot
   // outscore hard work.
   let effectiveVolume = 0
-  for (const [exerciseId, volume] of volumeByExercise(session.sets)) {
+  for (const [exerciseId, volume] of volumeByExercise(session.sets, context.exercises)) {
     effectiveVolume += volume * classMultiplier(exerciseId, context, balance)
   }
   const scoredVolume = softCap(effectiveVolume, might.volumeSoftCapLbs, might.volumeCurveBeyondCap)
@@ -61,7 +61,7 @@ export function mightAwards(session, context, balance) {
   }
   add('might.carry', 'Loaded carries', carryUnits * might.carryXpPerLbPerHundredFeet)
 
-  const detected = detectRecords(session.sets, context.records)
+  const detected = detectRecords(session.sets, context.records, context.exercises)
 
   let weightPrXp = 0
   for (const pr of detected.weightPrs) {

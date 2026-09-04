@@ -1,5 +1,5 @@
 {
-  "_comment": "Seed library. Weights are Cory's actual working numbers as of Sep 2026. class drives Might XP weighting: compound counts fully, isolation at a reduced rate. Users can add exercises; these ship as the default.",
+  "_comment": "Seed library. Weights are Cory's actual working numbers as of Sep 2026. class drives Might XP weighting: compound counts fully, isolation at a reduced rate. notionalLoad is the load in lbs credited to a bodyweight rep: a FIXED per-exercise constant, never the user's body weight and never derived from it. A weighted variant adds the logged weight on top. Users can add exercises; these ship as the default.",
 
   "routines": [
     {
@@ -58,7 +58,7 @@
     {"id":"leg_curl","name":"Leg Curl","variant":"Machine","group":"legs","class":"isolation","pattern":"Knee Flexion","unit":"lbs","progression":"linear","activation":{"hamstrings":1}},
     {"id":"leg_extension","name":"Leg Extension","variant":"Machine","group":"legs","class":"isolation","pattern":"Knee Extension","unit":"lbs","progression":"linear","activation":{"quads":1}},
     {"id":"calf_raise","name":"Calf Raise (Standing)","variant":"Machine","group":"legs","class":"isolation","pattern":"Ankle Extension","unit":"lbs","progression":"linear","activation":{"calves":1}},
-    {"id":"calf_raise_single","name":"Single-Leg Calf Raise","variant":"Bodyweight","group":"legs","class":"isolation","pattern":"Ankle Extension","unit":"bodyweight","progression":"reps","activation":{"calves":1}},
+    {"id":"calf_raise_single","name":"Single-Leg Calf Raise","variant":"Bodyweight","group":"legs","class":"isolation","pattern":"Ankle Extension","unit":"bodyweight","notionalLoad":40,"progression":"reps","activation":{"calves":1}},
 
     {"id":"hyperextension","name":"Hyperextension","variant":"Bodyweight","group":"posterior","class":"isolation","pattern":"Hip Extension","unit":"lbs","progression":"linear","activation":{"erector_spinae":1,"glutes":0.5}},
     {"id":"lateral_raise","name":"Lateral Raise (Cable)","variant":"Cable","group":"shoulders","class":"isolation","pattern":"Shoulder Abduction","unit":"lbs","progression":"linear","activation":{"mid_delts":1}},
@@ -66,7 +66,9 @@
     {"id":"tricep_push","name":"Tricep Pushdown (Cable)","variant":"Cable","group":"arms","class":"isolation","pattern":"Arm Extension","unit":"lbs","progression":"linear","activation":{"triceps":1}},
     {"id":"curl_db","name":"Dumbbell Curl","variant":"Dumbbell","group":"arms","class":"isolation","pattern":"Elbow Flexion","unit":"lbs","progression":"linear","activation":{"biceps":1}},
     {"id":"face_pull","name":"Face Pull","variant":"Cable","group":"back","class":"isolation","pattern":"Horizontal Pulling","unit":"lbs","progression":"linear","activation":{"rear_delts":1,"traps":0.5}},
-    {"id":"pullup","name":"Pull-up","variant":"Bodyweight","group":"back","class":"compound","pattern":"Vertical Pulling","unit":"bodyweight","progression":"reps","activation":{"lats":1.5,"biceps":0.5}},
+    {"id":"pullup","name":"Pull-up","variant":"Bodyweight","group":"back","class":"compound","pattern":"Vertical Pulling","unit":"bodyweight","notionalLoad":120,"progression":"reps","activation":{"lats":1.5,"biceps":0.5}},
+    {"id":"dip","name":"Dip","variant":"Bodyweight","group":"chest","class":"compound","pattern":"Vertical Pushing","unit":"bodyweight","notionalLoad":100,"progression":"reps","activation":{"pecs":1,"triceps":1.5,"front_delts":0.5}},
+    {"id":"hanging_leg_raise","name":"Hanging Leg Raise","variant":"Bodyweight","group":"core","class":"isolation","pattern":"Hip Flexion","unit":"bodyweight","notionalLoad":60,"progression":"reps","activation":{"core":1.5,"forearms":0.5}},
     {"id":"plank","name":"Plank","variant":"Bodyweight","group":"core","class":"isolation","pattern":"Anti-Extension","unit":"time","progression":"time","activation":{"core":1}}
   ],
 

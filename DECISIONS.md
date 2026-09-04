@@ -283,3 +283,29 @@ test checks, so the published table and the enforced checks cannot drift. The te
 compares the committed table against a fresh run, which makes a stale doc a test failure.
 **Confidence:** inferred
 **Needs Cory:** no
+
+## 2026-09-04 — Bodyweight exercises carry a fixed notionalLoad
+**Phase:** 1 (follow-up)
+**Decision:** Each bodyweight movement carries a `notionalLoad` in `data/exercises.json`:
+pull-up 120, dip 100, hanging leg raise 60, single-leg calf raise 40. Volume for a plain
+set is `notionalLoad x reps`; for a weighted variant `(notionalLoad + addedWeight) x reps`.
+The plank is scored by time, not load, so it has none. Dip and hanging leg raise did not
+exist in the seed library and were added.
+**Reasoning:** Cory's instruction, resolving the open item from the Phase 1 report. The
+constant is a property of the exercise, not of the person — that is precisely what keeps
+the hard rule intact, since deriving it from body weight would mean a heavier user earns
+more Might and losing weight costs it. `SetInput.weight` now means *added* weight for any
+exercise carrying a notional load.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — The plank still earns no Might
+**Phase:** 1 (follow-up)
+**Decision:** Time-under-tension is not scored for Might. The plank earns Grit through the
+session and nothing else.
+**Reasoning:** "Scored by time not load" settles that it gets no notional load. Actually
+paying Might for held seconds needs a rate that does not exist in `data/balance.json`, and
+inventing one is a new scoring mechanism rather than a tuning value.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. If planks should feed Might, it needs an
+`xpPerMinuteUnderTension` in `balance.json`. Nothing is blocked either way.

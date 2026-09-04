@@ -12,6 +12,28 @@
 import { estimateOneRepMax } from './e1rm.js'
 
 /**
+ * The load a set is scored at.
+ *
+ * For a bodyweight movement this is the exercise's `notionalLoad` — a fixed
+ * constant from `data/exercises.json`, chosen once per exercise. It is never the
+ * user's body weight and never derived from it, so a heavier user earns no more
+ * Might than a lighter one and losing weight costs nothing.
+ *
+ * A weighted variant adds the logged weight on top: a pull-up with a 25 lb belt
+ * scores at notionalLoad + 25.
+ *
+ * @param {import('./types.js').SetInput} set
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
+ * @returns {number} 0 when there is no load to score.
+ */
+export function effectiveLoad(set, exercises) {
+  const added = typeof set.weight === 'number' && Number.isFinite(set.weight) ? set.weight : 0
+  const notional = exercises?.get(set.exerciseId)?.notionalLoad
+  if (typeof notional === 'number' && notional > 0) return notional + Math.max(0, added)
+  return Math.max(0, added)
+}
+
+/**
  * @param {import('./types.js').SetInput[]} sets
  * @returns {import('./types.js').SetInput[]}
  */
@@ -26,15 +48,17 @@ export function workingSets(sets) {
  * substitutes the user's body weight — see `docs/01-attributes-and-xp.md`.
  *
  * @param {import('./types.js').SetInput[]} sets
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
  * @returns {Map<string, number>}
  */
-export function volumeByExercise(sets) {
+export function volumeByExercise(sets, exercises) {
   /** @type {Map<string, number>} */
   const volumes = new Map()
   for (const set of workingSets(sets)) {
-    if (typeof set.weight !== 'number' || typeof set.reps !== 'number') continue
-    if (set.weight <= 0 || set.reps <= 0) continue
-    volumes.set(set.exerciseId, (volumes.get(set.exerciseId) ?? 0) + set.weight * set.reps)
+    if (typeof set.reps !== 'number' || set.reps <= 0) continue
+    const load = effectiveLoad(set, exercises)
+    if (load <= 0) continue
+    volumes.set(set.exerciseId, (volumes.get(set.exerciseId) ?? 0) + load * set.reps)
   }
   return volumes
 }
@@ -43,17 +67,19 @@ export function volumeByExercise(sets) {
  * Heaviest single working set per exercise.
  *
  * @param {import('./types.js').SetInput[]} sets
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
  * @returns {Map<string, {weight: number, reps: number}>}
  */
-export function heaviestByExercise(sets) {
+export function heaviestByExercise(sets, exercises) {
   /** @type {Map<string, {weight: number, reps: number}>} */
   const heaviest = new Map()
   for (const set of workingSets(sets)) {
-    if (typeof set.weight !== 'number' || typeof set.reps !== 'number') continue
-    if (set.weight <= 0 || set.reps <= 0) continue
+    if (typeof set.reps !== 'number' || set.reps <= 0) continue
+    const load = effectiveLoad(set, exercises)
+    if (load <= 0) continue
     const current = heaviest.get(set.exerciseId)
-    if (!current || set.weight > current.weight) {
-      heaviest.set(set.exerciseId, { weight: set.weight, reps: set.reps })
+    if (!current || load > current.weight) {
+      heaviest.set(set.exerciseId, { weight: load, reps: set.reps })
     }
   }
   return heaviest
@@ -63,13 +89,14 @@ export function heaviestByExercise(sets) {
  * Best estimated 1RM per exercise in one session.
  *
  * @param {import('./types.js').SetInput[]} sets
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
  * @returns {Map<string, number>}
  */
-export function bestE1rmByExercise(sets) {
+export function bestE1rmByExercise(sets, exercises) {
   /** @type {Map<string, number>} */
   const best = new Map()
   for (const set of workingSets(sets)) {
-    const estimate = estimateOneRepMax(set.weight, set.reps)
+    const estimate = estimateOneRepMax(effectiveLoad(set, exercises) || null, set.reps)
     if (estimate <= 0) continue
     if (estimate > (best.get(set.exerciseId) ?? 0)) best.set(set.exerciseId, estimate)
   }
@@ -88,27 +115,28 @@ export function bestE1rmByExercise(sets) {
  *
  * @param {import('./types.js').SetInput[]} sets
  * @param {Map<string, import('./types.js').ExerciseRecord>} records
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
  * @returns {DetectedRecords}
  */
-export function detectRecords(sets, records) {
+export function detectRecords(sets, records, exercises) {
   /** @type {DetectedRecords} */
   const detected = { weightPrs: [], volumePrs: [], e1rmGains: [] }
 
-  for (const [exerciseId, heaviest] of heaviestByExercise(sets)) {
+  for (const [exerciseId, heaviest] of heaviestByExercise(sets, exercises)) {
     const previous = records.get(exerciseId)?.bestWeight
     if (previous && heaviest.weight > previous.weight) {
       detected.weightPrs.push({ exerciseId, ...heaviest, previous: previous.weight })
     }
   }
 
-  for (const [exerciseId, volume] of volumeByExercise(sets)) {
+  for (const [exerciseId, volume] of volumeByExercise(sets, exercises)) {
     const previous = records.get(exerciseId)?.bestVolume
     if (previous && volume > previous.volume) {
       detected.volumePrs.push({ exerciseId, volume, previous: previous.volume })
     }
   }
 
-  for (const [exerciseId, value] of bestE1rmByExercise(sets)) {
+  for (const [exerciseId, value] of bestE1rmByExercise(sets, exercises)) {
     const previous = records.get(exerciseId)?.bestE1RM
     if (previous && value > previous.value) {
       detected.e1rmGains.push({ exerciseId, gainLbs: value - previous.value, value })
@@ -125,13 +153,14 @@ export function detectRecords(sets, records) {
  * @param {Map<string, import('./types.js').ExerciseRecord>} records
  * @param {import('./types.js').SetInput[]} sets
  * @param {string} date
+ * @param {Map<string, import('./types.js').Exercise>} [exercises]
  * @returns {Map<string, import('./types.js').ExerciseRecord>}
  */
-export function applyRecords(records, sets, date) {
+export function applyRecords(records, sets, date, exercises) {
   const updated = new Map(records)
-  const heaviest = heaviestByExercise(sets)
-  const volumes = volumeByExercise(sets)
-  const e1rms = bestE1rmByExercise(sets)
+  const heaviest = heaviestByExercise(sets, exercises)
+  const volumes = volumeByExercise(sets, exercises)
+  const e1rms = bestE1rmByExercise(sets, exercises)
 
   const touched = new Set([...heaviest.keys(), ...volumes.keys(), ...e1rms.keys()])
 

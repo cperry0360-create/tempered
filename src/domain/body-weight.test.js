@@ -66,11 +66,20 @@ test('REQUIRED: body weight bolted onto a session input is ignored entirely', ()
   )
 })
 
-test('REQUIRED: bodyweight exercises never borrow the user\'s weight as load', () => {
-  // A pull-up has no logged load. It must score no volume rather than silently
-  // using body weight, which would make a heavier user earn more Might.
+test('REQUIRED: bodyweight exercises score a fixed constant, not the user\'s weight', () => {
+  // A pull-up scores at the exercise's notionalLoad from data/exercises.json.
+  // That constant is the same for every user, so a heavier lifter earns no more
+  // Might than a lighter one and losing weight costs nothing.
+  const context = makeContext()
+  const notional = context.exercises.get('pullup').notionalLoad
   const session = makeSession({ sets: [{ exerciseId: 'pullup', weight: null, reps: 12 }] })
-  assert.equal(totalsByAttribute(awardsForSession(session, makeContext(), balance)).might, 0)
+
+  const might = totalsByAttribute(awardsForSession(session, context, balance)).might
+  assert.ok(might > 0, 'a pull-up must earn Might')
+
+  // Exactly notionalLoad x reps at the compound rate, and nothing else.
+  const expected = ((notional * 12) / 1000) * balance.might.xpPerThousandLbsVolume
+  assert.ok(Math.abs(might - expected) < 1e-9, `${might} should be ${expected}`)
 })
 
 test('REQUIRED: the SessionInput type declares no body-weight field', () => {

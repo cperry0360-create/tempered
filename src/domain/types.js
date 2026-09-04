@@ -18,7 +18,10 @@
  *
  * @typedef {object} SetInput
  * @property {string} exerciseId
- * @property {number|null} weight      Load in lbs, or null for bodyweight.
+ * @property {number|null} weight      Load in lbs. For an exercise carrying a
+ *                                     `notionalLoad`, this is the ADDED weight
+ *                                     (a belt, a vest) on top of it, and null
+ *                                     means the plain bodyweight variant.
  * @property {number|null} reps
  * @property {number|null} [timeSec]   For time-based holds.
  * @property {number|null} [distance]  Feet carried, for loaded carries.
@@ -97,6 +100,9 @@
  * @property {string} name
  * @property {'compound'|'isolation'} class
  * @property {string} [metric]
+ * @property {number} [notionalLoad] Fixed lbs credited to one bodyweight rep.
+ *   A per-exercise constant from `data/exercises.json`. Never the user's body
+ *   weight, never derived from it.
  */
 
 /**

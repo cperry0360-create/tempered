@@ -13,10 +13,14 @@ export function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return
 
   window.addEventListener('load', () => {
-    // Relative to the document, so this resolves correctly under /tempered/.
-    navigator.serviceWorker.register('./sw.js').catch((/** @type {unknown} */ error) => {
-      // A failed registration costs offline support, not the app.
-      console.error('[tempered] service worker registration failed', error)
-    })
+    // A module worker, so sw.js can import the version its cache key derives
+    // from. Registered relative to the document, so it resolves under /tempered/.
+    navigator.serviceWorker.register('./sw.js', { type: 'module' })
+      .catch((/** @type {unknown} */ moduleError) => {
+        // Module workers need a modern browser (iOS 16.4+). On anything older
+        // the app still runs — it just runs online-only, which is a better
+        // outcome than a hard failure at startup.
+        console.error('[tempered] service worker registration failed', moduleError)
+      })
   })
 }

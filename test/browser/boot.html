@@ -16,6 +16,7 @@
        * default wiring. This is the check that the shipped entry path works.
        */
       import { bootstrap } from '../../src/app/bootstrap.js'
+      import { VERSION } from '../../src/version.js'
 
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return ok }
@@ -65,6 +66,24 @@
         check('the page does not scroll sideways',
           document.documentElement.scrollWidth <= window.innerWidth + 1,
           `${document.documentElement.scrollWidth}px content in ${window.innerWidth}px viewport`)
+
+        // The service worker is a MODULE worker now, so it can import the version
+        // its cache key derives from. If module workers were unsupported this
+        // would fail here rather than silently shipping without offline support.
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('./../../sw.js', { type: 'module' })
+            .catch((error) => { check('module service worker registers', false, String(error)); return null })
+          if (registration) {
+            check('the service worker registers as a module', true, registration.scope)
+            const ready = await navigator.serviceWorker.ready.catch(() => null)
+            check('it activates', ready !== null)
+            const names = await caches.keys()
+            check('its cache key is derived from VERSION',
+              names.some((name) => name === `tempered-${VERSION}`),
+              names.join(', ') || 'no caches yet')
+            await registration.unregister()
+          }
+        }
 
         await fetch('/__report', {
           method: 'POST', headers: { 'content-type': 'application/json' },

@@ -541,3 +541,98 @@ mean the wrong thing was sabotaged, and the two are worth telling apart before d
 assertion.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 3.6: completion is derived, not stored
+**Phase:** 3.6
+**Decision:** A slot is complete when the current program week's logged sets for that
+`(programDayId, slotIndex)` reach its prescribed count. Nothing records "done".
+**Reasoning:** `docs/10` needs rollover within the week and a clean slate at the boundary.
+Derivation gives both for free: ask a different week and outstanding work is simply gone,
+with nothing to reset and no cron job to forget. A stored flag would have needed explicit
+clearing, and a missed clear is exactly how an app becomes a debt tracker.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.6: slot attribution, and schema 3
+**Phase:** 3.6
+**Decision:** Set logs gained optional `programDayId` and `slotIndex`.
+`CURRENT_SCHEMA_VERSION` 2 -> 3 with a migration that transforms nothing.
+**Reasoning:** Lateral raises appear on three days of the program; without attribution,
+doing Monday's would mark Thursday's complete. A no-op migration looks like noise, but
+`docs/02` requires a version per schema change, and recording where the fields appeared is
+what lets a future reader know that an unattributed log is old rather than broken.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.6: one session per day, settled per slot
+**Phase:** 3.6
+**Decision:** Every slot completed on a given day shares one session record. Day-level Grit
+— showing up, coming back, meeting the week's plan — fires once, on the first work logged;
+time under load accrues every time. Settling a day's session scores only the sets just
+added.
+**Reasoning:** `docs/10` requires that a micro-set day still accrues Grit without a formal
+session, and that XP is unchanged by the path. Five separate sessions would have paid the
+showing-up bonus five times; one session settled repeatedly would have re-awarded earlier
+slots. Both are wrong in the same direction — inflation — so the fix is a shared day session
+plus `onlySets` scoping. A test asserts a slot done alone scores exactly what it scores
+inside a block.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.6: weekly targets, and the groups the doc did not name
+**Phase:** 3.6
+**Decision:** Added the five ranges `docs/10` states to `data/programs.json` — chest 12–16,
+back 14–18, quads 10–14, hamstrings/glutes 10–14, shoulders 12–18. The doc's "and so on"
+groups carry no target: their sets are counted and shown, just not against a number. The
+mapping from those coarse groups to the library's finer activation keys lives in
+`src/domain/tasks.js`.
+**Reasoning:** Inventing ranges for arms and core would have been inventing programming.
+The mapping is a judgement call: back is lats and traps; shoulders is all three deltoid
+heads; rear delts are shoulders rather than back.
+**Confidence:** specified (the five ranges), inferred (the mapping)
+**Needs Cory:** yes — low priority. Confirm the group mapping, and give ranges for arms and
+core if you want them scored.
+
+## 2026-09-04 — Phase 3.6: the service worker is now a module worker
+**Phase:** 3.6
+**Decision:** `sw.js` is registered with `{ type: 'module' }` and imports `VERSION` from
+`src/version.js`, so the cache key genuinely derives from the version rather than being a
+duplicate kept in step by hand.
+**Reasoning:** `docs/10` asks for derivation. The alternative — duplicating the constant and
+asserting equality in a test — would satisfy the letter and not the intent. Module workers
+need iOS 16.4 or newer; on anything older registration rejects and is logged, and the app
+runs online-only rather than failing at startup. Verified in Chromium that it registers,
+activates, and produces a cache named `tempered-0.4.0 (3.6)`.
+**Confidence:** inferred
+**Needs Cory:** yes — if your iPhone is on iOS 16.3 or older, tell me and I will duplicate
+the constant with an equality test instead.
+
+## 2026-09-04 — Phase 3.6: two bugs found by the harnesses
+**Phase:** 3.6
+**Decision:** Fixed a variable shadowing bug in `train.js` and changed where the
+post-session screen returns to.
+**Reasoning:** `programBlock` destructured `const { program, week, deload } = active`, which
+shadowed the outer `week` state with the week *number* — the weekly view crashed on first
+render. And DONE always returned to Train, even for a slot opened from Today, dropping the
+user on a screen they were not working in. Neither would have shown up in a unit test.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — A sabotage that did not fail, and what it meant
+**Phase:** 3.6
+**Decision:** Kept the slot-identity behaviour; noted that only the node tests cover it.
+**Reasoning:** Sabotaging slot identity — keying completion by exercise instead of by slot —
+did not fail the browser harness, though it did fail two node tests. So the behaviour is
+covered, just not at the layer I sabotaged. Recording it because the useful habit is not
+"sabotage until something goes red" but "find out which layer actually holds the guarantee".
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.4.0 (3.6)
+**Phase:** 3.6
+**Decision:** `src/version.js` carries `0.4.0 (3.6)`, built 2026-09-04. Bumped in the same
+commit as the phase, as `docs/10` requires.
+**Reasoning:** The minor version tracks the phase group; the parenthetical names the exact
+phase, so a screenshot of Settings identifies the build precisely.
+**Confidence:** specified
+**Needs Cory:** no

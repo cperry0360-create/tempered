@@ -13,8 +13,9 @@
  * The schema version this build reads and writes.
  *
  * 2 — programs and programState added.
+ * 3 — set logs may carry programDayId and slotIndex.
  */
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -32,6 +33,17 @@ export const MIGRATIONS = Object.freeze({
    * existing is touched: no session, set log or attribute state changes shape.
    */
   1: (data) => ({ ...data, programs: data.programs ?? [], programState: data.programState ?? [] }),
+
+  /**
+   * 2 -> 3: slot attribution (docs/10).
+   *
+   * Set logs gained optional `programDayId` and `slotIndex`, so a logged set can
+   * be attributed to the program slot it completes. Nothing needs rewriting: a
+   * version 2 log simply carries no attribution, which reads as "not part of a
+   * program slot" — exactly what it was. The version boundary is recorded here
+   * so a future reader knows when the fields appeared.
+   */
+  2: (data) => data,
 })
 
 /**

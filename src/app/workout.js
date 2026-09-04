@@ -10,6 +10,7 @@ import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, t
 import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
 import { proposeNext } from '../domain/progression.js'
 import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets } from '../domain/programs.js'
+import { dayTasks, weekTasks, weeklyHardSetsCompleted, isInSameProgramWeek } from '../domain/tasks.js'
 import { levelFromXp, levelProgress } from '../domain/levels.js'
 import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
@@ -184,6 +185,10 @@ export function createWorkoutService({ storage, clock, balance }) {
       // done, not what was planned.
       substitutedFor: set.substitutedFor ?? null,
       perSide: set.perSide === true,
+      // Which program slot this set completes, so a slot can be finished on any
+      // day of the week and still count against the day it was prescribed for.
+      programDayId: set.programDayId ?? null,
+      slotIndex: set.slotIndex ?? null,
       completedAt: clock.nowIso(),
     }
     await storage.put('setLogs', log)
@@ -205,7 +210,11 @@ export function createWorkoutService({ storage, clock, balance }) {
    * @param {{durationMinutes?: number}} [options]
    */
   async function finishSession(session, options = {}) {
-    const sets = await setsFor(session.id)
+    // `onlySets` scores just the work being settled now. A day's session is
+    // reused by every slot completed that day, so settling it a second time must
+    // not re-award the first slot. Without this, completing three slots would
+    // pay for the first one three times.
+    const sets = options.onlySets ?? await setsFor(session.id)
     const exercises = await exerciseMap()
     const records = await recordMap()
 
@@ -245,6 +254,9 @@ export function createWorkoutService({ storage, clock, balance }) {
       daysSinceLastSession: previous ? daysBetween(previous, session.date) : Infinity,
       sessionsThisWeekBefore,
       planTargetSessionsPerWeek: profile?.planTargetSessionsPerWeek ?? 4,
+      // Day-level Grit — showing up, coming back, meeting the week — fires once
+      // per day, however many slots that day contains. See docs/10.
+      isFirstOfDay: options.isFirstOfDay !== false,
     }
 
     const detected = detectRecords(input.sets, records, exercises)
@@ -302,9 +314,98 @@ export function createWorkoutService({ storage, clock, balance }) {
     return rates
   }
 
+  /**
+   * Every working set logged inside the current program week.
+   *
+   * Completion is derived from this rather than stored, which is what makes the
+   * week boundary self-cleaning: ask a different week and outstanding work is
+   * simply gone, with nothing to reset and no debt to carry.
+   */
+  async function currentWeekLogs() {
+    const active = await activeProgram()
+    if (!active) return { active: null, logs: [] }
+    const sessions = new Map((await storage.getAll('sessions')).map((s) => [s.id, s]))
+    const today = clock.today()
+    const logs = (await storage.getAll('setLogs')).filter((log) => {
+      const date = sessions.get(log.sessionId)?.date
+      if (!date) return false
+      return isInSameProgramWeek(active.state.startedOn, date, today, daysBetween)
+    })
+    return { active, logs }
+  }
+
+  /** Today's prescribed slots, as tasks. */
+  async function todayTasks() {
+    const { active, logs } = await currentWeekLogs()
+    if (!active) return null
+    const weekday = new Date(`${clock.today()}T00:00:00`).getDay()
+    const names = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    const day = active.program.days.find((d) => d.id === names[weekday])
+      ?? active.program.days.find((d) => dayTasks(d, logs).some((t) => !t.done))
+      ?? active.program.days[0]
+    return { ...active, day, tasks: dayTasks(day, logs) }
+  }
+
+  /** The whole week: prescribed, done, remaining, and hard sets against target. */
+  async function weekStatus() {
+    const { active, logs } = await currentWeekLogs()
+    if (!active) return null
+    return {
+      ...active,
+      week: weekTasks(active.program, logs),
+      hardSets: weeklyHardSetsCompleted(logs, await exerciseMap(), active.program.weeklyTargets ?? {}),
+    }
+  }
+
+  /**
+   * Today's session, opened if it does not exist yet.
+   *
+   * Every slot completed on a given day shares one session record: that is what
+   * makes a day of micro sets one training day rather than five.
+   *
+   * @returns {Promise<{session: any, isFirstOfDay: boolean}>}
+   */
+  async function openDaySession() {
+    const today = clock.today()
+    const existing = (await storage.getAll('sessions')).find((s) => s.date === today)
+    return { session: existing ?? await startSession(null), isFirstOfDay: !existing }
+  }
+
+  /**
+   * Completes one slot on its own — no routine, no session ceremony.
+   *
+   * Work still lands in a session record, because that is where set logs live,
+   * but the session is the DAY's, reused by every slot completed that day. That
+   * is what makes a day of micro sets count once as a training day rather than
+   * five times, while every set still scores exactly what it would have scored
+   * inside a block. The path does not change the reward.
+   *
+   * @param {{dayId: string, slotIndex: number, exerciseId: string}} slot
+   * @param {any[]} sets
+   * @param {{durationMinutes?: number}} [options]
+   */
+  async function completeSlot(slot, sets, options = {}) {
+    const { session, isFirstOfDay } = await openDaySession()
+    for (const [index, set] of sets.entries()) {
+      await logSet(session, {
+        ...set,
+        exerciseId: slot.exerciseId,
+        programDayId: slot.dayId,
+        slotIndex: slot.slotIndex,
+        setIndex: index,
+      })
+    }
+    return finishSession(session, {
+      durationMinutes: options.durationMinutes ?? Math.max(1, sets.length * 2),
+      isFirstOfDay,
+      onlySets: sets.map((set) => ({ ...set, exerciseId: slot.exerciseId })),
+    })
+  }
+
   return {
     exerciseMap, recordMap, lastPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide,
+    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession,
     startSession, logSet, setsFor, finishSession,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },

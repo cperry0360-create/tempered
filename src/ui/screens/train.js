@@ -21,6 +21,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   let query = ''
   /** @type {{program: any, week: number, deload: boolean}|null} */ let active = null
   /** @type {any} */ let guide = null
+  /** @type {any} */ let weekView = null
   let guideOpen = false
   /** @type {any[]} */ let routines = []
   /** @type {any[]} */ let exercises = []
@@ -91,18 +92,46 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
           el('span.programday__count', { text: `${day.exercises.length}` }),
         ])),
 
+        // The week: prescribed, worked, and what is still available. Nothing here
+        // is late or missed — outstanding work is simply work still available.
+        weekView && el('div.weekview', {}, [
+          el('div.weekview__head', {}, [
+            el('span.weekview__label', { text: 'THIS WEEK' }),
+            el('span.weekview__count', { text: `${weekView.week.done} of ${weekView.week.total} slots worked` }),
+          ]),
+          ...weekView.week.days.map((entry) => el('div.weekday', { dataset: { weekday: entry.day.id } }, [
+            el('span.weekday__name', { text: entry.day.name }),
+            el('span.weekday__bar', {
+              style: `--fill:${entry.total ? Math.round((entry.done / entry.total) * 100) : 0}%`,
+            }),
+            el('span.weekday__count', { text: `${entry.done}/${entry.total}` }),
+          ])),
+        ]),
+
         el('button.tool', {
           type: 'button', dataset: { guide: 'toggle' },
           onclick: () => { guideOpen = !guideOpen; render() },
-        }, [guideOpen ? 'HIDE GUIDE' : 'GUIDE']),
+        }, [guideOpen ? 'HIDE HARD SETS' : 'HARD SETS']),
 
-        guideOpen && guide && el('div.panel', {}, [
-          el('p.panel__note', { text: 'Weekly hard sets per muscle group, counted from the program itself.' }),
-          el('div.guide', {}, guide.hardSets.map((row) => el('div.guide__row', {}, [
-            el('span.guide__group', { text: row.group.replace(/_/g, ' ') }),
-            el('span.guide__bar', { style: `--fill:${Math.round((row.sets / guide.hardSets[0].sets) * 100)}%` }),
-            el('span.guide__sets', { text: `${row.sets}` }),
-          ]))),
+        guideOpen && weekView && el('div.panel', {}, [
+          el('p.panel__note', {
+            text: 'Hard sets worked this week per muscle group, counted from what you '
+              + 'logged. This is the number that says whether the week worked.',
+          }),
+          el('div.guide', {}, weekView.hardSets.map((row) => {
+            const ceiling = row.target ? row.target[1] : Math.max(1, weekView.hardSets[0].sets)
+            return el('div.guide__row', { dataset: { group: row.group, met: String(row.met) } }, [
+              el('span.guide__group', { text: row.group.replace(/_/g, ' ') }),
+              el('span.guide__bar', { style: `--fill:${Math.min(100, Math.round((row.sets / ceiling) * 100))}%` }),
+              el('span.guide__sets', {
+                text: row.target ? `${row.sets} / ${row.target[0]}–${row.target[1]}` : `${row.sets}`,
+              }),
+            ])
+          })),
+          el('p.panel__note', {
+            text: 'Anything below its range is still available this week. It clears at the '
+              + 'week boundary rather than carrying over.',
+          }),
         ]),
       ]),
     ])
@@ -142,6 +171,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     async refresh() {
       active = await workout.activeProgram()
       guide = await workout.programGuide()
+      weekView = await workout.weekStatus()
       routines = await storage.getAll('routines')
       exercises = (await storage.getAll('exercises')).sort((a, b) => a.name.localeCompare(b.name))
       records = await workout.recordMap()

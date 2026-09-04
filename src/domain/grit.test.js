@@ -104,3 +104,49 @@ test('the first session ever is a beginning, not a return after a gap', () => {
   const genuine = gritAwards(makeSession(), makeContext({ daysSinceLastSession: 6 }), balance)
   assert.equal(src(genuine)['grit.return'], balance.grit.returnAfterGapBonus)
 })
+
+// --- docs/10: the unit is the slot, not the session ------------------------
+
+test('a day of micro sets still counts as a training day', () => {
+  const first = gritAwards(makeSession({ durationMinutes: 8 }),
+    makeContext({ daysSinceLastSession: 2 }), balance)
+  assert.equal(src(first)['grit.session'], balance.grit.xpPerSession,
+    'the first slot of the day must pay for showing up')
+  assert.ok(totalsByAttribute(first).grit > 0)
+})
+
+test('later slots the same day add time under load but not a second showing-up', () => {
+  const later = gritAwards(makeSession({ durationMinutes: 8 }),
+    makeContext({ daysSinceLastSession: 2, isFirstOfDay: false }), balance)
+  assert.equal(src(later)['grit.session'], undefined, 'showing up is once a day')
+  assert.equal(src(later)['grit.hours'], (8 / 60) * balance.grit.xpPerTrainingHour,
+    'but the time is real and still counts')
+})
+
+test('five micro slots pay one showing-up, not five', () => {
+  const one = totalsByAttribute(gritAwards(makeSession({ durationMinutes: 10 }),
+    makeContext({ daysSinceLastSession: 2 }), balance)).grit
+  let total = one
+  for (let i = 0; i < 4; i++) {
+    total += totalsByAttribute(gritAwards(makeSession({ durationMinutes: 10 }),
+      makeContext({ daysSinceLastSession: 2, isFirstOfDay: false }), balance)).grit
+  }
+  const sessionBonus = balance.grit.xpPerSession
+  const hours = (10 / 60) * balance.grit.xpPerTrainingHour
+  assert.ok(Math.abs(total - (sessionBonus + hours * 5)) < 1e-9,
+    `five micro slots should pay one session bonus plus five stints of time, got ${total}`)
+})
+
+test('the return bonus is a day-level award too, paid once', () => {
+  const context = { daysSinceLastSession: 9 }
+  const first = gritAwards(makeSession(), makeContext(context), balance)
+  const second = gritAwards(makeSession(), makeContext({ ...context, isFirstOfDay: false }), balance)
+  assert.equal(src(first)['grit.return'], balance.grit.returnAfterGapBonus)
+  assert.equal(src(second)['grit.return'], undefined, 'you only come back once')
+})
+
+test('a normal session is unaffected — isFirstOfDay defaults to true', () => {
+  const explicit = gritAwards(makeSession(), makeContext({ isFirstOfDay: true }), balance)
+  const implied = gritAwards(makeSession(), makeContext(), balance)
+  assert.deepEqual(explicit, implied)
+})

@@ -101,6 +101,29 @@ hit-target separation are computed and asserted, never eyeballed.
 
 ---
 
+## Phase 3.6 — The task model
+
+Corrects `docs/05`: the unit of work is the exercise slot, not the session. Full
+specification in `docs/10-task-model.md`.
+
+- Slots are independently completable from Today, with no session ceremony.
+- Unfinished slots roll forward through the program week, and clear at the boundary.
+  Never accumulate them — that is a debt tracker, which non-negotiable 4 forbids.
+- A weekly view shows hard sets completed against target per muscle group, derived
+  from logged data.
+- No overdue state anywhere, asserted against the copy and not merely the styling.
+- Grit accrues on any day work was logged, whether or not a formal session was run.
+
+**Version visibility.** A `VERSION` constant carrying the phase, displayed in Settings
+with the last-updated date, and the service worker cache key derived from it. Bumped in
+the same commit as any phase completion. Installed to a home screen there is no address
+bar and no reload button, so without this there is no way to tell a build that failed to
+deploy from one that deployed and did not fix the problem.
+
+**Acceptance:** the criteria at the end of `docs/10-task-model.md`.
+
+---
+
 ## Phase 4 — Daily tracking
 
 The habit and metric surface: today's activities, quick completion, manual numeric

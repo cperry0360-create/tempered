@@ -6,6 +6,29 @@
       "name": "November Physique Sprint",
       "weeks": 8,
       "note": "Upper-body-biased hypertrophy. Deload at week 8.",
+      "weeklyTargets": {
+        "_comment": "Weekly hard-set ranges per muscle group, from docs/10-task-model.md. Groups the doc did not name carry no target: completed sets are still counted and shown, just not against a number.",
+        "chest": [
+          12,
+          16
+        ],
+        "back": [
+          14,
+          18
+        ],
+        "quads": [
+          10,
+          14
+        ],
+        "hamstrings_glutes": [
+          10,
+          14
+        ],
+        "shoulders": [
+          12,
+          18
+        ]
+      },
       "days": [
         {
           "id": "monday",

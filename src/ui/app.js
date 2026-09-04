@@ -11,6 +11,8 @@ import { createTrainScreen } from './screens/train.js'
 import { createSessionScreen } from './screens/session.js'
 import { createSummaryScreen } from './screens/summary.js'
 import { createHistoryScreen } from './screens/history.js'
+import { createTodayScreen } from './screens/today.js'
+import { createSettingsScreen } from './screens/settings.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
@@ -30,14 +32,26 @@ export function createApp({ mount, workout, storage, clock }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   let active = 'train'
+  /** Where the session was started from, so DONE returns there. */
+  let returnTab = 'train'
 
   const train = createTrainScreen({
     workout, storage, clock,
     onStart: (options) => startSession(options),
   })
   const history = createHistoryScreen({ storage, workout })
+  const settings = createSettingsScreen({ storage })
+  const today = createTodayScreen({
+    workout, clock,
+    onStart: (options) => startSession(options),
+    // A slot opened from Today is a session of exactly one exercise, carrying
+    // its slot identity so the work counts against the day it was prescribed for.
+    onOpenSlot: (slot) => startSession({ slotTask: slot }),
+  })
   const summary = createSummaryScreen({
-    onDone: async () => { await show('train') },
+    // Back where you came from: a slot opened from Today returns to Today, not
+    // to Train, which is a different screen than the one you were working in.
+    onDone: async () => { await show(returnTab) },
   })
   let session = null
 
@@ -48,8 +62,9 @@ export function createApp({ mount, workout, storage, clock }) {
     ])
   }
 
-  /** @param {{routine?: any, programDay?: any, exerciseId?: string}} options */
+  /** @param {{routine?: any, programDay?: any, exerciseId?: string, slotTask?: any}} options */
   async function startSession(options) {
+    returnTab = active === 'settings' ? 'character' : active
     session?.destroy()
     session = createSessionScreen({
       workout, clock,
@@ -76,14 +91,20 @@ export function createApp({ mount, workout, storage, clock }) {
 
     if (tab === 'train') { await train.refresh(); replace(body, [train.root]) }
     else if (tab === 'history') { await history.refresh(); replace(body, [history.root]) }
-    else if (tab === 'today') {
-      replace(body, [placeholder('Today', 'The daily surface arrives in Phase 4. Training works now — see Train.')])
-    } else {
-      replace(body, [placeholder('Character', 'The progression surface arrives in Phase 5. Your XP is being recorded already.')])
+    else if (tab === 'today') { await today.refresh(); replace(body, [today.root]) }
+    else if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]) }
+    else {
+      replace(body, [
+        placeholder('Character', 'The progression surface arrives in Phase 5. Your XP is being recorded already.'),
+        el('button.button.button--quiet.button--wide', {
+          type: 'button', dataset: { tab: 'settings' }, onclick: () => show('settings'),
+        }, ['SETTINGS']),
+      ])
     }
 
     replace(tabBar, TABS.map((entry) => el('button.tabbar__tab', {
-      type: 'button', dataset: { tab: entry.id, active: String(active === entry.id) },
+      type: 'button',
+      dataset: { tab: entry.id, active: String(active === entry.id || (active === 'settings' && entry.id === 'character')) },
       'aria-current': active === entry.id ? 'page' : null,
       onclick: () => show(entry.id),
     }, [entry.label])))

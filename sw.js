@@ -1,6 +1,9 @@
 /**
  * Tempered service worker — offline support for the installed app.
  *
+ * A MODULE worker, so the cache key can be derived from src/version.js rather
+ * than duplicated here and left to drift.
+ *
  * There is no build step, so filenames are stable and the precache list below is
  * written by hand. Keep it in step with the shell.
  *
@@ -15,7 +18,12 @@
  * Bumping VERSION still forces an immediate clean sweep of every old cache.
  */
 
-const VERSION = '0.3.5'
+// Single source of truth: bumping src/version.js sweeps every old cache. This
+// worker is registered with { type: 'module' } so it can import it — see
+// src/pwa/register.js, which falls back to running without offline support if a
+// browser cannot load a module worker.
+import { VERSION } from './src/version.js'
+
 const CACHE = `tempered-${VERSION}`
 
 // Resolved against this file's own URL, so the app works at any base path —
@@ -29,6 +37,7 @@ const PRECACHE = [
   './src/main.js',
   './src/style.css',
   './src/pwa/register.js',
+  './src/version.js',
   './icons/icon-180.png',
   './icons/icon-512.png',
   './icons/icon-1024.png',
@@ -57,6 +66,7 @@ const PRECACHE = [
   './src/domain/progression.js',
   './src/domain/rank.js',
   './src/domain/records.js',
+  './src/domain/tasks.js',
   './src/domain/tiers.js',
   './src/domain/vitality.js',
   './src/domain/wind.js',
@@ -67,6 +77,8 @@ const PRECACHE = [
   './src/ui/screens/history.js',
   './src/ui/screens/session.js',
   './src/ui/screens/summary.js',
+  './src/ui/screens/settings.js',
+  './src/ui/screens/today.js',
   './src/ui/screens/train.js',
 ]
 

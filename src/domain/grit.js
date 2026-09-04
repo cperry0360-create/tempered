@@ -8,6 +8,15 @@
  * The return-after-a-gap bonus is the counterpart: coming back is the hardest
  * single act in fitness, so the app pays for it rather than punishing the
  * absence that preceded it.
+ *
+ * `docs/10-task-model.md`: a day on which any slot was completed is a training
+ * day, whether or not a formal session was run. So the day-level awards — showing
+ * up, coming back, meeting the week's plan — fire once per day, on the first work
+ * logged, and `context.isFirstOfDay: false` suppresses them for everything after.
+ * Time under load still accrues every time, because it is a measurement rather
+ * than a milestone. Without this, a day of micro sets would either score zero on
+ * the attribute specifically about showing up, or pay the session bonus five
+ * times over.
  */
 
 /**
@@ -26,22 +35,28 @@ export function gritAwards(session, context, balance) {
     if (xp > 0) awards.push({ attribute: 'grit', source, label, xp })
   }
 
-  // Flat, for any training type. This is the one Grit source that does not care
-  // what you did, only that you did it.
-  add('grit.session', 'Session completed', grit.xpPerSession)
+  // Defaults to true, so a normal session behaves exactly as it always has.
+  const firstOfDay = context.isFirstOfDay !== false
 
+  // Flat, for any training type. This is the one Grit source that does not care
+  // what you did, only that you did it — so it fires once for the day, however
+  // many slots that day turns out to contain.
+  if (firstOfDay) add('grit.session', 'Trained today', grit.xpPerSession)
+
+  // Always: this is measured time, and a second slot is more time under load.
   const hours = Math.max(0, session.durationMinutes ?? 0) / 60
   add('grit.hours', 'Time under load', hours * grit.xpPerTrainingHour)
 
   // Requires a previous session to have returned from: `daysSinceLastSession` is
   // Infinity for the very first session ever, which is a beginning, not a return.
-  if (Number.isFinite(context.daysSinceLastSession) &&
-      context.daysSinceLastSession >= grit.returnGapDaysThreshold) {
+  if (firstOfDay
+      && Number.isFinite(context.daysSinceLastSession)
+      && context.daysSinceLastSession >= grit.returnGapDaysThreshold) {
     add('grit.return', 'Back after time away', grit.returnAfterGapBonus)
   }
 
-  // Awarded on the session that reaches the weekly target, once per week.
-  if (context.sessionsThisWeekBefore + 1 === context.planTargetSessionsPerWeek) {
+  // Awarded on the day that reaches the weekly target, once per week.
+  if (firstOfDay && context.sessionsThisWeekBefore + 1 === context.planTargetSessionsPerWeek) {
     add('grit.weekPlan', 'Week met plan', grit.weekMetPlanBonus)
   }
 

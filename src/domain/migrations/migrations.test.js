@@ -10,8 +10,8 @@ const v1Fixture = Object.freeze({
   sessions: [{ id: 's1' }],
 })
 
-test('schema 2 is current, and every step from 1 exists', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 2)
+test('schema 3 is current, and every step from 1 exists', () => {
+  assert.equal(CURRENT_SCHEMA_VERSION, 3)
   for (let version = 1; version < CURRENT_SCHEMA_VERSION; version++) {
     assert.equal(typeof MIGRATIONS[version], 'function', `no migration from ${version}`)
   }
@@ -98,4 +98,22 @@ test('canMigrate reports whether a path exists before anything is attempted', ()
 
 test('non-integer versions are refused', () => {
   assert.throws(() => migrate({}, 1.5, 2), /must be integers/)
+})
+
+test('2 -> 3 leaves version 2 set logs untouched, unattributed', () => {
+  const v2 = {
+    ...structuredClone(V1_BACKUP),
+    programs: [], programState: [],
+    setLogs: [{ id: 'sl1', sessionId: 's1', exerciseId: 'squat_bb', weight: 145, reps: 8 }],
+  }
+  const upgraded = migrate(structuredClone(v2), 2, 3)
+  assert.deepEqual(upgraded, v2)
+  assert.equal(upgraded.setLogs[0].programDayId, undefined,
+    'an old log belongs to no program slot, which is what it always meant')
+})
+
+test('a version 1 backup walks all the way to 3', () => {
+  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 3)
+  assert.deepEqual(upgraded.programs, [])
+  assert.equal(upgraded.profile.name, 'Cory')
 })

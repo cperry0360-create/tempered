@@ -31,6 +31,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
 
   /** @type {any} */ let session = null
   /** @type {any[]} */ let plan = []
+  /** Sets logged in THIS screen, so settling a shared day session scores only
+   *  the work just done rather than everything already logged today. */
+  /** @type {any[]} */ let loggedHere = []
+  let isFirstOfDay = true
   /** @type {any[]} */ let library = []
   /** @type {{exerciseId: string, endsAt: number}|null} */ let rest = null
   /** @type {string|null} */ let openPanel = null   // `${exerciseId}:${panel}`
@@ -104,14 +108,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         for (const input of inputs) {
           if (input.dataset?.field) set[input.dataset.field] = numberOrNull(input.value)
         }
-        const log = await workout.logSet(session, {
+        const logged = {
           exerciseId: entry.exercise.id,
           weight: set.weight ?? null, reps: set.reps ?? null,
           timeSec: set.timeSec ?? null, distance: set.distance ?? null,
           perSide: set.perSide === true,
           substitutedFor: entry.substitutedFor ?? null,
+          programDayId: entry.programDayId ?? null,
+          slotIndex: entry.slotIndex ?? null,
           setIndex: index,
-        })
+        }
+        const log = await workout.logSet(session, logged)
+        loggedHere.push(logged)
         set.logged = true
         set.logId = log.id
         render()
@@ -384,7 +392,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   }
 
   async function finish() {
-    const summary = await workout.finishSession(session)
+    const summary = await workout.finishSession(session, {
+      isFirstOfDay,
+      // A block settles everything it logged; a single slot settles only itself,
+      // because the day's session may already carry earlier slots.
+      ...(session.slotMode ? { onlySets: loggedHere } : {}),
+    })
     onFinish(summary)
   }
 
@@ -397,9 +410,43 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
      * @param {object|null} [options.programDay]  A day from the active program.
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
-    async start({ routine = null, programDay = null, exerciseId = null }) {
+    async start({ routine = null, programDay = null, exerciseId = null, slotTask = null }) {
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       plan = []
+      loggedHere = []
+      isFirstOfDay = true
+
+      // One slot, opened from Today. It joins the day's session rather than
+      // starting a ceremony of its own.
+      if (slotTask) {
+        const opened = await workout.openDaySession()
+        session = opened.session
+        isFirstOfDay = opened.isFirstOfDay
+        session.slotMode = true
+        session.title = slotTask.slot?.name ?? 'Exercise'
+        const active = await workout.activeProgram()
+        session.weekLabel = active ? `Week ${active.week} of ${active.program.weeks}` : null
+        session.deload = active?.deload === true
+
+        const prepared = await workout.prepareSlot(
+          slotTask.slot, active?.week ?? 1, active?.program ?? { weeks: 1 })
+        if (prepared.exercise) {
+          const remaining = Math.max(1, (slotTask.slot.sets ?? 3) - (slotTask.alreadyLogged ?? 0))
+          plan.push({
+            ...prepared,
+            restSec: slotTask.slot.restSec?.[0] ?? 120,
+            barWeight: 45,
+            substitutedFor: null,
+            history: null,
+            programDayId: slotTask.dayId,
+            slotIndex: slotTask.slotIndex,
+            sets: prepared.proposal.sets.slice(0, remaining)
+              .map((set) => ({ ...set, logged: false, logId: null })),
+          })
+        }
+        render()
+        return
+      }
 
       if (programDay) {
         const active = await workout.activeProgram()
@@ -410,7 +457,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         session.weekLabel = active ? `Week ${active.week} of ${active.program.weeks}` : null
         session.deload = active?.deload === true
 
-        for (const slot of programDay.exercises) {
+        for (const [slotIndex, slot] of programDay.exercises.entries()) {
           const prepared = await workout.prepareSlot(slot, active?.week ?? 1, active?.program ?? { weeks: 1 })
           if (!prepared.exercise) continue
           plan.push({
@@ -419,6 +466,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
             barWeight: 45,
             substitutedFor: null,
             history: null,
+            programDayId: programDay.id,
+            slotIndex,
             sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
           })
         }

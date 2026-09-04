@@ -11,9 +11,16 @@ These are acceptance criteria, not aspirations.
 - An ad-hoc set of curls: **under 20 seconds from app open to logged.**
 - Last performance and PR visible **before** the first set is entered.
 
-## Two entry points
+## Entry points
 
-### Full session
+> **Superseded in part by `docs/10-task-model.md`.** This document assumed a session is
+> the only way to log work. It is not: the unit is the **exercise slot**, and a session
+> is one convenient way to complete several at once. A slot can be opened and completed
+> on its own, from Today, with no session ceremony at all. Read `docs/10` alongside this.
+> Everything below about the set row, records, rest and the post-session screen still
+> holds — it describes how logging works, whichever path reaches it.
+
+### Full session — one path among several
 
 Start a routine. Exercises in order. Each shows: name, variant, last performance, PR,
 prescribed sets/reps/weight, and a rest timer. Log each set. Finish.
@@ -41,6 +48,12 @@ performance immediately, logs sets identically. Creates a `Session` with
 `routineId: null`.
 
 This is a first-class feature, not a shortcut. Some days are one exercise.
+
+### Program slot as a task
+
+The day's prescribed slots appear on Today as independently completable items, and roll
+forward through the program week. See `docs/10-task-model.md`. Logging inside a slot is
+identical to logging inside a session — the same set row, the same records, the same XP.
 
 ## Progression rules
 

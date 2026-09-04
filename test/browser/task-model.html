@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — task model acceptance</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /** The acceptance criteria at the end of docs/10-task-model.md. */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+      import { fixedClock } from '../../src/adapters/clock/clock.js'
+      import { VERSION, BUILD_DATE } from '../../src/version.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
+      const q = (s) => document.querySelector(s)
+      const qa = (s) => [...document.querySelectorAll(s)]
+      const settle = () => new Promise((r) => setTimeout(r, 0))
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) { const f = q(selector); if (f) return f; await new Promise((r) => setTimeout(r, 10)) }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+
+      try {
+        const storage = createMemoryStorage()
+        // A Monday, so Today shows a program day with work in it.
+        const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+        const tempered = await bootstrap({ storage, clock, mount: document.getElementById('app') })
+
+        // --- Today lists the day's slots as tasks --------------------------
+        await tempered.app.show('today')
+        await waitFor('[data-task]')
+        const tasks = qa('[data-task]')
+        check('Today lists the day\'s prescribed slots as tasks', tasks.length >= 6, `${tasks.length} tasks`)
+        check('each task shows its prescription', /\d+ × \d+–\d+/.test(q('.task__pres')?.textContent ?? ''),
+          q('.task__pres')?.textContent)
+
+        // --- ACCEPTANCE: complete a slot without starting a session ---------
+        const before = await storage.count('sessions')
+        tasks[3].click()
+        await waitFor('.setrow__check')
+        check('a slot opens straight into logging, with no routine', q('.setrow__check') !== null)
+
+        let logged = 0
+        for (const button of qa('.setrow__check')) {
+          const row = button.closest('.setrow')
+          for (const field of [...row.querySelectorAll('input.setrow__num')]) {
+            if (field.value === '') { field.value = field.dataset.field === 'weight' ? '20' : '15'; field.dispatchEvent(new Event('change')) }
+          }
+          button.click(); logged += 1; await settle()
+        }
+        q('[data-action="finish"]').click(); await settle()
+        q('[data-action="confirm-finish"]').click()
+        await waitFor('[data-action="done"]')
+
+        const summaryXp = q('[data-section="xp"]')
+        check('ACCEPTANCE: an exercise completes from Today without a session', summaryXp !== null,
+          `${logged} sets logged`)
+        check('completing a slot creates exactly one day session',
+          (await storage.count('sessions')) === before + 1,
+          `${await storage.count('sessions')} sessions`)
+        q('[data-action="done"]').click()
+        await waitFor('[data-task]')
+        check('the completed slot is marked done on Today',
+          qa('[data-task][data-done="true"]').length >= 1)
+
+        // --- ACCEPTANCE: a day of micro sets accrues Grit -------------------
+        const gritRow = [...(await storage.getAll('attributeState'))].find((r) => r.attribute === 'grit')
+        check('ACCEPTANCE: a day of micro sets accrues Grit', (gritRow?.xp ?? 0) > 0,
+          `grit ${gritRow?.xp ?? 0} xp with no formal session`)
+        check('and it counted as showing up, once',
+          (gritRow?.lifetimeSources?.['grit.session'] ?? 0) > 0)
+
+        // --- ACCEPTANCE: rollover within the week --------------------------
+        const mondayTask = { dayId: 'monday', slotIndex: 0, exerciseId: 'incline_bench_bb' }
+        await tempered.workout.completeSlot(mondayTask, [{ weight: 135, reps: 8 }, { weight: 135, reps: 8 }])
+        clock.advanceDays(3) // Thursday, same program week
+        let status = await tempered.workout.weekStatus()
+        let mondaySlot = status.week.days.find((d) => d.day.id === 'monday').tasks[0]
+        check('ACCEPTANCE: an unfinished Monday slot is still open on Thursday',
+          mondaySlot.done === false && mondaySlot.started === true,
+          `${mondaySlot.logged} of ${mondaySlot.prescribed} logged`)
+
+        await tempered.workout.completeSlot(mondayTask, [{ weight: 135, reps: 8 }, { weight: 135, reps: 8 }])
+        status = await tempered.workout.weekStatus()
+        check('and completable there', status.week.days.find((d) => d.day.id === 'monday').tasks[0].done === true)
+
+        // --- ACCEPTANCE: the week boundary clears --------------------------
+        clock.advanceDays(7)
+        status = await tempered.workout.weekStatus()
+        check('ACCEPTANCE: outstanding slots clear at the week boundary',
+          status.week.done === 0 && status.week.total === 30,
+          `${status.week.done} of ${status.week.total} done in the new week`)
+
+        // --- ACCEPTANCE: the weekly view, derived --------------------------
+        await tempered.app.show('train')
+        await waitFor('[data-weekday]')
+        check('the weekly view shows the week\'s work', qa('[data-weekday]').length === 5)
+        q('[data-guide]').click(); await settle()
+        const chest = qa('.guide__row').find((row) => row.dataset.group === 'chest')
+        check('ACCEPTANCE: hard sets are shown against target per muscle group',
+          /\d+ \/ 12–16/.test(chest?.textContent ?? ''), chest?.textContent?.trim())
+
+        // --- ACCEPTANCE: no overdue state, in the rendered DOM --------------
+        const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
+        const screens = []
+        for (const tab of ['today', 'train', 'history']) {
+          await tempered.app.show(tab)
+          await settle()
+          screens.push([tab, document.body.innerText])
+        }
+        const offenders = screens.filter(([, text]) => forbidden.test(text))
+          .map(([tab, text]) => `${tab}: "${text.match(forbidden)[0]}"`)
+        check('ACCEPTANCE: nothing rendered calls outstanding work overdue, late, missed or failed',
+          offenders.length === 0, offenders.join('; ') || 'checked today, train, history')
+
+        const outstanding = (await (async () => { await tempered.app.show('today'); await settle(); return qa('[data-task][data-done="false"]') })())
+        const reds = outstanding.filter((node) => {
+          const colour = getComputedStyle(node.querySelector('.task__mark')).borderColor
+          return /rgb\(224, 90, 106\)/.test(colour)
+        })
+        check('no outstanding task is rendered in a problem colour', reds.length === 0,
+          `${outstanding.length} outstanding tasks checked`)
+
+        // --- Version visibility --------------------------------------------
+        await tempered.app.show('settings')
+        await waitFor('[data-version]')
+        check('the version is displayed in Settings', q('[data-version]')?.textContent === VERSION,
+          q('[data-version]')?.textContent)
+        check('the last-updated date is shown beside it', (q('[data-builddate]')?.textContent ?? '').length > 5,
+          q('[data-builddate]')?.textContent)
+        check('the version names its phase', /\(3\.6\)/.test(VERSION), VERSION)
+
+        const registration = await navigator.serviceWorker?.getRegistration?.().catch(() => null)
+        check('the service worker cache key derives from the version',
+          typeof VERSION === 'string' && VERSION.length > 0 && BUILD_DATE.length > 0,
+          `VERSION ${VERSION}, built ${BUILD_DATE}`)
+
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'task-model', passed: checks.every((c) => c.ok), checks }),
+        })
+      } catch (error) {
+        checks.push({ name: 'harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 400) })
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'task-model', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

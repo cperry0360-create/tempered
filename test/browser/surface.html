@@ -239,6 +239,14 @@
         await waitFor('[data-task]')
         budgets.push(await acidBudget('today'))
 
+        await tempered.app.show('character')
+        await waitFor('[data-attr]')
+        budgets.push(await acidBudget('character'))
+        // Expanded, because that is the state the screen is read in.
+        q('[data-attr="might"]').click()
+        await settle()
+        budgets.push(await acidBudget('character, expanded'))
+
         await tempered.app.show('train')
         await waitFor('[data-programday="monday"]')
         q('[data-programday="monday"]').click()

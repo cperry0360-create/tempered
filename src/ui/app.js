@@ -21,6 +21,7 @@ import { createSummaryScreen } from './screens/summary.js'
 import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
+import { createCharacterScreen } from './screens/character.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
@@ -34,10 +35,11 @@ const TABS = [
  * @param {HTMLElement} deps.mount
  * @param {ReturnType<import('../app/workout.js').createWorkoutService>} deps.workout
  * @param {ReturnType<import('../app/daily.js').createDailyService>} deps.daily
+ * @param {ReturnType<import('../app/character.js').createCharacterService>} deps.character
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
  */
-export function createApp({ mount, workout, daily, storage, clock }) {
+export function createApp({ mount, workout, daily, character, storage, clock }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -51,6 +53,9 @@ export function createApp({ mount, workout, daily, storage, clock }) {
   })
   const history = createHistoryScreen({ storage, workout })
   const settings = createSettingsScreen({ storage, daily })
+  const characterScreen = createCharacterScreen({
+    character, onSettings: () => show('settings'),
+  })
   const today = createTodayScreen({
     workout, daily, clock,
     onStart: (options) => startSession(options),
@@ -66,7 +71,7 @@ export function createApp({ mount, workout, daily, storage, clock }) {
   let session = null
 
   /** Which screen object backs each tab, for the FAB lookup above. */
-  const SCREENS = { today, train, history, settings }
+  const SCREENS = { today, train, history, settings, character: characterScreen }
 
   function placeholder(title, note) {
     return el('div.screen', {}, [
@@ -106,14 +111,7 @@ export function createApp({ mount, workout, daily, storage, clock }) {
     else if (tab === 'history') { await history.refresh(); replace(body, [history.root]) }
     else if (tab === 'today') { await today.refresh(); replace(body, [today.root]) }
     else if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]) }
-    else {
-      replace(body, [
-        placeholder('Character', 'The progression surface arrives in Phase 5. Your XP is being recorded already.'),
-        el('button.button.button--quiet.button--wide', {
-          type: 'button', dataset: { tab: 'settings' }, onclick: () => show('settings'),
-        }, ['SETTINGS']),
-      ])
-    }
+    else { await characterScreen.refresh(); replace(body, [characterScreen.root]) }
 
     replace(tabs, TABS.map((entry) => el('button.tabbar__tab', {
       type: 'button',

@@ -938,3 +938,77 @@ the question does not get reopened by the next person who notices the unit.
 how 3.7 was handled.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 5: the explanation is checked against the engine, not written beside it
+**Phase:** 5
+**Decision:** `src/domain/sources.js` holds one entry per XP source — a label and a worth
+phrased from `data/balance.json` at call time. `sources.test.js` drives the XP engine over
+a day and a session that between them trigger everything, and asserts the explanation
+covers every source the engine emits, and emits every source the explanation claims.
+**Reasoning:** The Phase 5 acceptance criterion is that tapping an attribute reveals
+exactly what feeds it and what each is worth, and `CLAUDE.md` non-negotiable 3 says the
+mapping must be legible. A hand-maintained list is true the day it is written and quietly
+wrong six weeks later, and the failure mode is the worst kind — the app confidently
+explaining itself incorrectly. Reading the rates out of balance at call time is the same
+argument: non-negotiable 7 puts balance in config, and a worth with the old number baked
+into a string would make that a lie the first time one moved. There is a test for that
+too: it retunes a value and checks the sentence follows.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: titles are awarded, and never taken back
+**Phase:** 5
+**Decision:** `src/domain/titles.js` holds one predicate per catalogue entry, and
+`src/app/character.js` derives the facts from what is logged — session count and hours
+from `sessions`, miles and in-band sleeps from `dayLogs`, the lifts from `records`, the
+return-after-a-gap from the `grit.return` the engine recorded at the time. Anything newly
+earned is stamped with the day and stored. Display reads the store, never the predicate.
+**Reasoning:** `docs/07` names Titles as Phase 5 work and the catalogue was sitting unused
+since Phase 0. Deriving the facts rather than keeping counters follows `docs/10`'s reason
+for deriving slot completion: a counter drifts and nothing notices. Storing the earned date
+and displaying from the store is what makes "no punishment" hold at the edges — retuning a
+threshold, or a bad import, must not silently un-award something somebody already has.
+There is a test that drops an attribute back to level 0 and checks the title stays.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: two title conditions needed a reading
+**Phase:** 5
+**Decision:** "Log a rest day after three consecutive training days" is read as: a rest day
+whose three preceding calendar days each carry a finished session. "Farmer's carry 200 lbs
+total load" is read as the best recorded load on `farmers_carry`, not load × distance.
+**Reasoning:** Both sentences admit a looser and a stricter reading. Three *consecutive*
+days is the stricter and matches the words; "total load" most likely means the weight on
+the bar rather than a work product, since the exercise already logs load and distance
+separately and a work figure would need a distance to be stated in the condition.
+**Confidence:** guessed
+**Needs Cory:** yes — low priority. Confirm the carry title means 200 lbs carried, not 200
+lbs × some distance.
+
+## 2026-09-04 — Phase 5: the Character screen has no FAB
+**Phase:** 5
+**Decision:** No primary action on Character, so the floating bar carries no FAB there.
+Acid marks two roles: the rank letter, and the attribute being read.
+**Reasoning:** `docs/04` allows a screen to have no single primary action, and Character is
+a reading surface — nothing on it is the thing you came to do. Inventing one would spend
+the accent on whatever happened to be nearest. Measured at 0.29% of the viewport.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: the copy guard caught the word "behind"
+**Phase:** 5
+**Decision:** Reworded "nothing is locked behind one" to "nothing depends on having one".
+**Reasoning:** `test/copy.test.js` bans "behind" because outstanding work must never be
+framed that way, and it reads raw copy rather than trying to judge intent. The usage was
+innocent; the guard is blunt on purpose, and the same reasoning applies as with the
+body-metric guard — it is worth having only while it has no exceptions.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.6.0 (5)
+**Phase:** 5
+**Decision:** `src/version.js` carries `0.6.0 (5)`, built 2026-09-04.
+**Reasoning:** New phase group. Re-keys the service worker cache, which matters here
+because `data/titles.json` is newly fetched at boot.
+**Confidence:** specified
+**Needs Cory:** no

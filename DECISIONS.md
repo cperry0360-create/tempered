@@ -740,3 +740,129 @@ this work landed after 3.6 and labelling it "(3.5 D)" would read like a build go
 backwards.
 **Confidence:** inferred
 **Needs Cory:** no
+
+## 2026-09-04 — What counts as a session, and why the guard sits above every Grit source
+**Phase:** bug fix (docs/01)
+**Decision:** A session earns Grit only if at least one set was logged. The guard returns
+early from `gritAwards` before any source, so the flat award, time under load, the return
+bonus and the weekly plan bonus are all suppressed together. `docs/01` now defines this.
+**Reasoning:** Cory saw +142 for zero sets and zero pounds: 140 flat, plus 2 for the
+one-minute floor on duration. The spec said "session completed — flat per training
+session" and never said what a session was, so the engine paid for opening one.
+
+Guarding only the flat award would have moved the hole rather than closed it. All four
+sources rest on the same premise — that a session happened. Time under load with nothing
+logged is time under nothing; the return bonus would pay for coming back to log zero; the
+week bonus would count a session that never was.
+
+Might was already immune, because it is derived from volume and an empty session has none.
+That is the difference the spec now states in general terms: score the measurement where
+one exists, and where an award pays for an action instead, the action has to be one the
+user deliberately took and the app can see evidence of.
+**Confidence:** specified — Cory defined the rule; the scope of the guard is inferred.
+**Needs Cory:** no
+
+## 2026-09-04 — A warm-up-only session still counts as showing up
+**Phase:** bug fix
+**Decision:** The guard counts any logged set, warm-ups included. A session of nothing but
+warm-up sets earns full Grit and no Might.
+**Reasoning:** The rule Cory wrote is "at least one set was logged", and a warm-up is a
+logged set. It is also the least punishing reading: someone who warmed up, felt a tweak and
+stopped did show up, and non-negotiable 4 says missing produces no gain rather than a loss.
+Might already declines to pay for warm-ups, which is the right place for that distinction —
+Grit is about attendance, Might about load.
+
+Worth noting this was not a free choice: `workout.test.js` already carried a test asserting
+that a warm-up-only session scores no Might "but showing up still counts". The rule was
+therefore already in the codebase, and the guard was written to preserve it rather than to
+introduce it.
+**Confidence:** inferred
+**Needs Cory:** no — but it is the one place the rule could reasonably read the other way.
+
+## 2026-09-04 — The empty session is discarded, not stored as completed
+**Phase:** bug fix
+**Decision:** `finishSession` returns `null` and deletes the session record when nothing
+was logged. The deletion is guarded against the whole session, never against `onlySets`.
+**Reasoning:** Suppressing the XP was not enough. A stored empty session is not inert: it
+counts toward `sessionsThisWeekBefore`, inflating the week-met-plan bonus, and it resets
+`daysSinceLastSession`, which silently swallows a later return-after-a-gap bonus. Open a
+session on the day you come back, log nothing, close it, then actually train — and the
+bonus for coming back is gone for good. There is a test for exactly that.
+
+The `onlySets` distinction is load-bearing and nearly went wrong. In slot mode the record
+is the DAY's session and may already carry earlier slots. Deleting it because *this* slot
+logged nothing would destroy real training, so the delete asks whether the session holds
+anything at all, not whether this settlement does.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Finishing with nothing logged closes silently
+**Phase:** bug fix
+**Decision:** `finishSession` returning `null` means the screen closes back to the tab it
+came from. No summary.
+**Reasoning:** Cory asked for this and it is right: there is nothing to summarise. A
+post-session screen reporting no sets, no volume and no XP is a screen that reports
+nothing, and against an app whose whole posture is "missing produces no gain, never a
+loss", it reads as a rebuke. Silence is the correct absence of an event.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Audit: where else an XP source pays for an action
+**Phase:** bug fix
+**Decision:** Checked every source in all five attributes. One live bug, found in two
+places; one latent class, now governed by a written rule.
+**Reasoning:** Cory asked whether the same hole existed elsewhere. Findings:
+
+- **Might** — derived from volume. An empty session has none. No hole, and this is why the
+  bug showed as Grit 142 with Might 0.
+- **Wind** — fully derived. Every source multiplies a measured quantity, and awards of zero
+  are dropped, so nothing can pay for an absence. No hole.
+- **Mind** — the four duration sources are gated on minutes greater than zero. `mind.journal`
+  is flat on a boolean.
+- **Vitality** — `proteinTargetMet`, `nutritionLogged`, `restDay` and `bodyMetricsLogged`
+  are all flat on booleans.
+- **Grit** — the bug. And a second door into it: the seeded `cardio` routine ships with
+  zero exercises, so starting and finishing it logged nothing and paid the full flat award.
+  The same guard closes both.
+
+The Mind and Vitality booleans are **not** the same bug. They pay for an action the user
+deliberately took, which `docs/01` mandates ("the act of logging honestly", "rest day taken
+— a rewarded action, not an absence") and non-negotiable 4 requires. Nothing in the app
+writes any of those flags yet, so there is no live hole. The risk is a future day-logging
+screen that sets them on open rather than on save, which is precisely the Grit bug in
+another costume — so `docs/01` now carries the general rule: opening a screen is not an
+action, and any flat award must name the evidence it requires or it pays for navigation.
+**Confidence:** specified (measured against each module)
+**Needs Cory:** no
+
+## 2026-09-04 — Netlify replaces GitHub Pages, and what that does not fix
+**Phase:** hosting
+**Decision:** Added `netlify.toml` — publish the repository root, no build command, cache
+headers that keep `sw.js` and the shell revalidating. Documented connecting the site and
+making the repository private in `README.md`, and repointed `CLAUDE.md`, `docs/07` and the
+Phase 0 report away from Pages. The Netlify site itself is not connected: that needs a
+browser sign-in and authorisation of Netlify's GitHub app against Cory's account.
+**Reasoning:** The move is cheap because the app was already base-path agnostic — every
+path is relative, which is what `CLAUDE.md` demanded for the `/tempered/` project path and
+what now lets it serve from a domain root unchanged. Nothing in the app needed touching.
+
+**One correction to the premise, flagged rather than assumed away.** Cory's reasoning was
+that a private repository serving a personal app publishes nothing, which removes the
+exercise-art licensing question. Going private does remove one channel: the images, the
+provenance file and the README attribution stop being publicly readable. It does not make
+the deployed site private. A Netlify site is reachable by anyone with the URL, so the
+images are still published — and the attribution that is supposed to travel with them is
+now in a README nobody can read, which is strictly worse than today under a CC BY-SA
+reading. So the question is narrowed, not removed. Two things close it properly, both
+small, neither done: password-protect the Netlify site, or carry the attribution on the
+Settings screen so it travels with the images. `README.md` says this plainly.
+**Confidence:** inferred
+**Needs Cory:** yes — which of the two, if either. The app ships either way.
+
+## 2026-09-04 — Version bumped to 0.4.2 (3.6)
+**Phase:** bug fix
+**Decision:** `src/version.js` carries `0.4.2 (3.6)`.
+**Reasoning:** Awarding behaviour changed, so an installed phone must not keep serving the
+build that paid for empty sessions. The cache key derives from this.
+**Confidence:** specified
+**Needs Cory:** no

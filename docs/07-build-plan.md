@@ -8,12 +8,12 @@ criteria pass. Commit at the end of each phase with the phase number in the mess
 ## Phase 0 — Skeleton
 
 Plain ES modules, no build step. Directory structure per `CLAUDE.md`. `node --test`
-wired. PWA manifest and service worker. GitHub Pages serves the repo root.
+wired. PWA manifest and service worker. Netlify serves the repo root.
 
 **Acceptance:**
 - `index.html` opens in a browser with no build step.
 - `node --test` runs and passes.
-- The app installs to an iPhone home screen from the Pages URL and opens offline.
+- The app installs to an iPhone home screen from the live Netlify URL and opens offline.
 
 > Serve the directory to open it — `python3 -m http.server` from the repo root is
 > enough. Browsers block `<script type="module">` over `file://` as a cross-origin

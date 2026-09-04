@@ -206,8 +206,12 @@ export function createWorkoutService({ storage, clock, balance }) {
    * everything the post-session screen needs in one object — because docs/05
    * requires that screen to be one screen.
    *
+   * Returns `null` when nothing was logged. There is nothing to summarise and
+   * nothing was earned, so the caller closes the session silently.
+   *
    * @param {object} session
-   * @param {{durationMinutes?: number}} [options]
+   * @param {{durationMinutes?: number, isFirstOfDay?: boolean, onlySets?: any[]}} [options]
+   * @returns {Promise<object|null>}
    */
   async function finishSession(session, options = {}) {
     // `onlySets` scores just the work being settled now. A day's session is
@@ -215,6 +219,22 @@ export function createWorkoutService({ storage, clock, balance }) {
     // not re-award the first slot. Without this, completing three slots would
     // pay for the first one three times.
     const sets = options.onlySets ?? await setsFor(session.id)
+
+    // Nothing was logged, so there is no training session here to settle: no XP,
+    // and nothing to summarise. `null` tells the caller to close in silence.
+    //
+    // The record is also removed when it holds nothing at all, because a stored
+    // empty session is not inert — it counts toward `sessionsThisWeekBefore` and
+    // resets `daysSinceLastSession`, so leaving it behind would inflate the week
+    // bonus and swallow a later return bonus. The check is deliberately against
+    // the WHOLE session and not `onlySets`: in slot mode the record is the day's
+    // and may already carry earlier slots that must not be destroyed.
+    if (sets.length === 0) {
+      const all = options.onlySets ? await setsFor(session.id) : sets
+      if (all.length === 0) await storage.delete('sessions', session.id)
+      return null
+    }
+
     const exercises = await exerciseMap()
     const records = await recordMap()
 

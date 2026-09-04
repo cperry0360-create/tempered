@@ -10,7 +10,12 @@ const src = (awards) => totalsBySource(awards)
 
 test('SOURCE: completing a session pays a flat amount, any training type', () => {
   const lifting = gritAwards(makeSession({ sets: [{ exerciseId: 'squat_bb', weight: 145, reps: 8 }] }), makeContext(), balance)
-  const cardio = gritAwards(makeSession({ routineId: 'cardio', sets: [] }), makeContext(), balance)
+  // A cardio session is still a session and pays the same flat amount: "any
+  // training type" fixes the rate, it does not excuse logging nothing. What
+  // cardio logs is a timed entry rather than a load.
+  const cardio = gritAwards(
+    makeSession({ routineId: 'cardio', sets: [{ exerciseId: 'row_erg', timeSec: 1200 }] }),
+    makeContext(), balance)
   assert.equal(src(lifting)['grit.session'], balance.grit.xpPerSession)
   assert.equal(src(cardio)['grit.session'], balance.grit.xpPerSession)
 })
@@ -149,4 +154,50 @@ test('a normal session is unaffected — isFirstOfDay defaults to true', () => {
   const explicit = gritAwards(makeSession(), makeContext({ isFirstOfDay: true }), balance)
   const implied = gritAwards(makeSession(), makeContext(), balance)
   assert.deepEqual(explicit, implied)
+})
+
+// --- an empty session is not a training session ---------------------------
+// docs/01: "Session completed" counts only when at least one set was logged.
+// Opening a session and logging nothing used to pay the full day-level award —
+// 140 flat plus the forced one-minute duration — for zero work.
+
+test('SOURCE: a session with no logged sets earns no Grit at all', () => {
+  const awards = gritAwards(makeSession({ sets: [], durationMinutes: 60 }), makeContext(), balance)
+  assert.deepEqual(awards, [], 'nothing was logged, so nothing counts as showing up')
+})
+
+test('one logged set is enough — there is no volume threshold', () => {
+  // Three sets of laterals is showing up. The rule is "something", not "enough".
+  const oneSet = makeSession({ sets: [{ exerciseId: 'lateral_raise_db', weight: 10, reps: 12 }] })
+  const awards = gritAwards(oneSet, makeContext(), balance)
+  assert.equal(src(awards)['grit.session'], balance.grit.xpPerSession)
+})
+
+test('the empty session earns nothing from any Grit source, not just the flat one', () => {
+  // Every day-level source rides on the same "this session happened" premise:
+  // time under load, the return bonus and the weekly plan bonus included.
+  const gap = balance.grit.returnGapDaysThreshold
+  const context = makeContext({
+    daysSinceLastSession: gap,
+    sessionsThisWeekBefore: 3,
+    planTargetSessionsPerWeek: 4,
+  })
+  const empty = gritAwards(makeSession({ sets: [], durationMinutes: 90 }), context, balance)
+  assert.equal(totalsByAttribute(empty).grit, 0, `an empty session paid ${totalsByAttribute(empty).grit}`)
+
+  // The same context with one set logged pays all of them, so the guard is
+  // what suppressed the awards and not a broken fixture.
+  const worked = gritAwards(
+    makeSession({ sets: [{ exerciseId: 'squat_bb', weight: 185, reps: 5 }], durationMinutes: 90 }),
+    context, balance)
+  for (const source of ['grit.session', 'grit.hours', 'grit.return', 'grit.weekPlan']) {
+    assert.ok(src(worked)[source] > 0, `${source} should pay when a set was logged`)
+  }
+})
+
+test('a warm-up-only session still counts as showing up', () => {
+  // Judgement call, recorded in DECISIONS.md: the rule is "at least one set was
+  // logged", and a warm-up is a logged set. Might still pays nothing for it.
+  const warmup = makeSession({ sets: [{ exerciseId: 'squat_bb', weight: 45, reps: 5, isWarmup: true }] })
+  assert.equal(src(gritAwards(warmup, makeContext(), balance))['grit.session'], balance.grit.xpPerSession)
 })

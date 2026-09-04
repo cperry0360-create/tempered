@@ -35,6 +35,20 @@ export function gritAwards(session, context, balance) {
     if (xp > 0) awards.push({ attribute: 'grit', source, label, xp })
   }
 
+  // A session counts only if it recorded work. `docs/01` defines "session
+  // completed" as at least one logged set — not a volume threshold, so three
+  // sets of laterals counts and an empty session does not.
+  //
+  // The guard sits above every source rather than on the flat award alone,
+  // because all of them ride on the same premise that a session happened: time
+  // under load is time under nothing, the return bonus would pay for coming
+  // back to log zero, and the week bonus would count a session that never was.
+  //
+  // Warm-ups count. The rule is "at least one set", and a warm-up is a logged
+  // set — Might already declines to pay for it, which is the right place for
+  // that distinction. See DECISIONS.md.
+  if ((session.sets?.length ?? 0) === 0) return awards
+
   // Defaults to true, so a normal session behaves exactly as it always has.
   const firstOfDay = context.isFirstOfDay !== false
 

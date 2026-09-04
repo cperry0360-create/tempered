@@ -261,3 +261,84 @@ test('ACCEPTANCE: the weekly view derives hard sets from logged data', async () 
   assert.equal(chest.short, 8)
   assert.ok(status.hardSets.every((row) => row.short >= 0), 'never a negative, never a debt')
 })
+
+// --- an empty session is not a training session ---------------------------
+// `grit.test.js` proves the domain refuses to pay for a session with no sets.
+// That is necessary and not sufficient: the bug Cory saw was a whole flow —
+// open a session, log nothing, press finish, watch +142 land and a summary
+// appear. What made it wrong lives here: what gets stored, and what the finish
+// hands back for the screen to show.
+
+test('finishing a session with nothing logged earns no XP at all', async () => {
+  const { storage, workout } = await freshApp()
+  const session = await workout.startSession('lower')
+
+  const summary = await workout.finishSession(session, { durationMinutes: 40 })
+
+  assert.equal(summary, null, 'there is nothing to summarise')
+  const stored = await storage.getAll('attributeState')
+  for (const row of stored) assert.equal(row.xp, 0, `${row.attribute} earned XP for an empty session`)
+})
+
+test('the empty session leaves no completed session behind', async () => {
+  // A stored empty session is not inert: it counts toward the week's sessions
+  // and resets the days-since-last-session clock.
+  const { storage, workout } = await freshApp()
+  const session = await workout.startSession('lower')
+  await workout.finishSession(session)
+
+  assert.deepEqual(await storage.getAll('sessions'), [], 'the empty session was kept')
+})
+
+test('one logged set is enough to count — there is no volume threshold', async () => {
+  // Three sets of laterals is showing up. One is too.
+  const { storage, workout } = await freshApp()
+  const session = await workout.startSession('lower')
+  await workout.logSet(session, { exerciseId: 'lateral_raise_db', weight: 15, reps: 12 })
+
+  const summary = await workout.finishSession(session, { durationMinutes: 8 })
+
+  assert.ok(summary, 'a session with work in it must summarise')
+  assert.equal(summary.setsCompleted, 1)
+  assert.equal(summary.xpBySource['grit.session'], balance.grit.xpPerSession)
+  assert.equal((await storage.getAll('sessions')).length, 1, 'a real session must be kept')
+})
+
+test('an abandoned session does not consume the return-after-a-gap bonus', async () => {
+  // The sharpest consequence of storing empty sessions. Come back after a gap,
+  // open a session, log nothing, close it — then actually train. Before the fix
+  // the empty session had already reset the clock and the bonus was gone.
+  const { clock, workout } = await freshApp()
+  const first = await workout.startSession('lower')
+  await workout.logSet(first, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+  await workout.finishSession(first, { durationMinutes: 45 })
+
+  clock.advanceDays(balance.grit.returnGapDaysThreshold + 2)
+
+  const abandoned = await workout.startSession('lower')
+  assert.equal(await workout.finishSession(abandoned), null)
+
+  const real = await workout.startSession('lower')
+  await workout.logSet(real, { exerciseId: 'squat_bb', weight: 185, reps: 5 })
+  const summary = await workout.finishSession(real, { durationMinutes: 45 })
+
+  assert.equal(summary.xpBySource['grit.return'], balance.grit.returnAfterGapBonus,
+    'the abandoned session swallowed the return bonus')
+})
+
+test('abandoning one slot never destroys the day the other slots built', async () => {
+  // In slot mode the record is the DAY's session and may already carry work.
+  // Discarding it because this slot logged nothing would delete real training.
+  const { storage, workout } = await freshApp()
+  const done = await workout.completeSlot(
+    { dayId: 'monday', slotIndex: 0, exerciseId: 'incline_bench_bb' },
+    [{ weight: 135, reps: 8 }])
+  assert.ok(done, 'the first slot must count')
+
+  const { session } = await workout.openDaySession()
+  const abandoned = await workout.finishSession(session, { onlySets: [], isFirstOfDay: false })
+
+  assert.equal(abandoned, null, 'a slot that logged nothing summarises nothing')
+  assert.equal((await storage.getAll('sessions')).length, 1, 'the day was deleted')
+  assert.equal((await storage.getAll('setLogs')).length, 1, 'the day lost its logged work')
+})

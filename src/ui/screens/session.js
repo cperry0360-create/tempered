@@ -24,7 +24,7 @@ const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.u
  * @param {object} deps
  * @param {ReturnType<import('../../app/workout.js').createWorkoutService>} deps.workout
  * @param {import('../../adapters/clock/clock.js').Clock} deps.clock
- * @param {(summary: object) => void} deps.onFinish
+ * @param {(summary: object|null) => void} deps.onFinish  `null` when nothing was logged.
  */
 export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   const root = el('div.screen.screen--session')
@@ -398,6 +398,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       // because the day's session may already carry earlier slots.
       ...(session.slotMode ? { onlySets: loggedHere } : {}),
     })
+    // `null` means nothing was logged. There is nothing to summarise, so the
+    // screen closes without one rather than reporting an empty session back.
     onFinish(summary)
   }
 

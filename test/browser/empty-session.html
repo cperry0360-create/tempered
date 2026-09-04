@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — an empty session closes quietly</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * docs/01 — an empty session earns nothing and summarises nothing.
+       *
+       * The node tests prove the service returns null and stores nothing. They
+       * cannot prove what the person sees, and the visible half of this bug was
+       * a summary screen announcing +142 for an empty session. So this drives
+       * the real screens: start a session, log nothing, press FINISH, and check
+       * that the app went back to where it came from rather than to a summary.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
+      const q = (s) => document.querySelector(s)
+      const settle = () => new Promise((r) => setTimeout(r, 0))
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+      /** Drive the two-step FINISH the session screen requires. */
+      async function pressFinish() {
+        ;(await waitFor('[data-action="finish"]')).click()
+        ;(await waitFor('[data-action="confirm-finish"]')).click()
+        for (let i = 0; i < 60 && q('[data-action="confirm-finish"]'); i++) await settle()
+        await settle()
+      }
+
+      try {
+        const tempered = await bootstrap({ storage: createMemoryStorage() })
+        const xpOf = async () => (await tempered.storage.getAll('attributeState'))
+          .reduce((sum, row) => sum + row.xp, 0)
+
+        // --- empty session -------------------------------------------------
+        await tempered.app.show('train')
+        await waitFor('[data-programday]')
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+        check('a session opened with nothing logged', q('.setrow') !== null)
+
+        await pressFinish()
+
+        check('no summary is shown for a session that logged nothing',
+          q('.screen--summary') === null,
+          q('.screen--summary') ? 'a summary appeared' : 'none')
+        check('the app returned to a normal tab, not a dead end',
+          document.querySelector('.tabbar') !== null && !document.querySelector('.tabbar').hidden)
+        check('the empty session earned no XP', await xpOf() === 0, `${await xpOf()} xp`)
+        check('no completed session was stored',
+          (await tempered.storage.getAll('sessions')).length === 0,
+          `${(await tempered.storage.getAll('sessions')).length} stored`)
+
+        // --- one set is enough ---------------------------------------------
+        await tempered.app.show('train')
+        await waitFor('[data-programday]')
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+        const weight = q('input.setrow__num[data-field="weight"]')
+        weight.value = '95'
+        weight.dispatchEvent(new Event('change'))
+        await settle()
+        q('.setrow__check').click()
+        await settle()
+
+        await pressFinish()
+
+        check('one logged set does produce a summary', q('.screen--summary') !== null,
+          q('.screen--summary') ? 'shown' : 'missing')
+        check('one logged set earns XP', await xpOf() > 0, `${await xpOf()} xp`)
+      } catch (error) {
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 300))
+      }
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'empty-session', passed: checks.every((c) => c.ok), checks }),
+      })
+    </script>
+  </body>
+</html>

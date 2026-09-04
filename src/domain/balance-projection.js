@@ -178,7 +178,11 @@ export function simulateYear(balance, library, options = {}) {
       const context = { date: `d${day}`, exercises, records, daysSinceLastSession: day - lastSessionDay,
         sessionsThisWeekBefore, planTargetSessionsPerWeek: planTarget }
       state = applyAwards(state, awardsForSession(
-        { id: `c${day}`, routineId: 'cardio', durationMinutes: Math.round(miles * runPace), sets: [] },
+        // The session records the run it covered. A distance entry with no
+        // weight earns Grit for showing up and no Might, which is the mapping
+        // docs/01 describes — and it is what a built cardio session would log.
+        { id: `c${day}`, routineId: 'cardio', durationMinutes: Math.round(miles * runPace),
+          sets: [{ exerciseId: 'run', distance: miles, timeSec: Math.round(miles * runPace * 60) }] },
         context, balance), balance)
       lastSessionDay = day
       sessionDays.add(day)

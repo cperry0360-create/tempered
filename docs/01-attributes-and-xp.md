@@ -61,6 +61,39 @@ Pace improvement stops Wind becoming a step-count grind.
 | Weeks meeting plan | sessions >= plan target in a calendar week |
 | Return after a gap | bonus for the first session back after 4+ days off |
 
+### What counts as a session
+
+**A session counts for Grit only if at least one set was logged.** Opening a session and
+closing it without logging anything earns nothing, from any Grit source.
+
+This is not a volume threshold and must never become one. Three sets of laterals is
+showing up. Nothing is not. The test is whether anything was recorded, never whether
+enough was.
+
+Three consequences, all deliberate:
+
+- **The guard covers every Grit source, not just the flat one.** Time under load, the
+  return bonus and the weekly plan bonus all rest on the same premise — that a session
+  happened. An empty session must not pay any of them, or the hole simply moves.
+- **"Any training type" fixes the rate, it does not excuse logging nothing.** A cardio
+  session earns the same flat amount as a lifting one, but it still has to record what
+  it covered.
+- **A warm-up set counts.** The rule is "at least one set". Might already declines to
+  pay for warm-ups, which is the right place for that distinction; Grit is about
+  showing up, and a warm-up is showing up.
+
+An empty session is not stored as a completed one either. A stored empty session is not
+inert: it would count toward the week's session total and reset the days-since-last-session
+clock, inflating one bonus and swallowing another. It is discarded, and the session closes
+without a summary — there is nothing to summarise, and a summary reporting zero reads as
+a rebuke, which this app does not do.
+
+**The general rule this comes from.** Where a measurement exists, score the measurement.
+Where an attribute pays for an action instead, the action must be one the user deliberately
+took and the app can see evidence of — logging nutrition, marking a rest day, recording
+body metrics. Opening a screen is not an action. Any flat award must name the evidence it
+requires, or it pays for navigation.
+
 That last row matters. Coming back is the hardest single act in fitness. The app rewards
 it rather than punishing the absence before it.
 

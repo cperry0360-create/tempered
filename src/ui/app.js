@@ -71,6 +71,12 @@ export function createApp({ mount, workout, storage, clock }) {
       onFinish: async (result) => {
         session?.destroy()
         session = null
+        // Nothing logged: close in silence. A summary of no sets, no volume and
+        // no XP is a screen that reports nothing, and it reads like a rebuke.
+        if (!result) {
+          await show(returnTab)
+          return
+        }
         summary.show(result)
         replace(body, [summary.root])
         tabBar.hidden = true

@@ -80,6 +80,27 @@ const PRECACHE = [
   './src/ui/screens/settings.js',
   './src/ui/screens/today.js',
   './src/ui/screens/train.js',
+
+  // Exercise art, referenced from data/exercises.json rather than imported,
+  // so no import graph can find it. Reference imagery is useless if it only
+  // appears when you happen to have signal in the gym.
+  './art/exercises/cable_fly.jpg',
+  './art/exercises/close_grip_bench_bb.jpg',
+  './art/exercises/crunch.jpg',
+  './art/exercises/flat_bench_db.jpg',
+  './art/exercises/front_squat.jpg',
+  './art/exercises/hammer_curl_db.jpg',
+  './art/exercises/incline_bench_bb.jpg',
+  './art/exercises/incline_bench_db.jpg',
+  './art/exercises/incline_curl_db.jpg',
+  './art/exercises/lat_pulldown.jpg',
+  './art/exercises/lateral_raise_db.jpg',
+  './art/exercises/one_arm_row_db.jpg',
+  './art/exercises/rdl.jpg',
+  './art/exercises/rear_delt_fly_db.jpg',
+  './art/exercises/seated_row_close.jpg',
+  './art/exercises/shoulder_press_db.jpg',
+  './art/exercises/tricep_push.jpg',
 ]
 
 self.addEventListener('install', (event) => {

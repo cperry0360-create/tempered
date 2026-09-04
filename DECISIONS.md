@@ -636,3 +636,107 @@ commit as the phase, as `docs/10` requires.
 phase, so a screenshot of Settings identifies the build precisely.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
+**Phase:** 3.5 D (unblocking)
+**Decision:** All 17 program movements now have art in `art/exercises/`, sourced from
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db) at revision
+`a859101`. The watermarked `art/source/exercise-frames.png` and its crop are deleted.
+Attribution is in `README.md`; per-file provenance is in `art/exercises/SOURCES.json`.
+**Reasoning:** Cory directed me to source openly licensed art rather than publish the
+"STRENGTH LEVEL" watermarked image, which was the rights question I flagged in Phase 3.5 D.
+
+The licence needs stating carefully, because it is not one licence but three.
+free-exercise-db carries **the Unlicense** — a public domain dedication that permits
+copying, modifying and publishing with no conditions at all. Read alone, that settles it.
+
+It does not stand alone. That archive took its imagery from
+[wrkout/exercises.json](https://github.com/wrkout/exercises.json) (also Unlicense), which
+took it from the [Everkinetic](https://github.com/everkinetic/data) open data project by
+Greg Priday — and Everkinetic, the oldest ancestor still carrying a licence file, is
+**CC BY-SA 4.0**. Two intermediaries relicensed CC BY-SA material as public domain. A
+relicensing like that is only valid if whoever did it held the rights, and there is nothing
+in either repository showing they did.
+
+So I did not pick a side. The images are used **as if CC BY-SA 4.0 still bound them**:
+attributed to Everkinetic and to the archive, with the modification described, the licence
+named and linked, and the images stated to remain under CC BY-SA 4.0 while the rest of the
+repository does not. That costs a paragraph in the README and satisfies both readings —
+whereas relying on the Unlicense and being wrong would mean stripping attribution from
+CC BY-SA work on a public site. Under BY-SA, including the images in a larger collection is
+allowed; it is the images themselves that carry the licence, not Tempered.
+**Confidence:** inferred — the Unlicense text is unambiguous, the chain behind it is not.
+**Needs Cory:** yes, but not blocking. Two things worth an opinion. (1) If you want the
+simple story, the position is defensible either way and the app ships as is. If you want
+certainty, the safest version is dropping the attribution question entirely by paying for
+a licensed set. (2) If Tempered ever gets a LICENSE file of its own, it must exclude
+`art/exercises/` or it will claim terms over images it does not own.
+
+## 2026-09-04 — Two frames per movement, not one
+**Phase:** 3.5 D
+**Decision:** Each art file is the archive's frame 0 and frame 1 side by side, scaled to
+300px tall and joined with a 2px gap. JPEG, quality 78. 17 files, 800 KB total.
+**Reasoning:** `docs/09 D` says the art exists to answer "which incline curl variant is
+this". One frame often cannot. The start frame of a lateral raise is a man standing still
+holding dumbbells, which is also the start frame of a hammer curl, a shrug and a deadlift;
+only the second frame distinguishes them. Start-plus-finish also reads as a movement rather
+than a pose, which is what a reference image is for. JPEG because these are photographs —
+PNG was right for the sprite work and is wrong here, at roughly four times the size for no
+visible gain. The existing single-filename `art` field needed no change.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Exercise art is precached
+**Phase:** 3.5 D
+**Decision:** All 17 art files were added to `PRECACHE` in `sw.js`, adding ~800 KB to the
+install. A node test asserts the list and the `art` fields cannot drift apart.
+**Reasoning:** `CLAUDE.md` non-negotiable 5 is that the app works fully offline. The runtime
+handler caches images once seen, but that makes the first sight of a movement depend on
+signal — and the place you look up an unfamiliar lift is a basement gym with no bars. 800 KB
+once, at install, buys reference imagery that is never missing. Art is referenced from
+`data/exercises.json`, not imported, so the existing import-graph test could never have
+caught a missing entry; that gap is now covered by four assertions, each proven to fail.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — `tools/slice-exercise-art.js` kept, with an empty manifest
+**Phase:** 3.5 D
+**Decision:** The slicing tool stays in the repo, its `ART_MANIFEST` emptied and its purpose
+restated at the top. Running it prints that there is nothing to slice and exits 0.
+**Reasoning:** Its only entry cropped a source file that is now deleted, so leaving the
+manifest as it was would have left a tool that crashes on sight. Deleting the tool outright
+was the other option and I did not take it: the PNG decode/encode/trim cropper is the
+expensive part, it is written and it works, and a real frame sheet would need it back. An
+honest note costs less than rewriting it later. Flagging rather than deciding silently,
+since dead code is exactly what rots.
+**Confidence:** inferred
+**Needs Cory:** no — but say the word and it goes.
+
+## 2026-09-04 — The plate calculator was already surfaced; docs/09 C needed no work
+**Phase:** 3.5 C (verification)
+**Decision:** Changed nothing. Confirmed that `platePanel()` renders inline in every
+exercise card in `src/ui/screens/session.js`, unconditionally, for any exercise not measured
+in time — not behind a menu, a tab or the `openPanel` toggle that gates REST, HISTORY, SWAP
+and the art enlargement.
+**Reasoning:** Asked to surface it, I checked before building. `docs/09 C` requires it "next
+to the weight field during a session, not behind a menu", and it was already put there in
+Phase 3.5, with a test in `test/browser/tracker-v2.html` asserting `.plates` is present
+without any interaction. The one nuance worth recording: it sits directly below the set rows
+and the ADD SET button rather than horizontally beside the weight input, so "beside" is
+satisfied in the sense of same card, always visible, no interaction — not literal adjacency.
+That reads as correct on a phone, where a horizontal split beside a numeric field would
+leave neither enough room.
+**Confidence:** specified
+**Needs Cory:** no — unless you read "beside" literally, in which case say so and it moves.
+
+## 2026-09-04 — Version bumped to 0.4.1 (3.6)
+**Phase:** 3.5 D (unblocking)
+**Decision:** `src/version.js` carries `0.4.1 (3.6)`. A patch bump, and the parenthetical
+still names 3.6.
+**Reasoning:** `PRECACHE` changed, and the cache key derives from this — without a bump an
+installed phone keeps serving a cache with no art in it. Not a phase completion, so the
+minor stays put; the parenthetical names the last phase reached rather than 3.5 D, because
+this work landed after 3.6 and labelling it "(3.5 D)" would read like a build going
+backwards.
+**Confidence:** inferred
+**Needs Cory:** no

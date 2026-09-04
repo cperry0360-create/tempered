@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — exercise art</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * docs/09 D — exercise art, checked against a real browser.
+       *
+       * The node tests prove the files exist, that every `art` field points at one,
+       * and that each is precached. None of that proves a picture appears: a file
+       * can exist and still fail to decode, and `<img loading="lazy">` can quietly
+       * never fetch at all. Only a browser answers "is there an image on screen",
+       * so that is asked here, by reading naturalWidth rather than trusting the
+       * element's presence.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
+      const q = (s) => document.querySelector(s)
+      const qa = (s) => [...document.querySelectorAll(s)]
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+      /** Lazy images never fetch off-screen, which would make every check below a lie. */
+      const settleImages = (images) => Promise.all(images.map((image) => {
+        image.loading = 'eager'
+        return image.complete ? null : new Promise((r) => { image.onload = image.onerror = r })
+      }))
+
+      try {
+        const tempered = await bootstrap({ storage: createMemoryStorage() })
+        await tempered.app.show('train')
+        await waitFor('[data-programday]')
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+
+        const cards = qa('section.exercise[data-exercise]')
+        const thumbs = qa('img.exercise__art, .exercise__art img')
+        check('every movement of the day carries art', thumbs.length === cards.length,
+          `${thumbs.length} images across ${cards.length} movements`)
+
+        await settleImages(thumbs)
+        const broken = thumbs.filter((image) => !image.naturalWidth)
+          .map((image) => image.src.split('/').pop())
+        check('every thumbnail decodes to a real picture', broken.length === 0,
+          broken.join(', ') || 'none broken')
+
+        // Reference, not decoration: it has to be legible enlarged, per docs/09 D.
+        q('.exercise__art').click()
+        const full = await waitFor('.exercise__full')
+        await settleImages([full])
+        check('the art enlarges to something legible', full.naturalWidth >= 600,
+          `${full.naturalWidth}x${full.naturalHeight}`)
+        check('the enlarged art shows two frames, not one',
+          full.naturalWidth > full.naturalHeight * 2,
+          `aspect ${(full.naturalWidth / full.naturalHeight).toFixed(2)}:1`)
+      } catch (error) {
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 300))
+      }
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'exercise-art', passed: checks.every((c) => c.ok), checks }),
+      })
+    </script>
+  </body>
+</html>

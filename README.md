@@ -33,6 +33,30 @@ every session. Then follow **`docs/07-build-plan.md`** in order.
 `data/` holds seed content and balance configuration as hand-editable JSON. Balance
 constants live in `data/balance.json` and must never be hard-coded.
 
+## Exercise art
+
+The movement photographs in `art/exercises/` are not original work. Each one is two
+frames — start and finish — of an exercise from the **[free-exercise-db][fedb]** archive
+by yuhonas, released under the [Unlicense][unlicense] (a public domain dedication).
+Tempered scales the two frames to a common height and joins them side by side; nothing
+else about them is changed.
+
+That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], from the
+**[Everkinetic][everkinetic] open data project by Greg Priday**, which is licensed
+**[CC BY-SA 4.0][ccbysa]**. Both downstream repositories relicensed the set as public
+domain. Tempered does not rely on that: the images are attributed and shared alike as
+though CC BY-SA 4.0 still bound them, which satisfies either reading. The images remain
+under CC BY-SA 4.0; the rest of this repository does not.
+
+`art/exercises/SOURCES.json` records the exact archive entry, revision and modification
+behind every file, so any picture can be traced back to its origin.
+
+[fedb]: https://github.com/yuhonas/free-exercise-db
+[unlicense]: https://unlicense.org
+[wrkout]: https://github.com/wrkout/exercises.json
+[everkinetic]: https://github.com/everkinetic/data
+[ccbysa]: https://creativecommons.org/licenses/by-sa/4.0/
+
 ## Status
 
 Specification in progress. Not yet built.

@@ -407,18 +407,10 @@
           unnamed.length === 0,
           unnamed.map((n) => n.className || n.tagName).slice(0, 4).join(', ') || 'none')
 
-        /**
-         * Under 5% of the viewport — or nothing but the one primary action.
-         *
-         * The document permits "a full-width acid button where a bar would be
-         * wrong", and on a phone a full-width button is about 6% of the screen.
-         * The two rules cannot both hold literally, so the exemption is stated
-         * here rather than silently widened: a screen whose entire acid content
-         * is the single thing you are meant to tap has not diluted the accent,
-         * which is what the 5% rule exists to prevent. Logged in DECISIONS.md.
-         */
-        const overBudget = budgets.filter((b) => b.coverage >= 0.05
-          && !(b.roles.size === 1 && b.roles.has('primary')))
+        // Under 5% of the viewport. No exceptions, on any screen: the summary's
+        // DONE is a pill rather than a full-width button precisely so this can
+        // be the flat rule the document says it is.
+        const overBudget = budgets.filter((b) => b.coverage >= 0.05)
         check('1 acid covers under 5% of the viewport', overBudget.length === 0,
           budgets.map((b) => `${b.label} ${(b.coverage * 100).toFixed(2)}%`).join(' · ')
             + ` (viewport ${innerWidth}×${innerHeight})`)

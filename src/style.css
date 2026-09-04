@@ -278,6 +278,10 @@ body {
 
 .button--quiet { background: none; color: var(--text-2); }
 .button--wide { width: 100%; }
+/* A primary action that carries acid is a pill, never the full width: filling
+   the width of a phone with the accent spends the whole 5% budget on one
+   control. See docs/04-design-system.md and DECISIONS.md. */
+.button--pill { justify-self: end; padding: var(--s3) var(--s5); }
 
 .search {
   width: 100%;

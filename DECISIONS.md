@@ -664,8 +664,8 @@ and the accent "has stopped meaning anything" — and a screen whose entire acid
 the one thing you are meant to tap has diluted nothing. The exemption is written into the
 harness where it can be read, rather than being absorbed by quietly loosening the number.
 **Confidence:** guessed
-**Needs Cory:** yes — low priority. Either is easy: keep the full-width DONE and accept
-~7% on that one screen, or shrink it to a right-aligned pill and hold 5% everywhere.
+**Needs Cory:** answered — Cory chose the pill. See the entry below; the exemption is gone
+and the rule is flat.
 
 ## 2026-09-04 — Phase 3.7: which screens get a FAB, and what it does
 **Phase:** 3.7
@@ -723,7 +723,8 @@ are the subject. They never appear in the tracker." The summary is not the Chara
 screen, but it is a screen whose content is attribute XP, and stripping colour from it
 would have made an attribute list read as five identical rows.
 **Confidence:** inferred
-**Needs Cory:** yes — low priority. Say the word and the summary goes monochrome too.
+**Needs Cory:** answered — Cory kept it, and `docs/04` now says so: attribute colours
+appear on Character and in the post-session "What grew" readout, nowhere else.
 
 ## 2026-09-04 — Phase 3.7: a bug the acceptance harness could not see
 **Phase:** 3.7
@@ -770,5 +771,31 @@ service worker cache.
 the 3.x group, not a new phase group. Bumping it sweeps every cached copy of the old
 stylesheet, which matters more than usual here: a stale `style.css` against new markup is
 exactly the kind of half-applied build a version number exists to identify.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: the acid budget is a flat 5%, with no exemption
+**Phase:** 3.7
+**Decision:** Cory's call on the open question above: the summary's DONE is now a pill
+(`.button--pill`, right-aligned) rather than a full-width button, and the fallback clause
+came out of the assertion. `test/browser/surface.html` asserts under 5% of the viewport,
+full stop. Measured: train 0.71%, today 0.71%, a session 0.18%, resting 0.24%, confirming
+0.24%, summary 1.56%. Restoring the full-width button puts the summary at 6.22% and turns
+the check red, which is how the rule was verified to still bite.
+**Reasoning:** A rule with a stated exemption is a rule someone will widen later. The
+document's "full-width acid button" was one of two permitted forms for a primary action,
+not a requirement; the 5% ceiling was the one with a reason attached to it. Dropping the
+form that could not fit the ceiling costs nothing and leaves one number to hold.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: looking at the screens is now part of finishing a phase
+**Phase:** 3.7
+**Decision:** Added to `CLAUDE.md` under How to work: at the end of any phase that changes
+the interface, screenshot each screen it touched and look at them.
+**Reasoning:** Cory's, after the `.tabbar[hidden]` bug. Twenty-one assertions and four
+older harnesses all passed while a live control that starts a new session sat over the
+session you were in, because no one had thought to assert that a hidden thing is hidden.
+A screenshot has no such blind spot: it shows what is there, not what was asked about.
 **Confidence:** specified
 **Needs Cory:** no

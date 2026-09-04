@@ -37,8 +37,9 @@ If more than roughly 5% of a screen is acid, it has stopped meaning anything.
 distinguishable from primary values without competing — effort percentages, prescribed
 versus actual.
 
-**The five attribute colours from the old system survive**, but only on the Character
-screen where attributes are the subject. They never appear in the tracker.
+**The five attribute colours from the old system survive**, but only where attributes are
+the subject: the Character screen, and the post-session "What grew" readout. Nowhere
+else. They never appear in the tracker.
 
 ## Surfaces
 

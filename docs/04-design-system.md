@@ -1,88 +1,102 @@
 # 04 — Design system
 
-Dark tactical. No illustration is required to ship. The look comes from typography,
-restraint and one accent colour per attribute.
+**Superseded.** The previous version specified a muted, restrained, hairline-and-space
+system. Built faithfully, it produced something too flat to read in a gym. The reference
+Cory chose is the opposite: black ground, one loud acid accent, heavy type, generous
+cards. This document is rewritten to that.
 
-## Why this direction
+---
 
-A tracker is read at a glance, in a gym, one-handed, often mid-set. Density and
-legibility beat atmosphere. It also needs no commissioned art, which removes the
-project's largest risk.
+## The reference
 
-Flavour lives in **language**, not decoration: attribute names, tier titles, directives,
-the battle log. "Might reached Formidable" carries the fantasy without a single drawing.
+Sampled directly from the chosen screenshot, not estimated.
+
+| Role | Value |
+|---|---|
+| Page ground | `#1c1c1e` |
+| Card surface | `#2f2f2f` |
+| Deep well / active field | `#000000` |
+| Raised surface | `#413f40` |
+| Primary accent (acid) | `#edfe73` |
+| Secondary accent (blue) | `#8db2dd` |
+| Text primary | `#ffffff` |
+| Text secondary | `#c7c7c5` |
+
+## Colour rules
+
+**One accent carries the app: `#edfe73`.** Acid lime. It is loud on purpose. It marks
+exactly three things and nothing else:
+
+1. The single primary action on screen (the FAB, the confirm)
+2. The active state — the column being logged, the current set
+3. A value worth noticing — a PR, a max, a live counter
+
+If more than roughly 5% of a screen is acid, it has stopped meaning anything.
+
+**`#8db2dd` is the only other accent**, for secondary numeric data that must be
+distinguishable from primary values without competing — effort percentages, prescribed
+versus actual.
+
+**The five attribute colours from the old system survive**, but only on the Character
+screen where attributes are the subject. They never appear in the tracker.
+
+## Surfaces
+
+Three levels, no more. `#1c1c1e` ground, `#2f2f2f` cards, `#000000` for input wells and
+the active field. Cards are `--r-lg` (16px) or larger and generously padded. **No
+hairline borders between rows** — separation comes from the surface step and from space.
 
 ## Type
 
-Two faces. No others.
+Heavy, tight, large. The previous system's timidity was mostly a type failure.
 
-- **Display** — a condensed geometric sans for numbers, levels, headings.
-  Suggested: Chakra Petch, Rajdhani, or Barlow Condensed. Pick one and never mix.
-- **UI** — Inter, or the system stack.
+- **Section headings are big, bold and uppercase** with tight tracking: `INCLINE DB`.
+  Not a small grey label. 24–28px, weight 800, letter-spacing -0.01em.
+- **Numbers are the largest thing in any row.** A weight is the content; `lb` is a
+  footnote beside it at half the size and dimmed.
+- Column labels are small, uppercase, `--text-3` — except the active column, which is
+  acid.
+- Tabular numerals everywhere a number can change.
 
-Scale, five steps only: `11 / 13 / 15 / 20 / 32`.
-Numbers are always tabular. A weight that shifts as it changes is unreadable.
-
-## Spacing
-
-A 4px rhythm: `4 / 8 / 12 / 20 / 32 / 52`. No other values.
-
-## Colour
-
-```
---bg          #0a0c10   near black, slightly cool
---surface     #12151c   cards
---surface-2   #1a1f28   raised
---line        rgba(255,255,255,.08)
---text        #e6eaf2
---text-2      rgba(230,234,242,.60)
---text-3      rgba(230,234,242,.34)
-```
-
-One accent per attribute, used only for that attribute:
-
-```
---might       #f0803c   orange
---wind        #4fc9a0   green
---grit        #d8b23c   amber
---vitality    #e05a6a   red
---mind        #7b7bf0   violet
-```
-
-Plus `--good #4fc9a0`, `--warn #e0a94a`, `--bad #e05a6a` for state.
-
-**Rules.** Accent colour is used for exactly one thing on a screen at a time. Never two
-accents competing. Backgrounds stay neutral; colour identifies attributes only.
+Scale: `11 / 13 / 15 / 20 / 28 / 34`. Two more steps than before, because the old scale
+had no room for a number to dominate.
 
 ## Components
 
-- **Cards** are flat surfaces with a hairline, never bevels or gradients.
-- **Progress bars** are 4px, square, full width, with the value as text beside them.
-- **Numbers lead.** The number is the largest thing in any stat block, the label is the
-  smallest.
-- **One primary action per screen**, full width at the bottom.
-- **No emoji anywhere.** Use a consistent icon set or nothing.
+**Set row.** Each field is its own rounded outlined cell, not a bare input. The active
+row gets a filled olive tint plus a 4px acid bar down its left edge. Completed rows keep
+full text brightness — dimming them is conventional and wrong here, because those
+numbers are what you read to choose the next weight. The check control carries the state.
+
+**Pill buttons.** Exercise actions — swap, history, edit sets, equipment — are full-round
+grey pills with a small icon and a label, laid out in a horizontal scroller directly
+under the exercise name. Not a menu. Not an overflow. Visible.
+
+**The tab bar floats.** Inset from all three edges with a margin, over a blurred
+translucent surface, safe-area respected. Never welded to the screen edge.
+
+**Primary action is a circular acid FAB** at the bottom right of the floating bar, or a
+full-width acid button where a bar would be wrong. One per screen.
+
+**Exercise thumbnails** are rounded squares at the left of the name, roughly 3 lines
+tall.
+
+## Density
+
+Cards breathe: `--s4` internal padding, `--s3` between rows. The old system's `--s1`
+row rhythm produced mis-taps. Touch targets stay at 44px minimum.
 
 ## Motion
 
-Fast and functional. 120ms for state, 220ms for screen transitions, 400ms maximum for
-the level-up moment which is the only place celebration is warranted.
+Unchanged: 120ms state, 220ms transitions, 400ms for the level-up moment only. Respect
+`prefers-reduced-motion`.
 
-Respect `prefers-reduced-motion` everywhere.
+## Acceptance
 
-## The battle is the exception
-
-The daily battle may be more theatrical than the rest of the app: pixel sprites,
-floating numbers, a victory flourish. It is thirty seconds a day and it is where the
-game lives. Do not let that treatment leak into the tracker.
-
-## Art required to ship
-
-Almost none.
-
-- An app icon
-- A small set of interface icons
-- Enemy and hero sprites for the battle only
-
-Everything else is type, colour and space. **Do not generate decorative art.** If a
-screen looks empty, the fix is spacing and hierarchy, not illustration.
+- Acid `#edfe73` appears on at most three distinct element roles per screen, and covers
+  under 5% of the viewport. Assert it.
+- Every set-row number meets WCAG AA against its cell.
+- No hairline row separators anywhere in the tracker.
+- The tab bar has a nonzero margin on left, right and bottom, plus the safe-area inset.
+- Section headings compute to at least 24px and weight 700 or heavier.
+- The largest text in a set row is a number, not a label.

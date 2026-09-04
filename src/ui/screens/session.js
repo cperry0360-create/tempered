@@ -1,24 +1,40 @@
 /**
  * The active workout — the centre of the app.
  *
- * Rewritten for `docs/09-tracker-v2.md` after real gym use. Everything still
- * serves the speed targets in docs/05, but the corrections in section F govern
- * how it reads at arm's length in bad light, mid-set:
+ * Re-implemented against the rewritten `docs/04-design-system.md`, which
+ * supersedes section F of `docs/09-tracker-v2.md`. Everything docs/09 asked for
+ * functionally is unchanged; how it reads at arm's length is not:
  *
- *   - set-row numbers are primary content and carry full `--text`, never dimmed
- *   - one accent, Might's orange, on the active row, the rest timer and the
- *     primary action. Nothing else is coloured
- *   - rows sit on the --space-3 rhythm; a cramped row is a mis-tap
- *   - FINISH is separated from the set controls and asks before ending
+ *   - the exercise name is a section heading, not a label: 28px, weight 800
+ *   - each field is its own rounded outlined cell. The set being worked gets an
+ *     olive fill and a 4px acid bar down its left edge
+ *   - completed rows keep full text brightness. The check carries the state,
+ *     because those numbers are what you read to choose the next weight
+ *   - exercise actions are visible round pills in a scroller. Never a menu
+ *   - no hairline separates any two rows. Surface and space do that work
+ *   - acid marks three things only: the set being worked, the column being
+ *     logged, and a value worth noticing. Every one of them carries
+ *     `data-acid`, which is the only way this stylesheet paints acid at all
+ *
+ * The plate calculator now sits in the row being worked, beside its weight
+ * field, which is what `docs/09` section C asked for — it was previously at the
+ * foot of the card, a screen away from the number it describes.
  */
 
 import { el, replace } from '../dom.js'
+import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
 
 /** Art lives beside the repo root; resolve against this module so the path holds
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
 const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.url).href
+
+/** What a home gym holds, per side. Editable from the EQUIPMENT pill. */
+const DEFAULT_PLATES = [45, 35, 25, 10, 5, 2.5, 1.25]
+
+/** A plate calculator is only meaningful on a loadable bar. */
+const isBarbell = (exercise) => exercise?.variant === 'Barbell' && exercise?.unit !== 'time'
 
 /**
  * @param {object} deps
@@ -61,7 +77,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     const node = root.querySelector(`[data-rest="${rest.exerciseId}"]`)
     if (node) {
       node.textContent = remaining > 0 ? clock(remaining) : 'rested'
-      node.dataset.active = String(remaining > 0)
+      // A live counter is a value worth noticing, and stops being one the
+      // moment it stops counting.
+      if (remaining > 0) node.dataset.acid = 'value'
+      else delete node.dataset.acid
     }
     if (remaining <= 0) rest = null
   }
@@ -83,6 +102,45 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     return Number.isFinite(parsed) ? parsed : null
   }
 
+  /**
+   * The column being logged is acid, the rest are `--text-3`.
+   *
+   * Done by hand rather than by re-rendering, because re-rendering on focus
+   * would take the field out from under the thumb that just tapped it.
+   */
+  function markColumn(input, on) {
+    const card = input.closest('[data-exercise]')
+    const label = card?.querySelector(`.setrow--head [data-col="${input.dataset.field}"]`)
+    if (!label) return
+    if (on) label.dataset.acid = 'active'
+    else delete label.dataset.acid
+  }
+
+  // --- the plate calculator, in the row it describes ------------------------
+
+  function plateStrip(entry, set) {
+    const solution = typeof set.weight === 'number'
+      ? solvePlates(set.weight, { bar: entry.barWeight, plates: entry.plates })
+      : null
+
+    if (!solution) {
+      return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
+        el('span.plates__label', { text: 'PER SIDE' }),
+        el('p.plates__note', { text: `${entry.barWeight} lb bar` }),
+      ])
+    }
+
+    return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
+      el('span.plates__label', { text: 'PER SIDE' }),
+      ...(solution.perSide.length === 0
+        ? [el('span.plates__empty', { text: 'empty bar' })]
+        : solution.perSide.map((plate) => el('span.plate', {
+            dataset: { plate: String(plate) }, text: String(plate),
+          }))),
+      el('p.plates__note', { dataset: { exact: String(solution.exact) }, text: solution.note }),
+    ])
+  }
+
   // --- set row -------------------------------------------------------------
 
   function setRow(entry, set, index) {
@@ -96,6 +154,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         readOnly: done, 'aria-label': `${field.label}, set ${index + 1}`,
         dataset: { field: field.key, exercise: entry.exercise.id, set: String(index) },
         oninput: (event) => { set[field.key] = numberOrNull(event.target.value) },
+        onfocus: (event) => markColumn(event.target, true),
+        onblur: (event) => markColumn(event.target, false),
         onchange: (event) => { set[field.key] = numberOrNull(event.target.value); if (field.key === 'weight') render() },
       })
     })
@@ -103,7 +163,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     const check = el('button.setrow__check', {
       type: 'button', disabled: done,
       'aria-label': done ? `Set ${index + 1} logged` : `Log set ${index + 1}`,
-      dataset: { log: `${entry.exercise.id}:${index}` },
+      dataset: { log: `${entry.exercise.id}:${index}`, ...(active ? { acid: 'active' } : {}) },
       onclick: async () => {
         for (const input of inputs) {
           if (input.dataset?.field) set[input.dataset.field] = numberOrNull(input.value)
@@ -125,15 +185,20 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         render()
         startRest(entry)
       },
-    }, ['✓'])
+    }, [icon('check')])
 
-    return el('div.setrow', { dataset: { done: String(done), active: String(active) } }, [
+    return el('div.setrow', {
+      dataset: { done: String(done), active: String(active), editing: String(entry.editing === true) },
+    }, [
+      // The 4px acid bar down the left edge of the set being worked.
+      active && el('span.setrow__edge', { dataset: { acid: 'active' } }),
       el('span.setrow__index', { text: String(index + 1) }),
       el('span.setrow__record', { text: performance(entry.last?.sets?.[index] ?? entry.last?.sets?.[0] ?? null) }),
       ...inputs,
       check,
-      // Removing a set, which docs/09 lists as missing. Both directions now.
-      el('button.setrow__remove', {
+      // Removing a set, which docs/09 B5 lists as missing. Behind EDIT SETS so
+      // every control in the row keeps a 44px target.
+      entry.editing === true && el('button.setrow__remove', {
         type: 'button', 'aria-label': `Remove set ${index + 1}`,
         dataset: { removeset: `${entry.exercise.id}:${index}` },
         onclick: async () => {
@@ -141,38 +206,42 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           entry.sets.splice(index, 1)
           render()
         },
-      }, ['−']),
+      }, [icon('minus')]),
+      // Beside the weight field of the set actually being worked.
+      active && isBarbell(entry.exercise) && plateStrip(entry, set),
     ])
   }
 
-  // --- panels: plates, history, swap ---------------------------------------
+  // --- panels --------------------------------------------------------------
 
-  function platePanel(entry) {
-    const pending = entry.sets.find((set) => !set.logged) ?? entry.sets.at(-1)
-    const target = pending?.weight
-    const solution = typeof target === 'number' ? solvePlates(target, { bar: entry.barWeight }) : null
-
-    return el('div.plates', {}, [
-      el('div.plates__head', {}, [
-        el('span.plates__label', { text: 'PLATES PER SIDE' }),
-        el('label.plates__bar', {}, [
-          'bar ',
-          el('input.plates__barinput', {
-            type: 'text', inputmode: 'numeric', value: String(entry.barWeight),
+  function equipmentPanel(entry) {
+    return el('div.panel', {}, [
+      el('p.panel__note', { text: 'The bar, and the plates you have. The loading beside the weight follows this.' }),
+      el('div.equipment', {}, [
+        el('label.equipment__row', {}, [
+          el('span.equipment__label', { text: 'BAR' }),
+          el('input.equipment__bar', {
+            type: 'text', inputmode: 'decimal', value: String(entry.barWeight),
             'aria-label': 'Bar weight',
             dataset: { barweight: entry.exercise.id },
             onchange: (event) => { entry.barWeight = numberOrNull(event.target.value) ?? 45; render() },
           }),
         ]),
+        el('div.equipment__row', {}, [
+          el('span.equipment__label', { text: 'PLATES' }),
+          ...DEFAULT_PLATES.map((plate) => el('button.equipment__plate', {
+            type: 'button',
+            'aria-pressed': String(entry.plates.includes(plate)),
+            dataset: { plateon: String(entry.plates.includes(plate)), plateoption: String(plate) },
+            onclick: () => {
+              entry.plates = entry.plates.includes(plate)
+                ? entry.plates.filter((p) => p !== plate)
+                : [...entry.plates, plate].sort((a, b) => b - a)
+              render()
+            },
+          }, [String(plate)])),
+        ]),
       ]),
-      !solution
-        ? el('p.plates__note', { text: 'Enter a weight to see the loading.' })
-        : el('div', {}, [
-            el('div.plates__stack', {}, solution.perSide.length === 0
-              ? [el('span.plates__empty', { text: 'empty bar' })]
-              : solution.perSide.map((plate) => el('span.plate', { dataset: { plate: String(plate) }, text: String(plate) }))),
-            el('p.plates__note', { dataset: { exact: String(solution.exact) }, text: solution.note }),
-          ]),
     ])
   }
 
@@ -224,12 +293,62 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     ])
   }
 
+  // --- the action pills ----------------------------------------------------
+
+  function actionPill(entry, { name, label, glyph, onclick, value = null }) {
+    return el('button.actionpill', {
+      type: 'button',
+      dataset: { [name]: entry.exercise.id, open: String(isOpen(entry, name)) },
+      onclick,
+    }, [
+      icon(glyph),
+      label,
+      value,
+    ])
+  }
+
+  function actionBar(entry) {
+    return el('div.actions', { 'aria-label': 'Exercise actions' }, [
+      // `data-rest="edit"` is kept: it is what the rest of the harnesses reach for.
+      el('button.actionpill', {
+        type: 'button',
+        dataset: { rest: 'edit', restfor: entry.exercise.id, open: String(isOpen(entry, 'rest')) },
+        onclick: () => togglePanel(entry, 'rest'),
+      }, [
+        icon('rest'),
+        'REST',
+        el('span.actionpill__value', { dataset: { rest: entry.exercise.id }, text: clock(entry.restSec) }),
+      ]),
+      actionPill(entry, {
+        name: 'history', label: 'HISTORY', glyph: 'history',
+        onclick: async () => {
+          if (!entry.history) entry.history = await workout.exerciseHistory(entry.exercise.id)
+          togglePanel(entry, 'history')
+        },
+      }),
+      actionPill(entry, {
+        name: 'swap', label: 'SWAP', glyph: 'swap',
+        onclick: () => togglePanel(entry, 'swap'),
+      }),
+      el('button.actionpill', {
+        type: 'button',
+        dataset: { editsets: entry.exercise.id, open: String(entry.editing === true) },
+        onclick: () => { entry.editing = entry.editing !== true; render() },
+      }, [icon('sets'), entry.editing === true ? 'DONE EDITING' : 'EDIT SETS']),
+      isBarbell(entry.exercise) && actionPill(entry, {
+        name: 'equipment', label: 'EQUIPMENT', glyph: 'equipment',
+        onclick: () => togglePanel(entry, 'equipment'),
+      }),
+    ])
+  }
+
   // --- exercise card -------------------------------------------------------
 
   function exerciseCard(entry, position) {
     const best = entry.record?.bestWeight
     const slot = entry.slot
     const range = slot ? `${slot.sets} × ${slot.repMin}–${slot.repMax}${slot.perSide ? ' / side' : ''}` : null
+    const fields = fieldsFor(entry.exercise)
 
     return el('section.card.exercise', { dataset: { exercise: entry.exercise.id } }, [
       el('header.exercise__head', {}, [
@@ -252,12 +371,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
             type: 'button', 'aria-label': 'Move up', disabled: position === 0,
             dataset: { moveup: entry.exercise.id },
             onclick: () => { move(position, -1) },
-          }, ['↑']),
+          }, [icon('up')]),
           el('button.iconbutton', {
             type: 'button', 'aria-label': 'Move down', disabled: position === plan.length - 1,
             dataset: { movedown: entry.exercise.id },
             onclick: () => { move(position, 1) },
-          }, ['↓']),
+          }, [icon('down')]),
         ]),
       ]),
 
@@ -265,7 +384,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         text: [slot.setup, slot.cue].filter(Boolean).join(' · '),
       }),
 
-      // Last performance and PR — with the PR's date, per docs/09 B6.
+      actionBar(entry),
+
+      // Last performance and PR — with the PR's date, per docs/09 B6. A PR is a
+      // value worth noticing, so it is one of the three things acid marks.
       el('div.exercise__history', {}, [
         el('span.pill', { dataset: { kind: 'last' } }, [
           el('span.pill__label', { text: 'LAST' }),
@@ -274,27 +396,16 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         ]),
         el('span.pill', { dataset: { kind: 'pr' } }, [
           el('span.pill__label', { text: 'PR' }),
-          el('span.pill__value', { text: best ? `${lbs(best.weight)} × ${best.reps}` : '—' }),
-          best?.date && el('span.pill__aside', { dataset: { prdate: '' }, text: shortDate(best.date) }),
+          el('span.pill__value', {
+            dataset: best ? { acid: 'value' } : {},
+            text: best ? lbs(best.weight) : '—',
+          }),
+          best && el('span.pill__unit', { text: 'lb' }),
+          best && el('span.pill__aside', {
+            dataset: best.date ? { prdate: '' } : {},
+            text: `× ${best.reps}${best.date ? ` · ${shortDate(best.date)}` : ''}`,
+          }),
         ]),
-      ]),
-
-      el('div.exercise__tools', {}, [
-        el('button.tool', {
-          type: 'button', dataset: { rest: 'edit', restfor: entry.exercise.id },
-          onclick: () => togglePanel(entry, 'rest'),
-        }, ['REST ', el('span.tool__value', { dataset: { rest: entry.exercise.id }, text: clock(entry.restSec) })]),
-        el('button.tool', {
-          type: 'button', dataset: { history: entry.exercise.id },
-          onclick: async () => {
-            if (!entry.history) entry.history = await workout.exerciseHistory(entry.exercise.id)
-            togglePanel(entry, 'history')
-          },
-        }, ['HISTORY']),
-        el('button.tool', {
-          type: 'button', dataset: { swap: entry.exercise.id },
-          onclick: () => togglePanel(entry, 'swap'),
-        }, ['SWAP']),
       ]),
 
       isOpen(entry, 'rest') && el('div.panel', {}, [
@@ -307,18 +418,21 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
 
       isOpen(entry, 'history') && historyPanel(entry),
       isOpen(entry, 'swap') && swapPanel(entry),
+      isOpen(entry, 'equipment') && equipmentPanel(entry),
       isOpen(entry, 'art') && el('div.panel.panel--art', {}, [
         el('img.exercise__full', { src: artUrl(entry.exercise.art), alt: entry.exercise.name }),
       ]),
 
       entry.proposal?.reason && el('p.exercise__proposal', { text: entry.proposal.reason }),
 
-      el('div.setrow.setrow--head', {}, [
+      el('div.setrow.setrow--head', { dataset: { editing: String(entry.editing === true) } }, [
         el('span.setrow__index', { text: 'SET' }),
         el('span.setrow__record', { text: 'LAST' }),
-        ...fieldsFor(entry.exercise).map((field) => el('span.setrow__num', { text: field?.label ?? '' })),
+        ...fields.map((field) => el('span.setrow__col', {
+          dataset: field ? { col: field.key } : {}, text: field?.label ?? '',
+        })),
         el('span', { text: '' }),
-        el('span', { text: '' }),
+        entry.editing === true && el('span', { text: '' }),
       ]),
 
       ...entry.sets.map((set, index) => setRow(entry, set, index)),
@@ -330,10 +444,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           entry.sets.push({ weight: previous?.weight ?? null, reps: previous?.reps ?? null, logged: false })
           render()
         },
-      }, ['+ ADD SET']),
-
-      // The plate calculator sits beside the weights, not behind a menu.
-      entry.exercise.unit !== 'time' && platePanel(entry),
+      }, [icon('plus'), 'ADD SET']),
     ])
   }
 
@@ -367,22 +478,25 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       ...plan.map(exerciseCard),
 
       // FINISH lives below every set control, behind a confirm, because ending
-      // a session by mis-tapping next to a checkmark is unacceptable.
+      // a session by mis-tapping next to a checkmark is unacceptable. The tab
+      // bar is hidden during a session, so the one primary action on this
+      // screen is a full-width acid button rather than a FAB — and it is the
+      // confirm that carries the acid, not the control that opens it.
       el('div.finishzone', {}, [
         confirmingFinish
           ? el('div.finishzone__confirm', {}, [
               el('p.finishzone__ask', { text: `Finish with ${loggedCount()} sets logged?` }),
               el('div.finishzone__pair', {}, [
-                el('button.button.button--quiet', {
+                el('button.button', {
                   type: 'button', dataset: { action: 'cancel-finish' },
                   onclick: () => { confirmingFinish = false; render() },
                 }, ['KEEP GOING']),
-                el('button.button.button--primary', {
-                  type: 'button', dataset: { action: 'confirm-finish' }, onclick: finish,
+                el('button.button', {
+                  type: 'button', dataset: { action: 'confirm-finish', acid: 'primary' }, onclick: finish,
                 }, ['FINISH']),
               ]),
             ])
-          : el('button.button.button--primary.button--wide', {
+          : el('button.button.button--wide', {
               type: 'button', dataset: { action: 'finish' },
               onclick: () => { confirmingFinish = true; render() },
             }, ['FINISH SESSION']),
@@ -400,6 +514,15 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     })
     onFinish(summary)
   }
+
+  /** Everything a plan entry carries beyond what the workout service prepared. */
+  const entryDefaults = () => ({
+    barWeight: 45,
+    plates: [...DEFAULT_PLATES],
+    substitutedFor: null,
+    history: null,
+    editing: false,
+  })
 
   return {
     root,
@@ -434,10 +557,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           const remaining = Math.max(1, (slotTask.slot.sets ?? 3) - (slotTask.alreadyLogged ?? 0))
           plan.push({
             ...prepared,
+            ...entryDefaults(),
             restSec: slotTask.slot.restSec?.[0] ?? 120,
-            barWeight: 45,
-            substitutedFor: null,
-            history: null,
             programDayId: slotTask.dayId,
             slotIndex: slotTask.slotIndex,
             sets: prepared.proposal.sets.slice(0, remaining)
@@ -462,10 +583,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           if (!prepared.exercise) continue
           plan.push({
             ...prepared,
+            ...entryDefaults(),
             restSec: slot.restSec?.[0] ?? 120,
-            barWeight: 45,
-            substitutedFor: null,
-            history: null,
             programDayId: programDay.id,
             slotIndex,
             sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
@@ -482,10 +601,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           if (!prepared.exercise) continue
           plan.push({
             ...prepared,
+            ...entryDefaults(),
             restSec: entry.rest ?? 150,
-            barWeight: 45,
-            substitutedFor: null,
-            history: null,
             sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
           })
         }

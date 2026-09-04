@@ -154,8 +154,8 @@
         const restOption = q('[data-restset="90"]')
         check('B1 rest time is editable in-session', restOption !== null)
         restOption.click(); await settle()
-        check('B1 the edited rest time is kept', /1:30/.test(q('.tool__value')?.textContent ?? ''),
-          q('.tool__value')?.textContent)
+        check('B1 the edited rest time is kept', /1:30/.test(q('.actionpill__value')?.textContent ?? ''),
+          q('.actionpill__value')?.textContent)
 
         q('[data-history]').click(); await new Promise((r) => setTimeout(r, 50))
         check('B2 history opens without leaving the workout',
@@ -177,8 +177,12 @@
         check('B4 exercises can be reordered', q('.exercise__name').textContent !== firstName,
           `${firstName} -> ${q('.exercise__name').textContent}`)
 
+        // Removing a set now lives behind the EDIT SETS pill, so every control
+        // left in the row keeps a 44px target. Both directions still work.
         const rowsBefore = qa('[data-exercise] .setrow:not(.setrow--head)').length
+        q('[data-editsets]').click(); await settle()
         q('[data-removeset]').click(); await settle()
+        q('[data-editsets]').click(); await settle()
         check('B5 a set can be removed as well as added',
           qa('[data-exercise] .setrow:not(.setrow--head)').length === rowsBefore - 1)
 
@@ -204,6 +208,11 @@
         // C — the plate calculator, beside the weight field
         // ---------------------------------------------------------------
         check('C the plate calculator is on screen, not behind a menu', q('.plates') !== null)
+        // docs/09 C asks for it NEXT TO the weight field, which the previous
+        // build did not do — it sat at the foot of the card.
+        const firstWeight = q('input.setrow__num[data-field="weight"]')
+        const besideIt = firstWeight.closest('.setrow')?.querySelector('.plates') ?? null
+        check('C the plate calculator sits in the row with the weight field', besideIt !== null)
         const weightField = q('input.setrow__num[data-field="weight"]')
         const card = weightField.closest('[data-exercise]')
         weightField.value = '185'

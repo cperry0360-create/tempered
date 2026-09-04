@@ -7,6 +7,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { icon } from '../icons.js'
 import { lbs, since } from '../format.js'
 
 /**
@@ -22,6 +23,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   /** @type {{program: any, week: number, deload: boolean}|null} */ let active = null
   /** @type {any} */ let guide = null
   /** @type {any} */ let weekView = null
+  /** Today's prescribed day, for the FAB. */ /** @type {any} */ let todayDay = null
   let guideOpen = false
   /** @type {any[]} */ let routines = []
   /** @type {any[]} */ let exercises = []
@@ -40,7 +42,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
       primaryExercise && el('p.routine__primary', {
         text: `${primaryExercise.name}${primary.weight ? ` · ${lbs(primary.weight)} lbs` : ''}`,
       }),
-      el('button.button.button--primary.button--wide', {
+      el('button.button.button--wide', {
         type: 'button', dataset: { start: routine.id },
         onclick: () => onStart({ routine }),
       }, ['START']),
@@ -108,10 +110,12 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
           ])),
         ]),
 
-        el('button.tool', {
-          type: 'button', dataset: { guide: 'toggle' },
-          onclick: () => { guideOpen = !guideOpen; render() },
-        }, [guideOpen ? 'HIDE HARD SETS' : 'HARD SETS']),
+        el('div.actions', {}, [
+          el('button.actionpill', {
+            type: 'button', dataset: { guide: 'toggle', open: String(guideOpen) },
+            onclick: () => { guideOpen = !guideOpen; render() },
+          }, [icon('sets'), guideOpen ? 'HIDE HARD SETS' : 'HARD SETS']),
+        ]),
 
         guideOpen && weekView && el('div.panel', {}, [
           el('p.panel__note', {
@@ -168,8 +172,28 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
 
   return {
     root,
+
+    /**
+     * The one primary action: start the day the program prescribes for today.
+     *
+     * Routines and the library are browsing — every row there is an equally
+     * valid start, so none of them is the primary action and none of them is
+     * acid. When no program is active there is no single obvious thing to do,
+     * and the bar carries no FAB rather than an invented one.
+     */
+    primary() {
+      if (!todayDay) return null
+      return {
+        label: `Run ${todayDay.name}`,
+        icon: 'play',
+        dataset: { startday: todayDay.id },
+        run: () => onStart({ programDay: todayDay }),
+      }
+    },
+
     async refresh() {
       active = await workout.activeProgram()
+      todayDay = (await workout.todayTasks())?.day ?? null
       guide = await workout.programGuide()
       weekView = await workout.weekStatus()
       routines = await storage.getAll('routines')

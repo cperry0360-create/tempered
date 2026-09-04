@@ -636,3 +636,139 @@ commit as the phase, as `docs/10` requires.
 phase, so a screenshot of Settings identifies the build precisely.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: acid is paintable only through `data-acid`
+**Phase:** 3.7
+**Decision:** `src/style.css` sets `#edfe73` in exactly four places, all of them selectors
+on `[data-acid]`, whose value names one of the document's three roles: `primary`,
+`active`, `value`. No component class paints acid. The block sits last in the file so a
+same-specificity component rule cannot quietly win a tie and leave a state unpainted.
+**Reasoning:** `docs/04` says acid marks three things "and nothing else", and asks for
+that to be asserted. A budget you can only measure after the fact gets exceeded; a budget
+that cannot be exceeded without naming the role you are claiming does not. It also makes
+the assertion cheap and exact: `test/browser/surface.html` counts distinct roles on screen
+and, separately, flags anything painted acid with no `data-acid` ancestor.
+**Confidence:** inferred (the mechanism; the three roles are specified)
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: "under 5% of the viewport" and "a full-width acid button"
+**Phase:** 3.7
+**Decision:** The acid budget is asserted as: under 5% of the viewport, **or** the only
+acid on the screen is the single primary action. Every tracker screen passes the 5% rule
+outright — train 0.7%, today 0.7%, a session 0.9%. The post-session summary, whose one
+control is a full-width acid DONE, lands at 6.9% and passes under the second clause.
+**Reasoning:** The document asks for both "under 5%" and "a full-width acid button where a
+bar would be wrong", and on a phone a full-width 44px button is about 6% of the screen.
+The two cannot both hold literally. The 5% rule states its own purpose — more than that
+and the accent "has stopped meaning anything" — and a screen whose entire acid content is
+the one thing you are meant to tap has diluted nothing. The exemption is written into the
+harness where it can be read, rather than being absorbed by quietly loosening the number.
+**Confidence:** guessed
+**Needs Cory:** yes — low priority. Either is easy: keep the full-width DONE and accept
+~7% on that one screen, or shrink it to a right-aligned pill and hold 5% everywhere.
+
+## 2026-09-04 — Phase 3.7: which screens get a FAB, and what it does
+**Phase:** 3.7
+**Decision:** The floating bar carries a circular acid FAB for the screen's one primary
+action. Today and Train both get one: start the day the program prescribes for today.
+History, Character and Settings get none. A session hides the bar entirely, so its primary
+action is the FINISH **confirm** — the FINISH button that opens the confirm is neutral.
+Train's per-routine START buttons stopped being primary buttons.
+**Reasoning:** `docs/04` allows a screen to have no FAB but not two primary actions.
+Train's routines and library rows are all equally valid starts, so none of them is the
+primary action and inventing one would be inventing product. Today's list has the same
+shape, and its one distinguishable action — run the whole block — is the FAB. Leaving the
+acid on the FINISH button that merely *opens* the confirm would have made the loudest
+thing on the logging screen the control docs/09 says must not be reachable by a mis-tap.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. Confirm you want Train's FAB to start today's day
+rather than the last day you worked.
+
+## 2026-09-04 — Phase 3.7: the plate calculator moved into the row it describes
+**Phase:** 3.7
+**Decision:** The per-side loading now renders inside the set row being worked, directly
+under its weight cell, for barbell movements only. Bar weight and the plates you own moved
+to an EQUIPMENT pill. Previously the calculator sat at the foot of the exercise card.
+**Reasoning:** `docs/09` section C asks for it "next to the weight field during a session,
+not behind a menu". It was not behind a menu, but it was also not next to the weight
+field — on a phone it was most of a screen away from the number it describes, under four
+set rows and an ADD SET button. `test/browser/surface.html` now asserts adjacency
+geometrically: the strip must overlap the weight cell horizontally and sit within a
+thumb's reach below it. Gating on `variant === 'Barbell'` follows from the data; a plate
+solver on a dumbbell curl is noise. Configuration is not the calculator, so the bar and
+plate inventory behind a pill still satisfies "not behind a menu".
+**Confidence:** specified (the placement), inferred (the barbell gate)
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: removing a set moved behind EDIT SETS
+**Phase:** 3.7
+**Decision:** The per-row remove control is shown by the EDIT SETS pill rather than living
+permanently in every row. Adding a set is unchanged and still one tap.
+**Reasoning:** `docs/04` names "edit sets" as one of the pill actions and holds touch
+targets at 44px. Six columns of controls in a row that also has to fit a 28px weight and a
+28px rep count cannot all be 44px wide on a 390px screen; something had to leave the row,
+and removing a set is rare next to logging one. It is one extra tap, and it bought every
+remaining control in the row its full target.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: the attribute colours, and where they survive
+**Phase:** 3.7
+**Decision:** The five attribute colours are kept as tokens and used in exactly one place:
+the post-session "What grew" readout, where the subject genuinely is attributes. Nowhere
+in the tracker — the active set row, the rest timer, the PR marker and the started-task
+mark all stopped using Might's orange.
+**Reasoning:** `docs/04` says they survive "only on the Character screen where attributes
+are the subject. They never appear in the tracker." The summary is not the Character
+screen, but it is a screen whose content is attribute XP, and stripping colour from it
+would have made an attribute list read as five identical rows.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. Say the word and the summary goes monochrome too.
+
+## 2026-09-04 — Phase 3.7: a bug the acceptance harness could not see
+**Phase:** 3.7
+**Decision:** Added `.tabbar[hidden] { display: none }`.
+**Reasoning:** `app.js` has always set `tabBar.hidden = true` when a session starts, but
+`.tabbar` sets `display: flex` (previously `grid`), which outranks the user agent's
+`[hidden] { display: none }`. The bar has therefore been visible through every session
+since Phase 3, and with the FAB added it was worse than cosmetic: a live control that
+starts a *new* session, sitting over the set rows of the one you are in. No assertion
+caught it — every harness queried elements that were present and correct. A screenshot of
+the rendered session did, in about a second. Worth remembering: the harnesses check
+claims, and cannot check the claim nobody thought to make.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: token names follow the document
+**Phase:** 3.7
+**Decision:** Spacing tokens renamed `--space-N` to `--sN`, the type scale extended to the
+document's six steps, and radius tokens `--r-sm|md|lg|xl|full` added.
+**Reasoning:** `docs/04` refers to `--s4`, `--s3` and `--r-lg` by name. A document naming
+one token and a stylesheet defining another is how a design system stops being read.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: harnesses updated, not loosened
+**Phase:** 3.7
+**Decision:** Four existing harnesses needed edits: the boot check for the ground colour,
+the logging-speed check for a running rest timer, and two tracker-v2 checks whose controls
+moved. Each was re-pointed at the new marker; none had its threshold relaxed. tracker-v2
+also gained a check that the plate calculator is in the same row as the weight field,
+which the previous build would have failed.
+**Reasoning:** A harness edited to match whatever the code now does is worse than no
+harness. The distinction held here: every one of these was "this element is now called
+something else", and each was verified to still fail when the behaviour is broken rather
+than merely renamed — the sabotage runs are in the commit message.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.4.1 (3.7)
+**Phase:** 3.7
+**Decision:** `src/version.js` carries `0.4.1 (3.7)`, built 2026-09-04, which re-keys the
+service worker cache.
+**Reasoning:** The patch version moves because this is a surface re-implementation inside
+the 3.x group, not a new phase group. Bumping it sweeps every cached copy of the old
+stylesheet, which matters more than usual here: a stale `style.css` against new markup is
+exactly the kind of half-applied build a version number exists to identify.
+**Confidence:** specified
+**Needs Cory:** no

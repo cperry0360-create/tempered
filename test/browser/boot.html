@@ -50,7 +50,8 @@
         // Cheap guards against gross CSS failure. A DOM assertion passes happily
         // on a completely unstyled page, so check the design system applied.
         const bodyStyle = getComputedStyle(document.body)
-        check('the dark ground is painted', bodyStyle.backgroundColor === 'rgb(10, 12, 16)',
+        // docs/04-design-system.md: #1c1c1e, sampled from the reference.
+        check('the dark ground is painted', bodyStyle.backgroundColor === 'rgb(28, 28, 30)',
           bodyStyle.backgroundColor)
         check('numbers are tabular, so weights do not shift as they change',
           bodyStyle.fontVariantNumeric.includes('tabular-nums'), bodyStyle.fontVariantNumeric)

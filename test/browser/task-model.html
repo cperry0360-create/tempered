@@ -134,7 +134,7 @@
           q('[data-version]')?.textContent)
         check('the last-updated date is shown beside it', (q('[data-builddate]')?.textContent ?? '').length > 5,
           q('[data-builddate]')?.textContent)
-        check('the version names its phase', /\(3\.6\)/.test(VERSION), VERSION)
+        check('the version names its phase', /\(3\.7\)/.test(VERSION), VERSION)
 
         const registration = await navigator.serviceWorker?.getRegistration?.().catch(() => null)
         check('the service worker cache key derives from the version',

@@ -124,6 +124,28 @@ deploy from one that deployed and did not fix the problem.
 
 ---
 
+## Phase 3.7 — Tracker surface
+
+`docs/04-design-system.md` was rewritten after the Phase 3.5 surface, built faithfully to
+the old document, turned out too flat to read in a gym. The new document is sampled from
+the reference Cory chose: black ground, one acid accent, heavy type, generous cards.
+
+This supersedes section F of `docs/09-tracker-v2.md`. Everything else in docs/09 stands.
+
+- Tokens re-sampled: three surfaces, `#edfe73` acid, `#8db2dd` blue, the `11/13/15/20/28/34`
+  scale, `--sN` spacing, `--r-*` radii.
+- Set rows become outlined cells with an olive active tint and a 4px acid edge. No
+  hairline separators anywhere.
+- Exercise actions become visible round pills in a scroller, never a menu.
+- The floating bar carries a circular acid FAB for the one primary action per screen.
+- The plate calculator moves from the foot of the exercise card to the active set's
+  weight field, which is what `docs/09` section C asked for.
+
+**Acceptance:** the six criteria at the end of `docs/04-design-system.md`, all asserted in
+`test/browser/surface.html`, plus the Phase 3.5 criteria still passing.
+
+---
+
 ## Phase 4 — Daily tracking
 
 The habit and metric surface: today's activities, quick completion, manual numeric

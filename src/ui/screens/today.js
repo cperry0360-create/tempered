@@ -12,7 +12,7 @@
  */
 
 import { el, replace } from '../dom.js'
-import { lbs, performance } from '../format.js'
+import { icon } from '../icons.js'
 
 /**
  * @param {object} deps
@@ -38,7 +38,7 @@ export function createTodayScreen({ workout, clock, onStart, onOpenSlot }) {
         alreadyLogged: task.logged,
       }),
     }, [
-      el('span.task__mark', { text: done ? '✓' : '' }),
+      el('span.task__mark', {}, [done && icon('check')]),
       el('span.task__main', {}, [
         el('span.task__name', { text: task.slot.name }),
         el('span.task__pres', {
@@ -88,16 +88,30 @@ export function createTodayScreen({ workout, clock, onStart, onOpenSlot }) {
         el('h2.block__title', { text: 'Worked' }),
         el('div.tasks', {}, finished.map((task) => taskRow(task, today.day))),
       ]),
-
-      el('button.button.button--primary.button--wide', {
-        type: 'button', dataset: { startday: today.day.id },
-        onclick: () => onStart({ programDay: today.day }),
-      }, ['RUN THE WHOLE BLOCK']),
     ])
   }
 
   return {
     root,
+
+    /**
+     * The one primary action on this screen: work the whole day in one go.
+     *
+     * It is the FAB in the floating bar rather than a full-width button at the
+     * end of the list, per `docs/04-design-system.md` — a screen whose content
+     * is a list of individually startable slots should not end in a button that
+     * looks like the way to start them.
+     */
+    primary() {
+      if (!today) return null
+      return {
+        label: `Run ${today.day.name}`,
+        icon: 'play',
+        dataset: { startday: today.day.id },
+        run: () => onStart({ programDay: today.day }),
+      }
+    },
+
     async refresh() {
       today = await workout.todayTasks()
       render()

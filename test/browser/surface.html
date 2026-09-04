@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — tracker surface acceptance</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * The six acceptance criteria at the end of docs/04-design-system.md,
+       * driven against the real app in a real browser.
+       *
+       * Every one of them is computed. "Assert it" is in the document itself for
+       * the acid budget, and the rest are the same kind of claim: a colour, a
+       * pixel size, a font weight. None of this is eyeballed, and none of it is
+       * asserted against the stylesheet in isolation — the question is always
+       * what the browser actually painted on a rendered screen.
+       *
+       *   node tools/verify-logging-speed.js --page test/browser/surface.html \
+       *     --window 390,844
+       *
+       * The window size matters for the acid budget: "under 5% of the viewport"
+       * is a ratio, so it has to be measured at a viewport a phone actually has.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const ACID = 'rgb(237, 254, 115)'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
+      const q = (s, root = document) => root.querySelector(s)
+      const qa = (s, root = document) => [...root.querySelectorAll(s)]
+      const settle = () => new Promise((r) => setTimeout(r, 0))
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+
+      // --- colour ------------------------------------------------------------
+      const channel = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+      const parse = (css) => (css.match(/[\d.]+/g) ?? []).map(Number)
+      const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+      const opaque = (css) => Boolean(css) && css !== 'transparent' && (parse(css)[3] ?? 1) !== 0
+
+      function over(fg, bg) {
+        const [fr, fg2, fb, fa = 1] = parse(fg)
+        const [br, bg2, bb] = parse(bg)
+        return [fr * fa + br * (1 - fa), fg2 * fa + bg2 * (1 - fa), fb * fa + bb * (1 - fa)]
+      }
+
+      /** The first background actually painted behind this node. */
+      function paintedBackground(node) {
+        let current = node
+        while (current && current !== document.documentElement) {
+          const bg = getComputedStyle(current).backgroundColor
+          if (opaque(bg)) return bg
+          current = current.parentElement
+        }
+        return getComputedStyle(document.body).backgroundColor
+      }
+
+      /** Contrast of a node's text against the surface it is painted on. */
+      function contrast(node) {
+        const bg = paintedBackground(node)
+        const l1 = luminance(over(getComputedStyle(node).color, bg))
+        const l2 = luminance(parse(bg))
+        const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1]
+        return (hi + 0.05) / (lo + 0.05)
+      }
+
+      const isAcid = (css) => css.replace(/\s/g, '') === ACID.replace(/\s/g, '')
+
+      // --- how much acid is on screen ----------------------------------------
+      /**
+       * Painted acid area, in square pixels of the current viewport.
+       *
+       * A filled box counts its whole visible area. A border counts its
+       * perimeter. Text and line-art icons count an ink estimate rather than
+       * their bounding box, because a 300px-wide element with one acid word in
+       * it does not paint 300px of acid — counting the box would make the
+       * budget meaningless in the other direction.
+       */
+      function acidArea(node) {
+        const box = node.getBoundingClientRect()
+        const w = Math.max(0, Math.min(box.right, innerWidth) - Math.max(box.left, 0))
+        const h = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0))
+        if (w === 0 || h === 0) return 0
+
+        const style = getComputedStyle(node)
+        let area = 0
+        if (isAcid(style.backgroundColor)) area += w * h
+        if (isAcid(style.borderTopColor) && Number.parseFloat(style.borderTopWidth) > 0) {
+          area += 2 * (w + h) * Number.parseFloat(style.borderTopWidth)
+        }
+        if (isAcid(style.color)) {
+          const text = [...node.childNodes]
+            .filter((child) => child.nodeType === Node.TEXT_NODE)
+            .map((child) => child.textContent.trim()).join('')
+          const size = Number.parseFloat(style.fontSize)
+          // Roughly half the em box is ink, and a glyph is about 0.6em wide.
+          if (text) area += Math.min(w * h, text.length * size * 0.6 * size * 0.5)
+          // Stroked line art covers about a quarter of its own box.
+          for (const svg of node.children) {
+            if (svg.tagName.toLowerCase() !== 'svg') continue
+            const icon = svg.getBoundingClientRect()
+            area += icon.width * icon.height * 0.25
+          }
+        }
+        return area
+      }
+
+      /** Every acid-painted element on screen, with the role it claims. */
+      function acidOnScreen() {
+        const found = []
+        for (const node of qa('*')) {
+          const style = getComputedStyle(node)
+          const painted = isAcid(style.color) || isAcid(style.backgroundColor)
+            || (isAcid(style.borderTopColor) && Number.parseFloat(style.borderTopWidth) > 0)
+          if (!painted) continue
+          if (style.visibility === 'hidden' || style.display === 'none') continue
+          const box = node.getBoundingClientRect()
+          if (box.width === 0 || box.height === 0) continue
+          found.push({ node, role: node.closest('[data-acid]')?.dataset.acid ?? null, area: acidArea(node) })
+        }
+        return found
+      }
+
+      /** The acid budget, measured at the top of the screen and at the bottom. */
+      async function acidBudget(label) {
+        const body = q('.app__body')
+        const positions = [0, body.scrollHeight]
+        let worst = { roles: new Set(), coverage: 0, unnamed: [] }
+        for (const top of positions) {
+          body.scrollTop = top
+          await settle()
+          const painted = acidOnScreen()
+          const roles = new Set(painted.map((entry) => entry.role))
+          const coverage = painted.reduce((sum, entry) => sum + entry.area, 0) / (innerWidth * innerHeight)
+          const unnamed = painted.filter((entry) => entry.role === null).map((entry) => entry.node)
+          if (coverage > worst.coverage) worst = { roles, coverage, unnamed }
+          else worst.unnamed.push(...unnamed)
+          for (const role of roles) worst.roles.add(role)
+        }
+        body.scrollTop = 0
+        return { label, ...worst }
+      }
+
+      // --- separators --------------------------------------------------------
+      /**
+       * A hairline row separator: a border on one horizontal edge only, or the
+       * 1px-gap-over-a-coloured-background trick the previous build used to fake
+       * one. Cells outlined on all four sides are not separators — the design
+       * system asks for exactly those.
+       */
+      function separators(root) {
+        const offenders = []
+        for (const node of [root, ...qa('*', root)]) {
+          const style = getComputedStyle(node)
+          const [top, right, bottom, left] = [
+            style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth,
+          ].map((value) => Number.parseFloat(value) || 0)
+          const horizontalOnly = (top > 0 || bottom > 0) && right === 0 && left === 0
+          if (horizontalOnly && (opaque(style.borderTopColor) || opaque(style.borderBottomColor))) {
+            offenders.push(`${node.className || node.tagName} border`)
+          }
+          const gap = Number.parseFloat(style.rowGap) || 0
+          if (gap > 0 && gap <= 2 && opaque(style.backgroundColor) && node.children.length > 1) {
+            offenders.push(`${node.className || node.tagName} 1px gap over a painted background`)
+          }
+        }
+        return offenders
+      }
+
+      /** Whether the authored rule — not the resolved pixels — names the inset. */
+      function authoredRule(selector, property) {
+        for (const sheet of document.styleSheets) {
+          for (const rule of sheet.cssRules ?? []) {
+            if (rule.selectorText === selector) {
+              const value = rule.style.getPropertyValue(property)
+              if (value) return value
+            }
+          }
+        }
+        return ''
+      }
+
+      try {
+        const storage = createMemoryStorage()
+        const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
+        await waitFor('[data-programday]')
+
+        // ===============================================================
+        // 4 — the tab bar floats, with the safe area respected
+        // ===============================================================
+        const bar = q('.tabbar')
+        const barBox = bar.getBoundingClientRect()
+        const margins = {
+          left: barBox.left,
+          right: innerWidth - barBox.right,
+          bottom: innerHeight - barBox.bottom,
+        }
+        check('4 the tab bar has a nonzero margin on left, right and bottom',
+          margins.left > 0 && margins.right > 0 && margins.bottom > 0,
+          `${Math.round(margins.left)} / ${Math.round(margins.right)} / ${Math.round(margins.bottom)}px`)
+        const authoredBottom = authoredRule('.tabbar', 'bottom')
+        check('4 and adds the safe-area inset on top of that margin',
+          authoredBottom.includes('safe-area-inset-bottom') && authoredBottom.includes('--s'),
+          `bottom: ${authoredBottom}`)
+        check('4 the bar floats over a blurred translucent surface',
+          (getComputedStyle(bar).backdropFilter || getComputedStyle(bar).webkitBackdropFilter || '').includes('blur')
+          && (parse(getComputedStyle(bar).backgroundColor)[3] ?? 1) < 1,
+          getComputedStyle(bar).backgroundColor)
+
+        // The one primary action, circular and acid, at the right of the bar.
+        const fab = q('.fab')
+        const fabBox = fab?.getBoundingClientRect()
+        check('4 the bar carries one circular acid FAB, at its right',
+          fab !== null && Math.abs(fabBox.width - fabBox.height) < 1
+          && Number.parseFloat(getComputedStyle(fab).borderRadius) >= fabBox.width / 2
+          && isAcid(getComputedStyle(fab).backgroundColor)
+          && fabBox.right > barBox.left + barBox.width / 2,
+          fab ? `${Math.round(fabBox.width)}px, ${getComputedStyle(fab).backgroundColor}` : 'no FAB')
+
+        // ===============================================================
+        // 1 — the acid budget, on every tracker screen
+        // ===============================================================
+        const budgets = []
+        budgets.push(await acidBudget('train'))
+        await tempered.app.show('today')
+        await waitFor('[data-task]')
+        budgets.push(await acidBudget('today'))
+
+        await tempered.app.show('train')
+        await waitFor('[data-programday="monday"]')
+        q('[data-programday="monday"]').click()
+        await waitFor('.setrow__check')
+        budgets.push(await acidBudget('session'))
+
+        // The acid verdict comes after criterion 2 below, which logs a set —
+        // that is what puts the third role on screen. Judging the budget before
+        // any of the three roles had appeared would be judging nothing.
+
+        // ===============================================================
+        // 2 — every set-row number meets WCAG AA against its cell
+        // ===============================================================
+        const numbers = qa('.setrow:not(.setrow--head) .setrow__num')
+        const worstNumber = Math.min(...numbers.map(contrast))
+        check('2 every set-row number meets WCAG AA against its cell', worstNumber >= 4.5,
+          `worst is ${worstNumber.toFixed(2)}:1 across ${numbers.length} cells`)
+
+        // Completed rows keep full brightness — the check carries the state, and
+        // dimming a logged number would hide what you read to pick the next one.
+        const firstCheck = q('.setrow__check')
+        const pendingColour = getComputedStyle(q('.setrow:not(.setrow--head) input.setrow__num')).color
+        firstCheck.click()
+        await new Promise((r) => setTimeout(r, 60))
+        const loggedRow = q('.setrow[data-done="true"]')
+        const loggedColour = loggedRow ? getComputedStyle(q('input.setrow__num', loggedRow)).color : null
+        check('2 a logged row keeps full text brightness', loggedColour === pendingColour,
+          `${loggedColour} vs ${pendingColour}`)
+        const loggedNumbers = qa('.setrow[data-done="true"] .setrow__num')
+        const worstLogged = Math.min(...loggedNumbers.map(contrast))
+        check('2 logged numbers meet WCAG AA too', worstLogged >= 4.5,
+          `worst is ${worstLogged.toFixed(2)}:1 across ${loggedNumbers.length} cells`)
+
+        budgets.push(await acidBudget('session, resting'))
+
+        // ===============================================================
+        // 3 — no hairline row separators anywhere in the tracker
+        // ===============================================================
+        const sessionSeparators = separators(q('.screen--session'))
+        check('3 no hairline row separators in a session', sessionSeparators.length === 0,
+          sessionSeparators.slice(0, 3).join('; ') || 'none in the whole session screen')
+
+        // ===============================================================
+        // 5 — section headings are big and heavy
+        // ===============================================================
+        const headings = qa('.screen__title, .sessionbar__title, .block__title, .exercise__name, .program__name, .routine__name')
+        const weak = headings.filter((node) => {
+          const style = getComputedStyle(node)
+          return Number.parseFloat(style.fontSize) < 24 || Number.parseFloat(style.fontWeight) < 700
+        })
+        check('5 every section heading is at least 24px and weight 700+', weak.length === 0,
+          weak.length
+            ? weak.slice(0, 3).map((n) => `${n.className} ${getComputedStyle(n).fontSize}/${getComputedStyle(n).fontWeight}`).join(', ')
+            : `${headings.length} headings checked, in a session`)
+
+        // ===============================================================
+        // 6 — the largest text in a set row is a number, not a label
+        // ===============================================================
+        function biggest(row) {
+          let number = 0
+          let label = 0
+          for (const node of qa('*', row)) {
+            const size = Number.parseFloat(getComputedStyle(node).fontSize)
+            if (!Number.isFinite(size)) continue
+            const isNumberCell = node.classList.contains('setrow__num')
+            const hasOwnText = node.tagName === 'INPUT'
+              || [...node.childNodes].some((c) => c.nodeType === Node.TEXT_NODE && c.textContent.trim())
+            if (!hasOwnText) continue
+            if (isNumberCell) number = Math.max(number, size)
+            else label = Math.max(label, size)
+          }
+          return { number, label }
+        }
+        const rows = qa('.setrow:not(.setrow--head)')
+        const wrongWayRound = rows.map(biggest).filter((r) => !(r.number > r.label))
+        check('6 the largest text in every set row is a number, not a label',
+          rows.length > 0 && wrongWayRound.length === 0,
+          wrongWayRound.length
+            ? `${wrongWayRound.length} of ${rows.length} rows lead with a label`
+            : `${rows.length} rows, numbers at ${biggest(rows[0]).number}px vs labels at ${biggest(rows[0]).label}px`)
+
+        // ===============================================================
+        // The components the document names, since they are what produce the
+        // six above and a passing number with the wrong component behind it
+        // would be a pass for the wrong reason.
+        // ===============================================================
+        const activeRow = q('.setrow[data-active="true"]')
+        const edge = q('.setrow__edge', activeRow)
+        const edgeBox = edge?.getBoundingClientRect()
+        const rowBox = activeRow?.getBoundingClientRect()
+        check('the set being worked has a 4px acid bar down its left edge',
+          edge !== null && Math.round(edgeBox.width) === 4
+          && Math.abs(edgeBox.left - rowBox.left) < 1
+          && isAcid(getComputedStyle(edge).backgroundColor),
+          edge ? `${edgeBox.width}px at +${Math.round(edgeBox.left - rowBox.left)}px` : 'no edge')
+        check('and a filled olive tint behind it',
+          opaque(getComputedStyle(activeRow).backgroundColor)
+          && getComputedStyle(activeRow).backgroundColor !== paintedBackground(activeRow.parentElement),
+          getComputedStyle(activeRow).backgroundColor)
+
+        const cells = qa('.setrow:not(.setrow--head) .setrow__num')
+        const unOutlined = cells.filter((cell) => {
+          const style = getComputedStyle(cell)
+          return Number.parseFloat(style.borderRadius) < 4
+            || (!opaque(style.borderTopColor) && !opaque(style.backgroundColor))
+        })
+        check('each field is its own rounded cell, not a bare input', unOutlined.length === 0,
+          `${cells.length - unOutlined.length} of ${cells.length} cells outlined and rounded`)
+
+        const pills = qa('.exercise .actionpill')
+        const roundPills = pills.filter((pill) => {
+          const box = pill.getBoundingClientRect()
+          return Number.parseFloat(getComputedStyle(pill).borderRadius) >= box.height / 2
+            && box.height >= 44 && q('svg.icon', pill) !== null
+        })
+        check('exercise actions are visible round pills with icons, not a menu',
+          pills.length >= 4 && roundPills.length === pills.length,
+          `${roundPills.length} of ${pills.length} pills, in a ${getComputedStyle(q('.exercise .actions')).overflowX} scroller`)
+
+        const card = q('.card')
+        check('cards are 16px or rounder, and generously padded',
+          Number.parseFloat(getComputedStyle(card).borderRadius) >= 16
+          && Number.parseFloat(getComputedStyle(card).paddingLeft) >= 20,
+          `${getComputedStyle(card).borderRadius} radius, ${getComputedStyle(card).paddingLeft} padding`)
+
+        // Rendered controls only: the tab bar is hidden during a session, and a
+        // control that is not on screen has no target to mis-tap.
+        const targets = qa('.setrow__check, .actionpill, .tabbar__tab, .fab, .addset, .restedit__option')
+          .filter((node) => node.getBoundingClientRect().height > 0)
+        const small = targets.filter((node) => node.getBoundingClientRect().height < 44)
+        check('every touch target is at least 44px', small.length === 0,
+          `${targets.length - small.length} of ${targets.length} controls`)
+
+        // The plate calculator, beside the weight field of the set being worked.
+        const weightField = q('.setrow[data-active="true"] input.setrow__num[data-field="weight"]')
+        const strip = q('.plates', weightField?.closest('.setrow'))
+        const weightBox = weightField?.getBoundingClientRect()
+        const stripBox = strip?.getBoundingClientRect()
+        check('the plate calculator is beside the weight field, not behind a menu',
+          strip !== null
+          && stripBox.left < weightBox.right && stripBox.right > weightBox.left
+          && Math.abs(stripBox.top - weightBox.bottom) < 44,
+          strip ? `${Math.round(Math.abs(stripBox.top - weightBox.bottom))}px under the weight cell` : 'no strip')
+
+        // The two screens where the primary action is a button rather than the
+        // FAB: the confirm, and the post-session dismiss.
+        q('[data-action="finish"]').click()
+        await waitFor('[data-action="confirm-finish"]')
+        budgets.push(await acidBudget('session, confirming'))
+        q('[data-action="confirm-finish"]').click()
+        await waitFor('[data-action="done"]')
+        budgets.push(await acidBudget('summary'))
+
+        // ===============================================================
+        // 1 — the verdict, with every tracker screen measured and all three
+        // roles having actually appeared
+        // ===============================================================
+        const tooManyRoles = budgets.filter((b) => b.roles.size > 3)
+        check('1 acid marks at most three distinct roles per screen', tooManyRoles.length === 0,
+          budgets.map((b) => `${b.label}: ${[...b.roles].join('+') || 'none'}`).join(' · '))
+        check('1 and all three roles do appear, so that bound means something',
+          new Set(budgets.flatMap((b) => [...b.roles])).size === 3,
+          [...new Set(budgets.flatMap((b) => [...b.roles]))].join(', '))
+        const unnamed = budgets.flatMap((b) => b.unnamed)
+        check('1 nothing is painted acid without declaring which role it is',
+          unnamed.length === 0,
+          unnamed.map((n) => n.className || n.tagName).slice(0, 4).join(', ') || 'none')
+
+        /**
+         * Under 5% of the viewport — or nothing but the one primary action.
+         *
+         * The document permits "a full-width acid button where a bar would be
+         * wrong", and on a phone a full-width button is about 6% of the screen.
+         * The two rules cannot both hold literally, so the exemption is stated
+         * here rather than silently widened: a screen whose entire acid content
+         * is the single thing you are meant to tap has not diluted the accent,
+         * which is what the 5% rule exists to prevent. Logged in DECISIONS.md.
+         */
+        const overBudget = budgets.filter((b) => b.coverage >= 0.05
+          && !(b.roles.size === 1 && b.roles.has('primary')))
+        check('1 acid covers under 5% of the viewport', overBudget.length === 0,
+          budgets.map((b) => `${b.label} ${(b.coverage * 100).toFixed(2)}%`).join(' · ')
+            + ` (viewport ${innerWidth}×${innerHeight})`)
+
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'surface', passed: checks.every((c) => c.ok), checks }),
+        })
+      } catch (error) {
+        checks.push({ name: 'harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 400) })
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'surface', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

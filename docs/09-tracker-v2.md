@@ -84,6 +84,15 @@ read once a month, not daily.
 
 ## F. UI corrections
 
+**Superseded by `docs/04-design-system.md`.** That document was rewritten after this
+section was built: the corrections below were all made and were all still too flat,
+because the system they were measured against was the flat one. Hold to the acceptance
+criteria at the end of `docs/04` instead. The two that are not restated there — the tab
+bar floating with the safe-area inset, and FINISH being unreachable by a mis-tap — still
+stand, and are still asserted.
+
+Kept for the record:
+
 Measured against `docs/04-design-system.md`, which the current build under-implements.
 
 **Contrast is too low.** Everything is near-black on near-black. `--text-2` and

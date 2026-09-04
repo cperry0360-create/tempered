@@ -101,8 +101,10 @@ export function createSummaryScreen({ onDone }) {
           el('p.directive__detail', { text: summary.directive.detail }),
         ]),
 
-        el('button.button.button--primary.button--wide', {
-          type: 'button', dataset: { action: 'done' }, onclick: onDone,
+        // The tab bar is hidden here, so the one primary action is a full-width
+        // acid button rather than a FAB.
+        el('button.button.button--wide', {
+          type: 'button', dataset: { action: 'done', acid: 'primary' }, onclick: onDone,
         }, ['DONE']),
       ])
     },

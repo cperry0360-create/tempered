@@ -1,0 +1,443 @@
+{
+  "_comment": "Time-boxed training programs. Unlike routines (repeatable), a program has a week index, rep RANGES rather than fixed reps, and a deload week. Cory's active program as of Sep 2026.",
+  "programs": [
+    {
+      "id": "november-physique",
+      "name": "November Physique Sprint",
+      "weeks": 8,
+      "note": "Upper-body-biased hypertrophy. Deload at week 8.",
+      "days": [
+        {
+          "id": "monday",
+          "weekday": "Monday",
+          "name": "Push A",
+          "focus": "Upper chest \u2022 chest \u2022 delts \u2022 triceps",
+          "exercises": [
+            {
+              "name": "Incline Barbell Bench Press",
+              "sets": 4,
+              "repMin": 6,
+              "repMax": 10,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Incline bench + rack",
+              "cue": "Lower to the upper chest. Press up and slightly back."
+            },
+            {
+              "name": "Flat Dumbbell Bench Press",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Flat bench",
+              "cue": "Lower into a comfortable chest stretch, then press smoothly."
+            },
+            {
+              "name": "Seated Dumbbell Shoulder Press",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Upright / high-incline bench",
+              "cue": "Press overhead without excessively arching the lower back."
+            },
+            {
+              "name": "Dumbbell Lateral Raise",
+              "sets": 4,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Standing",
+              "cue": "Lead with the elbows and stop around shoulder height."
+            },
+            {
+              "name": "Cable Fly",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Dual cable station",
+              "cue": "Bring the hands together in a wide arc and squeeze the chest."
+            },
+            {
+              "name": "Cable Triceps Pushdown",
+              "sets": 3,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "High pulley + rope or bar",
+              "cue": "Keep elbows pinned and fully extend the arms."
+            }
+          ]
+        },
+        {
+          "id": "tuesday",
+          "weekday": "Tuesday",
+          "name": "Pull A",
+          "focus": "Lats \u2022 upper back \u2022 rear delts \u2022 biceps",
+          "exercises": [
+            {
+              "name": "Lat Pulldown",
+              "sets": 4,
+              "repMin": 6,
+              "repMax": 10,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Lat pulldown station",
+              "cue": "Drive the elbows down. Control the stretch at the top."
+            },
+            {
+              "name": "Seated Cable Row",
+              "sets": 4,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Low pulley + row handle",
+              "cue": "Pull to the torso, squeeze, then reach forward under control."
+            },
+            {
+              "name": "One-Arm Dumbbell Row",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": true,
+              "restSec": [
+                90,
+                120
+              ],
+              "setup": "Bench + one dumbbell",
+              "cue": "Pull the elbow toward the hip while keeping the torso stable."
+            },
+            {
+              "name": "Dumbbell Rear-Delt Fly",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Bent-over / chest-supported",
+              "cue": "Open the arms wide without shrugging."
+            },
+            {
+              "name": "Incline Dumbbell Curl",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Incline bench",
+              "cue": "Let the biceps stretch, curl without swinging, and lower slowly."
+            },
+            {
+              "name": "Dumbbell Hammer Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Standing or seated",
+              "cue": "Use a neutral grip and keep the upper arms quiet."
+            }
+          ]
+        },
+        {
+          "id": "wednesday",
+          "weekday": "Wednesday",
+          "name": "Minimal Legs + Abs",
+          "focus": "One short lower-body maintenance day",
+          "exercises": [
+            {
+              "name": "Front Squat",
+              "sets": 3,
+              "repMin": 6,
+              "repMax": 10,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Rack / cage",
+              "cue": "Stay tall with elbows up and drive through the whole foot."
+            },
+            {
+              "name": "Romanian Deadlift",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Barbell + open floor",
+              "cue": "Push the hips back and keep the bar close to the legs."
+            },
+            {
+              "name": "Crunch",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                60
+              ],
+              "setup": "Floor / mat",
+              "cue": "Curl the rib cage toward the pelvis. Do not pull the neck."
+            }
+          ]
+        },
+        {
+          "id": "thursday",
+          "weekday": "Thursday",
+          "name": "Upper Specialization",
+          "focus": "Main physique day",
+          "exercises": [
+            {
+              "name": "Incline Dumbbell Bench Press",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Incline bench",
+              "cue": "Use a full comfortable upper-chest stretch and smooth press."
+            },
+            {
+              "name": "Cable Fly",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Dual cable station",
+              "cue": "Keep constant tension on the chest."
+            },
+            {
+              "name": "Lat Pulldown",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                120
+              ],
+              "setup": "Lat pulldown station",
+              "cue": "Think elbows toward pockets and control the return."
+            },
+            {
+              "name": "Seated Cable Row",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                120,
+                120
+              ],
+              "setup": "Low pulley + row handle",
+              "cue": "Reach, pull, then squeeze the middle back."
+            },
+            {
+              "name": "Dumbbell Lateral Raise",
+              "sets": 4,
+              "repMin": 15,
+              "repMax": 25,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Standing",
+              "cue": "Smooth reps with tension on the side delts."
+            },
+            {
+              "name": "Dumbbell Rear-Delt Fly",
+              "sets": 3,
+              "repMin": 15,
+              "repMax": 25,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Bent-over / chest-supported",
+              "cue": "Open wide without shrugging."
+            },
+            {
+              "name": "Incline Dumbbell Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Incline bench",
+              "cue": "Keep the upper arm behind the torso and control the stretch."
+            },
+            {
+              "name": "Cable Triceps Pushdown",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "High pulley + rope or bar",
+              "cue": "Lock out hard and control the return."
+            }
+          ]
+        },
+        {
+          "id": "saturday",
+          "weekday": "Saturday",
+          "name": "Delts + Arms",
+          "focus": "No leg work",
+          "exercises": [
+            {
+              "name": "Dumbbell Lateral Raise",
+              "sets": 4,
+              "repMin": 15,
+              "repMax": 25,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Standing",
+              "cue": "Keep the side delts loaded throughout the set."
+            },
+            {
+              "name": "Dumbbell Rear-Delt Fly",
+              "sets": 3,
+              "repMin": 15,
+              "repMax": 25,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Bent-over / chest-supported",
+              "cue": "Rear delts and upper back. Avoid shrugging."
+            },
+            {
+              "name": "Incline Dumbbell Curl",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Incline bench",
+              "cue": "Control the stretch and avoid swinging."
+            },
+            {
+              "name": "Dumbbell Hammer Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Standing or seated",
+              "cue": "Neutral grip with controlled reps."
+            },
+            {
+              "name": "Close-Grip Barbell Bench Press",
+              "sets": 3,
+              "repMin": 6,
+              "repMax": 10,
+              "perSide": false,
+              "restSec": [
+                120,
+                180
+              ],
+              "setup": "Flat bench + rack",
+              "cue": "Use a grip just inside normal bench width and press through the triceps."
+            },
+            {
+              "name": "Cable Triceps Pushdown",
+              "sets": 2,
+              "repMin": 12,
+              "repMax": 20,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "High pulley + rope or bar",
+              "cue": "Finish with a hard lockout."
+            },
+            {
+              "name": "Seated Dumbbell Shoulder Press",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "perSide": false,
+              "restSec": [
+                90,
+                120
+              ],
+              "setup": "Upright bench",
+              "cue": "Finish with clean reps and stop before form breaks down."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

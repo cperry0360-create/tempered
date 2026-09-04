@@ -124,6 +124,28 @@ deploy from one that deployed and did not fix the problem.
 
 ---
 
+## Phase 3.7 — Tracker surface
+
+`docs/04-design-system.md` was rewritten after the Phase 3.5 surface, built faithfully to
+the old document, turned out too flat to read in a gym. The new document is sampled from
+the reference Cory chose: black ground, one acid accent, heavy type, generous cards.
+
+This supersedes section F of `docs/09-tracker-v2.md`. Everything else in docs/09 stands.
+
+- Tokens re-sampled: three surfaces, `#edfe73` acid, `#8db2dd` blue, the `11/13/15/20/28/34`
+  scale, `--sN` spacing, `--r-*` radii.
+- Set rows become outlined cells with an olive active tint and a 4px acid edge. No
+  hairline separators anywhere.
+- Exercise actions become visible round pills in a scroller, never a menu.
+- The floating bar carries a circular acid FAB for the one primary action per screen.
+- The plate calculator moves from the foot of the exercise card to the active set's
+  weight field, which is what `docs/09` section C asked for.
+
+**Acceptance:** the six criteria at the end of `docs/04-design-system.md`, all asserted in
+`test/browser/surface.html`, plus the Phase 3.5 criteria still passing.
+
+---
+
 ## Phase 4 — Daily tracking
 
 The habit and metric surface: today's activities, quick completion, manual numeric
@@ -134,6 +156,25 @@ entry, sleep, water, nutrition, rest day, body metrics.
 - Any single item completes in one tap or one number plus one tap.
 - Rest day is a first-class rewarded action.
 - Body metric entry shows the number back to the user but awards XP only for logging.
+
+---
+
+## Phase 4.1 — The daily list
+
+Phase 4 met its one-view criterion with 10px to spare, by shaving labels. That is not a
+fix — it is a promise that gets harder to keep every time an activity is added.
+
+Every activity carries a `daily` flag, defaulted from the seed and stored on the profile.
+Today shows the daily list; everything else is behind one control. See `docs/03-screens.md`
+and the rule restated in `docs/10-task-model.md`.
+
+- Seeded daily: sleep, water, steps, nutrition, rest day. Everything else starts off.
+- The list is editable — Settings for now, setup in Phase 7.
+- The flag is a placement rule for one screen. It never changes what anything is worth.
+
+**Acceptance:** the Phase 4 criteria, with the one-view rule now asserted against the
+daily list and the day's slots, plus: every other activity reachable in one tap, rest day
+never behind that control, and editing the list changing Today without unlogging anything.
 
 ---
 

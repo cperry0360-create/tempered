@@ -101,8 +101,12 @@ export function createSummaryScreen({ onDone }) {
           el('p.directive__detail', { text: summary.directive.detail }),
         ]),
 
-        el('button.button.button--primary.button--wide', {
-          type: 'button', dataset: { action: 'done' }, onclick: onDone,
+        // The tab bar is hidden here, so the one primary action is a button
+        // rather than a FAB — a pill, not the full width: a full-width acid
+        // button is about 7% of a phone screen, and the accent holds to 5%
+        // everywhere without exception.
+        el('button.button.button--pill', {
+          type: 'button', dataset: { action: 'done', acid: 'primary' }, onclick: onDone,
         }, ['DONE']),
       ])
     },

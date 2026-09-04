@@ -91,7 +91,9 @@
 
           // Immediately after logging: is rest counting down, and is the next
           // set still tappable while it does?
-          const countdown = document.querySelector('.tool__value[data-active="true"]')
+          // A live counter is one of the three things acid marks, so a running
+          // rest timer is exactly the element carrying data-acid="value".
+          const countdown = document.querySelector('.actionpill__value[data-acid="value"]')
           if (countdown) {
             restWasRunning = true
             const remaining = qa('.setrow__check').filter((b) => !b.disabled)

@@ -1,38 +1,68 @@
-/* Design tokens — docs/04-design-system.md. The only place these are defined. */
-:root {
-  --bg: #0a0c10;
-  --surface: #12151c;
-  --surface-2: #1a1f28;
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #e6eaf2;
-  --text-2: rgba(230, 234, 242, 0.6);
-  --text-3: rgba(230, 234, 242, 0.34);
+/* ---------------------------------------------------------------------------
+   Design tokens — docs/04-design-system.md. The only place these are defined.
 
-  /* One accent per attribute. Never used for anything else. */
+   The values below are sampled from the reference, not estimated. The previous
+   system was muted and hairline-thin and could not be read in a gym; this one is
+   a black ground, three surface steps, one loud accent and heavy type.
+   --------------------------------------------------------------------------- */
+:root {
+  /* Three surfaces, no more. */
+  --bg: #1c1c1e;          /* page ground */
+  --surface: #2f2f2f;     /* cards */
+  --raised: #413f40;      /* pills, secondary controls */
+  --well: #000000;        /* input wells and the active field */
+
+  /* One accent carries the app. It marks exactly three things: the single
+     primary action, the active state, and a value worth noticing. Nothing
+     else. Painting acid is only possible through [data-acid], below, so a
+     fourth use cannot be added by accident. */
+  --acid: #edfe73;
+  /* The only other accent: secondary numeric data — prescribed versus actual. */
+  --blue: #8db2dd;
+
+  --text: #ffffff;
+  --text-2: #c7c7c5;
+  /* Column labels. 4.75:1 on a card, 6.04:1 on the ground — AA either way. */
+  --text-3: #9a9a98;
+
+  /* Cell outlines. Cells are outlined; rows are never separated by a hairline. */
+  --edge: rgba(255, 255, 255, 0.16);
+  --edge-strong: rgba(255, 255, 255, 0.34);
+
+  /* The active row's olive fill. 8% acid: enough to read as a lit row, light
+     enough that blue prescribed-versus-actual text still clears AA on it. */
+  --active-tint: #3e4034;
+
+  /* The five attribute colours survive, but only where attributes are the
+     subject — the Character surface and the post-session attribute readout.
+     They never appear in the tracker. */
   --might: #f0803c;
   --wind: #4fc9a0;
   --grit: #d8b23c;
   --vitality: #e05a6a;
   --mind: #7b7bf0;
 
-  --good: #4fc9a0;
-  --warn: #e0a94a;
-  --bad: #e05a6a;
-
-  /* Type scale — five steps, no others. */
+  /* Type scale — six steps. The old five had no room for a number to dominate. */
   --text-xs: 11px;
   --text-sm: 13px;
   --text-md: 15px;
   --text-lg: 20px;
-  --text-xl: 32px;
+  --text-xl: 28px;
+  --text-xxl: 34px;
 
   /* 4px rhythm — no other values. */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 20px;
-  --space-5: 32px;
-  --space-6: 52px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 20px;
+  --s5: 32px;
+  --s6: 52px;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 999px;
 
   /* Motion. 400ms is reserved for the level-up moment. */
   --motion-state: 120ms;
@@ -74,7 +104,7 @@ body {
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--text-md);
-  line-height: 1.4;
+  line-height: 1.35;
   /* Weights and reps must not reflow as they change. */
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -83,8 +113,8 @@ body {
 /* Respect the iPhone safe area once installed to the home screen. */
 .shell {
   min-height: 100%;
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4)
-    max(var(--space-4), env(safe-area-inset-bottom));
+  padding: max(var(--s4), env(safe-area-inset-top)) var(--s4)
+    max(var(--s4), env(safe-area-inset-bottom));
   display: grid;
   place-items: center;
 }
@@ -93,64 +123,74 @@ body {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.28em;
   color: var(--text-3);
 }
 
 /* ---------------------------------------------------------------------------
    Shell
-   Four tabs fixed at the bottom, content scrolling above. One primary action
-   per screen, full width, at the end of the content.
+
+   Four tabs on a bar that floats, inset from all three edges over a blurred
+   translucent surface. Never welded to the screen edge.
    --------------------------------------------------------------------------- */
 
 .app {
+  position: relative;
   min-height: 100%;
   display: grid;
   grid-template-rows: 1fr auto;
 }
 
-.app {
-  position: relative;
-}
-
 .app__body {
   overflow-y: auto;
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4);
-  /* Room for the floating bar, so content never hides beneath it. */
-  padding-bottom: calc(var(--space-6) + var(--space-6) + env(safe-area-inset-bottom));
+  padding: max(var(--s4), env(safe-area-inset-top)) var(--s3) var(--s3);
+  /* Room for the floating bar, so content never hides beneath it: its own
+     height, plus the margin it floats on, plus a thumb's clearance. */
+  padding-bottom: calc(var(--s6) + var(--s4) + var(--s3) + env(safe-area-inset-bottom));
 }
 
-/* Floats, inset from every edge, over a blurred translucent surface — not a bar
-   welded to the bottom of the screen. */
+/* `display: flex` outranks the user-agent `[hidden] { display: none }`, so the
+   hidden state has to be restated or the bar — and its FAB — stays on screen
+   through a whole session. */
+.tabbar[hidden] { display: none; }
+
 .tabbar {
   position: fixed;
-  left: var(--space-3);
-  right: var(--space-3);
-  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  left: var(--s3);
+  right: var(--s3);
+  bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: var(--s1);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+}
+
+.tabbar__tabs {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  gap: var(--s1);
+  min-width: 0;
 }
 
 .tabbar__tab {
   appearance: none;
   background: none;
   border: 0;
-  border-radius: 6px;
-  /* --text-2, not --text-3: an inactive tab is still a label to be read. */
+  border-radius: var(--r-lg);
+  /* An inactive tab is still a label to be read. */
   color: var(--text-2);
   font-family: var(--font-display);
   font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  padding: var(--space-3) var(--space-1);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: var(--s3) var(--s1);
   min-height: 44px;
   cursor: pointer;
   transition: color var(--motion-state) ease, background var(--motion-state) ease;
@@ -158,267 +198,584 @@ body {
 
 .tabbar__tab[data-active='true'] {
   color: var(--text);
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--raised);
 }
 
-.screen { display: grid; gap: var(--space-4); }
+/* The one primary action, at the bottom right of the floating bar. */
+.fab {
+  appearance: none;
+  border: 0;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform var(--motion-state) ease;
+}
 
+.fab:active { transform: scale(0.94); }
+.fab .icon { width: 22px; height: 22px; }
+
+/* --------------------------------------------------------------------------- */
+
+.screen { display: grid; gap: var(--s4); }
+
+/* Headings are big, bold and uppercase. The old system's timidity was mostly a
+   type failure: a section heading was a small grey label. */
 .screen__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: var(--text-xxl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1.05;
 }
 
-.block { display: grid; gap: var(--space-3); }
+.block { display: grid; gap: var(--s3); }
 
 .block__title {
   margin: 0;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
-  color: var(--text-3);
+  line-height: 1.1;
+  color: var(--text);
 }
 
 .block__hint { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
-/* Cards are flat surfaces with a hairline. Never bevels, never gradients. */
+/* Cards are generous and rounded, and hold their own separation from the
+   ground. No border: the surface step is the separation. */
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: var(--space-3);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
   display: grid;
-  gap: var(--space-3);
+  gap: var(--s3);
 }
 
 /* --------------------------------------------------------------------------- */
 
 .button {
   appearance: none;
-  border: 1px solid var(--line);
-  background: var(--surface-2);
+  border: 0;
+  background: var(--raised);
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  padding: var(--space-3) var(--space-4);
-  border-radius: 4px;
+  font-size: var(--text-md);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-full);
   cursor: pointer;
   min-height: 44px; /* a thumb, mid-set */
   transition: background var(--motion-state) ease;
 }
 
-.button--primary { background: var(--text); color: var(--bg); border-color: var(--text); }
 .button--quiet { background: none; color: var(--text-2); }
 .button--wide { width: 100%; }
+/* A primary action that carries acid is a pill, never the full width: filling
+   the width of a phone with the accent spends the whole 5% budget on one
+   control. See docs/04-design-system.md and DECISIONS.md. */
+.button--pill { justify-self: end; padding: var(--s3) var(--s5); }
 
 .search {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
   color: var(--text);
   font-size: var(--text-md);
-  padding: var(--space-3);
+  padding: var(--s3);
   min-height: 44px;
 }
 
 /* --------------------------------------------------------------------------- */
 
-.routine__name { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); }
+.routine__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
 .routine__meta, .routine__primary { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
-.library { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; }
+/* Separation from the surface step and from space — never a hairline. */
+.library { display: grid; gap: var(--s1); }
 
 .libraryrow {
   appearance: none;
   border: 0;
   background: var(--surface);
+  border-radius: var(--r-md);
   color: var(--text);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--s3);
+  padding: var(--s3);
   text-align: left;
   cursor: pointer;
-  min-height: 52px;
+  min-height: 56px;
 }
 
 .libraryrow__main { display: grid; gap: 2px; }
-.libraryrow__name { font-size: var(--text-md); }
+.libraryrow__name { font-size: var(--text-md); font-weight: 600; }
 .libraryrow__meta { font-size: var(--text-xs); color: var(--text-3); }
 .libraryrow__stats { display: grid; gap: 2px; justify-items: end; }
-.libraryrow__pr { font-size: var(--text-xs); color: var(--might); }
+.libraryrow__pr { font-size: var(--text-sm); color: var(--text); font-variant-numeric: tabular-nums; }
 .libraryrow__last { font-size: var(--text-xs); color: var(--text-3); }
 
 /* ---------------------------------------------------------------------------
-   The set row — the centre of the app.
-   One tap on the check logs the set. Numbers are tabular so they do not shift.
+   The session — the centre of the app.
    --------------------------------------------------------------------------- */
 
-.sessionbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.sessionbar__title { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); }
-.sessionbar__meta { margin: 0; font-size: var(--text-xs); color: var(--text-3); }
+.sessionbar { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); }
+.sessionbar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xxl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+.sessionbar__meta { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
-.exercise__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
-.exercise__name { margin: 0; font-family: var(--font-display); font-size: var(--text-md); }
-.exercise__meta { margin: 0; font-size: var(--text-xs); color: var(--text-2); }
-.exercise__proposal { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
-.exercise__range { margin: 0; font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.exercise { padding-bottom: var(--s4); }
+
+.exercise__head { display: flex; align-items: flex-start; gap: var(--s3); }
+
+/* A rounded square at the left of the name, roughly three lines tall. */
+.exercise__art {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--raised);
+  padding: 0;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  cursor: pointer;
+  flex: none;
+}
+.exercise__thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.exercise__full { width: 100%; border-radius: var(--r-md); background: #fff; display: block; }
+.panel--art { padding: 0; overflow: hidden; }
+
+.exercise__title { flex: 1; min-width: 0; display: grid; gap: var(--s1); }
+
+/* INCLINE BARBELL BENCH PRESS. Not a small grey label. */
+.exercise__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+/* Prescribed, as distinct from performed: the second accent's whole job. */
+.exercise__range {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
 .exercise__cue { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
-.exercise__sub { margin: 0; font-size: var(--text-xs); color: var(--warn); }
+.exercise__sub { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+.exercise__proposal { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
-/* The rest timer carries the accent while it runs, and nothing else does. */
-.tool__value[data-active='true'] { color: var(--might); }
+.exercise__order { display: flex; flex-direction: column; gap: var(--s1); flex: none; }
 
-.exercise__history { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.iconbutton {
+  appearance: none;
+  background: var(--raised);
+  border: 0;
+  border-radius: var(--r-full);
+  color: var(--text);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.iconbutton:disabled { color: var(--text-3); cursor: default; opacity: 0.5; }
+.iconbutton .icon { width: 16px; height: 16px; }
+
+/* Last performance and PR. The number is the content; its unit is a footnote
+   beside it at half the size, dimmed. */
+.exercise__history { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .pill {
   display: inline-flex;
   align-items: baseline;
-  gap: var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: var(--space-1) var(--space-2);
+  gap: var(--s2);
+  background: var(--well);
+  border-radius: var(--r-full);
+  padding: var(--s2) var(--s3);
 }
-.pill__label { font-size: var(--text-xs); letter-spacing: 0.16em; color: var(--text-2); }
-.pill__value { font-size: var(--text-md); color: var(--text); font-variant-numeric: tabular-nums; }
+.pill__label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.14em; color: var(--text-3); }
+.pill__value { font-size: var(--text-lg); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.pill__unit { font-size: var(--text-xs); color: var(--text-3); }
 .pill__aside { font-size: var(--text-xs); color: var(--text-2); }
 
-/* Density: the --space-3 rhythm. A cramped row is a mis-tap. */
-.setrow {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 68px 60px 48px 32px;
-  gap: var(--space-3);
+/* Exercise actions: full-round grey pills with a small icon and a label, in a
+   horizontal scroller directly under the name. Not a menu. Not an overflow. */
+.actions {
+  display: flex;
+  gap: var(--s2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(var(--s4) * -1);
+  padding: var(--s1) var(--s4);
+}
+.actions::-webkit-scrollbar { display: none; }
+
+.actionpill {
+  appearance: none;
+  flex: none;
+  background: var(--raised);
+  border: 0;
+  border-radius: var(--r-full);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0 var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  gap: var(--s2);
+  white-space: nowrap;
+}
+.actionpill[data-open='true'] { background: var(--well); }
+.actionpill .icon { width: 16px; height: 16px; flex: none; }
+.actionpill__value { font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+.panel {
+  border-radius: var(--r-md);
+  padding: var(--s3);
+  display: grid;
+  gap: var(--s2);
+  background: var(--well);
+}
+.panel__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+
+/* ---------------------------------------------------------------------------
+   The set row.
+
+   Each field is its own rounded outlined cell. The row being worked gets a
+   filled olive tint and a 4px acid bar down its left edge. Completed rows keep
+   full text brightness — dimming them is conventional and wrong here, because
+   those numbers are what you read to choose the next weight. The check control
+   carries the state.
+   --------------------------------------------------------------------------- */
+
+.setrow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(56px, 1.15fr) minmax(48px, 0.85fr) 48px;
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s2) 0 var(--s2) var(--s3);
+  border-radius: var(--r-md);
 }
 
-.setrow:last-of-type { border-bottom: 0; }
+.setrow[data-editing='true'] {
+  grid-template-columns: 28px minmax(0, 1fr) minmax(56px, 1.15fr) minmax(48px, 0.85fr) 48px 44px;
+}
 
-/* One accent on this screen, and it is Might's — this is a lifting session. */
-.setrow[data-active='true'] {
-  box-shadow: inset 3px 0 0 var(--might);
-  padding-left: var(--space-2);
-  margin-left: calc(var(--space-2) * -1);
+.setrow[data-active='true'] { background: var(--active-tint); }
+
+.setrow__edge {
+  position: absolute;
+  left: 0;
+  top: var(--s2);
+  bottom: var(--s2);
+  width: 4px;
+  border-radius: 2px;
 }
 
 .setrow--head {
-  color: var(--text-2);
-  font-size: var(--text-xs);
-  letter-spacing: 0.14em;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: var(--space-2);
+  padding-top: 0;
+  padding-bottom: var(--s1);
 }
-.setrow--head .setrow__num { text-align: center; }
+.setrow--head span:not([data-acid]) {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+}
+.setrow--head span[data-acid] { font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.14em; }
+.setrow--head .setrow__col { text-align: center; }
 
-.setrow__index { font-size: var(--text-sm); color: var(--text-2); }
-.setrow__record { font-size: var(--text-sm); color: var(--text-2); }
+.setrow__index { font-size: var(--text-sm); font-weight: 700; color: var(--text-2); }
 
-/* Numbers are the primary content of this screen and the brightest thing on it.
-   They are read at arm's length in bad gym lighting, mid-set. */
-input.setrow__num {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
+/* Prescribed versus actual — the blue's only job in the tracker. */
+.setrow__record {
+  font-size: var(--text-sm);
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Numbers are the largest thing in the row, and the brightest thing on the
+   screen. They are read at arm's length in bad gym lighting, mid-set. */
+input.setrow__num,
+span.setrow__num {
+  background: transparent;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   text-align: center;
-  padding: var(--space-2);
+  padding: var(--s1) 2px;
   min-height: 48px;
   width: 100%;
 }
 
-/* A logged set is not a dimmed set. Its numbers are still what you read to
-   decide the next one, so they keep full contrast; the check carries the state. */
-input.setrow__num[readonly] {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text);
+/* The field being worked is a deep well. */
+.setrow[data-active='true'] input.setrow__num {
+  background: var(--well);
+  border-color: var(--edge-strong);
 }
+
+/* A logged set is not a dimmed set: same cell, same brightness. The check
+   carries the state, because these numbers are what you read to choose the
+   next weight. */
+input.setrow__num[readonly] { color: var(--text); }
 
 .setrow__check {
   appearance: none;
-  border: 1px solid var(--line);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 4px;
+  border: 1px solid var(--edge);
+  background: var(--raised);
+  color: var(--text-2);
+  border-radius: var(--r-md);
   min-height: 48px;
-  font-size: var(--text-md);
+  display: grid;
+  place-items: center;
   cursor: pointer;
   transition: background var(--motion-state) ease, color var(--motion-state) ease;
 }
+.setrow__check .icon { width: 20px; height: 20px; }
 
 .setrow[data-active='true'] .setrow__check {
-  border-color: var(--might);
-  color: var(--might);
+  background: transparent;
+  border-color: var(--acid);
 }
 
 .setrow[data-done='true'] .setrow__check {
-  background: var(--good);
-  border-color: var(--good);
+  background: var(--text);
+  border-color: var(--text);
   color: var(--bg);
 }
 
 .setrow__remove {
   appearance: none;
-  background: none;
+  background: var(--raised);
   border: 0;
+  border-radius: var(--r-md);
   color: var(--text-2);
-  font-size: var(--text-lg);
-  line-height: 1;
   min-height: 44px;
+  display: grid;
+  place-items: center;
   cursor: pointer;
 }
+.setrow__remove .icon { width: 16px; height: 16px; }
 
 .addset {
   appearance: none;
-  background: none;
-  border: 1px dashed var(--line);
-  border-radius: 4px;
-  color: var(--text-3);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  padding: var(--space-2);
+  background: var(--raised);
+  border: 0;
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0 var(--s4);
   cursor: pointer;
-  min-height: 40px;
+  min-height: 44px;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.addset .icon { width: 14px; height: 14px; }
+
+/* ---------------------------------------------------------------------------
+   The plate calculator — beside the weight field of the set being worked,
+   never behind a menu. Bar weight and the plates you own are configured from
+   the EQUIPMENT pill; what is on the bar right now is read here.
+   --------------------------------------------------------------------------- */
+
+.plates {
+  grid-column: 3 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding-top: var(--s1);
+}
+.plates__label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.12em; color: var(--text-3); }
+.plate {
+  background: var(--well);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 2px var(--s2);
+  display: inline-flex;
+  align-items: center;
+}
+.plates__empty, .plates__note { font-size: var(--text-xs); color: var(--text-3); margin: 0; }
+.plates__note[data-exact='false'] { color: var(--text-2); }
+
+/* Equipment: the bar, and the plates you actually own. */
+.equipment { display: grid; gap: var(--s2); }
+.equipment__row { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.equipment__label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.12em; color: var(--text-3); }
+.equipment__bar {
+  width: 72px;
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: var(--s1);
+  min-height: 44px;
+}
+.equipment__plate {
+  appearance: none;
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-full);
+  color: var(--text-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+}
+.equipment__plate[data-on='true'] { background: var(--raised); color: var(--text); border-color: var(--edge-strong); }
+
+/* Rest, edited in the session. */
+.restedit { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.restedit__option {
+  appearance: none;
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  font-size: var(--text-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--s4);
+  min-height: 44px;
+  cursor: pointer;
+}
+.restedit__option[data-active='true'] { background: var(--raised); color: var(--text); border-color: var(--edge-strong); }
+
+.historyline { display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--text-sm); padding: var(--s1) 0; }
+.historyline__date { color: var(--text-2); white-space: nowrap; }
+.historyline__sets { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+
+.swaplist { display: grid; gap: var(--s1); max-height: 260px; overflow-y: auto; }
+.swaplist__option {
+  appearance: none;
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  text-align: left;
+  padding: var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+  font-size: var(--text-md);
 }
 
-/* --------------------------------------------------------------------------- */
+/* FINISH is separated from every set control by its own zone, and asks before
+   it ends anything. Its confirm is the screen's one primary action. */
+.finishzone {
+  margin-top: var(--s6);
+  padding-top: var(--s5);
+  display: grid;
+  gap: var(--s3);
+}
+.finishzone__ask { margin: 0; font-size: var(--text-lg); font-weight: 700; }
+.finishzone__pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.finishzone__confirm { display: grid; gap: var(--s3); }
 
-.stats { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.deload {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--text);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+
+/* ---------------------------------------------------------------------------
+   Summary, records, history
+   --------------------------------------------------------------------------- */
+
+.stats { display: flex; gap: var(--s5); flex-wrap: wrap; }
 .stat { display: grid; gap: 2px; }
-.stat__value { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
-.stat--small .stat__value { font-size: var(--text-lg); }
-.stat__label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+.stat__value {
+  font-family: var(--font-display);
+  font-size: var(--text-xxl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.stat--small .stat__value { font-size: var(--text-xl); }
+.stat__label { font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
 
 .badge {
   display: inline-block;
-  border: 1px solid var(--might);
-  color: var(--might);
-  border-radius: 4px;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  padding: 2px var(--space-2);
+  background: var(--raised);
+  color: var(--text);
+  border-radius: var(--r-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: var(--s1) var(--s3);
 }
 
-.pr { display: flex; align-items: center; gap: var(--space-2); }
-.pr__detail { font-size: var(--text-sm); text-transform: capitalize; }
+.pr { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.pr__detail { font-size: var(--text-md); text-transform: capitalize; }
 
-.grew { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--space-3); align-items: baseline; }
-.grew__attr { font-family: var(--font-display); font-size: var(--text-md); }
-.grew__xp { font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-.grew__why { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--text-2); }
+.grew { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s3); align-items: baseline; }
+.grew__attr { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
+.grew__xp { font-size: var(--text-xl); font-weight: 800; font-variant-numeric: tabular-nums; }
+.grew__why { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text-2); }
 
+/* Attributes are the subject here, so the attribute colours apply. */
 .grew[data-attribute='might'] .grew__xp { color: var(--might); }
 .grew[data-attribute='wind'] .grew__xp { color: var(--wind); }
 .grew[data-attribute='grit'] .grew__xp { color: var(--grit); }
@@ -426,278 +783,448 @@ input.setrow__num[readonly] {
 .grew[data-attribute='mind'] .grew__xp { color: var(--mind); }
 
 .levelup { margin: 0; font-size: var(--text-md); }
-.directive__headline { margin: 0; font-family: var(--font-display); font-size: var(--text-md); }
+.directive__headline { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
 .directive__detail { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
-/* --------------------------------------------------------------------------- */
-
-.segmented { display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; }
+.segmented { display: flex; gap: var(--s1); }
 .segmented__option {
   flex: 1;
   appearance: none;
   border: 0;
   background: var(--surface);
-  color: var(--text-3);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  padding: var(--space-3);
+  border-radius: var(--r-full);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: var(--s3);
   cursor: pointer;
   min-height: 44px;
 }
-.segmented__option[data-active='true'] { background: var(--surface-2); color: var(--text); }
+.segmented__option[data-active='true'] { background: var(--raised); color: var(--text); }
 
-.historyrow__head, .recordrow__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
-.historyrow__name, .recordrow__name { margin: 0; font-family: var(--font-display); font-size: var(--text-md); }
-.historyrow__date { font-size: var(--text-xs); color: var(--text-3); }
+.historyrow__head, .recordrow__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); }
+.historyrow__name, .recordrow__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.historyrow__date { font-size: var(--text-sm); color: var(--text-2); }
 .historyrow__meta { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
-.recordrow__stats { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-.spark { width: 96px; height: 24px; color: var(--might); }
+.recordrow__stats { display: flex; gap: var(--s4); flex-wrap: wrap; }
+.spark { width: 96px; height: 24px; color: var(--text-2); }
 
 /* ---------------------------------------------------------------------------
-   docs/09 — programs, tools, plates, guide
+   Programs, the week, the guide
    --------------------------------------------------------------------------- */
 
-.program__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-.program__name { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); }
-.program__week { font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.program__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
-
-.deload {
+.program__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); }
+.program__name {
   margin: 0;
-  font-size: var(--text-sm);
-  color: var(--text);
-  border-left: 3px solid var(--vitality);
-  padding-left: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
+.program__week { font-size: var(--text-md); font-weight: 700; color: var(--blue); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.program__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
 
 .programday {
   appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--raised);
   color: var(--text);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
   text-align: left;
   cursor: pointer;
-  min-height: 56px;
+  min-height: 60px;
 }
 
 .programday__main { display: grid; gap: 2px; }
-.programday__name { font-family: var(--font-display); font-size: var(--text-md); }
+.programday__name { font-family: var(--font-display); font-size: var(--text-md); font-weight: 700; }
 .programday__focus { font-size: var(--text-xs); color: var(--text-2); }
-.programday__count { font-size: var(--text-lg); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.programday__count { font-size: var(--text-xl); font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
 
-.exercise__title { flex: 1; display: grid; gap: 2px; }
-.exercise__order { display: flex; gap: var(--space-1); }
+.weekview { display: grid; gap: var(--s2); padding-top: var(--s2); }
+.weekview__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); }
+.weekview__label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.14em; color: var(--text-3); }
+.weekview__count { font-size: var(--text-sm); color: var(--text); font-variant-numeric: tabular-nums; }
 
-.iconbutton {
-  appearance: none;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  min-width: 36px;
-  min-height: 36px;
-  cursor: pointer;
-  font-size: var(--text-sm);
-}
-.iconbutton:disabled { color: var(--text-3); cursor: default; }
+.weekday { display: grid; grid-template-columns: 110px 1fr 40px; gap: var(--s3); align-items: center; }
+.weekday__name { font-size: var(--text-sm); color: var(--text-2); }
+.weekday__bar { height: 6px; border-radius: 3px; background: var(--raised); position: relative; overflow: hidden; }
+.weekday__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-2); }
+.weekday__count { font-size: var(--text-sm); text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
 
-.exercise__art {
-  appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--surface-2);
-  padding: 0;
-  width: 52px;
-  height: 52px;
-  overflow: hidden;
-  cursor: pointer;
-  flex: none;
-}
-.exercise__thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
-.exercise__full { width: 100%; border-radius: 4px; background: #fff; }
-.panel--art { padding: 0; }
-
-.exercise__tools { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-
-.tool {
-  appearance: none;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: var(--text-xs);
-  letter-spacing: 0.1em;
-  padding: var(--space-2) var(--space-3);
-  min-height: 40px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.tool__value { font-variant-numeric: tabular-nums; color: var(--text-2); }
-
-.panel {
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: var(--space-3);
-  display: grid;
-  gap: var(--space-2);
-  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
-}
-.panel__note { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
-
-.restedit { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-.restedit__option {
-  appearance: none;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-  padding: var(--space-2) var(--space-3);
-  min-height: 44px;
-  cursor: pointer;
-}
-.restedit__option[data-active='true'] { border-color: var(--might); color: var(--might); }
-
-.historyline { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
-.historyline__date { color: var(--text-2); white-space: nowrap; }
-.historyline__sets { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
-
-.swaplist { display: grid; gap: 1px; max-height: 240px; overflow-y: auto; }
-.swaplist__option {
-  appearance: none;
-  background: var(--surface);
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
-  text-align: left;
-  padding: var(--space-3);
-  min-height: 44px;
-  cursor: pointer;
-  font-size: var(--text-sm);
-}
-
-/* The plate calculator sits beside the weight field, not behind a menu. */
-.plates {
-  border-top: 1px solid var(--line);
-  padding-top: var(--space-3);
-  display: grid;
-  gap: var(--space-2);
-}
-.plates__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
-.plates__label { font-size: var(--text-xs); letter-spacing: 0.14em; color: var(--text-2); }
-.plates__bar { font-size: var(--text-xs); color: var(--text-2); display: inline-flex; align-items: center; gap: var(--space-2); }
-.plates__barinput {
-  width: 56px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  padding: var(--space-1);
-  min-height: 36px;
-}
-.plates__stack { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
-.plate {
-  border: 1px solid var(--text-2);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-variant-numeric: tabular-nums;
-  padding: var(--space-1) var(--space-3);
-  min-height: 32px;
-  display: inline-flex;
-  align-items: center;
-}
-.plates__empty, .plates__note { font-size: var(--text-sm); color: var(--text-2); margin: 0; }
-.plates__note[data-exact='false'] { color: var(--warn); }
-
-/* FINISH is separated from every set control by its own zone. */
-.finishzone {
-  margin-top: var(--space-6);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
-  display: grid;
-  gap: var(--space-3);
-}
-.finishzone__ask { margin: 0; font-size: var(--text-md); }
-.finishzone__pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.finishzone__confirm { display: grid; gap: var(--space-3); }
-
-.guide { display: grid; gap: var(--space-2); }
-.guide__row { display: grid; grid-template-columns: 96px 1fr 32px; gap: var(--space-3); align-items: center; }
+.guide { display: grid; gap: var(--s2); }
+.guide__row { display: grid; grid-template-columns: 96px 1fr 60px; gap: var(--s3); align-items: center; }
 .guide__group { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
-.guide__bar { height: 4px; background: var(--line); position: relative; }
-.guide__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-2); }
+.guide__bar { height: 6px; border-radius: 3px; background: var(--raised); position: relative; overflow: hidden; }
+.guide__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-3); }
+.guide__row[data-met='true'] .guide__bar::after { background: var(--text); }
 .guide__sets { font-size: var(--text-sm); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------------------
-   docs/10 — tasks, the weekly view, settings
+   Today
    Nothing here has an overdue state. Outstanding is neutral, never red.
    --------------------------------------------------------------------------- */
 
 .today__frame { margin: 0; font-size: var(--text-md); color: var(--text-2); }
 
-.tasks { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; }
+.tasks { display: grid; gap: var(--s1); }
 
 .task {
   appearance: none;
   border: 0;
   background: var(--surface);
+  border-radius: var(--r-md);
   color: var(--text);
   display: grid;
-  grid-template-columns: 24px 1fr auto;
-  gap: var(--space-3);
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: var(--s3);
   align-items: center;
-  padding: var(--space-3);
+  padding: 0 var(--s3);
   text-align: left;
   cursor: pointer;
-  min-height: 56px;
+  min-height: 46px;
 }
 
 .task__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--bg);
+}
+.task__mark .icon { width: 14px; height: 14px; }
+
+/* Done is marked. Outstanding is marked in nothing at all — it is not a problem
+   state, so it gets no colour and no emphasis. */
+.task[data-done='true'] .task__mark { background: var(--text); border-color: var(--text); }
+.task[data-started='true'] .task__mark { border-color: var(--edge-strong); }
+
+.task__name {
+  font-size: var(--text-md);
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task__pres { font-size: var(--text-sm); color: var(--blue); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.task[data-done='true'] .task__pres { color: var(--text-3); }
+
+/* ---------------------------------------------------------------------------
+   Daily tracking — Phase 4.
+
+   A mark is one tap. A measurement is one number and one tap, which is why the
+   field is already on screen: nothing to open, nothing to expand, no menu
+   between you and the number you came to record.
+   --------------------------------------------------------------------------- */
+
+.marks { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.mark {
+  appearance: none;
+  border: 0;
+  background: var(--surface);
+  border-radius: var(--r-full);
+  color: var(--text);
   font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0 var(--s4) 0 var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  white-space: nowrap;
+}
+.mark .icon { width: 16px; height: 16px; color: var(--text-3); }
+
+/* Rest is an action that earns, so it reads as one — never a greyed-out row at
+   the bottom of a list of things you failed to do. */
+.mark[data-rest='true'] { background: var(--raised); }
+.mark[data-rest='true'] .icon { color: var(--text); }
+
+/* On the daily list a chip is a choice rather than an action: on is filled, off
+   is quiet. It sits ON a card, so `on` needs the raised step — the default
+   surface would be the same colour as the card behind it and read as nothing. */
+.mark[data-on='true'] { background: var(--raised); }
+.mark[data-on='true'] .icon { color: var(--text); }
+.mark[data-on='false'] { background: none; box-shadow: inset 0 0 0 1px var(--edge); color: var(--text-2); }
+
+.entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--s2);
 }
 
-/* Done is marked in green. Outstanding is marked in nothing at all — it is not
-   a problem state, so it gets no colour and no emphasis. */
-.task[data-done='true'] .task__mark { background: var(--good); border-color: var(--good); color: var(--bg); }
-.task[data-started='true'] .task__mark { border-color: var(--might); }
+.entry {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--s2) var(--s2) var(--s1);
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.entry__label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry__row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: var(--s1); align-items: center; }
+.entry__value {
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 2px;
+  width: 100%;
+}
+.entry__confirm {
+  appearance: none;
+  border: 1px solid var(--edge);
+  background: var(--raised);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.entry__value:focus { background: var(--well); border-color: var(--edge-strong); outline: none; }
+.entry__confirm .icon { width: 18px; height: 18px; }
+.entry__unit { font-size: 9px; color: var(--text-3); letter-spacing: 0; margin-left: 3px; }
 
-.task__main { display: grid; gap: 2px; min-width: 0; }
-.task__name { font-size: var(--text-md); }
-.task__pres { font-size: var(--text-xs); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.task__count { font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* What the last entry earned, said once, then gone. */
+.earned { margin: 0; display: flex; align-items: baseline; gap: var(--s2); min-height: 21px; }
+.earned__xp { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; }
+.earned__what { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
 
-.weekview { display: grid; gap: var(--space-2); border-top: 1px solid var(--line); padding-top: var(--space-3); }
-.weekview__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-.weekview__label { font-size: var(--text-xs); letter-spacing: 0.14em; color: var(--text-2); }
-.weekview__count { font-size: var(--text-sm); color: var(--text); font-variant-numeric: tabular-nums; }
+/* Everything off the daily list. One control, never a menu. */
+.elsewhere__toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  justify-self: start;
+}
+.elsewhere__toggle .icon { width: 14px; height: 14px; }
+.elsewhere { display: grid; gap: var(--s2); }
 
-.weekday { display: grid; grid-template-columns: 120px 1fr 40px; gap: var(--space-3); align-items: center; }
-.weekday__name { font-size: var(--text-sm); color: var(--text-2); }
-.weekday__bar { height: 4px; background: var(--line); position: relative; }
-.weekday__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--good); }
-.weekday__count { font-size: var(--text-sm); text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
+/* Logged work is collapsed by default: it is evidence, not a to-do list. */
+.worked__toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  justify-self: start;
+}
+.worked__toggle .icon { width: 14px; height: 14px; }
 
-.guide__row[data-met='true'] .guide__bar::after { background: var(--good); }
+.worked { display: grid; gap: var(--s1); }
+.worked__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: var(--s2) var(--s3);
+  font-size: var(--text-sm);
+}
+.worked__name { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worked__value { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.setting { margin: 0; display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-md); }
+.setting { margin: 0; display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--text-md); }
 .setting__label { color: var(--text-2); }
 .setting__value { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------------------
+   Character — Phase 5.
+
+   The one screen where the five attribute colours belong. docs/04: they survive
+   only where attributes are the subject, and never in the tracker.
+   --------------------------------------------------------------------------- */
+
+.rank { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--s4); }
+.rank__letter {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.rank__main { display: grid; gap: 2px; min-width: 0; }
+.rank__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+.rank__meta { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+
+.attr { gap: var(--s2); }
+
+.attr__head {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+.attr__title { display: grid; gap: 2px; min-width: 0; }
+.attr__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+.attr__tier { font-size: var(--text-md); color: var(--text-2); }
+.attr__numbers { display: grid; justify-items: end; gap: 0; flex: none; }
+.attr__level {
+  font-family: var(--font-display);
+  font-size: var(--text-xxl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.attr__levellabel { font-size: 9px; letter-spacing: 0.16em; color: var(--text-3); }
+
+.attr__bar { height: 6px; border-radius: 3px; background: var(--well); position: relative; overflow: hidden; }
+.attr__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-2); }
+.attr[data-attribute='might'] .attr__bar::after { background: var(--might); }
+.attr[data-attribute='wind'] .attr__bar::after { background: var(--wind); }
+.attr[data-attribute='grit'] .attr__bar::after { background: var(--grit); }
+.attr[data-attribute='vitality'] .attr__bar::after { background: var(--vitality); }
+.attr[data-attribute='mind'] .attr__bar::after { background: var(--mind); }
+
+.attr__xp { margin: 0; font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.attr__detail { display: grid; gap: var(--s2); padding-top: var(--s2); }
+.attr__subhead {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.feeds { display: grid; gap: var(--s2); }
+.feed { display: grid; gap: 1px; }
+.feed__label { font-size: var(--text-md); font-weight: 600; }
+.feed__worth { font-size: var(--text-sm); color: var(--text-2); }
+
+.fed { display: grid; gap: var(--s2); }
+.fed__row { display: grid; grid-template-columns: minmax(0, 1fr) 72px auto; gap: var(--s3); align-items: center; }
+.fed__label { font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fed__bar { height: 6px; border-radius: 3px; background: var(--well); position: relative; overflow: hidden; }
+.fed__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-2); }
+.attr[data-attribute='might'] .fed__bar::after { background: var(--might); }
+.attr[data-attribute='wind'] .fed__bar::after { background: var(--wind); }
+.attr[data-attribute='grit'] .fed__bar::after { background: var(--grit); }
+.attr[data-attribute='vitality'] .fed__bar::after { background: var(--vitality); }
+.attr[data-attribute='mind'] .fed__bar::after { background: var(--mind); }
+.fed__xp { font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.titles { display: grid; gap: var(--s2); }
+.title {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+.title__name { font-family: var(--font-display); font-size: var(--text-md); font-weight: 700; }
+.title__date { font-size: var(--text-sm); color: var(--text-2); white-space: nowrap; }
+.title__why { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text-2); }
+
+/* Icons are stroked line art at currentColor — one set, no emoji. */
+.icon { display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------------------------------------------------------------------------
+   The accent, and the only way to paint it.
+
+   Three roles, three values. A screen may use all three; it may not invent a
+   fourth, because there is no other selector in this file that sets --acid.
+   `test/browser/surface.html` asserts both halves: at most three roles on a
+   screen, and nothing painted acid without the attribute naming its role.
+
+   Last in the file on purpose. These are single-attribute selectors, so a
+   component rule of equal specificity defined below them would quietly win and
+   the state would go unpainted.
+   --------------------------------------------------------------------------- */
+
+/* 1. The single primary action — the FAB, or the confirm. */
+[data-acid='primary'] {
+  background: var(--acid);
+  color: var(--bg);
+  border-color: var(--acid);
+}
+
+/* 2. The active state — the set being worked, the column being logged. */
+[data-acid='active'] { color: var(--acid); }
+
+/* 3. A value worth noticing — a PR, a max, a live counter. */
+[data-acid='value'] { color: var(--acid); }
+
+/* The 4px bar down the left edge of the row being worked. */
+.setrow__edge[data-acid='active'] { background: var(--acid); }

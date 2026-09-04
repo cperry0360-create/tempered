@@ -637,6 +637,379 @@ phase, so a screenshot of Settings identifies the build precisely.
 **Confidence:** specified
 **Needs Cory:** no
 
+## 2026-09-04 — Phase 3.7: acid is paintable only through `data-acid`
+**Phase:** 3.7
+**Decision:** `src/style.css` sets `#edfe73` in exactly four places, all of them selectors
+on `[data-acid]`, whose value names one of the document's three roles: `primary`,
+`active`, `value`. No component class paints acid. The block sits last in the file so a
+same-specificity component rule cannot quietly win a tie and leave a state unpainted.
+**Reasoning:** `docs/04` says acid marks three things "and nothing else", and asks for
+that to be asserted. A budget you can only measure after the fact gets exceeded; a budget
+that cannot be exceeded without naming the role you are claiming does not. It also makes
+the assertion cheap and exact: `test/browser/surface.html` counts distinct roles on screen
+and, separately, flags anything painted acid with no `data-acid` ancestor.
+**Confidence:** inferred (the mechanism; the three roles are specified)
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: "under 5% of the viewport" and "a full-width acid button"
+**Phase:** 3.7
+**Decision:** The acid budget is asserted as: under 5% of the viewport, **or** the only
+acid on the screen is the single primary action. Every tracker screen passes the 5% rule
+outright — train 0.7%, today 0.7%, a session 0.9%. The post-session summary, whose one
+control is a full-width acid DONE, lands at 6.9% and passes under the second clause.
+**Reasoning:** The document asks for both "under 5%" and "a full-width acid button where a
+bar would be wrong", and on a phone a full-width 44px button is about 6% of the screen.
+The two cannot both hold literally. The 5% rule states its own purpose — more than that
+and the accent "has stopped meaning anything" — and a screen whose entire acid content is
+the one thing you are meant to tap has diluted nothing. The exemption is written into the
+harness where it can be read, rather than being absorbed by quietly loosening the number.
+**Confidence:** guessed
+**Needs Cory:** answered — Cory chose the pill. See the entry below; the exemption is gone
+and the rule is flat.
+
+## 2026-09-04 — Phase 3.7: which screens get a FAB, and what it does
+**Phase:** 3.7
+**Decision:** The floating bar carries a circular acid FAB for the screen's one primary
+action. Today and Train both get one: start the day the program prescribes for today.
+History, Character and Settings get none. A session hides the bar entirely, so its primary
+action is the FINISH **confirm** — the FINISH button that opens the confirm is neutral.
+Train's per-routine START buttons stopped being primary buttons.
+**Reasoning:** `docs/04` allows a screen to have no FAB but not two primary actions.
+Train's routines and library rows are all equally valid starts, so none of them is the
+primary action and inventing one would be inventing product. Today's list has the same
+shape, and its one distinguishable action — run the whole block — is the FAB. Leaving the
+acid on the FINISH button that merely *opens* the confirm would have made the loudest
+thing on the logging screen the control docs/09 says must not be reachable by a mis-tap.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. Confirm you want Train's FAB to start today's day
+rather than the last day you worked.
+
+## 2026-09-04 — Phase 3.7: the plate calculator moved into the row it describes
+**Phase:** 3.7
+**Decision:** The per-side loading now renders inside the set row being worked, directly
+under its weight cell, for barbell movements only. Bar weight and the plates you own moved
+to an EQUIPMENT pill. Previously the calculator sat at the foot of the exercise card.
+**Reasoning:** `docs/09` section C asks for it "next to the weight field during a session,
+not behind a menu". It was not behind a menu, but it was also not next to the weight
+field — on a phone it was most of a screen away from the number it describes, under four
+set rows and an ADD SET button. `test/browser/surface.html` now asserts adjacency
+geometrically: the strip must overlap the weight cell horizontally and sit within a
+thumb's reach below it. Gating on `variant === 'Barbell'` follows from the data; a plate
+solver on a dumbbell curl is noise. Configuration is not the calculator, so the bar and
+plate inventory behind a pill still satisfies "not behind a menu".
+**Confidence:** specified (the placement), inferred (the barbell gate)
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: removing a set moved behind EDIT SETS
+**Phase:** 3.7
+**Decision:** The per-row remove control is shown by the EDIT SETS pill rather than living
+permanently in every row. Adding a set is unchanged and still one tap.
+**Reasoning:** `docs/04` names "edit sets" as one of the pill actions and holds touch
+targets at 44px. Six columns of controls in a row that also has to fit a 28px weight and a
+28px rep count cannot all be 44px wide on a 390px screen; something had to leave the row,
+and removing a set is rare next to logging one. It is one extra tap, and it bought every
+remaining control in the row its full target.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: the attribute colours, and where they survive
+**Phase:** 3.7
+**Decision:** The five attribute colours are kept as tokens and used in exactly one place:
+the post-session "What grew" readout, where the subject genuinely is attributes. Nowhere
+in the tracker — the active set row, the rest timer, the PR marker and the started-task
+mark all stopped using Might's orange.
+**Reasoning:** `docs/04` says they survive "only on the Character screen where attributes
+are the subject. They never appear in the tracker." The summary is not the Character
+screen, but it is a screen whose content is attribute XP, and stripping colour from it
+would have made an attribute list read as five identical rows.
+**Confidence:** inferred
+**Needs Cory:** answered — Cory kept it, and `docs/04` now says so: attribute colours
+appear on Character and in the post-session "What grew" readout, nowhere else.
+
+## 2026-09-04 — Phase 3.7: a bug the acceptance harness could not see
+**Phase:** 3.7
+**Decision:** Added `.tabbar[hidden] { display: none }`.
+**Reasoning:** `app.js` has always set `tabBar.hidden = true` when a session starts, but
+`.tabbar` sets `display: flex` (previously `grid`), which outranks the user agent's
+`[hidden] { display: none }`. The bar has therefore been visible through every session
+since Phase 3, and with the FAB added it was worse than cosmetic: a live control that
+starts a *new* session, sitting over the set rows of the one you are in. No assertion
+caught it — every harness queried elements that were present and correct. A screenshot of
+the rendered session did, in about a second. Worth remembering: the harnesses check
+claims, and cannot check the claim nobody thought to make.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: token names follow the document
+**Phase:** 3.7
+**Decision:** Spacing tokens renamed `--space-N` to `--sN`, the type scale extended to the
+document's six steps, and radius tokens `--r-sm|md|lg|xl|full` added.
+**Reasoning:** `docs/04` refers to `--s4`, `--s3` and `--r-lg` by name. A document naming
+one token and a stylesheet defining another is how a design system stops being read.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: harnesses updated, not loosened
+**Phase:** 3.7
+**Decision:** Four existing harnesses needed edits: the boot check for the ground colour,
+the logging-speed check for a running rest timer, and two tracker-v2 checks whose controls
+moved. Each was re-pointed at the new marker; none had its threshold relaxed. tracker-v2
+also gained a check that the plate calculator is in the same row as the weight field,
+which the previous build would have failed.
+**Reasoning:** A harness edited to match whatever the code now does is worse than no
+harness. The distinction held here: every one of these was "this element is now called
+something else", and each was verified to still fail when the behaviour is broken rather
+than merely renamed — the sabotage runs are in the commit message.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.4.1 (3.7)
+**Phase:** 3.7
+**Decision:** `src/version.js` carries `0.4.1 (3.7)`, built 2026-09-04, which re-keys the
+service worker cache.
+**Reasoning:** The patch version moves because this is a surface re-implementation inside
+the 3.x group, not a new phase group. Bumping it sweeps every cached copy of the old
+stylesheet, which matters more than usual here: a stale `style.css` against new markup is
+exactly the kind of half-applied build a version number exists to identify.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: the acid budget is a flat 5%, with no exemption
+**Phase:** 3.7
+**Decision:** Cory's call on the open question above: the summary's DONE is now a pill
+(`.button--pill`, right-aligned) rather than a full-width button, and the fallback clause
+came out of the assertion. `test/browser/surface.html` asserts under 5% of the viewport,
+full stop. Measured: train 0.71%, today 0.71%, a session 0.18%, resting 0.24%, confirming
+0.24%, summary 1.56%. Restoring the full-width button puts the summary at 6.22% and turns
+the check red, which is how the rule was verified to still bite.
+**Reasoning:** A rule with a stated exemption is a rule someone will widen later. The
+document's "full-width acid button" was one of two permitted forms for a primary action,
+not a requirement; the 5% ceiling was the one with a reason attached to it. Dropping the
+form that could not fit the ceiling costs nothing and leaves one number to hold.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 3.7: looking at the screens is now part of finishing a phase
+**Phase:** 3.7
+**Decision:** Added to `CLAUDE.md` under How to work: at the end of any phase that changes
+the interface, screenshot each screen it touched and look at them.
+**Reasoning:** Cory's, after the `.tabbar[hidden]` bug. Twenty-one assertions and four
+older harnesses all passed while a live control that starts a new session sat over the
+session you were in, because no one had thought to assert that a hidden thing is hidden.
+A screenshot has no such blind spot: it shows what is there, not what was asked about.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4: how a day's XP is settled
+**Phase:** 4
+**Decision:** Every `dayLogs` record carries an `awarded` ledger of XP paid per source.
+Logging anything re-scores the whole day with `awardsForDay` and pays only the difference,
+and the ledger keeps the high-water mark per source rather than the latest figure.
+**Reasoning:** A day is logged a piece at a time and every piece re-scores the whole day,
+so paying out the day's awards on each entry would pay for the morning's sleep again every
+time a glass of water is logged. The high-water mark is what makes both directions of
+correction safe: a mistyped 12,000 steps corrected to 4,000 pays nothing and claws nothing
+back, and re-raising it to 12,000 pays nothing a second time. `CLAUDE.md` forbids
+subtracting, so the ledger has to be the thing that remembers, not the current value.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4: which activities are measured and which are marked
+**Phase:** 4
+**Decision:** Sleep, water, steps, body metrics and every minute-based activity take a
+number. Rest day, food logged, protein target and journal are one-tap marks. Water and the
+minute-based entries ADD to the day; sleep, steps and a body reading REPLACE it.
+**Reasoning:** `docs/01` is explicit that a measurable activity must not be a checkbox.
+Add-versus-replace is not in any document and is a judgement: water arrives a glass at a
+time and reading happens twice in an evening, so asking for a running total would be
+asking the user to do arithmetic; a night's sleep and a step count are already totals when
+they arrive. `protein_target` is seeded as `derived` with a unit of grams, but the engine
+scores "target met" and nothing anywhere holds a gram target to compare against, so it is
+implemented as a mark.
+**Confidence:** inferred (add versus replace), guessed (protein as a mark)
+**Needs Cory:** yes — low priority. If you want protein scored against a gram target, say
+what the target is and it becomes a measured entry.
+
+## 2026-09-04 — Phase 4: the body-metric value is read in exactly one place
+**Phase:** 4
+**Decision:** `applyActivity` writes a body reading to `day.bodyMetrics.weight` and sets
+the boolean `bodyMetricsLogged`. Reading that number back happens in `src/app/daily.js`
+and nowhere else; `activityValue()` in the domain returns the boolean act.
+**Reasoning:** `body-weight.test.js` asserts that no module under `src/domain/` so much as
+reaches for a recorded metric value, and Phase 4 requires the number shown back to the
+user. The obvious move was a display helper in the domain beside the rest of the activity
+model, and the guard caught it. The guard is right: it is only worth having while it has
+no exceptions, and "it is only for display" is exactly how the first exception would be
+argued. The read now lives at the app boundary, one layer away from anything that could
+score it. The guard reads raw source, so even a comment quoting the field name trips it —
+left as it is rather than taught to strip comments, because a blunt rule about this
+particular value is the point.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4: what "one view, no scrolling" cost
+**Phase:** 4
+**Decision:** Today shows six training slots and thirteen activities in 834px of an 844px
+phone. Getting there: single-line slot rows, marks as round chips, measured activities as
+a three-column grid whose number field is always present, the unit as a footnote beside
+the name rather than a line of its own, and no "OUTSTANDING" heading.
+**Reasoning:** Nineteen outstanding items at the design system's 44px minimum is 836px
+before any heading, so the criterion and `docs/10`'s slot list are in tension and something
+had to give. What gave was labelling, not touch targets: a 28px section heading is two
+activity tiles' worth of room spent saying what the screen's own title already says.
+Everything cut was chrome; nothing outstanding is hidden, truncated or behind a "more".
+The fit is asserted at a stated 390×844 rather than at whatever size the headless window
+happens to be, because "one view" is a claim about a phone.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. It fits, but with 10px to spare. If you add a
+fourteenth activity, something has to become a scroller.
+
+## 2026-09-04 — Phase 4: logging must not make the screen taller
+**Phase:** 4
+**Decision:** The "+195 XP" acknowledgement replaces the framing line rather than adding a
+row, and what is already logged collapses behind a single WORKED toggle.
+**Reasoning:** Found by screenshot, not by assertion: three entries in, the acknowledgement
+and the worked list had pushed the last outstanding tile under the floating bar, so the
+screen got worse the more you used it. `docs/03` already asked for logged work collapsed by
+default. There is now an assertion for the mid-day state too.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.5.0 (4)
+**Phase:** 4
+**Decision:** `src/version.js` carries `0.5.0 (4)`, built 2026-09-04.
+**Reasoning:** New phase group, so the minor version moves. Re-keys the service worker
+cache, which matters this time because `data/activities.json` is newly fetched at boot.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the daily flag, and where it lives
+**Phase:** 4.1
+**Decision:** Every activity carries a `daily` flag. The seed supplies the default — sleep,
+water, steps, nutrition, rest day on; everything else off — and the user's own list lives
+on the profile as `dailyActivityIds`. Today renders the daily list; the rest is behind one
+"log something else" control that opens the same chips and tiles. A profile with no list
+falls back to the seed defaults rather than having a copy written into it.
+**Reasoning:** Cory's call, and the right one: Phase 4 met its one-view criterion by
+shaving labels and had 10px left, which meant the fourteenth activity would have broken it.
+Now the rule holds by construction. The fallback matters because the defaults can then be
+retuned later without every existing profile carrying a stale copy of the old ones, and
+because a profile created before the flag existed still works. Measured after the change:
+736px of 844px with the section heading and the wider spacing restored, against 834px
+before it.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the flag is placement, never scoring
+**Phase:** 4.1
+**Decision:** `daily` affects one screen's contents and nothing else. An activity off the
+list earns exactly the same XP, logs the same way, and appears in the same worked list.
+Taking one off never unlogs anything. Both are asserted.
+**Reasoning:** The obvious way for this to rot is for "not on my daily list" to quietly
+become "worth less" or "not really tracked". `CLAUDE.md` is clear that nothing is punished
+and that measurement is what earns; a placement preference is not a measurement.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: the list is editable in Settings until setup exists
+**Phase:** 4.1
+**Decision:** Settings gains a Daily list card — one chip per activity, tap to toggle.
+`docs/03` says the flag is set during setup, which is Phase 7.
+**Reasoning:** A default nobody can change is not a default, and shipping the flag with no
+way to edit it for three phases would mean the defaults were never tested against a real
+preference. Setup will take this over rather than duplicate it.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.1: protein stays a mark
+**Phase:** 4.1
+**Decision:** Cory answered the open question from Phase 4: no gram target. `protein_target`
+stays a one-tap mark, and `data/activities.json` keeps its `unit: g` as description rather
+than as something the app asks for.
+**Reasoning:** His words: that is programming advice he is not going to invent. Recorded so
+the question does not get reopened by the next person who notices the unit.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.5.1 (4.1)
+**Phase:** 4.1
+**Decision:** `src/version.js` carries `0.5.1 (4.1)`, built 2026-09-04.
+**Reasoning:** A correction inside the Phase 4 group, so the patch version moves, matching
+how 3.7 was handled.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: the explanation is checked against the engine, not written beside it
+**Phase:** 5
+**Decision:** `src/domain/sources.js` holds one entry per XP source — a label and a worth
+phrased from `data/balance.json` at call time. `sources.test.js` drives the XP engine over
+a day and a session that between them trigger everything, and asserts the explanation
+covers every source the engine emits, and emits every source the explanation claims.
+**Reasoning:** The Phase 5 acceptance criterion is that tapping an attribute reveals
+exactly what feeds it and what each is worth, and `CLAUDE.md` non-negotiable 3 says the
+mapping must be legible. A hand-maintained list is true the day it is written and quietly
+wrong six weeks later, and the failure mode is the worst kind — the app confidently
+explaining itself incorrectly. Reading the rates out of balance at call time is the same
+argument: non-negotiable 7 puts balance in config, and a worth with the old number baked
+into a string would make that a lie the first time one moved. There is a test for that
+too: it retunes a value and checks the sentence follows.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: titles are awarded, and never taken back
+**Phase:** 5
+**Decision:** `src/domain/titles.js` holds one predicate per catalogue entry, and
+`src/app/character.js` derives the facts from what is logged — session count and hours
+from `sessions`, miles and in-band sleeps from `dayLogs`, the lifts from `records`, the
+return-after-a-gap from the `grit.return` the engine recorded at the time. Anything newly
+earned is stamped with the day and stored. Display reads the store, never the predicate.
+**Reasoning:** `docs/07` names Titles as Phase 5 work and the catalogue was sitting unused
+since Phase 0. Deriving the facts rather than keeping counters follows `docs/10`'s reason
+for deriving slot completion: a counter drifts and nothing notices. Storing the earned date
+and displaying from the store is what makes "no punishment" hold at the edges — retuning a
+threshold, or a bad import, must not silently un-award something somebody already has.
+There is a test that drops an attribute back to level 0 and checks the title stays.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: two title conditions needed a reading
+**Phase:** 5
+**Decision:** "Log a rest day after three consecutive training days" is read as: a rest day
+whose three preceding calendar days each carry a finished session. "Farmer's carry 200 lbs
+total load" is read as the best recorded load on `farmers_carry`, not load × distance.
+**Reasoning:** Both sentences admit a looser and a stricter reading. Three *consecutive*
+days is the stricter and matches the words; "total load" most likely means the weight on
+the bar rather than a work product, since the exercise already logs load and distance
+separately and a work figure would need a distance to be stated in the condition.
+**Confidence:** guessed
+**Needs Cory:** yes — low priority. Confirm the carry title means 200 lbs carried, not 200
+lbs × some distance.
+
+## 2026-09-04 — Phase 5: the Character screen has no FAB
+**Phase:** 5
+**Decision:** No primary action on Character, so the floating bar carries no FAB there.
+Acid marks two roles: the rank letter, and the attribute being read.
+**Reasoning:** `docs/04` allows a screen to have no single primary action, and Character is
+a reading surface — nothing on it is the thing you came to do. Inventing one would spend
+the accent on whatever happened to be nearest. Measured at 0.29% of the viewport.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 5: the copy guard caught the word "behind"
+**Phase:** 5
+**Decision:** Reworded "nothing is locked behind one" to "nothing depends on having one".
+**Reasoning:** `test/copy.test.js` bans "behind" because outstanding work must never be
+framed that way, and it reads raw copy rather than trying to judge intent. The usage was
+innocent; the guard is blunt on purpose, and the same reasoning applies as with the
+body-metric guard — it is worth having only while it has no exceptions.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.6.0 (5)
+**Phase:** 5
+**Decision:** `src/version.js` carries `0.6.0 (5)`, built 2026-09-04.
+**Reasoning:** New phase group. Re-keys the service worker cache, which matters here
+because `data/titles.json` is newly fetched at boot.
 ## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
 **Phase:** 3.5 D (unblocking)
 **Decision:** All 17 program movements now have art in `art/exercises/`, sourced from

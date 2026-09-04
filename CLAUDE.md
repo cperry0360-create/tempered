@@ -58,6 +58,10 @@ that could be awarded for doing the work.
   reports failure — before trusting a pass. The Phase 2 persistence harness is the
   example: it reported three green passes while asserting nothing, because the DOM was
   snapshotted before any of the asynchronous work had run.
+- **Some bugs are only visible to an eye.** Assertions check what you thought to check.
+  At the end of any phase that changes the interface, capture a screenshot of each screen
+  it touched and look at them — the Phase 3.7 tab bar was visible through every session
+  since Phase 3 and 21 assertions never saw it.
 - **Commit per phase**, with the phase number in the message.
 
 ## Stack

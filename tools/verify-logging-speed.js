@@ -6,6 +6,7 @@
  *   - last performance and PR visible before the first set is entered
  *
  *   node tools/verify-logging-speed.js [--chrome /path/to/chrome]
+ *     [--page test/browser/<harness>.html] [--window 390,844]
  *
  * The harness drives the actual UI and counts taps; a script's wall clock is
  * meaningless, so taps are converted at a stated one second per tap.
@@ -83,8 +84,17 @@ const page = process.argv.includes('--page')
 const url = `http://127.0.0.1:${port}/${page}`
 console.log(`Driving the real app at ${url}\n`)
 
+// A viewport can be stated: `--window 390,844`. It matters for anything
+// measured as a fraction of the screen — docs/04's acid budget is "under 5% of
+// the viewport", which is only a real number at a size a phone actually has.
+const windowSize = process.argv.includes('--window')
+  ? process.argv[process.argv.indexOf('--window') + 1]
+  : null
+
 const child = spawn(chrome, [
-  '--headless', '--no-sandbox', '--disable-gpu', url,
+  '--headless=new', '--no-sandbox', '--disable-gpu',
+  ...(windowSize ? [`--window-size=${windowSize}`] : []),
+  url,
 ], { stdio: 'ignore' })
 
 let passed = false

@@ -44,16 +44,20 @@ const PRECACHE = [
 
   // The app itself. Hand-maintained, because there is no build step to derive
   // it from — if you add a module, add it here or the app breaks offline.
+  './data/activities.json',
   './data/balance.json',
   './data/exercises.json',
   './data/programs.json',
   './src/app/bootstrap.js',
+  './src/app/daily.js',
   './src/app/seed.js',
   './src/app/workout.js',
   './src/adapters/clock/clock.js',
+  './src/adapters/health/manual-health.js',
   './src/adapters/storage/indexeddb-storage.js',
   './src/adapters/storage/memory-storage.js',
   './src/adapters/storage/stores.js',
+  './src/domain/activities.js',
   './src/domain/curves.js',
   './src/domain/directive.js',
   './src/domain/e1rm.js',

@@ -799,3 +799,86 @@ session you were in, because no one had thought to assert that a hidden thing is
 A screenshot has no such blind spot: it shows what is there, not what was asked about.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-04 — Phase 4: how a day's XP is settled
+**Phase:** 4
+**Decision:** Every `dayLogs` record carries an `awarded` ledger of XP paid per source.
+Logging anything re-scores the whole day with `awardsForDay` and pays only the difference,
+and the ledger keeps the high-water mark per source rather than the latest figure.
+**Reasoning:** A day is logged a piece at a time and every piece re-scores the whole day,
+so paying out the day's awards on each entry would pay for the morning's sleep again every
+time a glass of water is logged. The high-water mark is what makes both directions of
+correction safe: a mistyped 12,000 steps corrected to 4,000 pays nothing and claws nothing
+back, and re-raising it to 12,000 pays nothing a second time. `CLAUDE.md` forbids
+subtracting, so the ledger has to be the thing that remembers, not the current value.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4: which activities are measured and which are marked
+**Phase:** 4
+**Decision:** Sleep, water, steps, body metrics and every minute-based activity take a
+number. Rest day, food logged, protein target and journal are one-tap marks. Water and the
+minute-based entries ADD to the day; sleep, steps and a body reading REPLACE it.
+**Reasoning:** `docs/01` is explicit that a measurable activity must not be a checkbox.
+Add-versus-replace is not in any document and is a judgement: water arrives a glass at a
+time and reading happens twice in an evening, so asking for a running total would be
+asking the user to do arithmetic; a night's sleep and a step count are already totals when
+they arrive. `protein_target` is seeded as `derived` with a unit of grams, but the engine
+scores "target met" and nothing anywhere holds a gram target to compare against, so it is
+implemented as a mark.
+**Confidence:** inferred (add versus replace), guessed (protein as a mark)
+**Needs Cory:** yes — low priority. If you want protein scored against a gram target, say
+what the target is and it becomes a measured entry.
+
+## 2026-09-04 — Phase 4: the body-metric value is read in exactly one place
+**Phase:** 4
+**Decision:** `applyActivity` writes a body reading to `day.bodyMetrics.weight` and sets
+the boolean `bodyMetricsLogged`. Reading that number back happens in `src/app/daily.js`
+and nowhere else; `activityValue()` in the domain returns the boolean act.
+**Reasoning:** `body-weight.test.js` asserts that no module under `src/domain/` so much as
+reaches for a recorded metric value, and Phase 4 requires the number shown back to the
+user. The obvious move was a display helper in the domain beside the rest of the activity
+model, and the guard caught it. The guard is right: it is only worth having while it has
+no exceptions, and "it is only for display" is exactly how the first exception would be
+argued. The read now lives at the app boundary, one layer away from anything that could
+score it. The guard reads raw source, so even a comment quoting the field name trips it —
+left as it is rather than taught to strip comments, because a blunt rule about this
+particular value is the point.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4: what "one view, no scrolling" cost
+**Phase:** 4
+**Decision:** Today shows six training slots and thirteen activities in 834px of an 844px
+phone. Getting there: single-line slot rows, marks as round chips, measured activities as
+a three-column grid whose number field is always present, the unit as a footnote beside
+the name rather than a line of its own, and no "OUTSTANDING" heading.
+**Reasoning:** Nineteen outstanding items at the design system's 44px minimum is 836px
+before any heading, so the criterion and `docs/10`'s slot list are in tension and something
+had to give. What gave was labelling, not touch targets: a 28px section heading is two
+activity tiles' worth of room spent saying what the screen's own title already says.
+Everything cut was chrome; nothing outstanding is hidden, truncated or behind a "more".
+The fit is asserted at a stated 390×844 rather than at whatever size the headless window
+happens to be, because "one view" is a claim about a phone.
+**Confidence:** inferred
+**Needs Cory:** yes — low priority. It fits, but with 10px to spare. If you add a
+fourteenth activity, something has to become a scroller.
+
+## 2026-09-04 — Phase 4: logging must not make the screen taller
+**Phase:** 4
+**Decision:** The "+195 XP" acknowledgement replaces the framing line rather than adding a
+row, and what is already logged collapses behind a single WORKED toggle.
+**Reasoning:** Found by screenshot, not by assertion: three entries in, the acknowledgement
+and the worked list had pushed the last outstanding tile under the floating bar, so the
+screen got worse the more you used it. `docs/03` already asked for logged work collapsed by
+default. There is now an assertion for the mid-day state too.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.5.0 (4)
+**Phase:** 4
+**Decision:** `src/version.js` carries `0.5.0 (4)`, built 2026-09-04.
+**Reasoning:** New phase group, so the minor version moves. Re-keys the service worker
+cache, which matters this time because `data/activities.json` is newly fetched at boot.
+**Confidence:** specified
+**Needs Cory:** no

@@ -66,6 +66,10 @@
           `${await storage.count('sessions')} sessions`)
         q('[data-action="done"]').click()
         await waitFor('[data-task]')
+        // Phase 4 collapsed what is already done, per docs/03: Today's business
+        // is what is outstanding. A finished slot is still a task, and still
+        // openable — it is one tap further down.
+        q('[data-worked="toggle"]').click(); await settle()
         check('the completed slot is marked done on Today',
           qa('[data-task][data-done="true"]').length >= 1)
 
@@ -134,7 +138,7 @@
           q('[data-version]')?.textContent)
         check('the last-updated date is shown beside it', (q('[data-builddate]')?.textContent ?? '').length > 5,
           q('[data-builddate]')?.textContent)
-        check('the version names its phase', /\(3\.7\)/.test(VERSION), VERSION)
+        check('the version names its phase', /\(4\)/.test(VERSION), VERSION)
 
         const registration = await navigator.serviceWorker?.getRegistration?.().catch(() => null)
         check('the service worker cache key derives from the version',

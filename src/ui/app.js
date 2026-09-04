@@ -33,10 +33,11 @@ const TABS = [
  * @param {object} deps
  * @param {HTMLElement} deps.mount
  * @param {ReturnType<import('../app/workout.js').createWorkoutService>} deps.workout
+ * @param {ReturnType<import('../app/daily.js').createDailyService>} deps.daily
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
  */
-export function createApp({ mount, workout, storage, clock }) {
+export function createApp({ mount, workout, daily, storage, clock }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -51,7 +52,7 @@ export function createApp({ mount, workout, storage, clock }) {
   const history = createHistoryScreen({ storage, workout })
   const settings = createSettingsScreen({ storage })
   const today = createTodayScreen({
-    workout, clock,
+    workout, daily, clock,
     onStart: (options) => startSession(options),
     // A slot opened from Today is a session of exactly one exercise, carrying
     // its slot identity so the work counts against the day it was prescribed for.

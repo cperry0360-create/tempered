@@ -145,8 +145,9 @@ body {
 .app__body {
   overflow-y: auto;
   padding: max(var(--s4), env(safe-area-inset-top)) var(--s3) var(--s3);
-  /* Room for the floating bar, so content never hides beneath it. */
-  padding-bottom: calc(var(--s6) + var(--s6) + env(safe-area-inset-bottom));
+  /* Room for the floating bar, so content never hides beneath it: its own
+     height, plus the margin it floats on, plus a thumb's clearance. */
+  padding-bottom: calc(var(--s6) + var(--s4) + var(--s3) + env(safe-area-inset-bottom));
 }
 
 /* `display: flex` outranks the user-agent `[hidden] { display: none }`, so the
@@ -219,7 +220,7 @@ body {
 
 /* --------------------------------------------------------------------------- */
 
-.screen { display: grid; gap: var(--s4); }
+.screen { display: grid; gap: var(--s3); }
 
 /* Headings are big, bold and uppercase. The old system's timidity was mostly a
    type failure: a section heading was a small grey label. */
@@ -887,13 +888,13 @@ input.setrow__num[readonly] { color: var(--text); }
   border-radius: var(--r-md);
   color: var(--text);
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   gap: var(--s3);
   align-items: center;
-  padding: var(--s3) var(--s4);
+  padding: 0 var(--s3);
   text-align: left;
   cursor: pointer;
-  min-height: 60px;
+  min-height: 46px;
 }
 
 .task__mark {
@@ -913,10 +914,142 @@ input.setrow__num[readonly] { color: var(--text); }
 .task[data-done='true'] .task__mark { background: var(--text); border-color: var(--text); }
 .task[data-started='true'] .task__mark { border-color: var(--edge-strong); }
 
-.task__main { display: grid; gap: 2px; min-width: 0; }
-.task__name { font-size: var(--text-md); font-weight: 600; }
-.task__pres { font-size: var(--text-sm); color: var(--blue); font-variant-numeric: tabular-nums; }
-.task__count { font-size: var(--text-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.task__name {
+  font-size: var(--text-md);
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task__pres { font-size: var(--text-sm); color: var(--blue); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.task[data-done='true'] .task__pres { color: var(--text-3); }
+
+/* ---------------------------------------------------------------------------
+   Daily tracking — Phase 4.
+
+   A mark is one tap. A measurement is one number and one tap, which is why the
+   field is already on screen: nothing to open, nothing to expand, no menu
+   between you and the number you came to record.
+   --------------------------------------------------------------------------- */
+
+.marks { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.mark {
+  appearance: none;
+  border: 0;
+  background: var(--surface);
+  border-radius: var(--r-full);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0 var(--s4) 0 var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  white-space: nowrap;
+}
+.mark .icon { width: 16px; height: 16px; color: var(--text-3); }
+
+/* Rest is an action that earns, so it reads as one — never a greyed-out row at
+   the bottom of a list of things you failed to do. */
+.mark[data-rest='true'] { background: var(--raised); }
+.mark[data-rest='true'] .icon { color: var(--text); }
+
+.entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--s2);
+}
+
+.entry {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--s2) var(--s2) var(--s1);
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.entry__label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry__row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: var(--s1); align-items: center; }
+.entry__value {
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 2px;
+  width: 100%;
+}
+.entry__confirm {
+  appearance: none;
+  border: 1px solid var(--edge);
+  background: var(--raised);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.entry__value:focus { background: var(--well); border-color: var(--edge-strong); outline: none; }
+.entry__confirm .icon { width: 18px; height: 18px; }
+.entry__unit { font-size: 9px; color: var(--text-3); letter-spacing: 0; margin-left: 3px; }
+
+/* What the last entry earned, said once, then gone. */
+.earned { margin: 0; display: flex; align-items: baseline; gap: var(--s2); min-height: 21px; }
+.earned__xp { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; }
+.earned__what { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
+
+/* Logged work is collapsed by default: it is evidence, not a to-do list. */
+.worked__toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  justify-self: start;
+}
+.worked__toggle .icon { width: 14px; height: 14px; }
+
+.worked { display: grid; gap: var(--s1); }
+.worked__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: var(--s2) var(--s3);
+  font-size: var(--text-sm);
+}
+.worked__name { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worked__value { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .setting { margin: 0; display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--text-md); }
 .setting__label { color: var(--text-2); }

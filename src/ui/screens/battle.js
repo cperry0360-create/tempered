@@ -3,11 +3,8 @@
  *
  * The one place in the app where theatricality is allowed, and it must not leak
  * anywhere else: the tracker stays quiet. What theatre there is here comes from
- * motion and colour rather than from illustration — `CLAUDE.md` non-negotiable
- * 8 says no illustration is required to ship and that decorative art is not to
- * be invented, and `docs/06` names sprites as the product's only real art
- * requirement. So this plays the battle with the app's own vocabulary and holds
- * a place for sprites when they exist.
+ * motion, colour and the battle sprites. The screen keeps the existing glyphs
+ * as a deliberate fallback until each canonical PNG exists.
  *
  * Nothing here decides anything. The battle was resolved and paid for the
  * moment it was generated; this is a replay of a settled thing, which is
@@ -17,9 +14,51 @@
 
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
+import { heroSpriteUrl, enemySpriteUrl, itemSpriteUrl } from '../battle-art.js'
 
 /** Playback is compressed so a long gauntlet still reads in about half a minute. */
 const TARGET_SECONDS = 26
+
+/**
+ * A sprite with a built-in Tempered glyph fallback. The fallback is visible
+ * first, so a missing or slow image never produces a broken-image flash.
+ * @param {object} options
+ * @param {string|null} options.src
+ * @param {string} options.alt
+ * @param {string} options.glyph
+ * @param {string} options.attribute
+ */
+function fighterVisual({ src, alt, glyph, attribute }) {
+  const visual = el('span.fighter__visual', { dataset: { ready: 'false' } })
+  const fallback = el('span.fighter__mark', { dataset: { attribute } }, [icon(glyph)])
+  const image = src && el('img.fighter__sprite', {
+    src,
+    alt,
+    draggable: false,
+    onload: () => { visual.dataset.ready = 'true' },
+    onerror: () => { visual.dataset.ready = 'false'; image.remove() },
+  })
+  visual.append(fallback)
+  if (image) visual.append(image)
+  return visual
+}
+
+/** The same fallback rule for cosmetic loot icons. */
+function itemVisual(item) {
+  const visual = el('span.reward__item-visual', { dataset: { ready: 'false' } })
+  const fallback = el('span.reward__item-fallback', {}, [icon('item')])
+  const src = itemSpriteUrl(item?.id)
+  const image = src && el('img.reward__item-icon', {
+    src,
+    alt: '',
+    draggable: false,
+    onload: () => { visual.dataset.ready = 'true' },
+    onerror: () => { visual.dataset.ready = 'false'; image.remove() },
+  })
+  visual.append(fallback)
+  if (image) visual.append(image)
+  return visual
+}
 
 /**
  * @param {object} deps
@@ -70,7 +109,7 @@ export function createBattleScreen({ battle, onClose }) {
         cursor += 1
         moved = true
       }
-      if (cursor >= record.events.length) { finish() ; return }
+      if (cursor >= record.events.length) { finish(); return }
       if (moved) render()
     }, 50)
     render()
@@ -95,17 +134,22 @@ export function createBattleScreen({ battle, onClose }) {
   function combatants() {
     const { hero, enemy, defeated } = stateAt(cursor)
     return el('div.fight', {}, [
-      el('div.fighter', { dataset: { side: 'hero' } }, [
-        // Where the hero sprite goes when there is one. Until then the glyph
-        // the rest of the app already uses, rather than invented art.
-        el('span.fighter__mark', { dataset: { attribute: 'might' } }, [icon('train')]),
+      el('div.fighter', { dataset: { side: 'hero', boss: 'false' } }, [
+        fighterVisual({
+          src: heroSpriteUrl(), alt: 'Tempered hero', glyph: 'train', attribute: 'might',
+        }),
         el('span.fighter__name', { text: 'You' }),
         meter(hero.hp, hero.max, 'hero'),
         el('span.fighter__hp', { text: `${Math.max(0, hero.hp)}` }),
       ]),
       el('div.fight__vs', { text: `${defeated} of ${record.gauntlet.length}` }),
       el('div.fighter', { dataset: { side: 'enemy', boss: String(enemy?.boss === true) } }, [
-        el('span.fighter__mark', { dataset: { attribute: enemy?.boss ? 'vitality' : 'mind' } }, [icon('foe')]),
+        fighterVisual({
+          src: enemySpriteUrl(enemy?.id),
+          alt: enemy?.name ?? 'Enemy',
+          glyph: 'foe',
+          attribute: enemy?.boss ? 'vitality' : 'mind',
+        }),
         el('span.fighter__name', { text: enemy?.name ?? '—' }),
         meter(enemy?.hp ?? 0, enemy?.max ?? 1, 'enemy'),
         el('span.fighter__hp', { text: enemy ? `${Math.max(0, enemy.hp)}` : '' }),
@@ -151,6 +195,7 @@ export function createBattleScreen({ battle, onClose }) {
           el('span.reward__label', { text: 'GOLD' }),
         ]),
         rewards.item && el('span.reward', { dataset: { kind: 'item' } }, [
+          itemVisual(rewards.item),
           el('span.reward__value', { text: rewards.item.name }),
           el('span.reward__label', { text: 'FOUND' }),
         ]),

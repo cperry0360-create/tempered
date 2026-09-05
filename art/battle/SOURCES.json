@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "licensing": "first-party",
+  "source": "Original Tempered pixel art created for the project",
+  "style": "32x32 logical hero/enemy sprites and 16x16 logical loot icons, exported 3x nearest-neighbour",
+  "assets": 19
+}

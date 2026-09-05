@@ -188,6 +188,9 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     body.setAttribute('aria-busy', 'true')
     try {
       await refreshScreen(target)
+      // A screen's primary action can depend on data loaded by refresh. Render
+      // the bar again after that data exists so the FAB is never one visit late.
+      renderTabs(target)
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)
     } catch (error) {

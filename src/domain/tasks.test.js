@@ -108,13 +108,22 @@ test('shortfall is never negative — outstanding work is not a debt', () => {
   for (const row of completed) assert.ok(row.short >= 0, `${row.group} reported a negative shortfall`)
 })
 
-test('groups with no target are still counted, just not scored against one', () => {
-  const completed = weeklyHardSetsCompleted(
+test('approved arm and core targets are scored against their weekly ranges', () => {
+  const arms = weeklyHardSetsCompleted(
     logs('monday', 0, 3, 'incline_curl_db'), exercises, november.weeklyTargets)
-  const arms = completed.find((row) => row.group === 'arms')
+    .find((row) => row.group === 'arms')
   assert.equal(arms.sets, 3)
-  assert.equal(arms.target, null)
-  assert.equal(arms.short, 0)
+  assert.deepEqual(arms.target, [8, 12])
+  assert.equal(arms.short, 5)
+  assert.equal(arms.met, false)
+
+  const core = weeklyHardSetsCompleted(
+    logs('wednesday', 2, 3, 'crunch'), exercises, november.weeklyTargets)
+    .find((row) => row.group === 'core')
+  assert.equal(core.sets, 3)
+  assert.deepEqual(core.target, [6, 10])
+  assert.equal(core.short, 3)
+  assert.equal(core.met, false)
 })
 
 test('every targeted group in the program maps to real activation keys', () => {

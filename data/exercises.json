@@ -202,7 +202,8 @@
         "rear_delts": 1,
         "traps": 0.5,
         "biceps": 0.5
-      }
+      },
+      "art": "seated_row_close.jpg"
     },
     {
       "id": "lat_pulldown",
@@ -216,7 +217,8 @@
       "activation": {
         "lats": 1,
         "biceps": 0.5
-      }
+      },
+      "art": "lat_pulldown.jpg"
     },
     {
       "id": "rdl",
@@ -231,7 +233,8 @@
         "hamstrings": 1.5,
         "glutes": 1,
         "erector_spinae": 0.5
-      }
+      },
+      "art": "rdl.jpg"
     },
     {
       "id": "split_squat",
@@ -427,7 +430,8 @@
       "progression": "linear",
       "activation": {
         "triceps": 1
-      }
+      },
+      "art": "tricep_push.jpg"
     },
     {
       "id": "curl_db",
@@ -529,7 +533,7 @@
         "front_delts": 1,
         "triceps": 0.5
       },
-      "art": "incline_bench_bb.png"
+      "art": "incline_bench_bb.jpg"
     },
     {
       "id": "flat_bench_db",
@@ -544,7 +548,8 @@
         "pecs": 1.5,
         "front_delts": 0.5,
         "triceps": 0.5
-      }
+      },
+      "art": "flat_bench_db.jpg"
     },
     {
       "id": "incline_bench_db",
@@ -559,7 +564,8 @@
         "pecs": 1.5,
         "front_delts": 1,
         "triceps": 0.5
-      }
+      },
+      "art": "incline_bench_db.jpg"
     },
     {
       "id": "close_grip_bench_bb",
@@ -574,7 +580,8 @@
         "triceps": 1.5,
         "pecs": 1,
         "front_delts": 0.5
-      }
+      },
+      "art": "close_grip_bench_bb.jpg"
     },
     {
       "id": "shoulder_press_db",
@@ -589,7 +596,8 @@
         "front_delts": 1.5,
         "mid_delts": 1,
         "triceps": 0.5
-      }
+      },
+      "art": "shoulder_press_db.jpg"
     },
     {
       "id": "lateral_raise_db",
@@ -602,7 +610,8 @@
       "progression": "range",
       "activation": {
         "mid_delts": 1.5
-      }
+      },
+      "art": "lateral_raise_db.jpg"
     },
     {
       "id": "rear_delt_fly_db",
@@ -616,7 +625,8 @@
       "activation": {
         "rear_delts": 1.5,
         "traps": 0.5
-      }
+      },
+      "art": "rear_delt_fly_db.jpg"
     },
     {
       "id": "cable_fly",
@@ -629,7 +639,8 @@
       "progression": "range",
       "activation": {
         "pecs": 1.5
-      }
+      },
+      "art": "cable_fly.jpg"
     },
     {
       "id": "one_arm_row_db",
@@ -645,7 +656,8 @@
         "rear_delts": 0.5,
         "biceps": 0.5,
         "traps": 0.5
-      }
+      },
+      "art": "one_arm_row_db.jpg"
     },
     {
       "id": "incline_curl_db",
@@ -658,7 +670,8 @@
       "progression": "range",
       "activation": {
         "biceps": 1.5
-      }
+      },
+      "art": "incline_curl_db.jpg"
     },
     {
       "id": "hammer_curl_db",
@@ -672,7 +685,8 @@
       "activation": {
         "biceps": 1,
         "forearms": 1
-      }
+      },
+      "art": "hammer_curl_db.jpg"
     },
     {
       "id": "front_squat",
@@ -687,7 +701,8 @@
         "quads": 1.5,
         "glutes": 0.5,
         "core": 0.5
-      }
+      },
+      "art": "front_squat.jpg"
     },
     {
       "id": "crunch",
@@ -700,7 +715,8 @@
       "progression": "range",
       "activation": {
         "core": 1.5
-      }
+      },
+      "art": "crunch.jpg"
     }
   ],
   "cardio": [

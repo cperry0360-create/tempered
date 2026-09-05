@@ -8,12 +8,12 @@ criteria pass. Commit at the end of each phase with the phase number in the mess
 ## Phase 0 — Skeleton
 
 Plain ES modules, no build step. Directory structure per `CLAUDE.md`. `node --test`
-wired. PWA manifest and service worker. GitHub Pages serves the repo root.
+wired. PWA manifest and service worker. Netlify serves the repo root.
 
 **Acceptance:**
 - `index.html` opens in a browser with no build step.
 - `node --test` runs and passes.
-- The app installs to an iPhone home screen from the Pages URL and opens offline.
+- The app installs to an iPhone home screen from the live Netlify URL and opens offline.
 
 > Serve the directory to open it — `python3 -m http.server` from the repo root is
 > enough. Browsers block `<script type="module">` over `file://` as a cross-origin
@@ -210,6 +210,15 @@ Passive. Once per day. Costs no interaction.
 - Skipping to the result is always available and never punished.
 - A user who never opens the battle screen loses no progression.
 
+Asserted in `src/domain/battle.test.js`, `src/app/battle.test.js` and
+`test/browser/battle.html`. The clear-rate target from `docs/06` is asserted too, at
+every rank, because it is the criterion the difficulty design exists to hold.
+
+**Outstanding: the art.** `docs/06` names a hero sprite, roughly eight enemy sprites and
+a handful of item icons as the entire art requirement of the product. None of it is
+invented here — `CLAUDE.md` non-negotiable 8 forbids that — so the battle plays with the
+app's own icon and colour vocabulary and holds the places where sprites belong.
+
 ---
 
 ## Phase 7 — Setup and onboarding
@@ -219,6 +228,31 @@ matter, unit preferences. Re-runnable from settings.
 
 **Acceptance:** a new user reaches a usable Today screen in under two minutes without
 reading documentation.
+
+---
+
+## Phase 4.5 — Structure and feel
+
+`docs/11-structure-and-feel.md`, written after real use. The tracker read as a
+spreadsheet: everything on Today carried equal visual weight, and nothing acknowledged a
+completion. Six changes — four structural, one background, one set of bugs.
+
+- **A.** A 32px icon tile in the attribute's colour opens every row.
+- **B.** Today is divided into TRAIN, RECOVER and SHARPEN, each heading carrying a count.
+- **C.** Logging is acknowledged: the ring completes, the XP floats up in the attribute's
+  colour, the phone ticks, a finished section flashes, a finished day gets one beat.
+- **D.** A summary strip answers "how is today going" before the first row.
+- **E.** The colour scheme is derived from the night-forest artwork, which also becomes a
+  fixed, dimmed, blurred backdrop. Replaces the colour half of `docs/04`.
+- **F.** Three bugs: session duration measured as time under load rather than wall clock,
+  the first set cascading into the rest, and incremental entry for water.
+
+**Acceptance:** `test/browser/structure-and-feel.html` passes; Phase 4's one-view rule
+still holds with tiles and section headings on the screen; every attribute colour clears
+4.5:1 as text on a card, asserted rather than judged.
+
+Numbered 4.5 because it reshapes the Phase 4 daily surface, though it was built after
+Phase 5.
 
 ---
 

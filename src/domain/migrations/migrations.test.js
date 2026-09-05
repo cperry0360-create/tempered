@@ -11,7 +11,7 @@ const v1Fixture = Object.freeze({
 })
 
 test('schema 3 is current, and every step from 1 exists', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 3)
+  assert.equal(CURRENT_SCHEMA_VERSION, 4)
   for (let version = 1; version < CURRENT_SCHEMA_VERSION; version++) {
     assert.equal(typeof MIGRATIONS[version], 'function', `no migration from ${version}`)
   }

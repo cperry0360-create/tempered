@@ -1,0 +1,15 @@
+{
+  "_comment": "Battle loot. Cosmetic and flavour only in V1 — docs/06 is explicit that an item may never modify an attribute or a combat stat, because attributes must stay a pure reflection of real training. These entries therefore carry a name and a line of flavour and deliberately nothing else; battle.test.js asserts that no stat-shaped field ever appears here.",
+  "items": [
+    { "id": "ember_token", "name": "Ember Token", "flavour": "Still warm. It has been carried a long way." },
+    { "id": "wyrm_scale", "name": "Wyrm Scale", "flavour": "Heavier than it looks, and colder." },
+    { "id": "lantern_glass", "name": "Lantern Glass", "flavour": "Cut from a lamp that burned all night on the path." },
+    { "id": "quiet_stone", "name": "Quiet Stone", "flavour": "Worn smooth. Someone else carried it first." },
+    { "id": "moss_charm", "name": "Moss Charm", "flavour": "Grew over the thing it was tied to." },
+    { "id": "cinder_nail", "name": "Cinder Nail", "flavour": "Pulled from a golem, and still hot." },
+    { "id": "owl_feather", "name": "Owl Feather", "flavour": "Found on the road. Nothing was watching." },
+    { "id": "iron_ration", "name": "Iron Ration", "flavour": "Dense, plain, and exactly enough." },
+    { "id": "cap_spore", "name": "Cap Spore", "flavour": "Violet, and faintly luminous in the dark." },
+    { "id": "old_signet", "name": "Old Signet", "flavour": "The crest has worn away. The weight has not." }
+  ]
+}

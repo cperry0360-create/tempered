@@ -133,11 +133,28 @@ export function isLogged(activity, day) {
  * @param {number|string|null} [value]  Ignored for a mark.
  * @returns {import('./types.js').DayInput}
  */
-export function applyActivity(day, activityId, value = null) {
+export function applyActivity(day, activityId, value = null, options = {}) {
   const spec = ACTIVITY_FIELDS[activityId]
   if (!spec) return day
 
   if (spec.entry === 'mark') return { ...day, [spec.field]: true }
+
+  /**
+   * How this entry combines with what the day already holds.
+   *
+   * The spec's mode is the default and describes how the activity usually
+   * arrives. `options.mode` overrides it for one entry — `'set'` (or the
+   * spec's own `'replace'`) makes this entry the total rather than another
+   * piece of it. That is what lets the quick-add buttons accumulate while the
+   * typed field corrects, per `docs/11 F3` as revised. Add-only left a mistyped
+   * total uncorrectable: every attempt to fix 400 ounces only made it larger.
+   *
+   * Correcting downwards costs nothing, because `dayLogs.awarded` is a
+   * high-water ledger and XP already paid is never clawed back. Same
+   * no-punishment rule as everywhere else: putting a number right is not an
+   * admission, and the app does not charge for it.
+   */
+  const mode = options.mode ?? spec.mode
 
   const entered = positiveNumber(value)
   // A number that is not a number leaves the last good value where it was.
@@ -152,7 +169,8 @@ export function applyActivity(day, activityId, value = null) {
   }
 
   const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0
-  return { ...day, [spec.field]: spec.mode === 'add' ? existing + entered : entered }
+  // Anything that is not 'add' replaces, so 'set' and 'replace' agree.
+  return { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }
 }
 
 /**

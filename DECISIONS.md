@@ -1010,5 +1010,646 @@ body-metric guard — it is worth having only while it has no exceptions.
 **Decision:** `src/version.js` carries `0.6.0 (5)`, built 2026-09-04.
 **Reasoning:** New phase group. Re-keys the service worker cache, which matters here
 because `data/titles.json` is newly fetched at boot.
+## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
+**Phase:** 3.5 D (unblocking)
+**Decision:** All 17 program movements now have art in `art/exercises/`, sourced from
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db) at revision
+`a859101`. The watermarked `art/source/exercise-frames.png` and its crop are deleted.
+Attribution is in `README.md`; per-file provenance is in `art/exercises/SOURCES.json`.
+**Reasoning:** Cory directed me to source openly licensed art rather than publish the
+"STRENGTH LEVEL" watermarked image, which was the rights question I flagged in Phase 3.5 D.
+
+The licence needs stating carefully, because it is not one licence but three.
+free-exercise-db carries **the Unlicense** — a public domain dedication that permits
+copying, modifying and publishing with no conditions at all. Read alone, that settles it.
+
+It does not stand alone. That archive took its imagery from
+[wrkout/exercises.json](https://github.com/wrkout/exercises.json) (also Unlicense), which
+took it from the [Everkinetic](https://github.com/everkinetic/data) open data project by
+Greg Priday — and Everkinetic, the oldest ancestor still carrying a licence file, is
+**CC BY-SA 4.0**. Two intermediaries relicensed CC BY-SA material as public domain. A
+relicensing like that is only valid if whoever did it held the rights, and there is nothing
+in either repository showing they did.
+
+So I did not pick a side. The images are used **as if CC BY-SA 4.0 still bound them**:
+attributed to Everkinetic and to the archive, with the modification described, the licence
+named and linked, and the images stated to remain under CC BY-SA 4.0 while the rest of the
+repository does not. That costs a paragraph in the README and satisfies both readings —
+whereas relying on the Unlicense and being wrong would mean stripping attribution from
+CC BY-SA work on a public site. Under BY-SA, including the images in a larger collection is
+allowed; it is the images themselves that carry the licence, not Tempered.
+**Confidence:** inferred — the Unlicense text is unambiguous, the chain behind it is not.
+**Needs Cory:** yes, but not blocking. Two things worth an opinion. (1) If you want the
+simple story, the position is defensible either way and the app ships as is. If you want
+certainty, the safest version is dropping the attribution question entirely by paying for
+a licensed set. (2) If Tempered ever gets a LICENSE file of its own, it must exclude
+`art/exercises/` or it will claim terms over images it does not own.
+
+## 2026-09-04 — Two frames per movement, not one
+**Phase:** 3.5 D
+**Decision:** Each art file is the archive's frame 0 and frame 1 side by side, scaled to
+300px tall and joined with a 2px gap. JPEG, quality 78. 17 files, 800 KB total.
+**Reasoning:** `docs/09 D` says the art exists to answer "which incline curl variant is
+this". One frame often cannot. The start frame of a lateral raise is a man standing still
+holding dumbbells, which is also the start frame of a hammer curl, a shrug and a deadlift;
+only the second frame distinguishes them. Start-plus-finish also reads as a movement rather
+than a pose, which is what a reference image is for. JPEG because these are photographs —
+PNG was right for the sprite work and is wrong here, at roughly four times the size for no
+visible gain. The existing single-filename `art` field needed no change.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Exercise art is precached
+**Phase:** 3.5 D
+**Decision:** All 17 art files were added to `PRECACHE` in `sw.js`, adding ~800 KB to the
+install. A node test asserts the list and the `art` fields cannot drift apart.
+**Reasoning:** `CLAUDE.md` non-negotiable 5 is that the app works fully offline. The runtime
+handler caches images once seen, but that makes the first sight of a movement depend on
+signal — and the place you look up an unfamiliar lift is a basement gym with no bars. 800 KB
+once, at install, buys reference imagery that is never missing. Art is referenced from
+`data/exercises.json`, not imported, so the existing import-graph test could never have
+caught a missing entry; that gap is now covered by four assertions, each proven to fail.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — `tools/slice-exercise-art.js` kept, with an empty manifest
+**Phase:** 3.5 D
+**Decision:** The slicing tool stays in the repo, its `ART_MANIFEST` emptied and its purpose
+restated at the top. Running it prints that there is nothing to slice and exits 0.
+**Reasoning:** Its only entry cropped a source file that is now deleted, so leaving the
+manifest as it was would have left a tool that crashes on sight. Deleting the tool outright
+was the other option and I did not take it: the PNG decode/encode/trim cropper is the
+expensive part, it is written and it works, and a real frame sheet would need it back. An
+honest note costs less than rewriting it later. Flagging rather than deciding silently,
+since dead code is exactly what rots.
+**Confidence:** inferred
+**Needs Cory:** no — but say the word and it goes.
+
+## 2026-09-04 — The plate calculator was already surfaced; docs/09 C needed no work
+**Phase:** 3.5 C (verification)
+**Decision:** Changed nothing. Confirmed that `platePanel()` renders inline in every
+exercise card in `src/ui/screens/session.js`, unconditionally, for any exercise not measured
+in time — not behind a menu, a tab or the `openPanel` toggle that gates REST, HISTORY, SWAP
+and the art enlargement.
+**Reasoning:** Asked to surface it, I checked before building. `docs/09 C` requires it "next
+to the weight field during a session, not behind a menu", and it was already put there in
+Phase 3.5, with a test in `test/browser/tracker-v2.html` asserting `.plates` is present
+without any interaction. The one nuance worth recording: it sits directly below the set rows
+and the ADD SET button rather than horizontally beside the weight input, so "beside" is
+satisfied in the sense of same card, always visible, no interaction — not literal adjacency.
+That reads as correct on a phone, where a horizontal split beside a numeric field would
+leave neither enough room.
+**Confidence:** specified
+**Needs Cory:** no — unless you read "beside" literally, in which case say so and it moves.
+
+## 2026-09-04 — Version bumped to 0.4.1 (3.6)
+**Phase:** 3.5 D (unblocking)
+**Decision:** `src/version.js` carries `0.4.1 (3.6)`. A patch bump, and the parenthetical
+still names 3.6.
+**Reasoning:** `PRECACHE` changed, and the cache key derives from this — without a bump an
+installed phone keeps serving a cache with no art in it. Not a phase completion, so the
+minor stays put; the parenthetical names the last phase reached rather than 3.5 D, because
+this work landed after 3.6 and labelling it "(3.5 D)" would read like a build going
+backwards.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — What counts as a session, and why the guard sits above every Grit source
+**Phase:** bug fix (docs/01)
+**Decision:** A session earns Grit only if at least one set was logged. The guard returns
+early from `gritAwards` before any source, so the flat award, time under load, the return
+bonus and the weekly plan bonus are all suppressed together. `docs/01` now defines this.
+**Reasoning:** Cory saw +142 for zero sets and zero pounds: 140 flat, plus 2 for the
+one-minute floor on duration. The spec said "session completed — flat per training
+session" and never said what a session was, so the engine paid for opening one.
+
+Guarding only the flat award would have moved the hole rather than closed it. All four
+sources rest on the same premise — that a session happened. Time under load with nothing
+logged is time under nothing; the return bonus would pay for coming back to log zero; the
+week bonus would count a session that never was.
+
+Might was already immune, because it is derived from volume and an empty session has none.
+That is the difference the spec now states in general terms: score the measurement where
+one exists, and where an award pays for an action instead, the action has to be one the
+user deliberately took and the app can see evidence of.
+**Confidence:** specified — Cory defined the rule; the scope of the guard is inferred.
+**Needs Cory:** no
+
+## 2026-09-04 — A warm-up-only session still counts as showing up
+**Phase:** bug fix
+**Decision:** The guard counts any logged set, warm-ups included. A session of nothing but
+warm-up sets earns full Grit and no Might.
+**Reasoning:** The rule Cory wrote is "at least one set was logged", and a warm-up is a
+logged set. It is also the least punishing reading: someone who warmed up, felt a tweak and
+stopped did show up, and non-negotiable 4 says missing produces no gain rather than a loss.
+Might already declines to pay for warm-ups, which is the right place for that distinction —
+Grit is about attendance, Might about load.
+
+Worth noting this was not a free choice: `workout.test.js` already carried a test asserting
+that a warm-up-only session scores no Might "but showing up still counts". The rule was
+therefore already in the codebase, and the guard was written to preserve it rather than to
+introduce it.
+**Confidence:** inferred
+**Needs Cory:** no — but it is the one place the rule could reasonably read the other way.
+
+## 2026-09-04 — The empty session is discarded, not stored as completed
+**Phase:** bug fix
+**Decision:** `finishSession` returns `null` and deletes the session record when nothing
+was logged. The deletion is guarded against the whole session, never against `onlySets`.
+**Reasoning:** Suppressing the XP was not enough. A stored empty session is not inert: it
+counts toward `sessionsThisWeekBefore`, inflating the week-met-plan bonus, and it resets
+`daysSinceLastSession`, which silently swallows a later return-after-a-gap bonus. Open a
+session on the day you come back, log nothing, close it, then actually train — and the
+bonus for coming back is gone for good. There is a test for exactly that.
+
+The `onlySets` distinction is load-bearing and nearly went wrong. In slot mode the record
+is the DAY's session and may already carry earlier slots. Deleting it because *this* slot
+logged nothing would destroy real training, so the delete asks whether the session holds
+anything at all, not whether this settlement does.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Finishing with nothing logged closes silently
+**Phase:** bug fix
+**Decision:** `finishSession` returning `null` means the screen closes back to the tab it
+came from. No summary.
+**Reasoning:** Cory asked for this and it is right: there is nothing to summarise. A
+post-session screen reporting no sets, no volume and no XP is a screen that reports
+nothing, and against an app whose whole posture is "missing produces no gain, never a
+loss", it reads as a rebuke. Silence is the correct absence of an event.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Audit: where else an XP source pays for an action
+**Phase:** bug fix
+**Decision:** Checked every source in all five attributes. One live bug, found in two
+places; one latent class, now governed by a written rule.
+**Reasoning:** Cory asked whether the same hole existed elsewhere. Findings:
+
+- **Might** — derived from volume. An empty session has none. No hole, and this is why the
+  bug showed as Grit 142 with Might 0.
+- **Wind** — fully derived. Every source multiplies a measured quantity, and awards of zero
+  are dropped, so nothing can pay for an absence. No hole.
+- **Mind** — the four duration sources are gated on minutes greater than zero. `mind.journal`
+  is flat on a boolean.
+- **Vitality** — `proteinTargetMet`, `nutritionLogged`, `restDay` and `bodyMetricsLogged`
+  are all flat on booleans.
+- **Grit** — the bug. And a second door into it: the seeded `cardio` routine ships with
+  zero exercises, so starting and finishing it logged nothing and paid the full flat award.
+  The same guard closes both.
+
+The Mind and Vitality booleans are **not** the same bug. They pay for an action the user
+deliberately took, which `docs/01` mandates ("the act of logging honestly", "rest day taken
+— a rewarded action, not an absence") and non-negotiable 4 requires. Nothing in the app
+writes any of those flags yet, so there is no live hole. The risk is a future day-logging
+screen that sets them on open rather than on save, which is precisely the Grit bug in
+another costume — so `docs/01` now carries the general rule: opening a screen is not an
+action, and any flat award must name the evidence it requires or it pays for navigation.
+**Confidence:** specified (measured against each module)
+**Needs Cory:** no
+
+## 2026-09-04 — Netlify replaces GitHub Pages, and what that does not fix
+**Phase:** hosting
+**Decision:** Added `netlify.toml` — publish the repository root, no build command, cache
+headers that keep `sw.js` and the shell revalidating. Documented connecting the site and
+making the repository private in `README.md`, and repointed `CLAUDE.md`, `docs/07` and the
+Phase 0 report away from Pages. The Netlify site itself is not connected: that needs a
+browser sign-in and authorisation of Netlify's GitHub app against Cory's account.
+**Reasoning:** The move is cheap because the app was already base-path agnostic — every
+path is relative, which is what `CLAUDE.md` demanded for the `/tempered/` project path and
+what now lets it serve from a domain root unchanged. Nothing in the app needed touching.
+
+**One correction to the premise, flagged rather than assumed away.** Cory's reasoning was
+that a private repository serving a personal app publishes nothing, which removes the
+exercise-art licensing question. Going private does remove one channel: the images, the
+provenance file and the README attribution stop being publicly readable. It does not make
+the deployed site private. A Netlify site is reachable by anyone with the URL, so the
+images are still published — and the attribution that is supposed to travel with them is
+now in a README nobody can read, which is strictly worse than today under a CC BY-SA
+reading. So the question is narrowed, not removed. Two things close it properly, both
+small, neither done: password-protect the Netlify site, or carry the attribution on the
+Settings screen so it travels with the images. `README.md` says this plainly.
+**Confidence:** inferred
+**Needs Cory:** yes — which of the two, if either. The app ships either way.
+
+## 2026-09-04 — Version bumped to 0.4.2 (3.6)
+**Phase:** bug fix
+**Decision:** `src/version.js` carries `0.4.2 (3.6)`.
+**Reasoning:** Awarding behaviour changed, so an installed phone must not keep serving the
+build that paid for empty sessions. The cache key derives from this.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 E: the backdrop is Cory's own work, and the palette comes from it
+**Phase:** 4.5 E
+**Decision:** `art/source/bg-night-forest.jpg` is committed, and the colour scheme —
+ground gradient, surfaces, and all five attribute colours — is derived from it. Credited
+in `README.md`; `docs/04`'s colour section is superseded and says so.
+**Reasoning:** Provenance is clear and first-party: Cory confirmed the artwork is his own
+original work. `docs/11 E` says "do not commit the image until its provenance is
+established… the image layer goes behind a flag until cleared" — that condition is met, so
+the flag was never built. Recording it because the doc reads as an unconditional
+instruction and someone will otherwise wonder why the flag is missing.
+
+This is the opposite situation to the exercise photographs, and worth naming as such: there
+the chain of licences was three deep and the images had to be attributed defensively; here
+there is no chain at all, and nothing to attribute except authorship.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 E: four of the five attribute colours had to be lifted
+**Phase:** 4.5 E
+**Decision:** The art's sampled accents are kept as `--lantern`, `--wisp`, `--moss`,
+`--cap` and `--stone`. The five attribute tokens are those colours raised in HSL
+lightness — hue and saturation held — until each clears 4.5:1 as text on `--surface` and
+3:1 for a `--canopy` glyph on it as a tile fill.
+
+| Attribute | Sampled | Shipped | Lift |
+|---|---|---|---|
+| Might | `#d2a44d` | `#d2a44d` | none needed |
+| Wind | `#3798a8` | `#3ba4b5` | +4% L |
+| Grit | `#4a7890` | `#6f9db5` | +14% L |
+| Vitality | `#306c59` | `#4ba88a` | +17% L |
+| Mind | `#755e98` | `#a190ba` | +16% L |
+
+**Reasoning:** Measured before building anything. At the raw sampled values only Might
+passed: Wind read 3.91:1, Grit 2.76:1, Mind 2.40:1 and Vitality 2.15:1 as text on a card.
+Section A puts these colours on every row of the densest screen in the app and section C
+floats XP in them, so unlifted they would have shipped a list nobody could read at arm's
+length in bad light — the exact failure `docs/04` was rewritten to fix.
+
+Lifting is not a departure from the doc: `docs/11 E` already does it once itself, mapping
+Grit to "`--stone` lifted to `#4a7890`". That lift was simply not far enough. Hue and
+saturation are held so each colour still reads as the thing it came from — the lantern is
+still lantern-light, the caps still violet.
+
+Proven load-bearing rather than assumed: reverting Vitality to the sampled `#306c59` turns
+three assertions in `structure-and-feel.html` red at 2.15:1.
+**Confidence:** inferred (the values are measured; the decision to lift is a judgement)
+**Needs Cory:** no — but if the palette should match the picture exactly at the cost of
+legibility, that is a call only you can make, and it reverses this.
+
+## 2026-09-04 — Phase 4.5 B: steps and mobility live in RECOVER
+**Phase:** 4.5 B
+**Decision:** TRAIN holds the program slots and nothing else. The two Wind activities,
+steps and mobility, go at the end of RECOVER.
+**Reasoning:** `docs/11 B` names three sections and assigns every Vitality activity to
+RECOVER and every Mind activity to SHARPEN, leaving the Wind pair unnamed. Putting them in
+TRAIN was tried first and broke two things: it made steps the first daily action on the
+screen where `docs/03` requires rest day to be — `daily.html` caught it — and it stretched
+"today's program slots" to mean something it does not. Incidental daily movement sits more
+honestly with the things that keep the body going than with the prescription.
+**Confidence:** guessed — the doc does not place them, and either home is arguable.
+**Needs Cory:** yes, but trivially. If steps belongs under TRAIN, the section list at the
+top of `today.js` is a one-line change, and rest day's primacy would then need re-solving.
+
+## 2026-09-04 — Phase 4.5 A: the glyphs are Phosphor's idiom, not Phosphor's files
+**Phase:** 4.5 A
+**Decision:** Thirteen activity glyphs drawn by hand in `src/ui/icons.js`, matched to
+Phosphor's proportions — even strokes on a 24 grid, round caps, geometry over illustration.
+**Reasoning:** `docs/11 A` names the Phosphor set. The stack forbids dependencies, there is
+no build step to subset an icon font, and a CDN would break the offline rule — so the
+actual Phosphor files cannot ship. Copying its path data from memory would be worse than
+drawing: it would claim to be Phosphor while being an approximation of it. Hand-drawn in
+the same idiom is the honest version of the instruction.
+**Confidence:** inferred
+**Needs Cory:** no — but if the real set matters, vendoring the handful of SVGs used here
+is small and legitimate, since Phosphor is MIT.
+
+## 2026-09-04 — Phase 4.5 C: the logged row holds its place for one render
+**Phase:** 4.5 C
+**Decision:** The activity just logged stays in its section for the render immediately
+after logging, then moves to the collapsed "worked" list on the next refresh.
+**Reasoning:** Found by the acceptance harness, not by reading the code. Section C puts the
+acknowledgement ON the row — the ring completing, the XP floating up — but logging moves
+that row out of Outstanding in the same beat, so the row carrying the animation was gone
+before it could play. The screen acknowledged a completion by making the evidence vanish,
+which is the opposite of what C is for.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 F1: duration is time under load, not wall clock
+**Phase:** 4.5 F1
+**Decision:** New pure module `src/domain/duration.js`. Set logs are grouped into
+**sittings** — runs of sets no more than `session.sittingGapMinutes` apart — and each
+sitting counts for its span plus `session.minutesPerSet` for the set that ends it. Both
+constants live in `data/balance.json`. Gaps between sittings count for nothing.
+**Reasoning:** This is the one Cory called out as mattering most, and the cause is exactly
+as diagnosed: `docs/10` makes the slot the unit, so every slot completed in a day joins one
+session record, and the gap between the first and last log measures the day rather than the
+work. A five-minute session reported 2h 30m. It also fed `grit.hours` directly, so the day
+was paid XP for the hours it spent not training.
+
+Two details worth recording. The trailing `minutesPerSet` is not decoration: without it a
+single-set sitting is zero minutes, and a slot completed on its own is the commonest shape
+in the app. And the sitting boundary is exclusive — a gap exactly at the threshold stays one
+sitting — because rest between heavy triples is genuinely long and an inclusive boundary
+would split one visit into two.
+
+Fixing it exposed a second bug at both call sites: the session screen and `completeSlot`
+were both keeping the object they *sent* to `logSet` rather than the record that came back,
+so the settled sets carried no `completedAt` at all. Time under load would have measured
+nothing. That is now the written record in both places.
+**Confidence:** specified (the rule) and inferred (the two constants)
+**Needs Cory:** no — but 45 minutes and 2 minutes per set are guesses at your training, and
+they are one line each in `balance.json`.
+
+## 2026-09-04 — Phase 4.5 F2: only the first set cascades
+**Phase:** 4.5 F2
+**Decision:** Editing set 1's weight or reps fills every later unlogged set of that
+exercise. Editing any other set changes only that set. Logged sets are never touched.
+**Reasoning:** `docs/11 F2` specifies the first set and the protection of logged ones. The
+restriction to set 1 is the part worth stating: set 1 means "this is what I am doing today",
+where an edit to set 3 is a correction to set 3. Rewriting logged sets would falsify history
+and, worse, the volume the XP was already computed from.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5: Today runs a tighter rhythm than the other screens
+**Phase:** 4.5 A–D
+**Decision:** `.screen--today` uses a 12px gap and 8px block gaps against the app's 20px;
+rows are 44px, their height set by the 44px action button and no vertical padding.
+**Reasoning:** Phase 4's one-view rule — the whole outstanding day fits a 6.1" phone
+without scrolling — is a hard acceptance criterion, and tiles plus three section headings
+cost height. First build came to 1196px against an 844px budget. Every value above was
+trimmed to pay for the structure docs/11 asks for, and nothing else was allowed to give:
+the tile stays 32px as specified, and the action button stays 44px because that is the
+minimum honest touch target. Today is the only screen with a height budget, so it is the
+only screen whose rhythm was tightened.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5: two acceptance assertions had quietly stopped meaning anything
+**Phase:** 4.5
+**Decision:** Rewrote two checks in `task-model.html` rather than deleting or pinning them.
+**Reasoning:** Both were found by this phase breaking them, and neither was really testing
+what it claimed.
+
+The first read the border colour of `.task__mark` and compared it to one hex — the old
+vitality red. The redesign removed that element, but the deeper problem was that the hex no
+longer existed anywhere in the palette, so the check could not have failed whatever the UI
+did. It now states the rule instead: nothing in an outstanding row may be red-dominant,
+judged by both other channels being far below red so that Might's lantern gold keeps
+passing.
+
+The second asserted the version string contained `(5)`. That needs editing every phase, and
+an edit that can only ever be made to agree with what the code already says tests nothing.
+It now checks the shape — that a phase is named at all.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 D: a session records what it paid
+**Phase:** 4.5 D
+**Decision:** Sessions gained an optional `xpBySource`, written when the session settles.
+`CURRENT_SCHEMA_VERSION` 3 -> 4 with a migration that transforms nothing.
+**Reasoning:** The summary strip has to show what moved today, and the day log only records
+what the day's own activities paid — a lifting day would have shown an empty strip. The
+alternative was re-deriving today's session awards from history, which would quietly
+disagree with the XP the person was actually given, because awards depend on records and
+context at the moment of finishing. Recording what was paid is the same reasoning that
+already governs `dayLogs.awarded`. A version 3 session carries no record and counts as
+nothing, which is the truthful answer for a session finished before the app kept it.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-04 — Version bumped to 0.7.0 (4.5)
+**Phase:** 4.5
+**Decision:** `src/version.js` carries `0.7.0 (4.5)`, up from main's `0.6.0 (5)`.
+**Reasoning:** A new phase, so the minor moves; the parenthetical names the phase as the
+convention requires, even though 4.5 was built after 5. The cache key derives from this and
+the whole surface changed, so an installed phone must not keep the old one.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-04 — Phase 4.5 F3: a piecewise activity is never finished for the day
+**Phase:** 4.5 F3
+**Decision:** Quick-add buttons and a typed-amount field stay on the row after it has been
+logged, rather than leaving with it.
+**Reasoning:** Found by the acceptance harness. Logging any water at all moves the row out
+of Outstanding — Phase 4's rule, which `daily.html` enforces — and the first `+8` therefore
+took the buttons off screen with it. You could log one glass a day and no more without
+going hunting. The row still leaves the outstanding list, as required; it keeps its
+controls, because "arrives in pieces" means there is always another piece.
+
+**What this does not yet do: correct a total downwards.** The field adds, because the
+activity's spec says `mode: 'add'` and the daily service has no way to override that per
+call. Typing 23 adds 23 ounces; it cannot say "actually the day's total is 40". `docs/11 F3`
+asks for "a manual field for correction", and this is the adding half of it.
+**Confidence:** inferred
+**Needs Cory:** yes — small, and worth knowing about. Correcting downwards needs either a
+"set to" mode on the daily service or an edit control on the worked row. Neither is hard;
+neither is in this phase.
+
+## 2026-09-05 — F3 revised: the field corrects, the buttons accumulate
+**Phase:** 4.5 F3 (revision)
+**Decision:** `applyActivity` takes a per-entry `options.mode` that overrides the
+activity's own mode; `daily.log` threads it through. The typed field on any activity that
+also offers quick-add sends `{mode: 'set'}`, so it makes the day's total what you typed.
+The quick-add buttons keep the spec's `add`. The logged row's field gained a real confirm
+button.
+**Reasoning:** Cory corrected my earlier reading, and the correction is right. I had shipped
+a "manual field for correction" that could only add, which makes a mistyped entry
+*uncorrectable*: every attempt to fix 400 ounces makes it larger. That contradicts the
+Phase 4 high-water ledger, where `dayLogs.awarded` keeps XP already paid and a correction
+therefore costs nothing in either direction. An app that cannot take a number back is
+punishing a typo, which non-negotiable 4 forbids as plainly as it forbids losing a level.
+
+The override is per call rather than per activity because both behaviours are correct for
+the same activity at the same moment: the buttons mean "another glass", the field means
+"the day's total is this". One mode could not express both.
+
+Applied to every add-mode activity with a field, not just water — read, study, meditate,
+instrument and mobility all have quick-adds and all had the same trap.
+
+Two things worth recording beyond the ask. `'set'` and the spec's own `'replace'` both mean
+the same thing and are both accepted, because anything that is not `add` replaces; a second
+vocabulary for one behaviour would be a trap of its own. And the logged row's field had no
+confirm button at all — only Enter committed it, which on a numeric keypad is a field you
+can type into but not submit. The acceptance harness found that, not review.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — Phase 6: the battle pays gold, and the XP line is a switch at zero
+**Phase:** 6
+**Decision:** The battle awards gold and, occasionally, an item. `balance.battle.xpPerEnemy`
+is **0** as shipped. The mechanism that would pay attribute XP is built, wired and tested;
+only the number is zero.
+**Reasoning:** `docs/06` says "gold and a small XP contribution" and `docs/07` lists XP among
+the rewards, so the mechanism belongs here. But paying attribute XP for the battle would
+pay twice for the same training — the battle is a *readout* of work already scored — and it
+compounds: XP buys a stronger hero, which clears more, which buys more XP. `CLAUDE.md`'s
+one-line version is that nothing is awarded for ticking a box that could be awarded for
+doing the work, and the battle costs no interaction at all, so it is not even a box.
+
+Which attribute it would feed is also unspecified, and any answer breaks non-negotiable 3:
+there is no one-sentence justification for a gauntlet raising Might rather than Grit.
+
+So the simplest defensible version, per the "never invent product philosophy" rule: build
+it, set it to zero, and leave the decision where it belongs. Non-negotiable 7 makes this
+the right shape — balance lives in config, so turning it on is a data edit and needs no
+code. A test asserts both halves: that nothing is paid at the shipped value, and that
+setting it to 3 in config alone would pay it.
+**Confidence:** inferred — the mechanism is specified, the value is my judgement.
+**Needs Cory:** yes. One number in `data/balance.json`. If you want it on, say what it
+should feed and I will make the mapping legible rather than arbitrary.
+
+## 2026-09-05 — Phase 6: difficulty tracks the character, because ~80% at every rank asks it to
+**Phase:** 6
+**Decision:** The gauntlet's composition comes from rank — slimes at F, wyrms at S — and its
+strength is then fitted to the character by searching for the multiplier at which the day's
+matchup is survived about `clearRateTarget` of the time.
+**Reasoning:** Two attempts failed before this one, both measured rather than guessed.
+
+Scaling by rank alone gave 0% clear from rank D upward: rank is a seven-step function of
+levels, the roster's tiers are a five-step function of rank, and two coarse staircases
+against smooth character growth produce cliffs. Fitting to a health margin instead gave
+100% everywhere, then 45% at one level and 97% at the next from the same setting — the
+translation from "health left over" to "win rate" runs through the combat loop and is
+wildly non-linear.
+
+Fitting against the clear rate itself is stable: 74–90% across every level from 0 to 20,
+centred on the 80% `docs/06` asks for. It is mild rubber-banding, which is what "roughly an
+80% clear rate **at every rank**" specifies — a constant challenge is the stated goal. What
+still grows visibly is *who* you fight, which is the reward for a year of training.
+
+One consequence worth stating: "a stronger character clears more of the gauntlet" is now
+false by design, and the test that asserted it has been rewritten to assert what is true.
+**Confidence:** specified (the target) and inferred (the method)
+**Needs Cory:** no
+
+## 2026-09-05 — Phase 6: damage varies per hit, or a new character has no battle at all
+**Phase:** 6
+**Decision:** Every blow rolls within `battle.damageVariance` (0.22) of its nominal damage.
+**Reasoning:** Found while tuning. Crit was the only source of variance, and crit comes from
+Mind — so a character with Mind 0 had none, and every day resolved identically. Two
+identical days are not a battle, they are a screensaver, and the 80% target is meaningless
+without a distribution to take 80% of. The roll comes from the same seeded generator, so
+determinism is untouched.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-05 — Phase 6: no sprites were invented
+**Phase:** 6
+**Decision:** The battle screen uses the app's existing icon and colour vocabulary. A `foe`
+glyph was added to the icon set in the same geometric idiom as the rest; no hero sprite, no
+enemy sprites, no item icons were drawn.
+**Reasoning:** `docs/06` names sprites as the entire art requirement of the product, and
+`CLAUDE.md` non-negotiable 8 says no illustration is required to ship and that decorative
+art must not be invented. Those agree: the screen is built so sprites can drop into places
+that already exist, and it reads without them in the meantime. Recorded so the absence is
+understood as a decision rather than an omission.
+**Confidence:** specified
+**Needs Cory:** yes, eventually — this is the one thing the product genuinely needs drawn.
+
+## 2026-09-05 — Phase 6: a unit test that could not fail, caught by the browser
+**Phase:** 6
+**Decision:** Strengthened `src/app/battle.test.js` to count the purse rather than the
+battle records.
+**Reasoning:** Sabotaging the service so it regenerated the day on every request left all
+ten service tests green while the browser harness went red — the battle is keyed by date, so
+a regenerating bug overwrites its own record and the count stays at one. What actually goes
+wrong is that the day is *paid for* twice. Recording it because the lesson generalises: a
+test that counts rows is not testing an effect that is measured in something else.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — Version bumped to 0.8.0 (6)
+**Phase:** 6
+**Decision:** `src/version.js` carries `0.8.0 (6)`, built 2026-09-05.
+**Reasoning:** A new phase, so the minor moves and the parenthetical names it.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The one-view rule and docs/11's structure do not both fit the largest day
+**Phase:** 4.5 / 6 (found while verifying)
+**Decision:** Trimmed Today's rhythm as far as it goes without breaking a floor, which fits
+every program day except the largest. Reporting rather than shaving further.
+**Reasoning:** Phase 4 requires the whole outstanding day to fit a 6.1" phone without
+scrolling. `docs/11` adds a 32px tile to every row and three section headings. Measured on a
+390×844 screen, with the twelve rows of a seven-slot day, the screen now comes to 839px —
+five pixels of headroom. A row costs 46px, so the eight-slot day (Upper Specialization,
+eight slots plus five daily activities) overflows by roughly 41px.
+
+Everything that could give has given: the screen runs a tighter rhythm than the rest of the
+app, the two footer toggles share one line instead of taking a row each, and the title is a
+step smaller here than elsewhere. What has *not* given is the 44px touch target or the 32px
+tile — the first is the minimum honest target for a thumb mid-set, the second is what
+`docs/11 A` specifies, and shaving either to win 41px would be trading a real property for a
+number.
+
+Worth noting how this surfaced: the failure appeared on its own overnight, because the
+program day is chosen by weekday and Saturday prescribes seven slots where Friday prescribed
+six. `daily.html` had also pinned "six slots" as a constant, which is a property of whichever
+day the suite happens to run on; that assertion now derives the count from the program.
+**Confidence:** measured
+**Needs Cory:** yes — three ways out, all yours to pick. Let the largest day scroll
+(the rule bends). Drop the section headings when a day is large (the structure bends).
+Or split a day of eight into two program days (the program bends). I did not choose,
+because each trades away something a different document calls non-negotiable.
+
+## 2026-09-05 — Reset and update check live in a service, not in the screen
+**Phase:** 6 (maintenance)
+**Decision:** New `src/app/maintenance.js`. It owns the typed-phrase check, the backup, the
+shell teardown and the version stash; every platform API it needs — service workers, the
+cache store, `deleteDatabase`, session storage, `location.reload` — arrives through an
+injectable `platform` so the whole thing is testable in node against fakes.
+**Reasoning:** Cory's framing is right that these are conveniences now and safety features
+later, and the safety half is what decided the shape.
+
+**The typed phrase is checked in the service, not the screen.** A confirmation that lives
+only in the UI is one the next screen forgets, and the button that erases everything should
+refuse on its own terms whatever a caller believes. A test asserts that calling it with no
+confirmation at all is refused; sabotaging the check turns two tests red.
+
+**The backup is offered before the erase, and the order is asserted**, because after the
+reset there is nothing left to export. It reuses the export format `docs/02` already
+defines rather than inventing a second one.
+
+**Everything the platform offers is allowed to be missing.** This is the code path out of a
+broken state, so it must not require a good one: a browser with no cache API, no service
+worker, or a private window refusing session storage still resets. That was not true when
+first written — the platform wrapper was careful but `clearShell` trusted it, and a fake
+that threw took the whole reset down. The teardown now defends itself.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The update check reports both sides of the reload
+**Phase:** 6 (maintenance)
+**Decision:** The version is parked in session storage before the reload; Settings reads it
+once on arrival and says either "Updated — was X, now Y" or "No change — still X".
+**Reasoning:** Cory asked for the version before and after, and the "no change" case is the
+one that carries the value: installed to a home screen there is no address bar and no reload
+button, so without it there is no way to tell a build that failed to deploy from one that
+deployed and did not fix the problem. Silence answers neither.
+
+Said once, then forgotten — the service clears its own record on the first read. Getting
+that right needed the screen split into `refresh` (arriving) and `load` (redrawing), because
+the first version kept the notice in a closure variable that was only ever set, so it
+persisted for the life of the screen and a second visit still showed a stale answer. Found
+by the harness, not by reading.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The Settings daily-list chips had been unstyled for a phase
+**Phase:** 6 (found while verifying)
+**Decision:** Restored `.marks`/`.mark` chip styles, scoped through `.marks` so Today's
+`.row.mark` — which is a row, not a chip — is untouched.
+**Reasoning:** Phase 4.5 rebuilt Today by replacing the CSS block those rules lived in, and
+Settings still renders chips. Every test stayed green: nothing asserts what the daily list
+looks like, and the harnesses that touch it use data attributes. It shipped in Phase 4.5 and
+Phase 6 as grey boxes with a giant plus.
+
+It was found by screenshotting Settings while checking something else, which is exactly the
+case `CLAUDE.md`'s "some bugs are only visible to an eye" rule was added for. Worth
+recording as evidence that the rule earns its place: two phases of green assertions did not
+see it, and one screenshot did.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — Version bumped to 0.8.1 (6)
+**Phase:** 6 (maintenance)
+**Decision:** `src/version.js` carries `0.8.1 (6)`.
+**Reasoning:** A patch on top of Phase 6 rather than a new phase. It also gives the update
+check something true to report on the first deploy that carries it.
 **Confidence:** specified
 **Needs Cory:** no

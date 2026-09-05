@@ -112,6 +112,11 @@ and **the HTTP server killed**, the page still rendered from the worker's cache 
 Chromium. So offline serving works; what remains untested is iOS's home-screen
 installer specifically.
 
+> **Superseded (2026-09-04).** Hosting moved to Netlify so the repository can be
+> private. Everything verified below still holds — the app is base-path agnostic, which
+> is exactly what let it move — but the Pages instructions no longer apply. See
+> "Deployment" in `README.md`.
+
 **Remaining step:** set the GitHub Pages source to *Deploy from a branch: `main`,
 `/(root)`*, then open the published URL on an iPhone, add it to the home screen, enable
 airplane mode, and launch it.

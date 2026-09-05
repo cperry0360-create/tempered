@@ -32,7 +32,21 @@ export function unbeatableRecords(exerciseIds) {
   }]))
 }
 
-/** @param {object} [over] */
+/**
+ * A SessionInput with sensible defaults. Override any field.
+ *
+ * The default carries one working set, because a session with none earns no
+ * Grit at all — see `docs/01`. A test that means an empty session passes
+ * `sets: []` and says so.
+ *
+ * @param {object} [over]
+ */
 export function makeSession(over = {}) {
-  return { id: 's1', routineId: 'lower', durationMinutes: 60, sets: [], ...over }
+  return {
+    id: 's1',
+    routineId: 'lower',
+    durationMinutes: 60,
+    sets: [{ exerciseId: 'squat_bb', weight: 135, reps: 5 }],
+    ...over,
+  }
 }

@@ -11,7 +11,7 @@
  * guarantees a clean sweep of every old cache.
  */
 
-export const VERSION = '0.6.0 (5)'
+export const VERSION = '0.8.1 (6)'
 
 /** The day this version was cut. Shown in Settings beside the version. */
-export const BUILD_DATE = '2026-09-04'
+export const BUILD_DATE = '2026-09-05'

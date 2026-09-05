@@ -6,8 +6,13 @@
  * Pure Node — no image library, because there is none to install. PNG decode and
  * encode are done here against node:zlib, which is enough for cropping.
  *
- * Crops are declared in ART_MANIFEST below. Add an entry per exercise when a
- * source sheet with more movements arrives; the tool does the rest.
+ * CURRENTLY UNUSED, AND KEPT ON PURPOSE. The art in art/exercises/ no longer
+ * comes from a sheet: it is taken from the free-exercise-db archive, one file per
+ * exercise, recorded in art/exercises/SOURCES.json. There is nothing left to
+ * slice, so ART_MANIFEST is empty and running this writes nothing.
+ *
+ * It stays because the cropper itself is the hard part and it works. If a real
+ * frame sheet ever arrives, add an entry per exercise and the tool does the rest.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -19,13 +24,16 @@ const root = fileURLToPath(new URL('../', import.meta.url))
 /**
  * Which region of which sheet belongs to which exercise.
  *
- * `art/source/exercise-frames.png` turned out to hold ONE movement, not a sheet
- * of frames — an incline barbell bench press — so there is exactly one entry.
- * `trim: true` crops the surrounding white rather than guessing a box.
+ * Empty. The one entry that lived here cropped `art/source/exercise-frames.png`,
+ * which held a single watermarked movement rather than the sheet docs/09 assumed.
+ * That file has been deleted and its crop replaced, so the manifest describes
+ * nothing. `trim: true` on a future entry crops surrounding white rather than
+ * guessing a box.
+ *
+ * @type {{exerciseId: string, source: string, trim?: boolean,
+ *         x?: number, y?: number, width?: number, height?: number}[]}
  */
-const ART_MANIFEST = [
-  { exerciseId: 'incline_bench_bb', source: 'art/source/exercise-frames.png', trim: true },
-]
+const ART_MANIFEST = []
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 
@@ -160,6 +168,11 @@ function contentBox(image, threshold = 245) {
   }
 }
 
+if (ART_MANIFEST.length === 0) {
+  console.log('Nothing to slice: ART_MANIFEST is empty. See the note at the top of this file.')
+  process.exit(0)
+}
+
 mkdirSync(root + 'art/exercises', { recursive: true })
 for (const entry of ART_MANIFEST) {
   const image = decode(readFileSync(root + entry.source))
@@ -169,4 +182,4 @@ for (const entry of ART_MANIFEST) {
   writeFileSync(root + path, encode(out))
   console.log(`${path}  ${out.width}x${out.height}  (from ${image.width}x${image.height})`)
 }
-console.log(`\n${ART_MANIFEST.length} of 17 program movements have art.`)
+console.log(`\n${ART_MANIFEST.length} movement(s) sliced.`)

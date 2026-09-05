@@ -1,0 +1,48 @@
+# Netlify deployment.
+#
+# There is no build step and there is nothing to install, so this file only has
+# to say "serve what is committed". `publish = "."` serves the repository root,
+# which is the same thing GitHub Pages was doing — every path in the app is
+# relative, so the app runs unchanged whether it is served from a domain root or
+# from a /tempered/ subpath.
+#
+# The branch that deploys, and the GitHub connection itself, are site settings
+# rather than file settings: see "Deployment" in README.md.
+
+[build]
+  publish = "."
+  # Empty on purpose. Adding a build step here would mean committed files stop
+  # being the files that get served, which is the property this project keeps.
+  command = ""
+
+# The service worker must never be served stale. It is the thing that decides
+# what the cached app looks like, so a cached copy of an old sw.js pins every
+# installed phone to an old build until the HTTP cache happens to expire.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Same reasoning, one level up: the shell has to be able to point at a new
+# service worker. The service worker handles offline, not the HTTP cache.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Static by nature and already precached by the service worker, so a long
+# browser cache costs nothing and saves a round trip on first paint.
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/art/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

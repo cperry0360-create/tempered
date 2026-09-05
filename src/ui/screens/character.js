@@ -21,7 +21,7 @@ import { xp as formatXp, shortDate } from '../format.js'
  * @param {ReturnType<import('../../app/character.js').createCharacterService>} deps.character
  * @param {() => void} deps.onSettings
  */
-export function createCharacterScreen({ character, onSettings }) {
+export function createCharacterScreen({ character, onSettings, onBattle }) {
   const root = el('div.screen.screen--character')
   /** @type {any} */ let view = null
   /** @type {string|null} */ let openAttribute = null
@@ -147,14 +147,19 @@ export function createCharacterScreen({ character, onSettings }) {
         ]))),
       ]),
 
-      // 6. The battle, which arrives in Phase 6.
+      // 6. The battle.
       el('section.card', { dataset: { section: 'battle' } }, [
         el('h2.block__title', { text: 'Battle' }),
         el('p.block__hint', {
-          text: 'The daily battle arrives in Phase 6. Your attributes are already what it will fight with.',
+          text: 'Fought once a day from what you have trained. Watching is optional — the result is already yours.',
         }),
+        // A plain pill, not acid: Character already spends its one accent on the
+        // rank letter, and docs/04 allows exactly one per screen.
+        onBattle && el('button.button', {
+          type: 'button', dataset: { open: 'battle' },
+          onclick: () => onBattle(),
+        }, ['TODAY’S BATTLE']),
       ]),
-
       el('button.button.button--quiet.button--wide', {
         type: 'button', dataset: { tab: 'settings' }, onclick: onSettings,
       }, ['SETTINGS']),

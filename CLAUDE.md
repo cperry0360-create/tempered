@@ -76,8 +76,10 @@ No build step. No dependencies. Nothing to install.
 - No `package.json`, no lockfile, no `node_modules`.
 - IndexedDB via a thin wrapper in `src/adapters/storage/`.
 - PWA: manifest + hand-maintained `sw.js` at the repo root, installable, works offline.
-- GitHub Pages serves the **repository root** directly (Deploy from a branch: `main`,
-  `/(root)`). What is committed is what is served.
+- **Netlify** serves the **repository root** directly (`netlify.toml`: publish `.`, no
+  build command, deploy on push to `main`). What is committed is what is served.
+  GitHub Pages served this role until the repository went private; Netlify is now the
+  live URL. See "Deployment" in `README.md`.
 
 Rationale: this app is a few dozen screens of forms and lists over a numeric engine.
 A bundler earns nothing here — there is no dependency tree to resolve, no JSX to

@@ -1,0 +1,156 @@
+{
+  "_comment": "Provenance for art/exercises/. Every file is two frames (start, finish) of one movement, taken from the free-exercise-db archive and composited side by side. Nothing here was drawn for Tempered. Keep this file in step with the images: it is the only record of which archive entry a picture came from.",
+  "source": {
+    "name": "free-exercise-db",
+    "url": "https://github.com/yuhonas/free-exercise-db",
+    "revision": "a859101d633a01c4a1a920d6a8ce41dabba0705f",
+    "licence": "Unlicense (public domain dedication)",
+    "licenceUrl": "https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md",
+    "upstream": {
+      "_comment": "The archive relicensed imagery it inherited. The oldest ancestor that still carries a licence file, everkinetic/data, is CC BY-SA 4.0, so Tempered attributes and share-alikes the images as if that were binding. See DECISIONS.md.",
+      "name": "Everkinetic (Greg Priday), via wrkout/exercises.json",
+      "url": "https://github.com/everkinetic/data",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+    }
+  },
+  "modifications": "Frames 0 and 1 of each entry scaled to 300px tall and joined horizontally with a 2px gap, exported as JPEG at quality 78. No other change.",
+  "exercises": {
+    "cable_fly": {
+      "file": "cable_fly.jpg",
+      "archiveId": "Cable_Crossover",
+      "frames": [
+        "exercises/Cable_Crossover/0.jpg",
+        "exercises/Cable_Crossover/1.jpg"
+      ]
+    },
+    "close_grip_bench_bb": {
+      "file": "close_grip_bench_bb.jpg",
+      "archiveId": "Close-Grip_Barbell_Bench_Press",
+      "frames": [
+        "exercises/Close-Grip_Barbell_Bench_Press/0.jpg",
+        "exercises/Close-Grip_Barbell_Bench_Press/1.jpg"
+      ]
+    },
+    "crunch": {
+      "file": "crunch.jpg",
+      "archiveId": "Crunches",
+      "frames": [
+        "exercises/Crunches/0.jpg",
+        "exercises/Crunches/1.jpg"
+      ]
+    },
+    "flat_bench_db": {
+      "file": "flat_bench_db.jpg",
+      "archiveId": "Dumbbell_Bench_Press",
+      "frames": [
+        "exercises/Dumbbell_Bench_Press/0.jpg",
+        "exercises/Dumbbell_Bench_Press/1.jpg"
+      ]
+    },
+    "front_squat": {
+      "file": "front_squat.jpg",
+      "archiveId": "Front_Barbell_Squat",
+      "frames": [
+        "exercises/Front_Barbell_Squat/0.jpg",
+        "exercises/Front_Barbell_Squat/1.jpg"
+      ]
+    },
+    "hammer_curl_db": {
+      "file": "hammer_curl_db.jpg",
+      "archiveId": "Hammer_Curls",
+      "frames": [
+        "exercises/Hammer_Curls/0.jpg",
+        "exercises/Hammer_Curls/1.jpg"
+      ]
+    },
+    "incline_bench_bb": {
+      "file": "incline_bench_bb.jpg",
+      "archiveId": "Barbell_Incline_Bench_Press_-_Medium_Grip",
+      "frames": [
+        "exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg",
+        "exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/1.jpg"
+      ]
+    },
+    "incline_bench_db": {
+      "file": "incline_bench_db.jpg",
+      "archiveId": "Incline_Dumbbell_Press",
+      "frames": [
+        "exercises/Incline_Dumbbell_Press/0.jpg",
+        "exercises/Incline_Dumbbell_Press/1.jpg"
+      ]
+    },
+    "incline_curl_db": {
+      "file": "incline_curl_db.jpg",
+      "archiveId": "Incline_Dumbbell_Curl",
+      "frames": [
+        "exercises/Incline_Dumbbell_Curl/0.jpg",
+        "exercises/Incline_Dumbbell_Curl/1.jpg"
+      ]
+    },
+    "lat_pulldown": {
+      "file": "lat_pulldown.jpg",
+      "archiveId": "Wide-Grip_Lat_Pulldown",
+      "frames": [
+        "exercises/Wide-Grip_Lat_Pulldown/0.jpg",
+        "exercises/Wide-Grip_Lat_Pulldown/1.jpg"
+      ]
+    },
+    "lateral_raise_db": {
+      "file": "lateral_raise_db.jpg",
+      "archiveId": "Side_Lateral_Raise",
+      "frames": [
+        "exercises/Side_Lateral_Raise/0.jpg",
+        "exercises/Side_Lateral_Raise/1.jpg"
+      ]
+    },
+    "one_arm_row_db": {
+      "file": "one_arm_row_db.jpg",
+      "archiveId": "One-Arm_Dumbbell_Row",
+      "frames": [
+        "exercises/One-Arm_Dumbbell_Row/0.jpg",
+        "exercises/One-Arm_Dumbbell_Row/1.jpg"
+      ]
+    },
+    "rdl": {
+      "file": "rdl.jpg",
+      "archiveId": "Romanian_Deadlift",
+      "frames": [
+        "exercises/Romanian_Deadlift/0.jpg",
+        "exercises/Romanian_Deadlift/1.jpg"
+      ]
+    },
+    "rear_delt_fly_db": {
+      "file": "rear_delt_fly_db.jpg",
+      "archiveId": "Seated_Bent-Over_Rear_Delt_Raise",
+      "frames": [
+        "exercises/Seated_Bent-Over_Rear_Delt_Raise/0.jpg",
+        "exercises/Seated_Bent-Over_Rear_Delt_Raise/1.jpg"
+      ]
+    },
+    "seated_row_close": {
+      "file": "seated_row_close.jpg",
+      "archiveId": "Seated_Cable_Rows",
+      "frames": [
+        "exercises/Seated_Cable_Rows/0.jpg",
+        "exercises/Seated_Cable_Rows/1.jpg"
+      ]
+    },
+    "shoulder_press_db": {
+      "file": "shoulder_press_db.jpg",
+      "archiveId": "Dumbbell_Shoulder_Press",
+      "frames": [
+        "exercises/Dumbbell_Shoulder_Press/0.jpg",
+        "exercises/Dumbbell_Shoulder_Press/1.jpg"
+      ]
+    },
+    "tricep_push": {
+      "file": "tricep_push.jpg",
+      "archiveId": "Triceps_Pushdown",
+      "frames": [
+        "exercises/Triceps_Pushdown/0.jpg",
+        "exercises/Triceps_Pushdown/1.jpg"
+      ]
+    }
+  }
+}

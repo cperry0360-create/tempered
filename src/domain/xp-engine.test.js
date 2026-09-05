@@ -118,6 +118,9 @@ test('levelsOf reports all five attributes', () => {
 
 test('an empty day and an empty session award nothing', () => {
   assert.deepEqual(awardsForDay({ date: 'd' }, {}, balance), [])
-  const bare = awardsForSession(makeSession({ durationMinutes: 0 }), makeContext({ daysSinceLastSession: 1 }), balance)
-  assert.equal(totalsByAttribute(bare).grit, balance.grit.xpPerSession)
+  // A session that logged nothing is not a training session: it earns nothing
+  // from Might, which was never in doubt, and nothing from Grit either.
+  const bare = awardsForSession(
+    makeSession({ sets: [], durationMinutes: 0 }), makeContext({ daysSinceLastSession: 1 }), balance)
+  assert.deepEqual(bare, [], 'an empty session is not a training session')
 })

@@ -70,6 +70,28 @@ export function totalsBySource(awards) {
 }
 
 /**
+ * The per-attribute totals implied by a stored `xpBySource`.
+ *
+ * Every source id is `<attribute>.<what>` — `might.volume`, `vitality.sleep` —
+ * so what an award fed is recoverable from the record of what was paid, without
+ * re-running the engine over history that may since have changed. That is what
+ * makes "what moved today" answerable from storage rather than by simulation.
+ *
+ * @param {import('./types.js').XpBySource} sources
+ * @returns {Record<import('./types.js').AttributeId, number>}
+ */
+export function totalsByAttributeFromSources(sources) {
+  /** @type {Record<string, number>} */
+  const totals = {}
+  for (const id of ATTRIBUTE_IDS) totals[id] = 0
+  for (const [source, xp] of Object.entries(sources ?? {})) {
+    const attribute = source.split('.')[0]
+    if (attribute in totals) totals[attribute] += xp ?? 0
+  }
+  return /** @type {Record<import('./types.js').AttributeId, number>} */ (totals)
+}
+
+/**
  * A fresh character: every attribute at zero.
  * @returns {Record<import('./types.js').AttributeId, {xp: number, level: number, lifetimeSources: import('./types.js').XpBySource}>}
  */

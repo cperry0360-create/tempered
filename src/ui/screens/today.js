@@ -132,16 +132,15 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   function editor(activity, weekly = null) {
     const adding = activity.spec?.mode === 'add'
     const unit = unitLabel(activity)
-    const correctionMode = adding ? { mode: 'replace' } : {}
     const input = el('input.today-editor__input', {
       type: 'text',
       inputmode: 'decimal',
-      placeholder: adding ? `Total ${unit || 'amount'}` : (unit || 'Value'),
-      'aria-label': `${adding ? 'Set total for' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+      placeholder: adding ? `Add ${unit || 'amount'}` : (unit || 'Value'),
+      'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       onkeydown: (event) => {
         if (event.key === 'Enter') {
           event.preventDefault()
-          record(activity, input.value, correctionMode)
+          record(activity, input.value)
         }
       },
     })
@@ -157,8 +156,8 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         input,
         el('button.today-editor__save', {
           type: 'button',
-          onclick: () => record(activity, input.value, correctionMode),
-        }, [adding ? 'Set total' : 'Save']),
+          onclick: () => record(activity, input.value),
+        }, [adding ? 'Add' : 'Save']),
       ]),
       weekly && el('span.today-editor__hint', { text: statusFor(activity, weekly) }),
     ])
@@ -192,6 +191,8 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   function numberItem(activity, weekly = null) {
     const open = openActivityId === activity.id
     const complete = weekly ? weekly.complete : dailyGoalComplete(activity)
+    const goal = hasDailyGoal(activity)
+    const affordance = open ? icon('up') : icon(goal ? 'plus' : 'check')
     return el('div.today-item-wrap', {
       dataset: { open: String(open), activity: activity.id },
     }, [
@@ -209,7 +210,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
           el('span.today-item__name', { text: activity.short ?? activity.name }),
           el('span.today-item__meta', { text: statusFor(activity, weekly) }),
         ]),
-        el('span.today-item__chevron', {}, [icon(open ? 'up' : 'down')]),
+        el('span.today-item__chevron', {}, [affordance]),
       ]),
       open && editor(activity, weekly),
     ])

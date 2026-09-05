@@ -68,7 +68,7 @@ export function createBattleScreen({ battle, onClose }) {
     return el('div.battle__focus', {}, [
       el('div.battle__stat-row', {}, [
         el('span.battle__stat-icon', { text: 'ϟ' }),
-        el('span', { text: `Focus ${current.focus} / ${current.focusMax}` }),
+        el('span', { text: `FOCUS ${current.focus} / ${current.focusMax}` }),
       ]),
       meter(current.focus, current.focusMax, 'focus'),
     ])

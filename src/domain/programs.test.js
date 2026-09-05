@@ -60,6 +60,23 @@ test('rep ranges are the prescription: a first session aims at the bottom', () =
   assert.match(plan.reason, /6–10/)
 })
 
+test('a Phase 7 starting weight prefills the first session without creating fake history', () => {
+  const configured = { ...slot, weight: 115 }
+  const plan = prescribeFromProgram({ slot: configured, week: 1, program: november, last: null, exercise: exercises.get(slot.exerciseId) }, balance)
+  assert.equal(plan.sets.length, slot.sets)
+  assert.equal(plan.sets[0].weight, 115)
+  assert.equal(plan.sets[0].reps, slot.repMin)
+  assert.match(plan.reason, /Start at 115/)
+})
+
+test('real history outranks a configured starting weight after the first session', () => {
+  const configured = { ...slot, weight: 115 }
+  const last = { date: 'd1', sets: Array.from({ length: 4 }, () => ({ weight: 125, reps: 7 })) }
+  const plan = prescribeFromProgram({ slot: configured, week: 2, program: november, last, exercise: exercises.get(slot.exerciseId) }, balance)
+  assert.equal(plan.sets[0].weight, 125)
+  assert.equal(plan.sets[0].reps, 8)
+})
+
 test('double progression: hit the top of the range everywhere, then add load', () => {
   const last = { date: 'd1', sets: Array.from({ length: 4 }, () => ({ weight: 135, reps: 10 })) }
   const plan = prescribeFromProgram({ slot, week: 2, program: november, last, exercise: exercises.get(slot.exerciseId) }, balance)

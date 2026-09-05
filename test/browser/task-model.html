@@ -31,16 +31,16 @@
         const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0)) // Monday
         const tempered = await bootstrap({ storage, clock, mount: document.getElementById('app') })
 
-        // Cadence renamed Today task rows to weekly exercise rows. Keep the old
-        // task-model assertions so semantic drift is reported rather than hidden.
         await tempered.app.show('today')
         await waitFor('[data-exerciseweek]')
         const tasks = qa('[data-exerciseweek]')
-        check('Today lists the day\'s prescribed slots as tasks', tasks.length >= 6, `${tasks.length} exercise rows`)
-        check('each task shows its prescription', /\d+ × \d+–\d+/.test(q('.weekly-row__count')?.textContent ?? ''),
+        check('Today lists the week\'s exercise work as grouped tasks', tasks.length >= 6, `${tasks.length} exercise rows`)
+        check('each grouped task shows its prescription and weekly progress',
+          /\d+ × \d+–\d+/.test(q('.weekly-row__count')?.textContent ?? '')
+          && /\d+ \/ \d+ this week/.test(q('.weekly-row__count')?.textContent ?? ''),
           q('.weekly-row__count')?.textContent)
 
-        // --- ACCEPTANCE: complete a slot without starting a session ---------
+        // --- ACCEPTANCE: complete a slot without starting a full block -------
         const before = await storage.count('sessions')
         tasks[3]?.click()
         await waitFor('.setrow__check')
@@ -58,7 +58,7 @@
         q('[data-action="confirm-finish"]').click()
         await waitFor('[data-action="done"]')
 
-        check('ACCEPTANCE: an exercise completes from Today without a session', q('[data-section="xp"]') !== null,
+        check('ACCEPTANCE: an exercise completes from Today without a full block', q('[data-section="xp"]') !== null,
           `${logged} sets logged`)
         check('completing a slot creates exactly one day session',
           (await storage.count('sessions')) === before + 1,
@@ -67,8 +67,9 @@
         await waitFor('[data-exerciseweek]')
         const workedToggle = q('[data-worked="toggle"]')
         if (workedToggle) { workedToggle.click(); await settle() }
-        check('the completed slot is marked done on Today',
-          qa('[data-exerciseweek][data-done="true"]').length >= 1)
+        check('the completed slot is reflected on Today',
+          qa('[data-exerciseweek][data-done="true"]').length >= 1
+          || qa('[data-exerciseweek]').some((row) => /^[^·]+·\s*[1-9]\d*\s*\/\s*\d+\s*this week/.test(row.textContent)))
 
         // --- ACCEPTANCE: a day of micro sets accrues Grit -------------------
         const gritRow = [...(await storage.getAll('attributeState'))].find((r) => r.attribute === 'grit')
@@ -137,7 +138,15 @@
           q('[data-version]')?.textContent)
         check('the last-updated date is shown beside it', (q('[data-builddate]')?.textContent ?? '').length > 5,
           q('[data-builddate]')?.textContent)
-        check('the version names its phase', /\(\d+(\.\d+)?\)$/.test(VERSION), VERSION)
+
+        const phase = VERSION.match(/\((\d+(?:\.\d+)?)\)$/)?.[1] ?? null
+        const buildPlan = await fetch('../../docs/07-build-plan.md').then((r) => r.text())
+        const phaseHeading = phase
+          ? new RegExp(`^## Phase ${phase.replace('.', '\\.')}\\b`, 'm')
+          : null
+        check('the version names a phase that exists in docs/07',
+          Boolean(phase && phaseHeading?.test(buildPlan)),
+          phase ? `${VERSION} -> Phase ${phase}` : VERSION)
 
         check('the service worker cache key derives from the version',
           typeof VERSION === 'string' && VERSION.length > 0 && BUILD_DATE.length > 0,

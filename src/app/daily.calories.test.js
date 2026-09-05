@@ -35,6 +35,8 @@ test('calories are numeric, additive, and use a configurable target without scor
   assert.equal(result.day.calories, 1200)
   assert.equal(result.xpBySource['vitality.calories'] ?? 0, 0, 'more calories do not mint more tracking XP')
 
-  result = await daily.log('calories_logged', 1800, { mode: 'replace' })
-  assert.equal(result.day.calories, 1800, 'manual correction can set the running total')
+  result = await daily.log('calories_logged', 2500, { mode: 'replace' })
+  assert.equal(result.day.calories, 2500, 'manual correction can set the running total')
+  assert.equal(result.xpBySource['vitality.calories'] ?? 0, 0, 'going over target never adds or removes XP')
+  assert.ok(Object.values(result.xpByAttribute ?? {}).every((xp) => xp >= 0), 'calories never create negative XP')
 })

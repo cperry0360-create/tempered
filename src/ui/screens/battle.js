@@ -1,33 +1,15 @@
 /**
- * BATTLE — the daily thirty seconds. `docs/06-battle.md`, Phase 6.
+ * BATTLE — a tiny optional turn-based daily encounter.
  *
- * The one place in the app where theatricality is allowed, and it must not leak
- * anywhere else: the tracker stays quiet. What theatre there is here comes from
- * motion, colour and the battle sprites. The screen keeps the existing glyphs
- * as a deliberate fallback until each canonical PNG exists.
- *
- * Nothing here decides anything. The battle was resolved and paid for the
- * moment it was generated; this is a replay of a settled thing, which is
- * precisely why skipping it can cost nothing. PAUSE, 1x and SKIP are the whole
- * control surface, per the spec, and SKIP is never discouraged.
+ * The tracker remains the product. Battle choices only change the on-screen
+ * encounter. Daily rewards are generated once from the day seed, character XP
+ * is never granted here, and AUTO / SKIP are always available.
  */
 
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { heroSpriteUrl, enemySpriteUrl, itemSpriteUrl } from '../battle-art.js'
 
-/** Playback is compressed so a long gauntlet still reads in about half a minute. */
-const TARGET_SECONDS = 26
-
-/**
- * A sprite with a built-in Tempered glyph fallback. The fallback is visible
- * first, so a missing or slow image never produces a broken-image flash.
- * @param {object} options
- * @param {string|null} options.src
- * @param {string} options.alt
- * @param {string} options.glyph
- * @param {string} options.attribute
- */
 function fighterVisual({ src, alt, glyph, attribute }) {
   const visual = el('span.fighter__visual', { dataset: { ready: 'false' } })
   const fallback = el('span.fighter__mark', { dataset: { attribute } }, [icon(glyph)])
@@ -43,7 +25,6 @@ function fighterVisual({ src, alt, glyph, attribute }) {
   return visual
 }
 
-/** The same fallback rule for cosmetic loot icons. */
 function itemVisual(item) {
   const visual = el('span.reward__item-visual', { dataset: { ready: 'false' } })
   const fallback = el('span.reward__item-fallback', {}, [icon('item')])
@@ -67,63 +48,15 @@ function itemVisual(item) {
  */
 export function createBattleScreen({ battle, onClose }) {
   const root = el('div.screen.screen--battle')
-
   /** @type {any} */ let record = null
-  /** @type {number} */ let cursor = 0
-  let playing = false
-  let finished = false
-  /** @type {number|null} */ let timer = null
-  /** How much of the log has been shown, in the battle's own seconds. */
-  let clockAt = 0
+  let busy = false
 
-  /** The state the log has reached: whose turn it is and how battered. */
-  function stateAt(index) {
-    const hero = { hp: record.hero.health, max: record.hero.health }
-    let enemy = null
-    let defeated = 0
-    for (const event of record.events.slice(0, index)) {
-      if (event.kind === 'enemy') enemy = { ...event, max: event.hp }
-      if (event.kind === 'hit' && event.by === 'hero' && enemy) enemy.hp = event.enemyHp
-      if (event.kind === 'hit' && event.by === 'enemy') hero.hp = event.heroHp
-      if (event.kind === 'defeated') defeated += 1
-    }
-    return { hero, enemy, defeated }
+  const state = () => record?.turnState ?? null
+  const enemy = () => {
+    const current = state()
+    return current ? record.gauntlet?.[current.enemyIndex] ?? null : null
   }
 
-  function stop() {
-    if (timer !== null) clearInterval(timer)
-    timer = null
-    playing = false
-  }
-
-  function play() {
-    if (finished) return
-    playing = true
-    if (timer !== null) clearInterval(timer)
-    const total = Math.max(0.001, record.duration)
-    const perTick = total / (TARGET_SECONDS * 20)
-    timer = setInterval(() => {
-      clockAt += perTick
-      let moved = false
-      while (cursor < record.events.length && record.events[cursor].at <= clockAt) {
-        cursor += 1
-        moved = true
-      }
-      if (cursor >= record.events.length) { finish(); return }
-      if (moved) render()
-    }, 50)
-    render()
-  }
-
-  function finish() {
-    stop()
-    cursor = record.events.length
-    finished = true
-    battle.markWatched(record.date).catch(() => {})
-    render()
-  }
-
-  /** The bar under a combatant. Never red: a hurt hero is not a failure state. */
   function meter(value, max, who) {
     const pct = Math.max(0, Math.min(100, Math.round((value / Math.max(1, max)) * 100)))
     return el('span.meter', { dataset: { who } }, [
@@ -131,68 +64,92 @@ export function createBattleScreen({ battle, onClose }) {
     ])
   }
 
-  function combatants() {
-    const { hero, enemy, defeated } = stateAt(cursor)
-    return el('div.fight', {}, [
-      el('div.fighter', { dataset: { side: 'hero', boss: 'false' } }, [
-        fighterVisual({
-          src: heroSpriteUrl(), alt: 'Tempered hero', glyph: 'train', attribute: 'might',
-        }),
-        el('span.fighter__name', { text: 'You' }),
-        meter(hero.hp, hero.max, 'hero'),
-        el('span.fighter__hp', { text: `${Math.max(0, hero.hp)}` }),
+  function focusMeter(current) {
+    const pct = Math.max(0, Math.min(100, Math.round((current.focus / Math.max(1, current.focusMax)) * 100)))
+    return el('div.battle__focus', {}, [
+      el('div.battle__focus-head', {}, [
+        el('span', { text: 'FOCUS' }),
+        el('span', { text: `${current.focus} / ${current.focusMax}` }),
       ]),
-      el('div.fight__vs', { text: `${defeated} of ${record.gauntlet.length}` }),
-      el('div.fighter', { dataset: { side: 'enemy', boss: String(enemy?.boss === true) } }, [
-        fighterVisual({
-          src: enemySpriteUrl(enemy?.id),
-          alt: enemy?.name ?? 'Enemy',
-          glyph: 'foe',
-          attribute: enemy?.boss ? 'vitality' : 'mind',
-        }),
-        el('span.fighter__name', { text: enemy?.name ?? '—' }),
-        meter(enemy?.hp ?? 0, enemy?.max ?? 1, 'enemy'),
-        el('span.fighter__hp', { text: enemy ? `${Math.max(0, enemy.hp)}` : '' }),
+      el('span.meter', { dataset: { who: 'focus' } }, [
+        el('span.meter__fill', { style: `width:${pct}%` }),
       ]),
     ])
   }
 
-  /** The last few events, newest first — the floating damage, as a log. */
+  function combatants() {
+    const current = state()
+    const foe = enemy()
+    return el('div.fight', {}, [
+      el('div.fighter', { dataset: { side: 'hero', boss: 'false' } }, [
+        fighterVisual({ src: heroSpriteUrl(), alt: 'Tempered hero', glyph: 'train', attribute: 'might' }),
+        el('span.fighter__name', { text: 'You' }),
+        meter(current.heroHp, current.heroMax, 'hero'),
+        el('span.fighter__hp', { text: `${Math.max(0, current.heroHp)} / ${current.heroMax}` }),
+      ]),
+      el('div.fight__vs', { text: `${current.defeated} / ${record.gauntlet.length}` }),
+      el('div.fighter', { dataset: { side: 'enemy', boss: String(foe?.boss === true) } }, [
+        fighterVisual({
+          src: enemySpriteUrl(foe?.id),
+          alt: foe?.name ?? 'Enemy',
+          glyph: 'foe',
+          attribute: foe?.boss ? 'vitality' : 'mind',
+        }),
+        el('span.fighter__name', { text: foe?.name ?? '—' }),
+        meter(current.enemyHp ?? 0, current.enemyMax ?? 1, 'enemy'),
+        el('span.fighter__hp', { text: foe ? `${Math.max(0, current.enemyHp)} / ${current.enemyMax}` : '' }),
+      ]),
+    ])
+  }
+
+  function eventLine(event) {
+    const copy = {
+      enemy: `${event.name} steps up`,
+      guard: 'You guard and steady your focus',
+      dodge: 'You move before the hit lands',
+      defeated: `${event.name} falls`,
+      won: 'The gauntlet is cleared',
+      down: 'The gauntlet holds today',
+      skipped: event.won ? 'Skipped to a cleared gauntlet' : `Skipped to result: ${event.defeated} down`,
+    }[event.kind]
+
+    if (event.kind === 'attack' || event.kind === 'skill') {
+      return el('li.feed__line', { dataset: { by: 'hero', crit: String(event.crit === true) } }, [
+        el('span.feed__what', { text: event.kind === 'skill' ? `Skill hits ${event.target ?? 'enemy'}` : `You hit ${event.target ?? 'enemy'}` }),
+        el('span.feed__dmg', { text: `−${event.damage}${event.crit ? ' crit' : ''}` }),
+      ])
+    }
+    if (event.kind === 'enemyHit') {
+      return el('li.feed__line', { dataset: { by: 'enemy' } }, [
+        el('span.feed__what', { text: event.guarded ? `Guard absorbs ${event.source ?? 'the'} hit` : `${event.source ?? 'Enemy'} hits you` }),
+        el('span.feed__dmg', { text: `−${event.damage}` }),
+      ])
+    }
+    return el('li.feed__line', { dataset: { by: 'note' } }, [
+      el('span.feed__what', { text: copy ?? event.kind }),
+    ])
+  }
+
   function feed() {
-    const recent = record.events.slice(Math.max(0, cursor - 5), cursor).reverse()
-    return el('ol.feed', {}, recent.map((event) => {
-      if (event.kind === 'hit') {
-        // The event carries the enemy's id; a person reads its name.
-        const named = record.gauntlet.find((e) => e.id === event.target)?.name ?? event.target
-        return el('li.feed__line', { dataset: { by: event.by, crit: String(event.crit === true) } }, [
-          el('span.feed__what', { text: event.by === 'hero' ? `You hit the ${named}` : 'You are hit' }),
-          el('span.feed__dmg', { text: `−${event.damage}${event.crit ? ' crit' : ''}` }),
-        ])
-      }
-      const said = {
-        enemy: `${event.name} steps up`,
-        defeated: `${event.name} falls`,
-        down: 'You go down',
-        won: 'The gauntlet is cleared',
-        ended: 'The gauntlet ends',
-      }[event.kind]
-      return el('li.feed__line', { dataset: { by: 'note' } }, [el('span.feed__what', { text: said ?? event.kind })])
-    }))
+    const log = state().log ?? []
+    return el('ol.feed', {}, [...log].reverse().map(eventLine))
   }
 
   function result() {
+    const current = state()
     const { rewards } = record
-    return el('section.card.outcome', { dataset: { won: String(record.won) } }, [
-      el('h2.block__title', { text: record.won ? 'Gauntlet cleared' : 'The gauntlet held' }),
+    return el('section.card.outcome', { dataset: { won: String(current.won) } }, [
+      el('h2.block__title', { text: current.won ? 'Gauntlet cleared' : 'Battle complete' }),
       el('p.outcome__line', {
-        text: record.won
-          ? `All ${record.gauntlet.length} down, with ${record.remainingHealth} health to spare.`
-          : `${record.defeated} of ${record.gauntlet.length} down. Tomorrow brings another.`,
+        text: current.won
+          ? `All ${record.gauntlet.length} down, with ${current.heroHp} health left.`
+          : `${current.defeated} of ${record.gauntlet.length} down. Nothing is lost.`,
       }),
+      el('p.block__hint', { text: 'Daily rewards were locked when today’s encounter was generated. Battle never grants character XP.' }),
       el('div.outcome__rewards', {}, [
         el('span.reward', { dataset: { kind: 'gold' } }, [
           el('span.reward__value', { dataset: { acid: 'value' }, text: String(rewards.gold) }),
-          el('span.reward__label', { text: 'GOLD' }),
+          el('span.reward__label', { text: 'DAILY GOLD' }),
         ]),
         rewards.item && el('span.reward', { dataset: { kind: 'item' } }, [
           itemVisual(rewards.item),
@@ -204,68 +161,92 @@ export function createBattleScreen({ battle, onClose }) {
     ])
   }
 
+  async function run(action) {
+    if (busy) return
+    busy = true
+    render()
+    try {
+      record = await action()
+    } finally {
+      busy = false
+      render()
+    }
+  }
+
+  function actionButton(kind, title, sub, options = {}) {
+    const dataset = { action: kind }
+    if (options.primary) dataset.acid = 'primary'
+    return el('button.battle-action', {
+      type: 'button',
+      disabled: busy || options.disabled,
+      dataset,
+      onclick: () => run(() => options.run()),
+    }, [
+      el('span.battle-action__title', { text: title }),
+      el('span.battle-action__sub', { text: sub }),
+    ])
+  }
+
+  function controls() {
+    const current = state()
+    if (current.status === 'finished') {
+      return el('div.battle__controls', {}, [
+        el('button.button', {
+          type: 'button', disabled: busy, dataset: { battle: 'restart' },
+          onclick: () => run(() => battle.restart(record.date)),
+        }, [icon('history'), 'PLAY AGAIN']),
+        el('button.button', {
+          type: 'button', dataset: { battle: 'close', acid: 'primary' }, onclick: onClose,
+        }, ['DONE']),
+      ])
+    }
+
+    return el('div.battle-actions', {}, [
+      actionButton('attack', 'ATTACK', 'Deal damage', { primary: true, run: () => battle.act('attack', record.date) }),
+      actionButton('guard', 'GUARD', 'Reduce hit · restore Focus', { run: () => battle.act('guard', record.date) }),
+      actionButton('skill', 'SKILL', 'Heavy hit · 1 Focus', {
+        disabled: current.focus <= 0,
+        run: () => battle.act('skill', record.date),
+      }),
+      actionButton('auto', 'AUTO', 'Let it play out', { run: () => battle.auto(record.date) }),
+      actionButton('skip', 'SKIP', 'Instant result', { run: () => battle.skip(record.date) }),
+    ])
+  }
+
   function render() {
-    if (!record) {
-      replace(root, [el('h1.screen__title', { text: 'Battle' }),
-        el('p.block__hint', { text: 'Reading today’s battle…' })])
+    if (!record?.turnState) {
+      replace(root, [el('h1.screen__title', { text: 'Battle' }), el('p.block__hint', { text: 'Preparing today’s encounter…' })])
       return
     }
 
+    const current = state()
     replace(root, [
       el('div.battle__head', {}, [
-        el('h1.screen__title', { text: 'Battle' }),
+        el('div', {}, [
+          el('h1.screen__title', { text: 'Daily Battle' }),
+          el('p.battle__tagline', { text: 'Real effort. A stronger you.' }),
+        ]),
         el('span.battle__rank', { text: `RANK ${record.rank}` }),
       ]),
-
       combatants(),
+      focusMeter(current),
+      current.status === 'active' && el('p.battle__prompt', { text: 'Choose an action.' }),
+      controls(),
       feed(),
-
-      finished && result(),
-
-      el('div.battle__controls', {}, [
-        !finished && el('button.button', {
-          type: 'button', dataset: { battle: playing ? 'pause' : 'play' },
-          onclick: () => { playing ? stop() : play(); render() },
-        }, [icon(playing ? 'minus' : 'play'), playing ? 'PAUSE' : '1×']),
-
-        // Always available, never discouraged, and it does not cost a thing —
-        // the rewards were paid when the battle was made.
-        !finished && el('button.button', {
-          type: 'button', dataset: { battle: 'skip' },
-          onclick: () => finish(),
-        }, ['SKIP TO RESULT']),
-
-        finished && el('button.button', {
-          type: 'button', dataset: { battle: 'rewatch' },
-          onclick: () => { cursor = 0; clockAt = 0; finished = false; play() },
-        }, [icon('history'), 'WATCH AGAIN']),
-
-        // The battle screen's single primary action, so it carries the acid.
-        el('button.button', {
-          type: 'button', dataset: { battle: 'close', acid: 'primary' },
-          onclick: () => { stop(); onClose() },
-        }, ['DONE']),
-      ]),
-
-      el('p.block__hint', {
-        text: 'Fought once a day from what you have trained. Watching is optional — the result and its rewards are already yours.',
-      }),
+      current.status === 'finished' && result(),
+      current.status === 'active' && el('button.button.button--quiet', {
+        type: 'button', dataset: { battle: 'close' }, onclick: onClose,
+      }, ['BACK TO APP']),
+      el('p.block__hint', { text: 'Optional. Turn-based. No character XP from battles.' }),
     ])
   }
 
   return {
     root,
-
     async start() {
-      stop()
-      record = await battle.forDate()
-      cursor = 0
-      clockAt = 0
-      finished = false
+      record = await battle.stateForDate()
       render()
-      play()
     },
-
-    destroy() { stop() },
+    destroy() {},
   }
 }

@@ -5,105 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Tempered — the daily battle</title>
     <link rel="stylesheet" href="../../src/style.css" />
+    <link rel="stylesheet" href="../../src/battle.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
-      /**
-       * Phase 6's acceptance criteria, from `docs/07-build-plan.md`:
-       *
-       *   - the battle resolves identically for the same day and seed, always;
-       *   - skipping to the result is available and never punished;
-       *   - never opening the screen costs no progression.
-       *
-       * The first and third are proved in node against the domain and service.
-       * What only a browser can show is the third one's real meaning: that the
-       * screen has no way to change anything, however you use it.
-       */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
       const q = (s) => document.querySelector(s)
-      const qa = (s) => [...document.querySelectorAll(s)]
-      const settle = () => new Promise((r) => setTimeout(r, 0))
       const wait = (ms) => new Promise((r) => setTimeout(r, ms))
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
         while (Date.now() < deadline) {
           const found = q(selector)
           if (found) return found
-          await new Promise((r) => setTimeout(r, 10))
+          await wait(10)
         }
         throw new Error(`timed out waiting for ${selector}`)
       }
 
       try {
         const tempered = await bootstrap({ storage: createMemoryStorage() })
-        // A character with something to fight with.
         await tempered.storage.putAll('attributeState',
           ['might', 'wind', 'grit', 'vitality', 'mind'].map((attribute) =>
             ({ attribute, xp: 4000, level: 6, lifetimeSources: {} })))
 
         await tempered.app.show('character')
         const open = await waitFor('[data-open="battle"]')
-        check('the battle is reachable from Character', open !== null)
-
         open.click()
         await waitFor('.screen--battle')
-        await wait(300)
 
-        check('it opens playing, with no input asked for', q('[data-battle="pause"]') !== null)
-        check('SKIP is offered from the very first moment', q('[data-battle="skip"]') !== null)
-        check('the gauntlet is on screen', qa('.fighter').length === 2)
+        check('ATTACK is available', q('[data-action="attack"]') !== null)
+        check('GUARD is available', q('[data-action="guard"]') !== null)
+        check('SKILL is available', q('[data-action="skill"]') !== null)
+        check('AUTO is available', q('[data-action="auto"]') !== null)
+        check('SKIP is available immediately', q('[data-action="skip"]') !== null)
+        check('Focus is visible', /FOCUS/.test(q('.battle__focus')?.textContent ?? ''))
 
-        // Pause and 1x are the whole control surface, per docs/06.
-        q('[data-battle="pause"]').click(); await settle()
-        check('playback pauses', q('[data-battle="play"]') !== null)
-        const frozen = q('.feed').textContent
-        await wait(400)
-        check('and stays paused', q('.feed').textContent === frozen)
-        q('[data-battle="play"]').click(); await settle()
-        check('and resumes at 1x', q('[data-battle="pause"]') !== null)
+        const initial = await tempered.battle.stateForDate()
+        q('[data-action="attack"]').click()
+        await wait(30)
+        const afterAttack = await tempered.battle.stateForDate()
+        check('ATTACK advances exactly one stored turn',
+          afterAttack.turnState.turn === initial.turnState.turn + 1,
+          `${initial.turnState.turn} -> ${afterAttack.turnState.turn}`)
 
-        // --- ACCEPTANCE: skipping is never punished -------------------------
-        const goldBefore = (await tempered.battle.purse()).gold
-        const record = await tempered.battle.forDate()
-        q('[data-battle="skip"]').click()
-        await waitFor('.outcome')
-        const goldAfter = (await tempered.battle.purse()).gold
-
-        check('ACCEPTANCE: skipping to the result is always available', true)
-        check('ACCEPTANCE: and costs nothing', goldAfter === goldBefore,
-          `${goldBefore} gold before, ${goldAfter} after`)
-        check('the result shows what was won', /\d/.test(q('.reward__value')?.textContent ?? ''),
-          q('.reward__value')?.textContent)
-
-        // --- ACCEPTANCE: identical on replay --------------------------------
-        q('[data-battle="rewatch"]').click(); await settle()
-        check('the battle is re-watchable', q('[data-battle="pause"]') !== null)
-        q('[data-battle="skip"]').click()
-        await waitFor('.outcome')
-        const replayed = await tempered.battle.forDate()
-        check('ACCEPTANCE: a replay resolves to the identical battle',
-          JSON.stringify(replayed.events) === JSON.stringify(record.events)
-          && JSON.stringify(replayed.rewards) === JSON.stringify(record.rewards))
-        check('and watching it again paid nothing more',
-          (await tempered.battle.purse()).gold === goldBefore,
-          `${(await tempered.battle.purse()).gold} gold`)
-
-        // --- no punishment anywhere in the copy -----------------------------
-        const copy = q('.screen--battle').textContent
-        const forbidden = /\b(failed|failure|lost your|penalt|missed|you must watch)\b/i
-        check('a defeat is never framed as a failure', !forbidden.test(copy),
-          copy.match(forbidden)?.[0] ?? 'clean')
-
-        // The tracker's quiet stays the tracker's. docs/06: do not let this
-        // treatment leak.
+        // Leaving and reopening must resume the same battle rather than reset it.
         q('[data-battle="close"]').click()
-        await waitFor('.screen--today, .screen--character, .screen--train')
-        check('DONE returns to the app', q('.screen--battle') === null)
+        await waitFor('.screen--character, .screen--today, .screen--train')
+        await tempered.app.show('character')
+        ;(await waitFor('[data-open="battle"]')).click()
+        await waitFor('.screen--battle')
+        const resumed = await tempered.battle.stateForDate()
+        check('battle resumes after leaving the screen', resumed.turnState.turn === afterAttack.turnState.turn)
+
+        const purseBeforeSkip = JSON.stringify(await tempered.battle.purse())
+        q('[data-action="skip"]').click()
+        await waitFor('.outcome')
+        const skipped = await tempered.battle.stateForDate()
+        check('SKIP finishes the encounter', skipped.turnState.status === 'finished')
+        check('SKIP does not change rewards', JSON.stringify(await tempered.battle.purse()) === purseBeforeSkip)
+        check('result explicitly says battle grants no character XP', /never grants character xp/i.test(q('.outcome')?.textContent ?? ''))
+
+        q('[data-battle="restart"]').click()
+        await wait(30)
+        const replay = await tempered.battle.stateForDate()
+        check('PLAY AGAIN resets only battle play state', replay.turnState.turn === 0 && replay.turnState.status === 'active')
+        check('PLAY AGAIN does not pay again', JSON.stringify(await tempered.battle.purse()) === purseBeforeSkip)
+
+        q('[data-action="auto"]').click()
+        await waitFor('.outcome')
+        const auto = await tempered.battle.stateForDate()
+        check('AUTO resolves the encounter', auto.turnState.status === 'finished')
+        check('AUTO does not pay again', JSON.stringify(await tempered.battle.purse()) === purseBeforeSkip)
+
+        const copy = q('.screen--battle').textContent
+        const forbidden = /\b(failed|failure|lost your|penalt|missed|streak lost)\b/i
+        check('battle copy contains no punishment language', !forbidden.test(copy), copy.match(forbidden)?.[0] ?? 'clean')
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
       }

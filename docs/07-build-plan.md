@@ -196,28 +196,35 @@ levelled, what is next. One screen, scrollable, with a single dismiss.
 
 ## Phase 6 — The daily battle
 
-Passive. Once per day. Costs no interaction.
+A tiny optional turn-based encounter, once per day. It is deliberately shallower than a
+standalone RPG and never becomes a second progression loop.
 
 - Hero stats derived from attributes per `docs/06-battle.md`
-- A gauntlet of enemies scaled to rank
-- Deterministic resolution, seeded by date so it cannot be rerolled
-- Playback with pause, 1x speed and skip
-- Rewards: gold, XP, occasionally an item
-- Re-watchable
+- A deterministic daily gauntlet scaled to rank
+- ATTACK, GUARD and SKILL manual actions
+- AUTO to finish with a tiny deterministic AI
+- SKIP to show the already-generated canonical daily result immediately
+- Persistent turn state so leaving/reopening resumes the encounter
+- Daily rewards: gold and occasionally a cosmetic/flavour item
+- **No character XP from battle**
+- Re-playable for fun without additional rewards
 
 **Acceptance:**
-- The battle resolves identically for the same day and seed on every replay.
-- Skipping to the result is always available and never punished.
-- A user who never opens the battle screen loses no progression.
+- The daily gauntlet and reward cannot be rerolled by replaying or reopening.
+- ATTACK advances one stored turn; leaving and reopening resumes that turn state.
+- GUARD reduces the response and restores Focus; SKILL costs Focus and hits harder.
+- AUTO terminates; SKIP is always available and never punished.
+- Manual play, AUTO, SKIP and PLAY AGAIN never pay the daily reward twice.
+- A user who never plays the battle loses no character progression.
 
-Asserted in `src/domain/battle.test.js`, `src/app/battle.test.js` and
-`test/browser/battle.html`. The clear-rate target from `docs/06` is asserted too, at
-every rank, because it is the criterion the difficulty design exists to hold.
+Asserted in `src/domain/battle.test.js`, `src/domain/turn-battle.test.js`,
+`src/app/battle.test.js`, `src/app/battle.turns.test.js` and `test/browser/battle.html`.
+The existing canonical resolver still holds the clear-rate target from `docs/06` at
+every rank and supplies the fixed result used by SKIP.
 
-**Outstanding: the art.** `docs/06` names a hero sprite, roughly eight enemy sprites and
-a handful of item icons as the entire art requirement of the product. None of it is
-invented here — `CLAUDE.md` non-negotiable 8 forbids that — so the battle plays with the
-app's own icon and colour vocabulary and holds the places where sprites belong.
+**Outstanding: the art.** The UI is wired for a hero sprite, eight enemy sprites and
+loot icons with safe glyph fallbacks. The exact production contract lives under
+`art/battle/`. Battle mechanics do not wait on those PNGs.
 
 ---
 
@@ -272,5 +279,6 @@ reduced-motion, dynamic type.
 ## What is explicitly out of scope for V1
 
 Social, friends, feeds, leaderboards. Notifications. Cloud sync. HealthKit. Muscle
-activation maps. An exercise database beyond the seed. Interactive combat. Multiple
-characters. Item crafting or an economy beyond the battle's gold.
+activation maps. An exercise database beyond the seed. Deep combat systems, multiple
+characters, skill trees, item crafting, or an economy beyond the battle's fixed gold and
+cosmetic loot.

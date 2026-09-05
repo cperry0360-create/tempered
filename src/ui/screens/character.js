@@ -56,8 +56,6 @@ export function createCharacterScreen({ character, onBattle }) {
           : `${formatXp(attribute.xp)} XP · ${formatXp(progress.xpToNextLevel)} to level ${attribute.level + 1}`,
       }),
 
-      // The mandatory view. Rendered on demand rather than fetched on demand —
-      // everything it needs is already here.
       open && el('div.attr__detail', { dataset: { detail: attribute.id } }, [
         el('h3.attr__subhead', { text: 'What feeds it' }),
         el('div.feeds', {}, attribute.sources.map((source) => el('div.feed', {
@@ -95,32 +93,26 @@ export function createCharacterScreen({ character, onBattle }) {
     replace(root, [
       el('h1.screen__title', { text: 'Character' }),
 
-      // 1. Rank and identity.
       el('section.card.rank', { dataset: { section: 'rank' } }, [
         el('span.rank__letter', { dataset: { acid: 'value', rank: view.rank }, text: view.rank }),
         el('div.rank__main', {}, [
           el('p.rank__title', { text: current ? current.name : 'Unproven' }),
-          el('p.rank__meta', {
-            text: `${view.totalLevels} levels across five attributes`,
-          }),
+          el('p.rank__meta', { text: `${view.totalLevels} levels across five attributes` }),
         ]),
       ]),
 
-      // 2 and 3. The attributes, each one openable.
       el('section.block', {}, [
         el('h2.block__title', { text: 'Attributes' }),
         el('p.block__hint', { text: 'Tap one to see what feeds it, and what has.' }),
         ...view.attributes.map(attributeCard),
       ]),
 
-      // 4. The active directive.
       view.directive && el('section.card', { dataset: { section: 'directive' } }, [
         el('h2.block__title', { text: 'Directive' }),
         el('p.directive__headline', { text: view.directive.headline }),
         el('p.directive__detail', { text: view.directive.detail }),
       ]),
 
-      // 5. Titles, with the date and what earned them.
       el('section.block', { dataset: { section: 'titles' } }, [
         el('h2.block__title', { text: 'Titles' }),
         view.titles.earned.length === 0
@@ -146,18 +138,15 @@ export function createCharacterScreen({ character, onBattle }) {
         ]))),
       ]),
 
-      // 6. The battle.
       el('section.card', { dataset: { section: 'battle' } }, [
-        el('h2.block__title', { text: 'Battle' }),
+        el('h2.block__title', { text: 'Daily Battle' }),
         el('p.block__hint', {
-          text: 'Fought once a day from what you have trained. Watching is optional — the result is already yours.',
+          text: 'A tiny optional turn-based RPG encounter powered by your attributes. Attack, Guard, Skill, Auto, or Skip. Battles never grant character XP.',
         }),
-        // A plain pill, not acid: Character already spends its one accent on the
-        // rank letter, and docs/04 allows exactly one per screen.
         onBattle && el('button.button', {
           type: 'button', dataset: { open: 'battle' },
           onclick: () => onBattle(),
-        }, ['TODAY’S BATTLE']),
+        }, ['OPEN BATTLE']),
       ]),
     ])
   }

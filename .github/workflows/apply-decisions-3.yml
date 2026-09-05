@@ -1,0 +1,156 @@
+name: Apply decisions 3
+
+on:
+  push:
+    branches:
+      - chatgpt/cory-decisions-3
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/cory-decisions-3
+      - name: Apply approved changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Expected text not found in {path}: {old[:120]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # 1) Protein is additive. Calories become a numeric running total while
+          # preserving the existing "tracking" XP boolean for the vitality engine.
+          replace('src/domain/activities.js',
+              "  calories_logged: { field: 'caloriesLogged', entry: 'mark' },\n  protein_target: { field: 'proteinGrams', entry: 'number', mode: 'replace', scoredField: 'proteinTargetMet' },",
+              "  calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },\n  protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },")
+          replace('src/domain/activities.js',
+              "  const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0\n  return { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }",
+              "  const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0\n  const next = { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }\n  return spec.trackedField ? { ...next, [spec.trackedField]: true } : next")
+
+          activities_path = Path('data/activities.json')
+          data = json.loads(activities_path.read_text())
+          for activity in data['activities']:
+              if activity['id'] == 'calories_logged':
+                  activity['name'] = 'Calories'
+                  activity['short'] = 'Calories'
+                  activity['kind'] = 'derived'
+                  activity['unit'] = 'kcal'
+                  activity['help'] = 'Track a running calorie total. Set your daily target in Settings; the number itself is not scored.'
+              if activity['id'] == 'protein_target':
+                  activity['help'] = 'Daily goal is at least 0.8 grams per pound of your latest recorded body weight. Add protein through the day.'
+          activities_path.write_text(json.dumps(data, indent=2) + '\n')
+
+          # 2) Calorie target lives in the profile and decorates Today just like
+          # the dynamic protein target.
+          replace('src/app/daily.js',
+              "  async function resolveProteinDay(day) {\n    const goal = await proteinGoalFor(day.date, day)\n    if (goal === null) return day\n    if (typeof day.proteinGrams !== 'number') return { ...day, proteinGoalGrams: goal }\n    return {\n      ...day,\n      proteinGoalGrams: goal,\n      proteinTargetMet: proteinGoalMet(day.proteinGrams, goal),\n    }\n  }",
+              "  async function resolveProteinDay(day) {\n    const goal = await proteinGoalFor(day.date, day)\n    if (goal === null) return day\n    if (typeof day.proteinGrams !== 'number') return { ...day, proteinGoalGrams: goal }\n    return {\n      ...day,\n      proteinGoalGrams: goal,\n      proteinTargetMet: proteinGoalMet(day.proteinGrams, goal),\n    }\n  }\n\n  async function calorieTarget() {\n    const profile = await storage.get('profile', 'profile')\n    const value = Number(profile?.calorieTarget)\n    return Number.isFinite(value) && value > 0 ? Math.round(value) : null\n  }\n\n  async function setCalorieTarget(value) {\n    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }\n    const parsed = Number(value)\n    const target = Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null\n    await storage.put('profile', { ...profile, calorieTarget: target })\n    return target\n  }")
+          replace('src/app/daily.js',
+              "  function decorate(activity, day, schedule, dynamicProteinGoal = null) {",
+              "  function decorate(activity, day, schedule, dynamicProteinGoal = null, dynamicCalorieTarget = null) {")
+          replace('src/app/daily.js',
+              "    if (activity.id === 'protein_target') {\n      return { ...decorated, dailyCap: day.proteinGoalGrams ?? dynamicProteinGoal ?? null }\n    }\n    return decorated",
+              "    if (activity.id === 'protein_target') {\n      return { ...decorated, dailyCap: day.proteinGoalGrams ?? dynamicProteinGoal ?? null }\n    }\n    if (activity.id === 'calories_logged') {\n      return { ...decorated, dailyCap: dynamicCalorieTarget ?? null }\n    }\n    return decorated")
+          replace('src/app/daily.js',
+              "    const proteinGoal = await proteinGoalFor(date, day)\n    const { outstanding, logged } = splitActivities(activities, day)",
+              "    const proteinGoal = await proteinGoalFor(date, day)\n    const caloriesGoal = await calorieTarget()\n    const { outstanding, logged } = splitActivities(activities, day)")
+          replace('src/app/daily.js',
+              "      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal)),\n      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal)),",
+              "      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),\n      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),")
+          replace('src/app/daily.js',
+              "    const proteinGoal = await proteinGoalFor(todayDate, todayDay)\n    const completedOnDay",
+              "    const proteinGoal = await proteinGoalFor(todayDate, todayDay)\n    const caloriesGoal = await calorieTarget()\n    const completedOnDay")
+          replace('src/app/daily.js',
+              "          ...decorate(activity, todayDay, schedule, proteinGoal),",
+              "          ...decorate(activity, todayDay, schedule, proteinGoal, caloriesGoal),")
+          replace('src/app/daily.js',
+              "    dailyIds, setDaily, activitySchedule, setCadence,",
+              "    dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,")
+
+          # 3) Today quick-adds protein and understands kcal labels.
+          replace('src/ui/screens/today.js',
+              "  water: [8, 12, 16],",
+              "  water: [8, 12, 16],\n  protein_target: [20, 30, 40],")
+          replace('src/ui/screens/today.js',
+              "  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g' }[activity.unit] ?? ''",
+              "  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal' }[activity.unit] ?? ''")
+          replace('src/ui/screens/today.js',
+              "          : activity.unit === 'g' ? 'g'\n            : activity.id === 'body_metrics' ? 'lb' : ''",
+              "          : activity.unit === 'g' ? 'g'\n            : activity.unit === 'kcal' ? 'kcal'\n              : activity.id === 'body_metrics' ? 'lb' : ''")
+
+          # 4) Exercise frequency overrides live in the profile. When an override
+          # exists, progress counts actual workout occurrences (unique sessions)
+          # containing that exercise, including ad-hoc extra sessions.
+          replace('src/app/workout.js',
+              "  /**\n   * The last time this exercise was performed, for the prefill and the header.",
+              "  async function exerciseFrequencyTargets() {\n    const profile = await storage.get('profile', 'profile')\n    const stored = profile?.exerciseWeeklyTargets ?? {}\n    return Object.fromEntries(Object.entries(stored).flatMap(([id, raw]) => {\n      const value = Math.max(1, Math.min(7, Math.round(Number(raw) || 0)))\n      return Number(raw) > 0 ? [[id, value]] : []\n    }))\n  }\n\n  async function setExerciseFrequencyTarget(exerciseId, target = null) {\n    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }\n    const next = { ...(profile.exerciseWeeklyTargets ?? {}) }\n    const parsed = Number(target)\n    if (target === null || target === '' || !Number.isFinite(parsed) || parsed <= 0) delete next[exerciseId]\n    else next[exerciseId] = Math.max(1, Math.min(7, Math.round(parsed)))\n    await storage.put('profile', { ...profile, exerciseWeeklyTargets: next })\n    return next\n  }\n\n  /**\n   * The last time this exercise was performed, for the prefill and the header.")
+          replace('src/app/workout.js',
+              "  async function weekStatus() {\n    const { active, logs } = await currentWeekLogs()\n    if (!active) return null\n    return {\n      ...active,\n      week: weekTasks(active.program, logs),\n      hardSets: weeklyHardSetsCompleted(logs, await exerciseMap(), active.program.weeklyTargets ?? {}),\n    }\n  }",
+              "  async function weekStatus() {\n    const { active, logs } = await currentWeekLogs()\n    if (!active) return null\n    const targets = await exerciseFrequencyTargets()\n    const sessionsByExercise = new Map()\n    for (const log of logs) {\n      if (log.isWarmup) continue\n      if (!sessionsByExercise.has(log.exerciseId)) sessionsByExercise.set(log.exerciseId, new Set())\n      sessionsByExercise.get(log.exerciseId).add(log.sessionId)\n    }\n    return {\n      ...active,\n      week: weekTasks(active.program, logs),\n      hardSets: weeklyHardSetsCompleted(logs, await exerciseMap(), active.program.weeklyTargets ?? {}),\n      exerciseFrequencyTargets: targets,\n      exerciseFrequencyDone: Object.fromEntries([...sessionsByExercise].map(([id, sessions]) => [id, sessions.size])),\n    }\n  }")
+          replace('src/app/workout.js',
+              "    activeProgram, prepareSlot, exerciseHistory, programGuide,",
+              "    activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,")
+
+          # 5) Apply exercise overrides to THIS WEEK. Planned slots are used first;
+          # once they are exhausted, another tap opens the exercise ad-hoc.
+          replace('src/ui/screens/today.js',
+              "    return [...byExercise.values()].sort((a, b) => {\n      const aComplete = a.done >= a.target",
+              "    const overrides = weekProgram?.exerciseFrequencyTargets ?? {}\n    const frequencyDone = weekProgram?.exerciseFrequencyDone ?? {}\n    for (const group of byExercise.values()) {\n      group.programTarget = group.target\n      const override = Number(overrides[group.id])\n      if (Number.isFinite(override) && override > 0) {\n        group.target = override\n        group.done = frequencyDone[group.id] ?? 0\n        group.frequencyOverride = true\n      }\n    }\n    return [...byExercise.values()].sort((a, b) => {\n      const aComplete = a.done >= a.target")
+          replace('src/ui/screens/today.js',
+              "      onclick: () => {\n        if (!ref) return\n        onOpenSlot({",
+              "      onclick: () => {\n        if (group.frequencyOverride && !group.firstOpen && group.done < group.target) {\n          onOpenSlot({ exerciseId: group.id, extra: true })\n          return\n        }\n        if (!ref) return\n        onOpenSlot({")
+
+          # 6) Settings: calorie target plus per-exercise PROGRAM/custom frequency.
+          replace('src/ui/screens/settings.js',
+              "export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {",
+              "export function createSettingsScreen({ storage, daily, workout, maintenance, onSetup }) {")
+          replace('src/ui/screens/settings.js',
+              "  async function load() {\n    const profile = await storage.get('profile', 'profile')\n    const schedule = await daily.activitySchedule()",
+              "  async function load() {\n    const profile = await storage.get('profile', 'profile')\n    const schedule = await daily.activitySchedule()\n    const weekStatus = workout ? await workout.weekStatus() : null\n    const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}\n    const exerciseGroups = new Map()\n    for (const day of weekStatus?.week?.days ?? []) {\n      for (const task of day.tasks ?? []) {\n        const id = task.slot.exerciseId\n        const row = exerciseGroups.get(id) ?? { id, name: task.slot.name, programTarget: 0 }\n        row.programTarget += 1\n        exerciseGroups.set(id, row)\n      }\n    }")
+          replace('src/ui/screens/settings.js',
+              "      el('section.card', { dataset: { section: 'cadence' } }, [",
+              "      el('section.card', { dataset: { section: 'targets' } }, [\n        el('h2.block__title', { text: 'Daily targets' }),\n        el('p.block__hint', { text: 'Protein is calculated from body weight. Calories are your configurable daily target.' }),\n        el('div.setting', {}, [\n          el('span.setting__label', { text: 'Calories' }),\n          (() => {\n            const input = el('input.entry__value', {\n              type: 'text', inputmode: 'numeric', value: profile?.calorieTarget ?? '', placeholder: 'Not set',\n              'aria-label': 'Daily calorie target',\n            })\n            return el('span.setting__value', {}, [\n              input,\n              el('button.setup__cadence', {\n                type: 'button', onclick: async () => { await daily.setCalorieTarget(input.value); await load() },\n              }, ['SAVE']),\n            ])\n          })(),\n        ]),\n      ]),\n\n      el('section.card', { dataset: { section: 'cadence' } }, [")
+          replace('src/ui/screens/settings.js',
+              "      el('section.card', { dataset: { section: 'version' } }, [",
+              "      exerciseGroups.size > 0 && el('section.card', { dataset: { section: 'exercise-frequency' } }, [\n        el('h2.block__title', { text: 'Exercise frequency' }),\n        el('p.block__hint', { text: 'PROGRAM follows the current plan. Choose a number to override how often that exercise should be completed this week.' }),\n        el('div.setup__cadencelist', {}, [...exerciseGroups.values()].sort((a, b) => a.name.localeCompare(b.name)).map((exercise) =>\n          el('div.setup__cadencerow', {}, [\n            el('div.setup__cadencehead', {}, [\n              el('span.setup__activityname', { text: exercise.name }),\n              el('select.setup__weeklyselect', {\n                value: exerciseTargets[exercise.id] ? String(exerciseTargets[exercise.id]) : '',\n                'aria-label': `${exercise.name} weekly frequency`,\n                onchange: async (event) => {\n                  await workout.setExerciseFrequencyTarget(exercise.id, event.target.value === '' ? null : Number(event.target.value))\n                  await load()\n                },\n              }, [\n                el('option', { value: '' }, [`PROGRAM (${exercise.programTarget}×/wk)`]),\n                ...WEEKLY_OPTIONS.map((value) => el('option', { value: String(value) }, [`${value}×/wk`])),\n              ]),\n            ]),\n          ]))),\n      ]),\n\n      el('section.card', { dataset: { section: 'version' } }, [")
+
+          replace('src/ui/app.js',
+              "  const settings = createSettingsScreen({ storage, daily, maintenance, onSetup })",
+              "  const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })")
+          replace('src/ui/app.js',
+              "    onOpenSlot: (slot) => startSession({ slotTask: slot }),",
+              "    onOpenSlot: (slot) => slot?.extra\n      ? startSession({ exerciseId: slot.exerciseId })\n      : startSession({ slotTask: slot }),")
+
+          # Tests and version.
+          replace('src/app/daily.protein.test.js',
+              "  let result = await daily.log('protein_target', 131)\n  assert.equal(result.day.proteinGrams, 131)\n  assert.equal(result.day.proteinTargetMet, false)\n  assert.equal(result.xpBySource['vitality.protein'] ?? 0, 0)\n\n  result = await daily.log('protein_target', 132)\n  assert.equal(result.day.proteinTargetMet, true)",
+              "  let result = await daily.log('protein_target', 60)\n  assert.equal(result.day.proteinGrams, 60)\n  result = await daily.log('protein_target', 71)\n  assert.equal(result.day.proteinGrams, 131, 'protein entries accumulate through the day')\n  assert.equal(result.day.proteinTargetMet, false)\n  assert.equal(result.xpBySource['vitality.protein'] ?? 0, 0)\n\n  result = await daily.log('protein_target', 1)\n  assert.equal(result.day.proteinGrams, 132)\n  assert.equal(result.day.proteinTargetMet, true)")
+
+          Path('src/app/daily.calories.test.js').write_text("""import { test } from 'node:test'\nimport assert from 'node:assert/strict'\nimport { readFileSync } from 'node:fs'\nimport { loadBalance } from '../../test/helpers/balance.js'\nimport { createMemoryStorage } from '../adapters/storage/memory-storage.js'\nimport { fixedClock } from '../adapters/clock/clock.js'\nimport { createDailyService } from './daily.js'\nimport { ensureProfile } from './seed.js'\n\nconst balance = loadBalance()\nconst catalogue = JSON.parse(readFileSync(new URL('../../data/activities.json', import.meta.url), 'utf8'))\n\nasync function fresh() {\n  const storage = createMemoryStorage()\n  await storage.open()\n  const clock = fixedClock('2026-09-05T09:00:00.000Z')\n  await ensureProfile(storage, clock)\n  return { storage, daily: createDailyService({ storage, clock, balance, catalogue }) }\n}\n\nconst row = (today) => [...today.outstanding, ...today.logged].find((item) => item.id === 'calories_logged')\n\ntest('calories are numeric, additive, and use a configurable target without scoring the number', async () => {\n  const { daily } = await fresh()\n  await daily.setCalorieTarget(2200)\n  assert.equal(row(await daily.today()).dailyCap, 2200)\n\n  let result = await daily.log('calories_logged', 500)\n  assert.equal(result.day.calories, 500)\n  assert.equal(result.day.caloriesLogged, true)\n  const firstXp = result.xpBySource['vitality.calories']\n  assert.ok(firstXp > 0)\n\n  result = await daily.log('calories_logged', 700)\n  assert.equal(result.day.calories, 1200)\n  assert.equal(result.xpBySource['vitality.calories'] ?? 0, 0, 'more calories do not mint more tracking XP')\n\n  result = await daily.log('calories_logged', 1800, { mode: 'replace' })\n  assert.equal(result.day.calories, 1800, 'manual correction can set the running total')\n})\n""")
+
+          with Path('src/app/workout.test.js').open('a') as f:
+              f.write("""\n\ntest('exercise frequency can override the program and counts extra workout occurrences', async () => {\n  const { workout } = await freshApp()\n  await workout.setExerciseFrequencyTarget('squat_bb', 3)\n  assert.equal((await workout.exerciseFrequencyTargets()).squat_bb, 3)\n\n  const first = await workout.startSession(null)\n  await workout.logSet(first, { exerciseId: 'squat_bb', weight: 145, reps: 8 })\n  await workout.finishSession(first, { durationMinutes: 10 })\n  const second = await workout.startSession(null)\n  await workout.logSet(second, { exerciseId: 'squat_bb', weight: 145, reps: 8 })\n  await workout.finishSession(second, { durationMinutes: 10 })\n\n  const week = await workout.weekStatus()\n  assert.equal(week.exerciseFrequencyTargets.squat_bb, 3)\n  assert.equal(week.exerciseFrequencyDone.squat_bb, 2)\n})\n""")
+
+          replace('src/version.js', "export const VERSION = '0.11.4 (8)'", "export const VERSION = '0.11.5 (8)'")
+          PY
+
+      - name: Commit applied changes
+        shell: bash
+        run: |
+          git config user.name "Tempered CI"
+          git config user.email "actions@github.com"
+          git add src data
+          git commit -m "Apply additive nutrition and exercise frequency decisions"
+          git push origin HEAD:chatgpt/cory-decisions-3

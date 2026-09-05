@@ -405,7 +405,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       if (!date) return false
       return isInSameProgramWeek(active.state.startedOn, date, today, daysBetween)
     })
-    return { active, logs }
+    return { active, logs, sessions }
   }
 
   /** Today's prescribed slots, as tasks. */
@@ -422,21 +422,23 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   /** The whole week: prescribed, done, remaining, and hard sets against target. */
   async function weekStatus() {
-    const { active, logs } = await currentWeekLogs()
+    const { active, logs, sessions } = await currentWeekLogs()
     if (!active) return null
     const targets = await exerciseFrequencyTargets()
-    const sessionsByExercise = new Map()
+    const daysByExercise = new Map()
     for (const log of logs) {
       if (log.isWarmup) continue
-      if (!sessionsByExercise.has(log.exerciseId)) sessionsByExercise.set(log.exerciseId, new Set())
-      sessionsByExercise.get(log.exerciseId).add(log.sessionId)
+      const date = sessions.get(log.sessionId)?.date
+      if (!date) continue
+      if (!daysByExercise.has(log.exerciseId)) daysByExercise.set(log.exerciseId, new Set())
+      daysByExercise.get(log.exerciseId).add(date)
     }
     return {
       ...active,
       week: weekTasks(active.program, logs),
       hardSets: weeklyHardSetsCompleted(logs, await exerciseMap(), active.program.weeklyTargets ?? {}),
       exerciseFrequencyTargets: targets,
-      exerciseFrequencyDone: Object.fromEntries([...sessionsByExercise].map(([id, sessions]) => [id, sessions.size])),
+      exerciseFrequencyDone: Object.fromEntries([...daysByExercise].map(([id, days]) => [id, days.size])),
     }
   }
 

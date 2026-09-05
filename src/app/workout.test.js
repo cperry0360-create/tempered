@@ -390,14 +390,15 @@ test('Grit pays for the work, not for the gap between sittings', async () => {
 })
 
 
-test('exercise frequency can override the program and counts extra workout occurrences', async () => {
-  const { workout } = await freshApp()
+test('exercise frequency can override the program and counts distinct training days', async () => {
+  const { workout, clock } = await freshApp()
   await workout.setExerciseFrequencyTarget('squat_bb', 3)
   assert.equal((await workout.exerciseFrequencyTargets()).squat_bb, 3)
 
   const first = await workout.startSession(null)
   await workout.logSet(first, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
   await workout.finishSession(first, { durationMinutes: 10 })
+  clock.advanceDays(1)
   const second = await workout.startSession(null)
   await workout.logSet(second, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
   await workout.finishSession(second, { durationMinutes: 10 })

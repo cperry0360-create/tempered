@@ -73,7 +73,7 @@ test('restored lifestyle trackers are available and score only when logged', asy
     assert.ok(daily.activities.some((a) => a.id === id), `${id} is missing from the catalogue`)
   }
 
-  const calories = await daily.log('calories_logged')
+  const calories = await daily.log('calories_logged', 500)
   assert.equal(calories.xpByAttribute.vitality, balance.vitality.caloriesLoggedXp)
   const alcohol = await daily.log('alcohol_free')
   assert.equal(alcohol.xpByAttribute.vitality, balance.vitality.alcoholFreeXp)

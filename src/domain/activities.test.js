@@ -182,7 +182,7 @@ test('every activity states how it is entered, so no screen has to guess', () =>
 test('the seed starts with the intended core daily habits', () => {
   const defaults = defaultDailyIds(ACTIVITIES)
   assert.deepEqual([...defaults].sort(),
-    ['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free'].sort(),
+    ['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics'].sort(),
     'the first-run daily set should match the intended core habits')
 })
 

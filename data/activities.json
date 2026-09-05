@@ -41,7 +41,7 @@
       "attribute": "vitality",
       "daily": true,
       "kind": "derived",
-      "help": "Track a running calorie total. Set your daily target in Settings; the number itself is not scored.",
+      "help": "Track a running calorie total. Set your daily target in Settings; the number itself is not scored and going over never removes XP.",
       "unit": "kcal"
     },
     {
@@ -85,9 +85,9 @@
       "name": "Logged body metrics",
       "short": "Body",
       "attribute": "vitality",
-      "daily": false,
+      "daily": true,
       "kind": "marked",
-      "help": "The habit is scored. The number never is."
+      "help": "Daily weigh-in for trend averages. The habit is scored; the number never is."
     },
     {
       "id": "steps",

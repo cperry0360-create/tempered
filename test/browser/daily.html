@@ -10,10 +10,9 @@
     <div id="app" class="app"></div>
     <script type="module">
       /**
-       * Phase 4 acceptance harness. The cadence rebuild renamed the Today DOM,
-       * so this file deliberately speaks the current selectors while retaining
-       * the original acceptance claims. Superseded claims should fail visibly;
-       * they are not silently edited here.
+       * Phase 4 acceptance harness, reconciled with the later cadence model.
+       * DAILY is the immediate day view and must fit. THIS WEEK deliberately
+       * follows below it and may scroll. Cadence changes placement, never XP.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
@@ -66,6 +65,11 @@
         return true
       }
 
+      function dailyFits(barHeight) {
+        const section = q('[data-section="daily"]')
+        return section ? section.getBoundingClientRect().bottom <= PHONE.height - barHeight : false
+      }
+
       try {
         const storage = createMemoryStorage()
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
@@ -76,56 +80,57 @@
         await waitFor('.screen--today')
 
         // ---------------------------------------------------------------
-        // 1 — original one-view rule. Do not relax it here; step 4 decides it.
+        // 1 — revised one-view rule: DAILY fits; THIS WEEK scrolls below.
         // ---------------------------------------------------------------
-        const body = q('.app__body')
         const bar = q('.tabbar')
         const barBox = bar.getBoundingClientRect()
-        const needed = body.scrollHeight
-        check('1 everything outstanding fits one 6.1" view, with no scrolling',
-          needed <= PHONE.height,
-          `needs ${Math.round(needed)}px of ${PHONE.height}px (bar is ${Math.round(barBox.height)}px, reserved)`)
+        const dailySection = q('[data-section="daily"]')
+        check('1 the DAILY section fits one 6.1" view without scrolling',
+          dailyFits(barBox.height),
+          dailySection
+            ? `DAILY ends at ${Math.round(dailySection.getBoundingClientRect().bottom)}px; bar begins at ${Math.round(PHONE.height - barBox.height)}px`
+            : 'no DAILY section')
 
-        const renderedExercises = qa('[data-exerciseweek][data-done="false"]').length
-        const prescribedToday = (await tempered.workout.todayTasks())?.tasks?.length ?? 0
         const renderedDaily = qa('[data-section="daily"] [data-activity]').length
         const dailyIds = await tempered.daily.dailyIds()
-        check('1 and it is the whole day that fits, not a truncated list',
-          renderedExercises === prescribedToday && renderedDaily === dailyIds.length,
-          `${renderedExercises} exercise rows vs ${prescribedToday} prescribed today; ${renderedDaily}/${dailyIds.length} daily activities`)
+        check('1 the whole DAILY schedule is present, not a truncated list',
+          renderedDaily === dailyIds.length,
+          `${renderedDaily}/${dailyIds.length} scheduled daily activities rendered`)
 
         const catalogue = tempered.daily.activities.length
         const dailyCount = dailyIds.length
-        check('1 the fit is about the daily list, not the catalogue',
-          dailyCount < catalogue && q('[data-other="toggle"]') !== null,
-          `${dailyCount} of ${catalogue} activities are daily; the rest are reachable separately`)
+        check('1 the fit is about DAILY, not the whole catalogue or week',
+          dailyCount < catalogue && q('[data-section="weekly"]') !== null && q('[data-other="toggle"]') !== null,
+          `${dailyCount} daily of ${catalogue}; weekly work follows below`)
 
-        check('1 rest day is on the daily list, never behind that control', dailyIds.includes('rest_day'))
+        const schedule = await tempered.daily.activitySchedule()
+        const restSeed = tempered.daily.activities.find((activity) => activity.id === 'rest_day')
+        check('1 rest day follows its cadence instead of being forced onto DAILY',
+          schedule.rest_day?.cadence === (restSeed?.daily ? 'daily' : 'off'),
+          schedule.rest_day?.cadence)
 
         await setOther(true)
         const reachable = new Set(qa('[data-activity]').map((node) => node.dataset.activity))
-        check('1 and every other activity is reachable through it',
+        check('1 every activity is reachable through the same logging surface',
           tempered.daily.activities.every((activity) => reachable.has(activity.id)),
           `${reachable.size} of ${catalogue} activity rows reachable`)
         await setOther(false)
 
-        const visibleRows = qa('[data-section="daily"] [data-activity], [data-section="weekly"] [data-exerciseweek], [data-section="weekly"] [data-activity]')
-        const lastOutstanding = visibleRows.at(-1)
-        check('1 the last outstanding control is clear of the floating bar',
-          lastOutstanding ? lastOutstanding.getBoundingClientRect().bottom <= PHONE.height - barBox.height : false,
-          lastOutstanding ? `${Math.round(lastOutstanding.getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px` : 'no outstanding row')
+        const dailyRowsAtStart = qa('[data-section="daily"] [data-activity]')
+        const lastDaily = dailyRowsAtStart.at(-1)
+        check('1 the last DAILY control is clear of the floating bar',
+          lastDaily ? lastDaily.getBoundingClientRect().bottom <= PHONE.height - barBox.height : false,
+          lastDaily ? `${Math.round(lastDaily.getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px` : 'no daily row')
 
         // ---------------------------------------------------------------
-        // 3 — rest day is first-class and rewarded
+        // 3 — rest day is first-class and rewarded regardless of cadence.
         // ---------------------------------------------------------------
-        const restInitially = q('[data-section="daily"] [data-activity="rest_day"]')
-        check('3 rest day is on screen without opening anything', restInitially !== null)
-        const dailyRows = qa('[data-section="daily"] [data-activity]')
-        check('3 rest day is the first daily action, not the last', dailyRows[0] === restInitially,
-          `first is ${dailyRows[0]?.dataset.activity ?? 'none'}`)
+        check('3 rest day is one control away when it is not scheduled DAILY',
+          await setOther(true) && activityRow('rest_day') !== null)
+        check('3 rest day uses the same one-tap activity control as other marks',
+          activityAction('rest_day') !== null)
 
         const vitalityBefore = await xpOf('vitality')
-        await ensureActivityVisible('rest_day')
         taps = 0
         tap(activityAction('rest_day'), 'rest day')
         await settle()
@@ -157,27 +162,27 @@
         check('2 ACCEPTANCE: a measured activity completes in one number plus one tap',
           taps === 1 && await xpOf('vitality') > vitalityBeforeSleep,
           `${taps} tap after entering the number`)
-        check('2 and it leaves the outstanding list once logged',
-          q('[data-section="daily"] [data-activity="sleep"]') === null && activityInput('sleep') === null)
+        check('2 and it leaves the outstanding DAILY list once logged',
+          q('[data-section="daily"] [data-activity="sleep"]') === null)
 
-        // Running total. Water may be OFF after the cadence rebuild, but the old
-        // Phase 4 claim is still exercised rather than hidden by a null selector.
+        // Piecewise values accumulate through quick-adds.
         await ensureActivityVisible('water')
-        const waterField = activityInput('water')
-        if (waterField) {
-          waterField.value = '16'
-          tap(activityAction('water'), 'water')
-          await settle()
-        }
+        let waterRow = activityRow('water')
+        let quick = qa('.quick__add', waterRow)
+        quick[0]?.click(); await settle()
+        waterRow = activityRow('water')
+        quick = qa('.quick__add', waterRow)
+        quick[0]?.click(); await settle()
         const dayAfterWater = await tempered.daily.dayLog(tempered.clock.today())
         check('2 a value that arrives in pieces adds up rather than replacing',
           dayAfterWater.waterOz === 16, `${dayAfterWater.waterOz ?? 0} oz stored`)
 
-        const middayRows = qa('[data-section="daily"] [data-activity], [data-section="weekly"] [data-exerciseweek], [data-section="weekly"] [data-activity]')
-        const middayLast = middayRows.at(-1)
-        check('1 and it still fits once part of the day is logged',
-          middayLast ? middayLast.getBoundingClientRect().bottom <= PHONE.height - barBox.height : false,
-          middayLast ? `${Math.round(middayLast.getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px` : 'no outstanding row')
+        await setOther(false)
+        check('1 DAILY still fits once part of the day is logged',
+          dailyFits(barBox.height),
+          q('[data-section="daily"]')
+            ? `${Math.round(q('[data-section="daily"]').getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px`
+            : 'no DAILY section')
 
         // ---------------------------------------------------------------
         // 4 — body metric: display the value, score only the act

@@ -19,9 +19,8 @@ import { xp as formatXp, shortDate } from '../format.js'
 /**
  * @param {object} deps
  * @param {ReturnType<import('../../app/character.js').createCharacterService>} deps.character
- * @param {() => void} deps.onSettings
  */
-export function createCharacterScreen({ character, onSettings, onBattle }) {
+export function createCharacterScreen({ character, onBattle }) {
   const root = el('div.screen.screen--character')
   /** @type {any} */ let view = null
   /** @type {string|null} */ let openAttribute = null
@@ -160,9 +159,6 @@ export function createCharacterScreen({ character, onSettings, onBattle }) {
           onclick: () => onBattle(),
         }, ['TODAY’S BATTLE']),
       ]),
-      el('button.button.button--quiet.button--wide', {
-        type: 'button', dataset: { tab: 'settings' }, onclick: onSettings,
-      }, ['SETTINGS']),
     ])
   }
 

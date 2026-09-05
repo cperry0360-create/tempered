@@ -12,6 +12,7 @@ import { el, replace } from '../dom.js'
 import { icon, iconForActivity } from '../icons.js'
 import { xp as formatXp } from '../format.js'
 import { ATTRIBUTE_IDS } from '../../domain/tiers.js'
+import { sortActivities } from '../../domain/activities.js'
 import { totalsByAttributeFromSources } from '../../domain/xp-engine.js'
 
 const QUICK_ADD = {
@@ -29,7 +30,7 @@ function quickAddFor(activity) {
 
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
-  return { hours: 'h', min: 'min', oz: 'oz' }[activity.unit] ?? ''
+  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps' }[activity.unit] ?? ''
 }
 
 function valueLabel(activity, value) {
@@ -40,6 +41,24 @@ function valueLabel(activity, value) {
         : activity.unit === 'steps' ? 'steps'
           : activity.id === 'body_metrics' ? 'lb' : ''
   return `${value}${unit ? ` ${unit}` : ''}`
+}
+
+/** A dailyCap is a real finish line, not merely an XP cap. */
+export function hasDailyGoal(activity) {
+  return Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0
+}
+
+/** Goal-based rows remain outstanding until the target is actually reached. */
+export function dailyGoalComplete(activity) {
+  if (!hasDailyGoal(activity)) return activity?.logged === true
+  return typeof activity.value === 'number' && activity.value >= activity.dailyCap
+}
+
+function dailyGoalLabel(activity) {
+  if (!hasDailyGoal(activity)) return null
+  const value = typeof activity.value === 'number' ? activity.value : 0
+  const unit = unitLabel(activity)
+  return `${value} / ${activity.dailyCap}${unit ? ` ${unit}` : ''}`
 }
 
 function dailyFill(activity) {
@@ -151,8 +170,6 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     ])
   }
 
-  const entryMode = (activity) => (quickAddFor(activity) ? { mode: 'set' } : {})
-
   function quickAdd(activity) {
     return el('span.quick', {}, quickAddFor(activity).map((amount) => el('button.quick__add', {
       type: 'button',
@@ -184,33 +201,52 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   }
 
   function entryRow(activity, weekly = null) {
+    const goal = !weekly && hasDailyGoal(activity)
+    const adding = activity.spec?.mode === 'add'
+    const unit = unitLabel(activity)
     const input = el('input.entry__value', {
       type: 'text', inputmode: 'decimal',
-      'aria-label': `${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+      placeholder: adding ? `+${unit || 'amount'}` : '',
+      'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
       onkeydown: (event) => {
-        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value, entryMode(activity)) }
+        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value) }
       },
     })
     const fill = weekly
       ? weekly.weeklyDone / weekly.weeklyTarget
       : dailyFill(activity)
 
-    return el('div.row.entry', { dataset: { activity: activity.id, kind: 'number', weekly: String(Boolean(weekly)) } }, [
+    const label = goal
+      ? el('span.entry__label', {}, [
+          el('span.row__name', { text: activity.short ?? activity.name }),
+          el('span.entry__progress', { text: dailyGoalLabel(activity) }),
+        ])
+      : el('span.row__name', {}, [
+          activity.short ?? activity.name,
+          !quickAddFor(activity) && el('span.entry__unit', { text: unit }),
+        ])
+
+    return el('div.row.entry', {
+      dataset: {
+        activity: activity.id,
+        kind: 'number',
+        weekly: String(Boolean(weekly)),
+        goal: String(goal),
+      },
+    }, [
       tile(activity.attribute, iconForActivity(activity.id)),
-      el('span.row__name', {}, [
-        activity.short ?? activity.name,
-        !quickAddFor(activity) && el('span.entry__unit', { text: unitLabel(activity) }),
-      ]),
+      label,
       weekly && el('span.row__value.weekly-row__count', {
         text: `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week${weekly.loggedToday && !weekly.complete ? ' · done today' : ''}`,
       }),
       ...(quickAddFor(activity) ? [quickAdd(activity)] : []),
       el('span.entry__field', {}, [input]),
       el('button.row__act.entry__confirm', {
-        type: 'button', 'aria-label': `Log ${activity.name}`,
-        onclick: () => record(activity, input.value, entryMode(activity)),
-      }, [ring(fill), icon('check')]),
+        type: 'button',
+        'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}`,
+        onclick: () => record(activity, input.value),
+      }, [ring(fill), icon(goal ? 'plus' : 'check')]),
       floatFor(activity.id),
     ])
   }
@@ -223,7 +259,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       el('span.row__value', {
         text: weekly
           ? `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week`
-          : valueLabel(activity, activity.value),
+          : (hasDailyGoal(activity) ? dailyGoalLabel(activity) : valueLabel(activity, activity.value)),
       }),
       el('span.row__act', {}, [ring(fill), icon('check')]),
     ])
@@ -267,8 +303,16 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   }
 
   function render() {
-    const dailyOutstanding = (day?.outstanding ?? []).filter((a) => a.cadence === 'daily')
-    const dailyLogged = (day?.logged ?? []).filter((a) => a.cadence === 'daily')
+    // `logged` means a value exists. For a goal-based tracker that is not the
+    // same thing as complete: 8 oz of water is progress toward the day, not a
+    // finished hydration task. Merge both halves back together, restore the
+    // intended activity order, then split by actual completion.
+    const dailyScheduled = sortActivities([
+      ...(day?.outstanding ?? []),
+      ...(day?.logged ?? []),
+    ].filter((a) => a.cadence === 'daily'))
+    const dailyOutstanding = dailyScheduled.filter((a) => !dailyGoalComplete(a))
+    const dailyLogged = dailyScheduled.filter((a) => dailyGoalComplete(a))
     const weeklyLifestyle = weekActivities?.activities ?? []
     const weeklyExercises = weeklyExerciseGroups()
 
@@ -278,7 +322,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const doneExercises = weeklyExercises.filter((a) => a.done >= a.target)
 
     const dailyDone = dailyLogged.length
-    const dailyTotal = dailyOutstanding.length + dailyDone
+    const dailyTotal = dailyScheduled.length
     const weeklyDone = weeklyLifestyle.reduce((sum, a) => sum + Math.min(a.weeklyDone, a.weeklyTarget), 0)
       + weeklyExercises.reduce((sum, a) => sum + Math.min(a.done, a.target), 0)
     const weeklyTotal = weeklyLifestyle.reduce((sum, a) => sum + a.weeklyTarget, 0)

@@ -76,6 +76,100 @@ function returnTab() {
 }
 
 /**
+ * Tempered-owned confirmation UI. Native browser confirms look like a different
+ * app, especially in an installed PWA, so cancellation stays inside the visual
+ * and accessibility system used everywhere else.
+ */
+export function confirmDiscardExercise(count) {
+  if (typeof document === 'undefined') return Promise.resolve(false)
+
+  return new Promise((resolve) => {
+    const previousFocus = document.activeElement
+    const overlay = document.createElement('div')
+    overlay.className = 'confirm-overlay'
+    overlay.dataset.confirm = 'discard-exercise'
+
+    const sheet = document.createElement('section')
+    sheet.className = 'confirm-sheet'
+    sheet.setAttribute('role', 'dialog')
+    sheet.setAttribute('aria-modal', 'true')
+    sheet.setAttribute('aria-labelledby', 'discard-exercise-title')
+    sheet.setAttribute('aria-describedby', 'discard-exercise-copy')
+
+    const eyebrow = document.createElement('p')
+    eyebrow.className = 'confirm-sheet__eyebrow'
+    eyebrow.textContent = 'WORKOUT'
+
+    const title = document.createElement('h2')
+    title.id = 'discard-exercise-title'
+    title.className = 'confirm-sheet__title'
+    title.textContent = 'DISCARD EXERCISE?'
+
+    const copy = document.createElement('p')
+    copy.id = 'discard-exercise-copy'
+    copy.className = 'confirm-sheet__copy'
+    copy.textContent = count > 0
+      ? `${count} logged set${count === 1 ? '' : 's'} from this exercise will be discarded. No XP will be awarded for them.`
+      : 'Nothing has been logged yet. Leaving will discard this exercise and award no XP.'
+
+    const actions = document.createElement('div')
+    actions.className = 'confirm-sheet__actions'
+
+    const keep = document.createElement('button')
+    keep.type = 'button'
+    keep.className = 'button confirm-sheet__keep'
+    keep.dataset.confirmAction = 'keep'
+    keep.textContent = 'KEEP WORKING'
+
+    const discard = document.createElement('button')
+    discard.type = 'button'
+    discard.className = 'button confirm-sheet__discard'
+    discard.dataset.confirmAction = 'discard'
+    discard.textContent = count > 0 ? 'DISCARD SETS' : 'DISCARD'
+
+    actions.append(keep, discard)
+    sheet.append(eyebrow, title, copy, actions)
+    overlay.append(sheet)
+    document.body.append(overlay)
+
+    let settled = false
+    const close = (answer) => {
+      if (settled) return
+      settled = true
+      document.removeEventListener('keydown', onKeyDown)
+      overlay.remove()
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus()
+      resolve(answer)
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        close(false)
+      }
+      if (event.key === 'Tab') {
+        const focusables = [keep, discard]
+        const current = focusables.indexOf(document.activeElement)
+        if (event.shiftKey && current <= 0) {
+          event.preventDefault()
+          discard.focus()
+        } else if (!event.shiftKey && current === focusables.length - 1) {
+          event.preventDefault()
+          keep.focus()
+        }
+      }
+    }
+
+    keep.addEventListener('click', () => close(false))
+    discard.addEventListener('click', () => close(true))
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close(false)
+    })
+    document.addEventListener('keydown', onKeyDown)
+    requestAnimationFrame(() => keep.focus())
+  })
+}
+
+/**
  * Installs the guard after bootstrap. The screen keeps its existing implementation;
  * we wrap the workout service only to know which session/logs belong to this visit.
  *
@@ -128,12 +222,7 @@ export function installSessionGuard({ app, workout, storage }) {
 
   async function discardAndExit({ confirm = true } = {}) {
     const count = currentLogIds.size
-    if (confirm) {
-      const message = count > 0
-        ? `Cancel this exercise? ${count} logged set${count === 1 ? '' : 's'} will be discarded and no XP will be awarded.`
-        : 'Cancel this exercise? Nothing will be saved and no XP will be awarded.'
-      if (!window.confirm(message)) return
-    }
+    if (confirm && !(await confirmDiscardExercise(count))) return
 
     await discardSessionWork({
       storage,

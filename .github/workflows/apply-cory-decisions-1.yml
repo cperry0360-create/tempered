@@ -1,0 +1,53 @@
+name: Apply Cory decisions 1
+
+on:
+  push:
+    branches:
+      - chatgpt/cory-decisions-1
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply approved mappings and weekly targets
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          programs_path = Path('data/programs.json')
+          data = json.loads(programs_path.read_text())
+          program = next(p for p in data['programs'] if p['id'] == 'november-physique')
+          targets = program['weeklyTargets']
+          targets['_comment'] = 'Weekly hard-set ranges per muscle group, from docs/10-task-model.md.'
+          targets['arms'] = [8, 12]
+          targets['core'] = [6, 10]
+          programs_path.write_text(json.dumps(data, indent=2) + '\n')
+
+          docs_path = Path('docs/10-task-model.md')
+          text = docs_path.read_text()
+          old = ('The program specifies weekly volume ranges per muscle group — Chest 12–16, Back 14–18,\n'
+                 'Quads 10–14, Hamstrings/glutes 10–14 and Shoulders 12–18. Groups without a configured\n'
+                 'range are still counted and shown; the app does not invent a target for them.')
+          new = ('The program specifies weekly volume ranges per muscle group — Chest 12–16, Back 14–18,\n'
+                 'Quads 10–14, Hamstrings/glutes 10–14, Shoulders 12–18, Arms 8–12 and Core 6–10.\n'
+                 'Groups without a configured range are still counted and shown; the app does not invent\n'
+                 'a target for them.')
+          if old not in text:
+              raise SystemExit('Expected weekly target paragraph not found in docs/10-task-model.md')
+          docs_path.write_text(text.replace(old, new))
+          PY
+
+          git config user.name "Tempered CI"
+          git config user.email "actions@github.com"
+          git add data/programs.json docs/10-task-model.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply Cory-approved weekly muscle targets"
+            git push origin HEAD:chatgpt/cory-decisions-1
+          fi

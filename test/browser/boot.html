@@ -48,11 +48,13 @@
           document.querySelector('.shell__wordmark') === null)
 
         // Cheap guards against gross CSS failure. A DOM assertion passes happily
-        // on a completely unstyled page, so check the design system applied.
+        // on a completely unstyled page, so check the current forest design system.
         const bodyStyle = getComputedStyle(document.body)
-        // docs/04-design-system.md: #1c1c1e, sampled from the reference.
-        check('the dark ground is painted', bodyStyle.backgroundColor === 'rgb(28, 28, 30)',
-          bodyStyle.backgroundColor)
+        const rootStyle = getComputedStyle(document.documentElement)
+        check('the night-forest ground is painted',
+          bodyStyle.backgroundImage.includes('gradient')
+          && rootStyle.getPropertyValue('--bg-3').trim() === '#237494',
+          `${rootStyle.getPropertyValue('--bg-0').trim()} -> ${rootStyle.getPropertyValue('--bg-3').trim()}`)
         check('numbers are tabular, so weights do not shift as they change',
           bodyStyle.fontVariantNumeric.includes('tabular-nums'), bodyStyle.fontVariantNumeric)
 

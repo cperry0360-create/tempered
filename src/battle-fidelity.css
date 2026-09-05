@@ -1,0 +1,356 @@
+/*
+ * Fidelity overrides for the Daily Battle.
+ *
+ * The original mobile breakpoint reflowed the mockup into a tall app form.
+ * This file deliberately preserves the reference screen's game composition:
+ * compact header, wide battlefield, small staged sprites, five actions in one
+ * row, and log + rewards sharing a lower strip.
+ */
+
+@media (max-width: 560px) {
+  .screen--battle {
+    max-width: none;
+  }
+
+  .screen--battle .battle-shell {
+    border: 1px solid #34475a;
+    border-radius: 10px;
+  }
+
+  .screen--battle .battle__head {
+    min-height: 54px;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .screen--battle .battle__brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .screen--battle .battle__brand-mark {
+    display: block;
+    width: 24px;
+    height: 18px;
+    box-shadow: inset 0 -4px 0 #7894af;
+  }
+
+  .screen--battle .battle__brand-name {
+    flex: none;
+    font-size: 21px;
+  }
+
+  .screen--battle .battle__tagline {
+    width: auto;
+    min-width: 0;
+    padding-left: 0;
+    overflow: hidden;
+    font-size: 6px;
+    letter-spacing: 0.11em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .screen--battle .battle__daily {
+    flex: none;
+    gap: 1px;
+  }
+
+  .screen--battle .battle__daily-title {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .screen--battle .battle__daily-xp {
+    display: block;
+    max-width: 92px;
+    overflow: hidden;
+    font-size: 5px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .screen--battle .fight {
+    height: 226px;
+    min-height: 226px;
+    background-position: center center;
+  }
+
+  .screen--battle .fighter {
+    width: 50%;
+    clip-path: none !important;
+  }
+
+  .screen--battle .fighter[data-side='hero'] {
+    left: 0;
+    right: auto;
+  }
+
+  .screen--battle .fighter[data-side='enemy'] {
+    left: auto;
+    right: 0;
+  }
+
+  .screen--battle .fighter__panel {
+    top: 8px;
+    width: calc(100% - 12px);
+    gap: 3px;
+    padding: 6px 7px 7px;
+    border-width: 1px;
+    border-radius: 5px;
+    box-shadow: 0 3px 0 rgba(9, 15, 21, 0.38);
+  }
+
+  .screen--battle .fighter[data-side='hero'] .fighter__panel {
+    left: 6px;
+  }
+
+  .screen--battle .fighter[data-side='enemy'] .fighter__panel {
+    right: 6px;
+  }
+
+  .screen--battle .fighter__panel-head {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .screen--battle .fighter__name {
+    font-size: 11px;
+    line-height: 1.05;
+  }
+
+  .screen--battle .fighter__meta {
+    font-size: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .screen--battle .battle__stat-row {
+    gap: 3px;
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .screen--battle .battle__stat-icon {
+    width: 10px;
+    font-size: 10px;
+  }
+
+  .screen--battle .battle__focus {
+    gap: 3px;
+    margin-top: 1px;
+  }
+
+  .screen--battle .meter {
+    height: 5px;
+    border-radius: 2px;
+  }
+
+  .screen--battle .fighter__visual,
+  .screen--battle .fighter[data-boss='true'] .fighter__visual {
+    bottom: 13px;
+    width: 94px;
+    height: 94px;
+  }
+
+  .screen--battle .fighter[data-side='hero'] .fighter__visual {
+    left: 30%;
+    transform: translateX(-50%);
+  }
+
+  .screen--battle .fighter[data-side='enemy'] .fighter__visual {
+    right: 30%;
+    transform: translateX(50%);
+  }
+
+  .screen--battle .fighter__sprite {
+    filter: drop-shadow(0 4px 0 rgba(23, 34, 32, 0.18));
+  }
+
+  .screen--battle .fight__vs {
+    top: auto;
+    bottom: 7px;
+    padding: 3px 7px;
+    font-size: 7px;
+  }
+
+  .screen--battle .battle__lower {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .screen--battle .battle__main {
+    gap: 6px;
+  }
+
+  .screen--battle .battle-actions {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .screen--battle .battle-action,
+  .screen--battle .battle-action[data-action='auto'],
+  .screen--battle .battle-action[data-action='skip'] {
+    min-height: 66px;
+    gap: 2px;
+    padding: 5px 2px;
+    border-width: 1px;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(3, 8, 12, 0.24);
+  }
+
+  .screen--battle .battle-action__icon {
+    min-height: 18px;
+    font-size: 16px;
+  }
+
+  .screen--battle .battle-action__title {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .screen--battle .battle-action__sub {
+    min-height: 14px;
+    font-size: 5.5px;
+    line-height: 1.1;
+  }
+
+  .screen--battle .battle-log {
+    min-height: 88px;
+    border-width: 1px;
+    border-radius: 4px;
+  }
+
+  .screen--battle .feed {
+    gap: 4px;
+    padding: 8px 9px;
+  }
+
+  .screen--battle .feed__line {
+    min-height: 12px;
+    gap: 6px;
+    font-size: 7px;
+    line-height: 1.2;
+  }
+
+  .screen--battle .feed__cursor {
+    font-size: 9px;
+  }
+
+  .screen--battle .battle__rewards-preview {
+    grid-template-columns: 1fr;
+    align-items: start;
+    align-content: start;
+    gap: 7px;
+    padding: 8px 7px;
+    border-width: 1px;
+    border-radius: 4px;
+  }
+
+  .screen--battle .battle__rewards-title {
+    grid-column: auto;
+    margin: 0 0 1px;
+    font-size: 6px;
+    line-height: 1.15;
+  }
+
+  .screen--battle .battle__reward-row {
+    grid-template-columns: 14px minmax(0, 1fr);
+    gap: 4px;
+    font-size: 6px;
+  }
+
+  .screen--battle .battle__reward-glyph {
+    width: 13px;
+    height: 13px;
+    font-size: 11px;
+  }
+
+  .screen--battle .battle__reward-row[data-noxp='true'] .battle__reward-glyph {
+    border-width: 1px;
+    font-size: 8px;
+  }
+
+  .screen--battle .battle__reward-note {
+    grid-column: auto;
+    font-size: 5px;
+    line-height: 1.15;
+  }
+
+  .screen--battle .battle__utility {
+    padding: 0 7px 6px;
+  }
+
+  .screen--battle .battle__utility .button {
+    min-height: 28px;
+    padding: 5px 8px;
+    font-size: 8px;
+  }
+
+  .screen--battle .battle__footer {
+    min-height: 26px;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    padding: 5px 8px;
+    font-size: 5.5px;
+  }
+
+  .screen--battle .outcome {
+    margin: 0 7px 7px;
+  }
+}
+
+@media (max-width: 380px) {
+  .screen--battle .battle__brand-name {
+    font-size: 19px;
+  }
+
+  .screen--battle .battle__tagline {
+    display: none;
+  }
+
+  .screen--battle .battle__daily-xp {
+    display: none;
+  }
+
+  .screen--battle .fight {
+    height: 214px;
+    min-height: 214px;
+  }
+
+  .screen--battle .fighter__visual,
+  .screen--battle .fighter[data-boss='true'] .fighter__visual {
+    width: 88px;
+    height: 88px;
+  }
+
+  .screen--battle .battle__lower {
+    grid-template-columns: minmax(0, 1fr) 92px;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .screen--battle .battle-actions {
+    gap: 3px;
+  }
+
+  .screen--battle .battle-action,
+  .screen--battle .battle-action[data-action='auto'],
+  .screen--battle .battle-action[data-action='skip'] {
+    min-height: 61px;
+  }
+
+  .screen--battle .battle-action__title {
+    font-size: 8px;
+  }
+
+  .screen--battle .battle-action__sub {
+    font-size: 5px;
+  }
+}

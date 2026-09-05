@@ -1,5 +1,5 @@
 {
-  "_comment": "Non-workout trackable activities. kind: derived reads a value, marked is a toggle. short is the one-word label a compact tile uses; name is the prose one. daily is the DEFAULT for whether this appears on Today \u2014 the user's own list lives on the profile and is set during setup.",
+  "_comment": "Non-workout trackable activities. daily is the default cadence only; Phase 7 lets the user set OFF, DAILY, or X/week.",
   "activities": [
     {
       "id": "sleep",
@@ -9,10 +9,7 @@
       "daily": true,
       "kind": "derived",
       "unit": "hours",
-      "band": [
-        7,
-        9
-      ],
+      "band": [7, 9],
       "help": "Scored highest between seven and nine hours. More is not better."
     },
     {
@@ -20,7 +17,7 @@
       "name": "Water",
       "short": "Water",
       "attribute": "vitality",
-      "daily": true,
+      "daily": false,
       "kind": "derived",
       "unit": "oz",
       "dailyCap": 120
@@ -35,22 +32,46 @@
       "help": "Rewards the honesty of logging, not the numbers."
     },
     {
+      "id": "calories_logged",
+      "name": "Tracked calories",
+      "short": "Calories",
+      "attribute": "vitality",
+      "daily": true,
+      "kind": "marked",
+      "help": "Rewards tracking. The calorie number itself is not scored."
+    },
+    {
       "id": "protein_target",
       "name": "Hit protein target",
       "short": "Protein",
       "attribute": "vitality",
       "daily": false,
-      "kind": "derived",
-      "unit": "g"
+      "kind": "marked"
+    },
+    {
+      "id": "alcohol_free",
+      "name": "Alcohol-free day",
+      "short": "Alcohol-free",
+      "attribute": "vitality",
+      "daily": true,
+      "kind": "marked"
     },
     {
       "id": "rest_day",
       "name": "Took a rest day",
       "short": "Rest",
       "attribute": "vitality",
-      "daily": true,
+      "daily": false,
       "kind": "marked",
-      "help": "Recovery is training. This is a rewarded action, not an absence."
+      "help": "Recovery is training. This is rewarded when you intentionally take a rest day."
+    },
+    {
+      "id": "sauna",
+      "name": "Sauna",
+      "short": "Sauna",
+      "attribute": "vitality",
+      "daily": false,
+      "kind": "marked"
     },
     {
       "id": "body_metrics",

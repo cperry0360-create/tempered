@@ -37,8 +37,9 @@ not XP.
 ## Weekly hard-set targets
 
 The program specifies weekly volume ranges per muscle group — Chest 12–16, Back 14–18,
-Quads 10–14, Hamstrings/glutes 10–14 and Shoulders 12–18. Groups without a configured
-range are still counted and shown; the app does not invent a target for them.
+Quads 10–14, Hamstrings/glutes 10–14, Shoulders 12–18, Arms 8–12 and Core 6–10.
+Groups without a configured range are still counted and shown; the app does not invent
+a target for them.
 
 The weekly view shows **hard sets completed against target, per muscle group**, derived
 from logged sets and the exercise library's muscle activation data. This is why rollover

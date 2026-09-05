@@ -7,7 +7,7 @@
       "weeks": 8,
       "note": "Upper-body-biased hypertrophy. Deload at week 8.",
       "weeklyTargets": {
-        "_comment": "Weekly hard-set ranges per muscle group, from docs/10-task-model.md. Groups the doc did not name carry no target: completed sets are still counted and shown, just not against a number.",
+        "_comment": "Weekly hard-set ranges per muscle group, from docs/10-task-model.md.",
         "chest": [
           12,
           16
@@ -27,6 +27,14 @@
         "shoulders": [
           12,
           18
+        ],
+        "arms": [
+          8,
+          12
+        ],
+        "core": [
+          6,
+          10
         ]
       },
       "days": [

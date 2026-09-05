@@ -8,15 +8,10 @@
     <meta name="theme-color" content="#1c1c1e" />
     <meta name="color-scheme" content="dark" />
 
-    <!-- Every path here is relative, so the app runs unchanged from the repo
-         root, from a /tempered/ project page, or from a custom domain. -->
     <link rel="stylesheet" href="./src/style.css" />
     <link rel="stylesheet" href="./src/setup.css" />
+    <link rel="stylesheet" href="./src/cadence.css" />
 
-    <!-- Keep Cory's background artwork recognizable. The base stylesheet's
-         original 15% + blur treatment made the signpost read like a cross and
-         erased the moon, owl, lanterns and path. This override preserves the
-         artwork itself while leaving the existing UI surfaces untouched. -->
     <style>
       body::before {
         background-position: center center;
@@ -25,8 +20,6 @@
         transform: none;
       }
 
-      /* Page titles must stay razor-sharp. A blurred section label looks like a
-         loading or rendering failure, especially against the detailed art. */
       .screen__title {
         position: relative;
         z-index: 1;
@@ -39,8 +32,6 @@
         transform: none !important;
       }
 
-      /* Settings is global navigation, not Character content. Keep a compact,
-         thumb-sized control visible from every normal app screen. */
       .settings-access {
         position: fixed;
         top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -59,17 +50,8 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
       }
-
-      .settings-access .icon {
-        width: 22px;
-        height: 22px;
-      }
-
-      .settings-access[data-active="true"] {
-        color: #efff5a;
-        border-color: rgba(239, 255, 90, 0.38);
-      }
-
+      .settings-access .icon { width: 22px; height: 22px; }
+      .settings-access[data-active="true"] { color: #efff5a; border-color: rgba(239, 255, 90, 0.38); }
       .settings-access[hidden] { display: none !important; }
 
       @media (prefers-reduced-transparency: reduce) {
@@ -80,14 +62,11 @@
 
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" href="./icons/icon-512.png" />
-
-    <!-- iOS ignores the manifest for home-screen installs; these drive it. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tempered" />
     <link rel="apple-touch-icon" href="./icons/icon-180.png" />
-
     <script type="module" src="./src/main.js"></script>
   </head>
   <body>

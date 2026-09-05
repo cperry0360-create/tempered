@@ -1,39 +1,21 @@
 /**
  * Domain types for Tempered, as JSDoc typedefs.
- *
- * This file has no runtime exports on purpose — it is a type vocabulary only.
- * Shapes follow `docs/02-data-model.md`.
- *
- * The single most important thing in this file is what `SessionInput` does NOT
- * contain: the user's body weight. See the note on `DayInput.bodyMetrics`.
  */
 
 /** @typedef {'might' | 'wind' | 'grit' | 'vitality' | 'mind'} AttributeId */
-
 /** @typedef {'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S'} Rank */
 
 /**
- * One logged set. `weight` is null for bodyweight movements — the engine never
- * substitutes the user's body weight for it.
- *
  * @typedef {object} SetInput
  * @property {string} exerciseId
- * @property {number|null} weight      Load in lbs. For an exercise carrying a
- *                                     `notionalLoad`, this is the ADDED weight
- *                                     (a belt, a vest) on top of it, and null
- *                                     means the plain bodyweight variant.
+ * @property {number|null} weight
  * @property {number|null} reps
- * @property {number|null} [timeSec]   For time-based holds.
- * @property {number|null} [distance]  Feet carried, for loaded carries.
- * @property {boolean} [isWarmup]      Warmup sets score nothing and set no records.
+ * @property {number|null} [timeSec]
+ * @property {number|null} [distance]
+ * @property {boolean} [isWarmup]
  */
 
 /**
- * A completed training session, as the XP engine sees it.
- *
- * There is deliberately no body-weight field here, and there never may be.
- * `docs/02-data-model.md` requires a test proving it.
- *
  * @typedef {object} SessionInput
  * @property {string} id
  * @property {string|null} routineId
@@ -43,20 +25,17 @@
 
 /**
  * @typedef {object} CardioInput
- * @property {string} activityId          'run', 'cycle', 'heavy_bag', ...
+ * @property {string} activityId
  * @property {number|null} [distanceMiles]
  * @property {number|null} [minutes]
  */
 
 /**
- * A calendar day's non-workout logging. Values are whatever the user entered.
- *
- * `bodyMetrics` is carried here so the shape round-trips through storage, but the
- * XP engine must never read it. Only `bodyMetricsLogged` — the boolean act of
- * logging — is scored.
+ * A calendar day's non-workout logging. Body metric values round-trip through
+ * storage but are never used for scoring; only bodyMetricsLogged is scored.
  *
  * @typedef {object} DayInput
- * @property {string} date                    ISO calendar-local date.
+ * @property {string} date
  * @property {number|null} [sleepHours]
  * @property {number|null} [waterOz]
  * @property {number|null} [steps]
@@ -67,22 +46,22 @@
  * @property {number|null} [instrumentMinutes]
  * @property {boolean} [journalLogged]
  * @property {boolean} [nutritionLogged]
+ * @property {boolean} [caloriesLogged]
  * @property {boolean} [proteinTargetMet]
+ * @property {boolean} [alcoholFree]
+ * @property {boolean} [saunaLogged]
  * @property {boolean} [restDay]
- * @property {boolean} [bodyMetricsLogged]    The act only.
+ * @property {boolean} [bodyMetricsLogged]
  * @property {CardioInput[]} [cardio]
- * @property {{weight?: number, bodyFat?: number}} [bodyMetrics] Stored, never scored.
+ * @property {{weight?: number, bodyFat?: number}} [bodyMetrics]
  */
 
 /**
- * One unit of XP awarded, tagged with where it came from. The `source` is what
- * powers "tap an attribute to see exactly what fed it".
- *
  * @typedef {object} Award
  * @property {AttributeId} attribute
- * @property {string} source     Stable id, e.g. 'might.volume'.
- * @property {string} label      Human-readable, e.g. 'Working volume'.
- * @property {number} xp         Always >= 0. Nothing in this app subtracts XP.
+ * @property {string} source
+ * @property {string} label
+ * @property {number} xp
  */
 
 /**
@@ -100,31 +79,23 @@
  * @property {string} name
  * @property {'compound'|'isolation'} class
  * @property {string} [metric]
- * @property {number} [notionalLoad] Fixed lbs credited to one bodyweight rep.
- *   A per-exercise constant from `data/exercises.json`. Never the user's body
- *   weight, never derived from it.
+ * @property {number} [notionalLoad]
  */
 
 /**
- * Everything the engine needs to know that is not in the session itself.
- *
  * @typedef {object} SessionContext
  * @property {string} date
  * @property {Map<string, Exercise>} exercises
  * @property {Map<string, ExerciseRecord>} records
- * @property {number} daysSinceLastSession   Infinity for the very first session.
- * @property {number} sessionsThisWeekBefore Completed earlier in this calendar week.
+ * @property {number} daysSinceLastSession
+ * @property {number} sessionsThisWeekBefore
  * @property {number} planTargetSessionsPerWeek
- * @property {number|null} [paceBaselineMinPerMile] Rolling 30-day baseline.
+ * @property {number|null} [paceBaselineMinPerMile]
  */
 
 /** @typedef {Record<string, number>} XpBySource */
 
 /**
- * The shape of `data/balance.json`. Indexed loosely on purpose: balance is data,
- * and adding a tunable must not require editing a type. Nothing in the domain
- * reads this file — it is always passed in.
- *
  * @typedef {object} Balance
  * @property {number} schemaVersion
  * @property {{base: number, exponent: number, maxLevel: number}} levelCurve

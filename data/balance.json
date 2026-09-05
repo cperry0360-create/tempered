@@ -42,10 +42,7 @@
     "minutesPerSet": 2
   },
   "vitality": {
-    "sleepBandHours": [
-      7,
-      9
-    ],
+    "sleepBandHours": [7, 9],
     "sleepXpInBand": 75,
     "sleepXpNearBand": 40,
     "sleepXpOutOfBand": 15,
@@ -53,6 +50,9 @@
     "waterDailyCapOz": 120,
     "proteinTargetBonus": 60,
     "nutritionLoggedXp": 50,
+    "caloriesLoggedXp": 50,
+    "alcoholFreeXp": 60,
+    "saunaXp": 60,
     "restDayXp": 195,
     "bodyMetricsLoggedXp": 30,
     "_bodyMetricsNote": "Awarded for the act of logging only. The recorded value must never influence XP in any direction."
@@ -82,7 +82,7 @@
     "neverRequireConsecutiveDays": true
   },
   "battle": {
-    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate. xpPerEnemy is deliberately 0 \u2014 see DECISIONS.md: the mechanism is built and tested, but paying attribute XP for a passive battle would pay twice for the same training and compound. One number turns it on.",
+    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate. xpPerEnemy is deliberately 0 — see DECISIONS.md: the mechanism is built and tested, but paying attribute XP for a passive battle would pay twice for the same training and compound. One number turns it on.",
     "healthFromVitality": 14,
     "healthFromGrit": 6,
     "healthBase": 60,
@@ -117,62 +117,10 @@
       "trainingMaxPercentOfMax": 0.9,
       "roundToLbs": 5,
       "weeks": [
-        {
-          "name": "5s",
-          "percents": [
-            0.65,
-            0.75,
-            0.85
-          ],
-          "reps": [
-            5,
-            5,
-            5
-          ],
-          "amrapLastSet": true
-        },
-        {
-          "name": "3s",
-          "percents": [
-            0.7,
-            0.8,
-            0.9
-          ],
-          "reps": [
-            3,
-            3,
-            3
-          ],
-          "amrapLastSet": true
-        },
-        {
-          "name": "5/3/1",
-          "percents": [
-            0.75,
-            0.85,
-            0.95
-          ],
-          "reps": [
-            5,
-            3,
-            1
-          ],
-          "amrapLastSet": true
-        },
-        {
-          "name": "deload",
-          "percents": [
-            0.4,
-            0.5,
-            0.6
-          ],
-          "reps": [
-            5,
-            5,
-            5
-          ],
-          "amrapLastSet": false
-        }
+        { "name": "5s", "percents": [0.65, 0.75, 0.85], "reps": [5, 5, 5], "amrapLastSet": true },
+        { "name": "3s", "percents": [0.7, 0.8, 0.9], "reps": [3, 3, 3], "amrapLastSet": true },
+        { "name": "5/3/1", "percents": [0.75, 0.85, 0.95], "reps": [5, 3, 1], "amrapLastSet": true },
+        { "name": "deload", "percents": [0.4, 0.5, 0.6], "reps": [5, 5, 5], "amrapLastSet": false }
       ]
     }
   }

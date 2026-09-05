@@ -1,11 +1,4 @@
-/**
- * SETTINGS.
- *
- * Carries the build's identity, which matters more than it looks: installed to a
- * home screen there is no address bar and no reload button, so without a visible
- * version there is no way to tell a build that failed to deploy from one that
- * deployed and did not fix the problem.
- */
+/** SETTINGS. */
 
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
@@ -13,173 +6,156 @@ import { VERSION, BUILD_DATE } from '../../version.js'
 import { RESET_PHRASE } from '../../app/maintenance.js'
 import { shortDate } from '../format.js'
 
-/**
- * @param {object} deps
- * @param {import('../../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
- * @param {ReturnType<import('../../app/daily.js').createDailyService>} deps.daily
- * @param {ReturnType<import('../../app/maintenance.js').createMaintenanceService>} [deps.maintenance]
- * @param {() => Promise<void>|void} [deps.onSetup]
- */
+const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
+
 export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
   const root = el('div.screen.screen--settings')
-
-  /** Typed into the reset box. Nothing happens until it says RESET. */
   let typed = ''
-  /** What the last update check found, read once on arrival. */
   let update = null
-  /** A backup taken this visit, so the link stays available after saving it. */
   let saved = null
   let busy = false
 
-  /**
-   * Hands the browser a file. `docs/02` already defines the export format; this
-   * is only the delivery, and it is deliberately a real download rather than a
-   * copyable blob of text — a backup you have to select and paste is a backup
-   * nobody takes.
-   */
   function download(filename, json) {
     const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
     const link = el('a', { href: url, download: filename })
     document.body.append(link)
     link.click()
     link.remove()
-    // Revoked late: revoking before the click has been handled cancels it.
     setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 
-  /** Whether the typed phrase matches. The service checks again regardless. */
   const armed = () => typed.trim().toUpperCase() === RESET_PHRASE
 
-  /**
-   * Redraws with fresh data, without disturbing the update notice.
-   *
-   * Separate from `refresh` so that toggling a daily activity does not clear a
-   * notice the person has not read yet, while arriving at the screen a second
-   * time does.
-   */
+  function cadenceButton(activity, current, cadence, label) {
+    return el('button.setup__cadence', {
+      type: 'button',
+      dataset: { selected: String(current.cadence === cadence) },
+      onclick: async () => {
+        await daily.setCadence(activity.id, cadence, cadence === 'weekly' ? current.target : 1)
+        await load()
+      },
+    }, [label])
+  }
+
   async function load() {
-    {
-      const profile = await storage.get('profile', 'profile')
-      const chosen = new Set(await daily.dailyIds())
-      replace(root, [
-        el('h1.screen__title', { text: 'Settings' }),
+    const profile = await storage.get('profile', 'profile')
+    const schedule = await daily.activitySchedule()
 
-        el('section.card', {}, [
-          el('h2.block__title', { text: 'Plan' }),
-          el('p.setting', {}, [
-            el('span.setting__label', { text: 'Sessions per week' }),
-            el('span.setting__value', { text: String(profile?.planTargetSessionsPerWeek ?? 4) }),
-          ]),
-          el('p.setting', {}, [
-            el('span.setting__label', { text: 'Units' }),
-            el('span.setting__value', { text: profile?.units ?? 'imperial' }),
-          ]),
-          onSetup && el('button.button', {
-            type: 'button', dataset: { action: 'rerun-setup' },
-            onclick: () => onSetup(),
-          }, ['RE-RUN SETUP']),
+    replace(root, [
+      el('h1.screen__title', { text: 'Settings' }),
+
+      el('section.card', {}, [
+        el('h2.block__title', { text: 'Plan' }),
+        el('p.setting', {}, [
+          el('span.setting__label', { text: 'Sessions per week' }),
+          el('span.setting__value', { text: String(profile?.planTargetSessionsPerWeek ?? 4) }),
         ]),
+        el('p.setting', {}, [
+          el('span.setting__label', { text: 'Units' }),
+          el('span.setting__value', { text: profile?.units ?? 'imperial' }),
+        ]),
+        onSetup && el('button.button', {
+          type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
+        }, ['RE-RUN SETUP']),
+      ]),
 
-        el('section.card', { dataset: { section: 'daily' } }, [
-          el('h2.block__title', { text: 'Daily list' }),
-          el('p.block__hint', {
-            text: 'What Today asks you about every day. Everything else stays one tap '
-              + 'away under "log something else", and is worth exactly the same either way.',
+      el('section.card', { dataset: { section: 'cadence' } }, [
+        el('h2.block__title', { text: 'Tracking cadence' }),
+        el('p.block__hint', {
+          text: 'Daily resets each morning. Weekly can be completed on any day and shows progress on Today.',
+        }),
+        el('div.setup__cadencelist', {}, daily.activities.map((activity) => {
+          const current = schedule[activity.id] ?? { cadence: 'off', target: 1 }
+          return el('div.setup__cadencerow', {}, [
+            el('div.setup__cadencehead', {}, [
+              el('span.setup__activityname', { text: activity.name }),
+              current.cadence === 'weekly' && el('select.setup__weeklyselect', {
+                value: String(current.target),
+                'aria-label': `${activity.name} times per week`,
+                onchange: async (event) => {
+                  await daily.setCadence(activity.id, 'weekly', Number(event.target.value))
+                  await load()
+                },
+              }, WEEKLY_OPTIONS.map((value) => el('option', { value: String(value) }, [`${value}×/wk`]))),
+            ]),
+            el('div.setup__cadencechoices', {}, [
+              cadenceButton(activity, current, 'off', 'OFF'),
+              cadenceButton(activity, current, 'daily', 'DAILY'),
+              cadenceButton(activity, current, 'weekly', current.cadence === 'weekly' ? `${current.target}× / WK` : 'WEEKLY'),
+            ]),
+          ])
+        })),
+      ]),
+
+      el('section.card', { dataset: { section: 'version' } }, [
+        el('h2.block__title', { text: 'Build' }),
+        el('p.setting', {}, [
+          el('span.setting__label', { text: 'Version' }),
+          el('span.setting__value', { dataset: { version: '' }, text: VERSION }),
+        ]),
+        el('p.setting', {}, [
+          el('span.setting__label', { text: 'Last updated' }),
+          el('span.setting__value', { dataset: { builddate: '' }, text: shortDate(BUILD_DATE) }),
+        ]),
+        el('p.block__hint', {
+          text: 'The service worker cache is keyed to this version, so a new version always replaces the old one.',
+        }),
+        update && el('p.notice', { dataset: { update: String(update.changed) } }, [
+          update.changed
+            ? `Updated — was ${update.before}, now ${update.after}.`
+            : `No change — still ${update.after}. This is the newest build the server has.`,
+        ]),
+        maintenance && el('button.button', {
+          type: 'button', disabled: busy, dataset: { action: 'check-updates' },
+          onclick: async () => {
+            busy = true
+            await load()
+            await maintenance.checkForUpdates()
+          },
+        }, [icon('history'), 'CHECK FOR UPDATES']),
+      ]),
+
+      maintenance && el('section.card', { dataset: { section: 'reset' } }, [
+        el('h2.block__title', { text: 'Reset all data' }),
+        el('p.block__hint', {
+          text: 'Erases every session, set, day and battle on this device and returns the app to first run. It cannot be undone.',
+        }),
+        el('button.button', {
+          type: 'button', dataset: { action: 'backup' },
+          onclick: async () => {
+            const file = await maintenance.backup()
+            download(file.filename, file.json)
+            saved = file.filename
+            await load()
+          },
+        }, [icon('down'), saved ? 'SAVE ANOTHER BACKUP' : 'SAVE A BACKUP FIRST']),
+        saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
+        el('label.reset__confirm', {}, [
+          el('span.setting__label', { text: `Type ${RESET_PHRASE} to confirm` }),
+          el('input.entry__value.reset__input', {
+            type: 'text', value: typed, autocapitalize: 'characters',
+            'aria-label': `Type ${RESET_PHRASE} to confirm the reset`,
+            oninput: (event) => {
+              typed = event.target.value
+              const button = root.querySelector('[data-action="reset"]')
+              if (button) button.disabled = !armed()
+            },
           }),
-          el('div.marks', {}, daily.activities.map((activity) => el('button.mark', {
-            type: 'button',
-            'aria-pressed': String(chosen.has(activity.id)),
-            dataset: { daily: activity.id, on: String(chosen.has(activity.id)) },
-            onclick: async () => {
-              await daily.setDaily(activity.id, !chosen.has(activity.id))
-              await load()
-            },
-          }, [chosen.has(activity.id) ? icon('check') : icon('plus'), activity.name]))),
         ]),
-
-        el('section.card', { dataset: { section: 'version' } }, [
-          el('h2.block__title', { text: 'Build' }),
-          el('p.setting', {}, [
-            el('span.setting__label', { text: 'Version' }),
-            el('span.setting__value', { dataset: { version: '' }, text: VERSION }),
-          ]),
-          el('p.setting', {}, [
-            el('span.setting__label', { text: 'Last updated' }),
-            el('span.setting__value', { dataset: { builddate: '' }, text: shortDate(BUILD_DATE) }),
-          ]),
-          el('p.block__hint', {
-            text: 'The service worker cache is keyed to this version, so a new version '
-              + 'always replaces the old one rather than sitting behind it.',
-          }),
-
-          update && el('p.notice', { dataset: { update: String(update.changed) } }, [
-            update.changed
-              ? `Updated — was ${update.before}, now ${update.after}.`
-              : `No change — still ${update.after}. This is the newest build the server has.`,
-          ]),
-
-          maintenance && el('button.button', {
-            type: 'button', disabled: busy, dataset: { action: 'check-updates' },
-            onclick: async () => {
-              busy = true
-              await load()
-              await maintenance.checkForUpdates()
-            },
-          }, [icon('history'), 'CHECK FOR UPDATES']),
-        ]),
-
-        maintenance && el('section.card', { dataset: { section: 'reset' } }, [
-          el('h2.block__title', { text: 'Reset all data' }),
-          el('p.block__hint', {
-            text: 'Erases every session, set, day and battle on this device and returns '
-              + 'the app to first run. It cannot be undone, and it does not touch any '
-              + 'backup you have already saved.',
-          }),
-
-          el('button.button', {
-            type: 'button', dataset: { action: 'backup' },
-            onclick: async () => {
-              const file = await maintenance.backup()
-              download(file.filename, file.json)
-              saved = file.filename
-              await load()
-            },
-          }, [icon('down'), saved ? 'SAVE ANOTHER BACKUP' : 'SAVE A BACKUP FIRST']),
-
-          saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
-
-          el('label.reset__confirm', {}, [
-            el('span.setting__label', { text: `Type ${RESET_PHRASE} to confirm` }),
-            el('input.entry__value.reset__input', {
-              type: 'text', value: typed, autocapitalize: 'characters',
-              'aria-label': `Type ${RESET_PHRASE} to confirm the reset`,
-              dataset: { entry: 'reset-confirm' },
-              oninput: (event) => {
-                typed = event.target.value
-                const button = root.querySelector('[data-action="reset"]')
-                if (button) button.disabled = !armed()
-              },
-            }),
-          ]),
-
-          el('button.button.button--danger', {
-            type: 'button', disabled: !armed(),
-            dataset: { action: 'reset' },
-            onclick: async () => {
-              const result = await maintenance.resetEverything({ confirmation: typed })
-              if (!result.ok) {
-                typed = ''
-                await load()
-              }
-            },
-          }, ['ERASE EVERYTHING']),
-        ]),
-      ])
-    }
+        el('button.button.button--danger', {
+          type: 'button', disabled: !armed(), dataset: { action: 'reset' },
+          onclick: async () => {
+            const result = await maintenance.resetEverything({ confirmation: typed })
+            if (!result.ok) { typed = ''; await load() }
+          },
+        }, ['ERASE EVERYTHING']),
+      ]),
+    ])
   }
 
   async function refresh() {
     update = maintenance?.updateResult() ?? null
+    busy = false
     await load()
   }
 

@@ -1,13 +1,12 @@
 /**
- * The activity model — Phase 4.
+ * The activity model — Phase 4 plus the cadence correction.
  *
- * Written before `activities.js`. The rules under test come from
- * `docs/01-attributes-and-xp.md` and `docs/03-screens.md`:
- *
+ * Rules under test:
  *   - if an activity can be measured, it must not be a checkbox
  *   - a body metric's VALUE is never scored, in any direction, ever
  *   - rest is a rewarded action, not an absence
  *   - outstanding is sorted by what is likely next, never alphabetically
+ *   - seed defaults are only a starting cadence; the user's schedule owns Today
  */
 
 import { test } from 'node:test'
@@ -32,11 +31,11 @@ test('every seeded activity is mapped to a day-log field', () => {
 })
 
 test('every mapped field is one the XP engine actually reads', () => {
-  // Guards the other direction: a mapping typo would silently score nothing.
   const engineFields = new Set([
     'sleepHours', 'waterOz', 'steps', 'mobilityMinutes', 'readingMinutes', 'studyMinutes',
     'meditationMinutes', 'instrumentMinutes', 'journalLogged', 'nutritionLogged',
-    'proteinTargetMet', 'restDay', 'bodyMetricsLogged',
+    'caloriesLogged', 'alcoholFree', 'saunaLogged', 'proteinTargetMet', 'restDay',
+    'bodyMetricsLogged',
   ])
   for (const [id, spec] of Object.entries(ACTIVITY_FIELDS)) {
     assert.ok(engineFields.has(spec.field), `${id} writes ${spec.field}, which nothing scores`)
@@ -63,8 +62,6 @@ test('a measured activity stores the number it was given', () => {
 })
 
 test('a value that accumulates adds to the day rather than replacing it', () => {
-  // Water arrives a glass at a time. Typing the running total by hand is not
-  // logging, it is arithmetic.
   let day = applyActivity({ date: '2026-09-04' }, 'water', 16)
   day = applyActivity(day, 'water', 16)
   assert.equal(day.waterOz, 32)
@@ -75,7 +72,6 @@ test('a value that accumulates adds to the day rather than replacing it', () => 
 })
 
 test('a value that describes a state replaces it', () => {
-  // You do not sleep 7 hours and then a further 8.
   let day = applyActivity({ date: '2026-09-04' }, 'sleep', 7)
   day = applyActivity(day, 'sleep', 8)
   assert.equal(day.sleepHours, 8)
@@ -106,14 +102,11 @@ test('HARD RULE: a body metric records the number and scores only the act', () =
   const light = applyActivity({ date: '2026-09-04' }, 'body_metrics', 150)
   const heavy = applyActivity({ date: '2026-09-04' }, 'body_metrics', 250)
 
-  // The value is kept, for the app layer to show back to the user. Reading it
-  // is not this layer's job — see body-weight.test.js.
   assert.equal(light.bodyMetrics.weight, 150)
   assert.equal(heavy.bodyMetrics.weight, 250)
   assert.equal(activityValue(byId('body_metrics'), heavy), true,
     'the domain sees the act of logging, and not the reading')
 
-  // And it changes nothing about what the day is worth.
   assert.equal(light.bodyMetricsLogged, true)
   const lightXp = totalsByAttribute(awardsForDay(light, {}, balance))
   const heavyXp = totalsByAttribute(awardsForDay(heavy, {}, balance))
@@ -158,11 +151,8 @@ test('outstanding is sorted by what is likely next, never alphabetically', () =>
   const order = sortActivities(ACTIVITIES).map((a) => a.id)
   const alphabetical = [...ACTIVITIES].map((a) => a.name).sort()
   assert.notDeepEqual(sortActivities(ACTIVITIES).map((a) => a.name), alphabetical)
-
-  // Rest is never buried: docs/03 requires it always available and explicit.
-  assert.equal(order[0], 'rest_day')
-  // A day starts with the night before it.
-  assert.ok(order.indexOf('sleep') < order.indexOf('journal'))
+  assert.equal(order[0], 'sleep', 'a day starts with the night before it')
+  assert.ok(order.indexOf('rest_day') < order.indexOf('journal'), 'rest remains easy to find')
 })
 
 test('sorting is stable across calls and does not mutate its input', () => {
@@ -176,35 +166,31 @@ test('sorting is stable across calls and does not mutate its input', () => {
 test('every activity states how it is entered, so no screen has to guess', () => {
   for (const activity of ACTIVITIES) {
     const spec = ACTIVITY_FIELDS[activity.id]
-    assert.ok(spec.entry === 'mark' || spec.entry === 'number',
-      `${activity.id} has no entry mode`)
+    assert.ok(spec.entry === 'mark' || spec.entry === 'number', `${activity.id} has no entry mode`)
     if (spec.entry === 'number') {
       assert.ok(spec.mode === 'add' || spec.mode === 'replace', `${activity.id} has no update mode`)
     }
   }
 })
 
-// --- the daily list --------------------------------------------------------
-//
-// The one-view rule in docs/03 is a promise about a phone, and a promise that
-// gets harder to keep every time an activity is added is not one. So Today
-// shows the DAILY list — what this person actually tracks every day — and
-// everything else is one control away. The rule then holds by construction
-// rather than by shaving labels off the screen.
+// --- the seed daily list ---------------------------------------------------
+// The seed is only a starting point. Phase 7 persists the user's actual cadence
+// as OFF / DAILY / WEEKLY, and Today obeys that schedule.
 
-test('the seed says which activities are daily by default', () => {
+test('the seed starts with the intended core daily habits', () => {
   const defaults = defaultDailyIds(ACTIVITIES)
   assert.deepEqual([...defaults].sort(),
-    ['nutrition_logged', 'rest_day', 'sleep', 'steps', 'water'].sort(),
-    'what a normal person tracks every day, and nothing else')
+    ['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free'].sort(),
+    'the first-run daily set should match the intended core habits')
 })
 
 test('the defaults are a minority of the catalogue, or the flag buys nothing', () => {
   assert.ok(defaultDailyIds(ACTIVITIES).length < ACTIVITIES.length / 2)
 })
 
-test('rest day is daily by default — it is never one control away', () => {
-  assert.ok(defaultDailyIds(ACTIVITIES).includes('rest_day'))
+test('rest day is available but not forced into every day', () => {
+  assert.equal(defaultDailyIds(ACTIVITIES).includes('rest_day'), false)
+  assert.ok(byId('rest_day'))
 })
 
 test('the daily list partitions the catalogue, losing nothing', () => {
@@ -219,12 +205,11 @@ test('the daily list partitions the catalogue, losing nothing', () => {
 
 test('both halves keep the likely-next order', () => {
   const { daily, other } = partitionByDaily(ACTIVITIES, defaultDailyIds(ACTIVITIES))
-  assert.equal(daily[0].id, 'rest_day')
-  assert.ok(other.map((a) => a.id).indexOf('body_metrics') < other.map((a) => a.id).indexOf('journal'))
+  assert.equal(daily[0].id, 'sleep')
+  assert.ok(other.map((a) => a.id).indexOf('rest_day') < other.map((a) => a.id).indexOf('journal'))
 })
 
 test('the list is the user\'s, not the seed\'s', () => {
-  // Turning one on is all it takes; the seed only supplies the starting point.
   const { daily } = partitionByDaily(ACTIVITIES, ['read'])
   assert.deepEqual(daily.map((a) => a.id), ['read'])
 })
@@ -241,17 +226,12 @@ test('an unknown id in the list is ignored rather than inventing an activity', (
 })
 
 test('the daily flag has nothing to do with what anything is worth', () => {
-  // It is a placement rule for one screen. Scoring never sees it.
   const day = applyActivity({ date: '2026-09-04' }, 'read', 30)
   const totals = totalsByAttribute(awardsForDay(day, {}, balance))
   assert.ok(totals.mind > 0, 'an activity off the daily list still earns exactly the same')
 })
 
-// --- a correction, not just an addition -----------------------------------
-// docs/11 F3, revised: the quick-add buttons accumulate, the typed field
-// corrects. Add-only made a mistyped entry uncorrectable, which contradicts the
-// Phase 4 high-water ledger where a correction costs nothing in either
-// direction — you can put a number right without losing what it already paid.
+// --- correction semantics --------------------------------------------------
 
 test('an explicit entry can replace an add-mode total rather than appending', () => {
   const day = applyActivity({ date: 'd' }, 'water', 8)
@@ -260,7 +240,6 @@ test('an explicit entry can replace an add-mode total rather than appending', ()
 })
 
 test('without the override an add-mode activity still accumulates', () => {
-  // The buttons must not start replacing: that is the whole point of +8.
   let day = applyActivity({ date: 'd' }, 'water', 8)
   day = applyActivity(day, 'water', 8)
   assert.equal(day.waterOz, 16)
@@ -281,7 +260,6 @@ test('the override applies to every add-mode activity, not just water', () => {
 })
 
 test('the override cannot turn a mark into a number', () => {
-  // A mark has no value to set. Asking it to be one must not invent a field.
   const day = applyActivity({ date: 'd' }, 'rest_day', null, { mode: 'set' })
   assert.equal(day.restDay, true)
 })
@@ -292,9 +270,7 @@ test('a replace-mode activity is unaffected by the override', () => {
   assert.equal(applyActivity(day, 'sleep', 7, { mode: 'set' }).sleepHours, 7)
 })
 
-test('a correction to zero is honoured, not read as "no value"', () => {
-  // Logging 40oz by mistake when you have drunk none is exactly the case that
-  // needs this, and `positiveNumber` would otherwise discard the zero.
+test('a correction to zero is honoured, not read as no value', () => {
   const day = applyActivity({ date: 'd' }, 'water', 40)
   assert.equal(applyActivity(day, 'water', 0, { mode: 'set' }).waterOz, 0)
 })

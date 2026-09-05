@@ -72,7 +72,7 @@ test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () =
 
 test('REGRESSION: every screen gets extra top breathing room', () => {
   const index = read('index.html')
-  assert.match(index, /\.app__body\s*\{[\s\S]*padding-top:\s*calc\(max\(var\(--s4\), env\(safe-area-inset-top\)\) \+ var\(--s3\)\)/)
+  assert.match(index, /\.app__body\s*\{[\s\S]*padding-top:\s*calc\(max\(var\(--s4\), env\(safe-area-inset-top\)\) \+ var\(--s5\)\)/)
 })
 
 test('REGRESSION: Character no longer carries a duplicate Settings button', () => {

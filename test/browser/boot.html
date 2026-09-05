@@ -15,7 +15,7 @@
        * The speed harness injects memory storage, so it would not catch a broken
        * default wiring. This is the check that the shipped entry path works.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { VERSION } from '../../src/version.js'
 
       const checks = []

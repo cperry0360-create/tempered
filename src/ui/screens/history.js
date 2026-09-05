@@ -1,21 +1,11 @@
 /**
  * HISTORY — the evidence.
- *
- * Phase 3 builds the two views the workout tracker owes: sessions, and records
- * per exercise with the PR list. The calendar grid and the working-weight
- * sparkline are Phase 3's remaining History surface in `docs/03-screens.md`;
- * the sparkline is included here because it is named there as the single most
- * motivating artefact the app can produce, and it costs one small SVG.
  */
 
 import { el, replace } from '../dom.js'
+import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate } from '../format.js'
 
-/**
- * A working-weight line for one exercise. Deliberately tiny and unlabelled: it
- * is a shape, read at a glance, not a chart to be studied.
- * @param {number[]} values
- */
 function sparkline(values) {
   if (values.length < 2) return null
   const width = 96
@@ -33,6 +23,7 @@ function sparkline(values) {
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
   svg.setAttribute('class', 'spark')
   svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('focusable', 'false')
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline')
   line.setAttribute('points', points)
   line.setAttribute('fill', 'none')
@@ -42,23 +33,21 @@ function sparkline(values) {
   return svg
 }
 
-/**
- * @param {object} deps
- * @param {import('../../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
- * @param {ReturnType<import('../../app/workout.js').createWorkoutService>} deps.workout
- */
 export function createHistoryScreen({ storage, workout }) {
   const root = el('div.screen.screen--history')
   let view = 'sessions'
-  /** @type {any[]} */ let sessions = []
-  /** @type {any[]} */ let records = []
-  /** @type {Map<string, any>} */ let exercises = new Map()
-  /** @type {Map<string, {volume: number, prs: number}>} */ let sessionStats = new Map()
-  /** @type {Map<string, number[]>} */ let weightHistory = new Map()
+  let sessions = []
+  let records = []
+  let exercises = new Map()
+  let sessionStats = new Map()
+  let weightHistory = new Map()
 
   function sessionsView() {
     if (sessions.length === 0) {
-      return [el('p.block__hint', { text: 'No sessions yet. The first one is the hardest to start and the easiest to log.' })]
+      return [emptyState(
+        'No training history yet',
+        'Your first completed workout will appear here with its volume, duration and PRs.',
+      )]
     }
     return sessions.map((session) => {
       const stats = sessionStats.get(session.id) ?? { volume: 0, prs: 0 }
@@ -81,7 +70,10 @@ export function createHistoryScreen({ storage, workout }) {
   function recordsView() {
     const withRecords = records.filter((record) => record.bestWeight || record.bestVolume)
     if (withRecords.length === 0) {
-      return [el('p.block__hint', { text: 'Records appear here once an exercise has been worked.' })]
+      return [emptyState(
+        'No records yet',
+        'Records build automatically from logged working sets. Nothing extra to maintain.',
+      )]
     }
     return withRecords
       .sort((a, b) => (b.bestWeight?.weight ?? 0) - (a.bestWeight?.weight ?? 0))
@@ -112,8 +104,10 @@ export function createHistoryScreen({ storage, workout }) {
   function render() {
     replace(root, [
       el('h1.screen__title', { text: 'History' }),
-      el('div.segmented', {}, ['sessions', 'records'].map((name) => el('button.segmented__option', {
-        type: 'button', dataset: { view: name, active: String(view === name) },
+      el('div.segmented', { role: 'group', 'aria-label': 'History view' }, ['sessions', 'records'].map((name) => el('button.segmented__option', {
+        type: 'button',
+        dataset: { view: name, active: String(view === name) },
+        'aria-pressed': String(view === name),
         onclick: () => { view = name; render() },
       }, [name.toUpperCase()]))),
       el('div.block', {}, view === 'sessions' ? sessionsView() : recordsView()),
@@ -131,12 +125,9 @@ export function createHistoryScreen({ storage, workout }) {
 
       records = await storage.getAll('records')
       exercises = await workout.exerciseMap()
-
-      // Per-session volume, and working weight over time per exercise.
       sessionStats = new Map()
       weightHistory = new Map()
       const byDate = new Map(sessions.map((s) => [s.id, s.date]))
-      /** @type {Map<string, Map<string, number>>} */
       const perExercisePerDay = new Map()
 
       for (const log of await storage.getAll('setLogs')) {

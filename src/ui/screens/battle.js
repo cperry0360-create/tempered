@@ -65,39 +65,62 @@ export function createBattleScreen({ battle, onClose }) {
   }
 
   function focusMeter(current) {
-    const pct = Math.max(0, Math.min(100, Math.round((current.focus / Math.max(1, current.focusMax)) * 100)))
     return el('div.battle__focus', {}, [
-      el('div.battle__focus-head', {}, [
-        el('span', { text: 'FOCUS' }),
-        el('span', { text: `${current.focus} / ${current.focusMax}` }),
+      el('div.battle__stat-row', {}, [
+        el('span.battle__stat-icon', { text: 'ϟ' }),
+        el('span', { text: `FOCUS ${current.focus} / ${current.focusMax}` }),
       ]),
-      el('span.meter', { dataset: { who: 'focus' } }, [
-        el('span.meter__fill', { style: `width:${pct}%` }),
+      meter(current.focus, current.focusMax, 'focus'),
+    ])
+  }
+
+  function fighterPanel({ name, meta, hp, max, side, current }) {
+    return el('div.fighter__panel', {}, [
+      el('div.fighter__panel-head', {}, [
+        el('span.fighter__name', { text: name }),
+        el('span.fighter__meta', { text: meta }),
       ]),
+      el('div.battle__stat-row', {}, [
+        el('span.battle__stat-icon', { text: '♥' }),
+        el('span.fighter__hp', { text: `HP ${Math.max(0, hp)} / ${max}` }),
+      ]),
+      meter(hp, max, side),
+      side === 'hero' && focusMeter(current),
     ])
   }
 
   function combatants() {
     const current = state()
     const foe = enemy()
-    return el('div.fight', {}, [
+    const encounter = Math.min(record.gauntlet.length, current.enemyIndex + 1)
+    return el('section.fight', { 'aria-label': 'Battlefield' }, [
       el('div.fighter', { dataset: { side: 'hero', boss: 'false' } }, [
+        fighterPanel({
+          name: 'You',
+          meta: `RANK ${record.rank}`,
+          hp: current.heroHp,
+          max: current.heroMax,
+          side: 'hero',
+          current,
+        }),
         fighterVisual({ src: heroSpriteUrl(), alt: 'Tempered hero', glyph: 'train', attribute: 'might' }),
-        el('span.fighter__name', { text: 'You' }),
-        meter(current.heroHp, current.heroMax, 'hero'),
-        el('span.fighter__hp', { text: `${Math.max(0, current.heroHp)} / ${current.heroMax}` }),
       ]),
-      el('div.fight__vs', { text: `${current.defeated} / ${record.gauntlet.length}` }),
+      el('div.fight__vs', { text: `${encounter} / ${record.gauntlet.length}` }),
       el('div.fighter', { dataset: { side: 'enemy', boss: String(foe?.boss === true) } }, [
+        fighterPanel({
+          name: foe?.name ?? 'Enemy',
+          meta: foe?.boss ? 'BOSS' : `FOE ${encounter}`,
+          hp: current.enemyHp ?? 0,
+          max: current.enemyMax ?? 1,
+          side: 'enemy',
+          current,
+        }),
         fighterVisual({
           src: enemySpriteUrl(foe?.id),
           alt: foe?.name ?? 'Enemy',
           glyph: 'foe',
           attribute: foe?.boss ? 'vitality' : 'mind',
         }),
-        el('span.fighter__name', { text: foe?.name ?? '—' }),
-        meter(current.enemyHp ?? 0, current.enemyMax ?? 1, 'enemy'),
-        el('span.fighter__hp', { text: foe ? `${Math.max(0, current.enemyHp)} / ${current.enemyMax}` : '' }),
       ]),
     ])
   }
@@ -132,7 +155,38 @@ export function createBattleScreen({ battle, onClose }) {
 
   function feed() {
     const log = state().log ?? []
-    return el('ol.feed', {}, [...log].reverse().map(eventLine))
+    const foe = enemy()
+    const lines = log.length
+      ? [...log].reverse().map(eventLine)
+      : [
+          el('li.feed__line', { dataset: { by: 'note' } }, [
+            el('span.feed__what', { text: `You face a ${foe?.name ?? 'foe'}!` }),
+          ]),
+          el('li.feed__line', { dataset: { by: 'note' } }, [
+            el('span.feed__what', { text: 'Choose an action to begin.' }),
+          ]),
+          el('li.feed__cursor', { text: '_' }),
+        ]
+    return el('section.battle-log', {}, [el('ol.feed', {}, lines)])
+  }
+
+  function rewardPreview() {
+    return el('aside.battle__rewards-preview', {}, [
+      el('h2.battle__rewards-title', { text: 'Rewards (No Character XP)' }),
+      el('div.battle__reward-row', {}, [
+        el('span.battle__reward-glyph', { text: '●' }),
+        el('span', { text: `${record.rewards.gold} Gold` }),
+      ]),
+      el('div.battle__reward-row', {}, [
+        el('span.battle__reward-glyph', { text: '◆' }),
+        el('span', { text: 'Items (chance)' }),
+      ]),
+      el('div.battle__reward-row', { dataset: { noxp: 'true' } }, [
+        el('span.battle__reward-glyph', { text: '×' }),
+        el('span', { text: 'No character XP' }),
+      ]),
+      el('p.battle__reward-note', { text: '(Progress comes from real effort)' }),
+    ])
   }
 
   function result() {
@@ -173,7 +227,7 @@ export function createBattleScreen({ battle, onClose }) {
     }
   }
 
-  function actionButton(kind, title, sub, options = {}) {
+  function actionButton(kind, title, sub, glyph, options = {}) {
     const dataset = { action: kind }
     if (options.primary) dataset.acid = 'primary'
     return el('button.battle-action', {
@@ -182,6 +236,7 @@ export function createBattleScreen({ battle, onClose }) {
       dataset,
       onclick: () => run(() => options.run()),
     }, [
+      el('span.battle-action__icon', { text: glyph }),
       el('span.battle-action__title', { text: title }),
       el('span.battle-action__sub', { text: sub }),
     ])
@@ -202,14 +257,28 @@ export function createBattleScreen({ battle, onClose }) {
     }
 
     return el('div.battle-actions', {}, [
-      actionButton('attack', 'ATTACK', 'Deal damage', { primary: true, run: () => battle.act('attack', record.date) }),
-      actionButton('guard', 'GUARD', 'Reduce hit · restore Focus', { run: () => battle.act('guard', record.date) }),
-      actionButton('skill', 'SKILL', 'Heavy hit · 1 Focus', {
+      actionButton('attack', 'ATTACK', 'Deal damage', '⚔', { primary: true, run: () => battle.act('attack', record.date) }),
+      actionButton('guard', 'GUARD', 'Reduce next hit', '⬟', { run: () => battle.act('guard', record.date) }),
+      actionButton('skill', 'SKILL', 'Use 1 Focus', '★', {
         disabled: current.focus <= 0,
         run: () => battle.act('skill', record.date),
       }),
-      actionButton('auto', 'AUTO', 'Let it play out', { run: () => battle.auto(record.date) }),
-      actionButton('skip', 'SKIP', 'Instant result', { run: () => battle.skip(record.date) }),
+      actionButton('auto', 'AUTO', 'Let it play out', '▶▶', { run: () => battle.auto(record.date) }),
+      actionButton('skip', 'SKIP', 'Instant result', '➜', { run: () => battle.skip(record.date) }),
+    ])
+  }
+
+  function header() {
+    return el('header.battle__head', {}, [
+      el('div.battle__brand', {}, [
+        el('span.battle__brand-mark', { 'aria-hidden': 'true' }),
+        el('span.battle__brand-name', { text: 'Tempered' }),
+        el('span.battle__tagline', { text: 'Real effort. A stronger you.' }),
+      ]),
+      el('div.battle__daily', {}, [
+        el('span.battle__daily-title', { text: 'Daily Battle' }),
+        el('span.battle__daily-xp', { text: '+0 XP (battles don’t grant XP)' }),
+      ]),
     ])
   }
 
@@ -221,23 +290,27 @@ export function createBattleScreen({ battle, onClose }) {
 
     const current = state()
     replace(root, [
-      el('div.battle__head', {}, [
-        el('div', {}, [
-          el('h1.screen__title', { text: 'Daily Battle' }),
-          el('p.battle__tagline', { text: 'Real effort. A stronger you.' }),
+      el('div.battle-shell', {}, [
+        header(),
+        combatants(),
+        el('div.battle__lower', {}, [
+          el('div.battle__main', {}, [
+            controls(),
+            feed(),
+          ]),
+          rewardPreview(),
         ]),
-        el('span.battle__rank', { text: `RANK ${record.rank}` }),
+        current.status === 'finished' && result(),
+        current.status === 'active' && el('div.battle__utility', {}, [
+          el('button.button.button--quiet', {
+            type: 'button', dataset: { battle: 'close' }, onclick: onClose,
+          }, ['BACK TO APP']),
+        ]),
+        el('footer.battle__footer', {}, [
+          el('span', { text: 'Turn-based. Simple. Optional.' }),
+          el('span', { text: 'Same journey. Stronger days.' }),
+        ]),
       ]),
-      combatants(),
-      focusMeter(current),
-      current.status === 'active' && el('p.battle__prompt', { text: 'Choose an action.' }),
-      controls(),
-      feed(),
-      current.status === 'finished' && result(),
-      current.status === 'active' && el('button.button.button--quiet', {
-        type: 'button', dataset: { battle: 'close' }, onclick: onClose,
-      }, ['BACK TO APP']),
-      el('p.block__hint', { text: 'Optional. Turn-based. No character XP from battles.' }),
     ])
   }
 

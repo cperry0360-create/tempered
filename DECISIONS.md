@@ -1701,3 +1701,10 @@ quietly reintroduce punishment, XP subtraction, cadence debt, persistence loss o
 version drift.
 **Confidence:** specified by docs/07 Phase 8 and the Phase 8 regression suite.
 **Needs Cory:** no
+
+
+## 2026-09-05 — Cory decisions: modern iOS, today FAB, body-weight protein goal
+
+**Decision:** Tempered targets modern iOS PWA support (iOS 16.4+); iOS 16.3 and older are not a compatibility target. The Train primary FAB starts the program day prescribed for today. Protein is tracked as grams with a daily finish line of at least 0.8 g per pound of the latest recorded body weight; metric weights are converted to pounds before calculating the target.
+
+**Needs Cory:** no

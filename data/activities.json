@@ -9,7 +9,10 @@
       "daily": true,
       "kind": "derived",
       "unit": "hours",
-      "band": [7, 9],
+      "band": [
+        7,
+        9
+      ],
       "help": "Scored highest between seven and nine hours. More is not better."
     },
     {
@@ -42,11 +45,14 @@
     },
     {
       "id": "protein_target",
-      "name": "Hit protein target",
+      "name": "Protein",
       "short": "Protein",
       "attribute": "vitality",
       "daily": false,
-      "kind": "marked"
+      "kind": "derived",
+      "unit": "g",
+      "goalPerLb": 0.8,
+      "help": "Daily goal is at least 0.8 grams per pound of your latest recorded body weight."
     },
     {
       "id": "alcohol_free",

@@ -14,6 +14,7 @@ import {
 } from '../domain/xp-engine.js'
 import { tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
+import { proteinGoalGrams, proteinGoalMet } from '../domain/protein.js'
 
 /** @type {import('../domain/types.js').AttributeId[]} */
 const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
@@ -50,6 +51,32 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   /** @param {string} date */
   async function dayLog(date) {
     return (await storage.get('dayLogs', date)) ?? { date }
+  }
+
+  async function proteinGoalFor(date, candidateDay = null) {
+    const profile = await storage.get('profile', 'profile')
+    let weight = candidateDay?.bodyMetrics?.weight
+    if (!(typeof weight === 'number' && Number.isFinite(weight) && weight > 0)) {
+      const latest = (await storage.getAll('dayLogs'))
+        .filter((row) => row.date <= date
+          && typeof row.bodyMetrics?.weight === 'number'
+          && Number.isFinite(row.bodyMetrics.weight)
+          && row.bodyMetrics.weight > 0)
+        .sort((a, b) => b.date.localeCompare(a.date))[0]
+      weight = latest?.bodyMetrics?.weight ?? null
+    }
+    return proteinGoalGrams(weight, profile?.units ?? 'imperial')
+  }
+
+  async function resolveProteinDay(day) {
+    const goal = await proteinGoalFor(day.date, day)
+    if (goal === null) return day
+    if (typeof day.proteinGrams !== 'number') return { ...day, proteinGoalGrams: goal }
+    return {
+      ...day,
+      proteinGoalGrams: goal,
+      proteinTargetMet: proteinGoalMet(day.proteinGrams, goal),
+    }
   }
 
   /**
@@ -122,6 +149,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
 
   /** Pay only the increase over what this day has already earned. */
   async function settleDay(day) {
+    day = await resolveProteinDay(day)
     const profile = await storage.get('profile', 'profile')
     const context = { paceBaselineMinPerMile: profile?.paceBaselineMinPerMile ?? null }
 
@@ -185,9 +213,9 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   }
 
   /** Decorate one catalogue row against one day. */
-  function decorate(activity, day, schedule) {
+  function decorate(activity, day, schedule, dynamicProteinGoal = null) {
     const cadence = schedule[activity.id]?.cadence ?? 'off'
-    return {
+    const decorated = {
       ...activity,
       daily: cadence === 'daily',
       cadence,
@@ -198,6 +226,10 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
         : activityValue(activity, day),
       logged: isLogged(activity, day),
     }
+    if (activity.id === 'protein_target') {
+      return { ...decorated, dailyCap: day.proteinGoalGrams ?? dynamicProteinGoal ?? null }
+    }
+    return decorated
   }
 
   /** Today only: daily activities plus all catalogue rows for optional logging. */
@@ -205,14 +237,15 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const date = clock.today()
     const day = await dayLog(date)
     const schedule = await activitySchedule()
+    const proteinGoal = await proteinGoalFor(date, day)
     const { outstanding, logged } = splitActivities(activities, day)
     return {
       date,
       day,
       schedule,
       dailyIds: activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily'),
-      outstanding: outstanding.map((activity) => decorate(activity, day, schedule)),
-      logged: logged.map((activity) => decorate(activity, day, schedule)),
+      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal)),
+      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal)),
     }
   }
 
@@ -227,18 +260,22 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const days = (await storage.getAll('dayLogs'))
       .filter((day) => day.date >= start && day.date <= todayDate)
     const todayDay = days.find((day) => day.date === todayDate) ?? { date: todayDate }
+    const proteinGoal = await proteinGoalFor(todayDate, todayDay)
+    const completedOnDay = (activity, row) => activity.id === 'protein_target'
+      ? row.proteinTargetMet === true
+      : isLogged(activity, row)
 
     const weekly = activities
       .filter((activity) => schedule[activity.id]?.cadence === 'weekly')
       .map((activity) => {
         const target = clampTarget(schedule[activity.id]?.target)
-        const done = days.filter((day) => isLogged(activity, day)).length
+        const done = days.filter((day) => completedOnDay(activity, day)).length
         return {
-          ...decorate(activity, todayDay, schedule),
+          ...decorate(activity, todayDay, schedule, proteinGoal),
           weeklyDone: done,
           weeklyTarget: target,
           complete: done >= target,
-          loggedToday: isLogged(activity, todayDay),
+          loggedToday: completedOnDay(activity, todayDay),
         }
       })
 

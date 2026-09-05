@@ -9,7 +9,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
   steps: { field: 'steps', entry: 'number', mode: 'replace' },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'caloriesLogged', entry: 'mark' },
-  protein_target: { field: 'proteinTargetMet', entry: 'mark' },
+  protein_target: { field: 'proteinGrams', entry: 'number', mode: 'replace' },
   alcohol_free: { field: 'alcoholFree', entry: 'mark' },
   sauna: { field: 'saunaLogged', entry: 'mark' },
   body_metrics: { field: 'bodyMetricsLogged', entry: 'number', mode: 'replace', stores: 'bodyMetrics' },

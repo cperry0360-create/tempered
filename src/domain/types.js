@@ -47,6 +47,8 @@
  * @property {boolean} [journalLogged]
  * @property {boolean} [nutritionLogged]
  * @property {boolean} [caloriesLogged]
+ * @property {number|null} [proteinGrams]
+ * @property {number|null} [proteinGoalGrams]
  * @property {boolean} [proteinTargetMet]
  * @property {boolean} [alcoholFree]
  * @property {boolean} [saunaLogged]

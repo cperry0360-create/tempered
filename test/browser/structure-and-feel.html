@@ -3,16 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — structure and feel</title>
+    <title>Tempered — calm structure and feel</title>
     <link rel="stylesheet" href="../../src/style.css" />
+    <link rel="stylesheet" href="../../src/calm.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
       /**
-       * The acceptance criteria of `docs/11-structure-and-feel.md`, sections A
-       * to F, driven against the real app. The cadence model supersedes only
-       * section B's old TRAIN/RECOVER/SHARPEN grouping; A/C/D/E/F still hold.
+       * Structure-and-feel acceptance after the calm tracker pass.
+       * Today is intentionally quieter than Character/Battle: shared surfaces,
+       * neutral task icons, one progress signal, and rewards that appear only
+       * after an action. Workout ergonomics remain unchanged.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
@@ -21,7 +23,8 @@
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
       const q = (s, root = document) => root?.querySelector(s) ?? null
       const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 0))
+      const settle = () => new Promise((r) => setTimeout(r, 35))
+
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
         while (Date.now() < deadline) {
@@ -40,161 +43,113 @@
         return q(`[data-activity="${id}"]`)
       }
 
-      const channel = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
-      const parse = (css) => {
-        const text = String(css).trim()
-        const hex = text.match(/^#([0-9a-f]{6})$/i)
-        if (hex) return [0, 2, 4].map((k) => parseInt(hex[1].slice(k, k + 2), 16))
-        return (text.match(/[\d.]+/g) ?? []).map(Number)
+      async function openEditor(id) {
+        const row = await ensureActivity(id)
+        const opener = q('[data-action="open-log"]', row)
+        if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
+        return q(`[data-editor="${id}"]`)
       }
-      const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-      function ratio(fg, bg) {
-        const f = parse(fg), b = parse(bg)
-        const a = f[3] === undefined ? 1 : f[3]
-        const over = [0, 1, 2].map((i) => f[i] * a + b[i] * (1 - a))
-        const [hi, lo] = [luminance(over), luminance(b)].sort((x, y) => y - x)
-        return (hi + 0.05) / (lo + 0.05)
-      }
-      const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
       try {
-        const tempered = await bootstrap({ storage: createMemoryStorage() })
+        const tempered = await bootstrap({ storage: createMemoryStorage(), mount: document.getElementById('app') })
         await tempered.app.show('today')
-        await waitFor('.row')
-
-        check('E the ground is the night-forest gradient, not jet black',
-          /gradient/.test(getComputedStyle(document.body).backgroundImage) && token('--bg-3') === '#237494',
-          token('--bg-0') + ' -> ' + token('--bg-3'))
+        await waitFor('.screen--today-calm .today-item')
 
         const backdrop = getComputedStyle(document.body, '::before')
         const opacity = Number(backdrop.opacity)
-        check('E the backdrop is dimmed to 12-18%', opacity >= 0.12 && opacity <= 0.18, String(opacity))
-        check('E the backdrop is blurred 2-3px', /blur\((2(\.\d+)?|3)px\)/.test(backdrop.filter), backdrop.filter)
-        check('E the backdrop is fixed and anchored to the bottom',
-          backdrop.position === 'fixed' && /(bottom|100%)$/.test(backdrop.backgroundPosition.trim()),
-          `${backdrop.position} / ${backdrop.backgroundPosition}`)
+        check('the tracker backdrop is deliberately quiet', opacity >= 0.10 && opacity <= 0.14, `opacity ${opacity}`)
+        check('the tracker backdrop is softly blurred', /blur\((2(\.\d+)?)px\)/.test(backdrop.filter), backdrop.filter)
 
-        const surface = token('--surface')
-        const attrs = ['might', 'wind', 'grit', 'vitality', 'mind']
-        const worst = attrs.map((a) => ({ a, r: ratio(token(`--${a}`), surface) })).sort((x, y) => x.r - y.r)[0]
-        check('E every attribute colour clears AA as text on a card', worst.r >= 4.5, `worst is ${worst.a} at ${worst.r.toFixed(2)}:1`)
-        const glyphWorst = attrs.map((a) => ({ a, r: ratio(token('--canopy'), token(`--${a}`)) })).sort((x, y) => x.r - y.r)[0]
-        check('E a glyph on any attribute tile clears 3:1', glyphWorst.r >= 3, `worst is ${glyphWorst.a} at ${glyphWorst.r.toFixed(2)}:1`)
-        check('E acid survives unchanged as the action accent', token('--acid') === '#edfe73', token('--acid'))
+        const summary = q('[data-summary="daily"]')
+        check('Today opens with one clear summary card', summary !== null)
+        check('the summary has one progress signal, not five attribute meters',
+          qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0)
 
-        const rows = qa('.row')
-        const tiles = rows.map((r) => q('.tile', r)).filter(Boolean)
-        check('A every row opens with an icon tile', tiles.length === rows.length, `${tiles.length} tiles across ${rows.length} rows`)
-        const box = tiles[0]?.getBoundingClientRect()
-        check('A the tile is 32px', box && Math.round(box.width) === 32 && Math.round(box.height) === 32,
-          box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'no tile')
-        check('A each tile carries a drawn glyph, never text', tiles.every((t) => q('svg', t)), 'svg in every tile')
-        const tinted = new Set(tiles.map((t) => getComputedStyle(t).backgroundColor))
-        check('A tiles are coloured by attribute, not all alike', tinted.size >= 2, `${tinted.size} distinct tile colours on screen`)
-        const trainTile = q('[data-exerciseweek] .tile')
-        check('A a training slot wears Might', trainTile?.dataset.attribute === 'might', trainTile?.dataset.attribute)
+        const sectionTitles = qa('.today-section__title').map((node) => node.textContent.trim())
+        check('the main hierarchy is Today then This week',
+          sectionTitles[0] === 'Today' && sectionTitles[1] === 'This week', sectionTitles.join(' | '))
 
-        const sections = qa('.sect')
-        check('B Today is divided into named cadence sections', sections.length >= 2, sections.map((s) => s.dataset.section).join(', '))
-        const titles = qa('.sect__title').map((t) => t.textContent)
-        check('B the cadence sections are DAILY and THIS WEEK',
-          titles.length >= 2 && /DAILY/.test(titles[0]) && /THIS WEEK/.test(titles[1]), titles.join(' | '))
-        check('B each heading carries a completion count', qa('.sect__count').every((c) => /^\d+ of \d+$/.test(c.textContent.trim())),
-          qa('.sect__count').map((c) => c.textContent.trim()).join(', '))
+        const dailyList = q('[data-section="daily"] .today-list')
+        const dailyRows = qa('.today-item', dailyList)
+        const icons = qa('.today-item__icon', dailyList)
+        check('daily work shares one list surface', dailyList !== null && dailyRows.length > 1,
+          `${dailyRows.length} rows on one surface`)
+        check('every visible daily row has one compact icon', icons.length === dailyRows.length,
+          `${icons.length}/${dailyRows.length} icons`)
+        const firstIcon = icons[0]?.getBoundingClientRect()
+        check('task icons are compact rather than large attribute tiles',
+          firstIcon && firstIcon.width <= 36 && firstIcon.height <= 36,
+          firstIcon ? `${Math.round(firstIcon.width)}x${Math.round(firstIcon.height)}` : 'no icon')
+        check('Today contains no progress rings', qa('.ring, .ring__fill').length === 0)
+        check('numeric controls are progressive disclosure', qa('.today-editor').length === 0)
 
-        const strip = q('.strip')
-        check('D a summary strip is on screen', strip !== null)
-        check('D it sits above the first section', strip && q('.sect') && strip.getBoundingClientRect().top < q('.sect').getBoundingClientRect().top)
-        check('D it shows a bar for each of the five attributes', qa('.strip__bar').length === 5, `${qa('.strip__bar').length} bars`)
-        const movedBefore = qa('.strip__bar[data-moved="true"]').length
+        const training = q('[data-trainingweek="true"]')
+        check('weekly strength is summarized as one row', training !== null,
+          training?.textContent?.trim() ?? 'missing')
+        check('Today does not dump individual exercise slots into the weekly section',
+          qa('[data-exerciseweek]').length === 0)
 
-        const restRow = await ensureActivity('rest_day')
-        const restAction = q('button.row__act', restRow)
-        check('C rest is reachable through its configured cadence surface', restAction !== null)
-        check('C cadence does not remove the rest-day logging action', restAction !== null)
-        restAction?.click()
-        await settle(); await settle(); await new Promise((r) => setTimeout(r, 30))
+        const rest = await ensureActivity('rest_day')
+        const restAction = q('[data-action="mark"]', rest)
+        check('optional rest logging remains reachable', restAction !== null)
+        restAction?.click(); await settle()
+        const earned = q('.today-earned')
+        check('XP appears as a reward moment after logging', /\+\d+ XP/.test(earned?.textContent ?? ''),
+          earned?.textContent ?? 'no reward')
+        check('the reward is inline, not a modal', earned !== null && earned.closest('[role="dialog"]') === null)
 
-        const float = q('.float')
-        check('C the XP floats up beside the row that earned it', float !== null, float?.textContent ?? 'no float')
-        check('C the float is in the attribute’s colour', float?.dataset.attribute === 'vitality', float?.dataset.attribute)
-        const floatColour = float ? getComputedStyle(float).color : ''
-        check('C and that colour is legible where it floats', float ? ratio(floatColour, surface) >= 4.5 : false,
-          float ? `${ratio(floatColour, surface).toFixed(2)}:1` : '')
-        const loggedRow = q('[data-worked="rest_day"], [data-activity="rest_day"]')
-        const fill = q('.ring__fill', loggedRow)
-        check('C the ring completes on the logged row', fill ? Number(fill.getAttribute('stroke-dashoffset')) < 0.5 : false,
-          fill?.getAttribute('stroke-dashoffset'))
-        check('D the strip moves once something is logged', qa('.strip__bar[data-moved="true"]').length > movedBefore,
-          `${movedBefore} -> ${qa('.strip__bar[data-moved="true"]').length} attributes moved`)
-        const beat = q('.daybeat')
-        check('C the day-complete beat is not a modal to dismiss', beat === null || q('button', beat) === null, 'no button in the beat')
-
-        const waterRow = await ensureActivity('water')
-        const quick = qa('.quick__add', waterRow)
-        check('F3 water offers quick-add amounts', quick.length === 3, quick.map((b) => b.textContent).join(' '))
-        quick[0]?.click(); await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
+        let editor = await openEditor('water')
+        let quick = qa('[data-quickadd]', editor)
+        check('water offers three quick adds only after opening the row', quick.length === 3,
+          quick.map((node) => node.textContent).join(' '))
+        quick[0]?.click(); await settle()
         const afterOne = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        const waterAgainRow = await ensureActivity('water')
-        const again = qa('.quick__add', waterAgainRow)
-        check('F3 quick-add is still there after the first glass', again.length === 3, `${again.length} buttons after logging`)
-        again[0]?.click(); await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
+
+        editor = await openEditor('water')
+        quick = qa('[data-quickadd]', editor)
+        quick[0]?.click(); await settle()
         const afterTwo = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('F3 quick-adds accumulate rather than replace', afterTwo === afterOne * 2 && afterOne === 8, `${afterOne} then ${afterTwo} oz`)
+        check('quick adds accumulate safely', afterOne === 8 && afterTwo === 16, `${afterOne} then ${afterTwo} oz`)
 
-        const field = q('[data-entry="water"]')
-        check('F3 a manual field is still there for correction', field !== null)
-        const totalBefore = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        if (field) {
-          field.value = '40'
-          q('[data-activity="water"] .entry__confirm')?.click()
-          await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
-        }
-        const totalAfter = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('F3 the typed field sets the total rather than adding to it', field !== null && totalAfter === 40,
-          `${totalBefore} oz then typed 40 -> ${totalAfter} oz`)
+        editor = await openEditor('water')
+        const field = q('[data-entry="water"]', editor)
+        field.value = '4'
+        q('[data-action="log"]', editor)?.click(); await settle()
+        const afterManual = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
+        check('typed additive amounts also add rather than silently replace the total',
+          afterManual === 20, `16 + 4 -> ${afterManual} oz`)
 
-        const vitalityBeforeFix = (await tempered.storage.getAll('attributeState')).find((r) => r.attribute === 'vitality')?.xp ?? 0
-        const lower = q('[data-entry="water"]')
-        if (lower) {
-          lower.value = '8'
-          q('[data-activity="water"] .entry__confirm')?.click()
-          await settle(); await settle(); await new Promise((r) => setTimeout(r, 20))
-        }
-        const afterLower = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        const vitalityAfterFix = (await tempered.storage.getAll('attributeState')).find((r) => r.attribute === 'vitality')?.xp ?? 0
-        check('F3 a correction can lower the total', lower !== null && afterLower === 8, `${totalAfter} -> ${afterLower} oz`)
-        check('F3 and correcting downwards costs no XP', vitalityAfterFix >= vitalityBeforeFix,
-          `vitality ${vitalityBeforeFix} -> ${vitalityAfterFix}`)
-
+        // Workout ergonomics are intentionally untouched by the calm Today pass.
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         q('[data-programday="monday"]')?.click()
         await waitFor('.setrow__check')
         const firstCard = q('[data-exercise]')
-        const inCard = () => qa('input.setrow__num[data-field="weight"]', firstCard)
-        const w = inCard()
-        if (w[0]) { w[0].value = '95'; w[0].dispatchEvent(new Event('change')) }
+        const firstWeights = qa('input.setrow__num[data-field="weight"]', firstCard)
+        if (firstWeights[0]) {
+          firstWeights[0].value = '95'
+          firstWeights[0].dispatchEvent(new Event('change'))
+        }
         await settle()
-        q('.setrow__check')?.click()
-        await settle(); await new Promise((r) => setTimeout(r, 20))
-        const after = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('F2 the logged set keeps what was logged', after[0]?.value === '95', after[0]?.value)
+        q('.setrow__check')?.click(); await settle()
+        const kept = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
+        check('the logged set keeps what was logged', kept[0]?.value === '95', kept[0]?.value)
 
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         ;(q('[data-programday="tuesday"]') ?? q('[data-programday]'))?.click()
         await waitFor('.setrow__check')
         const fresh = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('F2 there are several sets to cascade into', fresh.length >= 3, `${fresh.length} sets`)
+        check('there are several sets to cascade into', fresh.length >= 3, `${fresh.length} sets`)
         if (fresh[0]) {
           fresh[0].value = '135'
           fresh[0].dispatchEvent(new Event('change'))
-          await settle(); await new Promise((r) => setTimeout(r, 20))
+          await settle()
         }
         const cascaded = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('F2 editing set 1 fills the remaining sets', cascaded.length > 1 && cascaded.slice(1).every((i) => i.value === '135'),
-          cascaded.map((i) => i.value || '-').join(', '))
+        check('editing set 1 fills the remaining sets',
+          cascaded.length > 1 && cascaded.slice(1).every((input) => input.value === '135'),
+          cascaded.map((input) => input.value || '-').join(', '))
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
       }

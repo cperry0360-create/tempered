@@ -49,12 +49,11 @@ punishment pattern `CLAUDE.md` forbids.
 nothing accrues a penalty. An unfinished slot is neutral until the week ends, and then
 it simply disappears.
 
-**Today's one-view rule covers the day's slots and the daily activities, and nothing
-else.** Slots are the day's prescription, so all of them are on the screen; activities are
-a catalogue that grows, so only the ones flagged daily are, with the rest one control
-away. See `docs/03-screens.md`. The rule then holds by construction rather than by shaving
-labels off a crowded screen, which means adding a fourteenth activity — or a fortieth —
-cannot break it.
+**The old whole-Today one-view rule is superseded.** The **DAILY section must fit one
+6.1-inch phone view** because it is the immediate day surface. **THIS WEEK sits below it
+and may scroll.** Weekly work remains visible and honest about its frequency instead of
+being compressed, truncated, or misrepresented as today's obligation. See
+`docs/03-screens.md`.
 
 **XP is unchanged.** A slot completed alone earns exactly what it earns inside a block.
 Volume is volume. The path does not change the reward.
@@ -73,6 +72,7 @@ would score zero on the attribute specifically about showing up.
 - Nothing anywhere renders an outstanding item as overdue, late, missed or failed —
   assert this against the copy, not just the styling.
 - A day of micro sets with no formal session still accrues Grit.
+- The DAILY section fits one phone view; THIS WEEK is allowed to scroll below it.
 
 ---
 

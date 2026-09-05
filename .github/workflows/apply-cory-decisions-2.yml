@@ -1,0 +1,26 @@
+name: Apply Cory decisions 2
+
+on:
+  push:
+    branches:
+      - chatgpt/cory-decisions-2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python tools/apply-cory-decisions-2.py
+      - run: |
+          git config user.name "Tempered CI"
+          git config user.email "actions@github.com"
+          git add data/activities.json src/domain/activities.js src/app/daily.js src/ui/screens/today.js src/domain/types.js src/pwa/register.js DECISIONS.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply Cory-approved protein and platform decisions"
+            git push origin HEAD:chatgpt/cory-decisions-2
+          fi

@@ -31,8 +31,13 @@
       check('item id maps to canonical icon slot', /\/art\/battle\/items\/ember_token\.png$/.test(itemSpriteUrl('ember_token')))
       check('path-shaped enemy id is refused', enemySpriteUrl('../slime') === null)
 
-      const css = [...document.styleSheets].map((sheet) => sheet.href ?? '').some((href) => href.endsWith('/src/battle.css'))
-      check('battle-only stylesheet is loaded by the shell', css)
+      const [shellResponse, cssResponse] = await Promise.all([
+        fetch('../../index.html'),
+        fetch('../../src/battle.css'),
+      ])
+      const shell = await shellResponse.text()
+      check('shell links battle-only stylesheet', shellResponse.ok && shell.includes('./src/battle.css'))
+      check('battle-only stylesheet is served', cssResponse.ok)
 
       const passed = checks.every((entry) => entry.ok)
       results.dataset.status = passed ? 'pass' : 'fail'

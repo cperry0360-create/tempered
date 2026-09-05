@@ -45,63 +45,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Append missing Phase 7, cadence, and Phase 8 decisions once
+      - name: Append missing decisions once
         shell: bash
         run: |
           if grep -q 'Backfill: Phase 7 setup is additive and safe for existing profiles' DECISIONS.md; then
             echo 'Decision backfill already present.'
             exit 0
           fi
-          cat >> DECISIONS.md <<'EOF'
-
-## 2026-09-05 — Backfill: Phase 7 setup is additive and safe for existing profiles
-**Phase:** 7
-**Decision:** First run is a five-step setup for name/units, sessions-per-week, active
-program, optional starting working weights, and non-workout activity cadence. Every step
-has a default. Re-running setup from Settings edits configuration without deleting logged
-history. Only profiles created by Phase 7 explicitly carry `setupComplete: false`; an older
-profile with no such field is treated as already configured and never forced into setup by
-an update. Starting weights prefill a first performance only; real logged history outranks
-them afterward.
-**Reasoning:** Phase 7 had landed in code and tests without an architectural entry in this
-log. The compatibility rule is load-bearing: onboarding must never turn a software update
-into a migration ceremony for an existing user, and configuration must not manufacture
-training history.
-**Confidence:** specified by the shipped Phase 7 behavior and docs/07 acceptance criteria.
-**Needs Cory:** no
-
-## 2026-09-05 — Backfill: activitySchedule owns cadence and supersedes attribute sections
-**Phase:** 7 / cadence model
-**Decision:** Non-workout activities have one profile-owned cadence: OFF, DAILY, or X/week
-(1–7). `activitySchedule` is authoritative; `dailyActivityIds` remains only as a backwards-
-compatible mirror. Weekly completion counts distinct logged calendar days, not taps. Today
-is organized by time horizon — DAILY then THIS WEEK — rather than the older TRAIN /
-RECOVER / SHARPEN attribute-family grouping. OFF activities remain one control away and
-score identically when logged. The DAILY section is the immediate one-view surface; THIS
-WEEK deliberately scrolls below it.
-**Reasoning:** Cadence answers the user's operational question — when does this belong —
-while attribute colour already answers what RPG stat it feeds. Keeping both as top-level
-section systems duplicated information and made the one-view rule impossible on larger
-program days. Distinct-day counting prevents repeated taps from satisfying a weekly habit.
-Placement must never become a reward multiplier or a punishment mechanism.
-**Confidence:** specified by the cadence rebuild and Cory's explicit one-view ruling.
-**Needs Cory:** no
-
-## 2026-09-05 — Backfill: Phase 8 hardens the existing product instead of adding systems
-**Phase:** 8
-**Decision:** Phase 8 is a polish/hardening pass only. It adds recoverable startup/screen /
-workout/battle errors, accessible empty states and live regions, rem-based dynamic type,
-visible focus, 44px targets, iOS input-zoom protection, reduced-motion/contrast/forced-
-colors/transparency handling, dual Node 22/24 CI, syntax checks, and long-horizon cadence /
-XP stress regressions. It does not alter XP philosophy, cadence semantics, program logic or
-battle rewards.
-**Reasoning:** Polish is safest when it can be falsified without moving the product model.
-The stress tests exist specifically to prove that accessibility and surface changes do not
-quietly reintroduce punishment, XP subtraction, cadence debt, persistence loss or runtime-
-version drift.
-**Confidence:** specified by docs/07 Phase 8 and the Phase 8 regression suite.
-**Needs Cory:** no
-EOF
+          cat .github/decisions-backfill.txt >> DECISIONS.md
           git config user.name 'Tempered CI'
           git config user.email 'actions@github.com'
           git add DECISIONS.md

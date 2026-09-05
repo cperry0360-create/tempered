@@ -91,7 +91,7 @@ export function takeTurn(state, action, record, balance) {
     if (action === 'skill') focus -= 1
     const damage = variedDamage(record.hero.damage * multiplier * (crit ? 2 : 1), rng, variance)
     enemyHp = Math.max(0, enemyHp - damage)
-    log.push({ kind: action, by: 'hero', damage, crit, enemyHp })
+    log.push({ kind: action, by: 'hero', target: enemy.name, targetId: enemy.id, damage, crit, enemyHp })
   }
 
   if (enemyHp <= 0) {
@@ -120,7 +120,7 @@ export function takeTurn(state, action, record, balance) {
       const raw = Math.max(1, enemy.damage - record.hero.defence) * guardMultiplier
       const damage = variedDamage(raw, rng, variance)
       heroHp = Math.max(0, heroHp - damage)
-      log.push({ kind: 'enemyHit', by: 'enemy', damage, heroHp, guarded })
+      log.push({ kind: 'enemyHit', by: 'enemy', source: enemy.name, damage, heroHp, guarded })
       if (heroHp <= 0) {
         status = 'finished'
         won = false
@@ -160,7 +160,7 @@ export function autoTurnBattle(state, record, balance) {
     else if (hurt && next.turn % 2 === 1) action = 'guard'
     next = takeTurn(next, action, record, balance)
   }
-  return next
+  return next.status === 'finished' ? next : skipTurnBattle(next, record)
 }
 
 /**

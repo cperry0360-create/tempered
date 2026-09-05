@@ -1,20 +1,9 @@
 /**
- * The daily service — a calendar day's non-workout logging.
+ * Non-workout logging and cadence.
  *
- * Wiring, like `workout.js`: it joins the pure activity model and XP engine to
- * the storage, clock and health adapters, and neither side knows it exists.
- *
- * **Settlement is the whole problem.** A day is not finished and then scored; it
- * is logged a piece at a time, and every piece re-scores the whole day. Paying
- * out `awardsForDay` on each entry would pay for the morning's sleep again every
- * time a glass of water is logged. So each day records what it has already been
- * paid, per source, and a log pays only the difference.
- *
- * That ledger also gives the two directions of correction for free, both of
- * which matter because `CLAUDE.md` forbids taking anything back:
- *
- *   - a value corrected downwards pays nothing and claws nothing back
- *   - re-raising it to a figure already paid for pays nothing a second time
+ * A trackable activity can be OFF, DAILY, or WEEKLY with a target count. The
+ * cadence controls what Today asks for; XP still comes only from what was
+ * actually logged. Missing a target never subtracts anything.
  */
 
 import {
@@ -28,6 +17,24 @@ import { rankFromLevels } from '../domain/rank.js'
 
 /** @type {import('../domain/types.js').AttributeId[]} */
 const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
+const CADENCES = new Set(['off', 'daily', 'weekly'])
+
+const clampTarget = (value) => Math.max(1, Math.min(7, Math.round(Number(value) || 1)))
+
+function formatDate(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/** Monday containing a YYYY-MM-DD date. */
+function calendarWeekStart(isoDate) {
+  const date = new Date(`${isoDate}T12:00:00`)
+  const offset = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - offset)
+  return formatDate(date)
+}
 
 /**
  * @param {object} deps
@@ -35,7 +42,7 @@ const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
  * @param {import('../adapters/health/health-adapter.js').HealthAdapter} [deps.health]
  * @param {import('../domain/types.js').Balance} deps.balance
- * @param {{activities: any[]}} deps.catalogue  data/activities.json
+ * @param {{activities: any[]}} deps.catalogue
  */
 export function createDailyService({ storage, clock, health, balance, catalogue }) {
   const activities = catalogue?.activities ?? []
@@ -46,38 +53,59 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   }
 
   /**
-   * The activities this person tracks every day, which is what Today shows.
-   *
-   * Falls back to the seed's defaults when the profile carries no list — a
-   * profile created before the flag existed, or one whose setup has not run
-   * yet. Storing nothing until the user changes something means the defaults
-   * can be retuned later without stale copies of them sitting in every profile.
+   * Backwards-compatible schedule. Older profiles only know `dailyActivityIds`;
+   * those remain daily and everything else stays off until setup is rerun.
    */
-  async function dailyIds() {
+  async function activitySchedule() {
     const profile = await storage.get('profile', 'profile')
-    return profile?.dailyActivityIds ?? defaultDailyIds(activities)
+    const legacyDaily = new Set(profile?.dailyActivityIds ?? defaultDailyIds(activities))
+    const stored = profile?.activitySchedule ?? {}
+
+    return Object.fromEntries(activities.map((activity) => {
+      const raw = stored[activity.id]
+      if (raw && CADENCES.has(raw.cadence)) {
+        return [activity.id, {
+          cadence: raw.cadence,
+          target: raw.cadence === 'weekly' ? clampTarget(raw.target) : 1,
+        }]
+      }
+      return [activity.id, legacyDaily.has(activity.id)
+        ? { cadence: 'daily', target: 1 }
+        : { cadence: 'off', target: 1 }]
+    }))
+  }
+
+  async function dailyIds() {
+    const schedule = await activitySchedule()
+    return activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily')
   }
 
   /**
-   * Puts an activity on the daily list, or takes it off.
-   *
-   * Taking one off never removes anything already logged and never costs XP;
-   * it is a decision about one screen's contents, not about the day.
-   *
-   * @param {string} activityId
-   * @param {boolean} on
+   * Set one activity's cadence. `dailyActivityIds` is maintained as a legacy
+   * mirror so older code/backups still degrade cleanly.
    */
-  async function setDaily(activityId, on) {
-    if (!ACTIVITY_FIELDS[activityId]) return dailyIds()
-    const current = new Set(await dailyIds())
-    if (on) current.add(activityId)
-    else current.delete(activityId)
-    // Stored in the catalogue's own order, so the list reads the same wherever
-    // it is shown.
-    const next = activities.map((a) => a.id).filter((id) => current.has(id))
+  async function setCadence(activityId, cadence, target = 1) {
+    if (!ACTIVITY_FIELDS[activityId] || !CADENCES.has(cadence)) return activitySchedule()
     const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
-    await storage.put('profile', { ...profile, dailyActivityIds: next })
-    return next
+    const schedule = await activitySchedule()
+    schedule[activityId] = {
+      cadence,
+      target: cadence === 'weekly' ? clampTarget(target) : 1,
+    }
+    const legacyDaily = activities.map((a) => a.id)
+      .filter((id) => schedule[id]?.cadence === 'daily')
+    await storage.put('profile', {
+      ...profile,
+      activitySchedule: schedule,
+      dailyActivityIds: legacyDaily,
+    })
+    return schedule
+  }
+
+  /** Compatibility wrapper for the old Settings toggle. */
+  async function setDaily(activityId, on) {
+    await setCadence(activityId, on ? 'daily' : 'off', 1)
+    return dailyIds()
   }
 
   /** The XP state, as the engine wants it. */
@@ -92,15 +120,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return state
   }
 
-  /**
-   * Pays a day up to what it is currently worth, and returns only the difference.
-   *
-   * `day.awarded` is the high-water mark per source rather than the latest
-   * figure, which is what makes a correction downwards cost nothing in either
-   * direction.
-   *
-   * @param {import('../domain/types.js').DayInput} day
-   */
+  /** Pay only the increase over what this day has already earned. */
   async function settleDay(day) {
     const profile = await storage.get('profile', 'profile')
     const context = { paceBaselineMinPerMile: profile?.paceBaselineMinPerMile ?? null }
@@ -115,8 +135,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       const difference = owed[award.source] - (paid[award.source] ?? 0)
       if (difference <= 0) continue
       delta.push({ ...award, xp: difference })
-      // A source may be split across several awards; the first one carries the
-      // whole difference and the rest are already covered.
       paid[award.source] = owed[award.source]
     }
 
@@ -152,72 +170,87 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     }
   }
 
-  /**
-   * One activity, logged. A mark takes no value; a measured activity takes the
-   * number the user entered.
-   *
-   * @param {string} activityId
-   * @param {number|string|null} [value]
-   */
+  /** One activity, logged for today. */
   async function log(activityId, value = null, options = {}) {
     const date = clock.today()
     const day = await dayLog(date)
     if (!ACTIVITY_FIELDS[activityId]) {
-      // Nothing to log and nothing to say about it. An unrecognised id is a bug
-      // in a caller, not something to throw in a user's face mid-day.
       return { day, awards: [], xpByAttribute: totalsByAttribute([]), xpBySource: {}, levelledUp: [], levels: {}, rank: null }
     }
     return settleDay(applyActivity(day, activityId, value, options))
   }
 
-  /**
-   * Pays for anything on today that has not been paid for yet.
-   *
-   * Needed because a health adapter can write a day directly — a device sample,
-   * an import — without passing through `log()`.
-   */
   async function settle() {
     return settleDay(await dayLog(clock.today()))
   }
 
-  /**
-   * Today, as a screen needs it: what is outstanding, what is logged, and the
-   * value of each thing that is.
-   *
-   * Nothing here is late or missed. The two lists are "still available" and
-   * "done", and there is deliberately no third.
-   */
-  async function today() {
-    const date = clock.today()
-    const day = await dayLog(date)
-    const wanted = new Set(await dailyIds())
-    const { outstanding, logged } = splitActivities(activities, day)
-    const decorate = (activity) => ({
-      daily: wanted.has(activity.id),
+  /** Decorate one catalogue row against one day. */
+  function decorate(activity, day, schedule) {
+    const cadence = schedule[activity.id]?.cadence ?? 'off'
+    return {
       ...activity,
+      daily: cadence === 'daily',
+      cadence,
+      weeklyTarget: cadence === 'weekly' ? schedule[activity.id].target : null,
       spec: ACTIVITY_FIELDS[activity.id],
-      // A body metric's reading is read HERE and only here. The domain may not
-      // touch it — see body-weight.test.js — but Phase 4 requires it shown back,
-      // so the read lives at the boundary, one layer away from anything that
-      // could score it.
       value: ACTIVITY_FIELDS[activity.id]?.stores === 'bodyMetrics'
         ? day.bodyMetrics?.weight ?? null
         : activityValue(activity, day),
       logged: isLogged(activity, day),
-    })
-    return {
-      date,
-      day,
-      dailyIds: [...wanted],
-      outstanding: outstanding.map(decorate),
-      logged: logged.map(decorate),
     }
   }
 
-  /** The health adapter's view of a date, for screens that want a device value. */
+  /** Today only: daily activities plus all catalogue rows for optional logging. */
+  async function today() {
+    const date = clock.today()
+    const day = await dayLog(date)
+    const schedule = await activitySchedule()
+    const { outstanding, logged } = splitActivities(activities, day)
+    return {
+      date,
+      day,
+      schedule,
+      dailyIds: activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily'),
+      outstanding: outstanding.map((activity) => decorate(activity, day, schedule)),
+      logged: logged.map((activity) => decorate(activity, day, schedule)),
+    }
+  }
+
+  /**
+   * Weekly activities count distinct days on which the activity was logged.
+   * That makes "3x/week" mean three actual days, not three taps on Tuesday.
+   */
+  async function week() {
+    const todayDate = clock.today()
+    const start = calendarWeekStart(todayDate)
+    const schedule = await activitySchedule()
+    const days = (await storage.getAll('dayLogs'))
+      .filter((day) => day.date >= start && day.date <= todayDate)
+    const todayDay = days.find((day) => day.date === todayDate) ?? { date: todayDate }
+
+    const weekly = activities
+      .filter((activity) => schedule[activity.id]?.cadence === 'weekly')
+      .map((activity) => {
+        const target = clampTarget(schedule[activity.id]?.target)
+        const done = days.filter((day) => isLogged(activity, day)).length
+        return {
+          ...decorate(activity, todayDay, schedule),
+          weeklyDone: done,
+          weeklyTarget: target,
+          complete: done >= target,
+          loggedToday: isLogged(activity, todayDay),
+        }
+      })
+
+    return { start, date: todayDate, activities: weekly }
+  }
+
   async function sample(date = clock.today()) {
     return health ? health.read(date) : null
   }
 
-  return { activities, today, log, settle, dayLog, sample, dailyIds, setDaily }
+  return {
+    activities, today, week, log, settle, dayLog, sample,
+    dailyIds, setDaily, activitySchedule, setCadence,
+  }
 }

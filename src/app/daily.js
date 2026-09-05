@@ -79,6 +79,20 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     }
   }
 
+  async function calorieTarget() {
+    const profile = await storage.get('profile', 'profile')
+    const value = Number(profile?.calorieTarget)
+    return Number.isFinite(value) && value > 0 ? Math.round(value) : null
+  }
+
+  async function setCalorieTarget(value) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const parsed = Number(value)
+    const target = Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null
+    await storage.put('profile', { ...profile, calorieTarget: target })
+    return target
+  }
+
   /**
    * Backwards-compatible schedule. Older profiles only know `dailyActivityIds`;
    * those remain daily and everything else stays off until setup is rerun.
@@ -213,7 +227,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   }
 
   /** Decorate one catalogue row against one day. */
-  function decorate(activity, day, schedule, dynamicProteinGoal = null) {
+  function decorate(activity, day, schedule, dynamicProteinGoal = null, dynamicCalorieTarget = null) {
     const cadence = schedule[activity.id]?.cadence ?? 'off'
     const decorated = {
       ...activity,
@@ -229,6 +243,9 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     if (activity.id === 'protein_target') {
       return { ...decorated, dailyCap: day.proteinGoalGrams ?? dynamicProteinGoal ?? null }
     }
+    if (activity.id === 'calories_logged') {
+      return { ...decorated, dailyCap: dynamicCalorieTarget ?? null }
+    }
     return decorated
   }
 
@@ -238,14 +255,15 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const day = await dayLog(date)
     const schedule = await activitySchedule()
     const proteinGoal = await proteinGoalFor(date, day)
+    const caloriesGoal = await calorieTarget()
     const { outstanding, logged } = splitActivities(activities, day)
     return {
       date,
       day,
       schedule,
       dailyIds: activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily'),
-      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal)),
-      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal)),
+      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),
+      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),
     }
   }
 
@@ -261,6 +279,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       .filter((day) => day.date >= start && day.date <= todayDate)
     const todayDay = days.find((day) => day.date === todayDate) ?? { date: todayDate }
     const proteinGoal = await proteinGoalFor(todayDate, todayDay)
+    const caloriesGoal = await calorieTarget()
     const completedOnDay = (activity, row) => activity.id === 'protein_target'
       ? row.proteinTargetMet === true
       : isLogged(activity, row)
@@ -271,7 +290,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
         const target = clampTarget(schedule[activity.id]?.target)
         const done = days.filter((day) => completedOnDay(activity, day)).length
         return {
-          ...decorate(activity, todayDay, schedule, proteinGoal),
+          ...decorate(activity, todayDay, schedule, proteinGoal, caloriesGoal),
           weeklyDone: done,
           weeklyTarget: target,
           complete: done >= target,
@@ -288,6 +307,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
 
   return {
     activities, today, week, log, settle, dayLog, sample,
-    dailyIds, setDaily, activitySchedule, setCadence,
+    dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
   }
 }

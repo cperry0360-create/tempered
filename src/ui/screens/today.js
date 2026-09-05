@@ -17,6 +17,7 @@ import { totalsByAttributeFromSources } from '../../domain/xp-engine.js'
 
 const QUICK_ADD = {
   water: [8, 12, 16],
+  protein_target: [20, 30, 40],
   read: [10, 20, 30],
   study: [10, 20, 30],
   meditate: [5, 10, 20],
@@ -30,7 +31,7 @@ function quickAddFor(activity) {
 
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
-  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g' }[activity.unit] ?? ''
+  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal' }[activity.unit] ?? ''
 }
 
 function valueLabel(activity, value) {
@@ -40,7 +41,8 @@ function valueLabel(activity, value) {
       : activity.unit === 'oz' ? 'oz'
         : activity.unit === 'steps' ? 'steps'
           : activity.unit === 'g' ? 'g'
-            : activity.id === 'body_metrics' ? 'lb' : ''
+            : activity.unit === 'kcal' ? 'kcal'
+              : activity.id === 'body_metrics' ? 'lb' : ''
   return `${value}${unit ? ` ${unit}` : ''}`
 }
 
@@ -141,6 +143,17 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         byExercise.set(id, existing)
       }
     }
+    const overrides = weekProgram?.exerciseFrequencyTargets ?? {}
+    const frequencyDone = weekProgram?.exerciseFrequencyDone ?? {}
+    for (const group of byExercise.values()) {
+      group.programTarget = group.target
+      const override = Number(overrides[group.id])
+      if (Number.isFinite(override) && override > 0) {
+        group.target = override
+        group.done = frequencyDone[group.id] ?? 0
+        group.frequencyOverride = true
+      }
+    }
     return [...byExercise.values()].sort((a, b) => {
       const aComplete = a.done >= a.target
       const bComplete = b.done >= b.target
@@ -156,6 +169,10 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       type: 'button',
       dataset: { exerciseweek: group.id, done: String(complete), started: String(group.started) },
       onclick: () => {
+        if (group.frequencyOverride && !group.firstOpen && group.done < group.target) {
+          onOpenSlot({ exerciseId: group.id, extra: true })
+          return
+        }
         if (!ref) return
         onOpenSlot({
           dayId: ref.programDay.id,

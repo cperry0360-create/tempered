@@ -43,7 +43,7 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
 
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout })
-  const settings = createSettingsScreen({ storage, daily, maintenance, onSetup })
+  const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })
   const battleScreen = battle
     ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })
     : null
@@ -57,7 +57,9 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
   const today = createTodayScreen({
     workout, daily, clock,
     onStart: (options) => startSession(options),
-    onOpenSlot: (slot) => startSession({ slotTask: slot }),
+    onOpenSlot: (slot) => slot?.extra
+      ? startSession({ exerciseId: slot.exerciseId })
+      : startSession({ slotTask: slot }),
   })
 
   const summary = createSummaryScreen({ onDone: async () => { await show(returnTab) } })

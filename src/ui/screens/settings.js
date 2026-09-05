@@ -8,7 +8,7 @@ import { shortDate } from '../format.js'
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 
-export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
+export function createSettingsScreen({ storage, daily, workout, maintenance, onSetup }) {
   const root = el('div.screen.screen--settings')
   let typed = ''
   let update = null
@@ -40,6 +40,17 @@ export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
   async function load() {
     const profile = await storage.get('profile', 'profile')
     const schedule = await daily.activitySchedule()
+    const weekStatus = workout ? await workout.weekStatus() : null
+    const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}
+    const exerciseGroups = new Map()
+    for (const day of weekStatus?.week?.days ?? []) {
+      for (const task of day.tasks ?? []) {
+        const id = task.slot.exerciseId
+        const row = exerciseGroups.get(id) ?? { id, name: task.slot.name, programTarget: 0 }
+        row.programTarget += 1
+        exerciseGroups.set(id, row)
+      }
+    }
 
     replace(root, [
       el('h1.screen__title', { text: 'Settings' }),
@@ -57,6 +68,26 @@ export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
         onSetup && el('button.button', {
           type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
         }, ['RE-RUN SETUP']),
+      ]),
+
+      el('section.card', { dataset: { section: 'targets' } }, [
+        el('h2.block__title', { text: 'Daily targets' }),
+        el('p.block__hint', { text: 'Protein is calculated from body weight. Calories are your configurable daily target.' }),
+        el('div.setting', {}, [
+          el('span.setting__label', { text: 'Calories' }),
+          (() => {
+            const input = el('input.entry__value', {
+              type: 'text', inputmode: 'numeric', value: profile?.calorieTarget ?? '', placeholder: 'Not set',
+              'aria-label': 'Daily calorie target',
+            })
+            return el('span.setting__value', {}, [
+              input,
+              el('button.setup__cadence', {
+                type: 'button', onclick: async () => { await daily.setCalorieTarget(input.value); await load() },
+              }, ['SAVE']),
+            ])
+          })(),
+        ]),
       ]),
 
       el('section.card', { dataset: { section: 'cadence' } }, [
@@ -85,6 +116,28 @@ export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
             ]),
           ])
         })),
+      ]),
+
+      exerciseGroups.size > 0 && el('section.card', { dataset: { section: 'exercise-frequency' } }, [
+        el('h2.block__title', { text: 'Exercise frequency' }),
+        el('p.block__hint', { text: 'PROGRAM follows the current plan. Choose a number to override how often that exercise should be completed this week.' }),
+        el('div.setup__cadencelist', {}, [...exerciseGroups.values()].sort((a, b) => a.name.localeCompare(b.name)).map((exercise) =>
+          el('div.setup__cadencerow', {}, [
+            el('div.setup__cadencehead', {}, [
+              el('span.setup__activityname', { text: exercise.name }),
+              el('select.setup__weeklyselect', {
+                value: exerciseTargets[exercise.id] ? String(exerciseTargets[exercise.id]) : '',
+                'aria-label': `${exercise.name} weekly frequency`,
+                onchange: async (event) => {
+                  await workout.setExerciseFrequencyTarget(exercise.id, event.target.value === '' ? null : Number(event.target.value))
+                  await load()
+                },
+              }, [
+                el('option', { value: '' }, [`PROGRAM (${exercise.programTarget}×/wk)`]),
+                ...WEEKLY_OPTIONS.map((value) => el('option', { value: String(value) }, [`${value}×/wk`])),
+              ]),
+            ]),
+          ]))),
       ]),
 
       el('section.card', { dataset: { section: 'version' } }, [

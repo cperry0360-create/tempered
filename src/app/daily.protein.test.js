@@ -30,12 +30,15 @@ test('protein goal derives from the latest body weight and pays only at the fini
   let protein = proteinRow(await daily.today())
   assert.equal(protein.dailyCap, 132, '164 lb × 0.8 rounds up to a 132 g goal')
 
-  let result = await daily.log('protein_target', 131)
-  assert.equal(result.day.proteinGrams, 131)
+  let result = await daily.log('protein_target', 60)
+  assert.equal(result.day.proteinGrams, 60)
+  result = await daily.log('protein_target', 71)
+  assert.equal(result.day.proteinGrams, 131, 'protein entries accumulate through the day')
   assert.equal(result.day.proteinTargetMet, false)
   assert.equal(result.xpBySource['vitality.protein'] ?? 0, 0)
 
-  result = await daily.log('protein_target', 132)
+  result = await daily.log('protein_target', 1)
+  assert.equal(result.day.proteinGrams, 132)
   assert.equal(result.day.proteinTargetMet, true)
   assert.equal(result.xpBySource['vitality.protein'], balance.vitality.proteinTargetBonus)
 

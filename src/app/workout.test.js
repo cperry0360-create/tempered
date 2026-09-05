@@ -388,3 +388,21 @@ test('Grit pays for the work, not for the gap between sittings', async () => {
   assert.ok(hoursXp < balance.grit.xpPerTrainingHour * 0.2,
     `three idle hours paid ${hoursXp} XP for time under load`)
 })
+
+
+test('exercise frequency can override the program and counts extra workout occurrences', async () => {
+  const { workout } = await freshApp()
+  await workout.setExerciseFrequencyTarget('squat_bb', 3)
+  assert.equal((await workout.exerciseFrequencyTargets()).squat_bb, 3)
+
+  const first = await workout.startSession(null)
+  await workout.logSet(first, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
+  await workout.finishSession(first, { durationMinutes: 10 })
+  const second = await workout.startSession(null)
+  await workout.logSet(second, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
+  await workout.finishSession(second, { durationMinutes: 10 })
+
+  const week = await workout.weekStatus()
+  assert.equal(week.exerciseFrequencyTargets.squat_bb, 3)
+  assert.equal(week.exerciseFrequencyDone.squat_bb, 2)
+})

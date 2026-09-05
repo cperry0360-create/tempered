@@ -1,16 +1,10 @@
 /**
- * The shell: four tabs, and the session flow that temporarily takes over.
+ * The shell: four tabs, global Settings access, and the session flow that
+ * temporarily takes over.
  *
- * Four tabs, per `docs/03-screens.md`. Today and Character are Phase 4 and 5 —
- * they are present so the shape of the app is honest, and say plainly that they
- * are not built rather than showing an empty screen that looks broken.
- *
- * The bar floats — inset from all three edges over a blurred translucent
- * surface, with the safe-area inset respected — and carries the screen's one
- * primary action as a circular acid FAB at its right, per
- * `docs/04-design-system.md`. A screen that has no single primary action gets no
- * FAB rather than a made-up one; the session hides the bar entirely, so its
- * primary action is a full-width acid confirm instead.
+ * Settings is app-level navigation, not Character content. A compact persistent
+ * control sits in the top-right on every normal screen. Immersive flows hide it
+ * so a stray tap cannot interrupt a workout, battle, or summary.
  */
 
 import { el, replace } from '../ui/dom.js'
@@ -45,6 +39,14 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
+  const settingsAccess = el('button.settings-access', {
+    type: 'button',
+    'aria-label': 'Settings',
+    title: 'Settings',
+    dataset: { active: 'false' },
+    onclick: () => show('settings'),
+  }, [icon('equipment')])
+
   let active = 'train'
   /** Where the session was started from, so DONE returns there. */
   let returnTab = 'train'
@@ -70,8 +72,10 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     await battleScreen.start()
     replace(body, [battleScreen.root])
     tabBar.hidden = true
+    settingsAccess.hidden = true
     body.scrollTop = 0
   }
+
   const today = createTodayScreen({
     workout, daily, clock,
     onStart: (options) => startSession(options),
@@ -79,6 +83,7 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     // its slot identity so the work counts against the day it was prescribed for.
     onOpenSlot: (slot) => startSession({ slotTask: slot }),
   })
+
   const summary = createSummaryScreen({
     // Back where you came from: a slot opened from Today returns to Today, not
     // to Train, which is a different screen than the one you were working in.
@@ -107,12 +112,14 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
         summary.show(result)
         replace(body, [summary.root])
         tabBar.hidden = true
+        settingsAccess.hidden = true
         body.scrollTop = 0
       },
     })
     await session.start(options)
     replace(body, [session.root])
     tabBar.hidden = true
+    settingsAccess.hidden = true
     body.scrollTop = 0
   }
 
@@ -122,6 +129,9 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     session = null
     battleScreen?.destroy()
     tabBar.hidden = false
+    settingsAccess.hidden = false
+    settingsAccess.dataset.active = String(tab === 'settings')
+    settingsAccess.setAttribute('aria-current', tab === 'settings' ? 'page' : 'false')
 
     if (tab === 'train') { await train.refresh(); replace(body, [train.root]) }
     else if (tab === 'history') { await history.refresh(); replace(body, [history.root]) }
@@ -149,6 +159,6 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     body.scrollTop = 0
   }
 
-  replace(mount, [body, tabBar])
+  replace(mount, [body, settingsAccess, tabBar])
   return { show, startSession }
 }

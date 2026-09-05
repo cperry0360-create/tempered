@@ -27,8 +27,9 @@ that could be awarded for doing the work.
    directly.
 7. **Balance lives in config, not code.** Every XP value, curve, cap and threshold sits
    in `data/balance.json`. Changing balance must never require editing logic.
-8. **Dark tactical visual language.** See `docs/04-design-system.md`. No illustration is
-   required to ship. Do not invent decorative art.
+8. **Dark tactical visual language.** See `docs/04-design-system.md`. Illustration is
+   reserved for the battle layer and exercise reference art; do not invent decorative
+   art elsewhere in the tracker.
 9. **The name means something. Use it.** Tempering is strengthening through controlled
    stress followed by rest. Rest is therefore never framed as absence, failure or a
    break in a streak — it is half the process. Copy should reflect this. Words to
@@ -37,7 +38,8 @@ that could be awarded for doing the work.
 
 ## What this is NOT
 
-- Not an interactive game. The only combat is a passive daily cutscene.
+- Not a full game. The only interactive game layer is the tiny optional daily battle:
+  ATTACK, GUARD, SKILL, AUTO, or SKIP. Playing it never creates character XP.
 - Not a 500-exercise database with muscle maps. Cory's lifts, extensible.
 - Not a social app. No feeds, no friends, no leaderboards in V1.
 - Not a notification machine. V1 sends none.

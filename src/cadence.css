@@ -1,0 +1,28 @@
+/* Cadence UI shared by Today and Settings. */
+.weekly-row__count {
+  color: var(--blue);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.row[data-weekly='true'] {
+  flex-wrap: wrap;
+}
+
+.row[data-weekly='true'] .weekly-row__count {
+  margin-left: auto;
+}
+
+.row.entry[data-weekly='true'] .entry__field {
+  margin-left: auto;
+}
+
+.sect[data-section='daily'] .sect__title,
+.sect[data-section='weekly'] .sect__title {
+  letter-spacing: .08em;
+}
+
+@media (max-width: 390px) {
+  .weekly-row__count { font-size: 11px; }
+}

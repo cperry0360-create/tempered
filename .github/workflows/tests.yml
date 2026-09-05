@@ -36,11 +36,4 @@ jobs:
         with:
           node-version: 24
       - name: Run every browser harness
-        shell: bash
-        run: set -o pipefail; node tools/verify-browser-harnesses.js | tee browser-harness.log
-      - name: Upload browser harness diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-harness-log
-          path: browser-harness.log
+        run: node tools/verify-browser-harnesses.js

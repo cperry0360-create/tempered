@@ -5,11 +5,10 @@
  * acceptance criterion that `docs/03-screens.md` calls mandatory: tap an
  * attribute and see exactly which activities feed it and what each is worth.
  *
- * The load-bearing test is the one that walks the XP engine and checks the
- * explanation covers every source the engine can actually emit. A hand-written
- * list of "things that give you Might" is exactly the kind of thing that is
- * true the day it is written and quietly wrong six weeks later, and the failure
- * mode is the worst kind: the app confidently explaining itself incorrectly.
+ * The load-bearing test walks the XP engine and checks this list against every
+ * source it can actually emit. The day half of that probe is derived from the
+ * activity registry so adding a new trackable activity cannot quietly leave the
+ * Character explanation behind.
  */
 
 import { test } from 'node:test'
@@ -18,22 +17,47 @@ import { loadBalance, loadExercises } from '../../test/helpers/balance.js'
 import { explainSources, topContributors, SOURCE_LABELS } from './sources.js'
 import { awardsForSession, awardsForDay } from './xp-engine.js'
 import { ATTRIBUTE_IDS } from './tiers.js'
+import { ACTIVITY_FIELDS, applyActivity } from './activities.js'
 
 const balance = loadBalance()
 
+/** Meaningful values for numeric activities. Mark activities need no value. */
+const ACTIVITY_PROBE_VALUES = Object.freeze({
+  sleep: 8,
+  water: 64,
+  steps: 9000,
+  body_metrics: 184,
+  mobility: 20,
+  read: 20,
+  study: 20,
+  meditate: 10,
+  instrument: 15,
+})
+
 /**
- * Every source id the engine can emit, found by driving it rather than by
- * reading it. A day and a session that between them trigger everything.
+ * Build the day by walking the actual activity registry. If a future activity
+ * gets a day-log field, this probe exercises it automatically instead of
+ * depending on somebody remembering to update a hand-written literal.
  */
-function everySourceTheEngineEmits() {
-  const day = {
-    date: '2026-09-04',
-    sleepHours: 8, waterOz: 64, steps: 9000, mobilityMinutes: 20,
-    readingMinutes: 20, studyMinutes: 20, meditationMinutes: 10, instrumentMinutes: 15,
-    journalLogged: true, nutritionLogged: true, proteinTargetMet: true,
-    restDay: true, bodyMetricsLogged: true,
+function activityProbeDay() {
+  let day = { date: '2026-09-04' }
+  for (const [activityId, spec] of Object.entries(ACTIVITY_FIELDS)) {
+    const value = spec.entry === 'number' ? (ACTIVITY_PROBE_VALUES[activityId] ?? 1) : null
+    day = applyActivity(day, activityId, value)
+  }
+  return {
+    ...day,
     cardio: [{ activityId: 'run', distanceMiles: 3, minutes: 27 }],
   }
+}
+
+/**
+ * Every source id the engine can emit, found by driving it rather than by
+ * reading it. A registry-derived day and a session between them trigger all
+ * currently reachable sources.
+ */
+function everySourceTheEngineEmits() {
+  const day = activityProbeDay()
   const session = {
     id: 's1', routineId: 'lower', durationMinutes: 75,
     sets: [
@@ -54,8 +78,8 @@ function everySourceTheEngineEmits() {
     date: '2026-09-04',
     exercises: loadExercises(),
     records,
-    daysSinceLastSession: 9,          // fires the return bonus
-    sessionsThisWeekBefore: 3,        // this session is the 4th, meeting the plan
+    daysSinceLastSession: 9,
+    sessionsThisWeekBefore: 3,
     planTargetSessionsPerWeek: 4,
     isFirstOfDay: true,
   }
@@ -68,9 +92,12 @@ function everySourceTheEngineEmits() {
 const emitted = everySourceTheEngineEmits()
 
 test('the probe actually reaches the engine, or this file proves nothing', () => {
-  assert.ok(emitted.size >= 20, `only ${emitted.size} sources emitted — the probe is too thin`)
-  for (const id of ['might.volume', 'might.weightPr', 'might.e1rm', 'grit.return',
-    'wind.pace', 'vitality.rest', 'mind.journal', 'grit.weekPlan']) {
+  assert.ok(emitted.size >= 27, `only ${emitted.size} sources emitted — the probe is too thin`)
+  for (const id of [
+    'might.volume', 'might.weightPr', 'might.e1rm', 'grit.return', 'wind.pace',
+    'vitality.rest', 'vitality.calories', 'vitality.alcoholFree', 'vitality.sauna',
+    'mind.journal', 'grit.weekPlan',
+  ]) {
     assert.ok(emitted.has(id), `${id} was not emitted, so the probe is not exercising it`)
   }
 })
@@ -79,8 +106,7 @@ test('MANDATORY: every source the engine can emit is explained', () => {
   const explained = new Set(ATTRIBUTE_IDS.flatMap(
     (attribute) => explainSources(attribute, balance).map((entry) => entry.source)))
   const missing = [...emitted].filter((source) => !explained.has(source)).sort()
-  assert.deepEqual(missing, [],
-    'these can raise an attribute with the app unable to say why')
+  assert.deepEqual(missing, [], 'these can raise an attribute with the app unable to say why')
 })
 
 test('and nothing is explained that the engine cannot emit', () => {
@@ -93,8 +119,7 @@ test('and nothing is explained that the engine cannot emit', () => {
 test('every source is filed under the attribute it actually raises', () => {
   for (const attribute of ATTRIBUTE_IDS) {
     for (const entry of explainSources(attribute, balance)) {
-      assert.ok(entry.source.startsWith(`${attribute}.`),
-        `${entry.source} is listed under ${attribute}`)
+      assert.ok(entry.source.startsWith(`${attribute}.`), `${entry.source} is listed under ${attribute}`)
     }
   }
 })
@@ -122,9 +147,15 @@ test('the worth quoted is the number in balance.json, not a copy of it', () => {
     `"${volume.worth}" does not quote ${balance.might.xpPerThousandLbsVolume}`)
 
   const vitality = explainSources('vitality', balance)
-  const rest = vitality.find((entry) => entry.source === 'vitality.rest')
-  assert.ok(rest.worth.includes(String(balance.vitality.restDayXp)),
-    `"${rest.worth}" does not quote ${balance.vitality.restDayXp}`)
+  for (const [source, amount] of [
+    ['vitality.rest', balance.vitality.restDayXp],
+    ['vitality.calories', balance.vitality.caloriesLoggedXp],
+    ['vitality.alcoholFree', balance.vitality.alcoholFreeXp],
+    ['vitality.sauna', balance.vitality.saunaXp],
+  ]) {
+    const entry = vitality.find((item) => item.source === source)
+    assert.ok(entry.worth.includes(String(amount)), `"${entry.worth}" does not quote ${amount}`)
+  }
 })
 
 test('retuning balance retunes what the app says, with no code change', () => {
@@ -135,10 +166,7 @@ test('retuning balance retunes what the app says, with no code change', () => {
 })
 
 test('the labels match the ones the engine puts on its own awards', () => {
-  // The breakdown after a session and the explanation on the Character screen
-  // must call the same thing by the same name.
-  const day = { date: 'd', restDay: true, sleepHours: 8, journalLogged: true }
-  for (const award of awardsForDay(day, {}, balance)) {
+  for (const award of awardsForDay(activityProbeDay(), { paceBaselineMinPerMile: 12 }, balance)) {
     assert.equal(SOURCE_LABELS[award.source], award.label,
       `the engine calls ${award.source} "${award.label}"`)
   }
@@ -173,7 +201,6 @@ test('an attribute with no history yet returns nothing, and does not divide by z
 })
 
 test('an unknown source in stored history is shown, not swallowed', () => {
-  // A source retired from the engine but still in someone's lifetime totals.
   const top = topContributors('might', { 'might.ancientBonus': 500 }, 5)
   assert.equal(top.length, 1)
   assert.ok(top[0].label.length > 0, 'it still needs something to call it')

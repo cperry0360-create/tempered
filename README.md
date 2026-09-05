@@ -59,10 +59,11 @@ behind every file, so any picture can be traced back to its origin.
 
 ## The backdrop
 
-The night-forest artwork behind every screen — `art/source/bg-night-forest.jpg` — is
+The night-forest artwork behind every screen — `art/dist/bg-night-forest.jpg` — is
 **Cory's own original work**, and the app's colour scheme is sampled from it: the ground
 gradient, the card surfaces, and all five attribute colours. See
-`docs/11-structure-and-feel.md` section E.
+`docs/11-structure-and-feel.md` section E. `art/dist/` is the canonical runtime location;
+there is no second source copy of this same file.
 
 Unlike the exercise photographs, there is no third-party licence question here. It is
 first-party art, and the palette derived from it is first-party too.
@@ -116,4 +117,5 @@ Either is small. Neither is done yet — see `DECISIONS.md`.
 
 ## Status
 
-Specification in progress. Not yet built.
+Tempered is built and deployed as a static PWA; `docs/07-build-plan.md` records completed
+phases and the remaining roadmap.

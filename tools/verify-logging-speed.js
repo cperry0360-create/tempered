@@ -46,7 +46,10 @@ function serve() {
     }
   })
 
-  function nextReport(timeoutMs = 40000) {
+  // CI can spend tens of seconds starting Chromium under load. The product
+  // timing assertions live inside the harnesses; this outer timeout is only a
+  // watchdog for "never reported at all", so give startup a generous window.
+  function nextReport(timeoutMs = 90000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('the harness never reported back')), timeoutMs)
       pending = {

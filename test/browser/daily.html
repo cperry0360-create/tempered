@@ -10,27 +10,14 @@
     <div id="app" class="app"></div>
     <script type="module">
       /**
-       * The four Phase 4 acceptance criteria from docs/07-build-plan.md, driven
-       * against the real app:
-       *
-       *   - Today loads in one view with no scrolling to see what is outstanding
-       *     (the day's slots and the DAILY activities — docs/03 and docs/10)
-       *   - any single item completes in one tap, or one number plus one tap
-       *   - rest day is a first-class rewarded action
-       *   - a body metric shows its number back and awards XP only for logging
-       *
-       * Taps are counted the way `logging-speed.html` counts them: every click
-       * goes through tap(), so nothing can be undercounted by hand. The fit is
-       * measured at a stated 6.1" phone rather than at whatever size the
-       * headless window happens to be, because "one view" is a claim about a
-       * phone and nothing else.
+       * Phase 4 acceptance harness, reconciled with the later cadence model.
+       * DAILY is the immediate day view and must fit. THIS WEEK deliberately
+       * follows below it and may scroll. Cadence changes placement, never XP.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
-      /** iPhone 14 / 15, in CSS pixels. The screen docs/03 is written for. */
       const PHONE = { width: 390, height: 844 }
-
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
       const q = (s, root = document) => root.querySelector(s)
@@ -46,12 +33,6 @@
         throw new Error(`timed out waiting for ${selector}`)
       }
 
-      /** The worked list is collapsed by default and stays open once opened. */
-      async function openWorked() {
-        const toggle = await waitFor('[data-worked="toggle"]')
-        if (toggle.dataset.open !== 'true') { tap(toggle, 'open worked'); await settle() }
-      }
-
       let taps = 0
       function tap(node, label) {
         if (!node) throw new Error(`nothing to tap for: ${label}`)
@@ -60,140 +41,157 @@
         return node
       }
 
+      const activityRow = (id) => q(`[data-activity="${id}"]`)
+      const activityAction = (id) => activityRow(id)?.querySelector('button.row__act, button.entry__confirm') ?? null
+      const activityInput = (id) => q(`[data-entry="${id}"]`)
+
+      async function setOther(open) {
+        const toggle = q('[data-other="toggle"]')
+        if (!toggle) return false
+        if ((toggle.dataset.open === 'true') !== open) { toggle.click(); await settle() }
+        return true
+      }
+
+      async function ensureActivityVisible(id) {
+        if (activityRow(id)) return activityRow(id)
+        await setOther(true)
+        return activityRow(id)
+      }
+
+      async function openWorked() {
+        const toggle = q('[data-worked="toggle"]')
+        if (!toggle) return false
+        if (toggle.dataset.open !== 'true') { toggle.click(); await settle() }
+        return true
+      }
+
+      function dailyFits(barHeight) {
+        const section = q('[data-section="daily"]')
+        return section ? section.getBoundingClientRect().bottom <= PHONE.height - barHeight : false
+      }
+
       try {
         const storage = createMemoryStorage()
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
         const xpOf = async (attribute) => (await storage.get('attributeState', attribute))?.xp ?? 0
 
-        // A phone-width layout, whatever window the harness happens to run in.
         document.getElementById('app').style.width = `${PHONE.width}px`
         await tempered.app.show('today')
-        await waitFor('[data-log]')
+        await waitFor('.screen--today')
 
         // ---------------------------------------------------------------
-        // 1 — one view, no scrolling to see what is outstanding
+        // 1 — revised one-view rule: DAILY fits; THIS WEEK scrolls below.
         // ---------------------------------------------------------------
-        const body = q('.app__body')
         const bar = q('.tabbar')
         const barBox = bar.getBoundingClientRect()
-        // The body's own bottom padding already reserves room for the floating
-        // bar, so its scroll height is the whole demand this screen makes.
-        const needed = body.scrollHeight
-        check('1 everything outstanding fits one 6.1" view, with no scrolling',
-          needed <= PHONE.height,
-          `needs ${Math.round(needed)}px of ${PHONE.height}px (bar is ${Math.round(barBox.height)}px, reserved)`)
+        const dailySection = q('[data-section="daily"]')
+        check('1 the DAILY section fits one 6.1" view without scrolling',
+          dailyFits(barBox.height),
+          dailySection
+            ? `DAILY ends at ${Math.round(dailySection.getBoundingClientRect().bottom)}px; bar begins at ${Math.round(PHONE.height - barBox.height)}px`
+            : 'no DAILY section')
 
-        const slots = qa('[data-task][data-done="false"]').length
-        // Not a fixed six: the number of slots is whatever today's program day
-        // prescribes, and pinning it made this fail on a Saturday.
-        const prescribed = (await tempered.workout.todayTasks())?.tasks?.length ?? 0
-        check('1 and it is the whole day that fits, not a truncated list',
-          slots === prescribed && qa('[data-log]').length === (await tempered.daily.dailyIds()).length,
-          `all ${slots} of ${prescribed} training slots and all ${qa('[data-log]').length} daily activities`)
+        const renderedDaily = qa('[data-section="daily"] [data-activity]').length
+        const dailyIds = await tempered.daily.dailyIds()
+        check('1 the whole DAILY schedule is present, not a truncated list',
+          renderedDaily === dailyIds.length,
+          `${renderedDaily}/${dailyIds.length} scheduled daily activities rendered`)
 
-        // The structural half of the rule: the fit is about the daily list, so
-        // the catalogue can grow without the screen degrading.
         const catalogue = tempered.daily.activities.length
-        const dailyCount = (await tempered.daily.dailyIds()).length
-        check('1 the fit is about the daily list, not the catalogue',
-          dailyCount < catalogue && q('[data-other="toggle"]') !== null,
-          `${dailyCount} of ${catalogue} activities are daily; the rest are one control away`)
+        const dailyCount = dailyIds.length
+        check('1 the fit is about DAILY, not the whole catalogue or week',
+          dailyCount < catalogue && q('[data-section="weekly"]') !== null && q('[data-other="toggle"]') !== null,
+          `${dailyCount} daily of ${catalogue}; weekly work follows below`)
 
-        check('1 rest day is on the daily list, never behind that control',
-          (await tempered.daily.dailyIds()).includes('rest_day'))
+        const schedule = await tempered.daily.activitySchedule()
+        const restSeed = tempered.daily.activities.find((activity) => activity.id === 'rest_day')
+        check('1 rest day follows its cadence instead of being forced onto DAILY',
+          schedule.rest_day?.cadence === (restSeed?.daily ? 'daily' : 'off'),
+          schedule.rest_day?.cadence)
 
-        // Nothing is lost by the split: everything else is still loggable.
-        tap(q('[data-other="toggle"]'), 'log something else')
-        await settle()
-        const reachable = new Set(qa('[data-log]').map((node) => node.dataset.log))
-        check('1 and every other activity is reachable through it',
+        await setOther(true)
+        const reachable = new Set(qa('[data-activity]').map((node) => node.dataset.activity))
+        check('1 every activity is reachable through the same logging surface',
           tempered.daily.activities.every((activity) => reachable.has(activity.id)),
-          `${reachable.size} of ${catalogue} reachable in one tap`)
-        tap(q('[data-other="toggle"]'), 'close')
-        await settle()
+          `${reachable.size} of ${catalogue} activity rows reachable`)
+        await setOther(false)
 
-        // Nothing may be hidden under the floating bar.
-        const lastOutstanding = qa('[data-log]').at(-1)
-        check('1 the last outstanding control is clear of the floating bar',
-          lastOutstanding.getBoundingClientRect().bottom <= PHONE.height - barBox.height,
-          `${Math.round(lastOutstanding.getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px`)
+        const dailyRowsAtStart = qa('[data-section="daily"] [data-activity]')
+        const lastDaily = dailyRowsAtStart.at(-1)
+        check('1 the last DAILY control is clear of the floating bar',
+          lastDaily ? lastDaily.getBoundingClientRect().bottom <= PHONE.height - barBox.height : false,
+          lastDaily ? `${Math.round(lastDaily.getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px` : 'no daily row')
 
         // ---------------------------------------------------------------
-        // 3 — rest day is first-class and rewarded
+        // 3 — rest day is first-class and rewarded regardless of cadence.
         // ---------------------------------------------------------------
-        const rest = q('[data-log="rest_day"]')
-        check('3 rest day is on screen without opening anything', rest !== null)
-        check('3 rest day is the first daily action, not the last',
-          qa('[data-log]')[0] === rest, `first is ${qa('[data-log]')[0]?.dataset.log}`)
+        check('3 rest day is one control away when it is not scheduled DAILY',
+          await setOther(true) && activityRow('rest_day') !== null)
+        check('3 rest day uses the same one-tap activity control as other marks',
+          activityAction('rest_day') !== null)
 
         const vitalityBefore = await xpOf('vitality')
         taps = 0
-        tap(rest, 'rest day')
+        tap(activityAction('rest_day'), 'rest day')
         await settle()
         const vitalityAfterRest = await xpOf('vitality')
         check('3 ACCEPTANCE: rest day is a rewarded action, taken in one tap',
           taps === 1 && vitalityAfterRest > vitalityBefore,
           `${taps} tap, +${vitalityAfterRest - vitalityBefore} Vitality`)
-        check('3 and the app says what it earned', /\+\d/.test(q('.earned')?.textContent ?? ''),
-          q('.earned')?.textContent)
+        check('3 and the app says what it earned', /\+\d/.test(q('.earned')?.textContent ?? ''), q('.earned')?.textContent)
 
         // ---------------------------------------------------------------
         // 2 — one tap, or one number plus one tap
         // ---------------------------------------------------------------
+        await ensureActivityVisible('nutrition_logged')
         const vitalityBeforeFood = await xpOf('vitality')
         taps = 0
-        tap(q('[data-log="nutrition_logged"]'), 'food logged')
+        tap(activityAction('nutrition_logged'), 'food logged')
         await settle()
         check('2 ACCEPTANCE: a marked activity completes in exactly one tap',
           taps === 1 && await xpOf('vitality') > vitalityBeforeFood, `${taps} tap`)
 
-        // The field is already on screen: nothing to open first, which is what
-        // makes the cost a number plus one tap rather than a tap, a number and
-        // another tap.
-        const field = q('[data-entry="sleep"]')
-        check('2 a measured activity shows its field without being opened first',
-          field !== null && field.offsetParent !== null)
-
+        await ensureActivityVisible('sleep')
+        const field = activityInput('sleep')
+        check('2 a measured activity shows its field without being opened first', field !== null && field.offsetParent !== null)
         const vitalityBeforeSleep = await xpOf('vitality')
         taps = 0
         field.value = '8'
-        tap(q('.entry [data-log="sleep"]'), 'confirm sleep')
+        tap(activityAction('sleep'), 'confirm sleep')
         await settle()
         check('2 ACCEPTANCE: a measured activity completes in one number plus one tap',
           taps === 1 && await xpOf('vitality') > vitalityBeforeSleep,
           `${taps} tap after entering the number`)
-        check('2 and it leaves the outstanding list once logged',
-          q('[data-log="sleep"]') === null && q('[data-entry="sleep"]') === null)
+        check('2 and it leaves the outstanding DAILY list once logged',
+          q('[data-section="daily"] [data-activity="sleep"]') === null)
 
-        // A running total adds rather than asking for arithmetic.
-        q('[data-entry="water"]').value = '16'
-        tap(q('.entry [data-log="water"]'), 'water')
-        await settle()
-        await tempered.app.show('today')
-        await openWorked()
+        // Piecewise values accumulate through quick-adds.
+        await ensureActivityVisible('water')
+        let waterRow = activityRow('water')
+        let quick = qa('.quick__add', waterRow)
+        quick[0]?.click(); await settle()
+        waterRow = activityRow('water')
+        quick = qa('.quick__add', waterRow)
+        quick[0]?.click(); await settle()
+        const dayAfterWater = await tempered.daily.dayLog(tempered.clock.today())
         check('2 a value that arrives in pieces adds up rather than replacing',
-          /16 oz/.test(q('[data-worked="water"]')?.textContent ?? ''),
-          q('[data-worked="water"]')?.textContent)
+          dayAfterWater.waterOz === 16, `${dayAfterWater.waterOz ?? 0} oz stored`)
 
-        // Logging must not make the screen taller. Three entries in, the last
-        // outstanding control is still above the bar.
-        const midday = qa('[data-log]').at(-1).getBoundingClientRect().bottom
-        check('1 and it still fits once part of the day is logged',
-          midday <= PHONE.height - barBox.height,
-          `${Math.round(midday)}px vs ${Math.round(PHONE.height - barBox.height)}px, three entries in`)
+        await setOther(false)
+        check('1 DAILY still fits once part of the day is logged',
+          dailyFits(barBox.height),
+          q('[data-section="daily"]')
+            ? `${Math.round(q('[data-section="daily"]').getBoundingClientRect().bottom)}px vs ${Math.round(PHONE.height - barBox.height)}px`
+            : 'no DAILY section')
 
         // ---------------------------------------------------------------
-        // 4 — a body metric shows the number back, and scores only the act
-        //
-        // Body metrics are not on the daily list by default — weighing yourself
-        // every day is not something the app should assume — so this also
-        // exercises logging from behind the one control.
+        // 4 — body metric: display the value, score only the act
         // ---------------------------------------------------------------
         const beforeMetric = await xpOf('vitality')
-        tap(q('[data-other="toggle"]'), 'log something else')
-        await settle()
-        q('[data-entry="body_metrics"]').value = '184.2'
-        tap(q('.entry [data-log="body_metrics"]'), 'body metrics')
+        await ensureActivityVisible('body_metrics')
+        const bodyField = activityInput('body_metrics')
+        if (bodyField) bodyField.value = '184.2'
+        tap(activityAction('body_metrics'), 'body metrics')
         await settle()
         const afterMetric = await xpOf('vitality')
         const flat = tempered.balance.vitality.bodyMetricsLoggedXp
@@ -204,9 +202,8 @@
         await openWorked()
         check('4 ACCEPTANCE: and shows the number back to the user',
           /184\.2/.test(q('[data-worked="body_metrics"]')?.textContent ?? ''),
-          q('[data-worked="body_metrics"]')?.textContent)
+          q('[data-worked="body_metrics"]')?.textContent ?? 'not shown')
 
-        // The hard rule, at the surface: a different reading is worth the same.
         const beforeHeavier = await xpOf('vitality')
         await tempered.daily.log('body_metrics', 250)
         await tempered.app.show('today')
@@ -216,17 +213,13 @@
           `${await xpOf('vitality')} XP, unchanged`)
         check('4 and the new number is the one shown back',
           /250/.test(q('[data-worked="body_metrics"]')?.textContent ?? ''),
-          q('[data-worked="body_metrics"]')?.textContent)
+          q('[data-worked="body_metrics"]')?.textContent ?? 'not shown')
 
-        // ---------------------------------------------------------------
-        // The rules that outlive this phase
-        // ---------------------------------------------------------------
         const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
         check('nothing on this screen calls unlogged work overdue, late or missed',
           !forbidden.test(document.body.innerText),
           (document.body.innerText.match(forbidden) ?? ['none'])[0])
 
-        // Logging is never punished, in either direction.
         const beforeCorrection = await xpOf('wind')
         await tempered.daily.log('steps', 12000)
         const paid = await xpOf('wind')
@@ -235,13 +228,10 @@
           await xpOf('wind') === paid && paid > beforeCorrection,
           `${paid} XP, kept`)
 
-        // The list is the user's: turning one on puts it on Today, and turning
-        // it off takes it away without touching anything already logged.
         await tempered.daily.setDaily('read', true)
         await tempered.app.show('today')
-        await waitFor('[data-log]')
         check('the daily list is editable, and Today follows it',
-          q('[data-log="read"]') !== null && q('[data-entry="read"]') !== null,
+          q('[data-section="daily"] [data-activity="read"]') !== null,
           'reading is on the daily list now')
 
         const loggedBefore = (await tempered.daily.today()).logged.length

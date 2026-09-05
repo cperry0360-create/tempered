@@ -18,7 +18,7 @@
        * the real screens: start a session, log nothing, press FINISH, and check
        * that the app went back to where it came from rather than to a summary.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const checks = []

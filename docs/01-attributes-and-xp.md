@@ -24,6 +24,10 @@ Every XP source is one of two kinds.
 
 If an activity can be measured, it must not be a checkbox.
 
+**Cadence is placement, never scoring.** OFF, DAILY and X/week decide where an activity
+appears on Today. The same logged act earns the same XP whichever cadence the user chose.
+Changing cadence never logs, unlogs, adds or removes XP.
+
 ## Might — derived only
 
 Might responds to load, not attendance.
@@ -34,9 +38,11 @@ Might responds to load, not attendance.
 | Weight PR | new heaviest set for an exercise | Large one-off bonus |
 | Volume PR | new heaviest single-session volume for an exercise | Medium one-off bonus |
 | Estimated 1RM gain | Epley: `w * (1 + reps/30)` | Rewards intensity over junk volume |
+| Loaded carries | load carried × distance | Scaled per 100 feet |
 
 Compound lifts count fully, isolation at a reduced rate. The classification lives in
-`data/exercises.json`, not in code.
+`data/exercises.json`, not in code. Bodyweight movements may carry a fixed exercise-level
+`notionalLoad`; it is never derived from the user's body weight.
 
 **Diminishing returns within a session.** Volume XP uses a soft cap so a two-hour junk
 session does not outscore a hard 45 minutes. See `data/balance.json`.
@@ -57,7 +63,7 @@ Pace improvement stops Wind becoming a step-count grind.
 | Source | Formula |
 |---|---|
 | Session completed | flat, any training type |
-| Training hours | accumulating total crossing thresholds |
+| Time under load | continuous XP from measured training duration |
 | Weeks meeting plan | sessions >= plan target in a calendar week |
 | Return after a gap | bonus for the first session back after 4+ days off |
 
@@ -81,6 +87,11 @@ Three consequences, all deliberate:
 - **A warm-up set counts.** The rule is "at least one set". Might already declines to
   pay for warm-ups, which is the right place for that distinction; Grit is about
   showing up, and a warm-up is showing up.
+
+Training duration is **time under load**, not the wall-clock span between the first and
+last micro-set of a day. Set logs are grouped into sittings using the configurable gap in
+`data/balance.json`; gaps between sittings earn nothing. Grit time XP accrues smoothly from
+that duration, not at whole-hour thresholds.
 
 An empty session is not stored as a completed one either. A stored empty session is not
 inert: it would count toward the week's session total and reset the days-since-last-session
@@ -106,18 +117,22 @@ multiply XP, because that creates the anxiety this app exists to avoid.
 |---|---|---|
 | Sleep duration | derived | Peaks in the 7 to 9 hour band. More is not better. |
 | Hydration | derived | per ounce, capped |
-| Protein target met | derived | when nutrition is logged |
+| Protein target met | marked | one tap for meeting the user's target |
 | Nutrition logged | marked | the act of logging honestly |
+| Calories tracked | marked | rewards tracking; the calorie number itself is not scored |
+| Alcohol-free day | marked | one tap for the day |
 | Rest day taken | marked | a rewarded action, not an absence |
+| Sauna | marked | one tap for the recovery habit |
 | Body metrics logged | marked | the habit only |
 
-**Never score the weight value.** Not the number, not the direction, not the delta. The
-app rewards the act of measuring and nothing else. Hard rule.
+**Never score the body-metric value.** Not the number, not the direction, not the delta.
+The app rewards the act of measuring and nothing else. Hard rule.
 
-## Mind — mostly marked
+## Mind — mostly derived
 
-Reading, study, language practice, instrument, meditation, journaling. Duration-scaled
-where a duration is logged, otherwise flat.
+Reading, study, instrument practice and meditation scale with logged duration. Journaling
+is a marked action. The attribute has a daily cap in `data/balance.json` so duration work
+cannot become an XP grind.
 
 ## Character rank
 

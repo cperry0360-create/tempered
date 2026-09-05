@@ -19,7 +19,7 @@
        * typed, that a backup really downloads, and that the update notice says
        * which way it went.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const checks = []
@@ -45,17 +45,15 @@
         await tempered.app.show('settings')
         await waitFor('[data-section="reset"]')
 
-        // --- both actions are discoverable from inside the app -------------
         check('Settings offers a reset', q('[data-section="reset"]') !== null)
         check('Settings offers an update check', q('[data-action="check-updates"]') !== null)
         check('the version is shown beside the update check',
           (q('[data-version]')?.textContent ?? '').length > 0, q('[data-version]')?.textContent)
 
-        // --- a tap alone cannot erase anything ------------------------------
         const erase = await waitFor('[data-action="reset"]')
         check('erasing is unavailable until the phrase is typed', erase.disabled === true)
 
-        const field = await waitFor('[data-entry="reset-confirm"]')
+        const field = await waitFor('.reset__input')
         for (const partial of ['R', 'RES', 'RESE', 'yes', 'delete']) {
           type(field, partial)
           await settle()
@@ -70,12 +68,10 @@
         await settle()
         check('and lower case is accepted too', q('[data-action="reset"]').disabled === false)
 
-        // The service refuses regardless of what the screen believes.
         const refused = await tempered.maintenance.resetEverything({ confirmation: 'nope' })
         check('the service refuses a wrong phrase whatever the screen says',
           refused.ok === false, refused.reason)
 
-        // --- the backup is offered before the reset, and works ---------------
         const backupButton = q('[data-action="backup"]')
         const order = [...q('[data-section="reset"]').querySelectorAll('button')]
           .map((b) => b.dataset.action)
@@ -97,9 +93,6 @@
         check('the screen confirms what was saved', /tempered-backup-/.test(q('[data-saved]')?.textContent ?? ''),
           q('[data-saved]')?.textContent)
 
-        // --- the update check reports both sides ----------------------------
-        // Park a version the way checkForUpdates would, then re-enter Settings
-        // as the reload would. No actual reload: it would end the harness.
         sessionStorage.setItem('tempered:update-check', '0.0.1 (old)')
         await tempered.app.show('today'); await settle()
         await tempered.app.show('settings')
@@ -109,8 +102,6 @@
           && q('[data-update]')?.dataset.update === 'true',
           q('[data-update]')?.textContent)
 
-        // Same version on both sides is the case that matters most: it is the
-        // difference between "did not deploy" and "deployed, did not fix it".
         sessionStorage.setItem('tempered:update-check', tempered.maintenance.RESET_PHRASE
           ? q('[data-version]').textContent : '')
         sessionStorage.setItem('tempered:update-check', q('[data-version]').textContent)
@@ -122,13 +113,11 @@
           && q('[data-update]')?.dataset.update === 'false',
           q('[data-update]')?.textContent)
 
-        // --- and the notice is said once ------------------------------------
         await tempered.app.show('today'); await settle()
         await tempered.app.show('settings'); await settle()
         await new Promise((r) => setTimeout(r, 40))
         check('the notice is not repeated forever', q('[data-update]') === null)
 
-        // No punishment language on the one destructive screen in the app.
         const copy = q('[data-section="reset"]').textContent
         check('the copy states the consequence without scolding',
           /cannot be undone/i.test(copy) && !/\b(failed|failure|stupid|are you sure)\b/i.test(copy))

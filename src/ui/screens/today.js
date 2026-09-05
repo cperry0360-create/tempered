@@ -121,6 +121,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         const existing = byExercise.get(id) ?? {
           id,
           name: task.slot.name,
+          prescription: `${task.slot.sets} × ${task.slot.repMin}–${task.slot.repMax}`,
           target: 0,
           done: 0,
           started: false,
@@ -164,7 +165,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       tile('might', 'train'),
       el('span.row__name', { text: group.name }),
       el('span.row__value.weekly-row__count', {
-        text: `${group.done} / ${group.target} this week${group.started && !complete ? ' · in progress' : ''}`,
+        text: `${group.prescription} · ${group.done} / ${group.target} this week${group.started && !complete ? ' · in progress' : ''}`,
       }),
       el('span.row__act', {}, [ring(fill), complete && icon('check')]),
     ])
@@ -204,13 +205,14 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const goal = !weekly && hasDailyGoal(activity)
     const adding = activity.spec?.mode === 'add'
     const unit = unitLabel(activity)
+    const correctionMode = adding ? { mode: 'replace' } : {}
     const input = el('input.entry__value', {
       type: 'text', inputmode: 'decimal',
-      placeholder: adding ? `+${unit || 'amount'}` : '',
-      'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+      placeholder: adding ? `total ${unit || 'amount'}` : '',
+      'aria-label': `${adding ? 'Set total for' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
       onkeydown: (event) => {
-        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value) }
+        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value, correctionMode) }
       },
     })
     const fill = weekly
@@ -244,8 +246,8 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       el('span.entry__field', {}, [input]),
       el('button.row__act.entry__confirm', {
         type: 'button',
-        'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}`,
-        onclick: () => record(activity, input.value),
+        'aria-label': `${adding ? 'Set total for' : 'Log'} ${activity.name}`,
+        onclick: () => record(activity, input.value, correctionMode),
       }, [ring(fill), icon(goal ? 'plus' : 'check')]),
       floatFor(activity.id),
     ])
@@ -262,6 +264,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
           : (hasDailyGoal(activity) ? dailyGoalLabel(activity) : valueLabel(activity, activity.value)),
       }),
       el('span.row__act', {}, [ring(fill), icon('check')]),
+      floatFor(activity.id),
     ])
   }
 
@@ -307,12 +310,20 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     // same thing as complete: 8 oz of water is progress toward the day, not a
     // finished hydration task. Merge both halves back together, restore the
     // intended activity order, then split by actual completion.
-    const dailyScheduled = sortActivities([
+    const allActivities = sortActivities([
       ...(day?.outstanding ?? []),
       ...(day?.logged ?? []),
-    ].filter((a) => a.cadence === 'daily'))
+    ])
+    const dailyScheduled = allActivities.filter((a) => a.cadence === 'daily')
     const dailyOutstanding = dailyScheduled.filter((a) => !dailyGoalComplete(a))
     const dailyLogged = dailyScheduled.filter((a) => dailyGoalComplete(a))
+    const offScheduled = allActivities.filter((a) => a.cadence === 'off')
+    const offLogged = offScheduled.filter((a) => a.logged)
+    // Numeric OFF trackers remain editable after logging so piecewise values and
+    // body metrics can be added/corrected. A just-logged mark holds its row for
+    // one render so the completion ring and XP float have somewhere to happen.
+    const offAvailable = offScheduled.filter((a) =>
+      !a.logged || a.spec?.entry !== 'mark' || justEarned?.id === a.id)
     const weeklyLifestyle = weekActivities?.activities ?? []
     const weeklyExercises = weeklyExerciseGroups()
 
@@ -328,8 +339,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const weeklyTotal = weeklyLifestyle.reduce((sum, a) => sum + a.weeklyTarget, 0)
       + weeklyExercises.reduce((sum, a) => sum + a.target, 0)
 
-    const offActivities = (day?.outstanding ?? []).filter((a) => a.cadence === 'off')
-    const workedCount = dailyDone + doneWeeklyLifestyle.length + doneExercises.length
+    const workedCount = dailyDone + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length
 
     replace(root, [
       el('h1.screen__title', { text: 'Today' }),
@@ -363,8 +373,8 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
           : el('p.block__hint', { text: 'Everything for this week is worked through.' }),
       ]),
 
-      (offActivities.length > 0 || workedCount > 0) && el('div.footers', {}, [
-        offActivities.length > 0 && el('button.elsewhere__toggle', {
+      (offAvailable.length > 0 || workedCount > 0) && el('div.footers', {}, [
+        offAvailable.length > 0 && el('button.elsewhere__toggle', {
           type: 'button', dataset: { other: 'toggle', open: String(otherOpen) },
           onclick: () => { otherOpen = !otherOpen; render() },
         }, [icon(otherOpen ? 'up' : 'down'), 'LOG SOMETHING ELSE']),
@@ -374,8 +384,9 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         }, [icon('check'), `${workedCount} COMPLETED`]),
       ]),
 
-      otherOpen && offActivities.length > 0 && el('section.block', {}, [
-        el('div.rows', {}, offActivities.map((a) => activityRow(a))),
+      otherOpen && offAvailable.length > 0 && el('section.block', {}, [
+        el('div.rows', {}, offAvailable.map((a) =>
+          a.logged && a.spec?.entry === 'mark' ? workedActivityRow(a) : activityRow(a))),
       ]),
 
       workedOpen && workedCount > 0 && el('section.block', {}, [
@@ -383,6 +394,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
           ...dailyLogged.map((a) => workedActivityRow(a)),
           ...doneExercises.map(exerciseRow),
           ...doneWeeklyLifestyle.map((a) => workedActivityRow(a, a)),
+          ...offLogged.map((a) => workedActivityRow(a)),
         ]),
       ]),
     ])

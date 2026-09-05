@@ -29,16 +29,22 @@ that confined them to Character. **Revised: attribute colours identify attribute
 wherever an item belongs to one.** The acid accent is still reserved for action, active
 state, and values worth noticing — the two systems do different jobs and do not compete.
 
-## B. Named sections
+## B. Named sections — superseded by the cadence model
 
-Today is one undifferentiated list. Give it three labelled sections with real headings
-and space between them:
+The original Phase 4.5 grouping was:
 
 - **TRAIN** — today's program slots
 - **RECOVER** — sleep, water, food, rest, body
 - **SHARPEN** — reading, study, meditation, music
 
-Section headings carry a completion count: `RECOVER — 2 of 5`.
+That grouping was later superseded when Today was rebuilt around **when work is due** rather
+than which attribute family it belongs to. The shipped sections are now **DAILY** and
+**THIS WEEK**, each with a completion count. OFF activities live behind LOG SOMETHING ELSE.
+Attribute-coloured tiles from section A still carry the RPG meaning, so changing the
+section architecture does not flatten the rows back into identical objects.
+
+Sections C, D, E and F below are **not** superseded. Completion animation, the XP float,
+summary strip, forest palette and incremental/correctable entry remain requirements.
 
 ## C. Something has to happen when you log
 
@@ -130,9 +136,9 @@ The artwork is a **fixed backdrop**, not a scrolling one.
 The path and lanterns sit low, so they land under the tab bar, which is where the art
 is busiest and the content is not.
 
-**Do not commit the image until its provenance is established.** Same rule as the
-exercise photographs. Implement the gradient and tokens now; the image layer goes behind
-a flag until cleared.
+The artwork's provenance is established as Cory's original work. The runtime copy in
+`art/dist/bg-night-forest.jpg` is the canonical shipped asset; no provenance flag is
+needed.
 
 ## F. Bugs and corrections
 
@@ -148,5 +154,5 @@ a flag until cleared.
 
 3. **Water needs incremental entry.** Nobody knows their daily ounces; they drink a
    glass. Give quick-add buttons — `+8` `+12` `+16` — that accumulate, with the running
-   total shown and a manual field for correction. Apply the same pattern to any activity
-   that arrives in pieces.
+   total shown and a manual field that **sets/corrects the total**. Apply the same pattern
+   to any activity that arrives in pieces.

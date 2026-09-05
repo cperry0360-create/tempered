@@ -25,7 +25,7 @@
        * The window size matters for the acid budget: "under 5% of the viewport"
        * is a ratio, so it has to be measured at a viewport a phone actually has.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const ACID = 'rgb(237, 254, 115)'
@@ -80,15 +80,6 @@
       const isAcid = (css) => css.replace(/\s/g, '') === ACID.replace(/\s/g, '')
 
       // --- how much acid is on screen ----------------------------------------
-      /**
-       * Painted acid area, in square pixels of the current viewport.
-       *
-       * A filled box counts its whole visible area. A border counts its
-       * perimeter. Text and line-art icons count an ink estimate rather than
-       * their bounding box, because a 300px-wide element with one acid word in
-       * it does not paint 300px of acid — counting the box would make the
-       * budget meaningless in the other direction.
-       */
       function acidArea(node) {
         const box = node.getBoundingClientRect()
         const w = Math.max(0, Math.min(box.right, innerWidth) - Math.max(box.left, 0))
@@ -106,9 +97,7 @@
             .filter((child) => child.nodeType === Node.TEXT_NODE)
             .map((child) => child.textContent.trim()).join('')
           const size = Number.parseFloat(style.fontSize)
-          // Roughly half the em box is ink, and a glyph is about 0.6em wide.
           if (text) area += Math.min(w * h, text.length * size * 0.6 * size * 0.5)
-          // Stroked line art covers about a quarter of its own box.
           for (const svg of node.children) {
             if (svg.tagName.toLowerCase() !== 'svg') continue
             const icon = svg.getBoundingClientRect()
@@ -118,7 +107,6 @@
         return area
       }
 
-      /** Every acid-painted element on screen, with the role it claims. */
       function acidOnScreen() {
         const found = []
         for (const node of qa('*')) {
@@ -134,7 +122,6 @@
         return found
       }
 
-      /** The acid budget, measured at the top of the screen and at the bottom. */
       async function acidBudget(label) {
         const body = q('.app__body')
         const positions = [0, body.scrollHeight]
@@ -154,13 +141,6 @@
         return { label, ...worst }
       }
 
-      // --- separators --------------------------------------------------------
-      /**
-       * A hairline row separator: a border on one horizontal edge only, or the
-       * 1px-gap-over-a-coloured-background trick the previous build used to fake
-       * one. Cells outlined on all four sides are not separators — the design
-       * system asks for exactly those.
-       */
       function separators(root) {
         const offenders = []
         for (const node of [root, ...qa('*', root)]) {
@@ -180,7 +160,6 @@
         return offenders
       }
 
-      /** Whether the authored rule — not the resolved pixels — names the inset. */
       function authoredRule(selector, property) {
         for (const sheet of document.styleSheets) {
           for (const rule of sheet.cssRules ?? []) {
@@ -198,9 +177,6 @@
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
         await waitFor('[data-programday]')
 
-        // ===============================================================
-        // 4 — the tab bar floats, with the safe area respected
-        // ===============================================================
         const bar = q('.tabbar')
         const barBox = bar.getBoundingClientRect()
         const margins = {
@@ -220,7 +196,6 @@
           && (parse(getComputedStyle(bar).backgroundColor)[3] ?? 1) < 1,
           getComputedStyle(bar).backgroundColor)
 
-        // The one primary action, circular and acid, at the right of the bar.
         const fab = q('.fab')
         const fabBox = fab?.getBoundingClientRect()
         check('4 the bar carries one circular acid FAB, at its right',
@@ -230,19 +205,15 @@
           && fabBox.right > barBox.left + barBox.width / 2,
           fab ? `${Math.round(fabBox.width)}px, ${getComputedStyle(fab).backgroundColor}` : 'no FAB')
 
-        // ===============================================================
-        // 1 — the acid budget, on every tracker screen
-        // ===============================================================
         const budgets = []
         budgets.push(await acidBudget('train'))
         await tempered.app.show('today')
-        await waitFor('[data-task]')
+        await waitFor('[data-exerciseweek]')
         budgets.push(await acidBudget('today'))
 
         await tempered.app.show('character')
         await waitFor('[data-attr]')
         budgets.push(await acidBudget('character'))
-        // Expanded, because that is the state the screen is read in.
         q('[data-attr="might"]').click()
         await settle()
         budgets.push(await acidBudget('character, expanded'))
@@ -253,20 +224,11 @@
         await waitFor('.setrow__check')
         budgets.push(await acidBudget('session'))
 
-        // The acid verdict comes after criterion 2 below, which logs a set —
-        // that is what puts the third role on screen. Judging the budget before
-        // any of the three roles had appeared would be judging nothing.
-
-        // ===============================================================
-        // 2 — every set-row number meets WCAG AA against its cell
-        // ===============================================================
         const numbers = qa('.setrow:not(.setrow--head) .setrow__num')
         const worstNumber = Math.min(...numbers.map(contrast))
         check('2 every set-row number meets WCAG AA against its cell', worstNumber >= 4.5,
           `worst is ${worstNumber.toFixed(2)}:1 across ${numbers.length} cells`)
 
-        // Completed rows keep full brightness — the check carries the state, and
-        // dimming a logged number would hide what you read to pick the next one.
         const firstCheck = q('.setrow__check')
         const pendingColour = getComputedStyle(q('.setrow:not(.setrow--head) input.setrow__num')).color
         firstCheck.click()
@@ -282,16 +244,10 @@
 
         budgets.push(await acidBudget('session, resting'))
 
-        // ===============================================================
-        // 3 — no hairline row separators anywhere in the tracker
-        // ===============================================================
         const sessionSeparators = separators(q('.screen--session'))
         check('3 no hairline row separators in a session', sessionSeparators.length === 0,
           sessionSeparators.slice(0, 3).join('; ') || 'none in the whole session screen')
 
-        // ===============================================================
-        // 5 — section headings are big and heavy
-        // ===============================================================
         const headings = qa('.screen__title, .sessionbar__title, .block__title, .exercise__name, .program__name, .routine__name')
         const weak = headings.filter((node) => {
           const style = getComputedStyle(node)
@@ -302,9 +258,6 @@
             ? weak.slice(0, 3).map((n) => `${n.className} ${getComputedStyle(n).fontSize}/${getComputedStyle(n).fontWeight}`).join(', ')
             : `${headings.length} headings checked, in a session`)
 
-        // ===============================================================
-        // 6 — the largest text in a set row is a number, not a label
-        // ===============================================================
         function biggest(row) {
           let number = 0
           let label = 0
@@ -328,11 +281,6 @@
             ? `${wrongWayRound.length} of ${rows.length} rows lead with a label`
             : `${rows.length} rows, numbers at ${biggest(rows[0]).number}px vs labels at ${biggest(rows[0]).label}px`)
 
-        // ===============================================================
-        // The components the document names, since they are what produce the
-        // six above and a passing number with the wrong component behind it
-        // would be a pass for the wrong reason.
-        // ===============================================================
         const activeRow = q('.setrow[data-active="true"]')
         const edge = q('.setrow__edge', activeRow)
         const edgeBox = edge?.getBoundingClientRect()
@@ -372,15 +320,12 @@
           && Number.parseFloat(getComputedStyle(card).paddingLeft) >= 20,
           `${getComputedStyle(card).borderRadius} radius, ${getComputedStyle(card).paddingLeft} padding`)
 
-        // Rendered controls only: the tab bar is hidden during a session, and a
-        // control that is not on screen has no target to mis-tap.
         const targets = qa('.setrow__check, .actionpill, .tabbar__tab, .fab, .addset, .restedit__option')
           .filter((node) => node.getBoundingClientRect().height > 0)
         const small = targets.filter((node) => node.getBoundingClientRect().height < 44)
         check('every touch target is at least 44px', small.length === 0,
           `${targets.length - small.length} of ${targets.length} controls`)
 
-        // The plate calculator, beside the weight field of the set being worked.
         const weightField = q('.setrow[data-active="true"] input.setrow__num[data-field="weight"]')
         const strip = q('.plates', weightField?.closest('.setrow'))
         const weightBox = weightField?.getBoundingClientRect()
@@ -391,8 +336,6 @@
           && Math.abs(stripBox.top - weightBox.bottom) < 44,
           strip ? `${Math.round(Math.abs(stripBox.top - weightBox.bottom))}px under the weight cell` : 'no strip')
 
-        // The two screens where the primary action is a button rather than the
-        // FAB: the confirm, and the post-session dismiss.
         q('[data-action="finish"]').click()
         await waitFor('[data-action="confirm-finish"]')
         budgets.push(await acidBudget('session, confirming'))
@@ -400,10 +343,6 @@
         await waitFor('[data-action="done"]')
         budgets.push(await acidBudget('summary'))
 
-        // ===============================================================
-        // 1 — the verdict, with every tracker screen measured and all three
-        // roles having actually appeared
-        // ===============================================================
         const tooManyRoles = budgets.filter((b) => b.roles.size > 3)
         check('1 acid marks at most three distinct roles per screen', tooManyRoles.length === 0,
           budgets.map((b) => `${b.label}: ${[...b.roles].join('+') || 'none'}`).join(' · '))
@@ -415,9 +354,6 @@
           unnamed.length === 0,
           unnamed.map((n) => n.className || n.tagName).slice(0, 4).join(', ') || 'none')
 
-        // Under 5% of the viewport. No exceptions, on any screen: the summary's
-        // DONE is a pill rather than a full-width button precisely so this can
-        // be the flat rule the document says it is.
         const overBudget = budgets.filter((b) => b.coverage >= 0.05)
         check('1 acid covers under 5% of the viewport', overBudget.length === 0,
           budgets.map((b) => `${b.label} ${(b.coverage * 100).toFixed(2)}%`).join(' · ')

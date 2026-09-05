@@ -25,7 +25,7 @@ test('cancel discards this attempt and removes an empty session', async () => {
 
   const result = await discardSessionWork({ storage, session, logIds: ['new1', 'new2'] })
   assert.deepEqual(result, { discardedSets: 2, deletedSession: true })
-  assert.equal(await storage.get('sessions', 's1'), null)
+  assert.equal(await storage.get('sessions', 's1'), undefined)
   assert.equal((await storage.getAll('setLogs')).length, 0)
 })
 
@@ -41,5 +41,5 @@ test('canceling a Today slot preserves earlier work in the shared day session', 
   assert.deepEqual(result, { discardedSets: 1, deletedSession: false })
   assert.ok(await storage.get('sessions', 'day1'))
   assert.ok(await storage.get('setLogs', 'old'))
-  assert.equal(await storage.get('setLogs', 'new'), null)
+  assert.equal(await storage.get('setLogs', 'new'), undefined)
 })

@@ -16,7 +16,6 @@
 
 import { generateBattle } from '../domain/battle.js'
 import { rankFromLevels } from '../domain/rank.js'
-import { applyAwards, createInitialState } from '../domain/xp-engine.js'
 import { ATTRIBUTE_IDS } from '../domain/tiers.js'
 
 /**
@@ -67,35 +66,18 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
   }
 
   /**
-   * Pays what the battle earned. Called once, from generation.
+   * Pays the battle's downstream rewards once.
    *
    * Gold lives on the profile because it is not an attribute and must never be
-   * mistaken for one: nothing in `data/balance.json` turns gold into progression,
-   * and `docs/06` keeps V1 items cosmetic for the same reason.
+   * mistaken for one. Loot is flavour/progression for the game layer. Battles
+   * deliberately never call the XP engine: character XP must come from real
+   * training and lifestyle activity, never from defeating enemies.
    */
   async function grant(record, profile) {
     const gold = (profile?.gold ?? 0) + (record.rewards.gold ?? 0)
     const loot = [...(profile?.loot ?? [])]
     if (record.rewards.item) loot.push({ ...record.rewards.item, wonOn: record.date })
     await storage.put('profile', { ...(profile ?? { id: 'profile' }), id: 'profile', gold, loot })
-
-    // Zero as shipped, so this is normally a no-op. It is wired anyway, because
-    // a switch that has never been down is not a switch. See DECISIONS.md.
-    const xp = record.rewards.xp ?? 0
-    if (xp <= 0) return
-
-    const rows = await storage.getAll('attributeState')
-    const state = createInitialState()
-    for (const row of rows) {
-      if (state[row.attribute]) {
-        state[row.attribute] = { xp: row.xp, level: row.level, lifetimeSources: { ...row.lifetimeSources } }
-      }
-    }
-    const attribute = record.rewards.xpAttribute ?? 'grit'
-    const after = applyAwards(state, [{ attribute, source: 'battle.gauntlet', label: 'The daily battle', xp }], balance)
-    await storage.putAll('attributeState', ATTRIBUTE_IDS.map((id) => ({
-      attribute: id, xp: after[id].xp, level: after[id].level, lifetimeSources: after[id].lifetimeSources,
-    })))
   }
 
   /**

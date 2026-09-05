@@ -140,6 +140,26 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, onS
           ]))),
       ]),
 
+      el('section.card', { dataset: { section: 'credits' } }, [
+        el('h2.block__title', { text: 'Credits' }),
+        el('p.block__hint', {
+          text: 'Exercise movement images come from free-exercise-db and upstream Everkinetic material. Tempered treats those images as CC BY-SA 4.0 and keeps their exact provenance in art/exercises/SOURCES.json.',
+        }),
+        el('p.block__hint', {
+          text: 'Third-party exercise art is licensed separately. Any licence that applies to Tempered source code or first-party art does not automatically cover those images.',
+        }),
+        el('p.setting', {}, [
+          el('a', {
+            href: 'https://github.com/yuhonas/free-exercise-db',
+            target: '_blank', rel: 'noopener noreferrer', text: 'free-exercise-db',
+          }),
+          el('a', {
+            href: 'https://creativecommons.org/licenses/by-sa/4.0/',
+            target: '_blank', rel: 'noopener noreferrer', text: 'CC BY-SA 4.0',
+          }),
+        ]),
+      ]),
+
       el('section.card', { dataset: { section: 'version' } }, [
         el('h2.block__title', { text: 'Build' }),
         el('p.setting', {}, [

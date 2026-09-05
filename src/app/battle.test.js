@@ -20,14 +20,14 @@ const R = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'))
 const roster = R('../../data/enemies.json').enemies
 const items = R('../../data/items.json').items
 
-async function app(at = '2026-09-05T07:00:00.000Z', levels = 8) {
+async function app(at = '2026-09-05T07:00:00.000Z', levels = 8, useBalance = balance) {
   const storage = createMemoryStorage()
   await storage.open()
   await storage.put('profile', { id: 'profile', name: 'Cory' })
   await storage.putAll('attributeState', ['might', 'wind', 'grit', 'vitality', 'mind']
     .map((attribute) => ({ attribute, xp: 1000, level: levels, lifetimeSources: {} })))
   const clock = fixedClock(at)
-  return { storage, clock, battle: createBattleService({ storage, clock, balance, roster, items }) }
+  return { storage, clock, battle: createBattleService({ storage, clock, balance: useBalance, roster, items }) }
 }
 
 test('a day generates exactly one battle, however often it is asked for', async () => {
@@ -39,10 +39,6 @@ test('a day generates exactly one battle, however often it is asked for', async 
 })
 
 test('asking for the same day again never pays again', async () => {
-  // The weak version of this only counted the battles in storage, which stayed
-  // at one under a re-generating bug because the record is keyed by date and
-  // simply overwrote itself. What actually goes wrong is the purse, so count
-  // the purse. The browser harness caught this; these tests had not.
   const { storage, battle } = await app()
   const record = await battle.forDate()
   for (let i = 0; i < 5; i += 1) await battle.forDate()
@@ -70,7 +66,6 @@ test('ACCEPTANCE: rewards are granted on generation, not on watching', async () 
 })
 
 test('ACCEPTANCE: never opening the screen costs no progression', async () => {
-  // Two identical characters; one watches, one never does.
   const watcher = await app()
   const ignorer = await app()
   await watcher.battle.forDate()
@@ -115,11 +110,15 @@ test('gold accumulates across days rather than replacing', async () => {
     monday.rewards.gold + tuesday.rewards.gold)
 })
 
-test('the battle awards no attribute XP as shipped', async () => {
-  const { storage, battle } = await app()
-  const before = (await storage.getAll('attributeState')).map((r) => r.xp)
+test('battle defeats never award attribute XP, even if balance tries to enable it', async () => {
+  const impossibleToEnable = {
+    ...balance,
+    battle: { ...balance.battle, xpPerEnemy: 9999, xpAttribute: 'might' },
+  }
+  const { storage, battle } = await app('2026-09-05T07:00:00.000Z', 8, impossibleToEnable)
+  const before = (await storage.getAll('attributeState')).map((r) => ({ ...r }))
   await battle.forDate()
-  assert.deepEqual((await storage.getAll('attributeState')).map((r) => r.xp), before)
+  assert.deepEqual(await storage.getAll('attributeState'), before)
 })
 
 test('a character who has never trained still gets a battle', async () => {

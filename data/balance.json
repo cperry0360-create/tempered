@@ -82,7 +82,7 @@
     "neverRequireConsecutiveDays": true
   },
   "battle": {
-    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate. xpPerEnemy is deliberately 0 — see DECISIONS.md: the mechanism is built and tested, but paying attribute XP for a passive battle would pay twice for the same training and compound. One number turns it on.",
+    "_comment": "Attributes become combat stats. The daily encounter and rewards remain deterministic and battle XP is locked out of character progression. The turn* values tune the optional Attack / Guard / Skill layer only.",
     "healthFromVitality": 14,
     "healthFromGrit": 6,
     "healthBase": 60,
@@ -103,7 +103,16 @@
     "damageVariance": 0.22,
     "clearRateTarget": 0.8,
     "fitSamples": 16,
-    "fitSteps": 14
+    "fitSteps": 14,
+    "turnFocus": 3,
+    "turnSkillDamageMultiplier": 1.75,
+    "turnGuardDamageMultiplier": 0.35,
+    "turnGuardFocusGain": 1,
+    "turnDodgeFromSpeed": 0.45,
+    "turnDodgeCap": 0.35,
+    "turnAutoGuardBelow": 0.28,
+    "turnMaxTurns": 250,
+    "turnLogLimit": 8
   },
   "progressionDefaults": {
     "linearIncrementUpperLbs": 5,

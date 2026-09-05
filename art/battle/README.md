@@ -2,6 +2,8 @@
 
 The daily battle is the only illustrated gameplay surface in Tempered. These files are presentation only. They never change combat math, rewards, XP, attributes, or progression.
 
+`ASSETS.json` is the machine-readable source of truth for file names and canvas sizes. `PROMPTS.md` is the shared production brief. `node tools/verify-battle-art.js` validates every PNG that exists; add `--strict` once the complete set is ready and missing files should fail.
+
 ## File layout
 
 ```text

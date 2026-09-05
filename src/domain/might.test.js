@@ -11,7 +11,6 @@ const balance = loadBalance()
 const bySource = (awards) => totalsBySource(awards)
 
 test('SOURCE: working volume pays at the configured rate per thousand pounds', () => {
-  // 145 x 8 x 3 = 3480 lbs of compound volume, below the soft cap.
   const session = makeSession({
     sets: Array.from({ length: 3 }, () => ({ exerciseId: 'squat_bb', weight: 145, reps: 8 })),
   })
@@ -34,7 +33,6 @@ test('the volume soft cap stops junk volume outscoring hard work', () => {
   const cap = balance.might.volumeSoftCapLbs
   const context = makeContext({ records: unbeatableRecords(['squat_bb']) })
 
-  /** @param {number} volume */
   const xpFor = (volume) => {
     const session = makeSession({ sets: [{ exerciseId: 'squat_bb', weight: 100, reps: volume / 100 }] })
     return bySource(mightAwards(session, context, balance))['might.volume']
@@ -87,13 +85,28 @@ test('SOURCE: an estimated 1RM gain pays per pound gained', () => {
   assert.ok(Math.abs(xp - gain * balance.might.e1rmGainXpPerLb) < 1e-6)
 })
 
-test('SOURCE: loaded carries pay on load over distance', () => {
+test('SOURCE: loaded carry weight is total external load in the hands; distance is separate', () => {
+  // Two 50 lb dumbbells are logged as 100 lb total carried for 200 feet.
   const session = makeSession({
     sets: [{ exerciseId: 'farmers_carry', weight: 100, reps: null, distance: 200 }],
   })
   const context = makeContext({ records: unbeatableRecords(['farmers_carry']) })
   const xp = bySource(mightAwards(session, context, balance))['might.carry']
   assert.equal(xp, 100 * 2 * balance.might.carryXpPerLbPerHundredFeet)
+})
+
+test('loaded carry time is tracked independently and does not change load-distance Might', () => {
+  const context = makeContext({ records: unbeatableRecords(['farmers_carry']) })
+  const withoutTime = makeSession({
+    sets: [{ exerciseId: 'farmers_carry', weight: 100, distance: 200, timeSec: null }],
+  })
+  const withTime = makeSession({
+    sets: [{ exerciseId: 'farmers_carry', weight: 100, distance: 200, timeSec: 75 }],
+  })
+  assert.equal(
+    bySource(mightAwards(withTime, context, balance))['might.carry'],
+    bySource(mightAwards(withoutTime, context, balance))['might.carry'],
+  )
 })
 
 test('Might is derived only: attendance with no load earns nothing', () => {

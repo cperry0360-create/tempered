@@ -14,7 +14,7 @@
        * against the real app. Contrast and hit-target separation are computed,
        * not eyeballed, because the spec says so.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const checks = []
@@ -37,12 +37,10 @@
       const parse = (css) => (css.match(/[\d.]+/g) ?? []).map(Number)
       const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
       function over(fg, bg) {
-        // Composite any alpha in the foreground onto the background.
         const [fr, fg2, fb, fa = 1] = parse(fg)
         const [br, bg2, bb] = parse(bg)
         return [fr * fa + br * (1 - fa), fg2 * fa + bg2 * (1 - fa), fb * fa + bb * (1 - fa)]
       }
-      /** Walks up for the first non-transparent background actually painted. */
       function paintedBackground(node) {
         let current = node
         while (current && current !== document.documentElement) {
@@ -66,9 +64,6 @@
         const storage = createMemoryStorage()
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
 
-        // ---------------------------------------------------------------
-        // A — a November Physique session, end to end
-        // ---------------------------------------------------------------
         const active = await tempered.workout.activeProgram()
         check('the November Physique program is active', active?.program.id === 'november-physique',
           active ? `week ${active.week} of ${active.program.weeks}` : 'none')
@@ -87,13 +82,9 @@
           q('.sessionbar__meta')?.textContent)
         check('rep RANGES are shown, not fixed reps',
           /6–10/.test(q('.exercise__range')?.textContent ?? ''), q('.exercise__range')?.textContent)
-        const perSideText = qa('.exercise__range').map((n) => n.textContent).join(' ')
         check('setup and cue text is shown', (q('.exercise__cue')?.textContent ?? '').length > 10,
           q('.exercise__cue')?.textContent?.slice(0, 60))
 
-        // ---------------------------------------------------------------
-        // F — contrast, computed
-        // ---------------------------------------------------------------
         const numberFields = qa('input.setrow__num')
         const worstPending = Math.min(...numberFields.map(contrast))
         check('set-row numbers meet WCAG AA (4.5:1)', worstPending >= 4.5,
@@ -104,9 +95,6 @@
         check('set-row labels and history meet WCAG AA', worstLabel >= 4.5,
           `worst is ${worstLabel.toFixed(2)}:1 across ${labels.length} nodes`)
 
-        // ---------------------------------------------------------------
-        // F — the tab bar floats
-        // ---------------------------------------------------------------
         await tempered.app.show('train')
         await waitFor('.tabbar')
         const bar = q('.tabbar')
@@ -123,9 +111,6 @@
           (barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur'),
           barStyle.backdropFilter || barStyle.webkitBackdropFilter)
 
-        // ---------------------------------------------------------------
-        // F — FINISH cannot be reached by a mis-tap
-        // ---------------------------------------------------------------
         q('[data-programday="monday"]').click()
         await waitFor('.setrow__check')
         const finish = q('[data-action="finish"]')
@@ -147,9 +132,6 @@
         await settle()
         check('the session survives declining the confirm', q('.setrow__check') !== null)
 
-        // ---------------------------------------------------------------
-        // B — the six missing features, in a live session
-        // ---------------------------------------------------------------
         q('[data-rest="edit"]').click(); await settle()
         const restOption = q('[data-restset="90"]')
         check('B1 rest time is editable in-session', restOption !== null)
@@ -177,8 +159,6 @@
         check('B4 exercises can be reordered', q('.exercise__name').textContent !== firstName,
           `${firstName} -> ${q('.exercise__name').textContent}`)
 
-        // Removing a set now lives behind the EDIT SETS pill, so every control
-        // left in the row keeps a 44px target. Both directions still work.
         const rowsBefore = qa('[data-exercise] .setrow:not(.setrow--head)').length
         q('[data-editsets]').click(); await settle()
         q('[data-removeset]').click(); await settle()
@@ -186,7 +166,6 @@
         check('B5 a set can be removed as well as added',
           qa('[data-exercise] .setrow:not(.setrow--head)').length === rowsBefore - 1)
 
-        // B6 needs a PR to exist, so log a session first.
         for (const button of qa('.setrow__check').slice(0, 3)) {
           const row = button.closest('.setrow')
           for (const field of [...row.querySelectorAll('input.setrow__num')]) {
@@ -204,12 +183,7 @@
         check('B6 the PR date is shown beside the PR', q('[data-prdate]') !== null,
           q('[data-prdate]')?.textContent)
 
-        // ---------------------------------------------------------------
-        // C — the plate calculator, beside the weight field
-        // ---------------------------------------------------------------
         check('C the plate calculator is on screen, not behind a menu', q('.plates') !== null)
-        // docs/09 C asks for it NEXT TO the weight field, which the previous
-        // build did not do — it sat at the foot of the card.
         const firstWeight = q('input.setrow__num[data-field="weight"]')
         const besideIt = firstWeight.closest('.setrow')?.querySelector('.plates') ?? null
         check('C the plate calculator sits in the row with the weight field', besideIt !== null)
@@ -218,15 +192,11 @@
         weightField.value = '185'
         weightField.dispatchEvent(new Event('change'))
         await settle()
-        // Scope to this exercise's card: every card carries its own calculator.
         const scoped = document.querySelector(`[data-exercise="${card.dataset.exercise}"]`)
         const plates = [...scoped.querySelectorAll('.plate')].map((n) => n.textContent)
         check('C 185 lb on a 45 lb bar shows 45 and 25 per side',
           plates.join(',') === '45,25', plates.join(', ') || 'none')
 
-        // ---------------------------------------------------------------
-        // D/E — art and the guide
-        // ---------------------------------------------------------------
         check('D exercise art is shown beside the movement it depicts',
           q('.exercise__art') !== null)
         await tempered.app.show('train')

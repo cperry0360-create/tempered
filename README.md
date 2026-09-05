@@ -24,7 +24,7 @@ every session. Then follow **`docs/07-build-plan.md`** in order.
 | `docs/03-screens.md` | Every screen, specified. |
 | `docs/04-design-system.md` | Type, colour, spacing, components. |
 | `docs/05-workout-system.md` | Routines, sessions, progression rules. |
-| `docs/06-battle.md` | The passive daily battle. |
+| `docs/06-battle.md` | The tiny turn-based daily battle. |
 | `docs/07-build-plan.md` | Phased plan with acceptance criteria. |
 | `DECISIONS.md` | Claude's running log of anything not specified here. |
 
@@ -72,9 +72,18 @@ first-party art, and the palette derived from it is first-party too.
 
 ## Deployment
 
-The live app is served publicly by **Netlify**, from the repository root. The GitHub
-repository also remains public. There is no build step, so what is committed is what is
-served — `netlify.toml` only names the publish directory and sets cache headers.
+The primary live app is served publicly by **GitHub Pages** from `main` at:
+
+`https://cperry0360-create.github.io/tempered/`
+
+Pages publishes the repository root directly. There is no build step: `index.html`,
+`manifest.webmanifest`, `sw.js`, and all runtime assets are served exactly as committed.
+`.nojekyll` disables Jekyll processing, and all runtime URLs are relative so the PWA works
+under the `/tempered/` project path.
+
+The previous Netlify site may remain online as a fallback, but it is no longer the primary
+production host. Netlify production deploys were paused after the free-team deploy credit
+allowance was exhausted during rapid iteration.
 
 The public deployment is intentional. Because the exercise images are published with
 the app, the required provenance/licensing notice is carried inside the product under

@@ -1,20 +1,5 @@
-/**
- * One icon set, drawn as inline SVG at `currentColor`.
- *
- * `docs/04-design-system.md` asks for pill buttons carrying "a small icon and a
- * label", and a circular FAB whose whole content is an icon. There is no build
- * step and no sprite pipeline, so these are hand-written paths on a 24×24 grid:
- * no network request, no font, and they inherit colour from the control they sit
- * in, which is what makes the acid states work without a second copy of each
- * asset.
- *
- * Stroked line art, never emoji — CLAUDE.md's stack rules and the design
- * system's "a consistent icon set or nothing" both land in the same place.
- */
-
 const NS = 'http://www.w3.org/2000/svg'
 
-/** name -> [shape, ...args][]  — 'p' is a path, 'c' a circle. */
 const SHAPES = {
   check: [['p', 'M4.5 12.5 9.5 18 19.5 6.5']],
   plus: [['p', 'M12 5v14M5 12h14']],
@@ -35,28 +20,19 @@ const SHAPES = {
     ['c', 9, 8, 2],
     ['c', 15, 16, 2],
   ],
-
-  // --- one glyph per trackable thing, for the row tiles in docs/11 A -------
-  //
-  // Drawn here in the Phosphor idiom — even 1.75px strokes on a 24 grid, round
-  // caps and joins, geometry over illustration — rather than pulled from the
-  // Phosphor package. docs/11 A names that set, but the stack forbids a
-  // dependency and there is no build step to subset one, so these are matched
-  // to its proportions by hand. Recorded in DECISIONS.md.
+  gear: [
+    ['c', 12, 12, 3.1],
+    ['p', 'M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M18.5 5.5 17 7M7 17l-1.5 1.5'],
+    ['c', 12, 12, 7.1],
+  ],
   foe: [
     ['p', 'M12 3.4 20 8v8l-8 4.6L4 16V8Z'],
     ['p', 'M9.4 10.6h1.2M13.4 10.6h1.2'],
     ['p', 'M9.6 15.2h4.8'],
   ],
-  train: [
-    ['p', 'M3 9.5v5M6 7.5v9M18 7.5v9M21 9.5v5M6 12h12'],
-  ],
-  sleep: [
-    ['p', 'M20 14.2A8.2 8.2 0 0 1 9.8 4 8.6 8.6 0 1 0 20 14.2Z'],
-  ],
-  water: [
-    ['p', 'M12 3.2c3.4 3.6 5.6 6.4 5.6 9.2a5.6 5.6 0 0 1-11.2 0c0-2.8 2.2-5.6 5.6-9.2Z'],
-  ],
+  train: [['p', 'M3 9.5v5M6 7.5v9M18 7.5v9M21 9.5v5M6 12h12']],
+  sleep: [['p', 'M20 14.2A8.2 8.2 0 0 1 9.8 4 8.6 8.6 0 1 0 20 14.2Z']],
+  water: [['p', 'M12 3.2c3.4 3.6 5.6 6.4 5.6 9.2a5.6 5.6 0 0 1-11.2 0c0-2.8 2.2-5.6 5.6-9.2Z']],
   food: [
     ['p', 'M6 3v7.5a2.2 2.2 0 0 0 4.4 0V3M8.2 12.7V21'],
     ['p', 'M17.2 3c-1.7 1.4-2.4 3.6-2.4 6.2 0 1.6.8 2.6 2.4 2.8V21'],
@@ -104,10 +80,6 @@ const SHAPES = {
   ],
 }
 
-/**
- * @param {keyof SHAPES|string} name
- * @returns {SVGElement}
- */
 export function icon(name) {
   const svg = document.createElementNS(NS, 'svg')
   svg.setAttribute('class', 'icon')
@@ -125,7 +97,6 @@ export function icon(name) {
     } else {
       const path = document.createElementNS(NS, 'path')
       path.setAttribute('d', String(args[0]))
-      // A solid glyph — the play triangle — is filled rather than stroked.
       if (kind === 'fill') path.setAttribute('style', 'fill:currentColor;stroke:none')
       svg.append(path)
     }
@@ -133,22 +104,15 @@ export function icon(name) {
   return svg
 }
 
-/**
- * Which glyph stands for which trackable thing.
- *
- * Kept here beside the shapes rather than in `data/activities.json`: an icon is
- * a presentation choice, and the seed data should not have to be re-released to
- * change one. An unknown id falls back to the check, which is honest — it still
- * says "this is a thing you log" without pretending to a meaning it lacks.
- *
- * @param {string} activityId
- */
 export function iconForActivity(activityId) {
   const named = {
     rest_day: 'rest',
+    sauna: 'rest',
     sleep: 'sleep',
     water: 'water',
     nutrition_logged: 'food',
+    calories_logged: 'food',
+    alcohol_free: 'check',
     protein_target: 'protein',
     body_metrics: 'body',
     steps: 'steps',

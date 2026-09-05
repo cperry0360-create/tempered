@@ -18,13 +18,14 @@
        *   - after a session, the causal chain from performance to progression is
        *     visible without dismissing more than one screen
        *
-       * The first is checked against the XP engine rather than against a
-       * screenshot: whatever the engine can actually award has to appear in the
-       * expanded view, or the screen is explaining a different app.
+       * The source guard derives its day from ACTIVITY_FIELDS so a newly
+       * registered daily activity cannot silently award XP that Character is
+       * unable to explain.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
       import { awardsForDay, awardsForSession } from '../../src/domain/xp-engine.js'
+      import { ACTIVITY_FIELDS, applyActivity } from '../../src/domain/activities.js'
 
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
@@ -41,6 +42,19 @@
         throw new Error(`timed out waiting for ${selector}`)
       }
 
+      const probeValues = {
+        sleep: 8, water: 64, steps: 9000, body_metrics: 184, mobility: 20,
+        read: 20, study: 20, meditate: 10, instrument: 15,
+      }
+      function activityProbeDay() {
+        let day = { date: '2026-09-04' }
+        for (const [activityId, spec] of Object.entries(ACTIVITY_FIELDS)) {
+          const value = spec.entry === 'number' ? (probeValues[activityId] ?? 1) : null
+          day = applyActivity(day, activityId, value)
+        }
+        return { ...day, cardio: [{ activityId: 'run', distanceMiles: 3, minutes: 27 }] }
+      }
+
       let taps = 0
       function tap(node, label) {
         if (!node) throw new Error(`nothing to tap for: ${label}`)
@@ -54,12 +68,6 @@
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
         const balance = tempered.balance
 
-        // ---------------------------------------------------------------
-        // 2 — the causal chain, in one screen with one dismiss
-        //
-        // Run a real session first, so the Character screen below is looking at
-        // XP that was actually earned rather than at a fixture.
-        // ---------------------------------------------------------------
         await waitFor('[data-programday="monday"]')
         q('[data-programday="monday"]').click()
         await waitFor('.setrow__check')
@@ -96,20 +104,15 @@
         check('2 one tap leaves the chain, and nothing else is stacked behind it',
           taps === 1 && q('.screen--summary') === null, `${taps} tap`)
 
-        // ---------------------------------------------------------------
-        // 1 — tap an attribute, see what feeds it
-        // ---------------------------------------------------------------
         await tempered.app.show('character')
         await waitFor('[data-attr]')
 
         const rows = qa('[data-attr]')
         check('1 all five attributes are on the screen', rows.length === 5,
           rows.map((node) => node.dataset.attr).join(', '))
-
         check('1 each shows its level, tier and where it is in that level',
           qa('.attr__level').length === 5 && qa('.attr__tier').length === 5
           && qa('.attr__bar').length === 5 && qa('.attr__xp').length === 5)
-
         check('1 nothing is expanded until it is asked for', q('[data-detail]') === null)
 
         taps = 0
@@ -123,15 +126,8 @@
           feeds.length > 0 && feeds.every((node) => /\d/.test(q('.feed__worth', node)?.textContent ?? '')),
           feeds.map((node) => q('.feed__label', node).textContent).join(', '))
 
-        // The claim is checked against the engine, not against the screen.
         const emitted = new Set([
-          ...awardsForDay({
-            date: '2026-09-04', sleepHours: 8, waterOz: 64, steps: 9000, mobilityMinutes: 20,
-            readingMinutes: 20, studyMinutes: 20, meditationMinutes: 10, instrumentMinutes: 15,
-            journalLogged: true, nutritionLogged: true, proteinTargetMet: true,
-            restDay: true, bodyMetricsLogged: true,
-            cardio: [{ activityId: 'run', distanceMiles: 3, minutes: 27 }],
-          }, { paceBaselineMinPerMile: 12 }, balance).map((a) => a.source),
+          ...awardsForDay(activityProbeDay(), { paceBaselineMinPerMile: 12 }, balance).map((a) => a.source),
           ...awardsForSession(
             { id: 'p', routineId: null, durationMinutes: 75, sets: [
               { exerciseId: 'deadlift_bb', weight: 315, reps: 5 },
@@ -157,16 +153,17 @@
         const shown = new Set()
         for (const row of qa('[data-attr]')) {
           if (q(`[data-detail="${row.dataset.attr}"]`) === null) { row.click(); await settle() }
-          for (const feed of qa(`[data-detail="${row.dataset.attr}"] [data-feed]`)) {
-            shown.add(feed.dataset.feed)
-          }
+          for (const feed of qa(`[data-detail="${row.dataset.attr}"] [data-feed]`)) shown.add(feed.dataset.feed)
         }
         const unexplained = [...emitted].filter((source) => !shown.has(source))
         check('1 ACCEPTANCE: every source the engine can award is explained on screen',
           unexplained.length === 0,
           unexplained.join(', ') || `all ${emitted.size} sources appear across the five attributes`)
+        for (const source of ['vitality.calories', 'vitality.alcoholFree', 'vitality.sauna']) {
+          check(`1 Phase 5: Character explains ${source}`,
+            shown.has(source), shown.has(source) ? 'shown' : 'missing')
+        }
 
-        // What actually fed it, from the session just run.
         tap(q('[data-attr="might"]'), 'Might again')
         await settle()
         if (q('[data-detail="might"]') === null) { tap(q('[data-attr="might"]'), 'Might'); await settle() }
@@ -175,13 +172,9 @@
           fed.length > 0 && fed.some((node) => node.dataset.fed === 'might.volume'),
           fed.map((node) => node.dataset.fed).join(', ') || 'nothing')
 
-        // ---------------------------------------------------------------
-        // Rank, titles, directive
-        // ---------------------------------------------------------------
         const rank = q('[data-rank]')
         check('rank is shown and derived from the levels, never tracked separately',
           rank !== null && /^[FEDCBAS]$/.test(rank.textContent.trim()), rank?.textContent)
-
         check('the active directive is on the screen',
           q('[data-section="directive"] .directive__headline') !== null,
           q('[data-section="directive"] .directive__headline')?.textContent)
@@ -189,8 +182,7 @@
         await waitFor('[data-title="first_load"]')
         const firstLoad = q('[data-title="first_load"]')
         check('a title earned by the session is shown, with what earned it and when',
-          firstLoad !== null
-          && /session/i.test(firstLoad.textContent)
+          firstLoad !== null && /session/i.test(firstLoad.textContent)
           && /\d{4}/.test(q('.title__date', firstLoad)?.textContent ?? ''),
           firstLoad?.textContent.replace(/\s+/g, ' ').trim())
 
@@ -200,7 +192,6 @@
           qa('[data-available]').length > 0
           && qa('[data-available] .title__why').every((node) => node.textContent.trim().length > 5),
           `${qa('[data-available]').length} still to earn`)
-
         check('NO PUNISHMENT: nothing on this screen counts down or shames',
           !/\b(overdue|late|missed|failed|behind|streak lost|no excuses)\b/i.test(document.body.innerText),
           'checked the whole rendered screen')

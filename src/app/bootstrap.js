@@ -14,6 +14,7 @@ import { createBattleService } from './battle.js'
 import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
+import { createSetupScreen } from '../ui/screens/setup.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
 async function loadJson(path, base) {
@@ -49,7 +50,7 @@ export async function bootstrap(options = {}) {
 
   await seedLibrary(storage, library)
   await seedPrograms(storage, catalogue, clock)
-  await ensureProfile(storage, clock)
+  const profile = await ensureProfile(storage, clock)
 
   const workout = createWorkoutService({ storage, clock, balance })
   const health = createManualHealth(storage)
@@ -59,14 +60,46 @@ export async function bootstrap(options = {}) {
     storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
   })
   const maintenance = createMaintenanceService({ storage, clock })
-  const app = createApp({ mount, workout, daily, character, battle, maintenance, storage, clock })
-  await app.show('train')
 
-  // Exposed for the browser test harnesses, which drive the real app rather
-  // than a copy of it. Harmless in production and useful in the console.
-  globalThis.tempered = {
+  const exposed = {
     storage, clock, workout, daily, character, battle, maintenance, health,
-    balance, library, catalogue, activities, titles, enemies, itemRoster, app,
+    balance, library, catalogue, activities, titles, enemies, itemRoster,
+    app: null,
+    setup: null,
+    startSetup: null,
   }
-  return globalThis.tempered
+  globalThis.tempered = exposed
+
+  async function showApp() {
+    const app = createApp({
+      mount, workout, daily, character, battle, maintenance, storage, clock,
+      onSetup: () => showSetup(true),
+    })
+    exposed.app = app
+    exposed.setup = null
+    // Today is the product's landing screen. Phase 7 ends here, populated and usable.
+    await app.show('today')
+  }
+
+  async function showSetup(rerun = false) {
+    const setup = createSetupScreen({
+      mount,
+      storage,
+      clock,
+      activities: activities.activities ?? [],
+      onDone: showApp,
+      onCancel: rerun ? showApp : null,
+    })
+    exposed.setup = setup
+    await setup.start({ rerun })
+  }
+
+  exposed.startSetup = () => showSetup(true)
+
+  // Compatibility rule: an old profile has no setupComplete field and therefore
+  // stays in the app. Only profiles created by Phase 7 explicitly carry false.
+  if (profile?.setupComplete === false) await showSetup(false)
+  else await showApp()
+
+  return exposed
 }

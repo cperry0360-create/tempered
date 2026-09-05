@@ -35,26 +35,3 @@ jobs:
           node-version: 24
       - name: Run every browser harness
         run: node tools/verify-browser-harnesses.js
-
-  backfill-decisions:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/chatgpt/harness-doc-cleanup'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Append missing decisions once
-        shell: bash
-        run: |
-          if grep -q 'Backfill: Phase 7 setup is additive and safe for existing profiles' DECISIONS.md; then
-            echo 'Decision backfill already present.'
-            exit 0
-          fi
-          cat .github/decisions-backfill.txt >> DECISIONS.md
-          git config user.name 'Tempered CI'
-          git config user.email 'actions@github.com'
-          git add DECISIONS.md
-          git commit -m 'Backfill Phase 7, cadence, and Phase 8 decisions'
-          git push origin HEAD:chatgpt/harness-doc-cleanup

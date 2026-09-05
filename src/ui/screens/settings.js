@@ -18,8 +18,9 @@ import { shortDate } from '../format.js'
  * @param {import('../../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {ReturnType<import('../../app/daily.js').createDailyService>} deps.daily
  * @param {ReturnType<import('../../app/maintenance.js').createMaintenanceService>} [deps.maintenance]
+ * @param {() => Promise<void>|void} [deps.onSetup]
  */
-export function createSettingsScreen({ storage, daily, maintenance }) {
+export function createSettingsScreen({ storage, daily, maintenance, onSetup }) {
   const root = el('div.screen.screen--settings')
 
   /** Typed into the reset box. Nothing happens until it says RESET. */
@@ -73,10 +74,12 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
             el('span.setting__label', { text: 'Units' }),
             el('span.setting__value', { text: profile?.units ?? 'imperial' }),
           ]),
+          onSetup && el('button.button', {
+            type: 'button', dataset: { action: 'rerun-setup' },
+            onclick: () => onSetup(),
+          }, ['RE-RUN SETUP']),
         ]),
 
-        // The daily list. Setup will own this in Phase 7; until then it lives
-        // here, because a default nobody can change is not a default.
         el('section.card', { dataset: { section: 'daily' } }, [
           el('h2.block__title', { text: 'Daily list' }),
           el('p.block__hint', {
@@ -109,10 +112,6 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
               + 'always replaces the old one rather than sitting behind it.',
           }),
 
-          // The result of the last check, said once. Installed to a home screen
-          // there is no address bar and no reload button, so without this there
-          // is no way to tell a build that failed to deploy from one that
-          // deployed and did not fix the problem.
           update && el('p.notice', { dataset: { update: String(update.changed) } }, [
             update.changed
               ? `Updated — was ${update.before}, now ${update.after}.`
@@ -124,13 +123,11 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
             onclick: async () => {
               busy = true
               await load()
-              // Drops the worker and the caches, then reloads from the network.
               await maintenance.checkForUpdates()
             },
           }, [icon('history'), 'CHECK FOR UPDATES']),
         ]),
 
-        // --- starting over ------------------------------------------------
         maintenance && el('section.card', { dataset: { section: 'reset' } }, [
           el('h2.block__title', { text: 'Reset all data' }),
           el('p.block__hint', {
@@ -139,8 +136,6 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
               + 'backup you have already saved.',
           }),
 
-          // Offered first, because after the reset there is nothing left to
-          // export. The order is the whole point.
           el('button.button', {
             type: 'button', dataset: { action: 'backup' },
             onclick: async () => {
@@ -161,8 +156,6 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
               dataset: { entry: 'reset-confirm' },
               oninput: (event) => {
                 typed = event.target.value
-                // Only the button's own state changes, so the field keeps focus
-                // and the caret stays where the thumb left it.
                 const button = root.querySelector('[data-action="reset"]')
                 if (button) button.disabled = !armed()
               },
@@ -174,7 +167,6 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
             dataset: { action: 'reset' },
             onclick: async () => {
               const result = await maintenance.resetEverything({ confirmation: typed })
-              // A refusal is the service's to give; the screen only relays it.
               if (!result.ok) {
                 typed = ''
                 await load()
@@ -186,14 +178,6 @@ export function createSettingsScreen({ storage, daily, maintenance }) {
     }
   }
 
-  /**
-   * Arriving at the screen.
-   *
-   * The update notice is read here and nowhere else, so it is said once: the
-   * service clears its own record on the first read, and a second visit
-   * therefore finds nothing to say. A notice that persisted would stop being
-   * an answer to "did that do anything" and become furniture.
-   */
   async function refresh() {
     update = maintenance?.updateResult() ?? null
     await load()

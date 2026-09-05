@@ -40,7 +40,7 @@ const TABS = [
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
  */
-export function createApp({ mount, workout, daily, character, battle, storage, clock }) {
+export function createApp({ mount, workout, daily, character, battle, maintenance, storage, clock }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -53,7 +53,7 @@ export function createApp({ mount, workout, daily, character, battle, storage, c
     onStart: (options) => startSession(options),
   })
   const history = createHistoryScreen({ storage, workout })
-  const settings = createSettingsScreen({ storage, daily })
+  const settings = createSettingsScreen({ storage, daily, maintenance })
   /** The battle takes over the shell the way a session does, and hands it back. */
   const battleScreen = battle
     ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })

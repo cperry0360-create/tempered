@@ -1586,3 +1586,70 @@ day the suite happens to run on; that assertion now derives the count from the p
 (the rule bends). Drop the section headings when a day is large (the structure bends).
 Or split a day of eight into two program days (the program bends). I did not choose,
 because each trades away something a different document calls non-negotiable.
+
+## 2026-09-05 — Reset and update check live in a service, not in the screen
+**Phase:** 6 (maintenance)
+**Decision:** New `src/app/maintenance.js`. It owns the typed-phrase check, the backup, the
+shell teardown and the version stash; every platform API it needs — service workers, the
+cache store, `deleteDatabase`, session storage, `location.reload` — arrives through an
+injectable `platform` so the whole thing is testable in node against fakes.
+**Reasoning:** Cory's framing is right that these are conveniences now and safety features
+later, and the safety half is what decided the shape.
+
+**The typed phrase is checked in the service, not the screen.** A confirmation that lives
+only in the UI is one the next screen forgets, and the button that erases everything should
+refuse on its own terms whatever a caller believes. A test asserts that calling it with no
+confirmation at all is refused; sabotaging the check turns two tests red.
+
+**The backup is offered before the erase, and the order is asserted**, because after the
+reset there is nothing left to export. It reuses the export format `docs/02` already
+defines rather than inventing a second one.
+
+**Everything the platform offers is allowed to be missing.** This is the code path out of a
+broken state, so it must not require a good one: a browser with no cache API, no service
+worker, or a private window refusing session storage still resets. That was not true when
+first written — the platform wrapper was careful but `clearShell` trusted it, and a fake
+that threw took the whole reset down. The teardown now defends itself.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The update check reports both sides of the reload
+**Phase:** 6 (maintenance)
+**Decision:** The version is parked in session storage before the reload; Settings reads it
+once on arrival and says either "Updated — was X, now Y" or "No change — still X".
+**Reasoning:** Cory asked for the version before and after, and the "no change" case is the
+one that carries the value: installed to a home screen there is no address bar and no reload
+button, so without it there is no way to tell a build that failed to deploy from one that
+deployed and did not fix the problem. Silence answers neither.
+
+Said once, then forgotten — the service clears its own record on the first read. Getting
+that right needed the screen split into `refresh` (arriving) and `load` (redrawing), because
+the first version kept the notice in a closure variable that was only ever set, so it
+persisted for the life of the screen and a second visit still showed a stale answer. Found
+by the harness, not by reading.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The Settings daily-list chips had been unstyled for a phase
+**Phase:** 6 (found while verifying)
+**Decision:** Restored `.marks`/`.mark` chip styles, scoped through `.marks` so Today's
+`.row.mark` — which is a row, not a chip — is untouched.
+**Reasoning:** Phase 4.5 rebuilt Today by replacing the CSS block those rules lived in, and
+Settings still renders chips. Every test stayed green: nothing asserts what the daily list
+looks like, and the harnesses that touch it use data attributes. It shipped in Phase 4.5 and
+Phase 6 as grey boxes with a giant plus.
+
+It was found by screenshotting Settings while checking something else, which is exactly the
+case `CLAUDE.md`'s "some bugs are only visible to an eye" rule was added for. Worth
+recording as evidence that the rule earns its place: two phases of green assertions did not
+see it, and one screenshot did.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — Version bumped to 0.8.1 (6)
+**Phase:** 6 (maintenance)
+**Decision:** `src/version.js` carries `0.8.1 (6)`.
+**Reasoning:** A patch on top of Phase 6 rather than a new phase. It also gives the update
+check something true to report on the first deploy that carries it.
+**Confidence:** specified
+**Needs Cory:** no

@@ -355,7 +355,15 @@ body::before {
   cursor: pointer;
   min-height: 44px; /* a thumb, mid-set */
   transition: background var(--motion-state) ease;
+  /* A pill with a full radius and an unsized icon becomes a circle the size of
+     a coaster. Sizing the icon here rather than per screen is what stops that
+     happening again the next time a button gets one. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
 }
+.button .icon { width: 16px; height: 16px; flex: none; }
 
 .button--quiet { background: none; color: var(--text-2); }
 .button--wide { width: 100%; }
@@ -1579,6 +1587,79 @@ button.row__act { cursor: pointer; }
    PAUSE button into a circle the size of a coaster — the radius is --r-full, so
    any button given height without width becomes one. */
 .battle__controls { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
-.battle__controls .button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--s2); }
-.battle__controls .button .icon { width: 16px; height: 16px; }
+.battle__controls .button { flex: 0 0 auto; }
 .battle__controls .button[data-battle='close'] { margin-left: auto; }
+
+/* ---------------------------------------------------------------------------
+   Settings — maintenance.
+
+   Erasing everything is the one destructive action in the app, so it is the one
+   place a warning colour is correct. It is not an overdue state or a judgement
+   on the person; it is the button that cannot be taken back.
+   --------------------------------------------------------------------------- */
+
+.screen--settings .card > .button { justify-self: start; }
+
+.reset__confirm { display: grid; gap: var(--s2); }
+.reset__input {
+  max-width: none;
+  width: 100%;
+  text-align: left;
+  padding: 0 var(--s3);
+  letter-spacing: 0.18em;
+  font-weight: 700;
+}
+
+.button--danger {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--vitality);
+  color: var(--vitality);
+}
+.button--danger:disabled { box-shadow: inset 0 0 0 1px var(--edge); color: var(--text-3); cursor: default; }
+.button--danger:not(:disabled):active { background: var(--vitality); color: var(--canopy); }
+
+.notice {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-sm);
+  background: var(--well);
+}
+.notice[data-update='true'] { color: var(--acid); }
+
+/* ---------------------------------------------------------------------------
+   The daily-list chips in Settings.
+
+   Restored after Phase 4.5: rebuilding Today replaced the block these lived in,
+   and Settings still renders chips. Nothing asserted their appearance, so they
+   went unstyled for a phase and only a screenshot found it — which is what the
+   "some bugs are only visible to an eye" rule in CLAUDE.md is for.
+
+   Scoped through `.marks` so Today's `.row.mark`, which is a row rather than a
+   chip, is untouched.
+   --------------------------------------------------------------------------- */
+
+.marks { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.marks .mark {
+  appearance: none;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--edge);
+  background: none;
+  color: var(--text-2);
+  border-radius: var(--r-full);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 0 var(--s3);
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  cursor: pointer;
+}
+.marks .mark .icon { width: 15px; height: 15px; flex: none; }
+
+/* On is a filled chip, off is an outline. Neither is a problem state: an
+   activity you do not track every day is a choice, not an omission. */
+.marks .mark[data-on='true'] { background: var(--surface-2); color: var(--text); box-shadow: none; }

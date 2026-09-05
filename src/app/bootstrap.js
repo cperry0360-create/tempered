@@ -11,6 +11,7 @@ import { createWorkoutService } from './workout.js'
 import { createDailyService } from './daily.js'
 import { createCharacterService } from './character.js'
 import { createBattleService } from './battle.js'
+import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 
@@ -57,13 +58,14 @@ export async function bootstrap(options = {}) {
   const battle = createBattleService({
     storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
   })
-  const app = createApp({ mount, workout, daily, character, battle, storage, clock })
+  const maintenance = createMaintenanceService({ storage, clock })
+  const app = createApp({ mount, workout, daily, character, battle, maintenance, storage, clock })
   await app.show('train')
 
   // Exposed for the browser test harnesses, which drive the real app rather
   // than a copy of it. Harmless in production and useful in the console.
   globalThis.tempered = {
-    storage, clock, workout, daily, character, battle, health,
+    storage, clock, workout, daily, character, battle, maintenance, health,
     balance, library, catalogue, activities, titles, enemies, itemRoster, app,
   }
   return globalThis.tempered

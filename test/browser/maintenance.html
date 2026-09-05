@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — reset and updates</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      /**
+       * The two maintenance actions in Settings.
+       *
+       * The destructive halves are proved in node against a faked platform —
+       * a browser test that actually deleted the database would take the
+       * harness with it. What is checked here is everything the node tests
+       * cannot see: that the erase button is unreachable until the phrase is
+       * typed, that a backup really downloads, and that the update notice says
+       * which way it went.
+       */
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
+      const q = (s) => document.querySelector(s)
+      const settle = () => new Promise((r) => setTimeout(r, 0))
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+      const type = (input, value) => {
+        input.value = value
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+
+      try {
+        const tempered = await bootstrap({ storage: createMemoryStorage() })
+        await tempered.app.show('settings')
+        await waitFor('[data-section="reset"]')
+
+        // --- both actions are discoverable from inside the app -------------
+        check('Settings offers a reset', q('[data-section="reset"]') !== null)
+        check('Settings offers an update check', q('[data-action="check-updates"]') !== null)
+        check('the version is shown beside the update check',
+          (q('[data-version]')?.textContent ?? '').length > 0, q('[data-version]')?.textContent)
+
+        // --- a tap alone cannot erase anything ------------------------------
+        const erase = await waitFor('[data-action="reset"]')
+        check('erasing is unavailable until the phrase is typed', erase.disabled === true)
+
+        const field = await waitFor('[data-entry="reset-confirm"]')
+        for (const partial of ['R', 'RES', 'RESE', 'yes', 'delete']) {
+          type(field, partial)
+          await settle()
+          check(`"${partial}" does not arm it`, q('[data-action="reset"]').disabled === true)
+        }
+
+        type(field, 'RESET')
+        await settle()
+        check('typing RESET arms it', q('[data-action="reset"]').disabled === false)
+
+        type(field, 'reset')
+        await settle()
+        check('and lower case is accepted too', q('[data-action="reset"]').disabled === false)
+
+        // The service refuses regardless of what the screen believes.
+        const refused = await tempered.maintenance.resetEverything({ confirmation: 'nope' })
+        check('the service refuses a wrong phrase whatever the screen says',
+          refused.ok === false, refused.reason)
+
+        // --- the backup is offered before the reset, and works ---------------
+        const backupButton = q('[data-action="backup"]')
+        const order = [...q('[data-section="reset"]').querySelectorAll('button')]
+          .map((b) => b.dataset.action)
+        check('the backup is offered before the erase, not after',
+          order.indexOf('backup') < order.indexOf('reset'), order.join(' then '))
+
+        let downloaded = null
+        const realCreate = URL.createObjectURL
+        URL.createObjectURL = (blob) => { downloaded = blob; return realCreate.call(URL, blob) }
+        backupButton.click()
+        await settle(); await new Promise((r) => setTimeout(r, 60))
+        URL.createObjectURL = realCreate
+
+        check('saving a backup produces a file', downloaded !== null && downloaded.size > 0,
+          downloaded ? `${downloaded.size} bytes` : 'nothing')
+        const text = downloaded ? await downloaded.text() : ''
+        check('and the file is the documented export format',
+          JSON.parse(text || '{}').app === 'tempered')
+        check('the screen confirms what was saved', /tempered-backup-/.test(q('[data-saved]')?.textContent ?? ''),
+          q('[data-saved]')?.textContent)
+
+        // --- the update check reports both sides ----------------------------
+        // Park a version the way checkForUpdates would, then re-enter Settings
+        // as the reload would. No actual reload: it would end the harness.
+        sessionStorage.setItem('tempered:update-check', '0.0.1 (old)')
+        await tempered.app.show('today'); await settle()
+        await tempered.app.show('settings')
+        await waitFor('[data-update]')
+        check('after a check, the notice says it changed and from what',
+          /0\.0\.1 \(old\)/.test(q('[data-update]')?.textContent ?? '')
+          && q('[data-update]')?.dataset.update === 'true',
+          q('[data-update]')?.textContent)
+
+        // Same version on both sides is the case that matters most: it is the
+        // difference between "did not deploy" and "deployed, did not fix it".
+        sessionStorage.setItem('tempered:update-check', tempered.maintenance.RESET_PHRASE
+          ? q('[data-version]').textContent : '')
+        sessionStorage.setItem('tempered:update-check', q('[data-version]').textContent)
+        await tempered.app.show('today'); await settle()
+        await tempered.app.show('settings')
+        await waitFor('[data-update]')
+        check('an unchanged build is reported as unchanged, not as silence',
+          /No change/.test(q('[data-update]')?.textContent ?? '')
+          && q('[data-update]')?.dataset.update === 'false',
+          q('[data-update]')?.textContent)
+
+        // --- and the notice is said once ------------------------------------
+        await tempered.app.show('today'); await settle()
+        await tempered.app.show('settings'); await settle()
+        await new Promise((r) => setTimeout(r, 40))
+        check('the notice is not repeated forever', q('[data-update]') === null)
+
+        // No punishment language on the one destructive screen in the app.
+        const copy = q('[data-section="reset"]').textContent
+        check('the copy states the consequence without scolding',
+          /cannot be undone/i.test(copy) && !/\b(failed|failure|stupid|are you sure)\b/i.test(copy))
+      } catch (error) {
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
+      }
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'maintenance', passed: checks.every((c) => c.ok), checks }),
+      })
+    </script>
+  </body>
+</html>

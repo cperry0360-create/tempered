@@ -1,0 +1,305 @@
+/* Battle-only presentation. The tracker never inherits this theatrical layer. */
+
+.screen--battle {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.screen--battle .battle__head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.screen--battle .battle__rank {
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
+.screen--battle .fight {
+  position: relative;
+  isolation: isolate;
+  min-height: 232px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--s2);
+  padding: var(--s4) var(--s3) var(--s3);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-xl);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-1) 66%, transparent), color-mix(in srgb, var(--canopy) 86%, transparent));
+  box-shadow: inset 0 -28px 52px rgba(0, 0, 0, 0.18), 0 16px 42px rgba(0, 0, 0, 0.24);
+}
+
+.screen--battle .fight::before {
+  content: '';
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 64px;
+  z-index: -1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--edge-strong), transparent);
+}
+
+.screen--battle .fight::after {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 28px;
+  z-index: -2;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.34), transparent 68%);
+}
+
+.screen--battle .fighter {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: var(--s1);
+  text-align: center;
+}
+
+.screen--battle .fighter__visual {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+}
+
+.screen--battle .fighter__sprite {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity var(--motion-state) ease, transform var(--motion-state) ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.screen--battle .fighter__visual[data-ready='true'] .fighter__sprite {
+  opacity: 1;
+  transform: none;
+}
+
+.screen--battle .fighter__mark {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+  transition: opacity var(--motion-state) ease;
+}
+
+.screen--battle .fighter__mark .icon {
+  width: 34px;
+  height: 34px;
+}
+
+.screen--battle .fighter__visual[data-ready='true'] .fighter__mark {
+  opacity: 0;
+}
+
+.screen--battle .fighter[data-boss='true'] .fighter__visual {
+  transform: scale(1.08);
+  transform-origin: center bottom;
+}
+
+.screen--battle .fighter__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen--battle .fighter__hp {
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  line-height: 1;
+}
+
+.screen--battle .fight__vs {
+  align-self: center;
+  margin-bottom: 54px;
+  min-width: 58px;
+  color: var(--text-3);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.screen--battle .meter {
+  width: min(104px, 100%);
+}
+
+.screen--battle .feed {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s1);
+  list-style: none;
+}
+
+.screen--battle .feed__line {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: var(--s1) var(--s2);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+.screen--battle .feed__line[data-by='hero'] {
+  background: color-mix(in srgb, var(--might) 8%, transparent);
+}
+
+.screen--battle .feed__line[data-by='enemy'] {
+  background: color-mix(in srgb, var(--mind) 8%, transparent);
+}
+
+.screen--battle .feed__line[data-crit='true'] .feed__dmg {
+  color: var(--might);
+  font-weight: 800;
+}
+
+.screen--battle .feed__dmg {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.screen--battle .outcome {
+  border: 1px solid var(--edge);
+  background: color-mix(in srgb, var(--surface) 92%, var(--canopy));
+}
+
+.screen--battle .outcome__rewards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.screen--battle .reward {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--s1);
+  padding: var(--s3);
+  border-radius: var(--r-md);
+  background: var(--well);
+  text-align: center;
+}
+
+.screen--battle .reward__value {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen--battle .reward__label {
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.screen--battle .reward__item-visual {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.screen--battle .reward__item-icon {
+  position: absolute;
+  inset: 2px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  opacity: 0;
+}
+
+.screen--battle .reward__item-visual[data-ready='true'] .reward__item-icon {
+  opacity: 1;
+}
+
+.screen--battle .reward__item-fallback {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+}
+
+.screen--battle .reward__item-fallback .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.screen--battle .reward__item-visual[data-ready='true'] .reward__item-fallback {
+  opacity: 0;
+}
+
+.screen--battle .battle__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+@media (max-width: 360px) {
+  .screen--battle .fight {
+    min-height: 214px;
+    padding-inline: var(--s2);
+  }
+
+  .screen--battle .fighter__visual {
+    width: 96px;
+    height: 104px;
+  }
+
+  .screen--battle .fighter__sprite {
+    left: 0;
+    top: 4px;
+  }
+
+  .screen--battle .fight__vs {
+    min-width: 44px;
+  }
+}

@@ -24,6 +24,8 @@ jobs:
         run: find src test tools -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Full test suite
         run: node --test
+      - name: Battle art contract
+        run: node tools/verify-battle-art.js
 
   browser:
     runs-on: ubuntu-latest

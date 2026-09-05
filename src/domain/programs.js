@@ -14,6 +14,7 @@
  * @property {number} sets
  * @property {number} repMin
  * @property {number} repMax
+ * @property {number} [weight]  Optional first-session working weight from setup.
  * @property {boolean} [perSide]
  * @property {[number, number]} [restSec]
  * @property {string} [setup]
@@ -47,7 +48,8 @@ export function isDeloadWeek(week, program) {
  * Turns one program slot into the sets a session should show.
  *
  * The prescription is the range. Weight comes from last performance where there
- * is any, because the range says how hard, not how heavy.
+ * is any. On a first session, Phase 7 may provide a configured working weight;
+ * if not, the field stays blank and the user finds the load in the gym.
  *
  * @param {object} input
  * @param {ProgramSlot} input.slot
@@ -67,6 +69,8 @@ export function prescribeFromProgram(input, balance) {
   const lastWeight = performed.length
     ? performed.reduce((best, set) => ((set.weight ?? 0) > (best.weight ?? 0) ? set : best), performed[0]).weight
     : null
+  const startingWeight = typeof slot.weight === 'number' && slot.weight > 0 ? slot.weight : null
+  const baseWeight = lastWeight ?? startingWeight
 
   const build = (weight, reps) => Array.from({ length: count }, () => ({
     weight: weight ?? null,
@@ -76,7 +80,7 @@ export function prescribeFromProgram(input, balance) {
 
   if (deload) {
     return {
-      sets: build(lastWeight, slot.repMin),
+      sets: build(baseWeight, slot.repMin),
       reason: 'Deload week. Hold the weight and keep the reps at the bottom of the range.',
       isIncrease: false,
       deload: true,
@@ -85,8 +89,10 @@ export function prescribeFromProgram(input, balance) {
 
   if (performed.length === 0) {
     return {
-      sets: build(lastWeight, slot.repMin),
-      reason: `Aim for ${slot.repMin}–${slot.repMax}${slot.perSide ? ' per side' : ''}. Find a weight you can hold that range with.`,
+      sets: build(startingWeight, slot.repMin),
+      reason: startingWeight
+        ? `Start at ${startingWeight} and aim for ${slot.repMin}–${slot.repMax}${slot.perSide ? ' per side' : ''}. Change it if that is not today.`
+        : `Aim for ${slot.repMin}–${slot.repMax}${slot.perSide ? ' per side' : ''}. Find a weight you can hold that range with.`,
       isIncrease: false,
       deload: false,
     }

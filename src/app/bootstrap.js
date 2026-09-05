@@ -15,6 +15,7 @@ import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
+import { loadActiveSessionDraft } from '../ui/session-draft.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
 async function loadJson(path, base) {
@@ -77,8 +78,12 @@ export async function bootstrap(options = {}) {
     })
     exposed.app = app
     exposed.setup = null
-    // Today is the product's landing screen. Phase 7 ends here, populated and usable.
-    await app.show('today')
+    const activeWorkout = loadActiveSessionDraft()
+    if (activeWorkout) await app.resumeSession(activeWorkout)
+    else {
+      // Today is the product's landing screen when no workout is in progress.
+      await app.show('today')
+    }
   }
 
   async function showSetup(rerun = false) {

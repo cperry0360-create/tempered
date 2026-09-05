@@ -25,6 +25,7 @@ import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
+import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
 
 /** Art lives beside the repo root; resolve against this module so the path holds
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
@@ -57,10 +58,31 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   let confirmingFinish = false
   let ticker
 
+  function persistDraft() {
+    if (!session) return
+    saveActiveSessionDraft({
+      version: 1,
+      session: { ...session },
+      plan,
+      loggedHereIds: loggedHere.map((log) => log.id),
+      isFirstOfDay,
+      rest,
+      openPanel,
+    })
+  }
+
+  function checkpointWhenHidden() {
+    if (document.visibilityState === 'hidden') persistDraft()
+  }
+  function checkpointOnPageHide() { persistDraft() }
+  document.addEventListener('visibilitychange', checkpointWhenHidden)
+  window.addEventListener('pagehide', checkpointOnPageHide)
+
   const panelKey = (entry, name) => `${entry.exercise.id}:${name}`
   const isOpen = (entry, name) => openPanel === panelKey(entry, name)
   function togglePanel(entry, name) {
     openPanel = isOpen(entry, name) ? null : panelKey(entry, name)
+    persistDraft()
     render()
   }
 
@@ -68,6 +90,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
 
   function startRest(entry) {
     rest = { exerciseId: entry.exercise.id, endsAt: timeSource.now() + entry.restSec * 1000 }
+    persistDraft()
     tick()
   }
 
@@ -82,7 +105,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       if (remaining > 0) node.dataset.acid = 'value'
       else delete node.dataset.acid
     }
-    if (remaining <= 0) rest = null
+    if (remaining <= 0) { rest = null; persistDraft() }
   }
   ticker = setInterval(tick, 500)
 
@@ -177,12 +200,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         type: 'text', inputmode: field.mode, value: set[field.key] ?? '',
         readOnly: done, 'aria-label': `${field.label}, set ${index + 1}`,
         dataset: { field: field.key, exercise: entry.exercise.id, set: String(index) },
-        oninput: (event) => { set[field.key] = numberOrNull(event.target.value) },
+        oninput: (event) => { set[field.key] = numberOrNull(event.target.value); persistDraft() },
         onfocus: (event) => markColumn(event.target, true),
         onblur: (event) => markColumn(event.target, false),
         onchange: (event) => {
           set[field.key] = numberOrNull(event.target.value)
           if (index === 0) cascade(entry, field.key, set[field.key])
+          persistDraft()
           render()
         },
       })
@@ -232,8 +256,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         type: 'button', 'aria-label': `Remove set ${index + 1}`,
         dataset: { removeset: `${entry.exercise.id}:${index}` },
         onclick: async () => {
-          if (set.logId) await workout.removeSet(set.logId)
+          if (set.logId) {
+            await workout.removeSet(set.logId)
+            loggedHere = loggedHere.filter((log) => log.id !== set.logId)
+          }
           entry.sets.splice(index, 1)
+          persistDraft()
           render()
         },
       }, [icon('minus')]),
@@ -254,7 +282,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
             type: 'text', inputmode: 'decimal', value: String(entry.barWeight),
             'aria-label': 'Bar weight',
             dataset: { barweight: entry.exercise.id },
-            onchange: (event) => { entry.barWeight = numberOrNull(event.target.value) ?? 45; render() },
+            onchange: (event) => { entry.barWeight = numberOrNull(event.target.value) ?? 45; persistDraft(); render() },
           }),
         ]),
         el('div.equipment__row', {}, [
@@ -267,6 +295,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
               entry.plates = entry.plates.includes(plate)
                 ? entry.plates.filter((p) => p !== plate)
                 : [...entry.plates, plate].sort((a, b) => b - a)
+              persistDraft()
               render()
             },
           }, [String(plate)])),
@@ -316,6 +345,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
               logged: false, logId: null,
             }))
             openPanel = null
+            persistDraft()
             render()
           },
         }, [exercise.name])),
@@ -363,7 +393,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       el('button.actionpill', {
         type: 'button',
         dataset: { editsets: entry.exercise.id, open: String(entry.editing === true) },
-        onclick: () => { entry.editing = entry.editing !== true; render() },
+        onclick: () => { entry.editing = entry.editing !== true; persistDraft(); render() },
       }, [icon('sets'), entry.editing === true ? 'DONE EDITING' : 'EDIT SETS']),
       isBarbell(entry.exercise) && actionPill(entry, {
         name: 'equipment', label: 'EQUIPMENT', glyph: 'equipment',
@@ -442,7 +472,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         el('p.panel__note', { text: 'Rest between sets. The timer never blocks the next set.' }),
         el('div.restedit', {}, [30, 60, 90, 120, 150, 180, 240].map((seconds) => el('button.restedit__option', {
           type: 'button', dataset: { restset: String(seconds), active: String(entry.restSec === seconds) },
-          onclick: () => { entry.restSec = seconds; openPanel = null; render() },
+          onclick: () => { entry.restSec = seconds; openPanel = null; persistDraft(); render() },
         }, [clock(seconds)]))),
       ]),
 
@@ -472,6 +502,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         onclick: () => {
           const previous = entry.sets.at(-1)
           entry.sets.push({ weight: previous?.weight ?? null, reps: previous?.reps ?? null, logged: false })
+          persistDraft()
           render()
         },
       }, [icon('plus'), 'ADD SET']),
@@ -483,6 +514,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     if (target < 0 || target >= plan.length) return
     const [moved] = plan.splice(position, 1)
     plan.splice(target, 0, moved)
+    persistDraft()
     render()
   }
 
@@ -542,6 +574,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       // because the day's session may already carry earlier slots.
       ...(session.slotMode ? { onlySets: loggedHere } : {}),
     })
+    // Clear only after settlement succeeds. If finishing throws, the checkpoint
+    // remains so an iOS process eviction cannot turn a recoverable workout into
+    // lost UI state.
+    clearActiveSessionDraft()
     // `null` means nothing was logged. There is nothing to summarise, so the
     // screen closes without one rather than reporting an empty session back.
     onFinish(summary)
@@ -565,7 +601,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
      * @param {object|null} [options.programDay]  A day from the active program.
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
-    async start({ routine = null, programDay = null, exerciseId = null, slotTask = null }) {
+    async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       plan = []
       loggedHere = []
@@ -597,6 +633,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
               .map((set) => ({ ...set, logged: false, logId: null })),
           })
         }
+        session.returnTab = returnTab
+        persistDraft()
         render()
         return
       }
@@ -639,9 +677,55 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           })
         }
       }
+      session.returnTab = returnTab
+      persistDraft()
       render()
     },
 
-    destroy() { clearInterval(ticker); ticker = undefined },
+    async resume(draft) {
+      library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
+      session = { ...draft.session }
+      plan = Array.isArray(draft.plan) ? draft.plan : []
+      isFirstOfDay = draft.isFirstOfDay !== false
+      openPanel = draft.openPanel ?? null
+      confirmingFinish = false
+      rest = draft.rest && Number(draft.rest.endsAt) > timeSource.now() ? { ...draft.rest } : null
+
+      const logs = await workout.setsFor(session.id)
+      const liveLogIds = new Set(logs.map((log) => log.id))
+      const loggedHereIds = new Set(draft.loggedHereIds ?? [])
+      loggedHere = logs.filter((log) => loggedHereIds.has(log.id))
+
+      // IndexedDB is canonical for checked sets. Reconcile the checkpoint in
+      // case the app was killed after the set write but before its next paint.
+      for (const entry of plan) {
+        for (const [index, set] of entry.sets.entries()) {
+          const stored = logs.find((log) => log.exerciseId === entry.exercise.id
+            && (entry.programDayId == null || log.programDayId === entry.programDayId)
+            && (entry.slotIndex == null || log.slotIndex === entry.slotIndex)
+            && (log.setIndex ?? 0) === index)
+          if (stored) {
+            set.logged = true
+            set.logId = stored.id
+            for (const key of ['weight', 'reps', 'timeSec', 'distance', 'perSide']) {
+              if (stored[key] !== undefined) set[key] = stored[key]
+            }
+          } else if (set.logId && !liveLogIds.has(set.logId)) {
+            set.logged = false
+            set.logId = null
+          }
+        }
+      }
+
+      persistDraft()
+      render()
+    },
+
+    destroy() {
+      clearInterval(ticker)
+      ticker = undefined
+      document.removeEventListener('visibilitychange', checkpointWhenHidden)
+      window.removeEventListener('pagehide', checkpointOnPageHide)
+    },
   }
 }

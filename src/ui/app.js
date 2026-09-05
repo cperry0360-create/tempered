@@ -18,6 +18,7 @@ import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createCharacterScreen } from './screens/character.js'
 import { createBattleScreen } from './screens/battle.js'
+import { clearActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
@@ -125,10 +126,8 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     }
   }
 
-  async function startSession(options) {
-    returnTab = active === 'settings' ? 'character' : active
-    session?.destroy()
-    session = createSessionScreen({
+  function makeSessionScreen() {
+    return createSessionScreen({
       workout, clock,
       onFinish: async (result) => {
         session?.destroy()
@@ -142,10 +141,16 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
         announce('Workout summary')
       },
     })
+  }
+
+  async function startSession(options) {
+    returnTab = active === 'settings' ? 'character' : active
+    session?.destroy()
+    session = makeSessionScreen()
 
     body.setAttribute('aria-busy', 'true')
     try {
-      await session.start(options)
+      await session.start({ ...(options ?? {}), returnTab })
       replace(body, [session.root])
       tabBar.hidden = true
       settingsAccess.hidden = true
@@ -160,6 +165,36 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
         detail: 'Nothing was logged or removed. Try again, or return to where you were.',
         retry: () => startSession(options),
         back: () => show(returnTab),
+      })
+    } finally {
+      body.setAttribute('aria-busy', 'false')
+    }
+  }
+
+  async function resumeSession(draft) {
+    returnTab = ['today', 'train', 'character', 'history'].includes(draft?.session?.returnTab)
+      ? draft.session.returnTab
+      : 'today'
+    session?.destroy()
+    session = makeSessionScreen()
+
+    body.setAttribute('aria-busy', 'true')
+    try {
+      await session.resume(draft)
+      replace(body, [session.root])
+      tabBar.hidden = true
+      settingsAccess.hidden = true
+      body.scrollTop = 0
+      announce('Workout session resumed')
+    } catch (error) {
+      console.error('[tempered] workout resume failed', error)
+      session?.destroy()
+      session = null
+      showFailure({
+        title: 'Workout could not resume',
+        detail: 'Your checked sets are still saved. Retry, or discard the screen checkpoint and return to Today.',
+        retry: () => resumeSession(draft),
+        back: () => { clearActiveSessionDraft(); show('today') },
       })
     } finally {
       body.setAttribute('aria-busy', 'false')
@@ -209,5 +244,5 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
   }
 
   replace(mount, [body, announcer, settingsAccess, tabBar])
-  return { show, startSession }
+  return { show, startSession, resumeSession }
 }

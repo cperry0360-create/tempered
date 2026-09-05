@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tempered — active workout resume harness</title>
+    <style>
+      body { font: 14px system-ui; background: #0a0c10; color: #e6eaf2; padding: 20px; }
+      .check[data-ok="true"]::before { content: "PASS  "; color: #4fc9a0; }
+      .check[data-ok="false"]::before { content: "FAIL  "; color: #e05a6a; }
+    </style>
+  </head>
+  <body>
+    <h1>active workout resume</h1>
+    <div id="fixture"></div>
+    <div id="results"></div>
+    <script type="module">
+      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+      import { fixedClock } from '../../src/adapters/clock/clock.js'
+      import { clearActiveSessionDraft, loadActiveSessionDraft } from '../../src/ui/session-draft.js'
+
+      const mount = document.getElementById('fixture')
+      const results = document.getElementById('results')
+      const checks = []
+      function check(name, ok, detail = '') {
+        checks.push({ name, ok: Boolean(ok), detail })
+        const row = document.createElement('div')
+        row.className = 'check'
+        row.dataset.ok = String(Boolean(ok))
+        row.textContent = `${name}${detail ? ` — ${detail}` : ''}`
+        results.append(row)
+      }
+      const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
+
+      try {
+        clearActiveSessionDraft()
+        const storage = createMemoryStorage()
+        await storage.open()
+        await storage.put('profile', {
+          id: 'profile', name: 'Cory', units: 'imperial', setupComplete: true,
+          planTargetSessionsPerWeek: 4,
+        })
+        const clock = fixedClock('2026-09-05T18:00:00')
+
+        const first = await bootstrap({ mount, storage, clock })
+        await first.app.startSession({ exerciseId: 'incline_bench_db' })
+        const weight1 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="0"][data-field="weight"]')
+        const reps1 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="0"][data-field="reps"]')
+        weight1.value = '135'
+        weight1.dispatchEvent(new Event('input', { bubbles: true }))
+        reps1.value = '8'
+        reps1.dispatchEvent(new Event('input', { bubbles: true }))
+        mount.querySelector('[data-log="incline_bench_db:0"]').click()
+        await settle()
+
+        const weight2 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')
+        weight2.value = '140'
+        weight2.dispatchEvent(new Event('input', { bubbles: true }))
+        check('a live checkpoint exists before the restart', Boolean(loadActiveSessionDraft()))
+
+        // New shell + services, same durable stores. This is the important part:
+        // no call back into the first app instance is used to restore the UI.
+        const second = await bootstrap({ mount, storage, clock })
+        await settle()
+        check('relaunch opens the workout instead of Today', Boolean(mount.querySelector('.screen--session')))
+        check('navigation remains hidden in the resumed immersive workout', mount.querySelector('.tabbar')?.hidden === true)
+        check('checked-set count survives relaunch', mount.querySelector('.sessionbar__meta')?.textContent.includes('1 sets logged') === true,
+          mount.querySelector('.sessionbar__meta')?.textContent ?? '')
+        check('the checked set remains checked and locked', mount.querySelector('[data-log="incline_bench_db:0"]')?.disabled === true)
+        check('an unsubmitted next-set edit also survives', mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')?.value === '140',
+          mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')?.value ?? 'missing')
+        check('the canonical set log is still present', (await second.workout.setsFor(loadActiveSessionDraft().session.id)).length === 1)
+
+        clearActiveSessionDraft()
+        const passed = checks.every((entry) => entry.ok)
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'session-resume', passed, checks }),
+        })
+      } catch (error) {
+        check('harness threw', false, String(error?.stack ?? error))
+        clearActiveSessionDraft()
+        await fetch('/__report', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ label: 'session-resume', passed: false, checks }),
+        })
+      }
+    </script>
+  </body>
+</html>

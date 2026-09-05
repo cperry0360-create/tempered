@@ -33,8 +33,16 @@ export async function bypassSetup({ storage, clock } = {}) {
   return { storage: actualStorage, clock: actualClock }
 }
 
-/** Boot the shipped app after applying only the setup prerequisite above. */
+/**
+ * Boot the shipped app after applying the setup prerequisite above. Older
+ * acceptance harnesses were authored when Train was the initial surface, so a
+ * stable Train start keeps their first selector about the feature under test,
+ * not about whichever tab the product currently opens by default. Harnesses
+ * that test another screen immediately call app.show(...) themselves.
+ */
 export async function bootstrapHarness(options = {}) {
   const prepared = await bypassSetup(options)
-  return bootstrapApp({ ...options, ...prepared })
+  const tempered = await bootstrapApp({ ...options, ...prepared })
+  await tempered.app.show(options.initialTab ?? 'train')
+  return tempered
 }

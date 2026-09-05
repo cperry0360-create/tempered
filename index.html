@@ -11,6 +11,24 @@
     <!-- Every path here is relative, so the app runs unchanged from the repo
          root, from a /tempered/ project page, or from a custom domain. -->
     <link rel="stylesheet" href="./src/style.css" />
+
+    <!-- Keep Cory's background artwork recognizable. The base stylesheet's
+         original 15% + blur treatment made the signpost read like a cross and
+         erased the moon, owl, lanterns and path. This override preserves the
+         artwork itself while leaving the existing UI surfaces untouched. -->
+    <style>
+      body::before {
+        background-position: center center;
+        opacity: 0.48;
+        filter: none;
+        transform: none;
+      }
+
+      @media (prefers-reduced-transparency: reduce) {
+        body::before { opacity: 0.28; }
+      }
+    </style>
+
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" href="./icons/icon-512.png" />
 

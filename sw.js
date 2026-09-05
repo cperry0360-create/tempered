@@ -93,6 +93,7 @@ const PRECACHE = [
   './src/ui/dom.js',
   './src/ui/format.js',
   './src/ui/icons.js',
+  './src/ui/session-guard.js',
   './src/ui/screens/character.js',
   './src/ui/screens/battle.js',
   './src/ui/screens/history.js',

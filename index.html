@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Tempered</title>
     <meta name="description" content="Training tracker with an RPG progression layer." />
     <meta name="theme-color" content="#0b1e31" />
@@ -21,6 +21,16 @@
         transform: none;
       }
 
+      /* This is an installed app surface, not a document canvas. Keep touch
+         scrolling, but do not let a pinch gesture leave the viewport scaled or
+         visually shifted off centre. */
+      html,
+      body,
+      .app {
+        touch-action: pan-x pan-y;
+        overscroll-behavior-x: none;
+      }
+
       .screen__title {
         position: relative;
         z-index: 1;
@@ -33,14 +43,15 @@
         transform: none !important;
       }
 
-      /* Give every screen a little air below the iPhone status area. */
+      /* Deliberate air below the iPhone status area. The previous 12px addition
+         was too subtle in the installed PWA; 32px is visibly intentional. */
       .app__body {
-        padding-top: calc(max(var(--s4), env(safe-area-inset-top)) + var(--s3));
+        padding-top: calc(max(var(--s4), env(safe-area-inset-top)) + var(--s5));
       }
 
       .settings-access {
         position: fixed;
-        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        top: calc(env(safe-area-inset-top, 0px) + 20px);
         right: 14px;
         z-index: 40;
         width: 44px;

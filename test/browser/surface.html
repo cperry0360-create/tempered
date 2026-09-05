@@ -57,11 +57,11 @@
         check('Today uses one progress bar', qa('[data-summary="daily"] [role="progressbar"]').length === 1)
         check('Today renders a compact weekly strength summary', qa('[data-trainingweek="true"]').length === 1)
 
-        const todayTargets = qa('.screen--today-calm button, .tabbar__tab')
+        const todayTargets = qa('.screen--today-calm .today-item, .tabbar__tab')
           .filter((node) => node.getBoundingClientRect().height > 0)
-        const smallToday = todayTargets.filter((node) => node.getBoundingClientRect().height < 42)
-        check('primary Today touch targets stay comfortably tappable', smallToday.length === 0,
-          `${todayTargets.length - smallToday.length}/${todayTargets.length} are at least 42px`)
+        const smallToday = todayTargets.filter((node) => node.getBoundingClientRect().height < 44)
+        check('primary Today rows and navigation remain thumb sized', smallToday.length === 0,
+          `${todayTargets.length - smallToday.length}/${todayTargets.length} are at least 44px`)
 
         const dailyList = q('[data-section="daily"] .today-list')
         const listStyle = getComputedStyle(dailyList)

@@ -17,9 +17,9 @@ export function registerServiceWorker() {
     // from. Registered relative to the document, so it resolves under /tempered/.
     navigator.serviceWorker.register('./sw.js', { type: 'module' })
       .catch((/** @type {unknown} */ moduleError) => {
-        // Module workers need a modern browser (iOS 16.4+). On anything older
-        // the app still runs — it just runs online-only, which is a better
-        // outcome than a hard failure at startup.
+        // Tempered's supported iOS PWA target is 16.4+. Older iOS versions
+        // are not a compatibility target; registration failure still must not
+        // hard-fail the foreground app.
         console.error('[tempered] service worker registration failed', moduleError)
       })
   })

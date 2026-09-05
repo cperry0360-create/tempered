@@ -30,7 +30,7 @@ function quickAddFor(activity) {
 
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
-  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps' }[activity.unit] ?? ''
+  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g' }[activity.unit] ?? ''
 }
 
 function valueLabel(activity, value) {
@@ -39,23 +39,27 @@ function valueLabel(activity, value) {
     : activity.unit === 'min' ? 'min'
       : activity.unit === 'oz' ? 'oz'
         : activity.unit === 'steps' ? 'steps'
-          : activity.id === 'body_metrics' ? 'lb' : ''
+          : activity.unit === 'g' ? 'g'
+            : activity.id === 'body_metrics' ? 'lb' : ''
   return `${value}${unit ? ` ${unit}` : ''}`
 }
 
 /** A dailyCap is a real finish line, not merely an XP cap. */
 export function hasDailyGoal(activity) {
-  return Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0
+  return (Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)
+    || (Number.isFinite(activity?.goalPerLb) && activity.goalPerLb > 0)
 }
 
 /** Goal-based rows remain outstanding until the target is actually reached. */
 export function dailyGoalComplete(activity) {
   if (!hasDailyGoal(activity)) return activity?.logged === true
+  if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return false
   return typeof activity.value === 'number' && activity.value >= activity.dailyCap
 }
 
 function dailyGoalLabel(activity) {
   if (!hasDailyGoal(activity)) return null
+  if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return 'log body weight to set goal'
   const value = typeof activity.value === 'number' ? activity.value : 0
   const unit = unitLabel(activity)
   return `${value} / ${activity.dailyCap}${unit ? ` ${unit}` : ''}`

@@ -31,6 +31,10 @@ export async function seedLibrary(storage, library) {
  * deliberately means "already configured" so an update never throws an existing
  * user into onboarding. Only a genuinely new profile is marked false.
  *
+ * Schema 2 makes body metrics a daily cadence once for existing profiles. The
+ * migration is intentionally one-way: after it runs, a user can still change
+ * that cadence in Settings without a later launch forcing it back on.
+ *
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} storage
  * @param {import('../adapters/clock/clock.js').Clock} clock
  * @param {object} [defaults]
@@ -38,7 +42,27 @@ export async function seedLibrary(storage, library) {
  */
 export async function ensureProfile(storage, clock, defaults = {}) {
   const existing = await storage.get('profile', 'profile')
-  if (existing) return existing
+  if (existing) {
+    if ((existing.schemaVersion ?? 1) >= 2) return existing
+
+    const migrated = {
+      ...existing,
+      ...(Array.isArray(existing.dailyActivityIds)
+        ? { dailyActivityIds: [...new Set([...existing.dailyActivityIds, 'body_metrics'])] }
+        : {}),
+      ...(existing.activitySchedule
+        ? {
+            activitySchedule: {
+              ...existing.activitySchedule,
+              body_metrics: { cadence: 'daily', target: 1 },
+            },
+          }
+        : {}),
+      schemaVersion: 2,
+    }
+    await storage.put('profile', migrated)
+    return migrated
+  }
   const profile = {
     id: 'profile',
     name: defaults.name ?? '',
@@ -49,7 +73,7 @@ export async function ensureProfile(storage, clock, defaults = {}) {
     // what an older profile gets — see daily.js.
     ...(defaults.dailyActivityIds ? { dailyActivityIds: defaults.dailyActivityIds } : {}),
     setupComplete: defaults.setupComplete ?? false,
-    schemaVersion: 1,
+    schemaVersion: 2,
   }
   await storage.put('profile', profile)
   return profile

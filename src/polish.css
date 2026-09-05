@@ -47,6 +47,15 @@ body { min-width: 280px; }
    the whole interface into a zoomed viewport. */
 :where(input, select, textarea) { font-size: max(1rem, var(--text-md)); }
 
+/* Phase 8 closes the remaining undersized controls from earlier dense layouts.
+   The visible control can remain compact, but its actual target is 44px. */
+.quick__add,
+.iconbutton,
+.worked__toggle {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 /* Screen changes get one short spatial cue. Existing completion motion remains
    untouched. Reduced-motion below removes both. */
 @keyframes phase8-screen-enter {

@@ -44,6 +44,25 @@ export function createWorkoutService({ storage, clock, balance }) {
     return new Map((await storage.getAll('records')).map((r) => [r.exerciseId, r]))
   }
 
+  async function exerciseFrequencyTargets() {
+    const profile = await storage.get('profile', 'profile')
+    const stored = profile?.exerciseWeeklyTargets ?? {}
+    return Object.fromEntries(Object.entries(stored).flatMap(([id, raw]) => {
+      const value = Math.max(1, Math.min(7, Math.round(Number(raw) || 0)))
+      return Number(raw) > 0 ? [[id, value]] : []
+    }))
+  }
+
+  async function setExerciseFrequencyTarget(exerciseId, target = null) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const next = { ...(profile.exerciseWeeklyTargets ?? {}) }
+    const parsed = Number(target)
+    if (target === null || target === '' || !Number.isFinite(parsed) || parsed <= 0) delete next[exerciseId]
+    else next[exerciseId] = Math.max(1, Math.min(7, Math.round(parsed)))
+    await storage.put('profile', { ...profile, exerciseWeeklyTargets: next })
+    return next
+  }
+
   /**
    * The last time this exercise was performed, for the prefill and the header.
    * @param {string} exerciseId
@@ -386,7 +405,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       if (!date) return false
       return isInSameProgramWeek(active.state.startedOn, date, today, daysBetween)
     })
-    return { active, logs }
+    return { active, logs, sessions }
   }
 
   /** Today's prescribed slots, as tasks. */
@@ -403,12 +422,23 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   /** The whole week: prescribed, done, remaining, and hard sets against target. */
   async function weekStatus() {
-    const { active, logs } = await currentWeekLogs()
+    const { active, logs, sessions } = await currentWeekLogs()
     if (!active) return null
+    const targets = await exerciseFrequencyTargets()
+    const daysByExercise = new Map()
+    for (const log of logs) {
+      if (log.isWarmup) continue
+      const date = sessions.get(log.sessionId)?.date
+      if (!date) continue
+      if (!daysByExercise.has(log.exerciseId)) daysByExercise.set(log.exerciseId, new Set())
+      daysByExercise.get(log.exerciseId).add(date)
+    }
     return {
       ...active,
       week: weekTasks(active.program, logs),
       hardSets: weeklyHardSetsCompleted(logs, await exerciseMap(), active.program.weeklyTargets ?? {}),
+      exerciseFrequencyTargets: targets,
+      exerciseFrequencyDone: Object.fromEntries([...daysByExercise].map(([id, days]) => [id, days.size])),
     }
   }
 
@@ -463,7 +493,7 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   return {
     exerciseMap, recordMap, lastPerformance, prepareExercise,
-    activeProgram, prepareSlot, exerciseHistory, programGuide,
+    activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday,
     startSession, logSet, setsFor, finishSession,
     /** Removing a logged set, for the mistake that is currently unfixable. */

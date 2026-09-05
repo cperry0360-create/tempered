@@ -36,12 +36,13 @@
     },
     {
       "id": "calories_logged",
-      "name": "Tracked calories",
+      "name": "Calories",
       "short": "Calories",
       "attribute": "vitality",
       "daily": true,
-      "kind": "marked",
-      "help": "Rewards tracking. The calorie number itself is not scored."
+      "kind": "derived",
+      "help": "Track a running calorie total. Set your daily target in Settings; the number itself is not scored.",
+      "unit": "kcal"
     },
     {
       "id": "protein_target",
@@ -52,7 +53,7 @@
       "kind": "derived",
       "unit": "g",
       "goalPerLb": 0.8,
-      "help": "Daily goal is at least 0.8 grams per pound of your latest recorded body weight."
+      "help": "Daily goal is at least 0.8 grams per pound of your latest recorded body weight. Add protein through the day."
     },
     {
       "id": "alcohol_free",

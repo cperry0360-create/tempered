@@ -8,8 +8,8 @@ export const ACTIVITY_FIELDS = Object.freeze({
   water: { field: 'waterOz', entry: 'number', mode: 'add' },
   steps: { field: 'steps', entry: 'number', mode: 'replace' },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
-  calories_logged: { field: 'caloriesLogged', entry: 'mark' },
-  protein_target: { field: 'proteinGrams', entry: 'number', mode: 'replace', scoredField: 'proteinTargetMet' },
+  calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },
+  protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },
   alcohol_free: { field: 'alcoholFree', entry: 'mark' },
   sauna: { field: 'saunaLogged', entry: 'mark' },
   body_metrics: { field: 'bodyMetricsLogged', entry: 'number', mode: 'replace', stores: 'bodyMetrics' },
@@ -80,7 +80,8 @@ export function applyActivity(day, activityId, value = null, options = {}) {
   }
 
   const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0
-  return { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }
+  const next = { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }
+  return spec.trackedField ? { ...next, [spec.trackedField]: true } : next
 }
 
 export function defaultDailyIds(activities) {

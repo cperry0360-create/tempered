@@ -45,11 +45,13 @@ That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], f
 **[Everkinetic][everkinetic] open data project by Greg Priday**, which is licensed
 **[CC BY-SA 4.0][ccbysa]**. Both downstream repositories relicensed the set as public
 domain. Tempered does not rely on that: the images are attributed and shared alike as
-though CC BY-SA 4.0 still bound them, which satisfies either reading. The images remain
-under CC BY-SA 4.0; the rest of this repository does not.
+though CC BY-SA 4.0 still bound them, which satisfies either reading.
 
-`art/exercises/SOURCES.json` records the exact archive entry, revision and modification
-behind every file, so any picture can be traced back to its origin.
+**Third-party exercise art is licensed separately from Tempered's source code and
+first-party art. A repository-level licence never automatically relicenses the files in
+`art/exercises/`.** `art/exercises/SOURCES.json` records the exact archive entry,
+revision and modification behind every file, and the live app carries the attribution
+in **Settings → Credits** so it travels with the published images.
 
 [fedb]: https://github.com/yuhonas/free-exercise-db
 [unlicense]: https://unlicense.org
@@ -70,50 +72,13 @@ first-party art, and the palette derived from it is first-party too.
 
 ## Deployment
 
-The live app is served by **Netlify**, from the repository root. There is no build step,
-so what is committed is what is served — `netlify.toml` only names the publish directory
-and sets cache headers.
+The live app is served publicly by **Netlify**, from the repository root. The GitHub
+repository also remains public. There is no build step, so what is committed is what is
+served — `netlify.toml` only names the publish directory and sets cache headers.
 
-### Connecting the site (one-time, needs Cory's Netlify account)
-
-Claude cannot do this part: it needs a browser sign-in and authorisation of Netlify's
-GitHub app against this account.
-
-1. Netlify → **Add new site → Import an existing project → GitHub**, and authorise it for
-   `cperry0360-create/tempered`.
-2. Confirm the settings Netlify reads from `netlify.toml`: **branch `main`**, **build
-   command empty**, **publish directory `.`**.
-3. Deploy. Every push to `main` redeploys from then on.
-4. Note the site URL. Netlify assigns something like `tempered-xyz.netlify.app`; rename it
-   under **Site configuration → Site details → Change site name**.
-
-### Making the repository private afterwards
-
-Do this *after* the Netlify site is connected and has deployed once — Netlify keeps its
-access through the authorised GitHub app, so private repositories continue to deploy.
-
-1. GitHub → **Settings → General → Danger Zone → Change repository visibility → Private**.
-2. Push a trivial commit and confirm Netlify still builds. If it does not, reconnect the
-   repository under **Site configuration → Build & deploy → Repository**.
-3. GitHub Pages stops serving at this point. That is expected: **Netlify is the live URL.**
-   Under **Settings → Pages**, set the source to *None* so nothing points at a dead site.
-
-### What going private does and does not change
-
-Making the repository private stops the *source* from being redistributed — the images,
-`SOURCES.json` and this README are no longer public.
-
-It does **not** make the deployed site private. A Netlify site is reachable by anyone with
-the URL, so the exercise images are still published, and the attribution that travels with
-them is now in a README nobody can read. If the intent is to close the licensing question
-rather than narrow it, one of these two closes it properly:
-
-- **Password-protect the site** (Netlify → Site configuration → Access control), which
-  makes it genuinely personal rather than merely unlisted; or
-- **Carry the attribution inside the app**, as a line on the Settings screen, so it travels
-  with the images wherever they are served.
-
-Either is small. Neither is done yet — see `DECISIONS.md`.
+The public deployment is intentional. Because the exercise images are published with
+the app, the required provenance/licensing notice is carried inside the product under
+**Settings → Credits** rather than relying only on this README.
 
 ## Status
 

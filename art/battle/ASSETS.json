@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    { "kind": "hero", "id": "hero", "path": "hero.png", "width": 96, "height": 96 },
+
+    { "kind": "enemy", "id": "slime", "path": "enemies/slime.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "rat", "path": "enemies/rat.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "mushroom", "path": "enemies/mushroom.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "orc", "path": "enemies/orc.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "wight", "path": "enemies/wight.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "golem", "path": "enemies/golem.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "rhino", "path": "enemies/rhino.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "wyrm", "path": "enemies/wyrm.png", "width": 96, "height": 96 },
+
+    { "kind": "item", "id": "ember_token", "path": "items/ember_token.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "wyrm_scale", "path": "items/wyrm_scale.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "lantern_glass", "path": "items/lantern_glass.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "quiet_stone", "path": "items/quiet_stone.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "moss_charm", "path": "items/moss_charm.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "cinder_nail", "path": "items/cinder_nail.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "owl_feather", "path": "items/owl_feather.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "iron_ration", "path": "items/iron_ration.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "cap_spore", "path": "items/cap_spore.png", "width": 48, "height": 48 },
+    { "kind": "item", "id": "old_signet", "path": "items/old_signet.png", "width": 48, "height": 48 }
+  ]
+}

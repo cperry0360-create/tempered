@@ -27,6 +27,10 @@ export async function seedLibrary(storage, library) {
 /**
  * Creates the profile record if this is a first run.
  *
+ * Profiles created before Phase 7 have no `setupComplete` field. That absence
+ * deliberately means "already configured" so an update never throws an existing
+ * user into onboarding. Only a genuinely new profile is marked false.
+ *
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} storage
  * @param {import('../adapters/clock/clock.js').Clock} clock
  * @param {object} [defaults]
@@ -44,6 +48,7 @@ export async function ensureProfile(storage, clock, defaults = {}) {
     // Which activities Today shows. Absent means "the seed's defaults", which is
     // what an older profile gets — see daily.js.
     ...(defaults.dailyActivityIds ? { dailyActivityIds: defaults.dailyActivityIds } : {}),
+    setupComplete: defaults.setupComplete ?? false,
     schemaVersion: 1,
   }
   await storage.put('profile', profile)

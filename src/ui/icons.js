@@ -43,6 +43,11 @@ const SHAPES = {
   // Phosphor package. docs/11 A names that set, but the stack forbids a
   // dependency and there is no build step to subset one, so these are matched
   // to its proportions by hand. Recorded in DECISIONS.md.
+  foe: [
+    ['p', 'M12 3.4 20 8v8l-8 4.6L4 16V8Z'],
+    ['p', 'M9.4 10.6h1.2M13.4 10.6h1.2'],
+    ['p', 'M9.6 15.2h4.8'],
+  ],
   train: [
     ['p', 'M3 9.5v5M6 7.5v9M18 7.5v9M21 9.5v5M6 12h12'],
   ],

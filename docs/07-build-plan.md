@@ -210,6 +210,15 @@ Passive. Once per day. Costs no interaction.
 - Skipping to the result is always available and never punished.
 - A user who never opens the battle screen loses no progression.
 
+Asserted in `src/domain/battle.test.js`, `src/app/battle.test.js` and
+`test/browser/battle.html`. The clear-rate target from `docs/06` is asserted too, at
+every rank, because it is the criterion the difficulty design exists to hold.
+
+**Outstanding: the art.** `docs/06` names a hero sprite, roughly eight enemy sprites and
+a handful of item icons as the entire art requirement of the product. None of it is
+invented here — `CLAUDE.md` non-negotiable 8 forbids that — so the battle plays with the
+app's own icon and colour vocabulary and holds the places where sprites belong.
+
 ---
 
 ## Phase 7 — Setup and onboarding

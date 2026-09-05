@@ -10,6 +10,7 @@ import { createManualHealth } from '../adapters/health/manual-health.js'
 import { createWorkoutService } from './workout.js'
 import { createDailyService } from './daily.js'
 import { createCharacterService } from './character.js'
+import { createBattleService } from './battle.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 
@@ -35,12 +36,14 @@ export async function bootstrap(options = {}) {
     ?? (globalThis.indexedDB ? createIndexedDbStorage() : createMemoryStorage())
   await storage.open()
 
-  const [balance, library, catalogue, activities, titles] = await Promise.all([
+  const [balance, library, catalogue, activities, titles, enemies, itemRoster] = await Promise.all([
     loadJson('data/balance.json', base),
     loadJson('data/exercises.json', base),
     loadJson('data/programs.json', base),
     loadJson('data/activities.json', base),
     loadJson('data/titles.json', base),
+    loadJson('data/enemies.json', base),
+    loadJson('data/items.json', base),
   ])
 
   await seedLibrary(storage, library)
@@ -51,14 +54,17 @@ export async function bootstrap(options = {}) {
   const health = createManualHealth(storage)
   const daily = createDailyService({ storage, clock, health, balance, catalogue: activities })
   const character = createCharacterService({ storage, clock, balance, catalogue: titles })
-  const app = createApp({ mount, workout, daily, character, storage, clock })
+  const battle = createBattleService({
+    storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
+  })
+  const app = createApp({ mount, workout, daily, character, battle, storage, clock })
   await app.show('train')
 
   // Exposed for the browser test harnesses, which drive the real app rather
   // than a copy of it. Harmless in production and useful in the console.
   globalThis.tempered = {
-    storage, clock, workout, daily, character, health,
-    balance, library, catalogue, activities, titles, app,
+    storage, clock, workout, daily, character, battle, health,
+    balance, library, catalogue, activities, titles, enemies, itemRoster, app,
   }
   return globalThis.tempered
 }

@@ -963,8 +963,14 @@ input.setrow__num[readonly] { color: var(--text); }
    outstanding day to fit a 6.1" phone without scrolling, and docs/11 adds tiles
    and section headings on top of that. It therefore runs a tighter rhythm than
    the other screens, which have no such constraint. */
-.screen--today { gap: var(--s3); }
-.screen--today .block { gap: var(--s2); }
+.screen--today { gap: var(--s2); }
+.screen--today .block { gap: 6px; }
+.screen--today .rows { gap: 2px; }
+.footers { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.footers > * { min-height: 36px; }
+/* The title earns its size on every other screen; here it is competing with
+   twelve rows for one phone, and the sections carry the navigation anyway. */
+.screen--today .screen__title { font-size: var(--text-lg); }
 
 /* ---------------------------------------------------------------------------
    D — the summary strip. How today is going, before a single row is read.
@@ -1476,3 +1482,103 @@ button.row__act { cursor: pointer; }
 
 /* The 4px bar down the left edge of the row being worked. */
 .setrow__edge[data-acid='active'] { background: var(--acid); }
+
+/* ---------------------------------------------------------------------------
+   The daily battle — docs/06.
+
+   The one screen allowed theatre, and the theatre is motion and colour rather
+   than illustration: sprites are the product's only real art requirement and
+   CLAUDE.md forbids inventing them. Nothing in here may leak into the tracker.
+   --------------------------------------------------------------------------- */
+
+.battle__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.battle__rank {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--text-2);
+}
+
+.fight {
+  display: grid;
+  gap: var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
+}
+.fighter {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-areas: 'mark name hp' 'mark meter hp';
+  gap: var(--s1) var(--s3);
+  align-items: center;
+}
+.fighter__mark { grid-area: mark; }
+.fighter__name { grid-area: name; }
+.fighter__hp { grid-area: hp; }
+.meter { grid-area: meter; }
+.fighter__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  color: var(--canopy);
+  background: var(--stone);
+}
+.fighter__mark[data-attribute='might'] { background: var(--might); }
+.fighter__mark[data-attribute='mind'] { background: var(--mind); }
+.fighter__mark[data-attribute='vitality'] { background: var(--vitality); }
+.fighter__mark .icon { width: 22px; height: 22px; }
+.fighter__name { font-size: var(--text-md); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fighter__hp { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text-2); }
+.fighter[data-boss='true'] .fighter__name { color: var(--vitality); }
+
+/* A hurt hero is not a failure state, so the meter never turns red. It empties,
+   which is information, and that is all. */
+.meter { display: block; height: 6px; border-radius: var(--r-full); background: var(--well); overflow: hidden; }
+.meter__fill { display: block; height: 100%; background: var(--text-2); transition: width 140ms linear; }
+.meter[data-who='hero'] .meter__fill { background: var(--acid); }
+.meter[data-who='enemy'] .meter__fill { background: var(--wind); }
+
+.fight__vs {
+  justify-self: center;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  color: var(--text-2);
+}
+
+.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); min-height: 108px; }
+.feed__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  animation: feed-in 180ms ease-out;
+}
+@keyframes feed-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.feed__line[data-by='note'] .feed__what { color: var(--text); font-weight: 600; }
+.feed__dmg { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--wind); }
+.feed__line[data-by='enemy'] .feed__dmg { color: var(--text-2); }
+.feed__line[data-crit='true'] .feed__dmg { color: var(--acid); }
+
+.outcome { display: grid; gap: var(--s3); }
+.outcome__line { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+.outcome__rewards { display: flex; gap: var(--s5); }
+.reward { display: grid; gap: 2px; }
+.reward__value { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; }
+.reward__label { font-size: var(--text-xs); letter-spacing: 0.14em; color: var(--text-2); }
+.outcome__flavour { margin: 0; font-size: var(--text-sm); color: var(--text-2); font-style: italic; }
+
+/* Pills in a row, sized to their words. `flex: 1 1 auto` turned the two-word
+   PAUSE button into a circle the size of a coaster — the radius is --r-full, so
+   any button given height without width becomes one. */
+.battle__controls { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.battle__controls .button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--s2); }
+.battle__controls .button .icon { width: 16px; height: 16px; }
+.battle__controls .button[data-battle='close'] { margin-left: auto; }

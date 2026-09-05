@@ -84,9 +84,12 @@
           `needs ${Math.round(needed)}px of ${PHONE.height}px (bar is ${Math.round(barBox.height)}px, reserved)`)
 
         const slots = qa('[data-task][data-done="false"]').length
+        // Not a fixed six: the number of slots is whatever today's program day
+        // prescribes, and pinning it made this fail on a Saturday.
+        const prescribed = (await tempered.workout.todayTasks())?.tasks?.length ?? 0
         check('1 and it is the whole day that fits, not a truncated list',
-          slots === 6 && qa('[data-log]').length === (await tempered.daily.dailyIds()).length,
-          `all ${slots} training slots and all ${qa('[data-log]').length} daily activities`)
+          slots === prescribed && qa('[data-log]').length === (await tempered.daily.dailyIds()).length,
+          `all ${slots} of ${prescribed} training slots and all ${qa('[data-log]').length} daily activities`)
 
         // The structural half of the rule: the fit is about the daily list, so
         // the catalogue can grow without the screen degrading.

@@ -1468,3 +1468,121 @@ confirm button at all — only Enter committed it, which on a numeric keypad is 
 can type into but not submit. The acceptance harness found that, not review.
 **Confidence:** specified
 **Needs Cory:** no
+
+## 2026-09-05 — Phase 6: the battle pays gold, and the XP line is a switch at zero
+**Phase:** 6
+**Decision:** The battle awards gold and, occasionally, an item. `balance.battle.xpPerEnemy`
+is **0** as shipped. The mechanism that would pay attribute XP is built, wired and tested;
+only the number is zero.
+**Reasoning:** `docs/06` says "gold and a small XP contribution" and `docs/07` lists XP among
+the rewards, so the mechanism belongs here. But paying attribute XP for the battle would
+pay twice for the same training — the battle is a *readout* of work already scored — and it
+compounds: XP buys a stronger hero, which clears more, which buys more XP. `CLAUDE.md`'s
+one-line version is that nothing is awarded for ticking a box that could be awarded for
+doing the work, and the battle costs no interaction at all, so it is not even a box.
+
+Which attribute it would feed is also unspecified, and any answer breaks non-negotiable 3:
+there is no one-sentence justification for a gauntlet raising Might rather than Grit.
+
+So the simplest defensible version, per the "never invent product philosophy" rule: build
+it, set it to zero, and leave the decision where it belongs. Non-negotiable 7 makes this
+the right shape — balance lives in config, so turning it on is a data edit and needs no
+code. A test asserts both halves: that nothing is paid at the shipped value, and that
+setting it to 3 in config alone would pay it.
+**Confidence:** inferred — the mechanism is specified, the value is my judgement.
+**Needs Cory:** yes. One number in `data/balance.json`. If you want it on, say what it
+should feed and I will make the mapping legible rather than arbitrary.
+
+## 2026-09-05 — Phase 6: difficulty tracks the character, because ~80% at every rank asks it to
+**Phase:** 6
+**Decision:** The gauntlet's composition comes from rank — slimes at F, wyrms at S — and its
+strength is then fitted to the character by searching for the multiplier at which the day's
+matchup is survived about `clearRateTarget` of the time.
+**Reasoning:** Two attempts failed before this one, both measured rather than guessed.
+
+Scaling by rank alone gave 0% clear from rank D upward: rank is a seven-step function of
+levels, the roster's tiers are a five-step function of rank, and two coarse staircases
+against smooth character growth produce cliffs. Fitting to a health margin instead gave
+100% everywhere, then 45% at one level and 97% at the next from the same setting — the
+translation from "health left over" to "win rate" runs through the combat loop and is
+wildly non-linear.
+
+Fitting against the clear rate itself is stable: 74–90% across every level from 0 to 20,
+centred on the 80% `docs/06` asks for. It is mild rubber-banding, which is what "roughly an
+80% clear rate **at every rank**" specifies — a constant challenge is the stated goal. What
+still grows visibly is *who* you fight, which is the reward for a year of training.
+
+One consequence worth stating: "a stronger character clears more of the gauntlet" is now
+false by design, and the test that asserted it has been rewritten to assert what is true.
+**Confidence:** specified (the target) and inferred (the method)
+**Needs Cory:** no
+
+## 2026-09-05 — Phase 6: damage varies per hit, or a new character has no battle at all
+**Phase:** 6
+**Decision:** Every blow rolls within `battle.damageVariance` (0.22) of its nominal damage.
+**Reasoning:** Found while tuning. Crit was the only source of variance, and crit comes from
+Mind — so a character with Mind 0 had none, and every day resolved identically. Two
+identical days are not a battle, they are a screensaver, and the 80% target is meaningless
+without a distribution to take 80% of. The roll comes from the same seeded generator, so
+determinism is untouched.
+**Confidence:** inferred
+**Needs Cory:** no
+
+## 2026-09-05 — Phase 6: no sprites were invented
+**Phase:** 6
+**Decision:** The battle screen uses the app's existing icon and colour vocabulary. A `foe`
+glyph was added to the icon set in the same geometric idiom as the rest; no hero sprite, no
+enemy sprites, no item icons were drawn.
+**Reasoning:** `docs/06` names sprites as the entire art requirement of the product, and
+`CLAUDE.md` non-negotiable 8 says no illustration is required to ship and that decorative
+art must not be invented. Those agree: the screen is built so sprites can drop into places
+that already exist, and it reads without them in the meantime. Recorded so the absence is
+understood as a decision rather than an omission.
+**Confidence:** specified
+**Needs Cory:** yes, eventually — this is the one thing the product genuinely needs drawn.
+
+## 2026-09-05 — Phase 6: a unit test that could not fail, caught by the browser
+**Phase:** 6
+**Decision:** Strengthened `src/app/battle.test.js` to count the purse rather than the
+battle records.
+**Reasoning:** Sabotaging the service so it regenerated the day on every request left all
+ten service tests green while the browser harness went red — the battle is keyed by date, so
+a regenerating bug overwrites its own record and the count stays at one. What actually goes
+wrong is that the day is *paid for* twice. Recording it because the lesson generalises: a
+test that counts rows is not testing an effect that is measured in something else.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — Version bumped to 0.8.0 (6)
+**Phase:** 6
+**Decision:** `src/version.js` carries `0.8.0 (6)`, built 2026-09-05.
+**Reasoning:** A new phase, so the minor moves and the parenthetical names it.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-05 — The one-view rule and docs/11's structure do not both fit the largest day
+**Phase:** 4.5 / 6 (found while verifying)
+**Decision:** Trimmed Today's rhythm as far as it goes without breaking a floor, which fits
+every program day except the largest. Reporting rather than shaving further.
+**Reasoning:** Phase 4 requires the whole outstanding day to fit a 6.1" phone without
+scrolling. `docs/11` adds a 32px tile to every row and three section headings. Measured on a
+390×844 screen, with the twelve rows of a seven-slot day, the screen now comes to 839px —
+five pixels of headroom. A row costs 46px, so the eight-slot day (Upper Specialization,
+eight slots plus five daily activities) overflows by roughly 41px.
+
+Everything that could give has given: the screen runs a tighter rhythm than the rest of the
+app, the two footer toggles share one line instead of taking a row each, and the title is a
+step smaller here than elsewhere. What has *not* given is the 44px touch target or the 32px
+tile — the first is the minimum honest target for a thumb mid-set, the second is what
+`docs/11 A` specifies, and shaving either to win 41px would be trading a real property for a
+number.
+
+Worth noting how this surfaced: the failure appeared on its own overnight, because the
+program day is chosen by weekday and Saturday prescribes seven slots where Friday prescribed
+six. `daily.html` had also pinned "six slots" as a constant, which is a property of whichever
+day the suite happens to run on; that assertion now derives the count from the program.
+**Confidence:** measured
+**Needs Cory:** yes — three ways out, all yours to pick. Let the largest day scroll
+(the rule bends). Drop the section headings when a day is large (the structure bends).
+Or split a day of eight into two program days (the program bends). I did not choose,
+because each trades away something a different document calls non-negotiable.

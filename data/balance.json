@@ -82,7 +82,7 @@
     "neverRequireConsecutiveDays": true
   },
   "battle": {
-    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate.",
+    "_comment": "Coefficients turning attributes into combat stats. Target ~80% clear rate. xpPerEnemy is deliberately 0 \u2014 see DECISIONS.md: the mechanism is built and tested, but paying attribute XP for a passive battle would pay twice for the same training and compound. One number turns it on.",
     "healthFromVitality": 14,
     "healthFromGrit": 6,
     "healthBase": 60,
@@ -94,7 +94,16 @@
     "defenceFromGrit": 1.1,
     "enemiesPerGauntlet": 6,
     "goldPerEnemy": 14,
-    "itemDropChance": 0.22
+    "itemDropChance": 0.22,
+    "critCap": 0.5,
+    "rankScaling": 0.18,
+    "bossMultiplier": 1.25,
+    "xpPerEnemy": 0,
+    "xpAttribute": "grit",
+    "damageVariance": 0.22,
+    "clearRateTarget": 0.8,
+    "fitSamples": 16,
+    "fitSteps": 14
   },
   "progressionDefaults": {
     "linearIncrementUpperLbs": 5,

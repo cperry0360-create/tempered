@@ -537,21 +537,28 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         ])
       }),
 
-      // Everything off the daily list, one control away. Not a menu of
-      // settings — the same rows, logged the same way.
-      other.length > 0 && el('section.block', {}, [
-        el('button.elsewhere__toggle', {
+      // The two footers share a line. Neither is outstanding work, and giving
+      // each its own 44px row spent a whole slot's worth of the one-view budget
+      // on navigation — which the day's largest program day could not afford.
+      (other.length > 0 || workedCount > 0) && el('div.footers', {}, [
+        other.length > 0 && el('button.elsewhere__toggle', {
           type: 'button', dataset: { other: 'toggle', open: String(otherOpen) },
           onclick: () => { otherOpen = !otherOpen; render() },
         }, [icon(otherOpen ? 'up' : 'down'), 'LOG SOMETHING ELSE']),
-        otherOpen && el('div.elsewhere', {}, [el('div.rows', {}, rowsFor(other))]),
+
+        workedCount > 0 && el('button.worked__toggle', {
+          type: 'button', dataset: { worked: 'toggle', open: String(workedOpen) },
+          onclick: () => { workedOpen = !workedOpen; render() },
+        }, [icon('check'), `${workedCount} WORKED`]),
+      ]),
+
+      // Everything off the daily list, one control away. Not a menu of
+      // settings — the same rows, logged the same way.
+      otherOpen && other.length > 0 && el('section.block', {}, [
+        el('div.elsewhere', {}, [el('div.rows', {}, rowsFor(other))]),
       ]),
 
       workedCount > 0 && el('section.block', {}, [
-        el('button.worked__toggle', {
-          type: 'button', dataset: { worked: 'toggle', open: String(workedOpen) },
-          onclick: () => { workedOpen = !workedOpen; render() },
-        }, [icon('check'), `${workedCount} WORKED TODAY`]),
 
         // A finished slot stays a task, not a receipt: `docs/10` makes the slot
         // the unit, and a slot you have already worked is still one you can

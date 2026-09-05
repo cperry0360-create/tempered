@@ -22,6 +22,7 @@ import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createCharacterScreen } from './screens/character.js'
+import { createBattleScreen } from './screens/battle.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
@@ -39,7 +40,7 @@ const TABS = [
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
  */
-export function createApp({ mount, workout, daily, character, storage, clock }) {
+export function createApp({ mount, workout, daily, character, battle, storage, clock }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -53,9 +54,23 @@ export function createApp({ mount, workout, daily, character, storage, clock }) 
   })
   const history = createHistoryScreen({ storage, workout })
   const settings = createSettingsScreen({ storage, daily })
+  /** The battle takes over the shell the way a session does, and hands it back. */
+  const battleScreen = battle
+    ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })
+    : null
+
   const characterScreen = createCharacterScreen({
     character, onSettings: () => show('settings'),
+    onBattle: battleScreen ? () => openBattle() : null,
   })
+
+  async function openBattle() {
+    returnTab = active === 'settings' ? 'character' : active
+    await battleScreen.start()
+    replace(body, [battleScreen.root])
+    tabBar.hidden = true
+    body.scrollTop = 0
+  }
   const today = createTodayScreen({
     workout, daily, clock,
     onStart: (options) => startSession(options),
@@ -111,6 +126,7 @@ export function createApp({ mount, workout, daily, character, storage, clock }) 
     active = tab
     session?.destroy()
     session = null
+    battleScreen?.destroy()
     tabBar.hidden = false
 
     if (tab === 'train') { await train.refresh(); replace(body, [train.root]) }

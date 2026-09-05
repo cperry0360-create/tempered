@@ -46,7 +46,7 @@ function valueLabel(activity, value) {
   return `${value}${unit ? ` ${unit}` : ''}`
 }
 
-/** A dailyCap is a real finish line, not merely an XP cap. */
+/** A daily target can be a finish line or context; calories are tracking-only. */
 export function hasDailyGoal(activity) {
   return (Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)
     || (Number.isFinite(activity?.goalPerLb) && activity.goalPerLb > 0)
@@ -54,6 +54,7 @@ export function hasDailyGoal(activity) {
 
 /** Goal-based rows remain outstanding until the target is actually reached. */
 export function dailyGoalComplete(activity) {
+  if (activity?.id === 'calories_logged') return activity?.logged === true
   if (!hasDailyGoal(activity)) return activity?.logged === true
   if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return false
   return typeof activity.value === 'number' && activity.value >= activity.dailyCap
@@ -68,10 +69,16 @@ function dailyGoalLabel(activity) {
 }
 
 function dailyFill(activity) {
+  if (activity?.id === 'calories_logged') return activity.logged ? 1 : 0
   const target = activity.dailyCap ?? activity.band?.[0] ?? null
   const value = typeof activity.value === 'number' ? activity.value : null
   if (target && value !== null) return Math.max(0, Math.min(1, value / target))
   return activity.logged ? 1 : 0
+}
+
+/** Additive numeric trackers remain on Today after completion for more entries/corrections. */
+export function staysEditableAfterComplete(activity) {
+  return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
 }
 
 function ring(fill) {
@@ -336,8 +343,9 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       ...(day?.logged ?? []),
     ])
     const dailyScheduled = allActivities.filter((a) => a.cadence === 'daily')
-    const dailyOutstanding = dailyScheduled.filter((a) => !dailyGoalComplete(a))
-    const dailyLogged = dailyScheduled.filter((a) => dailyGoalComplete(a))
+    const dailyComplete = dailyScheduled.filter((a) => dailyGoalComplete(a))
+    const dailyVisible = dailyScheduled.filter((a) => !dailyGoalComplete(a) || staysEditableAfterComplete(a))
+    const dailyLogged = dailyComplete.filter((a) => !staysEditableAfterComplete(a))
     const offScheduled = allActivities.filter((a) => a.cadence === 'off')
     const offLogged = offScheduled.filter((a) => a.logged)
     // Numeric OFF trackers remain editable after logging so piecewise values and
@@ -353,14 +361,14 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const activeExercises = weeklyExercises.filter((a) => a.done < a.target)
     const doneExercises = weeklyExercises.filter((a) => a.done >= a.target)
 
-    const dailyDone = dailyLogged.length
+    const dailyDone = dailyComplete.length
     const dailyTotal = dailyScheduled.length
     const weeklyDone = weeklyLifestyle.reduce((sum, a) => sum + Math.min(a.weeklyDone, a.weeklyTarget), 0)
       + weeklyExercises.reduce((sum, a) => sum + Math.min(a.done, a.target), 0)
     const weeklyTotal = weeklyLifestyle.reduce((sum, a) => sum + a.weeklyTarget, 0)
       + weeklyExercises.reduce((sum, a) => sum + a.target, 0)
 
-    const workedCount = dailyDone + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length
+    const workedCount = dailyLogged.length + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length
 
     replace(root, [
       el('h1.screen__title', { text: 'Today' }),
@@ -376,8 +384,8 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
           'DAILY',
           el('span.sect__count', { text: `${dailyDone} of ${dailyTotal}` }),
         ]),
-        dailyOutstanding.length > 0
-          ? el('div.rows', {}, dailyOutstanding.map((a) => activityRow(a)))
+        dailyVisible.length > 0
+          ? el('div.rows', {}, dailyVisible.map((a) => activityRow(a)))
           : el('p.block__hint', { text: 'All daily items worked through.' }),
       ]),
 

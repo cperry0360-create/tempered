@@ -103,7 +103,6 @@ export function createBattleScreen({ battle, onClose }) {
   }
 
   function eventLine(event) {
-    const currentEnemy = enemy()
     const copy = {
       enemy: `${event.name} steps up`,
       guard: 'You guard and steady your focus',
@@ -116,13 +115,13 @@ export function createBattleScreen({ battle, onClose }) {
 
     if (event.kind === 'attack' || event.kind === 'skill') {
       return el('li.feed__line', { dataset: { by: 'hero', crit: String(event.crit === true) } }, [
-        el('span.feed__what', { text: event.kind === 'skill' ? `Skill hits ${currentEnemy?.name ?? 'enemy'}` : `You hit ${currentEnemy?.name ?? 'enemy'}` }),
+        el('span.feed__what', { text: event.kind === 'skill' ? `Skill hits ${event.target ?? 'enemy'}` : `You hit ${event.target ?? 'enemy'}` }),
         el('span.feed__dmg', { text: `−${event.damage}${event.crit ? ' crit' : ''}` }),
       ])
     }
     if (event.kind === 'enemyHit') {
       return el('li.feed__line', { dataset: { by: 'enemy' } }, [
-        el('span.feed__what', { text: event.guarded ? 'Guard absorbs the hit' : 'You are hit' }),
+        el('span.feed__what', { text: event.guarded ? `Guard absorbs ${event.source ?? 'the'} hit` : `${event.source ?? 'Enemy'} hits you` }),
         el('span.feed__dmg', { text: `−${event.damage}` }),
       ])
     }
@@ -175,10 +174,12 @@ export function createBattleScreen({ battle, onClose }) {
   }
 
   function actionButton(kind, title, sub, options = {}) {
+    const dataset = { action: kind }
+    if (options.primary) dataset.acid = 'primary'
     return el('button.battle-action', {
       type: 'button',
       disabled: busy || options.disabled,
-      dataset: { action: kind, acid: options.primary ? 'primary' : undefined },
+      dataset,
       onclick: () => run(() => options.run()),
     }, [
       el('span.battle-action__title', { text: title }),
@@ -202,7 +203,7 @@ export function createBattleScreen({ battle, onClose }) {
 
     return el('div.battle-actions', {}, [
       actionButton('attack', 'ATTACK', 'Deal damage', { primary: true, run: () => battle.act('attack', record.date) }),
-      actionButton('guard', 'GUARD', 'Reduce hit · +1 Focus', { run: () => battle.act('guard', record.date) }),
+      actionButton('guard', 'GUARD', 'Reduce hit · restore Focus', { run: () => battle.act('guard', record.date) }),
       actionButton('skill', 'SKILL', 'Heavy hit · 1 Focus', {
         disabled: current.focus <= 0,
         run: () => battle.act('skill', record.date),

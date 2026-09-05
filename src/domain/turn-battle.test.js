@@ -38,13 +38,15 @@ test('ATTACK is deterministic for the same state and day', () => {
   )
 })
 
-test('SKILL spends one focus and hits harder than the same opening ATTACK when neither crits', () => {
+test('SKILL spends one focus and deals more opening damage than ATTACK when neither crits', () => {
   const noCritRecord = { ...record, hero: { ...record.hero, crit: 0 } }
   const state = createTurnBattle(noCritRecord, balance)
   const attack = takeTurn(state, 'attack', noCritRecord, balance)
   const skill = takeTurn(state, 'skill', noCritRecord, balance)
+  const attackHit = attack.log.find((event) => event.kind === 'attack')
+  const skillHit = skill.log.find((event) => event.kind === 'skill')
   assert.equal(skill.focus, state.focus - 1)
-  assert.ok(skill.enemyHp <= attack.enemyHp, `${skill.enemyHp} was not <= ${attack.enemyHp}`)
+  assert.ok(skillHit.damage > attackHit.damage, `${skillHit.damage} was not > ${attackHit.damage}`)
 })
 
 test('SKILL with no focus does nothing', () => {
@@ -52,7 +54,7 @@ test('SKILL with no focus does nothing', () => {
   assert.deepEqual(takeTurn(state, 'skill', record, balance), state)
 })
 
-test('GUARD can restore focus and never increases incoming damage', () => {
+test('GUARD restores focus and marks any enemy hit as guarded', () => {
   const state = { ...createTurnBattle(record, balance), focus: 0 }
   const guarded = takeTurn(state, 'guard', record, balance)
   assert.equal(guarded.focus, 1)

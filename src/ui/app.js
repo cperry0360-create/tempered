@@ -39,8 +39,9 @@ const TABS = [
  * @param {ReturnType<import('../app/character.js').createCharacterService>} deps.character
  * @param {import('../adapters/storage/storage-adapter.js').StorageAdapter} deps.storage
  * @param {import('../adapters/clock/clock.js').Clock} deps.clock
+ * @param {() => Promise<void>|void} [deps.onSetup]
  */
-export function createApp({ mount, workout, daily, character, battle, maintenance, storage, clock }) {
+export function createApp({ mount, workout, daily, character, battle, maintenance, storage, clock, onSetup }) {
   const body = el('main.app__body')
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -53,7 +54,7 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     onStart: (options) => startSession(options),
   })
   const history = createHistoryScreen({ storage, workout })
-  const settings = createSettingsScreen({ storage, daily, maintenance })
+  const settings = createSettingsScreen({ storage, daily, maintenance, onSetup })
   /** The battle takes over the shell the way a session does, and hands it back. */
   const battleScreen = battle
     ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })
@@ -87,13 +88,6 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
 
   /** Which screen object backs each tab, for the FAB lookup above. */
   const SCREENS = { today, train, history, settings, character: characterScreen }
-
-  function placeholder(title, note) {
-    return el('div.screen', {}, [
-      el('h1.screen__title', { text: title }),
-      el('p.block__hint', { text: note }),
-    ])
-  }
 
   /** @param {{routine?: any, programDay?: any, exerciseId?: string, slotTask?: any}} options */
   async function startSession(options) {

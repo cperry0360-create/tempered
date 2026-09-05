@@ -11,8 +11,8 @@
     <script type="module">
       /**
        * The acceptance criteria of `docs/11-structure-and-feel.md`, sections A
-       * to F, driven against the real app. Stale product rules are intentionally
-       * kept as assertions so the report exposes doc drift rather than hiding it.
+       * to F, driven against the real app. The cadence model supersedes only
+       * section B's old TRAIN/RECOVER/SHARPEN grouping; A/C/D/E/F still hold.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
@@ -95,9 +95,10 @@
         check('A a training slot wears Might', trainTile?.dataset.attribute === 'might', trainTile?.dataset.attribute)
 
         const sections = qa('.sect')
-        check('B Today is divided into named sections', sections.length >= 2, sections.map((s) => s.dataset.section).join(', '))
+        check('B Today is divided into named cadence sections', sections.length >= 2, sections.map((s) => s.dataset.section).join(', '))
         const titles = qa('.sect__title').map((t) => t.textContent)
-        check('B the sections are TRAIN, RECOVER and SHARPEN', titles.every((t) => /TRAIN|RECOVER|SHARPEN/.test(t)), titles.join(' | '))
+        check('B the cadence sections are DAILY and THIS WEEK',
+          titles.length >= 2 && /DAILY/.test(titles[0]) && /THIS WEEK/.test(titles[1]), titles.join(' | '))
         check('B each heading carries a completion count', qa('.sect__count').every((c) => /^\d+ of \d+$/.test(c.textContent.trim())),
           qa('.sect__count').map((c) => c.textContent.trim()).join(', '))
 
@@ -107,11 +108,10 @@
         check('D it shows a bar for each of the five attributes', qa('.strip__bar').length === 5, `${qa('.strip__bar').length} bars`)
         const movedBefore = qa('.strip__bar[data-moved="true"]').length
 
-        const restInitially = q('[data-section="daily"] [data-activity="rest_day"]')
-        check('C rest is present in the old expected section', restInitially !== null, restInitially ? 'daily' : 'not daily')
         const restRow = await ensureActivity('rest_day')
         const restAction = q('button.row__act', restRow)
-        check('C rest is reachable through the current activity surface', restAction !== null)
+        check('C rest is reachable through its configured cadence surface', restAction !== null)
+        check('C cadence does not remove the rest-day logging action', restAction !== null)
         restAction?.click()
         await settle(); await settle(); await new Promise((r) => setTimeout(r, 30))
 

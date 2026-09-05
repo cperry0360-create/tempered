@@ -10,14 +10,13 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, join, normalize } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = normalize(join(here, '..'))
 const battleRoot = join(root, 'art', 'battle')
 const manifestPath = join(battleRoot, 'ASSETS.json')
-const strict = process.argv.includes('--strict')
 
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 
@@ -43,31 +42,45 @@ export function validateAsset(asset, buffer) {
   return { ok: true, detail: `${dimensions.width}×${dimensions.height}` }
 }
 
-const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.assets)) {
-  console.error('Battle art manifest is not schema version 1.')
-  process.exit(1)
-}
-
-let failures = 0
-let missing = 0
-let present = 0
-
-for (const asset of manifest.assets) {
-  const path = join(battleRoot, asset.path)
-  if (!existsSync(path)) {
-    missing += 1
-    console.log(`${strict ? 'FAIL' : 'MISS'}  ${asset.kind.padEnd(5)}  ${asset.id}  ${asset.path}`)
-    if (strict) failures += 1
-    continue
+export function verifyBattleArt({ strict = false, log = console.log } = {}) {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.assets)) {
+    throw new Error('Battle art manifest is not schema version 1.')
   }
 
-  present += 1
-  const result = validateAsset(asset, readFileSync(path))
-  if (!result.ok) failures += 1
-  console.log(`${result.ok ? 'PASS' : 'FAIL'}  ${asset.kind.padEnd(5)}  ${asset.id}  ${result.detail}`)
+  let failures = 0
+  let missing = 0
+  let present = 0
+
+  for (const asset of manifest.assets) {
+    const path = join(battleRoot, asset.path)
+    if (!existsSync(path)) {
+      missing += 1
+      log(`${strict ? 'FAIL' : 'MISS'}  ${asset.kind.padEnd(5)}  ${asset.id}  ${asset.path}`)
+      if (strict) failures += 1
+      continue
+    }
+
+    present += 1
+    const result = validateAsset(asset, readFileSync(path))
+    if (!result.ok) failures += 1
+    log(`${result.ok ? 'PASS' : 'FAIL'}  ${asset.kind.padEnd(5)}  ${asset.id}  ${result.detail}`)
+  }
+
+  log(`\nBattle art: ${present} present, ${missing} missing, ${failures} failing.`)
+  if (!strict && missing > 0) log('Missing art is allowed until the final art pass. Use --strict to require the complete set.')
+  return { present, missing, failures, ok: failures === 0 }
 }
 
-console.log(`\nBattle art: ${present} present, ${missing} missing, ${failures} failing.`)
-if (!strict && missing > 0) console.log('Missing art is allowed until the final art pass. Use --strict to require the complete set.')
-process.exit(failures === 0 ? 0 : 1)
+const invokedAsScript = process.argv[1]
+  && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (invokedAsScript) {
+  try {
+    const result = verifyBattleArt({ strict: process.argv.includes('--strict') })
+    process.exit(result.ok ? 0 : 1)
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  }
+}

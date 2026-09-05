@@ -1,0 +1,80 @@
+name: Apply Cory decisions 4
+
+on:
+  push:
+    branches:
+      - chatgpt/cory-decisions-4
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/cory-decisions-4
+      - name: Apply approved tracking semantics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Expected text not found in {path}: {old[:120]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          replace('src/ui/screens/today.js',
+              '/** A dailyCap is a real finish line, not merely an XP cap. */',
+              '/** A daily target can be a finish line or context; calories are tracking-only. */')
+
+          replace('src/ui/screens/today.js',
+              "export function dailyGoalComplete(activity) {\n  if (!hasDailyGoal(activity)) return activity?.logged === true",
+              "export function dailyGoalComplete(activity) {\n  if (activity?.id === 'calories_logged') return activity?.logged === true\n  if (!hasDailyGoal(activity)) return activity?.logged === true")
+
+          replace('src/ui/screens/today.js',
+              "function dailyFill(activity) {\n  const target = activity.dailyCap ?? activity.band?.[0] ?? null",
+              "function dailyFill(activity) {\n  if (activity?.id === 'calories_logged') return activity.logged ? 1 : 0\n  const target = activity.dailyCap ?? activity.band?.[0] ?? null")
+
+          replace('src/ui/screens/today.js',
+              "function dailyFill(activity) {\n  if (activity?.id === 'calories_logged') return activity.logged ? 1 : 0\n  const target = activity.dailyCap ?? activity.band?.[0] ?? null\n  const value = typeof activity.value === 'number' ? activity.value : null\n  if (target && value !== null) return Math.max(0, Math.min(1, value / target))\n  return activity.logged ? 1 : 0\n}\n",
+              "function dailyFill(activity) {\n  if (activity?.id === 'calories_logged') return activity.logged ? 1 : 0\n  const target = activity.dailyCap ?? activity.band?.[0] ?? null\n  const value = typeof activity.value === 'number' ? activity.value : null\n  if (target && value !== null) return Math.max(0, Math.min(1, value / target))\n  return activity.logged ? 1 : 0\n}\n\n/** Additive numeric trackers remain on Today after completion for more entries/corrections. */\nexport function staysEditableAfterComplete(activity) {\n  return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'\n}\n")
+
+          replace('src/ui/screens/today.js',
+              "    const dailyScheduled = allActivities.filter((a) => a.cadence === 'daily')\n    const dailyOutstanding = dailyScheduled.filter((a) => !dailyGoalComplete(a))\n    const dailyLogged = dailyScheduled.filter((a) => dailyGoalComplete(a))",
+              "    const dailyScheduled = allActivities.filter((a) => a.cadence === 'daily')\n    const dailyComplete = dailyScheduled.filter((a) => dailyGoalComplete(a))\n    const dailyVisible = dailyScheduled.filter((a) => !dailyGoalComplete(a) || staysEditableAfterComplete(a))\n    const dailyLogged = dailyComplete.filter((a) => !staysEditableAfterComplete(a))")
+
+          replace('src/ui/screens/today.js',
+              "    const dailyDone = dailyLogged.length",
+              "    const dailyDone = dailyComplete.length")
+
+          text = Path('src/ui/screens/today.js').read_text()
+          text = text.replace('dailyOutstanding.length > 0', 'dailyVisible.length > 0')
+          text = text.replace('dailyOutstanding.map((a) => activityRow(a))', 'dailyVisible.map((a) => activityRow(a))')
+          text = text.replace('const workedCount = dailyDone + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length',
+                              'const workedCount = dailyLogged.length + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length')
+          Path('src/ui/screens/today.js').write_text(text)
+
+          replace('src/domain/activities.test.js',
+              "['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free'].sort(),",
+              "['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics'].sort(),")
+
+          replace('src/version.js', "export const VERSION = '0.11.5 (8)'", "export const VERSION = '0.11.6 (8)'")
+
+          Path('src/app/seed.profile-migration.test.js').write_text("""import { test } from 'node:test'\nimport assert from 'node:assert/strict'\nimport { createMemoryStorage } from '../adapters/storage/memory-storage.js'\nimport { fixedClock } from '../adapters/clock/clock.js'\nimport { ensureProfile } from './seed.js'\n\ntest('schema 1 profiles migrate body metrics to daily exactly once', async () => {\n  const storage = createMemoryStorage()\n  await storage.open()\n  const clock = fixedClock('2026-09-05T09:00:00.000Z')\n  await storage.put('profile', {\n    id: 'profile',\n    schemaVersion: 1,\n    dailyActivityIds: ['sleep', 'steps'],\n    activitySchedule: {\n      sleep: { cadence: 'daily', target: 1 },\n      body_metrics: { cadence: 'off', target: 1 },\n    },\n  })\n\n  const migrated = await ensureProfile(storage, clock)\n  assert.equal(migrated.schemaVersion, 2)\n  assert.deepEqual(migrated.activitySchedule.body_metrics, { cadence: 'daily', target: 1 })\n  assert.ok(migrated.dailyActivityIds.includes('body_metrics'))\n\n  const userChanged = {\n    ...migrated,\n    activitySchedule: { ...migrated.activitySchedule, body_metrics: { cadence: 'off', target: 1 } },\n    dailyActivityIds: migrated.dailyActivityIds.filter((id) => id !== 'body_metrics'),\n  }\n  await storage.put('profile', userChanged)\n  const again = await ensureProfile(storage, clock)\n  assert.deepEqual(again.activitySchedule.body_metrics, { cadence: 'off', target: 1 },\n    'schema 2 must respect a later user choice')\n})\n""")
+
+          Path('src/ui/screens/today-semantics.test.js').write_text("""import { test } from 'node:test'\nimport assert from 'node:assert/strict'\nimport { dailyGoalComplete, staysEditableAfterComplete } from './today.js'\n\ntest('calories complete on logging, not on reaching the calorie target', () => {\n  assert.equal(dailyGoalComplete({ id: 'calories_logged', logged: false, value: 0, dailyCap: 2200 }), false)\n  assert.equal(dailyGoalComplete({ id: 'calories_logged', logged: true, value: 500, dailyCap: 2200 }), true)\n  assert.equal(dailyGoalComplete({ id: 'calories_logged', logged: true, value: 2600, dailyCap: 2200 }), true)\n})\n\ntest('true goal trackers still complete only at their goal', () => {\n  assert.equal(dailyGoalComplete({ id: 'water', logged: true, value: 8, dailyCap: 120 }), false)\n  assert.equal(dailyGoalComplete({ id: 'water', logged: true, value: 120, dailyCap: 120 }), true)\n})\n\ntest('additive numeric trackers stay editable after completion', () => {\n  assert.equal(staysEditableAfterComplete({ spec: { entry: 'number', mode: 'add' } }), true)\n  assert.equal(staysEditableAfterComplete({ spec: { entry: 'number', mode: 'replace' } }), false)\n  assert.equal(staysEditableAfterComplete({ spec: { entry: 'mark' } }), false)\n})\n""")
+          PY
+      - name: Commit approved decisions
+        shell: bash
+        run: |
+          git config user.name "Tempered CI"
+          git config user.email "actions@github.com"
+          git add src
+          git commit -m "Keep additive goals editable and make weigh-ins daily"
+          git push origin HEAD:chatgpt/cory-decisions-4

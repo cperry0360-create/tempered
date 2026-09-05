@@ -19,7 +19,7 @@
        * typed, that a backup really downloads, and that the update notice says
        * which way it went.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
       const checks = []

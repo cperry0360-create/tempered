@@ -47,7 +47,10 @@ export const SOURCE_LABELS = Object.freeze({
   'vitality.water': 'Hydration',
   'vitality.protein': 'Protein target met',
   'vitality.nutrition': 'Nutrition logged',
+  'vitality.calories': 'Calories tracked',
+  'vitality.alcoholFree': 'Alcohol-free day',
   'vitality.rest': 'Rest day taken',
+  'vitality.sauna': 'Sauna',
   'vitality.bodyMetrics': 'Body metrics logged',
 
   'mind.reading': 'Reading',
@@ -88,7 +91,10 @@ const SOURCE_WORTH = Object.freeze({
   'vitality.water': (b) => `${b.vitality.xpPerOunceWater} XP per ounce, counted to ${b.vitality.waterDailyCapOz} a day`,
   'vitality.protein': (b) => `${b.vitality.proteinTargetBonus} XP for hitting your protein target`,
   'vitality.nutrition': (b) => `${b.vitality.nutritionLoggedXp} XP for logging your food honestly`,
+  'vitality.calories': (b) => `${b.vitality.caloriesLoggedXp} XP for tracking calories. The calorie number itself is not scored`,
+  'vitality.alcoholFree': (b) => `${b.vitality.alcoholFreeXp} XP for an alcohol-free day`,
   'vitality.rest': (b) => `${b.vitality.restDayXp} XP for a rest day. Recovery is half the process`,
+  'vitality.sauna': (b) => `${b.vitality.saunaXp} XP for a sauna session`,
   'vitality.bodyMetrics': (b) => `${b.vitality.bodyMetricsLoggedXp} XP for the act of measuring. The number itself is never scored`,
 
   'mind.reading': (b) => `${b.mind.xpPerReadingMinute} XP per minute read`,

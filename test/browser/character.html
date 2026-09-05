@@ -22,7 +22,7 @@
        * screenshot: whatever the engine can actually award has to appear in the
        * expanded view, or the screen is explaining a different app.
        */
-      import { bootstrap } from '../../src/app/bootstrap.js'
+      import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
       import { awardsForDay, awardsForSession } from '../../src/domain/xp-engine.js'
 

@@ -137,6 +137,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       inputmode: 'decimal',
       placeholder: adding ? `Add ${unit || 'amount'}` : (unit || 'Value'),
       'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+      dataset: { entry: activity.id },
       onkeydown: (event) => {
         if (event.key === 'Enter') {
           event.preventDefault()
@@ -149,6 +150,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     return el('div.today-editor', { dataset: { editor: activity.id } }, [
       quick && el('div.today-editor__quick', {}, quick.map((amount) => el('button.today-editor__chip', {
         type: 'button',
+        dataset: { quickadd: String(amount) },
         'aria-label': `Add ${amount} ${activity.unit ?? ''} to ${activity.name}`,
         onclick: () => record(activity, String(amount)),
       }, [`+${amount}${unit ? ` ${unit}` : ''}`]))),
@@ -156,6 +158,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
         input,
         el('button.today-editor__save', {
           type: 'button',
+          dataset: { action: 'log' },
           onclick: () => record(activity, input.value),
         }, [adding ? 'Add' : 'Save']),
       ]),
@@ -172,6 +175,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       disabled: inactive,
       dataset: {
         activity: activity.id,
+        action: 'mark',
         complete: String(complete),
         today: String(alreadyToday),
       },
@@ -198,7 +202,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     }, [
       el('button.today-item.today-item--number', {
         type: 'button',
-        dataset: { complete: String(complete) },
+        dataset: { action: 'open-log', complete: String(complete) },
         'aria-expanded': String(open),
         onclick: () => {
           openActivityId = open ? null : activity.id
@@ -222,7 +226,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
   }
 
   function workedItem(activity, weekly = null) {
-    return el('div.today-item.today-item--worked', {}, [
+    return el('div.today-item.today-item--worked', { dataset: { worked: activity.id } }, [
       compactGlyph(activity, true),
       el('span.today-item__main', {}, [
         el('span.today-item__name', { text: activity.name }),
@@ -249,7 +253,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const label = todayProgram?.day?.name ?? 'Strength training'
     return el(canStart ? 'button.today-item.today-item--training' : 'div.today-item.today-item--training', {
       ...(canStart ? { type: 'button', onclick: () => onStart({ programDay: todayProgram.day }) } : {}),
-      dataset: { complete: String(summary.complete) },
+      dataset: { trainingweek: 'true', complete: String(summary.complete) },
     }, [
       el('span.today-item__icon', { dataset: { complete: String(summary.complete) } }, [icon(summary.complete ? 'check' : 'train')]),
       el('span.today-item__main', {}, [
@@ -283,7 +287,7 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     const percent = clampedPercent(done, total)
     const remaining = Math.max(0, total - done)
     const xp = todayXp()
-    return el('section.today-summary', {}, [
+    return el('section.today-summary', { dataset: { summary: 'daily' } }, [
       el('div.today-summary__top', {}, [
         el('div', {}, [
           el('span.today-summary__eyebrow', { text: 'DAILY PROGRESS' }),
@@ -397,10 +401,12 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
       (offAvailable.length > 0 || workedCount > 0) && el('div.today-secondary', {}, [
         offAvailable.length > 0 && el('button.today-secondary__button', {
           type: 'button',
+          dataset: { other: 'toggle', open: String(otherOpen) },
           onclick: () => { otherOpen = !otherOpen; render() },
         }, [icon(otherOpen ? 'up' : 'plus'), otherOpen ? 'Close extra logging' : 'Log something else']),
         workedCount > 0 && el('button.today-secondary__button', {
           type: 'button',
+          dataset: { worked: 'toggle', open: String(workedOpen) },
           onclick: () => { workedOpen = !workedOpen; render() },
         }, [icon(workedOpen ? 'up' : 'check'), `${workedCount} completed`]),
       ]),

@@ -2,19 +2,13 @@
  * The battle service — the seam between the pure resolver and stored state.
  *
  * One battle exists per day, keyed by date, generated the first time anything
- * asks for it. **Rewards are granted at that moment**, not when the screen is
- * opened: `docs/06` requires that a person who never watches loses nothing but
- * the flavour, and the only way to mean that is for watching to be incapable of
- * changing anything.
- *
- * Re-asking for the same day returns the stored record rather than resolving
- * again. That is belt and braces — the resolver is deterministic, so a second
- * resolution would produce the same battle anyway — but it also means the
- * record is the truth even if the balance file changes underneath it. A battle
- * that was fought on Tuesday should still read the same in Friday's history.
+ * asks for it. Rewards are granted at that moment. The optional turn-based
+ * controls change only how the encounter is played on screen; they cannot
+ * change tracker XP, reroll loot, or pay the day twice.
  */
 
 import { generateBattle } from '../domain/battle.js'
+import { createTurnBattle, takeTurn, autoTurnBattle, skipTurnBattle } from '../domain/turn-battle.js'
 import { rankFromLevels } from '../domain/rank.js'
 import { ATTRIBUTE_IDS } from '../domain/tiers.js'
 
@@ -36,12 +30,7 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
     return levels
   }
 
-  /**
-   * Today's battle, generated once and then read back.
-   *
-   * @param {string} [date]
-   * @returns {Promise<object>}
-   */
+  /** Today's generated battle, created once and then read back. */
   async function forDate(date) {
     const day = date ?? clock.today()
     const stored = await storage.get('battles', day)
@@ -65,14 +54,7 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
     return record
   }
 
-  /**
-   * Pays the battle's downstream rewards once.
-   *
-   * Gold lives on the profile because it is not an attribute and must never be
-   * mistaken for one. Loot is flavour/progression for the game layer. Battles
-   * deliberately never call the XP engine: character XP must come from real
-   * training and lifestyle activity, never from defeating enemies.
-   */
+  /** Pays the fixed daily gold/loot once. Character XP is never touched here. */
   async function grant(record, profile) {
     const gold = (profile?.gold ?? 0) + (record.rewards.gold ?? 0)
     const loot = [...(profile?.loot ?? [])]
@@ -81,11 +63,57 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
   }
 
   /**
-   * Notes that the battle has been seen, so Character can show its result
-   * rather than its invitation. Deliberately incapable of changing a reward.
-   *
-   * @param {string} [date]
+   * Loads or lazily creates the persistent turn state for the day. This also
+   * upgrades an already-generated passive battle without rerolling it.
    */
+  async function stateForDate(date) {
+    const record = await forDate(date)
+    if (record.turnState?.version === 1) return record
+    const updated = { ...record, turnState: createTurnBattle(record, balance) }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Play one manual turn and persist it immediately. */
+  async function act(action, date) {
+    const record = await stateForDate(date)
+    const turnState = takeTurn(record.turnState, action, record, balance)
+    const updated = {
+      ...record,
+      turnState,
+      watched: record.watched || turnState.status === 'finished',
+    }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Let the tiny deterministic AI finish from the current state. */
+  async function auto(date) {
+    const record = await stateForDate(date)
+    const turnState = autoTurnBattle(record.turnState, record, balance)
+    const updated = { ...record, turnState, watched: true }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Jump to the already-generated canonical daily result. */
+  async function skip(date) {
+    const record = await stateForDate(date)
+    const turnState = skipTurnBattle(record.turnState, record)
+    const updated = { ...record, turnState, watched: true }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Replay for fun. The daily reward is already locked and is never repaid. */
+  async function restart(date) {
+    const record = await stateForDate(date)
+    const updated = { ...record, turnState: createTurnBattle(record, balance), watched: true }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Compatibility marker for existing callers/history. Never changes rewards. */
   async function markWatched(date) {
     const day = date ?? clock.today()
     const stored = await storage.get('battles', day)
@@ -101,5 +129,5 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
     return { gold: profile?.gold ?? 0, loot: profile?.loot ?? [] }
   }
 
-  return { forDate, markWatched, purse }
+  return { forDate, stateForDate, act, auto, skip, restart, markWatched, purse }
 }

@@ -44,6 +44,7 @@ function activityProbeDay() {
   for (const [activityId, spec] of Object.entries(ACTIVITY_FIELDS)) {
     const value = spec.entry === 'number' ? (ACTIVITY_PROBE_VALUES[activityId] ?? 1) : null
     day = applyActivity(day, activityId, value)
+    if (spec.scoredField) day = { ...day, [spec.scoredField]: true }
   }
   return {
     ...day,

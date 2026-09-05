@@ -38,7 +38,9 @@ test('every mapped field is one the XP engine actually reads', () => {
     'bodyMetricsLogged',
   ])
   for (const [id, spec] of Object.entries(ACTIVITY_FIELDS)) {
-    assert.ok(engineFields.has(spec.field), `${id} writes ${spec.field}, which nothing scores`)
+    const scoredField = spec.scoredField ?? spec.field
+    assert.ok(engineFields.has(scoredField),
+      `${id} resolves to ${scoredField}, which nothing scores`)
   }
 })
 

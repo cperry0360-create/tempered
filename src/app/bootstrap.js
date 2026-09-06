@@ -16,7 +16,7 @@ import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
-import { loadActiveSessionDraft } from '../ui/session-draft.js'
+import { clearActiveSessionDraft } from '../ui/session-draft.js'
 import { installDailyWorkoutEnhancer } from '../ui/today-workout.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
@@ -84,12 +84,13 @@ export async function bootstrap(options = {}) {
     exposed.app = app
     exposed.setup = null
     stopDailyWorkoutEnhancer = installDailyWorkoutEnhancer({ mount, workout, app, clock })
-    const activeWorkout = loadActiveSessionDraft()
-    if (activeWorkout) await app.resumeSession(activeWorkout)
-    else {
-      // Today is the product's landing screen when no workout is in progress.
-      await app.show('today')
-    }
+
+    // A fresh launch always starts on Today. The old screen checkpoint was only
+    // intended to survive iOS eviction, but auto-restoring it trapped people in
+    // whatever exercise happened to be open. Clearing this checkpoint does NOT
+    // remove completed set logs; those remain canonical in IndexedDB.
+    clearActiveSessionDraft()
+    await app.show('today')
   }
 
   async function showSetup(rerun = false) {

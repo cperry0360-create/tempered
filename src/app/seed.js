@@ -12,11 +12,28 @@
  * @returns {Promise<{exercises: number, routines: number}>} how many were added.
  */
 export async function seedLibrary(storage, library) {
+  const seededEmptyRoutineIds = new Set((library.routines ?? [])
+    .filter((routine) => !Array.isArray(routine.exercises) || routine.exercises.length === 0)
+    .map((routine) => routine.id))
+
+  // Empty routines are placeholders, not runnable workouts. Older builds seeded
+  // one named Cardio, so remove that stored placeholder on upgrade as long as it
+  // is still empty. A user who later adds exercises to a routine keeps it.
+  for (const id of seededEmptyRoutineIds) {
+    const existing = await storage.get('routines', id)
+    if (existing && (!Array.isArray(existing.exercises) || existing.exercises.length === 0)) {
+      await storage.delete('routines', id)
+    }
+  }
+
   const existingExercises = new Set((await storage.getAll('exercises')).map((e) => e.id))
   const existingRoutines = new Set((await storage.getAll('routines')).map((r) => r.id))
 
   const newExercises = library.exercises.filter((e) => !existingExercises.has(e.id))
-  const newRoutines = library.routines.filter((r) => !existingRoutines.has(r.id))
+  const newRoutines = library.routines.filter((r) =>
+    !existingRoutines.has(r.id)
+    && Array.isArray(r.exercises)
+    && r.exercises.length > 0)
 
   await storage.putAll('exercises', newExercises)
   await storage.putAll('routines', newRoutines)

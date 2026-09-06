@@ -1,4 +1,4 @@
-/** Tempered service worker — offline support for the installed app. */
+/** Tempered service worker — offline support with atomic version handoff. */
 import { VERSION } from './src/version.js'
 
 const CACHE = `tempered-${VERSION}`
@@ -135,11 +135,22 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim()),
-  )
+  event.waitUntil((async () => {
+    const keys = await caches.keys()
+    const oldTemperedCaches = keys.filter((key) => key.startsWith('tempered-') && key !== CACHE)
+
+    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
+    await self.clients.claim()
+
+    // A version handoff must not leave an already-open Home Screen app running
+    // old JS against new HTML/CSS. If this activation replaced a previous
+    // Tempered cache, navigate each open window once so it restarts entirely
+    // under the newly activated worker and its newly precached asset set.
+    if (oldTemperedCaches.length > 0) {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      await Promise.allSettled(windows.map((client) => client.navigate(client.url)))
+    }
+  })())
 })
 
 self.addEventListener('fetch', (event) => {
@@ -147,19 +158,25 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   if (new URL(request.url).origin !== self.location.origin) return
 
-  const network = fetch(request).then((response) => {
+  // Online launches should always use the server's current file set. Cache is
+  // the offline fallback, not the first answer: cache-first delivery was the
+  // reason a release could show new CSS while still executing old JavaScript.
+  const network = fetch(request).then(async (response) => {
     if (response.ok && response.type === 'basic') {
-      const copy = response.clone()
-      caches.open(CACHE).then((cache) => cache.put(request, copy))
+      const cache = await caches.open(CACHE)
+      await cache.put(request, response.clone())
     }
     return response
   })
-  event.waitUntil(network.catch(() => undefined))
 
   if (request.mode === 'navigate') {
-    event.respondWith(network.catch(() => caches.match(SHELL).then((cached) => cached ?? Response.error())))
+    event.respondWith(
+      network.catch(() => caches.match(SHELL).then((cached) => cached ?? Response.error())),
+    )
     return
   }
 
-  event.respondWith(caches.match(request).then((cached) => cached ?? network.catch(() => Response.error())))
+  event.respondWith(
+    network.catch(() => caches.match(request).then((cached) => cached ?? Response.error())),
+  )
 })

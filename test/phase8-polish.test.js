@@ -90,8 +90,8 @@ test('PHASE 8: a startup failure is a real recovery surface, not dead text', () 
 })
 
 test('PHASE 8: Progress has meaningful empty states and pressed-state semantics', () => {
-  assert.match(history, /No training history yet/)
-  assert.match(history, /No records yet/)
+  assert.match(history, /No training in this range/)
+  assert.match(history, /No lifting progress yet/)
   assert.match(history, /'aria-pressed': String\(view === name\)/)
 })
 

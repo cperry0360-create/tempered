@@ -1,1 +1,0 @@
-Battle FX assets are installed by the FX integration pass.

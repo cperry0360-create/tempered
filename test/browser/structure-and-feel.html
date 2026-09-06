@@ -43,9 +43,14 @@
         return q(`[data-activity="${id}"]`)
       }
 
+      function actionIn(row, action) {
+        if (!row) return null
+        return row.matches?.(`[data-action="${action}"]`) ? row : q(`[data-action="${action}"]`, row)
+      }
+
       async function openEditor(id) {
         const row = await ensureActivity(id)
-        const opener = q('[data-action="open-log"]', row)
+        const opener = actionIn(row, 'open-log')
         if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
         return q(`[data-editor="${id}"]`)
       }
@@ -90,7 +95,7 @@
           qa('[data-exerciseweek]').length === 0)
 
         const rest = await ensureActivity('rest_day')
-        const restAction = q('[data-action="mark"]', rest)
+        const restAction = actionIn(rest, 'mark')
         check('optional rest logging remains reachable', restAction !== null)
         restAction?.click(); await settle()
         const earned = q('.today-earned')

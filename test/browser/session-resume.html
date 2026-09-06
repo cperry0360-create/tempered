@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Tempered — active workout resume harness</title>
+    <title>Tempered — launch returns to Today</title>
     <style>
       body { font: 14px system-ui; background: #0a0c10; color: #e6eaf2; padding: 20px; }
       .check[data-ok="true"]::before { content: "PASS  "; color: #4fc9a0; }
@@ -10,7 +10,7 @@
     </style>
   </head>
   <body>
-    <h1>active workout resume</h1>
+    <h1>launch returns to Today</h1>
     <div id="fixture"></div>
     <div id="results"></div>
     <script type="module">
@@ -56,20 +56,22 @@
         const weight2 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')
         weight2.value = '140'
         weight2.dispatchEvent(new Event('input', { bubbles: true }))
-        check('a live checkpoint exists before the restart', Boolean(loadActiveSessionDraft()))
+        const draftBeforeRestart = loadActiveSessionDraft()
+        const sessionId = draftBeforeRestart?.session?.id
+        check('a live checkpoint exists before the restart', Boolean(draftBeforeRestart))
 
-        // New shell + services, same durable stores. This is the important part:
-        // no call back into the first app instance is used to restore the UI.
+        // New shell + services, same durable stores. A cold launch should not
+        // take over the product with the old exercise screen.
         const second = await bootstrap({ mount, storage, clock })
         await settle()
-        check('relaunch opens the workout instead of Today', Boolean(mount.querySelector('.screen--session')))
-        check('navigation remains hidden in the resumed immersive workout', mount.querySelector('.tabbar')?.hidden === true)
-        check('checked-set count survives relaunch', mount.querySelector('.sessionbar__meta')?.textContent.includes('1 sets logged') === true,
-          mount.querySelector('.sessionbar__meta')?.textContent ?? '')
-        check('the checked set remains checked and locked', mount.querySelector('[data-log="incline_bench_db:0"]')?.disabled === true)
-        check('an unsubmitted next-set edit also survives', mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')?.value === '140',
-          mount.querySelector('[data-exercise="incline_bench_db"][data-set="1"][data-field="weight"]')?.value ?? 'missing')
-        check('the canonical set log is still present', (await second.workout.setsFor(loadActiveSessionDraft().session.id)).length === 1)
+        check('relaunch lands on Today', Boolean(mount.querySelector('.screen--today-calm')))
+        check('relaunch does not auto-open the workout', mount.querySelector('.screen--session') === null)
+        check('navigation is visible after relaunch', mount.querySelector('.tabbar')?.hidden === false)
+        check('Today is the active tab', mount.querySelector('[data-tab="today"]')?.getAttribute('aria-current') === 'page')
+        check('the old screen checkpoint is cleared', loadActiveSessionDraft() === null)
+        check('already logged canonical work is preserved', sessionId
+          ? (await second.workout.setsFor(sessionId)).length === 1
+          : false)
 
         clearActiveSessionDraft()
         const passed = checks.every((entry) => entry.ok)

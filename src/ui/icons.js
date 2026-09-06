@@ -120,6 +120,7 @@ export function iconForActivity(activityId) {
     protein_target: 'protein',
     body_metrics: 'body',
     steps: 'steps',
+    micro_cardio: 'steps',
     mobility: 'mobility',
     read: 'read',
     study: 'study',

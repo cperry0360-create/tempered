@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Tempered</title>
     <meta name="description" content="Training tracker with an RPG progression layer." />
-    <meta name="theme-color" content="#0b1e31" />
+    <meta name="theme-color" content="#16495f" />
     <meta name="color-scheme" content="dark" />
 
     <link rel="stylesheet" href="./src/style.css" />
@@ -22,9 +22,6 @@
         transform: none;
       }
 
-      /* This is an installed app surface, not a document canvas. Keep touch
-         scrolling, but do not let a pinch gesture leave the viewport scaled or
-         visually shifted off centre. */
       html,
       body,
       .app {
@@ -44,8 +41,6 @@
         transform: none !important;
       }
 
-      /* Deliberate air below the iPhone status area. The previous 12px addition
-         was too subtle in the installed PWA; 32px is visibly intentional. */
       .app__body {
         padding-top: calc(max(var(--s4), env(safe-area-inset-top)) + var(--s5));
       }
@@ -72,8 +67,6 @@
       .settings-access[data-active="true"] { color: #efff5a; border-color: rgba(239, 255, 90, 0.38); }
       .settings-access[hidden] { display: none !important; }
 
-      /* Goal-based daily trackers keep their running total visible beneath the
-         name without stealing horizontal room from quick-add controls. */
       .row.entry[data-goal="true"] .entry__label {
         flex: 1 1 auto;
         min-width: 0;
@@ -91,7 +84,6 @@
         white-space: nowrap;
       }
 
-      /* Tempered-owned confirmation sheet. No browser-native alert chrome. */
       .confirm-overlay {
         position: fixed;
         inset: 0;
@@ -153,6 +145,8 @@
     </style>
 
     <link rel="stylesheet" href="./src/calm.css" />
+    <link rel="stylesheet" href="./src/uplift.css" />
+    <link rel="stylesheet" href="./src/progress.css" />
     <link rel="stylesheet" href="./src/battle-fidelity.css" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" href="./icons/icon-512.png" />

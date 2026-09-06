@@ -93,9 +93,28 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return target
   }
 
+  /** User-owned one-tap amounts, e.g. Water = one 20 oz bottle. */
+  async function quickAddPresets() {
+    const profile = await storage.get('profile', 'profile')
+    return { ...(profile?.quickAddPresets ?? {}) }
+  }
+
+  async function setQuickAddPreset(activityId, value) {
+    if (!ACTIVITY_FIELDS[activityId] || ACTIVITY_FIELDS[activityId].mode !== 'add') return quickAddPresets()
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const next = { ...(profile.quickAddPresets ?? {}) }
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed) || parsed <= 0) delete next[activityId]
+    else next[activityId] = parsed
+    await storage.put('profile', { ...profile, quickAddPresets: next })
+    return next
+  }
+
   /**
    * Backwards-compatible schedule. Older profiles only know `dailyActivityIds`;
    * those remain daily and everything else stays off until setup is rerun.
+   * Micro cardio is a new default and therefore opts into DAILY once unless the
+   * user has explicitly given it a cadence.
    */
   async function activitySchedule() {
     const profile = await storage.get('profile', 'profile')
@@ -110,6 +129,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           target: raw.cadence === 'weekly' ? clampTarget(raw.target) : 1,
         }]
       }
+      if (activity.id === 'micro_cardio') return [activity.id, { cadence: 'daily', target: 1 }]
       return [activity.id, legacyDaily.has(activity.id)
         ? { cadence: 'daily', target: 1 }
         : { cadence: 'off', target: 1 }]
@@ -166,7 +186,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     day = await resolveProteinDay(day)
     const profile = await storage.get('profile', 'profile')
     const context = { paceBaselineMinPerMile: profile?.paceBaselineMinPerMile ?? null }
-
     const full = awardsForDay(day, context, balance)
     const owed = totalsBySource(full)
     const paid = day.awarded ?? {}
@@ -212,14 +231,20 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     }
   }
 
+  function emptyResult(day) {
+    return { day, awards: [], xpByAttribute: totalsByAttribute([]), xpBySource: {}, levelledUp: [], levels: {}, rank: null }
+  }
+
+  /** One activity logged against an explicit calendar date. Future health logs are not allowed. */
+  async function logAt(date, activityId, value = null, options = {}) {
+    const day = await dayLog(date)
+    if (date > clock.today() || !ACTIVITY_FIELDS[activityId]) return emptyResult(day)
+    return settleDay(applyActivity(day, activityId, value, options))
+  }
+
   /** One activity, logged for today. */
   async function log(activityId, value = null, options = {}) {
-    const date = clock.today()
-    const day = await dayLog(date)
-    if (!ACTIVITY_FIELDS[activityId]) {
-      return { day, awards: [], xpByAttribute: totalsByAttribute([]), xpBySource: {}, levelledUp: [], levels: {}, rank: null }
-    }
-    return settleDay(applyActivity(day, activityId, value, options))
+    return logAt(clock.today(), activityId, value, options)
   }
 
   async function settle() {
@@ -249,9 +274,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return decorated
   }
 
-  /** Today only: daily activities plus all catalogue rows for optional logging. */
-  async function today() {
-    const date = clock.today()
+  /** Daily activities plus all catalogue rows for optional logging on one date. */
+  async function forDate(date = clock.today()) {
     const day = await dayLog(date)
     const schedule = await activitySchedule()
     const proteinGoal = await proteinGoalFor(date, day)
@@ -267,18 +291,21 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     }
   }
 
+  async function today() {
+    return forDate(clock.today())
+  }
+
   /**
    * Weekly activities count distinct days on which the activity was logged.
    * That makes "3x/week" mean three actual days, not three taps on Tuesday.
    */
-  async function week() {
-    const todayDate = clock.today()
-    const start = calendarWeekStart(todayDate)
+  async function week(anchorDate = clock.today()) {
+    const start = calendarWeekStart(anchorDate)
     const schedule = await activitySchedule()
     const days = (await storage.getAll('dayLogs'))
-      .filter((day) => day.date >= start && day.date <= todayDate)
-    const todayDay = days.find((day) => day.date === todayDate) ?? { date: todayDate }
-    const proteinGoal = await proteinGoalFor(todayDate, todayDay)
+      .filter((day) => day.date >= start && day.date <= anchorDate)
+    const anchorDay = days.find((day) => day.date === anchorDate) ?? { date: anchorDate }
+    const proteinGoal = await proteinGoalFor(anchorDate, anchorDay)
     const caloriesGoal = await calorieTarget()
     const completedOnDay = (activity, row) => activity.id === 'protein_target'
       ? row.proteinTargetMet === true
@@ -290,15 +317,15 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
         const target = clampTarget(schedule[activity.id]?.target)
         const done = days.filter((day) => completedOnDay(activity, day)).length
         return {
-          ...decorate(activity, todayDay, schedule, proteinGoal, caloriesGoal),
+          ...decorate(activity, anchorDay, schedule, proteinGoal, caloriesGoal),
           weeklyDone: done,
           weeklyTarget: target,
           complete: done >= target,
-          loggedToday: completedOnDay(activity, todayDay),
+          loggedToday: completedOnDay(activity, anchorDay),
         }
       })
 
-    return { start, date: todayDate, activities: weekly }
+    return { start, date: anchorDate, activities: weekly }
   }
 
   async function sample(date = clock.today()) {
@@ -306,7 +333,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   }
 
   return {
-    activities, today, week, log, settle, dayLog, sample,
+    activities, today, forDate, week, log, logAt, settle, dayLog, sample,
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
+    quickAddPresets, setQuickAddPreset,
   }
 }

@@ -7,6 +7,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
   sleep: { field: 'sleepHours', entry: 'number', mode: 'replace' },
   water: { field: 'waterOz', entry: 'number', mode: 'add' },
   steps: { field: 'steps', entry: 'number', mode: 'replace' },
+  micro_cardio: { field: 'microCardioMinutes', entry: 'number', mode: 'add' },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },
   protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },
@@ -24,6 +25,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
 const LIKELY_NEXT = [
   'sleep',
   'steps',
+  'micro_cardio',
   'nutrition_logged',
   'calories_logged',
   'alcohol_free',

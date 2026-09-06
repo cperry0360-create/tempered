@@ -89,23 +89,30 @@ test('PHASE 8: a startup failure is a real recovery surface, not dead text', () 
   assert.doesNotMatch(main, /app\.textContent = 'Tempered could not start/)
 })
 
-test('PHASE 8: History has meaningful empty states and pressed-state semantics', () => {
-  assert.match(history, /No training history yet/)
-  assert.match(history, /No records yet/)
+test('PHASE 8: Progress has meaningful empty states and pressed-state semantics', () => {
+  assert.match(history, /No training in this range/)
+  assert.match(history, /No lifting progress yet/)
   assert.match(history, /'aria-pressed': String\(view === name\)/)
 })
 
-test('PHASE 8: the polish layer loads last and the browser chrome matches the forest palette', () => {
+test('PHASE 8: utility uplift loads after core polish and browser chrome matches the brighter forest palette', () => {
   const style = index.indexOf('./src/style.css')
   const setup = index.indexOf('./src/setup.css')
   const cadence = index.indexOf('./src/cadence.css')
   const polish = index.indexOf('./src/polish.css')
+  const calm = index.indexOf('./src/calm.css')
+  const uplift = index.indexOf('./src/uplift.css')
+  const progress = index.indexOf('./src/progress.css')
+  const battleFidelity = index.indexOf('./src/battle-fidelity.css')
   assert.ok(style < setup && setup < cadence && cadence < polish)
-  assert.match(index, /name="theme-color" content="#0b1e31"/)
+  assert.ok(polish < calm && calm < uplift && uplift < progress && progress < battleFidelity)
+  assert.match(index, /name="theme-color" content="#16495f"/)
 })
 
 test('PHASE 8: new runtime files are available offline', () => {
-  for (const path of ['./src/polish.css', './src/ui/states.js']) assert.ok(sw.includes(`'${path}'`), `${path} not precached`)
+  for (const path of [
+    './src/polish.css', './src/ui/states.js', './src/uplift.css', './src/progress.css', './src/app/planner.js',
+  ]) assert.ok(sw.includes(`'${path}'`), `${path} not precached`)
 })
 
 test('PHASE 8: polish adds no CDN or remote runtime dependency', () => {

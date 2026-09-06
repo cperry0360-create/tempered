@@ -50,13 +50,15 @@ test('REGRESSION: water accumulates across separate drinks and only finishes at 
   assert.equal(dailyGoalComplete(water), true)
 })
 
-test('REGRESSION: Today no longer overrides additive entries into set mode', () => {
+test('REGRESSION: Today preserves additive semantics for manual and custom quick-add entries', () => {
   const today = read('src/ui/screens/today.js')
   assert.doesNotMatch(today, /entryMode/)
   assert.doesNotMatch(today, /mode:\s*['"]set['"]/)
   assert.match(today, /dailyGoalComplete/)
   assert.match(today, /dailyGoalLabel/)
-  assert.match(today, /icon\(goal \? 'plus' : 'check'\)/)
+  assert.match(today, /record\(activity, input\.value\)/)
+  assert.match(today, /record\(activity, String\(preset\)\)/)
+  assert.match(today, /daily\.logAt\(selectedDate, activity\.id, value, options\)/)
 })
 
 test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () => {

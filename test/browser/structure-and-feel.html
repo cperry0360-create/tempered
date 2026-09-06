@@ -3,18 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — calm structure and feel</title>
+    <title>Tempered — planner structure and feel</title>
     <link rel="stylesheet" href="../../src/style.css" />
     <link rel="stylesheet" href="../../src/calm.css" />
+    <link rel="stylesheet" href="../../src/uplift.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
       /**
-       * Structure-and-feel acceptance after the calm tracker pass.
-       * Today is intentionally quieter than Character/Battle: shared surfaces,
-       * neutral task icons, one progress signal, and rewards that appear only
-       * after an action. Workout ergonomics remain unchanged.
+       * The utility layer stays calm, but now has a brighter dusk palette and
+       * three independently foldable jobs: Plan, Habits and Training.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
@@ -23,7 +22,7 @@
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
       const q = (s, root = document) => root?.querySelector(s) ?? null
       const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 35))
+      const settle = () => new Promise((r) => setTimeout(r, 40))
 
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
@@ -43,14 +42,9 @@
         return q(`[data-activity="${id}"]`)
       }
 
-      function actionIn(row, action) {
-        if (!row) return null
-        return row.matches?.(`[data-action="${action}"]`) ? row : q(`[data-action="${action}"]`, row)
-      }
-
       async function openEditor(id) {
         const row = await ensureActivity(id)
-        const opener = actionIn(row, 'open-log')
+        const opener = q('.today-item__body', row)
         if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
         return q(`[data-editor="${id}"]`)
       }
@@ -60,10 +54,9 @@
         await tempered.app.show('today')
         await waitFor('.screen--today-calm .today-item')
 
-        const backdrop = getComputedStyle(document.body, '::before')
-        const opacity = Number(backdrop.opacity)
-        check('the tracker backdrop is deliberately quiet', opacity >= 0.10 && opacity <= 0.14, `opacity ${opacity}`)
-        check('the tracker backdrop is softly blurred', /blur\((2(\.\d+)?)px\)/.test(backdrop.filter), backdrop.filter)
+        const bodyStyle = getComputedStyle(document.body)
+        check('Today is visibly brighter than the old midnight shell',
+          /rgb/.test(bodyStyle.backgroundImage) || bodyStyle.backgroundImage !== 'none', bodyStyle.backgroundImage)
 
         const summary = q('[data-summary="daily"]')
         check('Today opens with one clear summary card', summary !== null)
@@ -71,8 +64,10 @@
           qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0)
 
         const sectionTitles = qa('.today-section__title').map((node) => node.textContent.trim())
-        check('the main hierarchy is Today then This week',
-          sectionTitles[0] === 'Today' && sectionTitles[1] === 'This week', sectionTitles.join(' | '))
+        check('the main hierarchy is Plan, Habits, then Training',
+          sectionTitles[0] === 'Plan' && sectionTitles[1] === 'Habits' && sectionTitles[2] === 'Training',
+          sectionTitles.join(' | '))
+        check('the calendar rail sits above the work surfaces', qa('.today-calendar__day').length === 7)
 
         const dailyList = q('[data-section="daily"] .today-list')
         const dailyRows = qa('.today-item', dailyList)
@@ -88,14 +83,18 @@
         check('Today contains no progress rings', qa('.ring, .ring__fill').length === 0)
         check('numeric controls are progressive disclosure', qa('.today-editor').length === 0)
 
-        const training = q('[data-trainingweek="true"]')
-        check('weekly strength is summarized as one row', training !== null,
-          training?.textContent?.trim() ?? 'missing')
-        check('Today does not dump individual exercise slots into the weekly section',
-          qa('[data-exerciseweek]').length === 0)
+        const trainingFold = q('[data-fold="training"] .today-section__fold')
+        check('Training is present but folded by default',
+          trainingFold !== null && trainingFold.getAttribute('aria-expanded') === 'false')
+        trainingFold?.click(); await settle()
+        const exerciseRows = qa('[data-exerciseweek]')
+        check('opening Training reveals individual weekly movements for micro-set days',
+          exerciseRows.length > 1, `${exerciseRows.length} movements`)
+        check('the full-session action remains beside the same Training section',
+          q('[data-section="training"] .today-section__start') !== null)
 
         const rest = await ensureActivity('rest_day')
-        const restAction = actionIn(rest, 'mark')
+        const restAction = rest?.matches?.('[data-action="mark"]') ? rest : q('[data-action="mark"]', rest)
         check('optional rest logging remains reachable', restAction !== null)
         restAction?.click(); await settle()
         const earned = q('.today-earned')
@@ -103,28 +102,27 @@
           earned?.textContent ?? 'no reward')
         check('the reward is inline, not a modal', earned !== null && earned.closest('[role="dialog"]') === null)
 
-        let editor = await openEditor('water')
-        let quick = qa('[data-quickadd]', editor)
-        check('water offers three quick adds only after opening the row', quick.length === 3,
-          quick.map((node) => node.textContent).join(' '))
-        quick[0]?.click(); await settle()
-        const afterOne = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-
-        editor = await openEditor('water')
-        quick = qa('[data-quickadd]', editor)
-        quick[0]?.click(); await settle()
+        let water = await ensureActivity('water')
+        let quick = q('[data-quickadd]', water)
+        check('water has one calm direct preset rather than three game chips',
+          qa('[data-quickadd]', water).length === 1 && quick?.textContent?.includes('+20'), quick?.textContent ?? 'missing')
+        quick?.click(); await settle()
+        water = await ensureActivity('water')
+        q('[data-quickadd]', water)?.click(); await settle()
         const afterTwo = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('quick adds accumulate safely', afterOne === 8 && afterTwo === 16, `${afterOne} then ${afterTwo} oz`)
+        check('direct bottle presets accumulate safely', afterTwo === 40, `${afterTwo} oz`)
 
-        editor = await openEditor('water')
+        const editor = await openEditor('water')
         const field = q('[data-entry="water"]', editor)
         field.value = '4'
         q('[data-action="log"]', editor)?.click(); await settle()
         const afterManual = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('typed additive amounts also add rather than silently replace the total',
-          afterManual === 20, `16 + 4 -> ${afterManual} oz`)
+        check('typed additive amounts still add rather than replace the total',
+          afterManual === 44, `40 + 4 -> ${afterManual} oz`)
+        check('the expanded tracker exposes a user-owned preset field',
+          q('.today-editor__preset-input', await openEditor('water')) !== null)
 
-        // Workout ergonomics are intentionally untouched by the calm Today pass.
+        // Workout ergonomics remain dense and fast in the immersive session.
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         q('[data-programday="monday"]')?.click()
@@ -156,7 +154,7 @@
           cascaded.length > 1 && cascaded.slice(1).every((input) => input.value === '135'),
           cascaded.map((input) => input.value || '-').join(', '))
       } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
       }
 
       await fetch('/__report', {

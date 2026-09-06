@@ -18,6 +18,7 @@ export const STORES = Object.freeze({
   sessions: { keyPath: 'id' },
   setLogs: { keyPath: 'id', indexes: { sessionId: 'sessionId', exerciseId: 'exerciseId' } },
   dayLogs: { keyPath: 'date' },
+  plannerItems: { keyPath: 'id', indexes: { date: 'date' } },
   exercises: { keyPath: 'id' },
   routines: { keyPath: 'id' },
   attributeState: { keyPath: 'attribute' },
@@ -39,8 +40,9 @@ export const DATABASE_NAME = 'tempered'
  * `schemaVersion`, which describes the data rather than the database.
  *
  * 2 — added `programs` and `programState` for docs/09 time-boxed programs.
+ * 3 — added dated `plannerItems` for day-specific personal/work tasks.
  */
-export const DATABASE_VERSION = 2
+export const DATABASE_VERSION = 3
 
 /**
  * @param {string} store

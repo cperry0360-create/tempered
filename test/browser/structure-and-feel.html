@@ -53,6 +53,7 @@
         const tempered = await bootstrap({ storage: createMemoryStorage(), mount: document.getElementById('app') })
         await tempered.app.show('today')
         await waitFor('.screen--today-calm .today-item')
+        await waitFor('[data-section="training"][data-daily-workout-fingerprint]')
 
         const bodyStyle = getComputedStyle(document.body)
         check('Today is visibly brighter than the old midnight shell',
@@ -63,7 +64,6 @@
         check('the summary has one progress signal, not five attribute meters',
           qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0)
 
-        await waitFor('[data-section="training"] .today-section__title')
         const sectionTitles = qa('.today-section__title').map((node) => node.textContent.trim())
         check('the main hierarchy is Plan, Habits, then Workout',
           sectionTitles[0] === 'Plan' && sectionTitles[1] === 'Habits' && sectionTitles[2] === 'Workout',
@@ -87,7 +87,8 @@
         const trainingFold = q('[data-fold="training"] .today-section__fold')
         check('Workout is present but folded by default',
           trainingFold !== null && trainingFold.getAttribute('aria-expanded') === 'false')
-        trainingFold?.click(); await settle()
+        trainingFold?.click()
+        await waitFor('[data-daily-workout-task]')
         const exerciseRows = qa('[data-daily-workout-task]')
         check('opening Workout reveals today\'s individual prescribed movements',
           exerciseRows.length > 1, `${exerciseRows.length} movements`)

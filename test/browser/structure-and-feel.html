@@ -17,6 +17,7 @@
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+      import { fixedClock } from '../../src/adapters/clock/clock.js'
 
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
@@ -50,7 +51,8 @@
       }
 
       try {
-        const tempered = await bootstrap({ storage: createMemoryStorage(), mount: document.getElementById('app') })
+        const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0)) // Monday, an actual program day
+        const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: document.getElementById('app') })
         await tempered.app.show('today')
         await waitFor('.screen--today-calm .today-item')
         await waitFor('[data-section="training"][data-daily-workout-fingerprint]')

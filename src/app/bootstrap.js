@@ -17,6 +17,7 @@ import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
 import { loadActiveSessionDraft } from '../ui/session-draft.js'
+import { installDailyWorkoutEnhancer } from '../ui/today-workout.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
 async function loadJson(path, base) {
@@ -72,14 +73,17 @@ export async function bootstrap(options = {}) {
     startSetup: null,
   }
   globalThis.tempered = exposed
+  let stopDailyWorkoutEnhancer = null
 
   async function showApp() {
+    stopDailyWorkoutEnhancer?.()
     const app = createApp({
       mount, workout, daily, planner, character, battle, maintenance, storage, clock,
       onSetup: () => showSetup(true),
     })
     exposed.app = app
     exposed.setup = null
+    stopDailyWorkoutEnhancer = installDailyWorkoutEnhancer({ mount, workout, app, clock })
     const activeWorkout = loadActiveSessionDraft()
     if (activeWorkout) await app.resumeSession(activeWorkout)
     else {

@@ -61,17 +61,23 @@ test('REGRESSION: Today preserves additive semantics for manual and custom quick
   assert.match(today, /daily\.logAt\(selectedDate, activity\.id, value, options\)/)
 })
 
-test('REGRESSION: Water keeps +8 oz, +12 oz, and one editable third quick-add preset', () => {
+test('REGRESSION: Water shows +8 oz, +12 oz, and the editable custom quick add on the collapsed row', () => {
   const main = read('src/main.js')
   assert.match(main, /WATER_FIXED_PRESETS\s*=\s*\[8, 12\]/)
-  assert.match(main, /\.\.\.WATER_FIXED_PRESETS, customAmount/)
-  assert.match(main, /data-water-presets/)
-  assert.match(main, /today-editor__quick/)
-  assert.match(main, /today-editor__chip/)
-  assert.match(main, /data-adjustable|dataset\.adjustable/)
-  assert.match(main, /Custom quick add/)
-  assert.match(main, /third quick-add button/)
-  assert.match(main, /today-item__quick.*hidden|setAttribute\('hidden'/)
+  assert.match(main, /water-row-quickset/)
+  assert.match(main, /data-water-row-presets|dataset\.waterRowPresets/)
+  assert.match(main, /group\.append\(customButton\)/)
+  assert.match(main, /Add \$\{amount\} oz to Water/)
+  assert.match(main, /Third quick add/)
+  assert.match(main, /third row button/)
+  assert.doesNotMatch(main, /setAttribute\('hidden'/)
+})
+
+test('REGRESSION: iOS Home Screen worker URL changes with every visible release', () => {
+  const register = read('src/pwa/register.js')
+  assert.match(register, /import \{ VERSION \} from '\.\.\/version\.js'/)
+  assert.match(register, /searchParams\.set\('build', VERSION\)/)
+  assert.match(register, /updateViaCache:\s*'none'/)
 })
 
 test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () => {

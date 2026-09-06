@@ -29,7 +29,7 @@ const TABS = [
 
 const tabLabel = (id) => TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
 
-export function createApp({ mount, workout, daily, character, battle, maintenance, storage, clock, onSetup }) {
+export function createApp({ mount, workout, daily, planner, character, battle, maintenance, storage, clock, onSetup }) {
   const body = el('main.app__body', { 'aria-busy': 'false' })
   const announcer = liveRegion()
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
@@ -56,7 +56,7 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
   })
 
   const today = createTodayScreen({
-    workout, daily, clock,
+    workout, daily, planner, clock,
     onStart: (options) => startSession(options),
     onOpenSlot: (slot) => slot?.extra
       ? startSession({ exerciseId: slot.exerciseId })
@@ -68,7 +68,6 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
   const SCREENS = { today, train, history, settings, character: characterScreen }
 
   function announce(text) {
-    // Clearing first makes repeated visits to the same tab announce again.
     announcer.textContent = ''
     queueMicrotask(() => { announcer.textContent = text })
   }
@@ -225,8 +224,6 @@ export function createApp({ mount, workout, daily, character, battle, maintenanc
     body.setAttribute('aria-busy', 'true')
     try {
       await refreshScreen(target)
-      // A screen's primary action can depend on data loaded by refresh. Render
-      // the bar again after that data exists so the FAB is never one visit late.
       renderTabs(target)
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)

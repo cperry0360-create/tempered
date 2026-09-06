@@ -61,16 +61,17 @@ test('REGRESSION: Today preserves additive semantics for manual and custom quick
   assert.match(today, /daily\.logAt\(selectedDate, activity\.id, value, options\)/)
 })
 
-test('REGRESSION: Water keeps three quick presets plus a separate custom amount', () => {
+test('REGRESSION: additive trackers use one row-level quick add and a separate custom amount', () => {
+  const today = read('src/ui/screens/today.js')
   const main = read('src/main.js')
-  assert.match(main, /WATER_FIXED_PRESETS\s*=\s*\[8, 12\]/)
-  assert.match(main, /\.\.\.WATER_FIXED_PRESETS, bottleAmount/)
-  assert.match(main, /data-water-presets/)
-  assert.match(main, /today-editor__input/)
-  assert.match(main, /today-editor__save/)
-  assert.match(main, /Bottle preset/)
-  assert.match(main, /third quick button match your bottle/)
-  assert.match(main, /today-item__quick/)
+  assert.match(today, /today-item__quick/)
+  assert.match(today, /data.*quickadd|quickadd/)
+  assert.match(today, /record\(activity, String\(preset\)\)/)
+  assert.match(today, /today-editor__input/)
+  assert.match(today, /today-editor__preset-input/)
+  assert.doesNotMatch(main, /WATER_FIXED_PRESETS/)
+  assert.doesNotMatch(main, /data-water-presets/)
+  assert.doesNotMatch(main, /today-item__quick.*hidden/)
 })
 
 test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () => {

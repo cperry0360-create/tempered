@@ -3,11 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — settings toggle and sunset trial</title>
+    <title>Tempered — settings toggle</title>
     <link rel="stylesheet" href="../../src/style.css" />
     <link rel="stylesheet" href="../../src/calm.css" />
     <link rel="stylesheet" href="../../src/uplift.css" />
-    <link rel="stylesheet" href="../../src/sunset-test.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
@@ -60,15 +59,8 @@
           q('[data-tab="history"][aria-current="page"]') !== null)
 
         const backdrop = getComputedStyle(document.body, '::before').backgroundImage
-        check('the supplied sunset photo is the active app backdrop',
-          backdrop.includes('bg-sunset-user.jpg'), backdrop)
-
-        const photo = new Image()
-        photo.src = '../../art/dist/bg-sunset-user.jpg'
-        await photo.decode()
-        check('the optimized sunset asset decodes at useful phone-background resolution',
-          photo.naturalWidth >= 500 && photo.naturalHeight >= 900,
-          `${photo.naturalWidth}x${photo.naturalHeight}`)
+        check('the rejected sunset trial is gone and the forest backdrop is restored',
+          backdrop.includes('bg-night-forest.jpg') && !backdrop.includes('bg-sunset-user.jpg'), backdrop)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
       }

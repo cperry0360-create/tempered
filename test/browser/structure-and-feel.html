@@ -13,7 +13,7 @@
     <script type="module">
       /**
        * The utility layer stays calm, but now has a brighter dusk palette and
-       * three independently foldable jobs: Plan, Habits and Training.
+       * three independently foldable jobs: Plan, Habits and Workout.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
@@ -63,9 +63,10 @@
         check('the summary has one progress signal, not five attribute meters',
           qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0)
 
+        await waitFor('[data-section="training"] .today-section__title')
         const sectionTitles = qa('.today-section__title').map((node) => node.textContent.trim())
-        check('the main hierarchy is Plan, Habits, then Training',
-          sectionTitles[0] === 'Plan' && sectionTitles[1] === 'Habits' && sectionTitles[2] === 'Training',
+        check('the main hierarchy is Plan, Habits, then Workout',
+          sectionTitles[0] === 'Plan' && sectionTitles[1] === 'Habits' && sectionTitles[2] === 'Workout',
           sectionTitles.join(' | '))
         check('the calendar rail sits above the work surfaces', qa('.today-calendar__day').length === 7)
 
@@ -84,14 +85,18 @@
         check('numeric controls are progressive disclosure', qa('.today-editor').length === 0)
 
         const trainingFold = q('[data-fold="training"] .today-section__fold')
-        check('Training is present but folded by default',
+        check('Workout is present but folded by default',
           trainingFold !== null && trainingFold.getAttribute('aria-expanded') === 'false')
         trainingFold?.click(); await settle()
-        const exerciseRows = qa('[data-exerciseweek]')
-        check('opening Training reveals individual weekly movements for micro-set days',
+        const exerciseRows = qa('[data-daily-workout-task]')
+        check('opening Workout reveals today\'s individual prescribed movements',
           exerciseRows.length > 1, `${exerciseRows.length} movements`)
-        check('the full-session action remains beside the same Training section',
-          q('[data-section="training"] .today-section__start') !== null)
+        check('movement rows show set-level progress rather than whole-week frequency',
+          exerciseRows.some((row) => /\d+ \/ \d+ sets/.test(row.textContent))
+          && exerciseRows.every((row) => !/this week/.test(row.textContent)),
+          exerciseRows.map((row) => row.textContent.trim()).join(' | '))
+        check('the full-session action remains beside the same Workout section',
+          /start full session/i.test(q('[data-section="training"] .today-section__start')?.textContent ?? ''))
 
         const rest = await ensureActivity('rest_day')
         const restAction = rest?.matches?.('[data-action="mark"]') ? rest : q('[data-action="mark"]', rest)
@@ -104,7 +109,7 @@
 
         let water = await ensureActivity('water')
         let quick = q('[data-quickadd]', water)
-        check('water has one calm direct preset rather than three game chips',
+        check('water has one calm direct preset in the bootstrap harness',
           qa('[data-quickadd]', water).length === 1 && quick?.textContent?.includes('+20'), quick?.textContent ?? 'missing')
         quick?.click(); await settle()
         water = await ensureActivity('water')

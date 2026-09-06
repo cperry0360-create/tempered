@@ -14,6 +14,7 @@ const PRECACHE = [
   './src/cadence.css',
   './src/polish.css',
   './src/battle.css',
+  './src/calm.css',
   './src/pwa/register.js',
   './src/version.js',
   './icons/icon-180.png',

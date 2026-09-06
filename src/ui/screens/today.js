@@ -1,11 +1,13 @@
 /**
- * TODAY — two concepts only:
+ * TODAY — calm tracker surface.
  *
- *   DAILY      resets every morning
- *   THIS WEEK  can be completed on any day, with a visible frequency target
+ * The home screen answers three questions in order:
+ *   1. How is today going?
+ *   2. What still needs attention?
+ *   3. What is left this week?
  *
- * Attribute colours still explain RPG meaning, but they no longer dictate the
- * task list's information architecture.
+ * Logging power remains available, but numeric controls are one tap deeper so
+ * the default view reads like a tracker rather than an instrument panel.
  */
 
 import { el, replace } from '../dom.js'
@@ -35,14 +37,8 @@ function unitLabel(activity) {
 }
 
 function valueLabel(activity, value) {
-  if (value === true || value === null || value === undefined) return 'logged'
-  const unit = activity.unit === 'hours' ? 'h'
-    : activity.unit === 'min' ? 'min'
-      : activity.unit === 'oz' ? 'oz'
-        : activity.unit === 'steps' ? 'steps'
-          : activity.unit === 'g' ? 'g'
-            : activity.unit === 'kcal' ? 'kcal'
-              : activity.id === 'body_metrics' ? 'lb' : ''
+  if (value === true || value === null || value === undefined) return 'Logged'
+  const unit = unitLabel(activity)
   return `${value}${unit ? ` ${unit}` : ''}`
 }
 
@@ -62,18 +58,10 @@ export function dailyGoalComplete(activity) {
 
 function dailyGoalLabel(activity) {
   if (!hasDailyGoal(activity)) return null
-  if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return 'log body weight to set goal'
+  if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return 'Log body weight to set goal'
   const value = typeof activity.value === 'number' ? activity.value : 0
   const unit = unitLabel(activity)
   return `${value} / ${activity.dailyCap}${unit ? ` ${unit}` : ''}`
-}
-
-function dailyFill(activity) {
-  if (activity?.id === 'calories_logged') return activity.logged ? 1 : 0
-  const target = activity.dailyCap ?? activity.band?.[0] ?? null
-  const value = typeof activity.value === 'number' ? activity.value : null
-  if (target && value !== null) return Math.max(0, Math.min(1, value / target))
-  return activity.logged ? 1 : 0
 }
 
 /** Additive numeric trackers remain on Today after completion for more entries/corrections. */
@@ -81,224 +69,201 @@ export function staysEditableAfterComplete(activity) {
   return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
 }
 
-function ring(fill) {
-  const R = 15
-  const circumference = 2 * Math.PI * R
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('class', 'ring')
-  svg.setAttribute('viewBox', '0 0 34 34')
-  svg.setAttribute('aria-hidden', 'true')
-  svg.setAttribute('focusable', 'false')
-  for (const cls of ['ring__track', 'ring__fill']) {
-    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    c.setAttribute('class', cls)
-    c.setAttribute('cx', '17')
-    c.setAttribute('cy', '17')
-    c.setAttribute('r', String(R))
-    if (cls === 'ring__fill') {
-      c.setAttribute('stroke-dasharray', String(circumference))
-      c.setAttribute('stroke-dashoffset', String(circumference * (1 - Math.max(0, Math.min(1, fill)))))
-    }
-    svg.append(c)
-  }
-  return svg
+function dateLabel(dateKey) {
+  if (!dateKey) return ''
+  const [year, month, day] = dateKey.split('-').map(Number)
+  if (![year, month, day].every(Number.isFinite)) return dateKey
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(year, month - 1, day))
+}
+
+function clampedPercent(done, total) {
+  if (!total) return 0
+  return Math.max(0, Math.min(100, Math.round((done / total) * 100)))
 }
 
 export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }) {
-  const root = el('div.screen.screen--today')
+  const root = el('div.screen.screen--today.screen--today-calm')
   let todayProgram = null
   let weekProgram = null
   let day = null
   let weekActivities = null
   let movedToday = {}
   let justEarned = null
+  let openActivityId = null
+  let weekOpen = false
   let workedOpen = false
   let otherOpen = false
 
-  const tile = (attribute, glyph) => el('span.tile', { dataset: { attribute } }, [icon(glyph)])
-
-  function floatFor(id) {
-    if (!justEarned || justEarned.id !== id || justEarned.xp <= 0) return null
-    return el('span.float', {
-      dataset: { attribute: justEarned.attribute ?? 'grit' },
-      text: `+${formatXp(justEarned.xp)}`,
-    })
+  function todayXp() {
+    return Object.values(movedToday).reduce((sum, n) => sum + (n ?? 0), 0)
   }
 
-  function weeklyExerciseGroups() {
-    if (!weekProgram?.week?.days) return []
-    const byExercise = new Map()
-    for (const dayEntry of weekProgram.week.days) {
-      for (const task of dayEntry.tasks) {
-        const id = task.slot.exerciseId
-        const existing = byExercise.get(id) ?? {
-          id,
-          name: task.slot.name,
-          prescription: `${task.slot.sets} × ${task.slot.repMin}–${task.slot.repMax}`,
-          target: 0,
-          done: 0,
-          started: false,
-          firstOpen: null,
-          firstAny: null,
-        }
-        existing.target += 1
-        if (task.done) existing.done += 1
-        if (task.started) existing.started = true
-        const ref = { task, programDay: dayEntry.day }
-        if (!existing.firstAny) existing.firstAny = ref
-        if (!task.done && !existing.firstOpen) existing.firstOpen = ref
-        byExercise.set(id, existing)
-      }
+  function statusFor(activity, weekly = null) {
+    if (weekly) {
+      const suffix = weekly.loggedToday && !weekly.complete ? ' · done today' : ''
+      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week${suffix}`
     }
-    const overrides = weekProgram?.exerciseFrequencyTargets ?? {}
-    const frequencyDone = weekProgram?.exerciseFrequencyDone ?? {}
-    for (const group of byExercise.values()) {
-      group.programTarget = group.target
-      const override = Number(overrides[group.id])
-      if (Number.isFinite(override) && override > 0) {
-        group.target = override
-        group.done = frequencyDone[group.id] ?? 0
-        group.frequencyOverride = true
-      }
-    }
-    return [...byExercise.values()].sort((a, b) => {
-      const aComplete = a.done >= a.target
-      const bComplete = b.done >= b.target
-      return Number(aComplete) - Number(bComplete) || a.name.localeCompare(b.name)
-    })
+    if (hasDailyGoal(activity)) return dailyGoalLabel(activity)
+    if (activity.logged) return valueLabel(activity, activity.value)
+    const unit = unitLabel(activity)
+    return unit ? `Tap to log ${unit}` : 'Tap to log'
   }
 
-  function exerciseRow(group) {
-    const ref = group.firstOpen ?? group.firstAny
-    const fill = group.target > 0 ? group.done / group.target : 0
-    const complete = group.done >= group.target
-    return el('button.row.task.weekly-row', {
-      type: 'button',
-      dataset: { exerciseweek: group.id, done: String(complete), started: String(group.started) },
-      onclick: () => {
-        if (group.frequencyOverride && !group.firstOpen && group.done < group.target) {
-          onOpenSlot({ exerciseId: group.id, extra: true })
-          return
-        }
-        if (!ref) return
-        onOpenSlot({
-          dayId: ref.programDay.id,
-          slotIndex: ref.task.index,
-          exerciseId: ref.task.slot.exerciseId,
-          slot: ref.task.slot,
-          alreadyLogged: ref.task.logged,
-        })
-      },
-    }, [
-      tile('might', 'train'),
-      el('span.row__name', { text: group.name }),
-      el('span.row__value.weekly-row__count', {
-        text: `${group.prescription} · ${group.done} / ${group.target} this week${group.started && !complete ? ' · in progress' : ''}`,
+  function compactGlyph(activity, complete = false) {
+    return el('span.today-item__icon', {
+      dataset: { complete: String(complete) },
+    }, [icon(complete ? 'check' : iconForActivity(activity.id))])
+  }
+
+  function earnedBanner() {
+    if (!justEarned || justEarned.xp <= 0) return null
+    return el('div.today-earned', { dataset: { earned: justEarned.id } }, [
+      el('span.today-earned__xp', { text: `+${formatXp(justEarned.xp)} XP` }),
+      el('span.today-earned__copy', {
+        text: justEarned.levelled ? justEarned.levelled : 'Added to today',
       }),
-      el('span.row__act', {}, [ring(fill), complete && icon('check')]),
     ])
   }
 
-  function quickAdd(activity) {
-    return el('span.quick', {}, quickAddFor(activity).map((amount) => el('button.quick__add', {
-      type: 'button',
-      'aria-label': `Add ${amount} ${activity.unit ?? ''} to ${activity.name}`,
-      onclick: () => record(activity, String(amount)),
-    }, [`+${amount}`])))
-  }
-
-  function markRow(activity, weekly = null) {
-    const fill = weekly ? weekly.weeklyDone / weekly.weeklyTarget : (activity.logged ? 1 : 0)
-    const alreadyToday = weekly?.loggedToday === true
-    return el('div.row.mark', {
-      dataset: { activity: activity.id, kind: 'mark', weekly: String(Boolean(weekly)) },
-    }, [
-      tile(activity.attribute, iconForActivity(activity.id)),
-      el('span.row__name', { text: activity.name }),
-      weekly && el('span.row__value.weekly-row__count', {
-        text: `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week${alreadyToday && !weekly.complete ? ' · done today' : ''}`,
-      }),
-      alreadyToday
-        ? el('span.row__act', {}, [ring(fill), icon('check')])
-        : el('button.row__act', {
-            type: 'button', title: activity.help ?? activity.name,
-            'aria-label': `Log ${activity.name}`,
-            onclick: () => record(activity, null),
-          }, [ring(fill), icon(activity.id === 'rest_day' ? 'rest' : 'check')]),
-      floatFor(activity.id),
-    ])
-  }
-
-  function entryRow(activity, weekly = null) {
-    const goal = !weekly && hasDailyGoal(activity)
+  function editor(activity, weekly = null) {
     const adding = activity.spec?.mode === 'add'
     const unit = unitLabel(activity)
-    const correctionMode = adding ? { mode: 'replace' } : {}
-    const input = el('input.entry__value', {
-      type: 'text', inputmode: 'decimal',
-      placeholder: adding ? `total ${unit || 'amount'}` : '',
-      'aria-label': `${adding ? 'Set total for' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
+    const input = el('input.today-editor__input', {
+      type: 'text',
+      inputmode: 'decimal',
+      placeholder: adding ? `Add ${unit || 'amount'}` : (unit || 'Value'),
+      'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
       onkeydown: (event) => {
-        if (event.key === 'Enter') { event.preventDefault(); record(activity, input.value, correctionMode) }
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          record(activity, input.value)
+        }
       },
     })
-    const fill = weekly
-      ? weekly.weeklyDone / weekly.weeklyTarget
-      : dailyFill(activity)
 
-    const label = goal
-      ? el('span.entry__label', {}, [
-          el('span.row__name', { text: activity.short ?? activity.name }),
-          el('span.entry__progress', { text: dailyGoalLabel(activity) }),
-        ])
-      : el('span.row__name', {}, [
-          activity.short ?? activity.name,
-          !quickAddFor(activity) && el('span.entry__unit', { text: unit }),
-        ])
+    const quick = quickAddFor(activity)
+    return el('div.today-editor', { dataset: { editor: activity.id } }, [
+      quick && el('div.today-editor__quick', {}, quick.map((amount) => el('button.today-editor__chip', {
+        type: 'button',
+        dataset: { quickadd: String(amount) },
+        'aria-label': `Add ${amount} ${activity.unit ?? ''} to ${activity.name}`,
+        onclick: () => record(activity, String(amount)),
+      }, [`+${amount}${unit ? ` ${unit}` : ''}`]))),
+      el('div.today-editor__manual', {}, [
+        input,
+        el('button.today-editor__save', {
+          type: 'button',
+          dataset: { action: 'log' },
+          onclick: () => record(activity, input.value),
+        }, [adding ? 'Add' : 'Save']),
+      ]),
+      weekly && el('span.today-editor__hint', { text: statusFor(activity, weekly) }),
+    ])
+  }
 
-    return el('div.row.entry', {
+  function markItem(activity, weekly = null) {
+    const complete = weekly ? weekly.complete : dailyGoalComplete(activity)
+    const alreadyToday = weekly?.loggedToday === true
+    const inactive = Boolean(weekly && alreadyToday)
+    return el('button.today-item.today-item--mark', {
+      type: 'button',
+      disabled: inactive,
       dataset: {
         activity: activity.id,
-        kind: 'number',
-        weekly: String(Boolean(weekly)),
-        goal: String(goal),
+        action: 'mark',
+        complete: String(complete),
+        today: String(alreadyToday),
       },
+      'aria-label': inactive ? `${activity.name} already logged today` : `Log ${activity.name}`,
+      onclick: inactive ? null : () => record(activity, null),
     }, [
-      tile(activity.attribute, iconForActivity(activity.id)),
-      label,
-      weekly && el('span.row__value.weekly-row__count', {
-        text: `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week${weekly.loggedToday && !weekly.complete ? ' · done today' : ''}`,
-      }),
-      ...(quickAddFor(activity) ? [quickAdd(activity)] : []),
-      el('span.entry__field', {}, [input]),
-      el('button.row__act.entry__confirm', {
+      compactGlyph(activity, complete || alreadyToday),
+      el('span.today-item__main', {}, [
+        el('span.today-item__name', { text: activity.name }),
+        weekly && el('span.today-item__meta', { text: statusFor(activity, weekly) }),
+      ]),
+      !weekly && complete && el('span.today-item__meta', { text: 'Done' }),
+      !inactive && !complete && el('span.today-item__action', { text: '○' }),
+    ])
+  }
+
+  function numberItem(activity, weekly = null) {
+    const open = openActivityId === activity.id
+    const complete = weekly ? weekly.complete : dailyGoalComplete(activity)
+    const goal = hasDailyGoal(activity)
+    const affordance = open ? icon('up') : icon(goal ? 'plus' : 'check')
+    return el('div.today-item-wrap', {
+      dataset: { open: String(open), activity: activity.id },
+    }, [
+      el('button.today-item.today-item--number', {
         type: 'button',
-        'aria-label': `${adding ? 'Set total for' : 'Log'} ${activity.name}`,
-        onclick: () => record(activity, input.value, correctionMode),
-      }, [ring(fill), icon(goal ? 'plus' : 'check')]),
-      floatFor(activity.id),
+        dataset: { action: 'open-log', complete: String(complete) },
+        'aria-expanded': String(open),
+        onclick: () => {
+          openActivityId = open ? null : activity.id
+          render()
+        },
+      }, [
+        compactGlyph(activity, complete),
+        el('span.today-item__main', {}, [
+          el('span.today-item__name', { text: activity.short ?? activity.name }),
+          el('span.today-item__meta', { text: statusFor(activity, weekly) }),
+        ]),
+        el('span.today-item__chevron', {}, [affordance]),
+      ]),
+      open && editor(activity, weekly),
     ])
   }
 
-  function workedActivityRow(activity, weekly = null) {
-    const fill = weekly ? Math.min(1, weekly.weeklyDone / weekly.weeklyTarget) : 1
-    return el('div.row.row--worked', { dataset: { worked: activity.id } }, [
-      tile(activity.attribute, iconForActivity(activity.id)),
-      el('span.row__name', { text: activity.name }),
-      el('span.row__value', {
-        text: weekly
-          ? `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week`
-          : (hasDailyGoal(activity) ? dailyGoalLabel(activity) : valueLabel(activity, activity.value)),
-      }),
-      el('span.row__act', {}, [ring(fill), icon('check')]),
-      floatFor(activity.id),
+  function activityItem(activity, weekly = null) {
+    if (activity.spec?.entry === 'mark') return markItem(activity, weekly)
+    return numberItem(activity, weekly)
+  }
+
+  function workedItem(activity, weekly = null) {
+    return el('div.today-item.today-item--worked', { dataset: { worked: activity.id } }, [
+      compactGlyph(activity, true),
+      el('span.today-item__main', {}, [
+        el('span.today-item__name', { text: activity.name }),
+        el('span.today-item__meta', {
+          text: weekly
+            ? `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week`
+            : (hasDailyGoal(activity) ? dailyGoalLabel(activity) : valueLabel(activity, activity.value)),
+        }),
+      ]),
     ])
   }
 
-  function activityRow(activity, weekly = null) {
-    if (activity.spec?.entry === 'mark') return markRow(activity, weekly)
-    return entryRow(activity, weekly)
+  function trainingSummary() {
+    const days = weekProgram?.week?.days ?? []
+    if (days.length === 0) return null
+    const done = days.filter((entry) => entry.tasks.length > 0 && entry.tasks.every((task) => task.done)).length
+    const started = days.some((entry) => entry.tasks.some((task) => task.started && !task.done))
+    return { done, total: days.length, started, complete: done >= days.length }
+  }
+
+  function trainingItem(summary) {
+    const todayDone = todayProgram?.tasks?.length > 0 && todayProgram.tasks.every((task) => task.done)
+    const canStart = Boolean(todayProgram?.day) && !todayDone
+    const label = todayProgram?.day?.name ?? 'Strength training'
+    return el(canStart ? 'button.today-item.today-item--training' : 'div.today-item.today-item--training', {
+      ...(canStart ? { type: 'button', onclick: () => onStart({ programDay: todayProgram.day }) } : {}),
+      dataset: { trainingweek: 'true', complete: String(summary.complete) },
+    }, [
+      el('span.today-item__icon', { dataset: { complete: String(summary.complete) } }, [icon(summary.complete ? 'check' : 'train')]),
+      el('span.today-item__main', {}, [
+        el('span.today-item__name', { text: 'Strength training' }),
+        el('span.today-item__meta', {
+          text: `${summary.done} / ${summary.total} workouts${summary.started ? ' · in progress' : ''}`,
+        }),
+      ]),
+      canStart && el('span.today-item__cta', { text: `Start ${label}` }),
+    ])
   }
 
   async function record(activity, value, options = {}) {
@@ -307,123 +272,157 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
     justEarned = {
       id: activity.id,
       xp: earned,
-      attribute: activity.attribute,
       levelled: result.levelledUp?.[0]
         ? `${result.levelledUp[0].attribute} reached ${result.levelledUp[0].tier}`
         : null,
     }
+    openActivityId = null
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       try { navigator.vibrate(10) } catch { /* optional */ }
     }
     await reload()
   }
 
-  function summaryStrip() {
-    const total = Object.values(movedToday).reduce((sum, n) => sum + (n ?? 0), 0)
-    const peak = Math.max(1, ...ATTRIBUTE_IDS.map((id) => movedToday[id] ?? 0))
-    return el('section.strip', {}, [
-      el('div.strip__head', {}, [
-        el('span.strip__label', { text: 'TODAY' }),
-        el('span.strip__xp', { dataset: { acid: 'value' }, text: total > 0 ? `+${formatXp(total)}` : '—' }),
+  function summaryCard(done, total) {
+    const percent = clampedPercent(done, total)
+    const remaining = Math.max(0, total - done)
+    const xp = todayXp()
+    return el('section.today-summary', { dataset: { summary: 'daily' } }, [
+      el('div.today-summary__top', {}, [
+        el('div', {}, [
+          el('span.today-summary__eyebrow', { text: 'DAILY PROGRESS' }),
+          el('p.today-summary__headline', {
+            text: total > 0
+              ? `${done} of ${total} complete`
+              : 'Your day is clear',
+          }),
+        ]),
+        xp > 0 && el('span.today-summary__xp', { text: `+${formatXp(xp)} XP` }),
       ]),
-      el('div.strip__bars', {}, ATTRIBUTE_IDS.map((id) => el('span.strip__bar', {
-        dataset: { attribute: id, moved: String((movedToday[id] ?? 0) > 0) },
-        title: `${id}: ${formatXp(movedToday[id] ?? 0)} XP today`,
-      }, [el('span.strip__fill', { style: `height:${Math.round(((movedToday[id] ?? 0) / peak) * 100)}%` })]))),
+      total > 0 && el('div.today-summary__bar', {
+        role: 'progressbar',
+        'aria-valuemin': '0',
+        'aria-valuemax': String(total),
+        'aria-valuenow': String(done),
+        'aria-label': `${done} of ${total} daily items complete`,
+      }, [el('span.today-summary__fill', { style: `width:${percent}%` })]),
+      total > 0 && el('div.today-summary__foot', {}, [
+        el('span', { text: remaining === 0 ? 'Daily list complete' : `${remaining} left today` }),
+        el('span', { text: percent === 100 ? 'Tempered.' : `${percent}%` }),
+      ]),
+    ])
+  }
+
+  function sectionHeader(title, detail, action = null) {
+    return el('div.today-section__head', {}, [
+      el('div', {}, [
+        el('h2.today-section__title', { text: title }),
+        detail && el('span.today-section__detail', { text: detail }),
+      ]),
+      action,
     ])
   }
 
   function render() {
-    // `logged` means a value exists. For a goal-based tracker that is not the
-    // same thing as complete: 8 oz of water is progress toward the day, not a
-    // finished hydration task. Merge both halves back together, restore the
-    // intended activity order, then split by actual completion.
     const allActivities = sortActivities([
       ...(day?.outstanding ?? []),
       ...(day?.logged ?? []),
     ])
+
     const dailyScheduled = allActivities.filter((a) => a.cadence === 'daily')
     const dailyComplete = dailyScheduled.filter((a) => dailyGoalComplete(a))
-    const dailyVisible = dailyScheduled.filter((a) => !dailyGoalComplete(a) || staysEditableAfterComplete(a))
-    const dailyLogged = dailyComplete.filter((a) => !staysEditableAfterComplete(a))
+    const dailyActive = dailyScheduled.filter((a) => !dailyGoalComplete(a) || staysEditableAfterComplete(a))
+    const dailyWorked = dailyComplete.filter((a) => !staysEditableAfterComplete(a))
+
     const offScheduled = allActivities.filter((a) => a.cadence === 'off')
     const offLogged = offScheduled.filter((a) => a.logged)
-    // Numeric OFF trackers remain editable after logging so piecewise values and
-    // body metrics can be added/corrected. A just-logged mark holds its row for
-    // one render so the completion ring and XP float have somewhere to happen.
     const offAvailable = offScheduled.filter((a) =>
       !a.logged || a.spec?.entry !== 'mark' || justEarned?.id === a.id)
-    const weeklyLifestyle = weekActivities?.activities ?? []
-    const weeklyExercises = weeklyExerciseGroups()
 
+    const weeklyLifestyle = weekActivities?.activities ?? []
     const activeWeeklyLifestyle = weeklyLifestyle.filter((a) => !a.complete)
     const doneWeeklyLifestyle = weeklyLifestyle.filter((a) => a.complete)
-    const activeExercises = weeklyExercises.filter((a) => a.done < a.target)
-    const doneExercises = weeklyExercises.filter((a) => a.done >= a.target)
+    const training = trainingSummary()
 
     const dailyDone = dailyComplete.length
     const dailyTotal = dailyScheduled.length
-    const weeklyDone = weeklyLifestyle.reduce((sum, a) => sum + Math.min(a.weeklyDone, a.weeklyTarget), 0)
-      + weeklyExercises.reduce((sum, a) => sum + Math.min(a.done, a.target), 0)
-    const weeklyTotal = weeklyLifestyle.reduce((sum, a) => sum + a.weeklyTarget, 0)
-      + weeklyExercises.reduce((sum, a) => sum + a.target, 0)
 
-    const workedCount = dailyLogged.length + doneWeeklyLifestyle.length + doneExercises.length + offLogged.length
+    const trainingDone = training?.done ?? 0
+    const trainingTotal = training?.total ?? 0
+    const lifestyleDone = weeklyLifestyle.reduce((sum, a) => sum + Math.min(a.weeklyDone, a.weeklyTarget), 0)
+    const lifestyleTotal = weeklyLifestyle.reduce((sum, a) => sum + a.weeklyTarget, 0)
+    const weeklyDone = trainingDone + lifestyleDone
+    const weeklyTotal = trainingTotal + lifestyleTotal
+
+    const weeklyPreview = weekOpen ? activeWeeklyLifestyle : activeWeeklyLifestyle.slice(0, training ? 2 : 3)
+    const hiddenWeekly = Math.max(0, activeWeeklyLifestyle.length - weeklyPreview.length)
+    const workedCount = dailyWorked.length + doneWeeklyLifestyle.length + offLogged.length
 
     replace(root, [
-      el('h1.screen__title', { text: 'Today' }),
-      summaryStrip(),
-
-      justEarned && el('p.earned', { dataset: { earned: justEarned.id } }, [
-        el('span.earned__xp', { dataset: { acid: 'value' }, text: `+${formatXp(justEarned.xp)}` }),
-        el('span.earned__what', { text: justEarned.levelled ? `XP · ${justEarned.levelled}` : 'XP logged' }),
+      el('header.today-header', {}, [
+        el('h1.screen__title.today-header__title', { text: 'Today' }),
+        el('p.today-header__date', { text: dateLabel(clock.today()) }),
       ]),
 
-      dailyTotal > 0 && el('section.block.sect', { dataset: { section: 'daily' } }, [
-        el('h2.block__title.sect__title', {}, [
-          'DAILY',
-          el('span.sect__count', { text: `${dailyDone} of ${dailyTotal}` }),
+      summaryCard(dailyDone, dailyTotal),
+      earnedBanner(),
+
+      dailyTotal > 0 && el('section.today-section', { dataset: { section: 'daily' } }, [
+        sectionHeader('Today', dailyDone > 0 ? `${dailyDone} completed` : 'Your daily list'),
+        dailyActive.length > 0
+          ? el('div.today-list', {}, dailyActive.map((a) => activityItem(a)))
+          : el('div.today-empty', {}, [
+              el('span.today-empty__check', {}, [icon('check')]),
+              el('span', { text: 'Everything on today’s list is complete.' }),
+            ]),
+      ]),
+
+      weeklyTotal > 0 && el('section.today-section', { dataset: { section: 'weekly' } }, [
+        sectionHeader(
+          'This week',
+          `${weeklyDone} of ${weeklyTotal}`,
+          activeWeeklyLifestyle.length > (training ? 2 : 3)
+            ? el('button.today-section__link', {
+                type: 'button',
+                onclick: () => { weekOpen = !weekOpen; render() },
+              }, [weekOpen ? 'Show less' : 'See all'])
+            : null,
+        ),
+        el('div.today-list', {}, [
+          training && trainingItem(training),
+          ...weeklyPreview.map((a) => activityItem(a, a)),
         ]),
-        dailyVisible.length > 0
-          ? el('div.rows', {}, dailyVisible.map((a) => activityRow(a)))
-          : el('p.block__hint', { text: 'All daily items worked through.' }),
+        hiddenWeekly > 0 && el('button.today-more', {
+          type: 'button',
+          onclick: () => { weekOpen = true; render() },
+        }, [`${hiddenWeekly} more weekly goal${hiddenWeekly === 1 ? '' : 's'}`]),
       ]),
 
-      weeklyTotal > 0 && el('section.block.sect', { dataset: { section: 'weekly' } }, [
-        el('h2.block__title.sect__title', {}, [
-          'THIS WEEK',
-          el('span.sect__count', { text: `${weeklyDone} of ${weeklyTotal}` }),
-        ]),
-        (activeExercises.length > 0 || activeWeeklyLifestyle.length > 0)
-          ? el('div.rows', {}, [
-              ...activeExercises.map(exerciseRow),
-              ...activeWeeklyLifestyle.map((a) => activityRow(a, a)),
-            ])
-          : el('p.block__hint', { text: 'Everything for this week is worked through.' }),
-      ]),
-
-      (offAvailable.length > 0 || workedCount > 0) && el('div.footers', {}, [
-        offAvailable.length > 0 && el('button.elsewhere__toggle', {
-          type: 'button', dataset: { other: 'toggle', open: String(otherOpen) },
+      (offAvailable.length > 0 || workedCount > 0) && el('div.today-secondary', {}, [
+        offAvailable.length > 0 && el('button.today-secondary__button', {
+          type: 'button',
+          dataset: { other: 'toggle', open: String(otherOpen) },
           onclick: () => { otherOpen = !otherOpen; render() },
-        }, [icon(otherOpen ? 'up' : 'down'), 'LOG SOMETHING ELSE']),
-        workedCount > 0 && el('button.worked__toggle', {
-          type: 'button', dataset: { worked: 'toggle', open: String(workedOpen) },
+        }, [icon(otherOpen ? 'up' : 'plus'), otherOpen ? 'Close extra logging' : 'Log something else']),
+        workedCount > 0 && el('button.today-secondary__button', {
+          type: 'button',
+          dataset: { worked: 'toggle', open: String(workedOpen) },
           onclick: () => { workedOpen = !workedOpen; render() },
-        }, [icon('check'), `${workedCount} COMPLETED`]),
+        }, [icon(workedOpen ? 'up' : 'check'), `${workedCount} completed`]),
       ]),
 
-      otherOpen && offAvailable.length > 0 && el('section.block', {}, [
-        el('div.rows', {}, offAvailable.map((a) =>
-          a.logged && a.spec?.entry === 'mark' ? workedActivityRow(a) : activityRow(a))),
+      otherOpen && offAvailable.length > 0 && el('section.today-section.today-section--quiet', {}, [
+        sectionHeader('Extra logging', 'Optional'),
+        el('div.today-list', {}, offAvailable.map((a) =>
+          a.logged && a.spec?.entry === 'mark' ? workedItem(a) : activityItem(a))),
       ]),
 
-      workedOpen && workedCount > 0 && el('section.block', {}, [
-        el('div.rows.worked', {}, [
-          ...dailyLogged.map((a) => workedActivityRow(a)),
-          ...doneExercises.map(exerciseRow),
-          ...doneWeeklyLifestyle.map((a) => workedActivityRow(a, a)),
-          ...offLogged.map((a) => workedActivityRow(a)),
+      workedOpen && workedCount > 0 && el('section.today-section.today-section--quiet', {}, [
+        sectionHeader('Completed', 'Evidence from today and this week'),
+        el('div.today-list.today-list--worked', {}, [
+          ...dailyWorked.map((a) => workedItem(a)),
+          ...doneWeeklyLifestyle.map((a) => workedItem(a, a)),
+          ...offLogged.map((a) => workedItem(a)),
         ]),
       ]),
     ])
@@ -446,20 +445,15 @@ export function createTodayScreen({ workout, daily, clock, onStart, onOpenSlot }
 
   async function refresh() {
     justEarned = null
+    openActivityId = null
     await reload()
   }
 
   return {
     root,
-    primary() {
-      if (!todayProgram) return null
-      return {
-        label: `Run ${todayProgram.day.name}`,
-        icon: 'play',
-        dataset: { startday: todayProgram.day.id },
-        run: () => onStart({ programDay: todayProgram.day }),
-      }
-    },
+    // Today no longer needs a persistent neon FAB. Training stays directly
+    // available inside the weekly card where its context is visible.
+    primary() { return null },
     refresh,
   }
 }

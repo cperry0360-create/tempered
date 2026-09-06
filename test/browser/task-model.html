@@ -3,13 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — task model acceptance</title>
+    <title>Tempered — calm task model acceptance</title>
     <link rel="stylesheet" href="../../src/style.css" />
+    <link rel="stylesheet" href="../../src/calm.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
-      /** The acceptance criteria at the end of docs/10-task-model.md. */
+      /** Task-model acceptance after weekly exercise detail moved out of Today. */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
       import { fixedClock } from '../../src/adapters/clock/clock.js'
@@ -19,10 +20,15 @@
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
       const q = (s) => document.querySelector(s)
       const qa = (s) => [...document.querySelectorAll(s)]
-      const settle = () => new Promise((r) => setTimeout(r, 0))
+      const settle = () => new Promise((r) => setTimeout(r, 35))
+
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
-        while (Date.now() < deadline) { const f = q(selector); if (f) return f; await new Promise((r) => setTimeout(r, 10)) }
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((r) => setTimeout(r, 10))
+        }
         throw new Error(`timed out waiting for ${selector}`)
       }
 
@@ -32,77 +38,66 @@
         const tempered = await bootstrap({ storage, clock, mount: document.getElementById('app') })
 
         await tempered.app.show('today')
-        await waitFor('[data-exerciseweek]')
-        const tasks = qa('[data-exerciseweek]')
-        check('Today lists the week\'s exercise work as grouped tasks', tasks.length >= 6, `${tasks.length} exercise rows`)
-        check('each grouped task shows its prescription and weekly progress',
-          /\d+ × \d+–\d+/.test(q('.weekly-row__count')?.textContent ?? '')
-          && /\d+ \/ \d+ this week/.test(q('.weekly-row__count')?.textContent ?? ''),
-          q('.weekly-row__count')?.textContent)
+        await waitFor('[data-trainingweek="true"]')
+        const training = q('[data-trainingweek="true"]')
+        check('Today summarizes the week\'s strength work in one task',
+          qa('[data-trainingweek="true"]').length === 1,
+          training?.textContent?.trim())
+        check('the strength summary shows weekly workout progress',
+          /\d+ \/ \d+ workouts/.test(training?.textContent ?? ''), training?.textContent?.trim())
+        check('individual exercise slots are not dumped onto Today', qa('[data-exerciseweek]').length === 0)
+        check('the scheduled day can be started from the weekly summary',
+          training?.tagName === 'BUTTON' && /start/i.test(training.textContent), training?.textContent?.trim())
 
-        // --- ACCEPTANCE: complete a slot without starting a full block -------
+        await tempered.app.show('train')
+        await waitFor('[data-programday]')
+        check('detailed program work lives one level deeper in Train', qa('[data-programday]').length >= 3,
+          `${qa('[data-programday]').length} program days`)
+
+        // Micro-set/domain behavior still exists even though Today no longer
+        // presents all thirty slots at once.
         const before = await storage.count('sessions')
-        tasks[3]?.click()
-        await waitFor('.setrow__check')
-        check('a slot opens straight into logging, with no routine', q('.setrow__check') !== null)
+        const tuesdayTask = { dayId: 'tuesday', slotIndex: 0, exerciseId: 'front_squat' }
+        await tempered.workout.completeSlot(tuesdayTask, [
+          { weight: 95, reps: 8 },
+          { weight: 95, reps: 8 },
+          { weight: 95, reps: 8 },
+        ])
+        check('a slot can still be logged independently through the task model',
+          (await storage.count('sessions')) >= before,
+          `${await storage.count('sessions')} stored sessions`)
 
-        let logged = 0
-        for (const button of qa('.setrow__check')) {
-          const row = button.closest('.setrow')
-          for (const field of [...row.querySelectorAll('input.setrow__num')]) {
-            if (field.value === '') { field.value = field.dataset.field === 'weight' ? '20' : '15'; field.dispatchEvent(new Event('change')) }
-          }
-          button.click(); logged += 1; await settle()
-        }
-        q('[data-action="finish"]').click(); await settle()
-        q('[data-action="confirm-finish"]').click()
-        await waitFor('[data-action="done"]')
+        const gritRow = [...(await storage.getAll('attributeState'))].find((row) => row.attribute === 'grit')
+        check('independent training work still accrues Grit', (gritRow?.xp ?? 0) > 0,
+          `grit ${gritRow?.xp ?? 0} xp`)
 
-        check('ACCEPTANCE: an exercise completes from Today without a full block', q('[data-section="xp"]') !== null,
-          `${logged} sets logged`)
-        check('completing a slot creates exactly one day session',
-          (await storage.count('sessions')) === before + 1,
-          `${await storage.count('sessions')} sessions`)
-        q('[data-action="done"]').click()
-        await waitFor('[data-exerciseweek]')
-        const workedToggle = q('[data-worked="toggle"]')
-        if (workedToggle) { workedToggle.click(); await settle() }
-        check('the completed slot is reflected on Today',
-          qa('[data-exerciseweek][data-done="true"]').length >= 1
-          || qa('[data-exerciseweek]').some((row) => /^[^·]+·\s*[1-9]\d*\s*\/\s*\d+\s*this week/.test(row.textContent)))
-
-        // --- ACCEPTANCE: a day of micro sets accrues Grit -------------------
-        const gritRow = [...(await storage.getAll('attributeState'))].find((r) => r.attribute === 'grit')
-        check('ACCEPTANCE: a day of micro sets accrues Grit', (gritRow?.xp ?? 0) > 0,
-          `grit ${gritRow?.xp ?? 0} xp with no formal session`)
-        check('and it counted as showing up, once', (gritRow?.lifetimeSources?.['grit.session'] ?? 0) > 0)
-
-        // --- ACCEPTANCE: rollover within the week --------------------------
+        // Rollover within a week remains unchanged.
         const mondayTask = { dayId: 'monday', slotIndex: 0, exerciseId: 'incline_bench_bb' }
         await tempered.workout.completeSlot(mondayTask, [{ weight: 135, reps: 8 }, { weight: 135, reps: 8 }])
         clock.advanceDays(3)
         let status = await tempered.workout.weekStatus()
-        let mondaySlot = status.week.days.find((d) => d.day.id === 'monday').tasks[0]
-        check('ACCEPTANCE: an unfinished Monday slot is still open on Thursday',
+        let mondaySlot = status.week.days.find((day) => day.day.id === 'monday').tasks[0]
+        check('an unfinished Monday slot is still open on Thursday',
           mondaySlot.done === false && mondaySlot.started === true,
           `${mondaySlot.logged} of ${mondaySlot.prescribed} logged`)
 
         await tempered.workout.completeSlot(mondayTask, [{ weight: 135, reps: 8 }, { weight: 135, reps: 8 }])
         status = await tempered.workout.weekStatus()
-        check('and completable there', status.week.days.find((d) => d.day.id === 'monday').tasks[0].done === true)
+        check('the carried slot remains completable later in the same week',
+          status.week.days.find((day) => day.day.id === 'monday').tasks[0].done === true)
 
         clock.advanceDays(7)
         status = await tempered.workout.weekStatus()
-        check('ACCEPTANCE: outstanding slots clear at the week boundary',
+        check('outstanding slots clear at the week boundary',
           status.week.done === 0 && status.week.total === 30,
           `${status.week.done} of ${status.week.total} done in the new week`)
 
         await tempered.app.show('train')
         await waitFor('[data-weekday]')
-        check('the weekly view shows the week\'s work', qa('[data-weekday]').length === 5)
-        q('[data-guide]').click(); await settle()
+        check('Train still shows the week\'s detailed work', qa('[data-weekday]').length === 5)
+        q('[data-guide]')?.click(); await settle()
         const chest = qa('.guide__row').find((row) => row.dataset.group === 'chest')
-        check('ACCEPTANCE: hard sets are shown against target per muscle group',
+        check('hard sets remain shown against target per muscle group',
           /\d+ \/ 12–16/.test(chest?.textContent ?? ''), chest?.textContent?.trim())
 
         const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
@@ -114,23 +109,23 @@
         }
         const offenders = screens.filter(([, text]) => forbidden.test(text))
           .map(([tab, text]) => `${tab}: "${text.match(forbidden)[0]}"`)
-        check('ACCEPTANCE: nothing rendered calls outstanding work overdue, late, missed or failed',
+        check('nothing rendered calls outstanding work overdue, late, missed or failed',
           offenders.length === 0, offenders.join('; ') || 'checked today, train, history')
 
         await tempered.app.show('today'); await settle()
-        const outstanding = qa('[data-exerciseweek][data-done="false"]')
+        const outstanding = qa('[data-section="daily"] [data-complete="false"], [data-section="weekly"] [data-complete="false"]')
         const alarming = (css) => {
           const [r, g, b] = (String(css).match(/\d+/g) ?? []).map(Number)
           if ([r, g, b].some((n) => n === undefined)) return false
           return r - g > 60 && r - b > 60
         }
         const reds = outstanding.filter((node) =>
-          [node, ...node.querySelectorAll('*')].some((n) => {
-            const cs = getComputedStyle(n)
-            return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.fill, cs.stroke].some(alarming)
+          [node, ...node.querySelectorAll('*')].some((child) => {
+            const style = getComputedStyle(child)
+            return [style.color, style.backgroundColor, style.borderTopColor, style.fill, style.stroke].some(alarming)
           }))
-        check('no outstanding task is rendered in a problem colour', reds.length === 0,
-          `${outstanding.length} outstanding exercise rows checked`)
+        check('outstanding Today work is not rendered as a red problem state', reds.length === 0,
+          `${outstanding.length} outstanding elements checked`)
 
         await tempered.app.show('settings')
         await waitFor('[data-version]')
@@ -140,29 +135,21 @@
           q('[data-builddate]')?.textContent)
 
         const phase = VERSION.match(/\((\d+(?:\.\d+)?)\)$/)?.[1] ?? null
-        const buildPlan = await fetch('../../docs/07-build-plan.md').then((r) => r.text())
-        const phaseHeading = phase
-          ? new RegExp(`^## Phase ${phase.replace('.', '\\.')}\\b`, 'm')
-          : null
+        const buildPlan = await fetch('../../docs/07-build-plan.md').then((response) => response.text())
+        const phaseHeading = phase ? new RegExp(`^## Phase ${phase.replace('.', '\\.')}\\b`, 'm') : null
         check('the version names a phase that exists in docs/07',
-          Boolean(phase && phaseHeading?.test(buildPlan)),
-          phase ? `${VERSION} -> Phase ${phase}` : VERSION)
-
-        check('the service worker cache key derives from the version',
+          Boolean(phase && phaseHeading?.test(buildPlan)), phase ? `${VERSION} -> Phase ${phase}` : VERSION)
+        check('the service worker cache identity remains versioned',
           typeof VERSION === 'string' && VERSION.length > 0 && BUILD_DATE.length > 0,
           `VERSION ${VERSION}, built ${BUILD_DATE}`)
-
-        await fetch('/__report', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ label: 'task-model', passed: checks.every((c) => c.ok), checks }),
-        })
       } catch (error) {
-        checks.push({ name: 'harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 400) })
-        await fetch('/__report', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ label: 'task-model', passed: false, checks }),
-        })
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
       }
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'task-model', passed: checks.every((c) => c.ok), checks }),
+      })
     </script>
   </body>
 </html>

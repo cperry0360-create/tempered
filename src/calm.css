@@ -1,0 +1,449 @@
+/* ---------------------------------------------------------------------------
+   Calm tracker pass — Today
+
+   Utility screens should feel quiet until a reward happens. The RPG remains
+   present in earned XP and Character/Battle, but Today defaults to one visual
+   hierarchy instead of exposing every logging control at once.
+   --------------------------------------------------------------------------- */
+
+.screen--today-calm {
+  --calm-surface: rgba(13, 34, 51, 0.78);
+  --calm-surface-raised: rgba(255, 255, 255, 0.055);
+  --calm-line: rgba(255, 255, 255, 0.075);
+  --calm-text-2: rgba(255, 255, 255, 0.62);
+  --calm-text-3: rgba(255, 255, 255, 0.42);
+  --calm-accent: #cbdc75;
+  gap: 24px;
+  padding-bottom: 12px;
+}
+
+.screen--today-calm .screen__title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 760;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.today-header {
+  display: grid;
+  gap: 7px;
+  padding-right: 52px;
+}
+
+.today-header__date {
+  margin: 0;
+  color: var(--calm-text-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.today-summary {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--calm-line);
+  border-radius: 24px;
+  background: var(--calm-surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.today-summary__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.today-summary__eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--calm-text-3);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+}
+
+.today-summary__headline {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 720;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.today-summary__xp {
+  flex: none;
+  color: #e0c576;
+  font-size: 14px;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+.today-summary__bar {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.today-summary__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 0;
+  border-radius: inherit;
+  background: var(--calm-accent);
+  transition: width var(--motion-screen) ease-out;
+}
+
+.today-summary__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--calm-text-2);
+  font-size: 12px;
+  font-weight: 540;
+}
+
+.today-earned {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: -10px 4px -4px;
+  min-height: 18px;
+  animation: calm-earned 800ms ease-out both;
+}
+
+.today-earned__xp {
+  color: #e0c576;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.today-earned__copy {
+  color: var(--calm-text-2);
+  font-size: 12px;
+}
+
+@keyframes calm-earned {
+  0% { opacity: 0; transform: translateY(4px); }
+  22% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; }
+}
+
+.today-section {
+  display: grid;
+  gap: 11px;
+}
+
+.today-section__head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 3px;
+}
+
+.today-section__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.today-section__detail {
+  display: block;
+  margin-top: 3px;
+  color: var(--calm-text-3);
+  font-size: 11px;
+}
+
+.today-section__link,
+.today-more {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--calm-text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.today-section__link { flex: none; }
+.today-more { justify-self: center; padding: 4px 12px 0; }
+
+.today-list {
+  overflow: hidden;
+  border: 1px solid var(--calm-line);
+  border-radius: 20px;
+  background: var(--calm-surface);
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.10);
+}
+
+.today-item-wrap {
+  border-bottom: 1px solid var(--calm-line);
+}
+.today-item-wrap:last-child { border-bottom: 0; }
+
+.today-list > .today-item:not(:last-child),
+.today-list > .today-item-wrap:not(:last-child) > .today-item {
+  border-bottom: 1px solid var(--calm-line);
+}
+
+.today-item-wrap > .today-item { border-bottom: 0 !important; }
+
+.today-item {
+  appearance: none;
+  width: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+
+button.today-item { cursor: pointer; }
+button.today-item:active { background: rgba(255, 255, 255, 0.035); }
+button.today-item:disabled { opacity: 1; cursor: default; }
+
+.today-item__icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--calm-surface-raised);
+  color: rgba(255, 255, 255, 0.72);
+}
+.today-item__icon .icon { width: 17px; height: 17px; stroke-width: 1.8; }
+.today-item__icon[data-complete='true'] {
+  background: rgba(203, 220, 117, 0.12);
+  color: var(--calm-accent);
+}
+
+.today-item__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.today-item__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+
+.today-item__meta {
+  color: var(--calm-text-2);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-item__action {
+  flex: none;
+  color: var(--calm-text-3);
+  font-size: 25px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.today-item__chevron {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--calm-text-3);
+}
+.today-item__chevron .icon { width: 14px; height: 14px; }
+
+.today-item__cta {
+  flex: none;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--calm-accent);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.today-item[data-complete='true'] .today-item__name,
+.today-item--worked .today-item__name {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.today-editor {
+  display: grid;
+  gap: 11px;
+  padding: 0 14px 14px 60px;
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.today-editor__quick {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.today-editor__chip,
+.today-editor__save {
+  appearance: none;
+  min-height: 38px;
+  border: 1px solid var(--calm-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.76);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 640;
+  padding: 0 13px;
+  cursor: pointer;
+}
+
+.today-editor__manual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.today-editor__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  appearance: none;
+  border: 1px solid var(--calm-line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 0 12px;
+  outline: none;
+}
+.today-editor__input:focus { border-color: rgba(203, 220, 117, 0.55); }
+
+.today-editor__save {
+  min-height: 42px;
+  color: var(--calm-accent);
+  padding-inline: 16px;
+}
+
+.today-editor__hint {
+  color: var(--calm-text-3);
+  font-size: 10px;
+}
+
+.today-empty {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--calm-line);
+  border-radius: 20px;
+  background: var(--calm-surface);
+  color: var(--calm-text-2);
+  font-size: 13px;
+}
+
+.today-empty__check {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(203, 220, 117, 0.12);
+  color: var(--calm-accent);
+}
+.today-empty__check .icon { width: 15px; height: 15px; }
+
+.today-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 3px;
+}
+
+.today-secondary__button {
+  appearance: none;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--calm-text-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 620;
+  cursor: pointer;
+}
+.today-secondary__button .icon { width: 13px; height: 13px; }
+
+.today-section--quiet { opacity: 0.94; }
+.today-list--worked .today-item { min-height: 56px; }
+
+/* The tracker should not compete with the character/battle layers. The existing
+   background art stays, but at a whisper rather than almost half opacity. */
+body::before { opacity: 0.12; filter: blur(2px); transform: scale(1.02); }
+
+/* Bottom navigation: same structure, quieter typography and less visual weight. */
+.tabbar {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(8, 24, 38, 0.82);
+  box-shadow: 0 7px 26px rgba(0, 0, 0, 0.34);
+}
+
+.tabbar__tab {
+  font-size: 11px;
+  font-weight: 620;
+  letter-spacing: 0.025em;
+}
+
+.tabbar__tab[data-active='true'] {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.settings-access {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(8, 24, 38, 0.52) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 390px) {
+  .screen--today-calm { gap: 20px; }
+  .today-summary { padding: 18px; }
+  .today-item { padding-inline: 12px; }
+  .today-editor { padding-left: 58px; padding-right: 12px; }
+  .today-item__cta { max-width: 96px; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .today-summary,
+  .today-list { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body::before { opacity: 0.07; }
+}

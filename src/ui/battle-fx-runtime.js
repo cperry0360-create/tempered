@@ -237,3 +237,5 @@ export function installBattleFx() {
     queueMicrotask(() => waitForBattleToSettle(action))
   }, true)
 }
+
+installBattleFx()

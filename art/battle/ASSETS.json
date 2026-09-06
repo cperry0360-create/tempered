@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "assets": [
-    { "kind": "background", "id": "battlefield", "path": "battlefield.png", "width": 480, "height": 264 },
+    { "kind": "background", "id": "battlefield", "path": "battlefield.png", "width": 240, "height": 132 },
     { "kind": "hero", "id": "hero", "path": "hero.png", "width": 139, "height": 144 },
 
     { "kind": "enemy", "id": "slime", "path": "enemies/slime.png", "width": 139, "height": 139 },

@@ -1,3 +1,5 @@
+import { VERSION } from '../version.js'
+
 /**
  * Registers the service worker that makes the app work offline.
  *
@@ -12,11 +14,14 @@ export function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return
 
   window.addEventListener('load', () => {
-    // A module worker, so sw.js can import the version its cache key derives
-    // from. updateViaCache:none matters on iOS Home Screen installs: a launch
-    // should ask the server whether sw.js changed rather than trusting a stale
-    // HTTP-cache copy of the worker script or its imports.
-    navigator.serviceWorker.register('./sw.js', {
+    // Safari/iOS can be conservative about noticing a module worker whose
+    // top-level sw.js bytes are unchanged even when an imported version module
+    // changed. Put the visible release in the worker URL so every Tempered
+    // release is an unambiguous service-worker update on Home Screen installs.
+    const workerUrl = new URL('../../sw.js', import.meta.url)
+    workerUrl.searchParams.set('build', VERSION)
+
+    navigator.serviceWorker.register(workerUrl, {
       type: 'module',
       updateViaCache: 'none',
     })

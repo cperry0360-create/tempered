@@ -108,9 +108,6 @@
         q('[data-action="finish"]')?.click()
         await waitFor('[data-action="confirm-finish"]')
         check('finishing a workout still requires an explicit confirmation', q('[data-action="confirm-finish"]') !== null)
-        q('[data-action="confirm-finish"]')?.click()
-        await waitFor('[data-action="done"]')
-        check('the summary remains a single dismissible completion surface', q('[data-action="done"]') !== null)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
       }

@@ -1,9 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, access } from 'node:fs/promises'
 
 const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
+
+async function exists(path) {
+  try {
+    await access(new URL(path, root))
+    return true
+  } catch {
+    return false
+  }
+}
 
 test('installed PWA checks for updates without trusting the HTTP cache', async () => {
   const registration = await read('src/pwa/register.js')
@@ -23,9 +32,12 @@ test('service worker hands a release over atomically instead of mixing asset gen
   )
 })
 
-test('the rejected sunset trial no longer paints the app', async () => {
-  const sunset = await read('src/sunset-test.css')
-  assert.doesNotMatch(sunset, /bg-sunset-user|background-image|#915044/, 'sunset photo and warm trial palette are inactive')
+test('the rejected sunset trial is fully removed from the shipped app', async () => {
+  const [index, worker] = await Promise.all([read('index.html'), read('sw.js')])
+  assert.doesNotMatch(index, /sunset-test|bg-sunset-user/, 'index must not load the sunset trial')
+  assert.doesNotMatch(worker, /sunset-test|bg-sunset-user/, 'offline cache must not retain the sunset trial')
+  assert.equal(await exists('src/sunset-test.css'), false, 'sunset stylesheet is deleted')
+  assert.equal(await exists('art/dist/bg-sunset-user.jpg'), false, 'sunset photo copy is deleted')
 })
 
 test('the production bootstrap really installs the daily Workout enhancer', async () => {

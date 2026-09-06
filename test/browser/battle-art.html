@@ -31,13 +31,33 @@
       check('item id maps to canonical icon slot', /\/art\/battle\/items\/ember_token\.png$/.test(itemSpriteUrl('ember_token')))
       check('path-shaped enemy id is refused', enemySpriteUrl('../slime') === null)
 
-      const [shellResponse, cssResponse] = await Promise.all([
+      const fxFiles = [
+        'sword-slash.png.b64',
+        'impact-spark.png.b64',
+        'guard-shield.png.b64',
+        'magic-burst.png.b64',
+        'critical-hit.png.b64',
+        'dust-impact.png.b64',
+      ]
+
+      const [shellResponse, cssResponse, fxRuntimeResponse, ...fxResponses] = await Promise.all([
         fetch('../../index.html'),
         fetch('../../src/battle.css'),
+        fetch('../../src/ui/battle-fx-runtime.js'),
+        ...fxFiles.map((file) => fetch(`../../art/battle/fx/${file}`)),
       ])
       const shell = await shellResponse.text()
+      const fxRuntime = await fxRuntimeResponse.text()
       check('shell links battle-only stylesheet', shellResponse.ok && shell.includes('./src/battle.css'))
       check('battle-only stylesheet is served', cssResponse.ok)
+      check('shell loads combat FX runtime', shell.includes('./src/ui/battle-fx-runtime.js'))
+      check('combat FX runtime is served', fxRuntimeResponse.ok && fxRuntime.includes('battle-fx__sprite'))
+
+      for (let index = 0; index < fxFiles.length; index += 1) {
+        const response = fxResponses[index]
+        const payload = response.ok ? (await response.text()).trim() : ''
+        check(`combat FX asset ${fxFiles[index]} is present`, response.ok && payload.startsWith('iVBORw0KGgo'))
+      }
 
       const passed = checks.every((entry) => entry.ok)
       results.dataset.status = passed ? 'pass' : 'fail'

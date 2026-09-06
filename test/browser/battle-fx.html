@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Tempered — battle FX harness</title></head>
+<body>
+<div id="results"></div>
+<script type="module">
+  const files = [
+    'sword-slash.png.b64',
+    'impact-spark.png.b64',
+    'guard-shield.png.b64',
+    'magic-burst.png.b64',
+    'critical-hit.png.b64',
+    'dust-impact.png.b64',
+  ]
+  const checks = []
+  const runtime = await fetch('../../src/ui/battle-fx-runtime.js')
+  const runtimeText = await runtime.text()
+  checks.push({ name: 'runtime served', ok: runtime.ok })
+  checks.push({ name: 'attack wiring present', ok: runtimeText.includes("action === 'attack'") && runtimeText.includes("showFx('sword'") })
+  checks.push({ name: 'guard wiring present', ok: runtimeText.includes("action === 'guard'") && runtimeText.includes("showFx('guard'") })
+  checks.push({ name: 'skill wiring present', ok: runtimeText.includes("action === 'skill'") && runtimeText.includes("showFx('magic'") })
+  checks.push({ name: 'critical wiring present', ok: runtimeText.includes("currentTurnWasCritical") && runtimeText.includes("'critical'") })
+  checks.push({ name: 'enemy retaliation dust present', ok: runtimeText.includes("newestEventIsUnguardedEnemyHit") && runtimeText.includes("showFx('dust'") })
+
+  for (const file of files) {
+    const response = await fetch(`../../art/battle/fx/${file}`)
+    const text = response.ok ? (await response.text()).trim() : ''
+    checks.push({ name: `${file} available`, ok: response.ok && text.startsWith('iVBORw0KGgo') })
+  }
+
+  const passed = checks.every((check) => check.ok)
+  document.getElementById('results').textContent = JSON.stringify(checks)
+  await fetch('/__report', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'battle-fx', passed, checks }),
+  })
+</script>
+</body>
+</html>

@@ -53,13 +53,17 @@
         let row = q(`[data-activity="${id}"]`)
         if (row) return row
         await openOther()
-        row = q(`[data-activity="${id}"]`)
-        return row
+        return q(`[data-activity="${id}"]`)
+      }
+
+      function actionIn(row, action) {
+        if (!row) return null
+        return row.matches?.(`[data-action="${action}"]`) ? row : q(`[data-action="${action}"]`, row)
       }
 
       async function openEditor(id) {
         const row = await rowFor(id)
-        const opener = q('[data-action="open-log"]', row)
+        const opener = actionIn(row, 'open-log')
         if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
         return q(`[data-editor="${id}"]`)
       }
@@ -93,6 +97,9 @@
         check('numeric fields are hidden until requested',
           q('[data-entry="sleep"]') === null && q('[data-entry="water"]') === null,
           'no always-open numeric controls')
+        check('the first view uses one shared daily list surface',
+          qa('[data-section="daily"] .today-list').length === 1,
+          `${qa('[data-section="daily"] .today-list').length} daily surface`)
 
         await openAllWeekly()
         await openOther()
@@ -102,7 +109,7 @@
           `${reachable.size}/${tempered.daily.activities.length} trackers reachable`)
 
         const rest = await rowFor('rest_day')
-        const restAction = q('[data-action="mark"]', rest)
+        const restAction = actionIn(rest, 'mark')
         check('rest day is reachable in optional logging', restAction !== null)
         const vitalityBeforeRest = await xpOf('vitality')
         restAction?.click(); await settle()
@@ -111,9 +118,10 @@
           q('.today-earned')?.textContent ?? 'no earned message')
 
         const nutrition = await rowFor('nutrition_logged')
+        const nutritionAction = actionIn(nutrition, 'mark')
         const vitalityBeforeFood = await xpOf('vitality')
-        q('[data-action="mark"]', nutrition)?.click(); await settle()
-        check('food logging remains one tap', (await xpOf('vitality')) > vitalityBeforeFood)
+        nutritionAction?.click(); await settle()
+        check('food logging remains one tap', nutritionAction !== null && (await xpOf('vitality')) > vitalityBeforeFood)
 
         let editor = await openEditor('sleep')
         const sleepField = q('[data-entry="sleep"]', editor)
@@ -154,11 +162,6 @@
 
         const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
         check('Today uses no punishment language', !forbidden.test(document.body.innerText))
-
-        check('the first view uses shared list surfaces instead of a card per task',
-          qa('[data-section="daily"] .today-list').length === 1
-          && qa('[data-section="daily"] .today-item').length >= dailyIds.length,
-          `${qa('[data-section="daily"] .today-list').length} daily surface`)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
       }

@@ -36,11 +36,12 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   const tabs = el('div.tabbar__tabs')
   const settingsAccess = el('button.settings-access', {
     type: 'button', 'aria-label': 'Settings', title: 'Settings',
-    dataset: { active: 'false' }, onclick: () => show('settings'),
+    dataset: { active: 'false' }, onclick: () => toggleSettings(),
   }, [icon('gear')])
 
   let active = 'train'
   let returnTab = 'train'
+  let settingsReturnTab = 'today'
 
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
@@ -51,7 +52,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
 
   const characterScreen = createCharacterScreen({
     character,
-    onSettings: () => show('settings'),
+    onSettings: () => openSettings(),
     onBattle: battleScreen ? () => openBattle() : null,
   })
 
@@ -70,6 +71,17 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   function announce(text) {
     announcer.textContent = ''
     queueMicrotask(() => { announcer.textContent = text })
+  }
+
+  function openSettings() {
+    if (active !== 'settings') {
+      settingsReturnTab = TABS.some((entry) => entry.id === active) ? active : 'today'
+    }
+    return show('settings')
+  }
+
+  function toggleSettings() {
+    return active === 'settings' ? show(settingsReturnTab) : openSettings()
   }
 
   function renderTabs(tab) {
@@ -217,8 +229,11 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     battleScreen?.destroy()
     tabBar.hidden = false
     settingsAccess.hidden = false
-    settingsAccess.dataset.active = String(target === 'settings')
-    settingsAccess.setAttribute('aria-current', target === 'settings' ? 'page' : 'false')
+    const settingsActive = target === 'settings'
+    settingsAccess.dataset.active = String(settingsActive)
+    settingsAccess.setAttribute('aria-current', settingsActive ? 'page' : 'false')
+    settingsAccess.setAttribute('aria-label', settingsActive ? 'Close Settings' : 'Settings')
+    settingsAccess.title = settingsActive ? 'Close Settings' : 'Settings'
     renderTabs(target)
 
     body.setAttribute('aria-busy', 'true')

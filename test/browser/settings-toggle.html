@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tempered — settings toggle and sunset trial</title>
+    <link rel="stylesheet" href="../../src/style.css" />
+    <link rel="stylesheet" href="../../src/calm.css" />
+    <link rel="stylesheet" href="../../src/uplift.css" />
+    <link rel="stylesheet" href="../../src/sunset-test.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script type="module">
+      import { bootstrapHarness as bootstrap } from './harness.js'
+      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+      const checks = []
+      const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail })
+      const q = (selector) => document.querySelector(selector)
+
+      async function waitFor(selector, timeout = 5000) {
+        const deadline = Date.now() + timeout
+        while (Date.now() < deadline) {
+          const found = q(selector)
+          if (found) return found
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+        throw new Error(`timed out waiting for ${selector}`)
+      }
+
+      try {
+        const tempered = await bootstrap({ storage: createMemoryStorage(), mount: q('#app') })
+
+        await tempered.app.show('today')
+        await waitFor('.screen--today-calm')
+        const gear = q('.settings-access')
+        check('the global Settings gear exists', gear !== null)
+        check('the gear starts as Settings rather than a dead highlighted control',
+          gear?.dataset.active === 'false' && gear?.getAttribute('aria-label') === 'Settings')
+
+        gear?.click()
+        await waitFor('.screen--settings')
+        check('one gear tap opens Settings', q('.screen--settings') !== null)
+        check('while open the same gear advertises that it closes Settings',
+          gear?.dataset.active === 'true' && gear?.getAttribute('aria-label') === 'Close Settings')
+
+        gear?.click()
+        await waitFor('.screen--today-calm')
+        check('a second gear tap closes Settings and returns to Today',
+          q('.screen--settings') === null && gear?.dataset.active === 'false')
+
+        await tempered.app.show('history')
+        await waitFor('[data-tab="history"][aria-current="page"]')
+        gear?.click()
+        await waitFor('.screen--settings')
+        gear?.click()
+        await waitFor('[data-tab="history"][aria-current="page"]')
+        check('Settings returns to the tab it was opened from, not always Today',
+          q('[data-tab="history"][aria-current="page"]') !== null)
+
+        const backdrop = getComputedStyle(document.body, '::before').backgroundImage
+        check('the supplied sunset photo is the active app backdrop',
+          backdrop.includes('bg-sunset-user.jpg'), backdrop)
+
+        const photo = new Image()
+        photo.src = '../../art/dist/bg-sunset-user.jpg'
+        await photo.decode()
+        check('the optimized sunset asset decodes at useful phone-background resolution',
+          photo.naturalWidth >= 500 && photo.naturalHeight >= 900,
+          `${photo.naturalWidth}x${photo.naturalHeight}`)
+      } catch (error) {
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
+      }
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'settings-toggle', passed: checks.every((item) => item.ok), checks }),
+      })
+    </script>
+  </body>
+</html>

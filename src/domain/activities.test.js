@@ -32,7 +32,7 @@ test('every seeded activity is mapped to a day-log field', () => {
 
 test('every mapped field is one the XP engine actually reads', () => {
   const engineFields = new Set([
-    'sleepHours', 'waterOz', 'steps', 'mobilityMinutes', 'readingMinutes', 'studyMinutes',
+    'sleepHours', 'waterOz', 'steps', 'microCardioMinutes', 'mobilityMinutes', 'readingMinutes', 'studyMinutes',
     'meditationMinutes', 'instrumentMinutes', 'journalLogged', 'nutritionLogged',
     'caloriesLogged', 'alcoholFree', 'saunaLogged', 'proteinTargetMet', 'restDay',
     'bodyMetricsLogged',
@@ -71,6 +71,15 @@ test('a value that accumulates adds to the day rather than replacing it', () => 
   let minutes = applyActivity({ date: '2026-09-04' }, 'read', 20)
   minutes = applyActivity(minutes, 'read', 10)
   assert.equal(minutes.readingMinutes, 30)
+})
+
+test('micro cardio accumulates and earns Wind without creating a workout session', () => {
+  let day = applyActivity({ date: '2026-09-04' }, 'micro_cardio', 2)
+  day = applyActivity(day, 'micro_cardio', 2)
+  assert.equal(day.microCardioMinutes, 4)
+  const totals = totalsByAttribute(awardsForDay(day, {}, balance))
+  assert.ok(totals.wind > 0)
+  assert.equal(totals.grit, 0)
 })
 
 test('a value that describes a state replaces it', () => {
@@ -182,7 +191,7 @@ test('every activity states how it is entered, so no screen has to guess', () =>
 test('the seed starts with the intended core daily habits', () => {
   const defaults = defaultDailyIds(ACTIVITIES)
   assert.deepEqual([...defaults].sort(),
-    ['sleep', 'steps', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics'].sort(),
+    ['sleep', 'steps', 'micro_cardio', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics'].sort(),
     'the first-run daily set should match the intended core habits')
 })
 

@@ -42,6 +42,39 @@ test('invalid or corrupt drafts are ignored and removed', () => {
   assert.equal(storage.getItem(ACTIVE_SESSION_DRAFT_KEY), null)
 })
 
+test('an otherwise valid empty workout draft is rejected and purged', () => {
+  const storage = fakeStorage()
+  const empty = {
+    ...draft,
+    session: { ...draft.session, id: 's_empty', title: 'Cardio' },
+    plan: [],
+    loggedHereIds: [],
+  }
+  storage.setItem(ACTIVE_SESSION_DRAFT_KEY, JSON.stringify(empty))
+  assert.equal(loadActiveSessionDraft(storage), null)
+  assert.equal(storage.getItem(ACTIVE_SESSION_DRAFT_KEY), null)
+})
+
+test('saving an empty state clears an older valid checkpoint', () => {
+  const storage = fakeStorage()
+  assert.equal(saveActiveSessionDraft(draft, storage), true)
+  assert.equal(saveActiveSessionDraft({ ...draft, plan: [] }, storage), false)
+  assert.equal(loadActiveSessionDraft(storage), null)
+})
+
+test('a plan may contain an emptied exercise as long as another exercise is still loggable', () => {
+  const storage = fakeStorage()
+  const partial = {
+    ...draft,
+    plan: [
+      { exercise: { id: 'incline_bench_db' }, sets: [] },
+      { exercise: { id: 'row' }, sets: [{ weight: 90, reps: 10, logged: false }] },
+    ],
+  }
+  assert.equal(saveActiveSessionDraft(partial, storage), true)
+  assert.deepEqual(loadActiveSessionDraft(storage), partial)
+})
+
 test('clear removes a resumable workout', () => {
   const storage = fakeStorage()
   saveActiveSessionDraft(draft, storage)

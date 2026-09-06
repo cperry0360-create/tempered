@@ -20,6 +20,10 @@ export function battleArtId(value) {
   return /^[a-z0-9_]+$/.test(id) ? id : null
 }
 
+export function battlefieldUrl() {
+  return new URL('battlefield.png', ROOT).href
+}
+
 export function heroSpriteUrl() {
   return new URL('hero.png', ROOT).href
 }

@@ -39,8 +39,12 @@ export function awardsForSession(session, context, balance) {
  * @returns {import('./types.js').Award[]}
  */
 export function awardsForDay(day, context, balance) {
+  // Micro cardio is deliberately a day-level Wind input. A two-minute bike/run
+  // burst should reward cardiovascular work without pretending it is a separate
+  // workout session and repeatedly paying Grit for attendance.
+  const movementMinutes = (day.mobilityMinutes ?? 0) + (day.microCardioMinutes ?? 0)
   return [
-    ...windAwards(day.cardio ?? [], day.steps, day.mobilityMinutes, context?.paceBaselineMinPerMile, balance),
+    ...windAwards(day.cardio ?? [], day.steps, movementMinutes, context?.paceBaselineMinPerMile, balance),
     ...vitalityAwards(day, balance),
     ...mindAwards(day, balance),
   ]

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDailyWorkoutQueue } from '../src/ui/today-workout.js'
+import { buildDailyWorkoutQueue, remainingProgramDay } from '../src/ui/today-workout.js'
 
 const slot = (name, exerciseId, sets = 3) => ({ name, exerciseId, sets, repMin: 8, repMax: 12 })
 const task = (dayId, index, name, logged, prescribed = 3) => ({
@@ -12,7 +12,10 @@ const task = (dayId, index, name, logged, prescribed = 3) => ({
   done: logged >= prescribed,
   started: logged > 0 && logged < prescribed,
 })
-const day = (id, name, tasks) => ({ day: { id, name }, tasks })
+const day = (id, name, tasks) => ({
+  day: { id, name, exercises: tasks.map((entry) => entry.slot) },
+  tasks,
+})
 
 function status() {
   return {
@@ -56,11 +59,28 @@ test('a rest day carries unfinished earlier work forward', () => {
 
 test('completed work from this morning remains represented on Today', () => {
   const complete = status()
-  complete.week.days.find((entry) => entry.day.id === 'thursday').tasks[0] = task('thursday', 0, 'Incline Bench', 4, 4)
+  const thursday = complete.week.days.find((entry) => entry.day.id === 'thursday')
+  thursday.tasks[0] = task('thursday', 0, 'Incline Bench', 4, 4)
+  thursday.day.exercises[0] = thursday.tasks[0].slot
   const queue = buildDailyWorkoutQueue(complete, '2026-09-10')
 
   assert.equal(queue.today.length, 2)
   assert.equal(queue.completed.length, 2)
   assert.deepEqual(queue.active.map((row) => row.name), ['Lateral Raise'])
   assert.equal(queue.primaryDay.id, 'monday', 'after today is finished, the full-session action can pick up rollover work')
+})
+
+test('full-session route skips completed slots and only offers remaining sets for partial slots', () => {
+  const current = status()
+  const thursday = current.week.days.find((entry) => entry.day.id === 'thursday')
+  thursday.tasks[0] = task('thursday', 0, 'Incline Bench', 1, 4)
+  thursday.day.exercises[0] = thursday.tasks[0].slot
+
+  const remaining = remainingProgramDay(current, thursday.day)
+
+  assert.equal(remaining.exercises.length, thursday.day.exercises.length, 'slot indexes stay stable')
+  assert.equal(remaining.exercises[0].exerciseId, thursday.day.exercises[0].exerciseId)
+  assert.equal(remaining.exercises[0].sets, 3, '1 of 4 already done means only 3 remain in the full session')
+  assert.notEqual(remaining.exercises[1].exerciseId, thursday.day.exercises[1].exerciseId,
+    'a completed movement is skipped by the full-session builder')
 })

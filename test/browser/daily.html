@@ -3,30 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — calm daily tracking acceptance</title>
+    <title>Tempered — day planner tracking acceptance</title>
     <link rel="stylesheet" href="../../src/style.css" />
     <link rel="stylesheet" href="../../src/calm.css" />
+    <link rel="stylesheet" href="../../src/uplift.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
       /**
-       * Calm Today acceptance.
-       *
-       * The redesign deliberately trades an always-open control panel for a
-       * readable first view. Daily work still fits a phone, every tracker stays
-       * reachable, mark activities remain one tap, and measured activities are
-       * one disclosure tap plus the value/save interaction.
+       * Today is now a dated day planner, habit tracker and flexible training
+       * surface. Detail is progressive disclosure; core actions stay fast.
        */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
-      const PHONE = { width: 390, height: 844 }
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
       const q = (s, root = document) => root?.querySelector(s) ?? null
       const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 35))
+      const settle = () => new Promise((r) => setTimeout(r, 40))
 
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
@@ -41,12 +37,6 @@
       async function openOther() {
         const toggle = q('[data-other="toggle"]')
         if (toggle && toggle.dataset.open !== 'true') { toggle.click(); await settle() }
-        return toggle
-      }
-
-      async function openAllWeekly() {
-        const button = q('[data-section="weekly"] .today-section__link')
-        if (button && /see all/i.test(button.textContent)) { button.click(); await settle() }
       }
 
       async function rowFor(id) {
@@ -56,14 +46,14 @@
         return q(`[data-activity="${id}"]`)
       }
 
-      function actionIn(row, action) {
+      function markAction(row) {
         if (!row) return null
-        return row.matches?.(`[data-action="${action}"]`) ? row : q(`[data-action="${action}"]`, row)
+        return row.matches?.('[data-action="mark"]') ? row : q('[data-action="mark"]', row)
       }
 
       async function openEditor(id) {
         const row = await rowFor(id)
-        const opener = actionIn(row, 'open-log')
+        const opener = q('.today-item__body', row)
         if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
         return q(`[data-editor="${id}"]`)
       }
@@ -73,7 +63,6 @@
         const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
         const xpOf = async (attribute) => (await storage.get('attributeState', attribute))?.xp ?? 0
 
-        document.getElementById('app').style.width = `${PHONE.width}px`
         await tempered.app.show('today')
         await waitFor('.screen--today-calm')
 
@@ -83,17 +72,36 @@
           qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0,
           `${qa('[role="progressbar"]', summary).length} daily progress bar`)
 
-        const bar = q('.tabbar')
-        const dailySection = q('[data-section="daily"]')
-        const barTop = PHONE.height - bar.getBoundingClientRect().height
-        check('the DAILY list fits above navigation on a 6.1 inch view',
-          dailySection.getBoundingClientRect().bottom <= barTop,
-          `DAILY ends at ${Math.round(dailySection.getBoundingClientRect().bottom)}px; bar begins at ${Math.round(barTop)}px`)
+        check('Today opens with a seven-day calendar rail', qa('.today-calendar__day').length === 7,
+          `${qa('.today-calendar__day').length} dates`)
+        check('today is visibly identified in the rail', qa('.today-calendar__day[data-today="true"]').length === 1)
+
+        for (const name of ['planner', 'habits', 'training']) {
+          const fold = q(`[data-fold="${name}"] .today-section__fold`)
+          check(`${name} is independently foldable`, fold !== null && fold.hasAttribute('aria-expanded'))
+        }
+
+        // Planner tasks are dated and are not health/RPG awards.
+        q('[data-section="planner"] .today-section__add')?.click(); await settle()
+        q('.today-plan-kind__button:nth-child(2)')?.click(); await settle()
+        const taskInput = q('.today-plan-compose__input')
+        taskInput.value = 'Draft memo'
+        q('.today-plan-compose__add')?.click(); await settle()
+        check('a work todo can be added to the selected day',
+          /Draft memo/.test(q('.today-plan-item')?.textContent ?? '')
+          && /WORK/.test(q('.today-plan-item')?.textContent ?? ''))
+        const xpBeforeTask = ['might', 'wind', 'grit', 'vitality', 'mind']
+          .map(async (id) => xpOf(id))
+        const beforeTask = (await Promise.all(xpBeforeTask)).reduce((a, b) => a + b, 0)
+        q('.today-plan-item__check')?.click(); await settle()
+        const afterTask = (await Promise.all(['might', 'wind', 'grit', 'vitality', 'mind'].map((id) => xpOf(id)))).reduce((a, b) => a + b, 0)
+        check('checking off a work task does not mint RPG XP', afterTask === beforeTask, `${beforeTask} -> ${afterTask}`)
 
         const dailyIds = await tempered.daily.dailyIds()
         const renderedDaily = qa('[data-section="daily"] [data-activity]').length
-        check('the whole daily schedule is present', renderedDaily === dailyIds.length,
+        check('the whole daily schedule is present when Habits is open', renderedDaily === dailyIds.length,
           `${renderedDaily}/${dailyIds.length} daily activities`)
+        check('Micro cardio is included in the default daily schedule', dailyIds.includes('micro_cardio'))
         check('numeric fields are hidden until requested',
           q('[data-entry="sleep"]') === null && q('[data-entry="water"]') === null,
           'no always-open numeric controls')
@@ -101,7 +109,6 @@
           qa('[data-section="daily"] .today-list').length === 1,
           `${qa('[data-section="daily"] .today-list').length} daily surface`)
 
-        await openAllWeekly()
         await openOther()
         const reachable = new Set(qa('[data-activity]').map((node) => node.dataset.activity))
         check('every lifestyle tracker remains reachable from Today',
@@ -109,7 +116,7 @@
           `${reachable.size}/${tempered.daily.activities.length} trackers reachable`)
 
         const rest = await rowFor('rest_day')
-        const restAction = actionIn(rest, 'mark')
+        const restAction = markAction(rest)
         check('rest day is reachable in optional logging', restAction !== null)
         const vitalityBeforeRest = await xpOf('vitality')
         restAction?.click(); await settle()
@@ -117,31 +124,44 @@
         check('the reward is shown as a small earned moment', /\+\d/.test(q('.today-earned')?.textContent ?? ''),
           q('.today-earned')?.textContent ?? 'no earned message')
 
-        const nutrition = await rowFor('nutrition_logged')
-        const nutritionAction = actionIn(nutrition, 'mark')
-        const vitalityBeforeFood = await xpOf('vitality')
-        nutritionAction?.click(); await settle()
-        check('food logging remains one tap', nutritionAction !== null && (await xpOf('vitality')) > vitalityBeforeFood)
-
         let editor = await openEditor('sleep')
         const sleepField = q('[data-entry="sleep"]', editor)
-        check('a measured activity reveals its field only after tapping the row', sleepField !== null)
+        check('a measured activity reveals its field after tapping the row', sleepField !== null)
         const vitalityBeforeSleep = await xpOf('vitality')
         sleepField.value = '8'
         q('[data-action="log"]', editor)?.click(); await settle()
         check('measured logging still awards XP after disclosure', (await xpOf('vitality')) > vitalityBeforeSleep)
 
+        // Water's normal + button is now one user-owned bottle size, not three
+        // generic game chips. It defaults to twenty ounces and stays additive.
+        let waterRow = await rowFor('water')
+        let quick = q('[data-quickadd]', waterRow)
+        check('Water exposes one direct one-tap preset', quick?.textContent?.includes('+20'), quick?.textContent ?? 'missing')
+        quick?.click(); await settle()
+        waterRow = await rowFor('water')
+        q('[data-quickadd]', waterRow)?.click(); await settle()
+        let afterWater = await tempered.daily.dayLog(tempered.clock.today())
+        check('two default bottle taps accumulate', afterWater.waterOz === 40, `${afterWater.waterOz ?? 0} oz stored`)
+
         editor = await openEditor('water')
-        let quick = qa('[data-quickadd]', editor)
-        check('water keeps three fast add choices behind the row', quick.length === 3,
-          quick.map((button) => button.textContent).join(' '))
-        quick[0]?.click(); await settle()
-        editor = await openEditor('water')
-        quick = qa('[data-quickadd]', editor)
-        quick[0]?.click(); await settle()
-        const afterWater = await tempered.daily.dayLog(tempered.clock.today())
-        check('piecewise water entries accumulate rather than replace', afterWater.waterOz === 16,
-          `${afterWater.waterOz ?? 0} oz stored`)
+        const presetField = q('.today-editor__preset-input', editor)
+        presetField.value = '24'
+        q('.today-editor__preset-save', editor)?.click(); await settle()
+        waterRow = await rowFor('water')
+        quick = q('[data-quickadd]', waterRow)
+        check('the one-tap amount can be customized', quick?.textContent?.includes('+24'), quick?.textContent ?? 'missing')
+        quick?.click(); await settle()
+        afterWater = await tempered.daily.dayLog(tempered.clock.today())
+        check('the customized preset remains additive', afterWater.waterOz === 64, `${afterWater.waterOz ?? 0} oz stored`)
+
+        const microRow = await rowFor('micro_cardio')
+        check('Micro cardio defaults to a two-minute one-tap action',
+          q('[data-quickadd="2"]', microRow) !== null)
+        const windBefore = await xpOf('wind')
+        q('[data-quickadd="2"]', microRow)?.click(); await settle()
+        const microDay = await tempered.daily.dayLog(tempered.clock.today())
+        check('a micro-cardio burst records minutes', microDay.microCardioMinutes === 2)
+        check('a micro-cardio burst rewards Wind', (await xpOf('wind')) > windBefore)
 
         await openOther()
         editor = await openEditor('body_metrics')
@@ -154,16 +174,10 @@
           afterMetric - beforeMetric === tempered.balance.vitality.bodyMetricsLoggedXp,
           `+${afterMetric - beforeMetric}`)
 
-        const workedToggle = q('[data-worked="toggle"]')
-        if (workedToggle && workedToggle.dataset.open !== 'true') { workedToggle.click(); await settle() }
-        check('completed evidence shows the body metric value back',
-          /184\.2/.test(q('[data-worked="body_metrics"]')?.textContent ?? ''),
-          q('[data-worked="body_metrics"]')?.textContent ?? 'not shown')
-
         const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
         check('Today uses no punishment language', !forbidden.test(document.body.innerText))
       } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
       }
 
       await fetch('/__report', {

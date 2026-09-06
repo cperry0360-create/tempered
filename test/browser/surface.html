@@ -3,14 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — calm surface acceptance</title>
+    <title>Tempered — uplifted surface acceptance</title>
     <link rel="stylesheet" href="../../src/style.css" />
     <link rel="stylesheet" href="../../src/calm.css" />
+    <link rel="stylesheet" href="../../src/uplift.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
-      /** Browser-painted surface checks for the calm tracker pass. */
+      /** Browser-painted surface checks for the brighter planner tracker. */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
@@ -18,7 +19,6 @@
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
       const q = (s, root = document) => root?.querySelector(s) ?? null
       const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 35))
 
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
@@ -55,7 +55,11 @@
           qa('[data-section="daily"] .today-list').length === 1
           && qa('[data-section="daily"] .today-item').length > 1)
         check('Today uses one progress bar', qa('[data-summary="daily"] [role="progressbar"]').length === 1)
-        check('Today renders a compact weekly strength summary', qa('[data-trainingweek="true"]').length === 1)
+        check('Today renders a dedicated foldable Training surface',
+          qa('[data-section="training"]').length === 1
+          && q('[data-fold="training"] .today-section__fold')?.getAttribute('aria-expanded') === 'false')
+        check('Today renders a seven-day date rail', qa('.today-calendar__day').length === 7)
+        check('Today renders a foldable Plan surface', qa('[data-section="planner"]').length === 1)
 
         const todayTargets = qa('.screen--today-calm .today-item, .tabbar__tab')
           .filter((node) => node.getBoundingClientRect().height > 0)

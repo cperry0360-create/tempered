@@ -18,6 +18,8 @@ const DAY_INDEX = Object.freeze({
   saturday: 6,
 })
 
+const COMPLETED_SLOT_SENTINEL = '__tempered_completed_slot__'
+
 function weekdayIndex(dateKey) {
   const date = new Date(`${dateKey}T12:00:00`)
   return Number.isNaN(date.getTime()) ? null : date.getDay()
@@ -84,6 +86,41 @@ export function buildDailyWorkoutQueue(status, todayKey) {
     today,
     primaryDay,
     scheduledDay: todayEntry?.day ?? null,
+  }
+}
+
+/**
+ * Build the version of a program day that should open in a full session NOW.
+ *
+ * A full session is only another route through the same slot records. A slot
+ * already finished earlier in the day is represented by an intentionally
+ * unknown exercise id so the existing session builder skips it while preserving
+ * every later slot's original array index. A partially finished slot keeps its
+ * original index but asks only for the remaining number of sets.
+ *
+ * Keeping the array positions stable is critical: session logging writes that
+ * position as `slotIndex`, which is how Today and Train agree on completion.
+ */
+export function remainingProgramDay(status, programDay) {
+  if (!programDay) return null
+  const entry = status?.week?.days?.find((candidate) => candidate.day?.id === programDay.id)
+  if (!entry) return programDay
+
+  const source = Array.isArray(programDay.exercises) && programDay.exercises.length > 0
+    ? programDay.exercises
+    : entry.tasks.map((task) => task.slot)
+
+  return {
+    ...programDay,
+    exercises: source.map((slot, index) => {
+      const task = entry.tasks[index]
+      if (!task) return slot
+      if (task.done) return { ...slot, exerciseId: `${COMPLETED_SLOT_SENTINEL}${programDay.id}_${index}` }
+      const prescribed = Number(task.prescribed ?? slot?.sets ?? 0)
+      const logged = Number(task.logged ?? 0)
+      const remaining = Math.max(1, prescribed - logged)
+      return { ...slot, sets: remaining }
+    }),
   }
 }
 
@@ -213,9 +250,10 @@ export function installDailyWorkoutEnhancer({ mount, workout, app, clock }) {
         start.replaceWith(replacement)
         start = replacement
       }
+      const sessionDay = remainingProgramDay(status, queue.primaryDay)
       start.dataset.startDailyWorkout = queue.primaryDay.id
       start.textContent = 'Start full session'
-      start.addEventListener('click', () => app.startSession({ programDay: queue.primaryDay }))
+      start.addEventListener('click', () => app.startSession({ programDay: sessionDay }))
     } else {
       start?.remove()
     }

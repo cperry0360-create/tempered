@@ -16,7 +16,7 @@ test('seedLibrary removes an old empty seeded routine and does not recreate it',
     ],
   })
 
-  assert.equal(await storage.get('routines', 'cardio'), null)
+  assert.equal(await storage.get('routines', 'cardio'), undefined)
   assert.deepEqual(await storage.get('routines', 'upper'), {
     id: 'upper', name: 'Upper', exercises: [{ id: 'press', sets: 3 }],
   })

@@ -60,6 +60,10 @@ export function staysEditableAfterComplete(activity) {
   return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
 }
 
+function isAdditiveNumber(activity) {
+  return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
+}
+
 function parseDate(dateKey) {
   const [year, month, day] = String(dateKey).split('-').map(Number)
   return new Date(year, month - 1, day, 12)
@@ -142,7 +146,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   }
 
   function quickPresetFor(activity) {
-    if (activity?.spec?.mode !== 'add') return null
+    if (!isAdditiveNumber(activity)) return null
     const stored = Number(quickPresets?.[activity.id])
     if (Number.isFinite(stored) && stored > 0) return stored
     return DEFAULT_QUICK_ADD[activity.id] ?? null
@@ -184,7 +188,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   }
 
   function editor(activity, weekly = null) {
-    const adding = activity.spec?.mode === 'add'
+    const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
     const input = el('input.today-editor__input', {
       type: 'text', inputmode: 'decimal',
@@ -200,10 +204,11 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
       },
     })
     const preset = quickPresetFor(activity)
-    const presetInput = preset === null ? null : el('input.today-editor__preset-input', {
-      type: 'text', inputmode: 'decimal', value: String(preset),
+    const presetInput = adding ? el('input.today-editor__preset-input', {
+      type: 'text', inputmode: 'decimal', value: preset === null ? '' : String(preset),
+      placeholder: 'Set',
       'aria-label': `Quick add amount for ${activity.name}`,
-    })
+    }) : null
 
     return el('div.today-editor', { dataset: { editor: activity.id } }, [
       el('div.today-editor__manual', {}, [
@@ -214,15 +219,17 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
         }, [adding ? 'Add' : 'Save']),
       ]),
       presetInput && el('div.today-editor__preset', {}, [
-        el('span.today-editor__preset-label', { text: 'One-tap amount' }),
+        el('span.today-editor__preset-label', { text: 'Quick add' }),
         presetInput,
         el('span.today-editor__preset-unit', { text: unit }),
         el('button.today-editor__preset-save', {
           type: 'button', onclick: () => savePreset(activity, presetInput.value),
-        }, ['Save preset']),
+        }, ['Save']),
       ]),
       presetInput && el('span.today-editor__hint', {
-        text: `The + button will add ${preset}${unit ? ` ${unit}` : ''} each tap.`,
+        text: preset === null
+          ? 'Save an amount to turn SET + into a one-tap add.'
+          : `The green button adds ${preset}${unit ? ` ${unit}` : ''} in one tap.`,
       }),
       weekly && el('span.today-editor__hint', { text: statusFor(activity, weekly) }),
     ])
@@ -253,6 +260,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   function numberItem(activity, weekly = null) {
     const open = openActivityId === activity.id
     const complete = weekly ? weekly.complete : dailyGoalComplete(activity)
+    const adding = isAdditiveNumber(activity)
     const preset = quickPresetFor(activity)
     const unit = unitLabel(activity)
     return el('div.today-item-wrap', {
@@ -275,12 +283,21 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
             el('span.today-item__meta', { text: statusFor(activity, weekly) }),
           ]),
         ]),
-        preset !== null && canLogSelected() && el('button.today-item__quick', {
+        adding && canLogSelected() && el('button.today-item__quick', {
           type: 'button',
-          dataset: { quickadd: String(preset) },
-          'aria-label': `Add ${preset} ${activity.unit ?? ''} to ${activity.name}`,
-          onclick: () => record(activity, String(preset)),
-        }, [`+${preset}${unit ? ` ${unit}` : ''}`]),
+          dataset: preset !== null ? { quickadd: String(preset) } : { quicksetup: 'true' },
+          'aria-label': preset !== null
+            ? `Add ${preset} ${activity.unit ?? ''} to ${activity.name}`
+            : `Set one-tap amount for ${activity.name}`,
+          onclick: () => {
+            if (preset !== null) {
+              record(activity, String(preset))
+              return
+            }
+            openActivityId = activity.id
+            render()
+          },
+        }, [preset !== null ? `+${preset}${unit ? ` ${unit}` : ''}` : 'SET +']),
         canLogSelected() && el('button.today-item__expand', {
           type: 'button', 'aria-label': `${open ? 'Close' : 'Open'} ${activity.name} details`,
           'aria-expanded': String(open),

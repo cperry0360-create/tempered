@@ -14,15 +14,29 @@ function targetStorage(storage) {
 }
 
 function validDraft(value) {
+  const plan = value?.plan
   return value?.version === DRAFT_VERSION
     && typeof value?.session?.id === 'string'
     && value.session.id.length > 0
-    && Array.isArray(value.plan)
+    && Array.isArray(plan)
+    && plan.length > 0
+    && plan.every((entry) =>
+      typeof entry?.exercise?.id === 'string'
+      && entry.exercise.id.length > 0
+      && Array.isArray(entry.sets))
+    && plan.some((entry) => entry.sets.length > 0)
 }
 
 export function saveActiveSessionDraft(draft, storage = null) {
   const target = targetStorage(storage)
-  if (!target || !validDraft(draft)) return false
+  if (!target) return false
+  if (!validDraft(draft)) {
+    // Never leave an older resumable checkpoint behind after the current
+    // session becomes empty or malformed. That stale record would otherwise
+    // win again on the next launch and trap the app in a dead session.
+    try { target.removeItem(KEY) } catch {}
+    return false
+  }
   try {
     target.setItem(KEY, JSON.stringify(draft))
     return true

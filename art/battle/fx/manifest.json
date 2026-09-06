@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "effects": [
+    { "id": "sword", "file": "sword-slash.png.b64", "target": "enemy" },
+    { "id": "impact", "file": "impact-spark.png.b64", "target": "enemy" },
+    { "id": "guard", "file": "guard-shield.png.b64", "target": "hero" },
+    { "id": "magic", "file": "magic-burst.png.b64", "target": "enemy" },
+    { "id": "critical", "file": "critical-hit.png.b64", "target": "enemy" },
+    { "id": "dust", "file": "dust-impact.png.b64", "target": "hero" }
+  ]
+}

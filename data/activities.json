@@ -9,10 +9,7 @@
       "daily": true,
       "kind": "derived",
       "unit": "hours",
-      "band": [
-        7,
-        9
-      ],
+      "band": [7, 9],
       "help": "Scored highest between seven and nine hours. More is not better."
     },
     {
@@ -98,6 +95,16 @@
       "kind": "derived",
       "unit": "steps",
       "dailyCap": 15000
+    },
+    {
+      "id": "micro_cardio",
+      "name": "Micro cardio",
+      "short": "Micro cardio",
+      "attribute": "wind",
+      "daily": true,
+      "kind": "derived",
+      "unit": "min",
+      "help": "Short cardio bursts throughout the day. Bike, run, stairs or anything else that gets your heart rate up counts."
     },
     {
       "id": "mobility",

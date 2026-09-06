@@ -1,16 +1,17 @@
 {
   "schemaVersion": 1,
   "assets": [
-    { "kind": "hero", "id": "hero", "path": "hero.png", "width": 96, "height": 96 },
+    { "kind": "background", "id": "battlefield", "path": "battlefield.png", "width": 240, "height": 132 },
+    { "kind": "hero", "id": "hero", "path": "hero.png", "width": 139, "height": 144 },
 
-    { "kind": "enemy", "id": "slime", "path": "enemies/slime.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "rat", "path": "enemies/rat.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "mushroom", "path": "enemies/mushroom.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "orc", "path": "enemies/orc.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "wight", "path": "enemies/wight.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "golem", "path": "enemies/golem.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "rhino", "path": "enemies/rhino.png", "width": 96, "height": 96 },
-    { "kind": "enemy", "id": "wyrm", "path": "enemies/wyrm.png", "width": 96, "height": 96 },
+    { "kind": "enemy", "id": "slime", "path": "enemies/slime.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "rat", "path": "enemies/rat.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "mushroom", "path": "enemies/mushroom.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "orc", "path": "enemies/orc.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "wight", "path": "enemies/wight.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "golem", "path": "enemies/golem.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "rhino", "path": "enemies/rhino.png", "width": 139, "height": 139 },
+    { "kind": "enemy", "id": "wyrm", "path": "enemies/wyrm.png", "width": 139, "height": 139 },
 
     { "kind": "item", "id": "ember_token", "path": "items/ember_token.png", "width": 48, "height": 48 },
     { "kind": "item", "id": "wyrm_scale", "path": "items/wyrm_scale.png", "width": 48, "height": 48 },

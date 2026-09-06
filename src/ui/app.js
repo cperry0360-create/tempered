@@ -24,7 +24,7 @@ const TABS = [
   { id: 'today', label: 'TODAY' },
   { id: 'train', label: 'TRAIN' },
   { id: 'character', label: 'CHARACTER' },
-  { id: 'history', label: 'HISTORY' },
+  { id: 'history', label: 'PROGRESS' },
 ]
 
 const tabLabel = (id) => TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
@@ -43,7 +43,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   let returnTab = 'train'
 
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
-  const history = createHistoryScreen({ storage, workout })
+  const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })
   const battleScreen = battle
     ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })

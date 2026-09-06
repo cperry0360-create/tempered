@@ -186,16 +186,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     day = await resolveProteinDay(day)
     const profile = await storage.get('profile', 'profile')
     const context = { paceBaselineMinPerMile: profile?.paceBaselineMinPerMile ?? null }
-
-    // Micro cardio is intentionally lightweight: it contributes cardiovascular
-    // minutes without pretending that every two-minute bike burst is a formal
-    // workout session (and therefore without repeatedly paying session Grit).
-    const microMinutes = typeof day.microCardioMinutes === 'number' ? Math.max(0, day.microCardioMinutes) : 0
-    const scoringDay = microMinutes > 0
-      ? { ...day, cardio: [...(day.cardio ?? []), { minutes: microMinutes }] }
-      : day
-
-    const full = awardsForDay(scoringDay, context, balance)
+    const full = awardsForDay(day, context, balance)
     const owed = totalsBySource(full)
     const paid = day.awarded ?? {}
 

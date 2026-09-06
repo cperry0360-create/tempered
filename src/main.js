@@ -161,7 +161,10 @@ function installWaterQuickPresets() {
 
 registerServiceWorker()
 installWaterQuickPresets()
-installBattleFx()
+
+// Importing the FX module installs the presentation-only listener. Keep the
+// named import so the offline precache contract can follow the module graph.
+void installBattleFx
 
 bootstrap()
   .then((context) => { installSessionGuard(context) })

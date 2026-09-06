@@ -2,6 +2,7 @@ import { registerServiceWorker } from './pwa/register.js'
 import { bootstrap } from './app/bootstrap.js'
 import { installSessionGuard } from './ui/session-guard.js'
 import { errorState } from './ui/states.js'
+import { installBattleFx } from './ui/battle-fx-runtime.js'
 
 const WATER_FIXED_PRESETS = [8, 12]
 
@@ -160,6 +161,7 @@ function installWaterQuickPresets() {
 
 registerServiceWorker()
 installWaterQuickPresets()
+installBattleFx()
 
 bootstrap()
   .then((context) => { installSessionGuard(context) })

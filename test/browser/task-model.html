@@ -3,14 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — calm task model acceptance</title>
+    <title>Tempered — flexible task model acceptance</title>
     <link rel="stylesheet" href="../../src/style.css" />
     <link rel="stylesheet" href="../../src/calm.css" />
+    <link rel="stylesheet" href="../../src/uplift.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
     <script type="module">
-      /** Task-model acceptance after weekly exercise detail moved out of Today. */
+      /**
+       * The workout session and Today exercise slots are two views of the same
+       * weekly task model. Individual movements can be chipped away at all day;
+       * the full session remains a convenience path through those same slots.
+       */
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
       import { fixedClock } from '../../src/adapters/clock/clock.js'
@@ -20,7 +25,7 @@
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
       const q = (s) => document.querySelector(s)
       const qa = (s) => [...document.querySelectorAll(s)]
-      const settle = () => new Promise((r) => setTimeout(r, 35))
+      const settle = () => new Promise((r) => setTimeout(r, 40))
 
       async function waitFor(selector, timeout = 5000) {
         const deadline = Date.now() + timeout
@@ -38,24 +43,28 @@
         const tempered = await bootstrap({ storage, clock, mount: document.getElementById('app') })
 
         await tempered.app.show('today')
-        await waitFor('[data-trainingweek="true"]')
-        const training = q('[data-trainingweek="true"]')
-        check('Today summarizes the week\'s strength work in one task',
-          qa('[data-trainingweek="true"]').length === 1,
-          training?.textContent?.trim())
-        check('the strength summary shows weekly workout progress',
-          /\d+ \/ \d+ workouts/.test(training?.textContent ?? ''), training?.textContent?.trim())
-        check('individual exercise slots are not dumped onto Today', qa('[data-exerciseweek]').length === 0)
-        check('the scheduled day can be started from the weekly summary',
-          training?.tagName === 'BUTTON' && /start/i.test(training.textContent), training?.textContent?.trim())
+        await waitFor('[data-section="training"]')
+        const trainingFold = q('[data-fold="training"] .today-section__fold')
+        check('Today has a dedicated Training surface', trainingFold !== null)
+        check('individual exercise detail is folded until it is wanted',
+          trainingFold?.getAttribute('aria-expanded') === 'false' && qa('[data-exerciseweek]').length === 0)
+        check('the scheduled full day can still be started directly',
+          q('[data-section="training"] .today-section__start') !== null,
+          q('[data-section="training"] .today-section__start')?.textContent?.trim())
+
+        trainingFold?.click(); await settle()
+        const exerciseRows = qa('[data-exerciseweek]')
+        check('opening Training exposes individual weekly movements on Today',
+          exerciseRows.length > 1, `${exerciseRows.length} movement rows`)
+        check('each open movement shows weekly progress and an action',
+          exerciseRows.filter((row) => /\d+ \/ \d+ this week/.test(row.textContent) && /log sets/i.test(row.textContent)).length > 0)
 
         await tempered.app.show('train')
         await waitFor('[data-programday]')
-        check('detailed program work lives one level deeper in Train', qa('[data-programday]').length >= 3,
+        check('detailed program days also remain available in Train', qa('[data-programday]').length >= 3,
           `${qa('[data-programday]').length} program days`)
 
-        // Micro-set/domain behavior still exists even though Today no longer
-        // presents all thirty slots at once.
+        // Prove the independent path uses the same canonical task/session data.
         const before = await storage.count('sessions')
         const tuesdayTask = { dayId: 'tuesday', slotIndex: 0, exerciseId: 'front_squat' }
         await tempered.workout.completeSlot(tuesdayTask, [
@@ -63,7 +72,7 @@
           { weight: 95, reps: 8 },
           { weight: 95, reps: 8 },
         ])
-        check('a slot can still be logged independently through the task model',
+        check('a slot can be logged independently through the task model',
           (await storage.count('sessions')) >= before,
           `${await storage.count('sessions')} stored sessions`)
 
@@ -110,7 +119,7 @@
         const offenders = screens.filter(([, text]) => forbidden.test(text))
           .map(([tab, text]) => `${tab}: "${text.match(forbidden)[0]}"`)
         check('nothing rendered calls outstanding work overdue, late, missed or failed',
-          offenders.length === 0, offenders.join('; ') || 'checked today, train, history')
+          offenders.length === 0, offenders.join('; ') || 'checked today, train, progress')
 
         await tempered.app.show('today'); await settle()
         const outstanding = qa('[data-section="daily"] [data-complete="false"], [data-section="weekly"] [data-complete="false"]')
@@ -143,7 +152,7 @@
           typeof VERSION === 'string' && VERSION.length > 0 && BUILD_DATE.length > 0,
           `VERSION ${VERSION}, built ${BUILD_DATE}`)
       } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 400))
+        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
       }
 
       await fetch('/__report', {

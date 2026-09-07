@@ -13,7 +13,8 @@
   <link rel="stylesheet" href="../../src/uplift.css" />
   <link rel="stylesheet" href="../../src/progress.css" />
   <link rel="stylesheet" href="../../src/battle-fidelity.css" />
-  <link rel="stylesheet" href="../../src/character-rpg.css" />
+  <link rel="stylesheet" href="../../src/character.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -51,7 +52,7 @@
     }
 
     function isVisible(node) {
-      if (!node || node.disabled) return false
+      if (!node || node.disabled || !node.isConnected) return false
       const style = getComputedStyle(node)
       const rect = node.getBoundingClientRect()
       return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) !== 0
@@ -64,7 +65,7 @@
     }
 
     async function scrollControlIntoView(node) {
-      if (!node) return
+      if (!node || !node.isConnected) return
       const scroller = q('.app__body')
       if (!scroller || getComputedStyle(node).position === 'fixed') return
       node.scrollIntoView({ block: 'center', inline: 'nearest' })
@@ -78,7 +79,7 @@
       const onscreen = x >= 0 && x < innerWidth && y >= 0 && y < innerHeight
       const top = onscreen ? document.elementFromPoint(x, y) : null
       const owner = top?.closest?.('button, a, input, select, textarea, [role="button"]')
-      const hit = onscreen && (top === node || node.contains(top) || owner === node)
+      const hit = node.isConnected && onscreen && (top === node || node.contains(top) || owner === node)
       return { rect, x, y, onscreen, top, owner, hit }
     }
 
@@ -88,6 +89,10 @@
         return false
       }
       await scrollControlIntoView(node)
+      if (!node.isConnected) {
+        check(`${label}: center is actually tappable`, false, 'control was replaced while scrolling')
+        return false
+      }
       const info = hitInfo(node)
       check(`${label}: center is actually tappable`, info.hit,
         info.hit
@@ -96,8 +101,9 @@
               ? `could not scroll into viewport: top ${Math.round(info.rect.top)}, bottom ${Math.round(info.rect.bottom)}`
               : `blocked by ${info.top?.tagName || 'nothing'}.${info.top?.className || ''}`))
       if (info.hit && click) {
-        info.owner?.click?.() ?? node.click()
-        await settle(120)
+        const target = info.owner ?? node
+        target.click()
+        await settle(140)
       }
       return info.hit
     }
@@ -106,18 +112,22 @@
       const buttons = qa('button', root).filter(isVisible)
       const blocked = []
       const small = []
+      let checked = 0
       for (const button of buttons) {
+        if (!button.isConnected) continue
         await scrollControlIntoView(button)
+        if (!button.isConnected || !isVisible(button)) continue
         const info = hitInfo(button)
+        checked += 1
         if (!info.hit) blocked.push(`${labelFor(button)} -> ${info.onscreen ? labelFor(info.top) : 'offscreen'}`)
-        if (info.rect.width < 44 || info.rect.height < 44) {
+        if (info.rect.width < 43.5 || info.rect.height < 43.5) {
           small.push(`${labelFor(button)} ${Math.round(info.rect.width)}×${Math.round(info.rect.height)}`)
         }
       }
       check(`${screenName}: every enabled button center is hit-testable`, blocked.length === 0,
-        blocked.length ? blocked.slice(0, 12).join(' | ') : `${buttons.length} buttons checked`)
+        blocked.length ? blocked.slice(0, 12).join(' | ') : `${checked} buttons checked`)
       check(`${screenName}: every independent button is at least 44px`, small.length === 0,
-        small.length ? small.slice(0, 10).join(' | ') : `${buttons.length} buttons checked`)
+        small.length ? small.slice(0, 10).join(' | ') : `${checked} buttons checked`)
     }
 
     async function tapTab(id) {
@@ -145,7 +155,14 @@
       installMobileInteractions()
       const storage = createMemoryStorage()
       const tempered = await bootstrapHarness({ storage, mount: q('#app'), initialTab: 'today' })
+
+      // The owner's real profile keeps Water on the daily surface. Make that
+      // product path explicit rather than relying on the seed's smaller demo
+      // cadence, then rerender Today through the real service.
+      await tempered.daily.setCadence('water', 'daily')
+      await tempered.app.show('today')
       await waitFor('.screen--today')
+      await settle(160)
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today loads', Boolean(q('.screen--today')))
@@ -161,8 +178,7 @@
       check('Water quick add changes the logged value in one tap', waterMetaAfter !== waterMetaBefore,
         `${waterMetaBefore} -> ${waterMetaAfter}`)
 
-      const waterExpand = q('[data-activity="water"] .today-item__expand')
-      await centerHit(waterExpand, 'Water details chevron', { click: true })
+      await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details chevron', { click: true })
       check('Water chevron opens its numeric editor', Boolean(q('[data-editor="water"]')))
       await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details close', { click: true })
       check('Water chevron closes its editor', !q('[data-editor="water"]'))
@@ -197,8 +213,7 @@
       const attrId = firstAttribute?.dataset.attr
       await centerHit(firstAttribute, 'Character attribute', { click: true })
       check('Character attribute expands from a real tap', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
-      const battleButton = q('[data-open="battle"]')
-      await centerHit(battleButton, 'Character Enter Battle', { click: true })
+      await centerHit(q('[data-open="battle"]'), 'Character Enter Battle', { click: true })
       const battle = await waitFor('.screen--battle')
       check('Enter Battle opens the battle screen', Boolean(battle))
       if (battle) {

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — workout editing ergonomics</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s, root = document) => root?.querySelector?.(s) ?? null
+    const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+    const settle = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    async function waitFor(selector, timeout = 4000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      throw new Error(`timed out waiting for ${selector}`)
+    }
+
+    try {
+      installMobileInteractions()
+      const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+      const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      await tempered.app.show('train')
+      await waitFor('[data-programday="monday"]')
+      q('[data-programday="monday"]')?.click()
+      await waitFor('.screen--session .setrow__num[data-field="weight"]')
+
+      let card = q('.screen--session [data-exercise]')
+      let weights = qa('.setrow__num[data-field="weight"]', card)
+      let reps = qa('.setrow__num[data-field="reps"]', card)
+      check('test exercise has at least four editable sets', weights.length >= 4 && reps.length >= 4,
+        `${weights.length} weights / ${reps.length} reps`)
+
+      // Establish set 1, then log it so the following edit is a real mid-exercise adjustment.
+      weights[0].value = '12'
+      weights[0].dispatchEvent(new Event('input', { bubbles: true }))
+      reps[0].value = '16'
+      reps[0].dispatchEvent(new Event('input', { bubbles: true }))
+      q('.setrow__check', card)?.click()
+      await settle(120)
+
+      card = q('.screen--session [data-exercise]')
+      weights = qa('.setrow__num[data-field="weight"]', card)
+      reps = qa('.setrow__num[data-field="reps"]', card)
+      check('set 1 is now historical/read-only', weights[0]?.readOnly === true)
+
+      // A tap/focus on the existing second-set value must select the whole number.
+      weights[1]?.focus()
+      await settle(90)
+      check('existing weight is fully selected for replacement',
+        weights[1]?.selectionStart === 0 && weights[1]?.selectionEnd === weights[1]?.value.length,
+        `${weights[1]?.selectionStart}..${weights[1]?.selectionEnd} of ${weights[1]?.value.length}`)
+
+      // Change set 2. Reps are part of the new prescription and should travel with the weight.
+      reps[1].value = '16'
+      reps[1].dispatchEvent(new Event('input', { bubbles: true }))
+      weights[1].value = '15.5'
+      weights[1].dispatchEvent(new Event('input', { bubbles: true }))
+      weights[1].dispatchEvent(new Event('change', { bubbles: true }))
+      await settle(140)
+
+      card = q('.screen--session [data-exercise]')
+      weights = qa('.setrow__num[data-field="weight"]', card)
+      reps = qa('.setrow__num[data-field="reps"]', card)
+
+      check('editing set 2 carries its weight into every later unlogged set',
+        weights.slice(2).every((input) => input.value === '15.5'),
+        weights.map((input) => input.value || '-').join(', '))
+      check('editing set 2 carries its reps into every later unlogged set',
+        reps.slice(2).every((input) => input.value === '16'),
+        reps.map((input) => input.value || '-').join(', '))
+      check('the already logged set is never rewritten by a cascade',
+        weights[0]?.value === '12' && reps[0]?.value === '16',
+        `${weights[0]?.value} × ${reps[0]?.value}`)
+    } catch (error) {
+      check('workout editing harness threw', false, String(error?.stack ?? error).slice(0, 700))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'workout-editing', passed: checks.every((c) => c.ok), checks }),
+    })
+  </script>
+</body>
+</html>

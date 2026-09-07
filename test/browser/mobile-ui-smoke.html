@@ -35,6 +35,15 @@
     window.addEventListener('error', (event) => runtimeErrors.push(event.message || 'runtime error'))
     window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason || 'unhandled rejection')))
 
+    async function installShippedInlineCss() {
+      const html = await fetch('../../index.html').then((response) => response.text())
+      for (const match of html.matchAll(/<style>([\s\S]*?)<\/style>/gi)) {
+        const style = document.createElement('style')
+        style.textContent = match[1]
+        document.head.append(style)
+      }
+    }
+
     async function waitFor(selector, timeout = 3500) {
       const end = Date.now() + timeout
       while (Date.now() < end) {
@@ -92,12 +101,14 @@
     }
 
     try {
+      await installShippedInlineCss()
       installWaterQuickPresets()
       installMobileInteractions()
       const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       await tempered.app.show('today')
       await waitFor('.screen--today')
+      await settle(100)
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today renders', Boolean(q('.screen--today')))

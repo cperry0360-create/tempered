@@ -106,9 +106,15 @@
       installMobileInteractions()
       const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+
+      // The harness profile is intentionally minimal; make Water a daily item so
+      // this journey exercises the same three-button row the real user has.
+      await tempered.daily.setCadence('water', 'daily', 1)
       await tempered.app.show('today')
       await waitFor('.screen--today')
-      await settle(100)
+      installWaterQuickPresets()
+      await waitFor('[data-activity="water"] [data-water-row-presets="true"]')
+      await settle(80)
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today renders', Boolean(q('.screen--today')))

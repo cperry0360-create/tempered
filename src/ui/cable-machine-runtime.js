@@ -33,11 +33,10 @@ function ensureStyle() {
       display: flex;
       align-items: center;
       min-height: 26px;
-      color: var(--text-2);
+      color: var(--blue);
       font-size: 11px;
-      font-weight: 650;
+      font-weight: 750;
     }
-    .cable-readout strong { color: var(--blue); font-weight: 800; }
     .setrow__num[data-cable-invalid='true'] {
       border-color: var(--acid) !important;
       outline: 1px solid var(--acid);
@@ -153,26 +152,35 @@ export async function installCableMachineRuntime(context) {
   }
 
   function updateReadout(card) {
-    card.querySelector('.cable-readout')?.remove()
-    if (!machine.enabled) return
+    let readout = card.querySelector('.cable-readout')
+    if (!machine.enabled) {
+      readout?.remove()
+      return
+    }
 
     const row = card.querySelector('.setrow[data-active="true"]')
       ?? [...card.querySelectorAll('.setrow')].find((candidate) => candidate.querySelector('.setrow__num[data-field="weight"]:not([readonly])'))
     const input = row?.querySelector('.setrow__num[data-field="weight"]')
-    if (!(input instanceof HTMLInputElement)) return
+    if (!(input instanceof HTMLInputElement)) {
+      readout?.remove()
+      return
+    }
+
+    if (!readout) {
+      readout = document.createElement('div')
+      readout.className = 'cable-readout'
+      readout.dataset.cableReadout = card.dataset.exercise
+      row.append(readout)
+    } else if (readout.parentElement !== row) {
+      row.append(readout)
+    }
 
     const stacks = cableStacksForExercise(card.dataset.exercise, machine)
     const load = cableLoadForPeg(input.value, { profile: machine, stacks })
-    const readout = document.createElement('div')
-    readout.className = 'cable-readout'
-    readout.dataset.cableReadout = card.dataset.exercise
-
-    if (!load) {
-      readout.textContent = `Enter peg 1–${machine.selectorPositions}`
-    } else {
-      readout.innerHTML = `<strong>${fmt(load.perHandle)} lb / handle</strong>&nbsp; · &nbsp;${fmt(load.total)} lb total&nbsp; · &nbsp;${load.stacks} stack${load.stacks === 1 ? '' : 's'} @ ${fmt(load.ratio)}:1`
-    }
-    row.append(readout)
+    const next = load
+      ? `${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb total · ${load.stacks} stack${load.stacks === 1 ? '' : 's'} @ ${fmt(load.ratio)}:1`
+      : `Enter peg 1–${machine.selectorPositions}`
+    if (readout.textContent !== next) readout.textContent = next
   }
 
   function initialisePegInputs(card) {
@@ -259,9 +267,10 @@ export async function installCableMachineRuntime(context) {
     const example = section?.querySelector('.cable-settings__example')
     if (!example) return
     const load = cableLoadForPeg(6, { profile: machine, stacks: Math.min(2, machine.stackCount) })
-    example.innerHTML = load
-      ? `<strong>Peg 6</strong> → ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb Cable Fly total`
+    const next = load
+      ? `Peg 6 → ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb Cable Fly total`
       : 'Adjust the machine values to preview Peg 6.'
+    if (example.textContent !== next) example.textContent = next
   }
 
   function enhanceSettings(screen) {

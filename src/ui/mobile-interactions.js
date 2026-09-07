@@ -10,7 +10,7 @@ function selectExistingNumber(input) {
   if (input.readOnly || input.disabled || !input.value) return
 
   // iOS Safari can place the caret after the focus handler runs. Selecting on
-  // the next frame makes a tap into an existing weight/reps field mean
+  // the next frame makes a tap into an existing numeric field mean
   // "replace this value", not "insert before/after it".
   requestAnimationFrame(() => {
     if (document.activeElement !== input) return
@@ -19,12 +19,25 @@ function selectExistingNumber(input) {
   })
 }
 
+function numericInputFrom(target) {
+  const input = target?.closest?.('input')
+  if (!(input instanceof HTMLInputElement)) return null
+  if (input.matches('.setrow__num, .equipment__bar, .today-editor__preset-input')) return input
+  return ['decimal', 'numeric'].includes(input.inputMode) ? input : null
+}
+
 export function installMobileInteractions() {
   if (installed) return
   installed = true
 
   document.addEventListener('focusin', (event) => {
-    const input = event.target?.closest?.('.setrow__num')
-    selectExistingNumber(input)
+    selectExistingNumber(numericInputFrom(event.target))
+  })
+
+  // A second pass after the completed tap is intentional. Mobile Safari may
+  // move the caret after focusin while processing the touch. Running the same
+  // safe selection after click makes the replace behavior deterministic.
+  document.addEventListener('click', (event) => {
+    selectExistingNumber(numericInputFrom(event.target))
   })
 }

@@ -18,7 +18,13 @@ void installBattleFx
 bootstrap()
   .then(async (context) => {
     installSessionGuard(context)
-    await installCableMachineRuntime(context)
+    try {
+      await installCableMachineRuntime(context)
+    } catch (error) {
+      // Equipment preferences are optional. A malformed saved profile should
+      // never turn a working tracker into a startup failure.
+      console.error('[tempered] cable machine setup failed', error)
+    }
   })
   .catch((error) => {
     console.error('[tempered] failed to start', error)

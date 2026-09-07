@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — FT1 cable machine</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
+    import { installCableMachineRuntime } from '../../src/ui/cable-machine-runtime.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s, root = document) => root?.querySelector?.(s) ?? null
+    const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+    const settle = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    async function waitFor(selector, timeout = 4000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      throw new Error(`timed out waiting for ${selector}`)
+    }
+
+    try {
+      installMobileInteractions()
+      const storage = createMemoryStorage()
+      const clock = fixedClock(new Date(2026, 8, 7, 17, 45, 0))
+      const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+      await installCableMachineRuntime(tempered)
+
+      await tempered.app.startSession({ exerciseId: 'cable_fly' })
+      const card = await waitFor('.screen--session [data-exercise="cable_fly"]')
+      await settle(120)
+
+      check('Cable Fly weight column becomes PEG', q('.setrow--head [data-col="weight"]', card)?.textContent === 'PEG',
+        q('.setrow--head [data-col="weight"]', card)?.textContent)
+      check('session identifies Inspire FT1 peg mode', /FT1 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+
+      let weights = qa('.setrow__num[data-field="weight"]', card)
+      let reps = qa('.setrow__num[data-field="reps"]', card)
+      check('peg inputs use a numeric keyboard hint', weights[0]?.inputMode === 'numeric', weights[0]?.inputMode)
+
+      weights[0].value = '6'
+      weights[0].dispatchEvent(new Event('input', { bubbles: true }))
+      reps[0].value = '16'
+      reps[0].dispatchEvent(new Event('input', { bubbles: true }))
+      weights[0].dispatchEvent(new Event('change', { bubbles: true }))
+      await settle(160)
+
+      const liveCard = q('.screen--session [data-exercise="cable_fly"]')
+      weights = qa('.setrow__num[data-field="weight"]', liveCard)
+      reps = qa('.setrow__num[data-field="reps"]', liveCard)
+      const readout = q('.cable-readout', liveCard)?.textContent ?? ''
+
+      check('Peg 6 calculates 37.5 lb per handle', /37\.5 lb \/ handle/.test(readout), readout)
+      check('Cable Fly uses both stacks for 75 lb total', /75 lb total/.test(readout) && /2 stacks/.test(readout), readout)
+      check('changing set 1 carries the peg through later sets', weights.slice(1).every((input) => input.value === '6'),
+        weights.map((input) => input.value || '-').join(', '))
+      check('changing set 1 carries reps through later sets', reps.slice(1).every((input) => input.value === '16'),
+        reps.map((input) => input.value || '-').join(', '))
+
+      q('.setrow__check', liveCard)?.click()
+      await settle(180)
+      const logs = await storage.getAll('setLogs')
+      const log = logs.find((row) => row.exerciseId === 'cable_fly')
+      check('logged Cable Fly stores calculated effective resistance', log?.weight === 75, log?.weight)
+      check('logged Cable Fly preserves the physical selector peg', log?.cablePeg === 6, log?.cablePeg)
+      check('logged Cable Fly preserves per-handle resistance', log?.cablePerHandle === 37.5, log?.cablePerHandle)
+      check('logged Cable Fly records that both stacks were used', log?.cableStacks === 2, log?.cableStacks)
+
+      await tempered.app.show('settings')
+      const equipment = await waitFor('[data-section="cable-machine"]')
+      await settle(80)
+      check('Settings exposes the Inspire FT1 cable profile', /Inspire FT1 preset/.test(equipment.textContent ?? ''))
+      check('Settings defaults to 15 selector positions',
+        qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Selector positions' && input.value === '15'))
+      check('Settings defaults the FT1 head weight to 15 lb',
+        qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Top / head weight (lb)' && input.value === '15'))
+      check('Settings preview describes Peg 6 as 75 lb total', /75 lb Cable Fly total/.test(q('.cable-settings__example', equipment)?.textContent ?? ''))
+
+      const addon = [...equipment.querySelectorAll('button')].find((button) => button.textContent === 'NO')
+      addon?.click()
+      await settle(120)
+      check('5 lb add-on toggle updates the Peg 6 preview to 80 lb total',
+        /80 lb Cable Fly total/.test(q('.cable-settings__example', equipment)?.textContent ?? ''),
+        q('.cable-settings__example', equipment)?.textContent)
+      const profile = await storage.get('profile', 'profile')
+      check('cable profile is persisted through the storage adapter', profile?.cableMachine?.addOnEnabled === true)
+    } catch (error) {
+      check('cable machine harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'cable-machine', passed: checks.every((c) => c.ok), checks }),
+    })
+  </script>
+</body>
+</html>

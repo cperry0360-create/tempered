@@ -60,16 +60,23 @@
       reps = qa('.setrow__num[data-field="reps"]', card)
       check('set 1 is now historical/read-only', weights[0]?.readOnly === true)
 
-      // A tap/focus on the existing second-set value must select the whole number.
-      weights[1]?.focus()
+      // Give set 2 a real previous value exactly like the user's screenshot.
+      // The selection check is intentionally meaningless if the input is blank.
+      weights[1].value = '12'
+      weights[1].dispatchEvent(new Event('input', { bubbles: true }))
+      reps[1].value = '16'
+      reps[1].dispatchEvent(new Event('input', { bubbles: true }))
+      check('second set has an existing value to replace', weights[1].value === '12', weights[1].value)
+
+      weights[1].focus()
       await settle(90)
       check('existing weight is fully selected for replacement',
-        weights[1]?.selectionStart === 0 && weights[1]?.selectionEnd === weights[1]?.value.length,
+        weights[1]?.selectionStart === 0
+          && weights[1]?.selectionEnd === weights[1]?.value.length
+          && weights[1]?.value.length > 0,
         `${weights[1]?.selectionStart}..${weights[1]?.selectionEnd} of ${weights[1]?.value.length}`)
 
       // Change set 2. Reps are part of the new prescription and should travel with the weight.
-      reps[1].value = '16'
-      reps[1].dispatchEvent(new Event('input', { bubbles: true }))
       weights[1].value = '15.5'
       weights[1].dispatchEvent(new Event('input', { bubbles: true }))
       weights[1].dispatchEvent(new Event('change', { bubbles: true }))

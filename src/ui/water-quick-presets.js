@@ -23,6 +23,9 @@ function ensureStyle() {
       font-size: 10.5px;
       white-space: nowrap;
     }
+    .today-item-wrap[data-activity='water'] .today-editor[data-editor='water'] {
+      padding-top: 14px;
+    }
     @media (max-width: 430px) {
       .today-item-wrap[data-activity='water'] .today-item {
         gap: 5px;

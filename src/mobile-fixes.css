@@ -11,7 +11,10 @@
 .battle__utility .button,
 .actionpill,
 .setup__cadence,
-.setup__weeklyselect {
+.setup__weeklyselect,
+.attr__head,
+.character-hero__battle,
+.character-battle-cta .button {
   min-height: 44px !important;
 }
 

@@ -25,6 +25,16 @@
     window.addEventListener('error', (event) => runtimeErrors.push(event.message || 'runtime error'))
     window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason || 'unhandled rejection')))
 
+    async function waitFor(selector, timeout = 3000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle()
+      }
+      return null
+    }
+
     function waterValue() {
       const text = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
       const match = text.match(/([0-9.]+)\s*\/\s*[0-9.]+\s*oz/i)
@@ -56,6 +66,8 @@
       const clock = fixedClock(new Date(2026, 8, 7, 8, 41, 0))
       const tempered = await bootstrap({ clock, mount: q('#app'), initialTab: 'today' })
       await tempered.app.show('today')
+      const waterRow = await waitFor('.today-item-wrap[data-activity="water"]')
+      check('Water row renders before stress test', Boolean(waterRow))
       installWaterQuickPresets()
       await settle(100)
 

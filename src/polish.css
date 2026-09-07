@@ -26,6 +26,42 @@ html {
 
 body { min-width: 280px; }
 
+/* The app owns scrolling. Constraining the shell to the visual viewport fixes a
+   class of iOS bugs where long screens visually moved but the actual hit-test
+   surface did not. It also guarantees content can scroll clear of the floating
+   tab bar instead of ending underneath it. */
+html,
+body,
+#app,
+.app {
+  height: 100%;
+  max-height: 100%;
+}
+
+body { overflow: hidden; }
+
+.app {
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.app__body {
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: calc(var(--s4) + env(safe-area-inset-top));
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.tabbar { z-index: 40; }
+.settings-access { z-index: 50; }
+
 /* Keyboard and switch-control focus must be impossible to lose against the
    illustrated background. Focus is deliberately acid because it is an active
    state, one of the accent's allowed roles. */
@@ -48,13 +84,38 @@ body { min-width: 280px; }
 :where(input, select, textarea) { font-size: max(1rem, var(--text-md)); }
 
 /* Phase 8 closes the remaining undersized controls from earlier dense layouts.
-   The visible control can remain compact, but its actual target is 44px. */
+   Visual density can stay compact, but every independent tap target is at least
+   44px on its narrowest dimension. */
 .quick__add,
 .iconbutton,
-.worked__toggle {
-  min-width: 44px;
+.worked__toggle,
+.today-item__body,
+.today-item__quick,
+.today-item__expand,
+.setup__cadence,
+.setup__weeklyselect,
+.progress-range__button,
+.battle__back,
+.calendar__nav,
+.dayrail__nav,
+.planner__add,
+.today-planner__add {
   min-height: 44px;
 }
+
+.today-item__expand,
+.calendar__nav,
+.dayrail__nav {
+  min-width: 44px;
+}
+
+.today-item__body { padding-block: 6px; }
+
+/* The small cadence pills are used dozens of times in Settings, so an extra
+   four pixels of height removes a lot of missed taps without changing layout. */
+.setup__cadence { min-height: 44px !important; }
+.setup__weeklyselect { min-height: 44px !important; }
+.progress-range__button { min-width: 44px; }
 
 /* Screen changes get one short spatial cue. Existing completion motion remains
    untouched. Reduced-motion below removes both. */

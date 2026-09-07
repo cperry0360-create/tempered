@@ -5,6 +5,7 @@ import { errorState } from './ui/states.js'
 import { installBattleFx } from './ui/battle-fx-runtime.js'
 import { installWaterQuickPresets } from './ui/water-quick-presets.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
+import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 
 registerServiceWorker()
 installWaterQuickPresets()
@@ -15,7 +16,10 @@ installMobileInteractions()
 void installBattleFx
 
 bootstrap()
-  .then((context) => { installSessionGuard(context) })
+  .then(async (context) => {
+    installSessionGuard(context)
+    await installCableMachineRuntime(context)
+  })
   .catch((error) => {
     console.error('[tempered] failed to start', error)
     const app = document.getElementById('app')

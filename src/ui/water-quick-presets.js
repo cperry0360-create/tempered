@@ -1,19 +1,11 @@
 const WATER_FIXED_PRESETS = [8, 12]
 
-let installed = false
+let observer = null
+let observedApp = null
+let pendingWaterAdd = null
 
-/**
- * Water gets three one-tap choices in the collapsed row: 8 oz, 12 oz, and the
- * user's saved custom amount. The custom button is Today's real quick-add
- * button, so persistence and XP rules stay owned by Today.
- */
-export function installWaterQuickPresets() {
-  if (installed) return
-  installed = true
-
-  const app = document.getElementById('app')
-  if (!app) return
-
+function ensureStyle() {
+  if (document.getElementById('water-row-quickset-style')) return
   const style = document.createElement('style')
   style.id = 'water-row-quickset-style'
   style.textContent = `
@@ -47,87 +39,111 @@ export function installWaterQuickPresets() {
     }
   `
   document.head.append(style)
+}
 
-  let pendingWaterAdd = null
+function directChildWithClass(node, className) {
+  return [...(node?.children ?? [])].find((child) => child.classList?.contains(className)) ?? null
+}
 
-  function submitThroughEditor(editor, amount) {
-    const input = editor.querySelector('.today-editor__input')
-    const addButton = editor.querySelector('.today-editor__save')
-    if (!(input instanceof HTMLInputElement) || !(addButton instanceof HTMLButtonElement) || addButton.disabled) {
-      pendingWaterAdd = null
-      return
-    }
-    pendingWaterAdd = { amount, stage: 'submitted', editor }
-    input.value = String(amount)
-    addButton.click()
+function submitThroughEditor(editor, amount) {
+  const input = editor?.querySelector('.today-editor__input')
+  const addButton = editor?.querySelector('.today-editor__save')
+  if (!(input instanceof HTMLInputElement) || !(addButton instanceof HTMLButtonElement) || addButton.disabled) {
+    pendingWaterAdd = null
+    return
+  }
+  pendingWaterAdd = { amount, stage: 'submitted', editor }
+  input.value = String(amount)
+  addButton.click()
+}
+
+function addFixedAmount(wrap, amount) {
+  const openEditor = wrap.querySelector('.today-editor[data-editor="water"]')
+  if (openEditor) {
+    submitThroughEditor(openEditor, amount)
+    return
+  }
+  const expand = wrap.querySelector('.today-item__expand')
+  if (!(expand instanceof HTMLButtonElement)) return
+  pendingWaterAdd = { amount, stage: 'opening' }
+  expand.click()
+}
+
+function enhanceRow(wrap) {
+  const row = directChildWithClass(wrap, 'today-item')
+  if (!row || row.querySelector('[data-water-row-presets="true"]')) return
+
+  const customButton = directChildWithClass(row, 'today-item__quick')
+  const expand = directChildWithClass(row, 'today-item__expand')
+  if (!(customButton instanceof HTMLButtonElement) || !(expand instanceof HTMLButtonElement)) return
+
+  customButton.dataset.adjustable = 'true'
+  customButton.title = 'Custom Water quick add — change it with the chevron'
+
+  const group = document.createElement('div')
+  group.className = 'water-row-quickset'
+  group.dataset.waterRowPresets = 'true'
+
+  for (const amount of WATER_FIXED_PRESETS) {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'today-item__quick water-row-quickset__fixed'
+    button.dataset.quickadd = String(amount)
+    button.setAttribute('aria-label', `Add ${amount} oz to Water`)
+    button.textContent = `+${amount} oz`
+    button.addEventListener('click', () => addFixedAmount(wrap, amount))
+    group.append(button)
   }
 
-  function addFixedAmount(wrap, amount) {
-    const openEditor = wrap.querySelector('.today-editor[data-editor="water"]')
-    if (openEditor) {
-      submitThroughEditor(openEditor, amount)
-      return
-    }
-    const expand = wrap.querySelector('.today-item__expand')
-    if (!(expand instanceof HTMLButtonElement)) return
-    pendingWaterAdd = { amount, stage: 'opening' }
-    expand.click()
+  group.append(customButton)
+  row.insertBefore(group, expand)
+}
+
+function enhanceEditor(editor) {
+  const label = editor.querySelector('.today-editor__preset-label')
+  if (label) label.textContent = 'Third quick add'
+  const hint = editor.querySelector('.today-editor__hint')
+  if (hint) hint.textContent = 'Water always includes +8 oz and +12 oz. Change this amount to set the third row button.'
+
+  if (!pendingWaterAdd) return
+  if (pendingWaterAdd.stage === 'opening') {
+    submitThroughEditor(editor, pendingWaterAdd.amount)
+    return
   }
-
-  function enhanceRow(wrap) {
-    const row = wrap.querySelector(':scope > .today-item')
-    if (!row || row.querySelector('[data-water-row-presets="true"]')) return
-
-    const customButton = row.querySelector(':scope > .today-item__quick')
-    const expand = row.querySelector(':scope > .today-item__expand')
-    if (!(customButton instanceof HTMLButtonElement) || !(expand instanceof HTMLButtonElement)) return
-
-    customButton.dataset.adjustable = 'true'
-    customButton.title = 'Custom Water quick add — change it with the chevron'
-
-    const group = document.createElement('div')
-    group.className = 'water-row-quickset'
-    group.dataset.waterRowPresets = 'true'
-
-    for (const amount of WATER_FIXED_PRESETS) {
-      const button = document.createElement('button')
-      button.type = 'button'
-      button.className = 'today-item__quick water-row-quickset__fixed'
-      button.dataset.quickadd = String(amount)
-      button.setAttribute('aria-label', `Add ${amount} oz to Water`)
-      button.textContent = `+${amount} oz`
-      button.addEventListener('click', () => addFixedAmount(wrap, amount))
-      group.append(button)
-    }
-
-    group.append(customButton)
-    row.insertBefore(group, expand)
+  if (pendingWaterAdd.stage === 'submitted' && editor !== pendingWaterAdd.editor) {
+    const wrap = editor.closest('.today-item-wrap[data-activity="water"]')
+    const expand = wrap?.querySelector('.today-item__expand')
+    pendingWaterAdd = null
+    if (expand instanceof HTMLButtonElement) expand.click()
   }
+}
 
-  function enhanceEditor(editor) {
-    const label = editor.querySelector('.today-editor__preset-label')
-    if (label) label.textContent = 'Third quick add'
-    const hint = editor.querySelector('.today-editor__hint')
-    if (hint) hint.textContent = 'Water always includes +8 oz and +12 oz. Change this amount to set the third row button.'
+function enhance(app) {
+  for (const wrap of app.querySelectorAll('.today-item-wrap[data-activity="water"]')) enhanceRow(wrap)
+  for (const editor of app.querySelectorAll('.today-editor[data-editor="water"]')) enhanceEditor(editor)
+}
 
-    if (!pendingWaterAdd) return
-    if (pendingWaterAdd.stage === 'opening') {
-      submitThroughEditor(editor, pendingWaterAdd.amount)
-      return
-    }
-    if (pendingWaterAdd.stage === 'submitted' && editor !== pendingWaterAdd.editor) {
-      const wrap = editor.closest('.today-item-wrap[data-activity="water"]')
-      const expand = wrap?.querySelector('.today-item__expand')
-      pendingWaterAdd = null
-      if (expand instanceof HTMLButtonElement) expand.click()
-    }
-  }
+/**
+ * Water gets three one-tap choices in the collapsed row: 8 oz, 12 oz, and the
+ * user's saved custom amount. The custom button remains Today's real quick-add
+ * button, so persistence and XP stay owned by Today rather than this enhancer.
+ */
+export function installWaterQuickPresets() {
+  const app = document.getElementById('app')
+  if (!app) return
+  ensureStyle()
 
-  function enhance() {
-    for (const wrap of app.querySelectorAll('.today-item-wrap[data-activity="water"]')) enhanceRow(wrap)
-    for (const editor of app.querySelectorAll('.today-editor[data-editor="water"]')) enhanceEditor(editor)
-  }
+  // Installation is idempotent, but every call also performs an immediate
+  // enhancement. That matters in browser harnesses and iOS restores where the
+  // app shell can already exist before this module gets a turn.
+  enhance(app)
+  requestAnimationFrame(() => enhance(app))
 
-  enhance()
-  new MutationObserver(enhance).observe(app, { childList: true, subtree: true })
+  if (observer && observedApp === app) return
+  observer?.disconnect()
+  observedApp = app
+  observer = new MutationObserver(() => {
+    queueMicrotask(() => enhance(app))
+  })
+  observer.observe(app, { childList: true, subtree: true })
 }

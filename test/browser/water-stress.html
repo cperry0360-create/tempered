@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — Water stress</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/cadence.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installWaterQuickPresets } from '../../src/ui/water-quick-presets.js'
+
+    const checks = []
+    const runtimeErrors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const qa = (selector) => [...document.querySelectorAll(selector)]
+    const settle = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    window.addEventListener('error', (event) => runtimeErrors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason || 'unhandled rejection')))
+
+    async function installShippedInlineCss() {
+      const html = await fetch('../../index.html').then((response) => response.text())
+      for (const match of html.matchAll(/<style>([\s\S]*?)<\/style>/gi)) {
+        const style = document.createElement('style')
+        style.textContent = match[1]
+        document.head.append(style)
+      }
+    }
+
+    async function waitFor(selector, timeout = 3500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(15)
+      }
+      return null
+    }
+
+    function waterValue() {
+      const text = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      const match = text.match(/([0-9.]+)\s*\/\s*[0-9.]+\s*oz/i)
+      return match ? Number(match[1]) : NaN
+    }
+
+    async function waitForWaterValue(expected, timeout = 2500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const value = waterValue()
+        if (value === expected) return value
+        await settle(20)
+      }
+      return waterValue()
+    }
+
+    async function tapPreset(amount, index) {
+      const before = waterValue()
+      const button = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+        .find((node) => Number(node.dataset.quickadd) === amount)
+      if (!button) throw new Error(`Water +${amount} button missing at tap ${index}`)
+      button.click()
+      const expected = before + amount
+      const after = await waitForWaterValue(expected)
+      check(`tap ${index}: +${amount} advances exactly once`, after === expected, `${before} -> ${after}`)
+      check(`tap ${index}: Water remains collapsed`, !q('[data-activity="water"] .today-editor[data-editor="water"]'))
+      check(`tap ${index}: controls still render`, qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick').length === 3)
+    }
+
+    try {
+      await installShippedInlineCss()
+      installWaterQuickPresets()
+      const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+      const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      await tempered.daily.setCadence('water', 'daily', 1)
+      await tempered.app.show('today')
+      await waitFor('.screen--today')
+      installWaterQuickPresets()
+      await waitFor('[data-activity="water"] [data-water-row-presets="true"]')
+      await settle(80)
+
+      const initialButtons = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+      check('Water renders +8, +12 and custom', initialButtons.length === 3,
+        initialButtons.map((node) => node.textContent.trim()).join(' | '))
+
+      const start = waterValue()
+      let tap = 0
+      for (let i = 0; i < 4; i += 1) await tapPreset(8, ++tap)
+      for (let i = 0; i < 4; i += 1) await tapPreset(12, ++tap)
+
+      const custom = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+        .find((node) => ![8, 12].includes(Number(node.dataset.quickadd)))
+      const customAmount = Number(custom?.dataset.quickadd)
+      check('custom preset remains available', Number.isFinite(customAmount) && customAmount > 0,
+        custom?.textContent?.trim() ?? 'missing')
+      if (Number.isFinite(customAmount) && customAmount > 0) {
+        await tapPreset(customAmount, ++tap)
+        await tapPreset(customAmount, ++tap)
+      }
+
+      const expected = start + (4 * 8) + (4 * 12) + (2 * customAmount)
+      check('ten sequential quick taps all persist', waterValue() === expected,
+        `${start} -> ${waterValue()}, expected ${expected}`)
+      check('no uncaught error or rejection during Water stress', runtimeErrors.length === 0,
+        runtimeErrors.join(' | ') || 'none')
+    } catch (error) {
+      check('Water stress harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'water-stress', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

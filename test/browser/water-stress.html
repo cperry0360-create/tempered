@@ -53,10 +53,10 @@
     }
 
     try {
-      installWaterQuickPresets()
       const clock = fixedClock(new Date(2026, 8, 7, 8, 41, 0))
       const tempered = await bootstrap({ clock, mount: q('#app'), initialTab: 'today' })
       await tempered.app.show('today')
+      installWaterQuickPresets()
       await settle(100)
 
       const initialButtons = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')

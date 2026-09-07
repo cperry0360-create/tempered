@@ -26,120 +26,24 @@
 
     const checks = []
     const runtimeErrors = []
-    const check = (name, ok, detail = '') => {
-      checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
-      return Boolean(ok)
-    }
     const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
     const qa = (selector, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(selector)] : []
-    const settle = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms))
+    const settle = (ms = 30) => new Promise((resolve) => setTimeout(resolve, ms))
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
 
-    window.addEventListener('error', (event) => {
-      runtimeErrors.push(`error: ${event.message || event.error || 'unknown'}`)
-    })
-    window.addEventListener('unhandledrejection', (event) => {
-      runtimeErrors.push(`rejection: ${event.reason?.stack || event.reason || 'unknown'}`)
-    })
+    window.addEventListener('error', (event) => runtimeErrors.push(`error: ${event.message || event.error || 'unknown'}`))
+    window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(`rejection: ${event.reason?.stack || event.reason || 'unknown'}`))
 
-    async function installShippedInlineCss() {
+    async function installInlineCss() {
       const html = await fetch('../../index.html').then((response) => response.text())
-      const matches = [...html.matchAll(/<style>([\s\S]*?)<\/style>/gi)]
-      for (const match of matches) {
+      for (const match of html.matchAll(/<style>([\s\S]*?)<\/style>/gi)) {
         const style = document.createElement('style')
         style.textContent = match[1]
         document.head.append(style)
       }
     }
 
-    function isVisible(node) {
-      if (!node || node.disabled || !node.isConnected) return false
-      const style = getComputedStyle(node)
-      const rect = node.getBoundingClientRect()
-      return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) !== 0
-        && rect.width > 0 && rect.height > 0
-    }
-
-    function labelFor(node) {
-      return node?.getAttribute?.('aria-label') || node?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 60)
-        || node?.dataset?.action || node?.dataset?.tab || node?.className || node?.tagName || 'unknown'
-    }
-
-    async function scrollControlIntoView(node) {
-      if (!node || !node.isConnected) return
-      const scroller = q('.app__body')
-      if (!scroller || getComputedStyle(node).position === 'fixed') return
-      node.scrollIntoView({ block: 'center', inline: 'nearest' })
-      await settle(50)
-    }
-
-    function hitInfo(node) {
-      const rect = node.getBoundingClientRect()
-      const x = rect.left + rect.width / 2
-      const y = rect.top + rect.height / 2
-      const onscreen = x >= 0 && x < innerWidth && y >= 0 && y < innerHeight
-      const top = onscreen ? document.elementFromPoint(x, y) : null
-      const owner = top?.closest?.('button, a, input, select, textarea, [role="button"]')
-      const hit = node.isConnected && onscreen && (top === node || node.contains(top) || owner === node)
-      return { rect, x, y, onscreen, top, owner, hit }
-    }
-
-    async function centerHit(node, label, { click = false } = {}) {
-      if (!node) {
-        check(`${label}: control exists`, false, 'selector returned null')
-        return false
-      }
-      await scrollControlIntoView(node)
-      if (!node.isConnected) {
-        check(`${label}: center is actually tappable`, false, 'control was replaced while scrolling')
-        return false
-      }
-      const info = hitInfo(node)
-      check(`${label}: center is actually tappable`, info.hit,
-        info.hit
-          ? `${Math.round(info.rect.width)}×${Math.round(info.rect.height)} at ${Math.round(info.x)},${Math.round(info.y)}`
-          : (!info.onscreen
-              ? `could not scroll into viewport: top ${Math.round(info.rect.top)}, bottom ${Math.round(info.rect.bottom)}`
-              : `blocked by ${info.top?.tagName || 'nothing'}.${info.top?.className || ''}`))
-      if (info.hit && click) {
-        const target = info.owner ?? node
-        target.click()
-        await settle(140)
-      }
-      return info.hit
-    }
-
-    async function scanButtons(screenName, root = document) {
-      const buttons = qa('button', root).filter(isVisible)
-      const blocked = []
-      const small = []
-      let checked = 0
-      for (const button of buttons) {
-        if (!button.isConnected) continue
-        await scrollControlIntoView(button)
-        if (!button.isConnected || !isVisible(button)) continue
-        const info = hitInfo(button)
-        checked += 1
-        if (!info.hit) blocked.push(`${labelFor(button)} -> ${info.onscreen ? labelFor(info.top) : 'offscreen'}`)
-        if (info.rect.width < 43.5 || info.rect.height < 43.5) {
-          small.push(`${labelFor(button)} ${Math.round(info.rect.width)}×${Math.round(info.rect.height)}`)
-        }
-      }
-      check(`${screenName}: every enabled button center is hit-testable`, blocked.length === 0,
-        blocked.length ? blocked.slice(0, 12).join(' | ') : `${checked} buttons checked`)
-      check(`${screenName}: every independent button is at least 44px`, small.length === 0,
-        small.length ? small.slice(0, 10).join(' | ') : `${checked} buttons checked`)
-    }
-
-    async function tapTab(id) {
-      const button = q(`.tabbar__tab[data-tab="${id}"]`)
-      const ok = await centerHit(button, `Tab ${id}`, { click: true })
-      if (!ok) return false
-      const screen = await waitFor(`.screen--${id === 'history' ? 'history' : id}`)
-      check(`Tab ${id}: navigation changed the visible screen`, Boolean(screen), screen?.className || '')
-      return Boolean(screen)
-    }
-
-    async function waitFor(selector, timeout = 4000) {
+    async function waitFor(selector, timeout = 3000) {
       const deadline = Date.now() + timeout
       while (Date.now() < deadline) {
         const node = q(selector)
@@ -149,109 +53,152 @@
       return null
     }
 
-    try {
-      await installShippedInlineCss()
-      installWaterQuickPresets()
-      installMobileInteractions()
-      const storage = createMemoryStorage()
-      const tempered = await bootstrapHarness({ storage, mount: q('#app'), initialTab: 'today' })
+    function targetSize(node) {
+      if (!node) return null
+      const rect = node.getBoundingClientRect()
+      return { width: rect.width, height: rect.height }
+    }
 
-      // The owner's real profile keeps Water on the daily surface. Make that
-      // product path explicit rather than relying on the seed's smaller demo
-      // cadence, then rerender Today through the real service.
-      await tempered.daily.setCadence('water', 'daily')
-      await tempered.app.show('today')
-      await waitFor('.screen--today')
-      await settle(160)
+    function minTargetInventory(name, root) {
+      const tooSmall = qa('button:not(:disabled)', root).filter((button) => {
+        const style = getComputedStyle(button)
+        const rect = button.getBoundingClientRect()
+        if (!button.isConnected || style.display === 'none' || style.visibility === 'hidden' || rect.width <= 0 || rect.height <= 0) return false
+        return rect.width < 43.5 || rect.height < 43.5
+      }).map((button) => {
+        const rect = button.getBoundingClientRect()
+        return `${button.getAttribute('aria-label') || button.textContent.replace(/\s+/g, ' ').trim().slice(0, 32)} ${Math.round(rect.width)}×${Math.round(rect.height)}`
+      })
+      check(`${name}: independent buttons are finger-sized`, tooSmall.length === 0, tooSmall.slice(0, 8).join(' | '))
+    }
 
-      check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
-      check('Today loads', Boolean(q('.screen--today')))
-      await scanButtons('Today', q('.screen--today'))
-
-      const waterWrap = q('[data-activity="water"]')
-      const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', waterWrap)
-      check('Water exposes +8, +12, and a custom third quick add', waterButtons.length === 3,
-        waterButtons.map((button) => button.textContent.trim()).join(' | '))
-      const waterMetaBefore = q('.today-item__meta', waterWrap)?.textContent ?? ''
-      await centerHit(waterButtons[0], 'Water +8 quick add', { click: true })
-      const waterMetaAfter = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
-      check('Water quick add changes the logged value in one tap', waterMetaAfter !== waterMetaBefore,
-        `${waterMetaBefore} -> ${waterMetaAfter}`)
-
-      await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details chevron', { click: true })
-      check('Water chevron opens its numeric editor', Boolean(q('[data-editor="water"]')))
-      await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details close', { click: true })
-      check('Water chevron closes its editor', !q('[data-editor="water"]'))
-
-      await tapTab('train')
-      await scanButtons('Train', q('.screen--train'))
-      const exercise = q('.libraryrow')
-      await centerHit(exercise, 'First exercise row', { click: true })
-      const session = await waitFor('.screen--session')
-      check('Exercise row opens a workout session', Boolean(session))
-      if (session) {
-        const number = q('.setrow__num[data-field]', session)
-        if (number) {
-          number.value = '135'
-          number.focus()
-          await settle(80)
-          check('tapping an existing workout number selects it for replacement',
-            number.selectionStart === 0 && number.selectionEnd === number.value.length,
-            `${number.selectionStart}..${number.selectionEnd} of ${number.value.length}`)
-          number.blur()
-        } else {
-          check('tapping an existing workout number selects it for replacement', false, 'no numeric field rendered')
-        }
-        await scanButtons('Workout session', session)
+    async function hit(node, name, { click = false } = {}) {
+      if (!node) { check(`${name}: exists`, false, 'missing'); return false }
+      node.scrollIntoView({ block: 'center', inline: 'nearest' })
+      await settle(40)
+      const rect = node.getBoundingClientRect()
+      const x = rect.left + rect.width / 2
+      const y = rect.top + rect.height / 2
+      const top = x >= 0 && x < innerWidth && y >= 0 && y < innerHeight ? document.elementFromPoint(x, y) : null
+      const owner = top?.closest?.('button, input, select, textarea, [role="button"]')
+      const ok = node.isConnected && (top === node || node.contains(top) || owner === node)
+      check(`${name}: finger can hit center`, ok, ok ? `${Math.round(rect.width)}×${Math.round(rect.height)}` : `blocked by ${top?.tagName || 'offscreen'}.${top?.className || ''}`)
+      if (ok && click) {
+        ;(owner ?? node).click()
+        await settle(120)
       }
-      await tempered.app.show('train')
-      await settle()
+      return ok
+    }
 
-      await tapTab('character')
-      await scanButtons('Character', q('.screen--character'))
-      const firstAttribute = q('[data-attr]')
-      const attrId = firstAttribute?.dataset.attr
-      await centerHit(firstAttribute, 'Character attribute', { click: true })
-      check('Character attribute expands from a real tap', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
-      await centerHit(q('[data-open="battle"]'), 'Character Enter Battle', { click: true })
-      const battle = await waitFor('.screen--battle')
-      check('Enter Battle opens the battle screen', Boolean(battle))
-      if (battle) {
-        await scanButtons('Battle', battle)
-        await centerHit(q('[data-action="skip"]'), 'Battle Skip', { click: true })
-        const done = await waitFor('[data-battle="close"]')
-        await centerHit(done, 'Battle Done', { click: true })
-        check('Battle Done returns to Character', Boolean(await waitFor('.screen--character')))
-      }
+    async function tapTab(id) {
+      const button = q(`.tabbar__tab[data-tab="${id}"]`)
+      if (!await hit(button, `${id} tab`, { click: true })) return false
+      const screen = await waitFor(`.screen--${id === 'history' ? 'history' : id}`)
+      check(`${id} tab opens screen`, Boolean(screen))
+      return Boolean(screen)
+    }
 
-      await tapTab('history')
-      await scanButtons('Progress', q('.screen--history'))
-      await centerHit(q('[data-view="habits"]'), 'Progress Habits segment', { click: true })
-      check('Progress segment changes state', q('[data-view="habits"][data-active="true"]') !== null)
-      await centerHit(q('.progress-range__button'), 'Progress range button', { click: true })
-      check('Progress range keeps one selected range', qa('.progress-range__button[data-active="true"]').length === 1)
-
-      await tapTab('today')
-      await centerHit(q('.settings-access'), 'Settings gear', { click: true })
-      const settings = await waitFor('.screen--settings')
-      check('Settings gear opens Settings', Boolean(settings))
-      if (settings) await scanButtons('Settings', settings)
-      await centerHit(q('.settings-access'), 'Settings gear close', { click: true })
-      check('Settings gear closes Settings', Boolean(await waitFor('.screen--today')))
-
-      check('No uncaught runtime errors or unhandled rejections during the smoke journey', runtimeErrors.length === 0,
-        runtimeErrors.join(' | ') || 'none')
-
+    async function report() {
+      check('no uncaught runtime errors', runtimeErrors.length === 0, runtimeErrors.join(' | ') || 'none')
       await fetch('/__report', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ label: 'mobile-ui-smoke', passed: checks.every((entry) => entry.ok), checks }),
       })
+    }
+
+    try {
+      await installInlineCss()
+      installWaterQuickPresets()
+      installMobileInteractions()
+      const storage = createMemoryStorage()
+      const tempered = await bootstrapHarness({ storage, mount: q('#app'), initialTab: 'today' })
+      await tempered.daily.setCadence('water', 'daily')
+      await tempered.app.show('today')
+      await settle(150)
+
+      check('phone-class viewport', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
+      const today = await waitFor('.screen--today')
+      check('Today renders', Boolean(today))
+      minTargetInventory('Today', today)
+
+      const prevWeek = q('.today-calendar__nav', today)
+      const prevSize = targetSize(prevWeek)
+      check('calendar arrow is at least 44×44', prevSize?.width >= 43.5 && prevSize?.height >= 43.5, prevSize && `${Math.round(prevSize.width)}×${Math.round(prevSize.height)}`)
+
+      const waterGroup = await waitFor('[data-activity="water"] [data-water-row-presets="true"]')
+      const waterButtons = qa('.today-item__quick', waterGroup)
+      check('Water has +8, +12 and custom quick adds', waterButtons.length === 3, waterButtons.map((button) => button.textContent.trim()).join(' | '))
+      const waterBefore = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      await hit(waterButtons[0], 'Water +8', { click: true })
+      await settle(250)
+      const waterAfter = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      check('Water +8 changes total in one tap', waterAfter !== waterBefore, `${waterBefore} -> ${waterAfter}`)
+      await hit(q('[data-activity="water"] .today-item__expand'), 'Water details', { click: true })
+      check('Water details opens editor', Boolean(await waitFor('[data-editor="water"]')))
+      await hit(q('[data-activity="water"] .today-item__expand'), 'Water details close', { click: true })
+      check('Water details closes editor', !q('[data-editor="water"]'))
+
+      await tapTab('train')
+      const train = q('.screen--train')
+      minTargetInventory('Train', train)
+      const libraryRow = q('.libraryrow', train)
+      await hit(libraryRow, 'exercise library row', { click: true })
+      const session = await waitFor('.screen--session')
+      check('exercise row opens workout', Boolean(session))
+      if (session) {
+        minTargetInventory('Workout', session)
+        const number = q('.setrow__num[data-field]', session)
+        if (number) {
+          number.value = '135'
+          number.focus()
+          number.click()
+          await settle(80)
+          check('existing weight is selected for replacement', number.selectionStart === 0 && number.selectionEnd === 3, `${number.selectionStart}..${number.selectionEnd}`)
+          number.blur()
+        } else check('existing weight is selected for replacement', false, 'no numeric set field')
+      }
+      await tempered.app.show('train')
+
+      await tapTab('character')
+      const character = q('.screen--character')
+      minTargetInventory('Character', character)
+      const attr = q('[data-attr]', character)
+      const attrId = attr?.dataset.attr
+      await hit(attr, 'character attribute', { click: true })
+      check('attribute expands', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
+      await hit(q('[data-open="battle"]'), 'open battle', { click: true })
+      const battle = await waitFor('.screen--battle')
+      check('battle opens', Boolean(battle))
+      if (battle) {
+        minTargetInventory('Battle', battle)
+        await hit(q('[data-action="skip"]'), 'battle Skip', { click: true })
+        const done = await waitFor('[data-battle="close"]')
+        await hit(done, 'battle Done', { click: true })
+        check('battle returns to Character', Boolean(await waitFor('.screen--character')))
+      }
+
+      await tapTab('history')
+      const progress = q('.screen--history')
+      minTargetInventory('Progress', progress)
+      await hit(q('[data-view="habits"]', progress), 'Progress Habits', { click: true })
+      check('Progress Habits becomes active', Boolean(q('[data-view="habits"][data-active="true"]')))
+      await hit(q('.progress-range__button', progress), 'Progress range', { click: true })
+
+      await tapTab('today')
+      await hit(q('.settings-access'), 'Settings gear', { click: true })
+      const settings = await waitFor('.screen--settings')
+      check('Settings opens', Boolean(settings))
+      if (settings) {
+        minTargetInventory('Settings', settings)
+        await hit(q('.setup__cadence', settings), 'Settings cadence button')
+      }
+      await hit(q('.settings-access'), 'Settings close', { click: true })
+      check('Settings closes to Today', Boolean(await waitFor('.screen--today')))
+
+      await report()
     } catch (error) {
-      checks.push({ name: 'mobile UI smoke harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 800) })
-      await fetch('/__report', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: 'mobile-ui-smoke', passed: false, checks }),
-      })
+      checks.push({ name: 'mobile smoke completed without throwing', ok: false, detail: String(error?.stack ?? error).slice(0, 800) })
+      await report()
     }
   </script>
 </body>

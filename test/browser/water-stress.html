@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — Water stress</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installWaterQuickPresets } from '../../src/ui/water-quick-presets.js'
+
+    const checks = []
+    const runtimeErrors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const qa = (selector) => [...document.querySelectorAll(selector)]
+    const settle = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    window.addEventListener('error', (event) => runtimeErrors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason || 'unhandled rejection')))
+
+    function waterValue() {
+      const text = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      const match = text.match(/([0-9.]+)\s*\/\s*[0-9.]+\s*oz/i)
+      return match ? Number(match[1]) : NaN
+    }
+
+    async function waitForWaterValue(minimum, timeout = 2500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const value = waterValue()
+        if (Number.isFinite(value) && value >= minimum) return value
+        await settle()
+      }
+      return waterValue()
+    }
+
+    async function tapPreset(amount) {
+      const before = waterValue()
+      const button = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+        .find((node) => Number(node.dataset.quickadd) === amount)
+      if (!button) throw new Error(`Water +${amount} button missing`)
+      button.click()
+      const after = await waitForWaterValue(before + amount)
+      check(`Water +${amount} advances exactly once`, after === before + amount, `${before} -> ${after}`)
+      check(`Water stays collapsed after +${amount}`, !q('[data-activity="water"] .today-editor[data-editor="water"]'))
+    }
+
+    try {
+      installWaterQuickPresets()
+      const clock = fixedClock(new Date(2026, 8, 7, 8, 41, 0))
+      const tempered = await bootstrap({ clock, mount: q('#app'), initialTab: 'today' })
+      await tempered.app.show('today')
+      await settle(100)
+
+      const initialButtons = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+      check('Water renders three row presets', initialButtons.length === 3,
+        initialButtons.map((node) => node.textContent.trim()).join(' | '))
+
+      const start = waterValue()
+      for (let i = 0; i < 4; i += 1) await tapPreset(8)
+      for (let i = 0; i < 4; i += 1) await tapPreset(12)
+
+      const custom = qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick')
+        .find((node) => ![8, 12].includes(Number(node.dataset.quickadd)))
+      const customAmount = Number(custom?.dataset.quickadd)
+      check('Water custom preset remains present', Number.isFinite(customAmount) && customAmount > 0,
+        custom?.textContent?.trim() ?? 'missing')
+      if (Number.isFinite(customAmount) && customAmount > 0) {
+        for (let i = 0; i < 2; i += 1) await tapPreset(customAmount)
+      }
+
+      const expected = start + (4 * 8) + (4 * 12) + (2 * customAmount)
+      check('ten quick taps accumulate without losing an update', waterValue() === expected,
+        `${start} -> ${waterValue()}, expected ${expected}`)
+      check('Water controls are still responsive after repeated logging',
+        qa('[data-activity="water"] [data-water-row-presets="true"] .today-item__quick').length === 3)
+      check('no uncaught error or rejection during repeated Water logging', runtimeErrors.length === 0,
+        runtimeErrors.join(' | ') || 'none')
+    } catch (error) {
+      check('Water stress harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'water-stress', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

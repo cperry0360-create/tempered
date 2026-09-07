@@ -45,6 +45,15 @@ for (const page of pages) {
   ])
 }
 
+// The interaction smoke test is specifically about phone hit-testing. Run it
+// again at the larger current-iPhone viewport because fixed bars/overlays can
+// be fine at one height and cover controls at another.
+run('mobile-ui-smoke.html @ 430x932', process.execPath, [
+  'tools/verify-logging-speed.js',
+  '--page', 'test/browser/mobile-ui-smoke.html',
+  '--window', '430,932',
+])
+
 run('persistence.html', process.execPath, ['tools/verify-persistence.js'])
 
 console.log('\n===== BROWSER HARNESS SUMMARY =====')

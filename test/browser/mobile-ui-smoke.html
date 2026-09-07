@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — mobile interaction smoke</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/cadence.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/battle.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/battle-fidelity.css" />
+  <link rel="stylesheet" href="../../src/character.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installWaterQuickPresets } from '../../src/ui/water-quick-presets.js'
+    import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
+
+    const checks = []
+    const runtimeErrors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s, root = document) => root?.querySelector?.(s) ?? null
+    const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+    const settle = (ms = 35) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    window.addEventListener('error', (event) => runtimeErrors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason || 'unhandled rejection')))
+
+    async function installShippedInlineCss() {
+      const html = await fetch('../../index.html').then((response) => response.text())
+      for (const match of html.matchAll(/<style>([\s\S]*?)<\/style>/gi)) {
+        const style = document.createElement('style')
+        style.textContent = match[1]
+        document.head.append(style)
+      }
+    }
+
+    async function waitFor(selector, timeout = 3500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(15)
+      }
+      return null
+    }
+
+    function target(node) {
+      return node?.closest?.('button, input, select, textarea, a, [role="button"]') ?? node
+    }
+
+    async function bringIntoView(node) {
+      if (!node) return
+      if (node.closest?.('.tabbar, .settings-access')) return
+      node.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      await settle(20)
+    }
+
+    async function tapCenter(node, label) {
+      if (!node) {
+        check(`${label}: exists`, false, 'missing')
+        return false
+      }
+      await bringIntoView(node)
+      const rect = node.getBoundingClientRect()
+      const x = rect.left + rect.width / 2
+      const y = rect.top + rect.height / 2
+      const top = document.elementFromPoint(x, y)
+      const owner = target(top)
+      const expected = target(node)
+      const hit = Boolean(top && (top === node || node.contains(top) || owner === expected))
+      check(`${label}: center receives the tap`, hit,
+        hit ? `${Math.round(rect.width)}×${Math.round(rect.height)}` : `${top?.tagName || 'nothing'} ${top?.className || ''}`)
+      if (!hit) return false
+      owner?.click?.()
+      await settle(90)
+      return true
+    }
+
+    function thumbSized(node, label, min = 44) {
+      if (!node) { check(`${label}: thumb target exists`, false, 'missing'); return }
+      const rect = node.getBoundingClientRect()
+      check(`${label}: thumb target is at least ${min}px`, rect.width >= min && rect.height >= min,
+        `${Math.round(rect.width)}×${Math.round(rect.height)}`)
+    }
+
+    async function tab(id, screenSelector) {
+      const node = q(`.tabbar__tab[data-tab="${id}"]`)
+      thumbSized(node, `${id} tab`)
+      await tapCenter(node, `${id} tab`)
+      check(`${id} tab changes screen`, Boolean(await waitFor(screenSelector)))
+    }
+
+    try {
+      await installShippedInlineCss()
+      installWaterQuickPresets()
+      installMobileInteractions()
+      const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+      const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+
+      // The harness profile is intentionally minimal; make Water a daily item so
+      // this journey exercises the same three-button row the real user has.
+      await tempered.daily.setCadence('water', 'daily', 1)
+      await tempered.app.show('today')
+      await waitFor('.screen--today')
+      installWaterQuickPresets()
+      await waitFor('[data-activity="water"] [data-water-row-presets="true"]')
+      await settle(80)
+
+      check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
+      check('Today renders', Boolean(q('.screen--today')))
+
+      const water = q('[data-activity="water"]')
+      const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', water)
+      check('Water shows +8, +12 and custom quick adds', waterButtons.length === 3,
+        waterButtons.map((button) => button.textContent.trim()).join(' | '))
+      thumbSized(waterButtons[0], 'Water +8')
+      const before = q('.today-item__meta', water)?.textContent ?? ''
+      await tapCenter(waterButtons[0], 'Water +8')
+      const after = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      check('Water tap actually changes the logged amount', after !== before, `${before} -> ${after}`)
+
+      await tab('train', '.screen--train')
+      const programDay = q('[data-programday]')
+      thumbSized(programDay, 'Program day')
+      await tapCenter(programDay, 'Program day')
+      const session = await waitFor('.screen--session')
+      check('Program day opens a workout session', Boolean(session))
+      if (session) {
+        thumbSized(q('.setrow__check:not([disabled])', session), 'Set log check')
+        thumbSized(q('.actionpill', session), 'Exercise action')
+      }
+      await tempered.app.show('train')
+      await settle(60)
+
+      await tab('character', '.screen--character')
+      const attr = q('[data-attr]')
+      thumbSized(attr, 'Character attribute')
+      const attrId = attr?.dataset.attr
+      await tapCenter(attr, 'Character attribute')
+      check('Attribute tap expands details', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
+      const battleButton = q('[data-open="battle"]')
+      thumbSized(battleButton, 'Enter Battle')
+      await tapCenter(battleButton, 'Enter Battle')
+      const battle = await waitFor('.screen--battle')
+      check('Battle opens', Boolean(battle))
+      if (battle) {
+        const skip = q('[data-action="skip"]', battle)
+        thumbSized(skip, 'Battle Skip')
+        await tapCenter(skip, 'Battle Skip')
+        const done = await waitFor('[data-battle="close"]')
+        thumbSized(done, 'Battle Done')
+        await tapCenter(done, 'Battle Done')
+        check('Battle Done returns to Character', Boolean(await waitFor('.screen--character')))
+      }
+
+      await tab('history', '.screen--history')
+      const range = q('.progress-range__button')
+      thumbSized(range, 'Progress range')
+      await tapCenter(range, 'Progress range')
+      check('Progress keeps a selected range', qa('.progress-range__button[data-active="true"]').length === 1)
+
+      await tab('today', '.screen--today')
+      const gear = q('.settings-access')
+      thumbSized(gear, 'Settings gear')
+      await tapCenter(gear, 'Settings gear')
+      const settings = await waitFor('.screen--settings')
+      check('Settings opens', Boolean(settings))
+      if (settings) {
+        const cadence = q('.setup__cadence', settings)
+        thumbSized(cadence, 'Settings cadence')
+        await bringIntoView(cadence)
+        const info = cadence?.getBoundingClientRect()
+        check('Settings cadence remains visible after scrolling', Boolean(info && info.top < innerHeight && info.bottom > 0),
+          info ? `${Math.round(info.top)}..${Math.round(info.bottom)}` : 'missing')
+      }
+      await tapCenter(q('.settings-access'), 'Settings gear close')
+      check('Settings closes back to Today', Boolean(await waitFor('.screen--today')))
+
+      check('No uncaught errors during mobile journey', runtimeErrors.length === 0, runtimeErrors.join(' | ') || 'none')
+    } catch (error) {
+      check('mobile smoke harness threw', false, String(error?.stack ?? error).slice(0, 800))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'mobile-ui-smoke', passed: checks.every((c) => c.ok), checks }),
+    })
+  </script>
+</body>
+</html>

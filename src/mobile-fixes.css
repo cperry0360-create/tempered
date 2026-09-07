@@ -1,0 +1,55 @@
+/* Final mobile interaction layer.
+   Loaded after every feature stylesheet so later feature CSS cannot shrink a
+   control back below a reliable finger target. */
+
+.today-calendar__nav,
+.today-section__add,
+.today-item__quick,
+.today-item__expand,
+.today-secondary__button,
+.progress-range__button,
+.battle__utility .button,
+.actionpill,
+.setup__cadence,
+.setup__weeklyselect,
+.attr__head,
+.character-hero__battle,
+.character-battle-cta .button {
+  min-height: 44px !important;
+}
+
+.today-calendar__nav,
+.today-item__expand,
+.progress-range__button {
+  min-width: 44px !important;
+}
+
+/* Give controls that sit on fractional CSS pixels a little safety margin. */
+.actionpill,
+.today-secondary__button {
+  min-height: 46px !important;
+}
+
+/* The calendar arrows used to render as 32x28 even though they were important
+   navigation controls. Keep the glyph small but the hit area full-size. */
+.today-calendar__nav {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+}
+
+/* Planner action and common one-tap adds should feel like buttons, not labels. */
+.today-section__add,
+.today-item__quick {
+  padding-block: 8px !important;
+}
+
+/* Keep long pages scrollable above the floating bottom navigation. */
+.screen {
+  scroll-margin-top: 16px;
+  scroll-margin-bottom: 96px;
+}
+
+@media (max-width: 430px) {
+  .today-item__quick { min-width: 44px; }
+}

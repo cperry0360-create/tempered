@@ -62,15 +62,17 @@ test('REGRESSION: Today preserves additive semantics for manual and custom quick
 })
 
 test('REGRESSION: Water shows +8 oz, +12 oz, and the editable custom quick add on the collapsed row', () => {
+  const water = read('src/ui/water-quick-presets.js')
   const main = read('src/main.js')
-  assert.match(main, /WATER_FIXED_PRESETS\s*=\s*\[8, 12\]/)
-  assert.match(main, /water-row-quickset/)
-  assert.match(main, /data-water-row-presets|dataset\.waterRowPresets/)
-  assert.match(main, /group\.append\(customButton\)/)
-  assert.match(main, /Add \$\{amount\} oz to Water/)
-  assert.match(main, /Third quick add/)
-  assert.match(main, /third row button/)
-  assert.doesNotMatch(main, /setAttribute\('hidden'/)
+  assert.match(water, /WATER_FIXED_PRESETS\s*=\s*\[8, 12\]/)
+  assert.match(water, /water-row-quickset/)
+  assert.match(water, /data-water-row-presets|dataset\.waterRowPresets/)
+  assert.match(water, /group\.append\(customButton\)/)
+  assert.match(water, /Add \$\{amount\} oz to Water/)
+  assert.match(water, /Third quick add/)
+  assert.match(water, /third row button/)
+  assert.match(main, /installWaterQuickPresets\(\)/)
+  assert.doesNotMatch(water, /setAttribute\('hidden'/)
 })
 
 test('REGRESSION: iOS Home Screen worker URL changes with every visible release', () => {

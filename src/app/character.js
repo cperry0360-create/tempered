@@ -18,6 +18,7 @@ import { generateDirective } from '../domain/directive.js'
 import { explainSources, topContributors } from '../domain/sources.js'
 import { earnedTitles } from '../domain/titles.js'
 import { createInitialState } from '../domain/xp-engine.js'
+import { heroFor } from '../domain/battle.js'
 import { daysBetween } from '../adapters/clock/clock.js'
 
 const ATTRIBUTE_NAMES = {
@@ -139,6 +140,12 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
       rank: rankFromLevels(levels, balance),
       totalLevels: totalLevels(levels),
       levels,
+
+      // The RPG sheet should show the same derived hero the battle actually
+      // uses, never a second set of invented display-only combat numbers.
+      combat: heroFor(levels, balance),
+      gold: profile?.gold ?? 0,
+      loot: [...(profile?.loot ?? [])],
 
       attributes: ATTRIBUTE_IDS.map((id) => ({
         id,

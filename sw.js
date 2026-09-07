@@ -13,6 +13,7 @@ const PRECACHE = [
   './src/setup.css',
   './src/cadence.css',
   './src/polish.css',
+  './src/mobile-fixes.css',
   './src/battle.css',
   './src/battle-fidelity.css',
   './src/character.css',

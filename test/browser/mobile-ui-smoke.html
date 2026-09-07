@@ -20,6 +20,8 @@
   <script type="module">
     import { bootstrapHarness } from './harness.js'
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { installWaterQuickPresets } from '../../src/ui/water-quick-presets.js'
+    import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
 
     const checks = []
     const runtimeErrors = []
@@ -65,10 +67,8 @@
       if (!node) return
       const scroller = q('.app__body')
       if (!scroller || getComputedStyle(node).position === 'fixed') return
-      const before = node.getBoundingClientRect()
-      const viewport = scroller.getBoundingClientRect()
-      scroller.scrollTop += before.top - viewport.top - (viewport.height / 2) + (before.height / 2)
-      await settle(35)
+      node.scrollIntoView({ block: 'center', inline: 'nearest' })
+      await settle(50)
     }
 
     function hitInfo(node) {
@@ -116,11 +116,8 @@
       }
       check(`${screenName}: every enabled button center is hit-testable`, blocked.length === 0,
         blocked.length ? blocked.slice(0, 12).join(' | ') : `${buttons.length} buttons checked`)
-      // Touch-size is diagnostic rather than a hard failure. Several icon-only
-      // controls intentionally sit beside a much larger tappable row, but this
-      // inventory tells us when too much of the screen depends on precision taps.
-      check(`${screenName}: touch-target inventory captured`, true,
-        `${buttons.length} buttons; ${small.length} under 44px${small.length ? `: ${small.slice(0, 8).join(' | ')}` : ''}`)
+      check(`${screenName}: every independent button is at least 44px`, small.length === 0,
+        small.length ? small.slice(0, 10).join(' | ') : `${buttons.length} buttons checked`)
     }
 
     async function tapTab(id) {
@@ -144,6 +141,8 @@
 
     try {
       await installShippedInlineCss()
+      installWaterQuickPresets()
+      installMobileInteractions()
       const storage = createMemoryStorage()
       const tempered = await bootstrapHarness({ storage, mount: q('#app'), initialTab: 'today' })
       await waitFor('.screen--today')
@@ -152,20 +151,21 @@
       check('Today loads', Boolean(q('.screen--today')))
       await scanButtons('Today', q('.screen--today'))
 
-      const quick = q('.screen--today .today-item__quick')
-      const activityId = quick?.closest?.('[data-activity]')?.dataset.activity
-      const metaBefore = activityId ? q(`[data-activity="${activityId}"] .today-item__meta`)?.textContent ?? '' : ''
-      await centerHit(quick, 'Today one-tap quick add', { click: true })
-      const metaAfter = activityId ? q(`[data-activity="${activityId}"] .today-item__meta`)?.textContent ?? '' : ''
-      check('Today quick add changes the logged value in one tap', Boolean(activityId) && metaAfter !== metaBefore,
-        `${activityId || 'none'}: ${metaBefore} -> ${metaAfter}`)
+      const waterWrap = q('[data-activity="water"]')
+      const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', waterWrap)
+      check('Water exposes +8, +12, and a custom third quick add', waterButtons.length === 3,
+        waterButtons.map((button) => button.textContent.trim()).join(' | '))
+      const waterMetaBefore = q('.today-item__meta', waterWrap)?.textContent ?? ''
+      await centerHit(waterButtons[0], 'Water +8 quick add', { click: true })
+      const waterMetaAfter = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      check('Water quick add changes the logged value in one tap', waterMetaAfter !== waterMetaBefore,
+        `${waterMetaBefore} -> ${waterMetaAfter}`)
 
-      const expand = activityId ? q(`[data-activity="${activityId}"] .today-item__expand`) : null
-      await centerHit(expand, 'Today details chevron', { click: true })
-      check('Today chevron opens its numeric editor', Boolean(activityId && q(`[data-editor="${activityId}"]`)))
-      await centerHit(activityId ? q(`[data-activity="${activityId}"] .today-item__expand`) : null,
-        'Today details close', { click: true })
-      check('Today chevron closes its editor', !activityId || !q(`[data-editor="${activityId}"]`))
+      const waterExpand = q('[data-activity="water"] .today-item__expand')
+      await centerHit(waterExpand, 'Water details chevron', { click: true })
+      check('Water chevron opens its numeric editor', Boolean(q('[data-editor="water"]')))
+      await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details close', { click: true })
+      check('Water chevron closes its editor', !q('[data-editor="water"]'))
 
       await tapTab('train')
       await scanButtons('Train', q('.screen--train'))
@@ -173,7 +173,21 @@
       await centerHit(exercise, 'First exercise row', { click: true })
       const session = await waitFor('.screen--session')
       check('Exercise row opens a workout session', Boolean(session))
-      if (session) await scanButtons('Workout session', session)
+      if (session) {
+        const number = q('.setrow__num[data-field]', session)
+        if (number) {
+          number.value = '135'
+          number.focus()
+          await settle(80)
+          check('tapping an existing workout number selects it for replacement',
+            number.selectionStart === 0 && number.selectionEnd === number.value.length,
+            `${number.selectionStart}..${number.selectionEnd} of ${number.value.length}`)
+          number.blur()
+        } else {
+          check('tapping an existing workout number selects it for replacement', false, 'no numeric field rendered')
+        }
+        await scanButtons('Workout session', session)
+      }
       await tempered.app.show('train')
       await settle()
 

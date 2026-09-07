@@ -41,13 +41,16 @@ export function duration(minutes) {
 
 /**
  * A performed set, as shown in the RECORD column.
- * @param {{weight: number|null, reps: number|null, timeSec?: number|null, distance?: number|null}|null} set
+ * @param {{weight: number|null, reps: number|null, timeSec?: number|null, distance?: number|null, cablePeg?: number|null}|null} set
  */
 export function performance(set) {
   if (!set) return '—'
   if (typeof set.timeSec === 'number' && set.timeSec > 0) return `${set.timeSec}s`
   if (typeof set.distance === 'number' && set.distance > 0) {
     return set.weight ? `${lbs(set.weight)} × ${set.distance} ft` : `${set.distance} ft`
+  }
+  if (Number.isInteger(set.cablePeg) && typeof set.weight === 'number' && typeof set.reps === 'number') {
+    return `P${set.cablePeg} · ${lbs(set.weight)} × ${set.reps}`
   }
   if (typeof set.weight === 'number' && typeof set.reps === 'number') return `${lbs(set.weight)} × ${set.reps}`
   if (typeof set.reps === 'number') return `${set.reps} reps`

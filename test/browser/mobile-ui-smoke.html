@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — mobile interaction smoke</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/cadence.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/battle.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/battle-fidelity.css" />
+  <link rel="stylesheet" href="../../src/character-rpg.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+    const checks = []
+    const runtimeErrors = []
+    const check = (name, ok, detail = '') => {
+      checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+      return Boolean(ok)
+    }
+    const q = (selector, root = document) => root.querySelector(selector)
+    const qa = (selector, root = document) => [...root.querySelectorAll(selector)]
+    const settle = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    window.addEventListener('error', (event) => {
+      runtimeErrors.push(`error: ${event.message || event.error || 'unknown'}`)
+    })
+    window.addEventListener('unhandledrejection', (event) => {
+      runtimeErrors.push(`rejection: ${event.reason?.stack || event.reason || 'unknown'}`)
+    })
+
+    function isVisible(node) {
+      if (!node || node.disabled) return false
+      const style = getComputedStyle(node)
+      const rect = node.getBoundingClientRect()
+      return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) !== 0
+        && rect.width > 0 && rect.height > 0
+    }
+
+    function labelFor(node) {
+      return node.getAttribute('aria-label') || node.textContent?.replace(/\s+/g, ' ').trim().slice(0, 60)
+        || node.dataset.action || node.dataset.tab || node.className || node.tagName
+    }
+
+    async function centerHit(node, label, { click = false } = {}) {
+      if (!node) {
+        check(`${label}: control exists`, false, 'selector returned null')
+        return false
+      }
+      node.scrollIntoView({ block: 'center', inline: 'center' })
+      await settle(25)
+      const rect = node.getBoundingClientRect()
+      const x = Math.max(1, Math.min(innerWidth - 2, rect.left + rect.width / 2))
+      const y = Math.max(1, Math.min(innerHeight - 2, rect.top + rect.height / 2))
+      const top = document.elementFromPoint(x, y)
+      const button = top?.closest?.('button, a, input, select, textarea, [role="button"]')
+      const hit = top === node || node.contains(top) || button === node
+      check(`${label}: center is actually tappable`, hit,
+        hit ? `${Math.round(rect.width)}×${Math.round(rect.height)} at ${Math.round(x)},${Math.round(y)}`
+          : `blocked by ${top?.tagName || 'nothing'}.${top?.className || ''}`)
+      if (hit && click) {
+        button?.click?.() ?? node.click()
+        await settle(100)
+      }
+      return hit
+    }
+
+    async function scanButtons(screenName, root = document) {
+      const buttons = qa('button', root).filter(isVisible)
+      let blocked = 0
+      let tiny = 0
+      for (const button of buttons) {
+        button.scrollIntoView({ block: 'center', inline: 'center' })
+        await settle(8)
+        const rect = button.getBoundingClientRect()
+        const x = Math.max(1, Math.min(innerWidth - 2, rect.left + rect.width / 2))
+        const y = Math.max(1, Math.min(innerHeight - 2, rect.top + rect.height / 2))
+        const top = document.elementFromPoint(x, y)
+        const owner = top?.closest?.('button')
+        if (!(top === button || button.contains(top) || owner === button)) blocked += 1
+        if (rect.width < 44 || rect.height < 44) tiny += 1
+      }
+      check(`${screenName}: every enabled button center is hit-testable`, blocked === 0,
+        `${buttons.length} buttons checked, ${blocked} blocked`)
+      check(`${screenName}: controls avoid tiny touch targets`, tiny === 0,
+        `${buttons.length} buttons checked, ${tiny} under 44px in width or height`)
+    }
+
+    async function tapTab(id) {
+      const button = q(`.tabbar__tab[data-tab="${id}"]`)
+      const ok = await centerHit(button, `Tab ${id}`, { click: true })
+      if (!ok) return false
+      const screen = await waitFor(`.screen--${id === 'history' ? 'history' : id}`)
+      check(`Tab ${id}: navigation changed the visible screen`, Boolean(screen), screen?.className || '')
+      return Boolean(screen)
+    }
+
+    async function waitFor(selector, timeout = 4000) {
+      const deadline = Date.now() + timeout
+      while (Date.now() < deadline) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      return null
+    }
+
+    try {
+      const storage = createMemoryStorage()
+      const tempered = await bootstrapHarness({ storage, mount: q('#app'), initialTab: 'today' })
+      await waitFor('.screen--today')
+
+      check('viewport is phone-sized', innerWidth <= 500, `${innerWidth}×${innerHeight}`)
+      check('Today loads', Boolean(q('.screen--today')))
+      await scanButtons('Today', q('.screen--today'))
+
+      const waterWrap = q('[data-activity="water"]')
+      const waterMetaBefore = waterWrap?.querySelector('.today-item__meta')?.textContent ?? ''
+      const waterQuick = waterWrap?.querySelector('.today-item__quick')
+      await centerHit(waterQuick, 'Water quick add', { click: true })
+      const waterMetaAfter = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
+      check('Water quick add changes the logged value in one tap', waterMetaAfter !== waterMetaBefore,
+        `${waterMetaBefore} -> ${waterMetaAfter}`)
+
+      const waterExpand = q('[data-activity="water"] .today-item__expand')
+      await centerHit(waterExpand, 'Water details chevron', { click: true })
+      check('Water chevron opens its editor', Boolean(q('[data-editor="water"]')))
+      await centerHit(q('[data-activity="water"] .today-item__expand'), 'Water details close', { click: true })
+      check('Water chevron closes its editor', !q('[data-editor="water"]'))
+
+      await tapTab('train')
+      await scanButtons('Train', q('.screen--train'))
+      const exercise = q('.libraryrow')
+      await centerHit(exercise, 'First exercise row', { click: true })
+      check('Exercise row opens a workout session', Boolean(await waitFor('.screen--session')))
+      await scanButtons('Workout session', q('.screen--session'))
+      await tempered.app.show('train')
+      await settle()
+
+      await tapTab('character')
+      await scanButtons('Character', q('.screen--character'))
+      const firstAttribute = q('[data-attr]')
+      const attrId = firstAttribute?.dataset.attr
+      await centerHit(firstAttribute, 'Character attribute', { click: true })
+      check('Character attribute expands from a real tap', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
+      const battleButton = q('[data-open="battle"]')
+      await centerHit(battleButton, 'Character Enter Battle', { click: true })
+      check('Enter Battle opens the battle screen', Boolean(await waitFor('.screen--battle')))
+      await scanButtons('Battle', q('.screen--battle'))
+      const skip = q('[data-action="skip"]')
+      await centerHit(skip, 'Battle Skip', { click: true })
+      const done = await waitFor('[data-battle="close"]')
+      await centerHit(done, 'Battle Done', { click: true })
+      check('Battle Done returns to Character', Boolean(await waitFor('.screen--character')))
+
+      await tapTab('history')
+      await scanButtons('Progress', q('.screen--history'))
+      const habits = q('[data-view="habits"]')
+      await centerHit(habits, 'Progress Habits segment', { click: true })
+      check('Progress segment changes state', habits?.dataset.active === 'true' || q('[data-view="habits"][data-active="true"]') !== null)
+      const range7 = q('.progress-range__button')
+      await centerHit(range7, 'Progress range button', { click: true })
+      check('Progress range changes state', range7?.dataset.active === 'true' || q('.progress-range__button[data-active="true"]') === range7)
+
+      await tapTab('today')
+      const settings = q('.settings-access')
+      await centerHit(settings, 'Settings gear', { click: true })
+      check('Settings gear opens Settings', Boolean(await waitFor('.screen--settings')))
+      await scanButtons('Settings', q('.screen--settings'))
+      await centerHit(q('.settings-access'), 'Settings gear close', { click: true })
+      check('Settings gear closes Settings', Boolean(await waitFor('.screen--today')))
+
+      check('No uncaught runtime errors or unhandled rejections during the smoke journey', runtimeErrors.length === 0,
+        runtimeErrors.join(' | ') || 'none')
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'mobile-ui-smoke', passed: checks.every((entry) => entry.ok), checks }),
+      })
+    } catch (error) {
+      checks.push({ name: 'mobile UI smoke harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 800) })
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'mobile-ui-smoke', passed: false, checks }),
+      })
+    }
+  </script>
+</body>
+</html>

@@ -9,12 +9,14 @@
 
 import { el, replace } from '../dom.js'
 
+const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
+
 const STAGES = [
-  { min: 0, name: 'Seed', art: './art/tempered/companion-stage-1.svg', copy: 'A tiny beginning.' },
-  { min: 35, name: 'Hatchling', art: './art/tempered/companion-stage-2.svg', copy: 'Curious and awake.' },
-  { min: 110, name: 'Sprout', art: './art/tempered/companion-stage-3.svg', copy: 'Growing into its own.' },
-  { min: 260, name: 'Bloom', art: './art/tempered/companion-stage-4.svg', copy: 'Steady progress made visible.' },
-  { min: 600, name: 'Radiant', art: './art/tempered/companion-stage-5.svg', copy: 'A long run of care, accumulated.' },
+  { min: 0, name: 'Seed', art: art('companion-stage-1.svg'), copy: 'A tiny beginning.' },
+  { min: 35, name: 'Hatchling', art: art('companion-stage-2.svg'), copy: 'Curious and awake.' },
+  { min: 110, name: 'Sprout', art: art('companion-stage-3.svg'), copy: 'Growing into its own.' },
+  { min: 260, name: 'Bloom', art: art('companion-stage-4.svg'), copy: 'Steady progress made visible.' },
+  { min: 600, name: 'Radiant', art: art('companion-stage-5.svg'), copy: 'A long run of care, accumulated.' },
 ]
 
 const ROOM_UNLOCKS = [
@@ -42,11 +44,13 @@ function lifestyleSignals(day) {
     day.microCardioMinutes,
     day.mobilityMinutes,
     day.readingMinutes,
+    day.studyMinutes,
     day.meditationMinutes,
+    day.instrumentMinutes,
     day.bodyMetrics?.weight,
   ]
   let count = values.filter((value) => hasNumber(value) && value > 0).length
-  for (const key of ['foodLogged', 'alcoholFree', 'sauna', 'restDay']) {
+  for (const key of ['nutritionLogged', 'alcoholFree', 'saunaLogged', 'restDay', 'journalLogged']) {
     if (day[key] === true) count += 1
   }
   return count
@@ -66,13 +70,13 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, Math.round(value)))
 }
 
-function todayMoment({ trained, day }) {
+function todayMoment({ trained, day, name }) {
   if (trained) return { icon: '🏋️', title: 'Post-workout stretch', copy: 'Your training gave the room some energy today.' }
-  if ((day?.waterOz ?? 0) >= 80) return { icon: '💧', title: 'Hydration break', copy: 'Pip found the oversized water bottle.' }
+  if ((day?.waterOz ?? 0) >= 80) return { icon: '💧', title: 'Hydration break', copy: `${name} found the oversized water bottle.` }
   if ((day?.readingMinutes ?? 0) > 0) return { icon: '📖', title: 'Quiet reading', copy: 'A few pages became a tiny reading session.' }
   if ((day?.proteinGrams ?? 0) > 0 || (day?.calories ?? 0) > 0) return { icon: '🥣', title: 'Snack time', copy: 'Nutrition logging turned into a little meal moment.' }
   if ((day?.sleepHours ?? 0) > 0) return { icon: '😴', title: 'Well rested', copy: 'Sleep showed up as a calmer day in the habitat.' }
-  return { icon: '🌿', title: 'Hanging out', copy: 'Nothing is due. Pip simply keeps what you have already built.' }
+  return { icon: '🌿', title: 'Hanging out', copy: `Nothing is due. ${name} simply keeps what you have already built.` }
 }
 
 export function createCompanionScreen({ storage, clock }) {
@@ -99,16 +103,17 @@ export function createCompanionScreen({ storage, clock }) {
     const growth = next
       ? clampPercent(((points - previousMin) / Math.max(1, next.min - previousMin)) * 100)
       : 100
+    const name = profile?.companionName || 'Pip'
 
     model = {
-      name: profile?.companionName || 'Pip',
+      name,
       points,
       stage,
       next,
       growth,
       unlocked: ROOM_UNLOCKS.filter((item) => points >= item.min),
       locked: ROOM_UNLOCKS.filter((item) => points < item.min),
-      moment: todayMoment({ trained, day: today }),
+      moment: todayMoment({ trained, day: today, name }),
       totals: { sessions: finished.length, sets: workingSets.length, lifestyle },
     }
   }

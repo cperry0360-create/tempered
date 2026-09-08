@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Seed stage companion">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#fff5ca"/><stop offset="1" stop-color="#d6caa0"/></radialGradient>
+    <radialGradient id="c"><stop offset="0" stop-color="#9ef5cf" stop-opacity=".9"/><stop offset="1" stop-color="#9ef5cf" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="256" cy="405" rx="112" ry="28" fill="#0c2833" opacity=".25"/>
+  <circle cx="256" cy="255" r="170" fill="url(#c)" opacity=".28"/>
+  <path d="M256 96c82 0 132 75 132 172 0 111-57 172-132 172s-132-61-132-172c0-97 50-172 132-172z" fill="url(#g)" stroke="#86b9a1" stroke-width="9"/>
+  <path d="M244 121c-2-30 12-54 42-72 0 35-10 59-42 72z" fill="#5da67a"/>
+  <path d="M258 124c23-23 49-29 78-18-25 23-49 30-78 18z" fill="#78bc85"/>
+  <path d="M200 246c25 18 42 23 58 16 18-8 31-5 54 14" fill="none" stroke="#72bca1" stroke-width="8" stroke-linecap="round" opacity=".65"/>
+  <circle cx="217" cy="220" r="11" fill="#14333a"/><circle cx="295" cy="220" r="11" fill="#14333a"/>
+  <path d="M236 259q20 18 40 0" fill="none" stroke="#14333a" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="256" cy="320" r="42" fill="#81e2bd" opacity=".34"/>
+  <circle cx="256" cy="320" r="18" fill="#9ff2cc"/>
+</svg>

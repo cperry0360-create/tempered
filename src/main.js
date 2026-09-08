@@ -7,6 +7,7 @@ import { installWaterQuickPresets } from './ui/water-quick-presets.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
+import { installHealthShortcutRuntime } from './ui/health-shortcut-runtime.js'
 
 registerServiceWorker()
 installWaterQuickPresets()
@@ -20,6 +21,7 @@ void installBattleFx
 bootstrap()
   .then(async (context) => {
     installSessionGuard(context)
+    installHealthShortcutRuntime(context)
     try {
       await installCableMachineRuntime(context)
     } catch (error) {

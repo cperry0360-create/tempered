@@ -103,3 +103,14 @@ test('REGRESSION: Character no longer carries a duplicate Settings button', () =
   assert.doesNotMatch(character, /\['SETTINGS'\]/)
   assert.doesNotMatch(character, /dataset:\s*\{\s*tab:\s*'settings'/)
 })
+
+test('REGRESSION: Progress widgets wake on the first mounted Progress screen', () => {
+  const app = read('src/ui/app.js')
+  const dashboard = read('src/ui/progress-dashboard-runtime.js')
+  const progressCss = read('src/progress.css')
+  assert.match(app, /tempered:screen-shown/)
+  assert.match(app, /detail:\s*\{\s*tab:\s*target\s*\}/)
+  assert.match(dashboard, /addEventListener\('tempered:screen-shown'/)
+  assert.match(dashboard, /detail\?\.tab\s*===\s*'history'/)
+  assert.match(progressCss, /\.progress-panel\[hidden\]\s*\{\s*display:\s*none\s*!important/)
+})

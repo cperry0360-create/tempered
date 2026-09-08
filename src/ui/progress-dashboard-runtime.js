@@ -302,7 +302,10 @@ export function installProgressDashboardRuntime(context) {
 
   async function enhance() {
     scheduled = false
-    if (busy) return
+    if (busy) {
+      schedule()
+      return
+    }
     const screen = mount.querySelector('.screen--history')
     if (!screen) return
     const overview = screen.querySelector('[data-view="overview"][data-active="true"]')
@@ -322,6 +325,13 @@ export function installProgressDashboardRuntime(context) {
 
   const observer = new MutationObserver(schedule)
   observer.observe(mount, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-active'] })
+  const screenShown = (event) => {
+    if (event?.detail?.tab === 'history') schedule()
+  }
+  window.addEventListener('tempered:screen-shown', screenShown)
   schedule()
-  return () => observer.disconnect()
+  return () => {
+    observer.disconnect()
+    window.removeEventListener('tempered:screen-shown', screenShown)
+  }
 }

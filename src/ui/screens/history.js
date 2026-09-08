@@ -7,6 +7,8 @@ import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
 
+const progressIcon = new URL('../../../art/tempered/icon-progress.png', import.meta.url).href
+
 function parseDate(key) {
   const [y, m, d] = String(key).split('-').map(Number)
   return new Date(y, m - 1, d, 12)
@@ -379,8 +381,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
 
     replace(root, [
       el('header.progress-header', {}, [
-        el('h1.screen__title', { text: 'Progress' }),
-        el('p.progress-header__copy', { text: 'A useful recap first. Detail when you want it.' }),
+        el('div.progress-header__copyblock', {}, [
+          el('h1.screen__title', { text: 'Progress' }),
+          el('p.progress-header__copy', { text: 'A useful recap first. Detail when you want it.' }),
+        ]),
+        el('img.progress-header__mark', { src: progressIcon, alt: '', 'aria-hidden': 'true' }),
       ]),
       el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress view' }, [
         ['overview', 'Recap'], ['habits', 'Habits'], ['lifts', 'Lifts'], ['log', 'Log'],

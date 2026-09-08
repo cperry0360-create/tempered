@@ -40,13 +40,18 @@
       const clock = fixedClock(new Date(2026, 8, 8, 9, 0, 0))
       const context = await bootstrap({ storage, clock, mount: q('#app') })
 
+      // Install while another screen is mounted, matching production startup.
+      // The dashboard must appear on the first Progress visit without a second
+      // range/view interaction to wake its mutation observer.
+      installProgressDashboardRuntime(context)
+
       await storage.put('dayLogs', { date: '2026-09-06', sleepHours: 7.2, steps: 9000, waterOz: 90, proteinGrams: 130, calories: 2100, bodyMetricsLogged: true, bodyMetrics: { weight: 165.1 } })
       await storage.put('dayLogs', { date: '2026-09-07', sleepHours: 7.8, steps: 11000, waterOz: 112, proteinGrams: 155, calories: 1950, bodyMetricsLogged: true, bodyMetrics: { weight: 164.8 } })
       await storage.put('dayLogs', { date: '2026-09-08', sleepHours: 7.75, steps: 10527, waterOz: 100, proteinGrams: 145, calories: 2000, bodyMetricsLogged: true, bodyMetrics: { weight: 164.2 }, healthMetrics: { restingHr: 49, hrvMs: 41, respiratoryRate: 12, spo2: 97, bodyTempC: 36.4 } })
 
       await context.app.show('history')
-      installProgressDashboardRuntime(context)
       const dashboard = await waitFor('[data-progress-dashboard]')
+      check('Dashboard appears on the first Progress visit without another tap', Boolean(dashboard))
       check('Progress keeps the existing recap and adds a dashboard below it', Boolean(q('.progress-recap') && dashboard))
       check('Recap remains before the configurable widgets', q('.progress-recap')?.compareDocumentPosition(dashboard) & Node.DOCUMENT_POSITION_FOLLOWING)
 

@@ -12,11 +12,11 @@ import { el, replace } from '../dom.js'
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 
 const STAGES = [
-  { min: 0, name: 'Seed', art: art('companion-stage-1.svg'), copy: 'A tiny beginning.' },
-  { min: 35, name: 'Hatchling', art: art('companion-stage-2.svg'), copy: 'Curious and awake.' },
-  { min: 110, name: 'Sprout', art: art('companion-stage-3.svg'), copy: 'Growing into its own.' },
-  { min: 260, name: 'Bloom', art: art('companion-stage-4.svg'), copy: 'Steady progress made visible.' },
-  { min: 600, name: 'Radiant', art: art('companion-stage-5.svg'), copy: 'A long run of care, accumulated.' },
+  { min: 0, name: 'Seed', art: art('companion-stage-1.png'), copy: 'A tiny beginning.' },
+  { min: 35, name: 'Hatchling', art: art('companion-stage-2.png'), copy: 'Curious and awake.' },
+  { min: 110, name: 'Sprout', art: art('companion-stage-3.png'), copy: 'Growing into its own.' },
+  { min: 260, name: 'Bloom', art: art('companion-stage-4.png'), copy: 'Steady progress made visible.' },
+  { min: 600, name: 'Radiant', art: art('companion-stage-5.png'), copy: 'A long run of care, accumulated.' },
 ]
 
 const ROOM_UNLOCKS = [
@@ -161,6 +161,9 @@ export function createCompanionScreen({ storage, clock }) {
           el('h1.screen__title', { text: m.name }),
           el('p.companion-header__copy', { text: 'Real-life progress grows this little world. Nothing ever decays.' }),
         ]),
+        el('img.companion-header__mark', {
+          src: art('icon-companion.png'), alt: '', 'aria-hidden': 'true',
+        }),
       ]),
 
       el('section.companion-habitat', {

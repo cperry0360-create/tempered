@@ -5,8 +5,16 @@
 
 .companion-header {
   display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
   gap: 6px;
   padding-right: 52px;
+}
+.companion-header__mark {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.25));
 }
 .companion-header__eyebrow,
 .companion-growth__label {
@@ -33,8 +41,22 @@
   border-radius: 30px;
   background:
     linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
-    url('../art/tempered/habitat.svg') center / cover no-repeat;
+    url('../art/tempered/habitat-starter.webp') center / cover no-repeat;
   box-shadow: 0 22px 60px rgba(0,0,0,.30);
+  transition: background-image 220ms ease-out;
+}
+.companion-habitat[data-room='3'],
+.companion-habitat[data-room='4'],
+.companion-habitat[data-room='5'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
+    url('../art/tempered/habitat-mid.webp');
+}
+.companion-habitat[data-room='6'],
+.companion-habitat[data-room='7'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
+    url('../art/tempered/habitat-full.webp');
 }
 .companion-habitat::after {
   content: '';

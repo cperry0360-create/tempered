@@ -1708,3 +1708,41 @@ version drift.
 **Decision:** Tempered targets modern iOS PWA support (iOS 16.4+); iOS 16.3 and older are not a compatibility target. The Train primary FAB starts the program day prescribed for today. Protein is tracked as grams with a daily finish line of at least 0.8 g per pound of the latest recorded body weight; metric weights are converted to pounds before calculating the target.
 
 **Needs Cory:** no
+
+## 2026-09-08 — The tracker-first Companion pivot is the authoritative product
+**Phase:** 0.14 continuity recovery
+**Decision:** Updated `CLAUDE.md` and added `docs/CURRENT-STATE.md` so the normal product
+is explicitly Today, Train, Companion, and Progress. Character/Battle remains internal
+only for old data and regression coverage. The Companion is positive-only and cannot
+decay or punish missed days.
+**Reasoning:** The long build conversation and companion-art chat had superseded several
+RPG-era documents, while the repository's session contract still described a visible
+character progression and dark tactical art direction. Leaving the contradiction in the
+first file every new session reads was the most likely way to lose the pivot again.
+**Confidence:** specified
+**Needs Cory:** no
+
+## 2026-09-08 — Generated art originals are durable; production assets are selective
+**Phase:** 0.14.2 art integration
+**Decision:** Preserved the recovered generation originals under
+`art/source/tempered-generated/`. Production uses optimized WebP scenic backgrounds and
+habitats, true-alpha PNG companion stages, and the three UI support icons under
+`art/tempered/`. Baked-checkerboard files remain source references only.
+**Reasoning:** The shared-chat URLs expire and had already left one asset incomplete.
+Committing the sources prevents another loss, while selectively precaching only the
+production derivatives keeps the installed PWA from downloading every reference board.
+**Confidence:** specified for the art direction; inferred for storage/format treatment
+**Needs Cory:** no
+
+## 2026-09-08 — Progress widgets get an explicit post-render signal
+**Phase:** 0.14.2 Progress repair
+**Decision:** `createApp.show` emits `tempered:screen-shown` after a screen is mounted,
+and the Progress dashboard runtime listens for the `history` signal. Its old mutation
+observer remains as a compatibility fallback. Hidden legacy Progress panels now use an
+explicit `display:none` rule while the widget dashboard is visible.
+**Reasoning:** Reproduced on production: the first Progress visit showed only the old
+recap panels; tapping `7D` woke the configurable widgets. Mutation timing was not a
+reliable screen lifecycle. The post-render signal removes the race, and the regression
+harness now installs the runtime before the first Progress visit.
+**Confidence:** measured
+**Needs Cory:** no

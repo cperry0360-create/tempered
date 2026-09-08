@@ -12,6 +12,8 @@ TEMPERED_PROTEIN=<whole-number grams of protein>
 // continue to work while the feature grows into one Nutrition tracker.
 export const CALORIE_PHOTO_PROMPT = NUTRITION_PHOTO_PROMPT
 
+const nutritionAiIcon = new URL('../../art/tempered/icon-nutrition-ai.png', import.meta.url).href
+
 function taggedNumber(raw, tag) {
   const match = raw.match(new RegExp(`${tag}\\s*[:=]\\s*([0-9]{1,5})`, 'i'))
   return match ? Number(match[1]) : null
@@ -263,15 +265,19 @@ export function installCalorieAiRuntime() {
     body.onclick = () => { nutritionOpen = !nutritionOpen; schedule() }
 
     const prompt = makeButton('today-item__ai-prompt', 'AI PHOTO', 'Copy AI meal-photo nutrition prompt')
+    prompt.replaceChildren(
+      Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
+      Object.assign(document.createElement('span'), { textContent: 'AI PHOTO' }),
+    )
     prompt.dataset.calorieAi = 'prompt'
     prompt.onclick = async (event) => {
       event.stopPropagation()
       const copied = await copyText(NUTRITION_PHOTO_PROMPT)
-      prompt.textContent = copied ? 'COPIED' : 'FAILED'
+      prompt.querySelector('span').textContent = copied ? 'COPIED' : 'FAILED'
       prompt.dataset.copied = String(copied)
       window.setTimeout(() => {
         if (!prompt.isConnected) return
-        prompt.textContent = 'AI PHOTO'
+        prompt.querySelector('span').textContent = 'AI PHOTO'
         delete prompt.dataset.copied
       }, 1600)
     }

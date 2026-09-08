@@ -60,7 +60,7 @@ That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], f
 
 ## First-party visual identity
 
-The post-RPG wellness and companion artwork lives under `art/tempered/`. It replaces the old RPG/night-forest identity in normal product surfaces and is intended to remain local/offline-safe with the rest of the PWA.
+The post-RPG wellness and companion artwork lives under `art/tempered/`. It replaces the old RPG/night-forest identity in normal product surfaces and is intended to remain local/offline-safe with the rest of the PWA. Production backgrounds are optimized WebP files; transparent companion stages and action icons remain PNG. The recovered generation originals and design references live under `art/source/tempered-generated/` so a future session does not depend on expiring chat links.
 
 ## Deployment
 

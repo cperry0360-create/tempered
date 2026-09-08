@@ -6,8 +6,17 @@
 
 .progress-header {
   display: grid;
-  gap: 5px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
   padding-right: 52px;
+}
+.progress-header__copyblock { min-width: 0; display: grid; gap: 5px; }
+.progress-header__mark {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 7px 16px rgba(0,0,0,.24));
 }
 .progress-header__copy {
   margin: 0;
@@ -224,6 +233,7 @@
   background: rgba(18, 57, 73, 0.82);
   box-shadow: 0 9px 26px rgba(3, 20, 29, 0.12);
 }
+.progress-panel[hidden] { display: none !important; }
 .progress-panel__head {
   min-width: 0;
   display: flex;

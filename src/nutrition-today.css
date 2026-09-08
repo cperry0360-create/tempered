@@ -48,6 +48,9 @@
 .today-item--nutrition .today-item__ai-prompt {
   flex: none;
   min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 0 10px;
   border: 1px solid rgba(203, 220, 117, .28);
   border-radius: 11px;
@@ -57,6 +60,11 @@
   font-size: 10px;
   font-weight: 760;
   letter-spacing: .025em;
+}
+.today-item--nutrition .today-item__ai-prompt img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .today-item--nutrition .today-item__expand {

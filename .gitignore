@@ -4,3 +4,7 @@
 
 # Guards against a stray npm install: this project has no dependencies.
 node_modules/
+
+# Local visual QA and built-in image-generation working copies.
+generated_images/
+tmp/

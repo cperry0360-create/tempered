@@ -1,22 +1,24 @@
 # CLAUDE.md — read this first, every session
 
-You are building **Tempered**, a health and training tracker with an RPG progression
-layer. This file is the contract. Re-read it at the start of every session.
+You are building **Tempered**, a health, training, and lifestyle tracker with a small
+positive companion layer. This file is the contract. Re-read it at the start of every
+session, then read `docs/CURRENT-STATE.md` for the latest shipped state.
 
 ## The one-line version
 
-Real training data drives character progression. Nothing is awarded for ticking a box
-that could be awarded for doing the work.
+Make healthy things fast to record, make progress easy to understand, and let accumulated
+real-world care grow a warm companion world. The tracker must stand on its own.
 
 ## Non-negotiables
 
-1. **Tracker first.** If the RPG layer were deleted, what remains must still be a good
-   workout and habit tracker. Never sacrifice logging speed for game flavour.
-2. **Attributes grow from measured performance**, not from completions, wherever a
-   measurement exists. A squat PR raises Might. Checking "I lifted" does not.
-3. **The mapping must be legible.** What you did should obviously explain what grew.
-   Never map lifting PRs to Intelligence. If you cannot justify a mapping in one
-   sentence to the user, it is wrong.
+1. **Tracker first.** Today, Train, and Progress must remain a good product without the
+   Companion. Never sacrifice logging speed or clarity for the reward layer.
+2. **Measured data stays authoritative.** Sets, load, reps, duration, steps, sleep,
+   hydration, nutrition, and body metrics come from canonical logs. A visual reward or
+   completion control must never manufacture a measurement.
+3. **The mapping must be legible.** What the user did should obviously explain what
+   changed in Progress or Companion. If it cannot be justified in one sentence, it is
+   wrong.
 4. **No punishment.** No negative XP, no lost levels, no broken-streak shaming. Missing
    days simply produces no gain. Rest is a loggable, rewarded action.
 5. **Local-first.** The app must work fully offline with no backend. All persistence
@@ -25,11 +27,12 @@ that could be awarded for doing the work.
 6. **Adapters at every boundary.** Storage, health data, and clock are interfaces with
    swappable implementations. Domain logic never imports IndexedDB or `Date.now()`
    directly.
-7. **Balance lives in config, not code.** Every XP value, curve, cap and threshold sits
-   in `data/balance.json`. Changing balance must never require editing logic.
-8. **Dark tactical visual language.** See `docs/04-design-system.md`. Illustration is
-   reserved for the battle layer and exercise reference art; do not invent decorative
-   art elsewhere in the tracker.
+7. **Legacy progression remains data-driven.** Retained XP values and curves stay in
+   `data/balance.json`. Do not surface or expand the old Character/Battle system.
+8. **Warm premium wellness visual language.** Normal screens use deep navy, teal/aqua,
+   fresh green, warm cream/gold, translucent dark cards, scenic wellness backgrounds,
+   and the ember-sprout companion under `art/tempered/`. Avoid pixel art, combat,
+   monsters, office/corporate themes, threatening imagery, and baked UI text.
 9. **The name means something. Use it.** Tempering is strengthening through controlled
    stress followed by rest. Rest is therefore never framed as absence, failure or a
    break in a streak — it is half the process. Copy should reflect this. Words to
@@ -38,16 +41,20 @@ that could be awarded for doing the work.
 
 ## What this is NOT
 
-- Not a full game. The only interactive game layer is the tiny optional daily battle:
-  ATTACK, GUARD, SKILL, AUTO, or SKIP. Playing it never creates character XP.
+- Not an RPG or battle game. Character/Battle code remains internal only so old local
+  data and regression fixtures keep working. It is absent from normal navigation and
+  must not receive new product features.
+- Not a second pet-care obligation. The Companion never gets sick, decays, loses items,
+  or punishes inactivity. It grows from activity Tempered already records.
 - Not a 500-exercise database with muscle maps. Cory's lifts, extensible.
 - Not a social app. No feeds, no friends, no leaderboards in V1.
 - Not a notification machine. V1 sends none.
 
 ## How to work
 
-- **Follow `docs/07-build-plan.md` in order.** Each phase has acceptance criteria.
-  Do not start phase N+1 until phase N's criteria pass.
+- **Treat `docs/CURRENT-STATE.md` as current product scope.** The original
+  `docs/07-build-plan.md` remains useful for acceptance criteria and history, but it
+  must not reintroduce visible RPG work that the tracker-first pivot removed.
 - **Write the test first for anything in `src/domain/`.** The XP engine, progression
   curves and workout progression rules must be unit tested. UI need not be.
 - **Log every decision** you make that is not specified here into `DECISIONS.md`, with
@@ -102,7 +109,9 @@ Two consequences worth remembering:
 
 ## Repository map
 
-- `docs/` — the specification. Authoritative.
+- `docs/CURRENT-STATE.md` — authoritative current product and continuity handoff.
+- `docs/` — detailed specifications and history. Where an RPG-era document conflicts
+  with `CURRENT-STATE.md`, the current-state document wins.
 - `data/` — seed content and balance config. JSON, hand-editable.
 - `src/domain/` — pure logic. No I/O, no DOM. Fully tested.
 - `src/adapters/` — storage, health, clock.

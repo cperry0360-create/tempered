@@ -246,6 +246,13 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       renderTabs(target)
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)
+      // Post-render integrations (notably the configurable Progress widgets)
+      // need a deterministic signal after the new screen is actually mounted.
+      // Observing shell mutations alone can race the asynchronous refresh and
+      // leave an enhancement dormant until the user taps another control.
+      window.dispatchEvent(new CustomEvent('tempered:screen-shown', {
+        detail: { tab: target },
+      }))
     } catch (error) {
       console.error(`[tempered] ${target} failed to load`, error)
       showFailure({

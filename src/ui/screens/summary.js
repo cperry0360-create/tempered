@@ -1,39 +1,7 @@
-/**
- * The post-session screen. ONE screen, one dismiss.
- *
- * `docs/05-workout-system.md` is explicit that this is the clearest thing to
- * improve on the competition: what you did, what broke, what grew, what
- * levelled, what is next — all scrollable, with a single Done. Nothing here is
- * behind a second dismiss.
- */
+/** Post-session recap. One screen, one dismiss, no RPG bookkeeping. */
 
 import { el, replace } from '../dom.js'
-import { volume, xp, duration, lbs } from '../format.js'
-
-const ATTRIBUTE_LABEL = {
-  might: 'Might', wind: 'Wind', grit: 'Grit', vitality: 'Vitality', mind: 'Mind',
-}
-
-/** Turns the XP breakdown into the causal line docs/05 asks for. */
-function causalLine(attribute, summary) {
-  const parts = []
-  const source = summary.xpBySource
-  if (attribute === 'might') {
-    if (summary.totalVolume > 0) parts.push(`${volume(summary.totalVolume)} lbs of volume`)
-    const weightPrs = summary.records.weightPrs.length
-    if (weightPrs) parts.push(`${weightPrs} weight PR${weightPrs > 1 ? 's' : ''}`)
-    const volumePrs = summary.records.volumePrs.length
-    if (volumePrs) parts.push(`${volumePrs} volume PR${volumePrs > 1 ? 's' : ''}`)
-    if (source['might.carry']) parts.push('loaded carries')
-  }
-  if (attribute === 'grit') {
-    parts.push('session completed')
-    if (source['grit.hours']) parts.push(`${duration(summary.durationMinutes)} under load`)
-    if (source['grit.return']) parts.push('back after time away')
-    if (source['grit.weekPlan']) parts.push('week met plan')
-  }
-  return parts.join(', ')
-}
+import { volume, duration, lbs } from '../format.js'
 
 /**
  * @param {object} deps
@@ -52,11 +20,10 @@ export function createSummaryScreen({ onDone }) {
       ]
 
       replace(root, [
-        el('h1.screen__title', { text: 'Session tempered' }),
+        el('h1.screen__title', { text: 'Workout complete' }),
 
-        // 1. What you did
         el('section.card', {}, [
-          el('h2.block__title', { text: 'What you did' }),
+          el('h2.block__title', { text: 'Session recap' }),
           el('div.stats', {}, [
             stat(duration(summary.durationMinutes), 'duration'),
             stat(String(summary.setsCompleted), 'sets'),
@@ -64,47 +31,19 @@ export function createSummaryScreen({ onDone }) {
           ]),
         ]),
 
-        // 2. What broke
         prs.length > 0 && el('section.card', { dataset: { section: 'prs' } }, [
-          el('h2.block__title', { text: 'What broke' }),
+          el('h2.block__title', { text: 'New records' }),
           ...prs.map((pr) => el('div.pr', {}, [
             el('span.badge', { text: pr.kind }),
             el('span.pr__detail', { text: `${pr.id.replace(/_/g, ' ')} — ${pr.detail}` }),
           ])),
         ]),
 
-        // 3. What grew
-        el('section.card', { dataset: { section: 'xp' } }, [
-          el('h2.block__title', { text: 'What grew' }),
-          ...Object.entries(summary.xpByAttribute)
-            .filter(([, amount]) => amount > 0)
-            .map(([attribute, amount]) => el('div.grew', { dataset: { attribute } }, [
-              el('span.grew__attr', { text: ATTRIBUTE_LABEL[attribute] }),
-              el('span.grew__xp', { text: `+${xp(amount)}` }),
-              el('span.grew__why', { text: causalLine(attribute, summary) }),
-            ])),
+        el('section.card.summary-companion', {}, [
+          el('h2.block__title', { text: 'Added to your day' }),
+          el('p.block__hint', { text: 'This training is already reflected in Progress and helps your companion grow. Nothing else to claim or manage.' }),
         ]),
 
-        // 4. What levelled
-        summary.levelledUp.length > 0 && el('section.card', { dataset: { section: 'levels' } }, [
-          el('h2.block__title', { text: 'What levelled' }),
-          ...summary.levelledUp.map((up) => el('p.levelup', { dataset: { attribute: up.attribute } }, [
-            el('strong', { text: `${ATTRIBUTE_LABEL[up.attribute]} reached ${up.tier}` }),
-            el('span', { text: ` · level ${up.level}` }),
-          ])),
-        ]),
-
-        // 5. What's next
-        summary.directive && el('section.card', { dataset: { section: 'directive' } }, [
-          el('h2.block__title', { text: "What's next" }),
-          el('p.directive__headline', { text: summary.directive.headline }),
-          el('p.directive__detail', { text: summary.directive.detail }),
-        ]),
-
-        // The tab bar is hidden here, so the one primary action is a button
-        // rather than a FAB — a pill, not the full width: a full-width acid
-        // button is about 7% of a phone screen, and the accent holds to 5%
-        // everywhere without exception.
         el('button.button.button--pill', {
           type: 'button', dataset: { action: 'done', acid: 'primary' }, onclick: onDone,
         }, ['DONE']),

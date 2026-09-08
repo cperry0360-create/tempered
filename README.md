@@ -1,57 +1,56 @@
 # Tempered
 
-A health and training tracker with an RPG progression layer. Real training data drives
-character progression — a squat PR raises Might; ticking "I lifted" does not.
+Tempered is a local-first health, lifestyle, and strength-training tracker with a small positive-reinforcement companion layer.
 
-*Tempering* is strengthening metal through controlled stress **followed by rest**. That
-is the whole product thesis: load and recovery, both rewarded, neither punished. The
-word is used deliberately throughout the app and should not be replaced with generic
-fitness language.
+It is built around one practical idea: **make the healthy things easy to record, make progress easy to understand, and never punish a missed day.** Training, sleep, steps, hydration, nutrition, recovery, and other lifestyle signals stay useful on their own; the companion simply makes accumulated care feel alive.
 
-## For Claude Code
+*Tempering* is strengthening metal through controlled stress **followed by rest**. That remains the product thesis: load and recovery both matter.
 
-Read **`CLAUDE.md`** first. It is the contract and should be re-read at the start of
-every session. Then follow **`docs/07-build-plan.md`** in order.
+## Current product
 
-## Documents
+The visible app has four primary surfaces:
+
+- **Today** — day planning, Lifestyle status, Nutrition, hydration, habits, and today's workout queue.
+- **Train** — programs, exercise history, fast set logging, progression tools, cable-machine support, and ad-hoc training.
+- **Companion** — a small creature that grows only from accumulated real-world activity. It never loses progress, gets sick, or punishes a missed day.
+- **Progress** — recap plus a configurable health/training widget dashboard.
+
+The earlier Character/Battle RPG implementation is retained internally for backwards compatibility with existing local data and regression fixtures, but it is intentionally absent from normal navigation. New product work should not expand the RPG.
+
+## Health data
+
+The production app is a static Home Screen PWA, so it cannot read HealthKit directly. Tempered includes a **light-touch Apple Health Shortcut bridge** instead: an iPhone Shortcut reads selected Health samples on-device, copies a tiny text snapshot, and Tempered imports it locally. This path needs no Mac, Apple Developer membership, server, or embedded AI provider.
+
+A native iOS wrapper also exists in the repository for a future signed/TestFlight build if direct HealthKit access eventually becomes worthwhile.
+
+## Data and privacy
+
+Tempered is local-first. Canonical app data is stored in IndexedDB on the device, with JSON backup/restore available in Settings. The nutrition photo helper does not upload photos from Tempered or embed an AI key; it copies a provider-neutral prompt for use in a vision-capable AI app and imports the small machine-readable result.
+
+## Repository documents
+
+Some documents under `docs/` describe the earlier RPG-era product and remain useful as implementation/history references. The live UI and current source are authoritative for the post-RPG product direction.
 
 | File | What it is |
 |---|---|
-| `CLAUDE.md` | Session contract. Non-negotiables, working rules, stack. |
-| `docs/00-product.md` | Vision, loop, principles. |
-| `docs/01-attributes-and-xp.md` | The XP engine. The heart of the app. |
-| `docs/02-data-model.md` | Schemas and storage shape. |
-| `docs/03-screens.md` | Every screen, specified. |
-| `docs/04-design-system.md` | Type, colour, spacing, components. |
-| `docs/05-workout-system.md` | Routines, sessions, progression rules. |
-| `docs/06-battle.md` | The tiny turn-based daily battle. |
-| `docs/07-build-plan.md` | Phased plan with acceptance criteria. |
-| `DECISIONS.md` | Claude's running log of anything not specified here. |
-
-## Data
-
-`data/` holds seed content and balance configuration as hand-editable JSON. Balance
-constants live in `data/balance.json` and must never be hard-coded.
+| `CLAUDE.md` | Engineering/session contract and stack rules. |
+| `docs/00-product.md` | Original product vision. |
+| `docs/01-attributes-and-xp.md` | Legacy progression engine retained underneath old data. |
+| `docs/02-data-model.md` | Storage/data model. |
+| `docs/03-screens.md` | Earlier screen specification. |
+| `docs/04-design-system.md` | Design-system foundations. |
+| `docs/05-workout-system.md` | Workout/routine/progression system. |
+| `docs/06-battle.md` | Legacy battle design; no longer a visible product feature. |
+| `docs/07-build-plan.md` | Original phased build plan. |
+| `DECISIONS.md` | Running implementation decisions. |
 
 ## Exercise art
 
-The movement photographs in `art/exercises/` are not original work. Each one is two
-frames — start and finish — of an exercise from the **[free-exercise-db][fedb]** archive
-by yuhonas, released under the [Unlicense][unlicense] (a public domain dedication).
-Tempered scales the two frames to a common height and joins them side by side; nothing
-else about them is changed.
+The movement photographs in `art/exercises/` are not original work. Each one is two frames — start and finish — of an exercise from the **[free-exercise-db][fedb]** archive by yuhonas, released under the [Unlicense][unlicense] (a public domain dedication).
 
-That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], from the
-**[Everkinetic][everkinetic] open data project by Greg Priday**, which is licensed
-**[CC BY-SA 4.0][ccbysa]**. Both downstream repositories relicensed the set as public
-domain. Tempered does not rely on that: the images are attributed and shared alike as
-though CC BY-SA 4.0 still bound them, which satisfies either reading.
+That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], from the **[Everkinetic][everkinetic] open data project by Greg Priday**, which is licensed **[CC BY-SA 4.0][ccbysa]**. Tempered keeps exact provenance in `art/exercises/SOURCES.json` and carries the attribution in **Settings → Credits**.
 
-**Third-party exercise art is licensed separately from Tempered's source code and
-first-party art. A repository-level licence never automatically relicenses the files in
-`art/exercises/`.** `art/exercises/SOURCES.json` records the exact archive entry,
-revision and modification behind every file, and the live app carries the attribution
-in **Settings → Credits** so it travels with the published images.
+**Third-party exercise art is licensed separately from Tempered's source code and first-party art. A repository-level licence never automatically relicenses the files in `art/exercises/`.**
 
 [fedb]: https://github.com/yuhonas/free-exercise-db
 [unlicense]: https://unlicense.org
@@ -59,16 +58,9 @@ in **Settings → Credits** so it travels with the published images.
 [everkinetic]: https://github.com/everkinetic/data
 [ccbysa]: https://creativecommons.org/licenses/by-sa/4.0/
 
-## The backdrop
+## First-party visual identity
 
-The night-forest artwork behind every screen — `art/dist/bg-night-forest.jpg` — is
-**Cory's own original work**, and the app's colour scheme is sampled from it: the ground
-gradient, the card surfaces, and all five attribute colours. See
-`docs/11-structure-and-feel.md` section E. `art/dist/` is the canonical runtime location;
-there is no second source copy of this same file.
-
-Unlike the exercise photographs, there is no third-party licence question here. It is
-first-party art, and the palette derived from it is first-party too.
+The post-RPG wellness and companion artwork lives under `art/tempered/`. It replaces the old RPG/night-forest identity in normal product surfaces and is intended to remain local/offline-safe with the rest of the PWA.
 
 ## Deployment
 
@@ -76,20 +68,8 @@ The primary live app is served publicly by **GitHub Pages** from `main` at:
 
 `https://cperry0360-create.github.io/tempered/`
 
-Pages publishes the repository root directly. There is no build step: `index.html`,
-`manifest.webmanifest`, `sw.js`, and all runtime assets are served exactly as committed.
-`.nojekyll` disables Jekyll processing, and all runtime URLs are relative so the PWA works
-under the `/tempered/` project path.
-
-The previous Netlify site may remain online as a fallback, but it is no longer the primary
-production host. Netlify production deploys were paused after the free-team deploy credit
-allowance was exhausted during rapid iteration.
-
-The public deployment is intentional. Because the exercise images are published with
-the app, the required provenance/licensing notice is carried inside the product under
-**Settings → Credits** rather than relying only on this README.
+Pages publishes the repository root directly. There is no application build step: `index.html`, `manifest.webmanifest`, `sw.js`, and runtime assets are served as committed. `.nojekyll` disables Jekyll processing, and runtime URLs are relative so the PWA works under the `/tempered/` project path.
 
 ## Status
 
-Tempered is built and deployed as a static PWA; `docs/07-build-plan.md` records completed
-phases and the remaining roadmap.
+Tempered is an actively developed static PWA. The current direction is tracker-first: excellent logging and progress visibility, with the Companion as a deliberately small reward layer rather than a second game product.

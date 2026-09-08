@@ -1,0 +1,146 @@
+/* Tempered wellness pivot — replaces the visible RPG skin with a calm lifestyle identity. */
+body::before {
+  background-image: linear-gradient(180deg, rgba(8,28,39,.18), rgba(8,28,39,.42)), url('../art/tempered/bg-wellness.svg') !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  opacity: .58 !important;
+  filter: saturate(.92) blur(.2px) !important;
+  transform: scale(1.01) !important;
+}
+
+/* Health Shortcut bridge */
+.health-bridge__today {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.health-bridge__today > span { color: rgba(255,255,255,.46); font-size: 9px; }
+.health-bridge__import {
+  min-height: 38px;
+  appearance: none;
+  border: 1px solid rgba(127,225,190,.24);
+  border-radius: 999px;
+  background: rgba(85,190,157,.10);
+  color: #cfeea3;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: .04em;
+  padding: 0 12px;
+}
+.health-bridge__import[data-state='success'] { border-color: rgba(203,220,117,.55); background: rgba(203,220,117,.13); }
+.health-bridge__import[data-state='error'] { color: rgba(255,255,255,.76); }
+.health-bridge__settings { order: 3; }
+.health-bridge__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.health-bridge__actions .button { min-width: 0; font-size: 10px; }
+
+/* Progress widget dashboard */
+.progress-dashboard { display: grid; gap: 12px; }
+.progress-dashboard__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+.progress-dashboard__toolbar > div:first-child { display: grid; gap: 2px; }
+.progress-dashboard__toolbar strong { font-size: 17px; letter-spacing: -.02em; }
+.progress-dashboard__toolbar span { color: rgba(255,255,255,.48); font-size: 10px; }
+.progress-dashboard__actions { display: flex; gap: 7px; }
+.progress-dashboard__plus,
+.progress-dashboard__edit {
+  min-width: 44px;
+  min-height: 44px;
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  background: rgba(9,29,40,.74);
+  color: white;
+  font: inherit;
+  font-weight: 760;
+}
+.progress-dashboard__plus { font-size: 28px; line-height: 1; color: #cbdc75; }
+.progress-dashboard__edit { padding: 0 13px; font-size: 10px; letter-spacing: .06em; }
+.progress-dashboard__grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.progress-widget {
+  position: relative;
+  min-height: 148px;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(80,199,167,.10), transparent 42%),
+    rgba(8,27,38,.84);
+  box-shadow: 0 13px 34px rgba(0,0,0,.19);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.progress-widget--wide { grid-column: 1 / -1; min-height: 155px; }
+.progress-widget[data-editing='true'] { outline: 1px solid rgba(255,255,255,.08); animation: widget-wiggle 1.2s ease-in-out infinite alternate; }
+@keyframes widget-wiggle { from { transform: rotate(-.15deg); } to { transform: rotate(.15deg); } }
+.progress-widget__title { color: rgba(255,255,255,.58); font-size: 11px; font-weight: 670; }
+.progress-widget__value { font-size: clamp(27px, 8vw, 42px); line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.progress-widget__detail { color: rgba(255,255,255,.58); font-size: 10px; line-height: 1.3; }
+.progress-widget__spark { width: 100%; height: 48px; margin-top: auto; color: #6ce0ba; overflow: visible; }
+.progress-widget__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.progress-widget__pair span { display: grid; gap: 2px; padding: 10px; border-radius: 15px; background: rgba(255,255,255,.045); }
+.progress-widget__pair b { font-size: 18px; }
+.progress-widget__pair small { color: rgba(255,255,255,.48); font-size: 9px; }
+.progress-widget__bodymetrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
+.progress-widget__bodymetrics span { min-width: 0; display: grid; justify-items: center; gap: 2px; padding: 8px 2px; border-radius: 13px; background: rgba(255,255,255,.04); text-align: center; }
+.progress-widget__bodymetrics i { color: #6ce0ba; font-style: normal; font-size: 14px; }
+.progress-widget__bodymetrics b { font-size: 16px; }
+.progress-widget__bodymetrics small { color: rgba(255,255,255,.42); font-size: 7px; line-height: 1.25; }
+.progress-widget__bar { height: 10px; overflow: hidden; margin-top: auto; border-radius: 999px; background: rgba(255,255,255,.07); }
+.progress-widget__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#5ad5b0,#cbdc75); }
+.progress-widget__remove {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: #1a2d34;
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: 0 3px 12px rgba(0,0,0,.25);
+}
+.progress-widget__move { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; gap: 4px; }
+.progress-widget__move button { width: 31px; height: 31px; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; background: rgba(9,29,40,.88); color: white; }
+.progress-widget__move button:disabled { opacity: .25; }
+.progress-widget[data-editing='true'] > .progress-widget__title { padding-left: 28px; }
+.progress-widget-gallery {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 22px;
+  background: rgba(8,27,38,.91);
+}
+.progress-widget-gallery__head { display: grid; gap: 2px; }
+.progress-widget-gallery__head span { color: rgba(255,255,255,.48); font-size: 10px; }
+.progress-widget-gallery__choices { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; color: rgba(255,255,255,.55); font-size: 11px; }
+.progress-widget-gallery__choices button { min-height: 44px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.045); color: white; font: inherit; font-size: 11px; text-align: left; padding: 0 12px; }
+
+/* The legacy Character/Battle palette no longer drives normal navigation. */
+.tabbar__tab[data-tab='companion'][data-active='true'] { color: #d8eaa0; }
+
+@media (max-width: 390px) {
+  .progress-widget { padding: 14px; min-height: 138px; }
+  .progress-widget__bodymetrics { grid-template-columns: repeat(3,1fr); }
+  .health-bridge__actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-widget[data-editing='true'] { animation: none; }
+}

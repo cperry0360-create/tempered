@@ -118,9 +118,9 @@
 .companion-foot__stats span { padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.055); color: rgba(255,255,255,.66); font-size: 10px; }
 .companion-name { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .companion-name__input,
-.companion-name__save { min-height: 44px; border: 1px solid rgba(255,255,255,.10); border-radius: 13px; background: rgba(0,0,0,.14); color: white; font: inherit; }
+.companion-name__save { min-height: 48px; border: 1px solid rgba(255,255,255,.10); border-radius: 13px; background: rgba(0,0,0,.14); color: white; font: inherit; }
 .companion-name__input { min-width: 0; padding: 0 12px; }
-.companion-name__save { padding: 0 14px; color: #cbdc75; font-size: 11px; font-weight: 760; }
+.companion-name__save { min-width: 82px; padding: 0 14px; color: #cbdc75; font-size: 11px; font-weight: 760; }
 
 @media (max-width: 390px) {
   .companion-habitat { min-height: 390px; }

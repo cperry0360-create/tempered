@@ -6,10 +6,12 @@ import { installBattleFx } from './ui/battle-fx-runtime.js'
 import { installWaterQuickPresets } from './ui/water-quick-presets.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
+import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 
 registerServiceWorker()
 installWaterQuickPresets()
 installMobileInteractions()
+installCalorieAiRuntime()
 
 // Importing the FX module installs the presentation-only listener. Keep the
 // named import so the offline precache contract can follow the module graph.

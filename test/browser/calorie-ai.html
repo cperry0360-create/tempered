@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — calorie AI handoff</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/ux-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { CALORIE_PHOTO_PROMPT, installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const settle = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'unhandled rejection')))
+
+    async function waitFor(selector, timeout = 3000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      return null
+    }
+
+    try {
+      const clipboard = {
+        copied: '',
+        async writeText(text) { this.copied = text },
+        async readText() { return 'TEMPERED_CALORIES=642' },
+      }
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard })
+
+      const clock = fixedClock(new Date(2026, 8, 8, 9, 0, 0))
+      const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      await tempered.daily.setCadence('calories_logged', 'daily', 1)
+      await tempered.app.show('today')
+      installCalorieAiRuntime()
+
+      const prompt = await waitFor('[data-calorie-ai="prompt"]')
+      check('Calories gets a row-level Copy AI Prompt button', Boolean(prompt), prompt?.textContent?.trim() ?? 'missing')
+      check('Calories quick preset is hidden in favor of the photo flow', q('[data-activity="calories_logged"] .today-item__quick')?.hidden === true)
+
+      prompt?.click()
+      await settle(30)
+      check('Copy button writes the stored prompt to the clipboard', clipboard.copied === CALORIE_PHOTO_PROMPT)
+      check('Stored prompt requests the machine-readable Tempered result', /TEMPERED_CALORIES=/.test(clipboard.copied))
+
+      q('[data-activity="calories_logged"] .today-item__body')?.click()
+      const paste = await waitFor('[data-calorie-ai="paste"]')
+      check('Expanded Calories editor offers Paste AI Result', Boolean(paste))
+      paste?.click()
+      await settle(140)
+      const meta = q('[data-activity="calories_logged"] .today-item__meta')?.textContent ?? ''
+      check('Pasted AI result logs through the normal Calories path', /642\s*kcal/i.test(meta), meta)
+
+      const img = document.createElement('img')
+      img.className = 'exercise__thumb'
+      img.style.width = '72px'
+      img.style.height = '72px'
+      document.body.append(img)
+      const position = getComputedStyle(img).objectPosition
+      check('Exercise thumbnail crop is anchored to the first frame', position !== '50% 50%', position)
+      img.remove()
+
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+    } catch (error) {
+      check('calorie AI harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'calorie-ai', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

@@ -66,13 +66,16 @@
 
       await tempered.app.startSession({ exerciseId: 'cable_fly' })
       const card = await waitFor('.screen--session [data-exercise="cable_fly"]')
-      await settle(140)
+      await settle(160)
 
       check('Cable Fly weight column becomes PEG', q('.setrow--head [data-col="weight"]', card)?.textContent === 'PEG',
         q('.setrow--head [data-col="weight"]', card)?.textContent)
       check('session identifies Inspire FTX / Centr 2 peg mode', /FTX \/ CENTR 2 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('session labels the calculation nominal', /NOMINAL/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('migrated LAST history shows peg rather than pretending it was pounds', /P7/.test(q('[data-kind="last"]')?.textContent ?? ''), q('[data-kind="last"]')?.textContent)
+      check('migrated PR pill shows Peg 7 and 85 nominal pounds',
+        /P7\s*·\s*85/.test(q('[data-kind="pr"]')?.textContent ?? '') && /nominal/i.test(q('[data-kind="pr"]')?.textContent ?? ''),
+        q('[data-kind="pr"]')?.textContent)
 
       let weights = qa('.setrow__num[data-field="weight"]', card)
       let reps = qa('.setrow__num[data-field="reps"]', card)

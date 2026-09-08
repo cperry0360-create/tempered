@@ -41,6 +41,8 @@
       check('Fresh companion starts as Seed', q('.companion-growth__stage')?.textContent === 'Seed', q('.companion-growth__stage')?.textContent)
       check('Companion explicitly never decays', /nothing ever decays/i.test(q('.companion-header__copy')?.textContent ?? ''))
       check('Starter room has at least one unlocked object', qa('.companion-room__item[data-unlocked="true"]').length >= 1)
+      check('Starter room paints its unlocked nest into the habitat', Boolean(q('.companion-habitat__prop[data-prop="nest"]')))
+      check('Current growth stage is checkpointed only for celebrations', (await storage.get('profile', 'profile'))?.companionStageSeen === 'Seed')
 
       const img = q('.companion-habitat__pet')
       if (img && !img.complete) await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve })
@@ -64,7 +66,16 @@
       const stage = q('.companion-growth__stage')?.textContent ?? ''
       check('Accumulated real activity grows the companion forward', stage !== 'Seed', stage)
       check('Growth unlocks more room objects', qa('.companion-room__item[data-unlocked="true"]').length > 1, qa('.companion-room__item[data-unlocked="true"]').length)
+      check('Unlocked room objects also appear inside the habitat', qa('.companion-habitat__prop').length > 1, qa('.companion-habitat__prop').length)
+      check('A newly reached form gets a one-time evolution celebration', q('.companion-habitat')?.dataset.evolved === 'true' && Boolean(q('.companion-evolve')), q('.companion-habitat')?.dataset.evolved)
+      check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
+      check('Growth-stage checkpoint advances after celebration', (await storage.get('profile', 'profile'))?.companionStageSeen === stage, (await storage.get('profile', 'profile'))?.companionStageSeen)
       check('Today activity creates a small companion moment', /Post-workout stretch|Hydration break|Quiet reading|Snack time|Well rested/.test(q('.companion-moment')?.textContent ?? ''), q('.companion-moment')?.textContent)
+
+      // Re-opening the same stage should not replay evolution endlessly.
+      await context.app.show('today')
+      await context.app.show('companion')
+      check('Evolution celebration does not replay after the stage was seen', q('.companion-habitat')?.dataset.evolved === 'false' && !q('.companion-evolve'))
 
       const input = q('.companion-name__input')
       input.value = 'Moss'

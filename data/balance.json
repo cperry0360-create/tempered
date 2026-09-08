@@ -81,6 +81,16 @@
     "targetDaysToComplete": 14,
     "neverRequireConsecutiveDays": true
   },
+  "talents": {
+    "_comment": "Permanent combat-only progression. Points are earned from real-world attribute levels, never from battle play.",
+    "pointEveryTotalLevels": 3,
+    "maxRankPerTalent": 3,
+    "damagePerRank": 0.05,
+    "healthPerRank": 0.05,
+    "defencePerRank": 1,
+    "speedPerRank": 0.04,
+    "critChancePerRank": 0.02
+  },
   "battle": {
     "_comment": "Attributes become combat stats. The daily encounter and rewards remain deterministic and battle XP is locked out of character progression. The turn* values tune the optional Attack / Guard / Skill layer only.",
     "healthFromVitality": 14,

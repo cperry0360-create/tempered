@@ -84,6 +84,27 @@
       check('Repeated Health sync does not double steps', repeated.steps === 10527, repeated.steps)
       check('Repeated Health sync does not double sleep', repeated.sleepHours === 7.75, repeated.sleepHours)
 
+      // Installed iPhone PWAs can deny programmatic clipboard reads even when
+      // the user tapped the button. The fallback must offer a real paste field,
+      // not merely change the button label.
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { async readText() { throw new Error('clipboard permission denied') }, async writeText() {} },
+      })
+      await context.app.show('today')
+      const denied = await waitFor('.screen--today [data-health-bridge="import"]')
+      denied?.click()
+      const pasteSheet = await waitFor('[data-health-import-overlay]')
+      check('Denied clipboard access opens an iPhone-friendly paste sheet', Boolean(pasteSheet))
+      const manualSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11888\nSLEEP=8.25\nRESTING_HR=48`
+      const pasteInput = q('[data-health-import-input]')
+      if (pasteInput) pasteInput.value = manualSnapshot
+      q('[data-health-import-submit]')?.click()
+      await settle(240)
+      const manual = await context.daily.dayLog('2026-09-08')
+      check('Manual paste fallback imports through the canonical day log', manual.steps === 11888 && manual.sleepHours === 8.25, `${manual.steps} steps · ${manual.sleepHours} h`)
+      check('Manual paste fallback closes after a successful import', !q('[data-health-import-overlay]'))
+
       await context.app.show('settings')
       const settings = await waitFor('[data-health-bridge="settings"]')
       check('Settings explains preferred one-tap and reliable fallback', /one-tap handoff/i.test(settings?.textContent ?? '') && /fallback/i.test(settings?.textContent ?? ''), settings?.textContent ?? 'missing')

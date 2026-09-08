@@ -54,6 +54,8 @@
       check('Dashboard appears on the first Progress visit without another tap', Boolean(dashboard))
       check('Progress keeps the existing recap and adds a dashboard below it', Boolean(q('.progress-recap') && dashboard))
       check('Recap remains before the configurable widgets', q('.progress-recap')?.compareDocumentPosition(dashboard) & Node.DOCUMENT_POSITION_FOLLOWING)
+      await settle(240)
+      check('Dashboard stays mounted instead of rebuilding itself in a loop', q('[data-progress-dashboard]') === dashboard && dashboard?.isConnected)
 
       const widgets = qa('[data-widget]')
       check('Dashboard starts with a useful widget set', widgets.length >= 6, widgets.map((node) => node.dataset.widget).join(' | '))

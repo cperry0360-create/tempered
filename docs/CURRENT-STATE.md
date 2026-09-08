@@ -3,7 +3,7 @@
 **Last recovered and verified:** 2026-09-08  
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.14.2 (9)
+**Current release:** 0.14.3 (10)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -62,8 +62,17 @@ and local persistence. The default widgets are:
 - Consistency
 
 Micro Cardio is available from the Add gallery. The dashboard must render on the first
-visit to Progress without requiring a second tap. Release 0.14.2 fixes the production
-race that previously left it dormant until a range button such as `7D` was pressed.
+visit to Progress without requiring a second tap, and must remain mounted while idle.
+Release 0.14.3 removes the self-triggering observer loop that repeatedly deleted and
+rebuilt the dashboard, leaving it absent most of the time and its controls untappable.
+
+## Apple Health Shortcut import
+
+The preferred Shortcut handoff opens Tempered with a `temperedHealth` URL parameter and
+imports automatically. `IMPORT HEALTH` may read a valid snapshot directly from the
+clipboard when iOS permits it. When installed Safari denies programmatic clipboard read,
+the button must open an in-app paste sheet where the user can touch and hold, Paste, and
+Import. A clipboard denial must never leave a button that appears to do nothing.
 
 ## Visual direction and recovered art
 

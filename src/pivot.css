@@ -59,6 +59,51 @@ body:has(.screen--companion)::before {
 .health-bridge__settings { order: 3; }
 .health-bridge__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .health-bridge__actions .button { min-width: 0; font-size: 10px; }
+.health-import-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  padding: 18px max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(2, 12, 19, .72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.health-import-sheet {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(124, 226, 193, .24);
+  border-radius: 28px;
+  background: linear-gradient(160deg, rgba(19, 60, 72, .98), rgba(7, 28, 40, .99));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .48);
+}
+.health-import-sheet__eyebrow { color: #cbdc75; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.health-import-sheet__title { margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -.025em; }
+.health-import-sheet__copy,
+.health-import-sheet__status { margin: 0; color: rgba(255,255,255,.64); font-size: 12px; line-height: 1.45; }
+.health-import-sheet__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 170px;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 17px;
+  outline: none;
+  background: rgba(2, 17, 26, .66);
+  color: #f4fbfa;
+  font: 500 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.health-import-sheet__input:focus { border-color: rgba(111, 224, 188, .65); box-shadow: 0 0 0 3px rgba(82, 211, 170, .10); }
+.health-import-sheet__input::placeholder { color: rgba(255,255,255,.28); }
+.health-import-sheet__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.health-import-sheet__actions .button { min-height: 48px; }
+.health-import-sheet__submit { border-color: rgba(203,220,117,.42); background: rgba(203,220,117,.13); color: #e8f6ac; }
+.health-import-sheet__submit:disabled { opacity: .55; }
 
 /* Progress widget dashboard */
 .progress-dashboard { display: grid; gap: 12px; }

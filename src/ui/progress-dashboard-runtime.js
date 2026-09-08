@@ -83,6 +83,7 @@ export function installProgressDashboardRuntime(context) {
   if (!mount) return () => {}
   let scheduled = false
   let busy = false
+  let rerenderRequested = false
   let editing = false
   let galleryOpen = false
 
@@ -251,8 +252,13 @@ export function installProgressDashboardRuntime(context) {
     const recap = screen.querySelector('.progress-recap')
     if (!recap) return
     screen.querySelectorAll('.progress-panel').forEach((node) => { node.hidden = true })
-    screen.querySelector('[data-progress-dashboard]')?.remove()
     const [data, order] = await Promise.all([model(range), widgetOrder()])
+
+    // Data reads are asynchronous. The user may have changed view or left
+    // Progress while they were in flight, so never attach a stale dashboard.
+    if (!screen.isConnected
+      || !screen.querySelector('[data-view="overview"][data-active="true"]')
+      || screen.querySelector('.progress-recap') !== recap) return
 
     const dashboard = document.createElement('section')
     dashboard.className = 'progress-dashboard'
@@ -297,13 +303,15 @@ export function installProgressDashboardRuntime(context) {
       grid.append(card)
     }
     dashboard.append(grid)
-    recap.after(dashboard)
+    const existing = screen.querySelector('[data-progress-dashboard]')
+    if (existing) existing.replaceWith(dashboard)
+    else recap.after(dashboard)
   }
 
   async function enhance() {
     scheduled = false
     if (busy) {
-      schedule()
+      rerenderRequested = true
       return
     }
     const screen = mount.querySelector('.screen--history')
@@ -315,7 +323,13 @@ export function installProgressDashboardRuntime(context) {
     try {
       const range = Number(recap.dataset.recap) || 30
       await renderDashboard(screen, range)
-    } finally { busy = false }
+    } finally {
+      busy = false
+      if (rerenderRequested) {
+        rerenderRequested = false
+        schedule()
+      }
+    }
   }
   function schedule() {
     if (scheduled) return
@@ -323,15 +337,18 @@ export function installProgressDashboardRuntime(context) {
     requestAnimationFrame(() => enhance().catch((error) => console.warn('[tempered] dashboard enhancement unavailable', error)))
   }
 
-  const observer = new MutationObserver(schedule)
-  observer.observe(mount, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-active'] })
   const screenShown = (event) => {
     if (event?.detail?.tab === 'history') schedule()
   }
+  const progressControlClicked = (event) => {
+    const target = event.target instanceof Element ? event.target : null
+    if (target?.closest('.progress-range__button, .progress-views .segmented__option')) schedule()
+  }
   window.addEventListener('tempered:screen-shown', screenShown)
+  mount.addEventListener('click', progressControlClicked)
   schedule()
   return () => {
-    observer.disconnect()
     window.removeEventListener('tempered:screen-shown', screenShown)
+    mount.removeEventListener('click', progressControlClicked)
   }
 }

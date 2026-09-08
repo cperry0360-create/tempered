@@ -1746,3 +1746,18 @@ reliable screen lifecycle. The post-render signal removes the race, and the regr
 harness now installs the runtime before the first Progress visit.
 **Confidence:** measured
 **Needs Cory:** no
+
+## 2026-09-08 — Progress rendering is event-driven and Health import has a paste sheet
+**Phase:** 0.14.3 production repair
+**Decision:** Removed the Progress runtime's subtree mutation observer. The dashboard now
+renders from the explicit screen-mounted event, range/view clicks, and its own controls.
+It keeps the current dashboard mounted until replacement data is ready. When iOS denies
+clipboard reads, `IMPORT HEALTH` opens a native-feeling in-app paste sheet and imports the
+pasted Shortcut snapshot through the same canonical day-log path.
+**Reasoning:** The observer watched the DOM that the dashboard itself replaced, so every
+successful render scheduled another render. Each pass deleted the widgets before its
+asynchronous IndexedDB reads, leaving them absent for most frames and making Add/Edit
+controls unstable. The old Health fallback only changed button copy after a clipboard
+error, which supplied no usable import path on installed iPhone PWAs.
+**Confidence:** measured from the reported iPhone state and reproduced render lifecycle
+**Needs Cory:** no

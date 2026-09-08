@@ -138,24 +138,112 @@ export function installHealthShortcutRuntime(context) {
   if (!mount) return () => {}
   let scheduled = false
 
+  function openImportSheet(button, initialText = '') {
+    document.querySelector('[data-health-import-overlay]')?.remove()
+
+    const overlay = document.createElement('div')
+    overlay.className = 'health-import-overlay'
+    overlay.dataset.healthImportOverlay = 'true'
+
+    const sheet = document.createElement('section')
+    sheet.className = 'health-import-sheet'
+    sheet.setAttribute('role', 'dialog')
+    sheet.setAttribute('aria-modal', 'true')
+    sheet.setAttribute('aria-labelledby', 'health-import-title')
+    sheet.setAttribute('aria-describedby', 'health-import-copy')
+
+    const eyebrow = document.createElement('span')
+    eyebrow.className = 'health-import-sheet__eyebrow'
+    eyebrow.textContent = 'APPLE HEALTH'
+    const title = document.createElement('h2')
+    title.id = 'health-import-title'
+    title.className = 'health-import-sheet__title'
+    title.textContent = 'PASTE HEALTH SNAPSHOT'
+    const copy = document.createElement('p')
+    copy.id = 'health-import-copy'
+    copy.className = 'health-import-sheet__copy'
+    copy.textContent = 'Run the Tempered Health Shortcut, then touch and hold in the box and tap Paste.'
+
+    const input = document.createElement('textarea')
+    input.className = 'health-import-sheet__input'
+    input.dataset.healthImportInput = 'true'
+    input.value = parseHealthSnapshot(initialText) ? initialText : ''
+    input.placeholder = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75`
+    input.rows = 8
+    input.autocapitalize = 'off'
+    input.autocomplete = 'off'
+    input.spellcheck = false
+    input.setAttribute('aria-label', 'Tempered Health snapshot')
+
+    const status = document.createElement('p')
+    status.className = 'health-import-sheet__status'
+    status.dataset.healthImportStatus = 'true'
+    status.setAttribute('role', 'status')
+    status.textContent = 'Your Health data stays on this device.'
+
+    const actions = document.createElement('div')
+    actions.className = 'health-import-sheet__actions'
+    const cancel = document.createElement('button')
+    cancel.type = 'button'
+    cancel.className = 'button health-import-sheet__cancel'
+    cancel.textContent = 'CANCEL'
+    const submit = document.createElement('button')
+    submit.type = 'button'
+    submit.className = 'button health-import-sheet__submit'
+    submit.dataset.healthImportSubmit = 'true'
+    submit.textContent = 'IMPORT'
+    actions.append(cancel, submit)
+    sheet.append(eyebrow, title, copy, input, status, actions)
+    overlay.append(sheet)
+
+    let closed = false
+    const close = () => {
+      if (closed) return
+      closed = true
+      document.removeEventListener('keydown', onKeyDown)
+      overlay.remove()
+      if (button?.isConnected) button.focus()
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') close()
+    }
+    cancel.onclick = close
+    overlay.onclick = (event) => { if (event.target === overlay) close() }
+    submit.onclick = async () => {
+      submit.disabled = true
+      status.textContent = 'Importing…'
+      try {
+        await importHealthSnapshot(context, input.value)
+      } catch {
+        status.textContent = `Paste text beginning with ${HEALTH_SNAPSHOT_PREFIX}, then try again.`
+        submit.disabled = false
+        input.focus()
+        return
+      }
+      close()
+      await context.app?.show('today')
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    document.body.append(overlay)
+    requestAnimationFrame(() => input.focus())
+  }
+
   async function importClipboard(button) {
-    const prior = button.textContent
+    let text = ''
+    button.disabled = true
     try {
       if (!navigator.clipboard?.readText) throw new Error('clipboard')
-      const text = await navigator.clipboard.readText()
+      text = await navigator.clipboard.readText()
       const result = await importHealthSnapshot(context, text)
       button.textContent = `SYNCED ${result.date}`
       button.dataset.state = 'success'
-      await context.app?.show('today')
     } catch {
-      button.textContent = 'COPY SNAPSHOT, THEN TAP HERE'
-      button.dataset.state = 'error'
+      button.disabled = false
+      openImportSheet(button, text)
+      return
     }
-    window.setTimeout(() => {
-      if (!button.isConnected) return
-      button.textContent = prior
-      delete button.dataset.state
-    }, 2200)
+    await context.app?.show('today')
   }
 
   function makeImportButton(className = 'health-bridge__import') {

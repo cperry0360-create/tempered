@@ -2,8 +2,10 @@ export const CALORIE_PHOTO_PROMPT = `Estimate the total calories in the food and
 
 Use any readable nutrition labels or menu information in the image. Otherwise estimate realistic portion sizes from what is visible. Include sauces, dressings, cooking oil, drinks, and sides when they appear. Do not ask follow-up questions. If there is uncertainty, choose one reasonable midpoint estimate rather than returning a range.
 
-Return exactly one line and nothing else:
-TEMPERED_CALORIES=<whole-number calories>`
+Return exactly ONE Markdown fenced code block and nothing outside it. Do not add a language label to the code fence. Inside the code block put exactly one line in this format:
+TEMPERED_CALORIES=<whole-number calories>
+
+The fenced code block is required so the result has a one-tap Copy button.`
 
 export function parseTemperedCalories(text) {
   const raw = String(text ?? '').trim()
@@ -131,7 +133,7 @@ export function installCalorieAiRuntime() {
       button.dataset.calorieAi = 'paste'
       button.onclick = () => pasteResult(editor)
       editor.append(button)
-      status(editor, 'Photo flow: copy prompt → attach meal photo in your AI app → copy its one-line result → paste here.')
+      status(editor, 'Photo flow: copy prompt → attach meal photo in your AI app → tap Copy on its code block → paste here.')
     }
   }
 

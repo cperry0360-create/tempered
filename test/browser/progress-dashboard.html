@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — configurable Progress dashboard</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/pivot.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installProgressDashboardRuntime } from '../../src/ui/progress-dashboard-runtime.js'
+
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s) => document.querySelector(s)
+    const qa = (s) => [...document.querySelectorAll(s)]
+    const settle = (ms = 60) => new Promise((resolve) => setTimeout(resolve, ms))
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    async function waitFor(selector, timeout = 3000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      return null
+    }
+
+    try {
+      const storage = createMemoryStorage()
+      const clock = fixedClock(new Date(2026, 8, 8, 9, 0, 0))
+      const context = await bootstrap({ storage, clock, mount: q('#app') })
+
+      await storage.put('dayLogs', { date: '2026-09-06', sleepHours: 7.2, steps: 9000, waterOz: 90, proteinGrams: 130, calories: 2100, bodyMetricsLogged: true, bodyMetrics: { weight: 165.1 } })
+      await storage.put('dayLogs', { date: '2026-09-07', sleepHours: 7.8, steps: 11000, waterOz: 112, proteinGrams: 155, calories: 1950, bodyMetricsLogged: true, bodyMetrics: { weight: 164.8 } })
+      await storage.put('dayLogs', { date: '2026-09-08', sleepHours: 7.75, steps: 10527, waterOz: 100, proteinGrams: 145, calories: 2000, bodyMetricsLogged: true, bodyMetrics: { weight: 164.2 }, healthMetrics: { restingHr: 49, hrvMs: 41, respiratoryRate: 12, spo2: 97, bodyTempC: 36.4 } })
+
+      await context.app.show('history')
+      installProgressDashboardRuntime(context)
+      const dashboard = await waitFor('[data-progress-dashboard]')
+      check('Progress keeps the existing recap and adds a dashboard below it', Boolean(q('.progress-recap') && dashboard))
+      check('Recap remains before the configurable widgets', q('.progress-recap')?.compareDocumentPosition(dashboard) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+      const widgets = qa('[data-widget]')
+      check('Dashboard starts with a useful widget set', widgets.length >= 6, widgets.map((node) => node.dataset.widget).join(' | '))
+      check('Dashboard includes health and training widgets', ['training','sleep','steps','nutrition','water','weight','body'].every((id) => q(`[data-widget="${id}"]`)))
+      check('Body Metrics renders Shortcut-imported health data', /49/.test(q('[data-widget="body"]')?.textContent ?? '') && /41/.test(q('[data-widget="body"]')?.textContent ?? ''), q('[data-widget="body"]')?.textContent)
+      check('Dashboard has a prominent add control', q('.progress-dashboard__plus')?.textContent === '+')
+
+      q('.progress-dashboard__edit')?.click()
+      await settle(120)
+      check('Edit mode shows iOS-like minus controls', qa('.progress-widget__remove').length === qa('[data-widget]').length, `${qa('.progress-widget__remove').length} minus controls`)
+      check('Edit mode gives touch-friendly reorder controls', qa('.progress-widget__move button').length >= 2)
+
+      const bodyRemove = q('[data-widget="body"] .progress-widget__remove')
+      bodyRemove?.click()
+      await settle(160)
+      check('Minus removes a widget', !q('[data-widget="body"]'))
+      const afterRemove = await storage.get('profile', 'profile')
+      check('Removed widget choice persists locally', Array.isArray(afterRemove?.progressWidgets) && !afterRemove.progressWidgets.includes('body'), afterRemove?.progressWidgets?.join(','))
+
+      q('.progress-dashboard__edit')?.click()
+      await settle(100)
+      q('.progress-dashboard__plus')?.click()
+      await settle(100)
+      check('Plus opens a widget gallery', Boolean(q('.progress-widget-gallery')))
+      const addBody = qa('.progress-widget-gallery__choices button').find((button) => /Body metrics/i.test(button.textContent))
+      check('Removed widgets become available to add again', Boolean(addBody))
+      addBody?.click()
+      await settle(180)
+      check('Gallery can add the widget back', Boolean(q('[data-widget="body"]')))
+
+      const beforeOrder = (await storage.get('profile', 'profile'))?.progressWidgets ?? []
+      q('.progress-dashboard__edit')?.click()
+      await settle(80)
+      const secondDown = qa('[data-widget]')[1]?.querySelector('.progress-widget__move button:last-child')
+      secondDown?.click()
+      await settle(150)
+      const afterOrder = (await storage.get('profile', 'profile'))?.progressWidgets ?? []
+      check('Reorder controls persist a changed widget order', beforeOrder.join('|') !== afterOrder.join('|'), `${beforeOrder.join(',')} -> ${afterOrder.join(',')}`)
+
+      check('Widget dashboard creates no horizontal overflow', document.documentElement.scrollWidth <= innerWidth + 1, `${document.documentElement.scrollWidth}/${innerWidth}`)
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+    } catch (error) {
+      check('Progress dashboard harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'progress-dashboard', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

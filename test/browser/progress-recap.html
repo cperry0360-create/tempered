@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — progress recap</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s, root = document) => root?.querySelector?.(s) ?? null
+    const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+    const settle = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    try {
+      const storage = createMemoryStorage()
+      const clock = fixedClock(new Date(2026, 8, 7, 20, 0, 0))
+      const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+
+      await storage.put('sessions', {
+        id: 'recap-session', date: '2026-09-07', startedAt: '2026-09-07T18:00:00',
+        endedAt: '2026-09-07T18:45:00', durationMinutes: 45,
+      })
+      await storage.put('setLogs', {
+        id: 'recap-set', sessionId: 'recap-session', exerciseId: 'curl_db',
+        weight: 20, reps: 10, completedAt: '2026-09-07T18:15:00', setIndex: 0,
+      })
+
+      await tempered.app.show('history')
+      await settle(140)
+      const screen = q('.screen--progress')
+      const recap = q('.progress-recap', screen)
+
+      check('Progress opens on a dedicated recap surface', Boolean(recap))
+      check('Recap leads with the selected range', /30-DAY RECAP/.test(recap?.textContent ?? ''), recap?.textContent)
+      check('Recap makes training days the primary headline', /1 training day/.test(q('.progress-recap__headline', recap)?.textContent ?? ''))
+      check('Recap surfaces working sets and training volume together',
+        /1 working sets/.test(recap?.textContent ?? '') && /200 lb nominal training volume/.test(recap?.textContent ?? ''),
+        recap?.textContent)
+
+      const labels = qa('.progress-recap__stats .progress-metric__label', recap).map((node) => node.textContent.toLowerCase())
+      check('Recap has four useful at-a-glance stats', labels.length === 4, labels.join(' | '))
+      check('Recap includes sessions, steps, sleep and weight',
+        ['sessions', 'avg steps', 'avg sleep', 'latest weight'].every((label) => labels.includes(label)), labels.join(' | '))
+      check('Recap compares the current period with the prior period', qa('.progress-recap__compare span', recap).length === 2)
+      check('Progress navigation calls the first view RECAP', q('[data-view="overview"]')?.textContent === 'RECAP')
+
+      const rangeButtons = qa('.progress-range__button')
+      check('all range controls are real thumb targets',
+        rangeButtons.every((button) => button.getBoundingClientRect().height >= 44),
+        rangeButtons.map((button) => `${button.textContent}:${Math.round(button.getBoundingClientRect().height)}`).join(', '))
+      check('the redesigned recap does not create horizontal scrolling',
+        document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        `${document.documentElement.scrollWidth}/${document.documentElement.clientWidth}`)
+    } catch (error) {
+      check('progress recap harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'progress-recap', passed: checks.every((c) => c.ok), checks }),
+    })
+  </script>
+</body>
+</html>

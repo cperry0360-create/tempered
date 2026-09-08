@@ -32,8 +32,11 @@ function unitLabel(activity) {
 
 function valueLabel(activity, value) {
   if (value === true || value === null || value === undefined) return 'Logged'
+  const shown = activity?.id === 'sleep' && typeof value === 'number'
+    ? Number(value.toFixed(2))
+    : value
   const unit = unitLabel(activity)
-  return `${value}${unit ? ` ${unit}` : ''}`
+  return `${shown}${unit ? ` ${unit}` : ''}`
 }
 
 export function hasDailyGoal(activity) {
@@ -57,7 +60,8 @@ function dailyGoalLabel(activity) {
 }
 
 export function staysEditableAfterComplete(activity) {
-  return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
+  return activity?.id === 'sleep'
+    || (activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add')
 }
 
 function isAdditiveNumber(activity) {
@@ -190,9 +194,14 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   function editor(activity, weekly = null) {
     const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
+    const sleep = activity.id === 'sleep'
     const input = el('input.today-editor__input', {
-      type: 'text', inputmode: 'decimal',
-      placeholder: adding ? `Add ${unit || 'amount'}` : (unit || 'Value'),
+      type: sleep ? 'number' : 'text', inputmode: 'decimal',
+      ...(sleep ? {
+        min: '0', max: '24', step: '0.1',
+        value: typeof activity.value === 'number' ? String(activity.value) : '',
+      } : {}),
+      placeholder: sleep ? 'Hours, e.g. 7.5' : (adding ? `Add ${unit || 'amount'}` : (unit || 'Value')),
       'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
       disabled: !canLogSelected(),
@@ -211,6 +220,12 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     }) : null
 
     return el('div.today-editor', { dataset: { editor: activity.id } }, [
+      sleep && el('div.today-editor__quick.today-editor__quick--sleep', { 'aria-label': 'Common sleep amounts' },
+        [6.5, 7, 7.5, 8, 8.5].map((hours) => el('button.today-editor__chip', {
+          type: 'button',
+          dataset: { sleepquick: String(hours) },
+          onclick: () => { input.value = String(hours); input.focus() },
+        }, [`${hours} h`]))),
       el('div.today-editor__manual', {}, [
         input,
         el('button.today-editor__save', {
@@ -226,6 +241,9 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
           type: 'button', onclick: () => savePreset(activity, presetInput.value),
         }, ['Save']),
       ]),
+      sleep && el('span.today-editor__hint', {
+        text: 'Decimals are hours: 7.5 = 7 h 30 m · 7.75 = 7 h 45 m.',
+      }),
       presetInput && el('span.today-editor__hint', {
         text: preset === null
           ? 'Save an amount to turn SET + into a one-tap add.'

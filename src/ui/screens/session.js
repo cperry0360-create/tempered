@@ -213,10 +213,28 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     })
 
     const check = el('button.setrow__check', {
-      type: 'button', disabled: done,
-      'aria-label': done ? `Set ${index + 1} logged` : `Log set ${index + 1}`,
-      dataset: { log: `${entry.exercise.id}:${index}`, ...(active ? { acid: 'active' } : {}) },
+      type: 'button',
+      'aria-label': done ? `Undo set ${index + 1}` : `Log set ${index + 1}`,
+      dataset: {
+        log: `${entry.exercise.id}:${index}`,
+        done: String(done),
+        ...(active ? { acid: 'active' } : {}),
+      },
       onclick: async () => {
+        if (done) {
+          const wasLatestLogged = entry.sets.findLastIndex((other) => other.logged === true) === index
+          if (set.logId) {
+            await workout.removeSet(set.logId)
+            loggedHere = loggedHere.filter((log) => log.id !== set.logId)
+          }
+          set.logged = false
+          set.logId = null
+          if (wasLatestLogged && rest?.exerciseId === entry.exercise.id) rest = null
+          persistDraft()
+          render()
+          return
+        }
+
         for (const input of inputs) {
           if (input.dataset?.field) set[input.dataset.field] = numberOrNull(input.value)
         }

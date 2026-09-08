@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — sleep decimal and set undo</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+    const qa = (selector, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(selector)] : []
+    const settle = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    async function waitFor(selector, timeout = 3500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(15)
+      }
+      return null
+    }
+
+    try {
+      const storage = createMemoryStorage()
+      const clock = fixedClock(new Date(2026, 8, 8, 7, 0, 0))
+      const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+
+      await tempered.daily.setCadence('sleep', 'daily', 1)
+      await tempered.app.show('today')
+      await waitFor('[data-activity="sleep"]')
+
+      q('[data-activity="sleep"] .today-item__body')?.click()
+      const sleepInput = await waitFor('[data-editor="sleep"] [data-entry="sleep"]')
+      check('Sleep uses a decimal-friendly number input', sleepInput?.type === 'number' && sleepInput?.inputMode === 'decimal',
+        `${sleepInput?.type ?? 'missing'} / ${sleepInput?.inputMode ?? 'missing'}`)
+      check('Sleep input explicitly allows partial hours', sleepInput?.step === '0.1', `step ${sleepInput?.step ?? 'missing'}`)
+
+      const quicks = qa('[data-editor="sleep"] [data-sleepquick]')
+      check('Sleep offers common decimal shortcuts', quicks.length === 5,
+        quicks.map((button) => button.textContent.trim()).join(' | '))
+      q('[data-editor="sleep"] [data-sleepquick="7.5"]')?.click()
+      check('7.5 shortcut fills the exact decimal', sleepInput?.value === '7.5', sleepInput?.value ?? 'missing')
+      q('[data-editor="sleep"] [data-action="log"]')?.click()
+      await settle(100)
+
+      const sleepMeta = q('[data-activity="sleep"] .today-item__meta')?.textContent ?? ''
+      check('7.5 hours persists and displays as a decimal', /7\.5\s*h/i.test(sleepMeta), sleepMeta)
+
+      q('[data-activity="sleep"] .today-item__body')?.click()
+      const reopened = await waitFor('[data-editor="sleep"] [data-entry="sleep"]')
+      check('Reopening Sleep prefills the saved decimal', reopened?.value === '7.5', reopened?.value ?? 'missing')
+
+      await tempered.app.show('train')
+      const lower = await waitFor('[data-start="lower"]')
+      lower?.click()
+      const firstCheck = await waitFor('.setrow__check')
+      const row = firstCheck?.closest('.setrow')
+      for (const field of qa('input.setrow__num', row)) {
+        if (field.value !== '') continue
+        field.value = field.dataset.field === 'weight' ? '95' : '8'
+        field.dispatchEvent(new Event('change'))
+      }
+
+      firstCheck?.click()
+      await settle(120)
+      const doneCheck = q('.setrow__check[data-done="true"]')
+      const doneRow = doneCheck?.closest('.setrow')
+      check('A completed set stays tappable', Boolean(doneCheck) && doneCheck.disabled === false)
+      check('Completed check becomes an Undo action', /^Undo set 1$/i.test(doneCheck?.getAttribute('aria-label') ?? ''),
+        doneCheck?.getAttribute('aria-label') ?? 'missing')
+      check('Set log exists after checking the set', (await storage.getAll('setLogs')).length === 1,
+        String((await storage.getAll('setLogs')).length))
+      check('Completed row is marked done before undo', doneRow?.dataset.done === 'true', doneRow?.dataset.done ?? 'missing')
+
+      doneCheck?.click()
+      await settle(120)
+      const openCheck = q('.setrow__check[data-log$=":0"]')
+      const openRow = openCheck?.closest('.setrow')
+      check('Second tap unchecks the set', openRow?.dataset.done === 'false', openRow?.dataset.done ?? 'missing')
+      check('Undo restores the normal Log action', /^Log set 1$/i.test(openCheck?.getAttribute('aria-label') ?? ''),
+        openCheck?.getAttribute('aria-label') ?? 'missing')
+      check('Undo removes the canonical set log', (await storage.getAll('setLogs')).length === 0,
+        String((await storage.getAll('setLogs')).length))
+      check('Undo makes the set fields editable again', qa('input.setrow__num', openRow).every((field) => field.readOnly === false))
+
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'sleep-set-undo', passed: checks.every((item) => item.ok), checks }),
+      })
+    } catch (error) {
+      checks.push({ name: 'sleep/set undo harness threw', ok: false, detail: String(error?.stack ?? error).slice(0, 900) })
+      await fetch('/__report', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'sleep-set-undo', passed: false, checks }),
+      })
+    }
+  </script>
+</body>
+</html>

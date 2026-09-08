@@ -7,7 +7,7 @@
  */
 
 const pending = new Map()
-let receiverInstalled = false
+const receiverScopes = new WeakSet()
 let sequence = 0
 
 export function appleHealthBridgeAvailable(scope = globalThis) {
@@ -15,8 +15,8 @@ export function appleHealthBridgeAvailable(scope = globalThis) {
 }
 
 function installReceiver(scope = globalThis) {
-  if (receiverInstalled) return
-  receiverInstalled = true
+  if (receiverScopes.has(scope)) return
+  receiverScopes.add(scope)
   scope.__temperedHealthReceive = (message) => {
     const id = message?.id
     const request = pending.get(id)

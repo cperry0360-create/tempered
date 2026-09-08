@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hatchling stage companion">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Hatchling stage companion">
   <defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8e0b7"/><stop offset="1" stop-color="#b7d5b3"/></linearGradient><radialGradient id="gl"><stop offset="0" stop-color="#88f1c4"/><stop offset="1" stop-color="#88f1c4" stop-opacity="0"/></radialGradient></defs>
   <ellipse cx="256" cy="416" rx="104" ry="26" fill="#0c2833" opacity=".25"/>
   <circle cx="256" cy="286" r="165" fill="url(#gl)" opacity=".18"/>

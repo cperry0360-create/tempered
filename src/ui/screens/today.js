@@ -60,7 +60,8 @@ function dailyGoalLabel(activity) {
 }
 
 export function staysEditableAfterComplete(activity) {
-  return activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add'
+  return activity?.id === 'sleep'
+    || (activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add')
 }
 
 function isAdditiveNumber(activity) {

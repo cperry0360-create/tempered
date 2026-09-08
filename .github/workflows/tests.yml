@@ -37,3 +37,18 @@ jobs:
           node-version: 24
       - name: Run every browser harness
         run: node tools/verify-browser-harnesses.js
+
+  ios-native:
+    runs-on: macos-latest
+    name: Native iOS wrapper build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Tempered for iOS Simulator
+        run: >-
+          xcodebuild
+          -project native/ios/Tempered.xcodeproj
+          -scheme Tempered
+          -configuration Debug
+          -sdk iphonesimulator
+          CODE_SIGNING_ALLOWED=NO
+          build

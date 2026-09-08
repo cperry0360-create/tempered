@@ -1,9 +1,8 @@
 /**
  * Health data contract.
  *
- * V1 ships manual entry only — HealthKit is explicitly out of scope in
- * `CLAUDE.md`. The interface exists now so that adding a device source later is
- * a new implementation rather than a change to anything that reads health data.
+ * The browser/PWA uses manual entry. The optional native iOS wrapper swaps in
+ * the Apple Health implementation without changing anything downstream.
  *
  * @typedef {object} HealthSample
  * @property {string} date              Calendar-local YYYY-MM-DD.

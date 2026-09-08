@@ -7,8 +7,10 @@ import { createIndexedDbStorage } from '../adapters/storage/indexeddb-storage.js
 import { createMemoryStorage } from '../adapters/storage/memory-storage.js'
 import { systemClock } from '../adapters/clock/clock.js'
 import { createManualHealth } from '../adapters/health/manual-health.js'
+import { createAppleHealth, appleHealthBridgeAvailable } from '../adapters/health/apple-health.js'
 import { createWorkoutService } from './workout.js'
 import { createDailyService } from './daily.js'
+import { createHealthSyncService } from './health-sync.js'
 import { createPlannerService } from './planner.js'
 import { createCharacterService } from './character.js'
 import { createBattleService } from './battle.js'
@@ -56,8 +58,13 @@ export async function bootstrap(options = {}) {
   const profile = await ensureProfile(storage, clock)
 
   const workout = createWorkoutService({ storage, clock, balance })
-  const health = createManualHealth(storage)
+  const health = appleHealthBridgeAvailable()
+    ? createAppleHealth()
+    : createManualHealth(storage)
   const daily = createDailyService({ storage, clock, health, balance, catalogue: activities })
+  const healthSync = health.kind === 'apple-health'
+    ? createHealthSyncService({ storage, health, daily, clock })
+    : null
   const planner = createPlannerService({ storage, clock })
   const character = createCharacterService({ storage, clock, balance, catalogue: titles })
   const battle = createBattleService({
@@ -66,7 +73,7 @@ export async function bootstrap(options = {}) {
   const maintenance = createMaintenanceService({ storage, clock })
 
   const exposed = {
-    storage, clock, workout, daily, planner, character, battle, maintenance, health,
+    storage, clock, workout, daily, planner, character, battle, maintenance, health, healthSync,
     balance, library, catalogue, activities, titles, enemies, itemRoster,
     app: null,
     setup: null,
@@ -74,6 +81,22 @@ export async function bootstrap(options = {}) {
   }
   globalThis.tempered = exposed
   let stopDailyWorkoutEnhancer = null
+
+  async function syncNativeHealth({ refreshToday = true } = {}) {
+    if (!healthSync) return null
+    try {
+      const result = await healthSync.syncToday()
+      if (refreshToday && exposed.app && mount.querySelector('.screen--today')) {
+        await exposed.app.show('today')
+      }
+      return result
+    } catch (error) {
+      // Health permission can be denied independently for steps and sleep. The
+      // tracker must remain fully usable with manual entry when that happens.
+      console.warn('[tempered] Apple Health sync unavailable', error)
+      return null
+    }
+  }
 
   async function showApp() {
     stopDailyWorkoutEnhancer?.()
@@ -91,6 +114,11 @@ export async function bootstrap(options = {}) {
     // remove completed set logs; those remain canonical in IndexedDB.
     clearActiveSessionDraft()
     await app.show('today')
+
+    // Native iOS asks for read-only HealthKit access here, after Today is
+    // visible. Once granted, steps and last night's sleep are imported into the
+    // same day log manual entry already uses and Today redraws with the values.
+    await syncNativeHealth()
   }
 
   async function showSetup(rerun = false) {
@@ -107,6 +135,15 @@ export async function bootstrap(options = {}) {
   }
 
   exposed.startSetup = () => showSetup(true)
+
+  if (healthSync && typeof window !== 'undefined') {
+    window.addEventListener('tempered:native-foreground', () => {
+      // Never interrupt a workout or another tab. If Today is already on screen,
+      // refresh it after the import; otherwise the newly stored values will be
+      // there the next time Today opens.
+      syncNativeHealth({ refreshToday: true })
+    })
+  }
 
   // Compatibility rule: an old profile has no setupComplete field and therefore
   // stays in the app. Only profiles created by Phase 7 explicitly carry false.

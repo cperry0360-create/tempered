@@ -47,6 +47,12 @@ function request(action, payload = {}, scope = globalThis) {
   })
 }
 
+function finiteOrNull(value) {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 /** @returns {import('./health-adapter.js').HealthAdapter & {requestAuthorization: () => Promise<any>}} */
 export function createAppleHealth(scope = globalThis) {
   return {
@@ -65,8 +71,8 @@ export function createAppleHealth(scope = globalThis) {
       if (!data) return null
       return {
         date,
-        steps: Number.isFinite(Number(data.steps)) ? Number(data.steps) : null,
-        sleepHours: Number.isFinite(Number(data.sleepHours)) ? Number(data.sleepHours) : null,
+        steps: finiteOrNull(data.steps),
+        sleepHours: finiteOrNull(data.sleepHours),
         waterOz: null,
         source: 'device',
       }

@@ -1,0 +1,55 @@
+/* Focused UX corrections shipped after the main mobile layer. */
+
+/* Exercise reference art is a two-frame contact sheet. Center-cropping lands on
+   the seam and often shows only the machine. Anchor the square thumbnail to the
+   first frame so the person/movement is visible; the expanded image remains the
+   full contact sheet. */
+.exercise__thumb {
+  object-fit: cover !important;
+  object-position: left center !important;
+}
+
+/* Calories gets a provider-neutral photo-estimation handoff instead of a
+   meaningless one-tap preset. Keep it compact enough to coexist with the row's
+   disclosure control on an iPhone. */
+.today-item__ai-prompt {
+  appearance: none;
+  flex: none;
+  min-height: 44px;
+  max-width: 116px;
+  padding: 7px 10px;
+  border: 1px solid rgba(203, 220, 117, 0.24);
+  border-radius: 14px;
+  background: rgba(203, 220, 117, 0.08);
+  color: var(--calm-accent, var(--acid));
+  font: inherit;
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.today-item__ai-prompt[data-copied='true'] {
+  border-color: rgba(203, 220, 117, 0.52);
+  background: rgba(203, 220, 117, 0.14);
+}
+
+.today-editor__ai-paste {
+  appearance: none;
+  min-height: 42px;
+  justify-self: start;
+  padding: 0 14px;
+  border: 1px solid rgba(203, 220, 117, 0.24);
+  border-radius: 999px;
+  background: rgba(203, 220, 117, 0.08);
+  color: var(--calm-accent, var(--acid));
+  font: inherit;
+  font-size: 11px;
+  font-weight: 720;
+}
+.calorie-ai__status[data-state='error'] { color: #e8b7a4; }
+.calorie-ai__status[data-state='ready'] { color: var(--calm-accent, var(--acid)); }
+
+@media (max-width: 390px) {
+  .today-item__ai-prompt { max-width: 96px; font-size: 9px; padding-inline: 8px; }
+}

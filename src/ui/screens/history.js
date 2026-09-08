@@ -39,7 +39,9 @@ function average(values) {
 
 function compactNumber(value) {
   if (!Number.isFinite(value)) return '—'
-  return new Intl.NumberFormat(undefined, { notation: value >= 10000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value)
+  return new Intl.NumberFormat(undefined, {
+    notation: Math.abs(value) >= 10000 ? 'compact' : 'standard', maximumFractionDigits: 1,
+  }).format(value)
 }
 
 function sparkline(values, width = 160, height = 38) {
@@ -94,6 +96,20 @@ function streaks(values) {
   return { current, longest }
 }
 
+function deltaText(current, previous, { suffix = '', points = false } = {}) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return 'no prior comparison yet'
+  const delta = current - previous
+  if (Math.abs(delta) < 0.05) return 'about the same as prior period'
+  const rounded = Math.abs(delta) >= 10 ? Math.round(Math.abs(delta)) : Math.round(Math.abs(delta) * 10) / 10
+  return `${delta > 0 ? '+' : '−'}${rounded}${points ? ' pts' : suffix} vs prior period`
+}
+
+function bestSetLabel(best) {
+  if (!best) return '—'
+  if (Number.isInteger(best.cablePeg)) return `P${best.cablePeg} · ${lbs(best.weight)} × ${best.reps}`
+  return `${lbs(best.weight)} × ${best.reps}`
+}
+
 export function createHistoryScreen({ storage, workout, daily, clock }) {
   const root = el('div.screen.screen--history.screen--progress')
   let view = 'overview'
@@ -111,9 +127,18 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return rangeDates(clock.today(), range)
   }
 
-  function selectedDays() {
+  function previousDates() {
+    const current = selectedDates()
+    return rangeDates(addDays(current[0], -1), range)
+  }
+
+  function daysForDates(dates) {
     const map = new Map(dayLogs.map((row) => [row.date, row]))
-    return selectedDates().map((date) => map.get(date) ?? { date })
+    return dates.map((date) => map.get(date) ?? { date })
+  }
+
+  function selectedDays() {
+    return daysForDates(selectedDates())
   }
 
   function dailyActivities() {
@@ -146,15 +171,16 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     }))
   }
 
-  function overviewView() {
-    const days = selectedDays()
-    const dates = new Set(days.map((day) => day.date))
+  function summaryForDates(dates) {
+    const days = daysForDates(dates)
+    const dateSet = new Set(dates)
     const habits = dailyActivities()
-    const totalHabitOpportunities = days.length * habits.length
+    const opportunities = days.length * habits.length
     const habitDone = days.reduce((sum, day) => sum + habits.filter((activity) => completedActivity(activity, day)).length, 0)
-    const habitRate = totalHabitOpportunities ? Math.round((habitDone / totalHabitOpportunities) * 100) : 0
-
-    const periodSessions = sessions.filter((session) => dates.has(session.date))
+    const habitRate = opportunities ? Math.round((habitDone / opportunities) * 100) : 0
+    const periodSessions = sessions.filter((session) => dateSet.has(session.date))
+    const sessionIds = new Set(periodSessions.map((session) => session.id))
+    const workingSets = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId)).length
     const trainingDays = new Set(periodSessions.map((session) => session.date)).size
     const avgSteps = average(days.map((day) => day.steps))
     const avgSleep = average(days.map((day) => day.sleepHours))
@@ -175,48 +201,85 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const firstWeight = weights[0]?.value ?? null
     const weightChange = latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null
 
+    return {
+      days, periodSessions, trainingDays, workingSets, habitRate, avgSteps, avgSleep,
+      microMinutes, volumeValues, totalVolume, weights, latestWeight, weightChange,
+    }
+  }
+
+  function overviewView() {
+    const current = summaryForDates(selectedDates())
+    const previous = summaryForDates(previousDates())
+    const sleepText = current.avgSleep === null ? '—' : `${current.avgSleep.toFixed(1)}h`
+    const stepsText = current.avgSteps === null ? '—' : compactNumber(Math.round(current.avgSteps))
+    const bodyText = current.latestWeight === null ? '—' : `${current.latestWeight.toFixed(1)} lb`
+
     return [
-      el('section.progress-grid', {}, [
-        metric(`${habitRate}%`, 'habit completion', `${range}-day average`),
-        metric(String(trainingDays), 'training days', `${periodSessions.length} logged session${periodSessions.length === 1 ? '' : 's'}`),
-        metric(avgSteps === null ? '—' : compactNumber(Math.round(avgSteps)), 'avg steps'),
-        metric(avgSleep === null ? '—' : `${avgSleep.toFixed(1)}h`, 'avg sleep'),
+      el('section.progress-recap', { dataset: { recap: String(range) } }, [
+        el('div.progress-recap__top', {}, [
+          el('div', {}, [
+            el('span.progress-recap__eyebrow', { text: `${range}-DAY RECAP` }),
+            el('h2.progress-recap__headline', {
+              text: current.trainingDays === 1 ? '1 training day' : `${current.trainingDays} training days`,
+            }),
+            el('p.progress-recap__sub', {
+              text: `${current.workingSets} working sets · ${compactNumber(current.totalVolume)} lb nominal training volume`,
+            }),
+          ]),
+          el('div.progress-recap__score', {}, [
+            el('strong', { text: `${current.habitRate}%` }),
+            el('span', { text: 'habits' }),
+          ]),
+        ]),
+        el('div.progress-recap__compare', {}, [
+          el('span', { text: deltaText(current.trainingDays, previous.trainingDays, { suffix: ' days' }) }),
+          el('span', { text: deltaText(current.habitRate, previous.habitRate, { points: true }) }),
+        ]),
+        el('div.progress-recap__stats', {}, [
+          metric(String(current.periodSessions.length), 'sessions', `${current.workingSets} working sets`),
+          metric(stepsText, 'avg steps', current.avgSteps === null ? null : deltaText(current.avgSteps, previous.avgSteps)),
+          metric(sleepText, 'avg sleep', current.avgSleep === null ? null : deltaText(current.avgSleep, previous.avgSleep, { suffix: 'h' })),
+          metric(bodyText, 'latest weight', current.weightChange === null ? 'log more days for a trend' : `${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb in range`),
+        ]),
       ]),
+
       el('section.progress-panel', {}, [
         el('div.progress-panel__head', {}, [
           el('div', {}, [
             el('h2.progress-panel__title', { text: 'Consistency' }),
-            el('p.progress-panel__sub', { text: `${range} days of daily habits` }),
+            el('p.progress-panel__sub', { text: 'Each square is one day of configured daily habits.' }),
           ]),
-          el('strong.progress-panel__hero', { text: `${habitRate}%` }),
+          el('strong.progress-panel__hero', { text: `${current.habitRate}%` }),
         ]),
-        heatmap(days),
+        heatmap(current.days),
       ]),
+
       el('section.progress-panel', {}, [
         el('div.progress-panel__head', {}, [
           el('div', {}, [
             el('h2.progress-panel__title', { text: 'Training load' }),
-            el('p.progress-panel__sub', { text: `${compactNumber(totalVolume)} lb total volume` }),
+            el('p.progress-panel__sub', { text: `${compactNumber(current.totalVolume)} lb nominal volume across ${current.workingSets} working sets` }),
           ]),
-          sparkline(volumeValues),
+          sparkline(current.volumeValues),
         ]),
         el('div.progress-panel__mini', {}, [
-          metric(String(trainingDays), 'days'),
-          metric(String(setLogs.filter((log) => !log.isWarmup && periodSessions.some((session) => session.id === log.sessionId)).length), 'working sets'),
-          metric(`${Math.round(microMinutes)}m`, 'micro cardio'),
+          metric(String(current.trainingDays), 'training days'),
+          metric(String(current.workingSets), 'working sets'),
+          metric(`${Math.round(current.microMinutes)}m`, 'micro cardio'),
         ]),
       ]),
+
       el('section.progress-panel', {}, [
         el('div.progress-panel__head', {}, [
           el('div', {}, [
             el('h2.progress-panel__title', { text: 'Body trend' }),
             el('p.progress-panel__sub', {
-              text: latestWeight === null
-                ? 'Log weight to build a trend'
-                : `${latestWeight.toFixed(1)} lb${weightChange === null ? '' : ` · ${weightChange >= 0 ? '+' : ''}${weightChange.toFixed(1)} lb`}`,
+              text: current.latestWeight === null
+                ? 'Log weight to build a trend.'
+                : `${current.latestWeight.toFixed(1)} lb${current.weightChange === null ? '' : ` · ${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb across this range`}`,
             }),
           ]),
-          sparkline(weights.map((entry) => entry.value)),
+          sparkline(current.weights.map((entry) => entry.value)),
         ]),
       ]),
     ]
@@ -269,7 +332,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
             line,
           ]),
           el('div.progress-lift__stats', {}, [
-            record.bestWeight && stat(`${lbs(record.bestWeight.weight)} × ${record.bestWeight.reps}`, 'best set'),
+            record.bestWeight && stat(bestSetLabel(record.bestWeight), 'best set'),
             record.bestVolume && stat(volume(record.bestVolume.volume), 'best volume'),
             record.bestE1RM && stat(lbs(record.bestE1RM.value), 'est. 1RM'),
           ].filter(Boolean)),
@@ -317,10 +380,10 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     replace(root, [
       el('header.progress-header', {}, [
         el('h1.screen__title', { text: 'Progress' }),
-        el('p.progress-header__copy', { text: 'What is changing, not just what you logged.' }),
+        el('p.progress-header__copy', { text: 'A useful recap first. Detail when you want it.' }),
       ]),
       el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress view' }, [
-        ['overview', 'Overview'], ['habits', 'Habits'], ['lifts', 'Lifts'], ['log', 'Log'],
+        ['overview', 'Recap'], ['habits', 'Habits'], ['lifts', 'Lifts'], ['log', 'Log'],
       ].map(([name, label]) => el('button.segmented__option', {
         type: 'button', dataset: { view: name, active: String(view === name) },
         'aria-pressed': String(view === name), onclick: () => { view = name; render() },

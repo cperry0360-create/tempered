@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tempered — FT1 cable machine</title>
+  <title>Tempered — FTX cable machine</title>
   <link rel="stylesheet" href="../../src/style.css" />
   <link rel="stylesheet" href="../../src/polish.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
@@ -38,15 +38,44 @@
       const storage = createMemoryStorage()
       const clock = fixedClock(new Date(2026, 8, 7, 17, 45, 0))
       const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+
+      // Reproduce the user's pre-peg history exactly: the physical selector
+      // number was written into weight and then promoted into the PR record.
+      await storage.put('sessions', {
+        id: 'legacy-cable-session', date: '2026-09-06', startedAt: '2026-09-06T10:00:00', endedAt: '2026-09-06T10:10:00',
+      })
+      await storage.put('setLogs', {
+        id: 'legacy-cable-set', sessionId: 'legacy-cable-session', exerciseId: 'cable_fly',
+        weight: 7, reps: 12, completedAt: '2026-09-06T10:05:00', setIndex: 0,
+      })
+      await storage.put('records', {
+        exerciseId: 'cable_fly',
+        bestWeight: { weight: 7, reps: 12, date: '2026-09-06' },
+        bestVolume: { volume: 84, date: '2026-09-06' },
+        bestE1RM: { value: 9.8, date: '2026-09-06' },
+        lastPerformance: { weight: 7, reps: 12, date: '2026-09-06' },
+      })
+
       await installCableMachineRuntime(tempered)
+      const migratedLog = (await storage.getAll('setLogs')).find((row) => row.id === 'legacy-cable-set')
+      const migratedRecord = await storage.get('records', 'cable_fly')
+      check('legacy Cable Fly peg 7 migrates to 85 lb nominal total', migratedLog?.weight === 85, migratedLog?.weight)
+      check('legacy Cable Fly keeps Peg 7 metadata', migratedLog?.cablePeg === 7, migratedLog?.cablePeg)
+      check('legacy PR is rebuilt from migrated resistance', migratedRecord?.bestWeight?.weight === 85, migratedRecord?.bestWeight?.weight)
+      check('legacy PR also remembers the physical peg', migratedRecord?.bestWeight?.cablePeg === 7, migratedRecord?.bestWeight?.cablePeg)
 
       await tempered.app.startSession({ exerciseId: 'cable_fly' })
       const card = await waitFor('.screen--session [data-exercise="cable_fly"]')
-      await settle(120)
+      await settle(160)
 
       check('Cable Fly weight column becomes PEG', q('.setrow--head [data-col="weight"]', card)?.textContent === 'PEG',
         q('.setrow--head [data-col="weight"]', card)?.textContent)
-      check('session identifies Inspire FT1 peg mode', /FT1 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+      check('session identifies Inspire FTX / Centr 2 peg mode', /FTX \/ CENTR 2 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+      check('session labels the calculation nominal', /NOMINAL/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+      check('migrated LAST history shows peg rather than pretending it was pounds', /P7/.test(q('[data-kind="last"]')?.textContent ?? ''), q('[data-kind="last"]')?.textContent)
+      check('migrated PR pill shows Peg 7 and 85 nominal pounds',
+        /P7\s*·\s*85/.test(q('[data-kind="pr"]')?.textContent ?? '') && /nominal/i.test(q('[data-kind="pr"]')?.textContent ?? ''),
+        q('[data-kind="pr"]')?.textContent)
 
       let weights = qa('.setrow__num[data-field="weight"]', card)
       let reps = qa('.setrow__num[data-field="reps"]', card)
@@ -64,7 +93,7 @@
       reps = qa('.setrow__num[data-field="reps"]', liveCard)
       const readout = q('.cable-readout', liveCard)?.textContent ?? ''
 
-      check('Peg 6 calculates 37.5 lb per handle', /37\.5 lb \/ handle/.test(readout), readout)
+      check('Peg 6 calculates 37.5 lb nominal per handle', /Nominal 37\.5 lb \/ handle/.test(readout), readout)
       check('Cable Fly uses both stacks for 75 lb total', /75 lb total/.test(readout) && /2 stacks/.test(readout), readout)
       check('changing set 1 carries the peg through later sets', weights.slice(1).every((input) => input.value === '6'),
         weights.map((input) => input.value || '-').join(', '))
@@ -74,21 +103,30 @@
       q('.setrow__check', liveCard)?.click()
       await settle(180)
       const logs = await storage.getAll('setLogs')
-      const log = logs.find((row) => row.exerciseId === 'cable_fly')
-      check('logged Cable Fly stores calculated effective resistance', log?.weight === 75, log?.weight)
-      check('logged Cable Fly preserves the physical selector peg', log?.cablePeg === 6, log?.cablePeg)
-      check('logged Cable Fly preserves per-handle resistance', log?.cablePerHandle === 37.5, log?.cablePerHandle)
-      check('logged Cable Fly records that both stacks were used', log?.cableStacks === 2, log?.cableStacks)
+      const log = logs.find((row) => row.exerciseId === 'cable_fly' && row.id !== 'legacy-cable-set')
+      check('new Cable Fly stores calculated nominal resistance', log?.weight === 75, log?.weight)
+      check('new Cable Fly preserves the physical selector peg', log?.cablePeg === 6, log?.cablePeg)
+      check('new Cable Fly preserves per-handle resistance', log?.cablePerHandle === 37.5, log?.cablePerHandle)
+      check('new Cable Fly records that both stacks were used', log?.cableStacks === 2, log?.cableStacks)
 
       await tempered.app.show('settings')
       const equipment = await waitFor('[data-section="cable-machine"]')
-      await settle(80)
-      check('Settings exposes the Inspire FT1 cable profile', /Inspire FT1 preset/.test(equipment.textContent ?? ''))
+      await settle(100)
+      check('Settings exposes the Inspire FTX / Centr 2 profile', /Inspire FTX \/ Centr 2 preset/.test(equipment.textContent ?? ''))
       check('Settings defaults to 15 selector positions',
         qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Selector positions' && input.value === '15'))
-      check('Settings defaults the FT1 head weight to 15 lb',
-        qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Top / head weight (lb)' && input.value === '15'))
-      check('Settings preview describes Peg 6 as 75 lb total', /75 lb Cable Fly total/.test(q('.cable-settings__example', equipment)?.textContent ?? ''))
+      check('Settings describes the selector/head assembly instead of claiming a 15 lb top plate',
+        qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Selector/head assembly (lb)' && input.value === '15'))
+      check('Settings preview explicitly calls the result nominal', /Nominal example/.test(q('.cable-settings__example', equipment)?.textContent ?? ''))
+
+      const pushdown = q('[data-cable-exercise="tricep_push"]', equipment)
+      check('other cable exercises are configurable from the same equipment profile', Boolean(pushdown))
+      check('Tricep Pushdown starts as normal lb entry', /normal lb entry/.test(pushdown?.textContent ?? ''), pushdown?.textContent)
+      q('button[aria-label="Tricep Pushdown (Cable) peg entry"]', pushdown)?.click()
+      await settle(120)
+      const profileAfterExercise = await storage.get('profile', 'profile')
+      check('Tricep Pushdown can opt into peg mode independently',
+        profileAfterExercise?.cableMachine?.exerciseSettings?.tricep_push?.enabled === true)
 
       const addon = [...equipment.querySelectorAll('button')].find((button) => button.textContent === 'NO')
       addon?.click()
@@ -97,9 +135,9 @@
         /80 lb Cable Fly total/.test(q('.cable-settings__example', equipment)?.textContent ?? ''),
         q('.cable-settings__example', equipment)?.textContent)
       const profile = await storage.get('profile', 'profile')
-      check('cable profile is persisted through the storage adapter', profile?.cableMachine?.addOnEnabled === true)
+      check('correct FTX identity is persisted through the storage adapter', profile?.cableMachine?.id === 'inspire_ftx_centr2')
     } catch (error) {
-      check('cable machine harness threw', false, String(error?.stack ?? error).slice(0, 900))
+      check('cable machine harness threw', false, String(error?.stack ?? error).slice(0, 1100))
     }
 
     await fetch('/__report', {

@@ -1,12 +1,16 @@
 import {
   cableLoadForPeg,
+  cablePegEnabledForExercise,
   cableStacksForExercise,
+  migrateLegacyCableFlySet,
   normalizeCableMachineProfile,
   pegForCableLoad,
+  withCableExerciseSetting,
 } from '../domain/cable-machine.js'
+import { estimateOneRepMax } from '../domain/e1rm.js'
 
 const RUNTIME_KEY = Symbol.for('tempered.cableMachineRuntime')
-const PEG_EXERCISES = new Set(['cable_fly'])
+const HISTORY_MIGRATION_VERSION = 2
 
 const fmt = (value) => Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10)
 
@@ -41,15 +45,63 @@ function ensureStyle() {
       border-color: var(--acid) !important;
       outline: 1px solid var(--acid);
     }
-    .cable-settings__grid {
+    .cable-settings__grid,
+    .cable-exercises {
       display: grid;
       gap: 10px;
     }
-    .cable-settings__toggle {
+    .cable-settings__toggle,
+    .cable-exercise {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+    .cable-exercises {
+      padding-top: 4px;
+    }
+    .cable-exercise {
+      min-height: 48px;
+      padding: 8px 0;
+      border-top: 1px solid var(--edge);
+    }
+    .cable-exercise__copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+    .cable-exercise__name {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .cable-exercise__meta {
+      color: var(--text-3);
+      font-size: 10px;
+    }
+    .cable-exercise__controls {
+      flex: none;
+      display: flex;
+      gap: 6px;
+    }
+    .cable-exercise__button {
+      appearance: none;
+      min-height: 44px;
+      min-width: 52px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--well);
+      color: var(--text-2);
+      font: inherit;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .cable-exercise__button[data-selected='true'] {
+      background: color-mix(in srgb, var(--acid) 12%, var(--well));
+      color: var(--acid);
+      outline: 1px solid color-mix(in srgb, var(--acid) 45%, transparent);
     }
     .cable-settings__example {
       margin: 0;
@@ -58,9 +110,8 @@ function ensureStyle() {
       background: var(--well);
       color: var(--text-2);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
-    .cable-settings__example strong { color: var(--blue); }
     .cable-settings__number {
       width: 88px;
       min-height: 44px;
@@ -78,14 +129,9 @@ function ensureStyle() {
 }
 
 /**
- * Adds Inspire FT1 peg entry without changing the workout engine's units.
- *
- * The session screen continues to own set state and logging. While Peg Mode is
- * on, Cable Fly's visible weight field contains the physical selector peg. The
- * workout service is wrapped only at the write boundary so the stored set keeps
- * effective resistance for volume, PRs and XP, plus explicit cable metadata for
- * history. That keeps the rest of the app in pounds and makes this adapter
- * removable rather than contaminating the domain with UI units.
+ * Peg entry is a presentation adapter around the normal workout engine.
+ * Stored weights remain nominal effective resistance so PRs, volume and XP stay
+ * in pounds; cablePeg preserves what the user physically set on the machine.
  */
 export async function installCableMachineRuntime(context) {
   if (!context?.storage || !context?.workout) return null
@@ -97,6 +143,12 @@ export async function installCableMachineRuntime(context) {
   const app = document.getElementById('app')
   if (!app) return null
 
+  const exerciseMap = await workout.exerciseMap()
+  const cableExercises = [...exerciseMap.values()]
+    .filter((exercise) => exercise.variant === 'Cable' && exercise.unit !== 'time')
+    .sort((a, b) => a.name.localeCompare(b.name))
+  const cableExerciseIds = new Set(cableExercises.map((exercise) => exercise.id))
+
   let profileRecord = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
   let machine = normalizeCableMachineProfile(profileRecord.cableMachine)
   let currentSessionRoot = null
@@ -104,18 +156,140 @@ export async function installCableMachineRuntime(context) {
   const pegState = new Map()
   let enhanceQueued = false
 
-  async function saveMachine(patch) {
-    machine = normalizeCableMachineProfile({ ...machine, ...patch })
+  async function persistMachine() {
     profileRecord = (await storage.get('profile', 'profile')) ?? profileRecord ?? { id: 'profile' }
     profileRecord = { ...profileRecord, cableMachine: { ...machine } }
     await storage.put('profile', profileRecord)
+  }
+
+  async function saveMachine(patch) {
+    machine = normalizeCableMachineProfile({ ...machine, ...patch })
+    await persistMachine()
     queueEnhance()
     return machine
   }
 
+  async function saveExercise(exerciseId, patch) {
+    machine = withCableExerciseSetting(machine, exerciseId, patch)
+    await persistMachine()
+    queueEnhance()
+    return machine
+  }
+
+  /** Rebuild one cable record from canonical logs so migrated peg history fixes PR. */
+  async function rebuildCableRecord(exerciseId) {
+    const allLogs = (await storage.getAll('setLogs'))
+      .filter((log) => log.exerciseId === exerciseId && log.isWarmup !== true)
+    if (allLogs.length === 0) return
+
+    const sessions = new Map((await storage.getAll('sessions')).map((session) => [session.id, session]))
+    const dated = allLogs
+      .map((log) => ({ log, date: sessions.get(log.sessionId)?.date }))
+      .filter((row) => row.date)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    if (dated.length === 0) return
+
+    let bestWeight = null
+    let bestVolume = null
+    let bestE1RM = null
+    let lastPerformance = null
+    const byDate = new Map()
+
+    for (const row of dated) {
+      if (!byDate.has(row.date)) byDate.set(row.date, [])
+      byDate.get(row.date).push(row.log)
+
+      const weight = Number(row.log.weight)
+      const reps = Number(row.log.reps)
+      if (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0) {
+        if (!bestWeight || weight > bestWeight.weight) {
+          bestWeight = {
+            weight,
+            reps,
+            date: row.date,
+            ...(row.log.cablePeg != null ? {
+              cablePeg: row.log.cablePeg,
+              cablePerHandle: row.log.cablePerHandle,
+              cableStacks: row.log.cableStacks,
+            } : {}),
+          }
+        }
+        const estimate = estimateOneRepMax(weight, reps)
+        if (estimate > (bestE1RM?.value ?? 0)) bestE1RM = { value: estimate, date: row.date }
+      }
+    }
+
+    for (const [date, logs] of byDate) {
+      const volume = logs.reduce((sum, log) => {
+        const weight = Number(log.weight)
+        const reps = Number(log.reps)
+        return sum + (Number.isFinite(weight) && weight > 0 && Number.isFinite(reps) && reps > 0 ? weight * reps : 0)
+      }, 0)
+      if (volume > (bestVolume?.volume ?? 0)) bestVolume = { volume, date }
+
+      const top = logs
+        .filter((log) => Number.isFinite(Number(log.weight)) && Number(log.weight) > 0 && Number(log.reps) > 0)
+        .sort((a, b) => Number(b.weight) - Number(a.weight))[0]
+      if (top) {
+        lastPerformance = {
+          weight: Number(top.weight),
+          reps: Number(top.reps),
+          date,
+          ...(top.cablePeg != null ? {
+            cablePeg: top.cablePeg,
+            cablePerHandle: top.cablePerHandle,
+            cableStacks: top.cableStacks,
+          } : {}),
+        }
+      }
+    }
+
+    await storage.put('records', {
+      exerciseId,
+      bestWeight,
+      bestVolume,
+      bestE1RM,
+      lastPerformance,
+    })
+  }
+
+  /**
+   * Fix the known pre-peg Cable Fly history where selector numbers 1–15 were
+   * stored as literal pounds. This is deliberately narrow: old rows/pulldowns
+   * remain pounds because there is no evidence those were selector numbers.
+   */
+  async function migrateLegacyHistory() {
+    const migrationVersion = Number(profileRecord?.cableMachineHistoryMigration ?? 0)
+    if (migrationVersion >= HISTORY_MIGRATION_VERSION) return 0
+
+    const logs = await storage.getAll('setLogs')
+    let changed = 0
+    for (const log of logs) {
+      const migrated = migrateLegacyCableFlySet(log, machine)
+      if (migrated === log) continue
+      await storage.put('setLogs', migrated)
+      changed += 1
+    }
+
+    if (changed > 0) await rebuildCableRecord('cable_fly')
+    profileRecord = (await storage.get('profile', 'profile')) ?? profileRecord
+    profileRecord = { ...profileRecord, cableMachineHistoryMigration: HISTORY_MIGRATION_VERSION }
+    await storage.put('profile', profileRecord)
+    return changed
+  }
+
+  await migrateLegacyHistory()
+  // Persist the corrected FTX identity even if the prior prototype saved FT1.
+  await persistMachine()
+
   const originalLogSet = workout.logSet.bind(workout)
+  const originalFinishSession = workout.finishSession.bind(workout)
+
   workout.logSet = async (session, set) => {
-    if (!machine.enabled || !PEG_EXERCISES.has(set?.exerciseId)) return originalLogSet(session, set)
+    if (!machine.enabled || !cableExerciseIds.has(set?.exerciseId)
+      || !cablePegEnabledForExercise(set.exerciseId, machine)) {
+      return originalLogSet(session, set)
+    }
 
     const stacks = cableStacksForExercise(set.exerciseId, machine)
     const load = cableLoadForPeg(set.weight, { profile: machine, stacks })
@@ -133,9 +307,22 @@ export async function installCableMachineRuntime(context) {
       cableEffectiveTotal: load.total,
       cableRatio: load.ratio,
       cableAddOn: load.addOnEnabled,
+      cableResistanceKind: 'nominal',
     }
     await storage.put('setLogs', enriched)
+    // The core workout service may have just promoted this set to a record
+    // before cable metadata was added. Rebuild immediately so the PR pill and
+    // Progress page both retain the physical peg as well as nominal pounds.
+    await rebuildCableRecord(set.exerciseId)
     return enriched
+  }
+
+  workout.finishSession = async (...args) => {
+    const summary = await originalFinishSession(...args)
+    const logs = await storage.getAll('setLogs')
+    const withPegMetadata = new Set(logs.filter((log) => log.cablePeg != null).map((log) => log.exerciseId))
+    for (const exerciseId of withPegMetadata) await rebuildCableRecord(exerciseId)
+    return summary
   }
 
   function syncSessionBoundary() {
@@ -153,7 +340,8 @@ export async function installCableMachineRuntime(context) {
 
   function updateReadout(card) {
     let readout = card.querySelector('.cable-readout')
-    if (!machine.enabled) {
+    const exerciseId = card.dataset.exercise
+    if (!machine.enabled || !cablePegEnabledForExercise(exerciseId, machine)) {
       readout?.remove()
       return
     }
@@ -169,18 +357,34 @@ export async function installCableMachineRuntime(context) {
     if (!readout) {
       readout = document.createElement('div')
       readout.className = 'cable-readout'
-      readout.dataset.cableReadout = card.dataset.exercise
+      readout.dataset.cableReadout = exerciseId
       row.append(readout)
     } else if (readout.parentElement !== row) {
       row.append(readout)
     }
 
-    const stacks = cableStacksForExercise(card.dataset.exercise, machine)
+    const stacks = cableStacksForExercise(exerciseId, machine)
     const load = cableLoadForPeg(input.value, { profile: machine, stacks })
     const next = load
-      ? `${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb total · ${load.stacks} stack${load.stacks === 1 ? '' : 's'} @ ${fmt(load.ratio)}:1`
+      ? `Nominal ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb total · ${load.stacks} stack${load.stacks === 1 ? '' : 's'} @ ${fmt(load.ratio)}:1`
       : `Enter peg 1–${machine.selectorPositions}`
     if (readout.textContent !== next) readout.textContent = next
+  }
+
+  async function decorateRecord(card) {
+    const exerciseId = card.dataset.exercise
+    const record = await storage.get('records', exerciseId)
+    const best = record?.bestWeight
+    if (!Number.isInteger(best?.cablePeg) || !Number.isFinite(Number(best?.weight)) || !card.isConnected) return
+
+    const token = `${best.cablePeg}:${best.weight}:${best.reps ?? ''}`
+    if (card.dataset.cableRecord === token) return
+    const pill = card.querySelector('[data-kind="pr"]')
+    const value = pill?.querySelector('.pill__value')
+    const unit = pill?.querySelector('.pill__unit')
+    if (value) value.textContent = `P${best.cablePeg} · ${fmt(Number(best.weight))}`
+    if (unit) unit.textContent = 'lb nominal'
+    card.dataset.cableRecord = token
   }
 
   function initialisePegInputs(card) {
@@ -221,7 +425,8 @@ export async function installCableMachineRuntime(context) {
 
   function enhanceCableCard(card) {
     const exerciseId = card.dataset.exercise
-    if (!machine.enabled || !PEG_EXERCISES.has(exerciseId)) return
+    if (!machine.enabled || !cableExerciseIds.has(exerciseId)
+      || !cablePegEnabledForExercise(exerciseId, machine)) return
 
     card.dataset.cableMachine = machine.id
     const weightHead = card.querySelector('.setrow--head [data-col="weight"]')
@@ -234,12 +439,13 @@ export async function installCableMachineRuntime(context) {
       note.className = 'cable-mode-note'
       note.dataset.cableMode = 'peg'
       const stacks = cableStacksForExercise(exerciseId, machine)
-      note.textContent = `${machine.name.toUpperCase()} PEG MODE · ${stacks === 2 ? 'BOTH STACKS' : 'ONE STACK'}`
+      note.textContent = `${machine.name.toUpperCase()} PEG MODE · ${stacks === 2 ? 'BOTH STACKS' : 'ONE STACK'} · NOMINAL`
       const actions = card.querySelector('.actions')
       actions?.insertAdjacentElement('afterend', note)
     }
 
     updateReadout(card)
+    void decorateRecord(card)
   }
 
   function numberSetting(label, key, value, inputMode = 'decimal') {
@@ -266,11 +472,79 @@ export async function installCableMachineRuntime(context) {
   function renderSettingsExample(section) {
     const example = section?.querySelector('.cable-settings__example')
     if (!example) return
-    const load = cableLoadForPeg(6, { profile: machine, stacks: Math.min(2, machine.stackCount) })
+    const load = cableLoadForPeg(6, {
+      profile: machine,
+      stacks: cableStacksForExercise('cable_fly', machine),
+    })
     const next = load
-      ? `Peg 6 → ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb Cable Fly total`
+      ? `Nominal example: Peg 6 → ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb Cable Fly total. Manufacturer spec: 165 lb per stack, 2:1 per pulley.`
       : 'Adjust the machine values to preview Peg 6.'
     if (example.textContent !== next) example.textContent = next
+  }
+
+  function exerciseSettingsList() {
+    const list = document.createElement('div')
+    list.className = 'cable-exercises'
+    for (const exercise of cableExercises) {
+      const enabled = cablePegEnabledForExercise(exercise.id, machine)
+      const stacks = cableStacksForExercise(exercise.id, machine)
+      const row = document.createElement('div')
+      row.className = 'cable-exercise'
+      row.dataset.cableExercise = exercise.id
+
+      const copy = document.createElement('div')
+      copy.className = 'cable-exercise__copy'
+      const name = document.createElement('span')
+      name.className = 'cable-exercise__name'
+      name.textContent = exercise.name
+      const meta = document.createElement('span')
+      meta.className = 'cable-exercise__meta'
+      meta.textContent = enabled ? `${stacks} stack${stacks === 1 ? '' : 's'} · peg entry` : 'normal lb entry'
+      copy.append(name, meta)
+
+      const controls = document.createElement('div')
+      controls.className = 'cable-exercise__controls'
+      const pegButton = document.createElement('button')
+      pegButton.type = 'button'
+      pegButton.className = 'cable-exercise__button'
+      pegButton.dataset.selected = String(enabled)
+      pegButton.setAttribute('aria-pressed', String(enabled))
+      pegButton.setAttribute('aria-label', `${exercise.name} peg entry`)
+      pegButton.textContent = enabled ? 'PEG' : 'LBS'
+      pegButton.addEventListener('click', async () => {
+        await saveExercise(exercise.id, { enabled: !cablePegEnabledForExercise(exercise.id, machine) })
+        const nextEnabled = cablePegEnabledForExercise(exercise.id, machine)
+        pegButton.dataset.selected = String(nextEnabled)
+        pegButton.setAttribute('aria-pressed', String(nextEnabled))
+        pegButton.textContent = nextEnabled ? 'PEG' : 'LBS'
+        meta.textContent = nextEnabled
+          ? `${cableStacksForExercise(exercise.id, machine)} stack${cableStacksForExercise(exercise.id, machine) === 1 ? '' : 's'} · peg entry`
+          : 'normal lb entry'
+      })
+
+      const stackButton = document.createElement('button')
+      stackButton.type = 'button'
+      stackButton.className = 'cable-exercise__button'
+      stackButton.dataset.selected = 'false'
+      stackButton.setAttribute('aria-label', `${exercise.name} stacks used`)
+      stackButton.textContent = `${stacks}×`
+      stackButton.addEventListener('click', async () => {
+        const current = cableStacksForExercise(exercise.id, machine)
+        const next = current >= Math.min(2, machine.stackCount) ? 1 : Math.min(2, machine.stackCount)
+        await saveExercise(exercise.id, { stacks: next })
+        stackButton.textContent = `${cableStacksForExercise(exercise.id, machine)}×`
+        if (cablePegEnabledForExercise(exercise.id, machine)) {
+          const actual = cableStacksForExercise(exercise.id, machine)
+          meta.textContent = `${actual} stack${actual === 1 ? '' : 's'} · peg entry`
+        }
+        renderSettingsExample(row.closest('[data-section="cable-machine"]'))
+      })
+
+      controls.append(pegButton, stackButton)
+      row.append(copy, controls)
+      list.append(row)
+    }
+    return list
   }
 
   function enhanceSettings(screen) {
@@ -286,13 +560,13 @@ export async function installCableMachineRuntime(context) {
 
     const hint = document.createElement('p')
     hint.className = 'block__hint'
-    hint.textContent = 'Inspire FT1 preset. Enter the selector peg for Cable Fly; Tempered stores the calculated effective resistance for progression and history.'
+    hint.textContent = 'Inspire FTX / Centr 2 preset. Peg mode stores nominal effective resistance for progression while keeping the physical selector number in history.'
 
     const toggleRow = document.createElement('div')
     toggleRow.className = 'cable-settings__toggle'
     const toggleLabel = document.createElement('span')
     toggleLabel.className = 'setting__label'
-    toggleLabel.textContent = 'FT1 peg entry'
+    toggleLabel.textContent = 'Cable peg entry'
     const toggle = document.createElement('button')
     toggle.type = 'button'
     toggle.className = 'setup__cadence'
@@ -332,7 +606,7 @@ export async function installCableMachineRuntime(context) {
     grid.append(
       toggleRow,
       numberSetting('Selector positions', 'selectorPositions', machine.selectorPositions, 'numeric'),
-      numberSetting('Top / head weight (lb)', 'headWeight', machine.headWeight),
+      numberSetting('Selector/head assembly (lb)', 'headWeight', machine.headWeight),
       numberSetting('Each numbered plate (lb)', 'plateIncrement', machine.plateIncrement),
       numberSetting('Pulley ratio', 'ratio', machine.ratio),
       addonRow,
@@ -340,7 +614,7 @@ export async function installCableMachineRuntime(context) {
 
     const example = document.createElement('p')
     example.className = 'cable-settings__example'
-    section.append(title, hint, grid, example)
+    section.append(title, hint, grid, example, exerciseSettingsList())
     renderSettingsExample(section)
 
     const credits = screen.querySelector('[data-section="credits"]')
@@ -372,21 +646,21 @@ export async function installCableMachineRuntime(context) {
     if (!(input instanceof HTMLInputElement)) return
     const card = input.closest('[data-exercise]')
     const exerciseId = card?.dataset.exercise
-    if (!exerciseId || !PEG_EXERCISES.has(exerciseId)) return
+    if (!exerciseId || !cableExerciseIds.has(exerciseId)
+      || !cablePegEnabledForExercise(exerciseId, machine)) return
     const peg = validPeg(input.value, machine)
     pegState.set(rowKey(exerciseId, input), peg)
     input.dataset.cableInvalid = String(input.value.trim() !== '' && peg == null)
     updateReadout(card)
   })
 
-  // Invalid pegs must never silently become pounds. Capture the log tap before
-  // session.js sees it and keep the user in the field with a useful range cue.
   app.addEventListener('click', (event) => {
     const button = event.target?.closest?.('.setrow__check')
     const row = button?.closest?.('.setrow')
     const card = row?.closest?.('[data-exercise]')
     const exerciseId = card?.dataset.exercise
-    if (!machine.enabled || !exerciseId || !PEG_EXERCISES.has(exerciseId)) return
+    if (!machine.enabled || !exerciseId || !cableExerciseIds.has(exerciseId)
+      || !cablePegEnabledForExercise(exerciseId, machine)) return
     const input = row.querySelector('.setrow__num[data-field="weight"]')
     if (!(input instanceof HTMLInputElement) || input.readOnly) return
     if (validPeg(input.value, machine) != null) return
@@ -405,9 +679,12 @@ export async function installCableMachineRuntime(context) {
   const runtime = {
     get profile() { return { ...machine } },
     saveMachine,
+    saveExercise,
+    rebuildCableRecord,
     destroy() {
       observer.disconnect()
       workout.logSet = originalLogSet
+      workout.finishSession = originalFinishSession
       context[RUNTIME_KEY] = null
     },
   }

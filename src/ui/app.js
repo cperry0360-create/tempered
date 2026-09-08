@@ -1,10 +1,9 @@
 /**
- * The shell: four tabs, global Settings access, and immersive workout/battle
- * flows that temporarily take over.
+ * The app shell. The visible product is now Today, Train, Companion and Progress.
  *
- * Phase 8 makes async failures recoverable. A failed refresh, session start or
- * battle start never leaves a blank app: the shell renders an accessible error
- * state with retry/back actions and keeps the user's data untouched.
+ * The old Character/Battle implementation remains reachable only as a legacy
+ * internal route so existing data and regression fixtures do not need a risky
+ * destructive migration. It is intentionally absent from navigation.
  */
 
 import { el, replace } from '../ui/dom.js'
@@ -18,16 +17,20 @@ import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createCharacterScreen } from './screens/character.js'
 import { createBattleScreen } from './screens/battle.js'
+import { createCompanionScreen } from './screens/companion.js'
 import { clearActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
   { id: 'train', label: 'TRAIN' },
-  { id: 'character', label: 'CHARACTER' },
+  { id: 'companion', label: 'COMPANION' },
   { id: 'history', label: 'PROGRESS' },
 ]
 
-const tabLabel = (id) => TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
+const tabLabel = (id) => {
+  if (id === 'character') return 'CHARACTER'
+  return TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
+}
 
 export function createApp({ mount, workout, daily, planner, character, battle, maintenance, storage, clock, onSetup }) {
   const body = el('main.app__body', { 'aria-busy': 'false' })
@@ -46,10 +49,14 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })
-  const battleScreen = battle
-    ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'character' : returnTab) })
-    : null
+  const companion = createCompanionScreen({ storage, clock })
 
+  // Legacy RPG surfaces are kept out of navigation. Keeping the route alive is
+  // deliberate: old stored battles/titles remain harmless and backups stay
+  // backwards compatible while the product pivots away from game mechanics.
+  const battleScreen = battle
+    ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'today' : returnTab) })
+    : null
   const characterScreen = createCharacterScreen({
     character,
     onSettings: () => openSettings(),
@@ -66,7 +73,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
 
   const summary = createSummaryScreen({ onDone: async () => { await show(returnTab) } })
   let session = null
-  const SCREENS = { today, train, history, settings, character: characterScreen }
+  const SCREENS = { today, train, companion, history, settings, character: characterScreen }
 
   function announce(text) {
     announcer.textContent = ''
@@ -87,7 +94,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   function renderTabs(tab) {
     replace(tabs, TABS.map((entry) => el('button.tabbar__tab', {
       type: 'button',
-      dataset: { tab: entry.id, active: String(tab === entry.id || (tab === 'settings' && entry.id === 'character')) },
+      dataset: { tab: entry.id, active: String(tab === entry.id) },
       'aria-current': tab === entry.id ? 'page' : null,
       'aria-label': `${entry.label.toLowerCase()} section`,
       onclick: () => show(entry.id),
@@ -104,18 +111,14 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   function showFailure({ title, detail, retry, back }) {
     tabBar.hidden = false
     settingsAccess.hidden = false
-    replace(body, [errorState({
-      title,
-      detail,
-      onRetry: retry,
-      onBack: back,
-    })])
+    replace(body, [errorState({ title, detail, onRetry: retry, onBack: back })])
     body.scrollTop = 0
     announce(title)
   }
 
   async function openBattle() {
-    returnTab = active === 'settings' ? 'character' : active
+    if (!battleScreen) return
+    returnTab = active === 'settings' ? 'today' : active
     body.setAttribute('aria-busy', 'true')
     try {
       await battleScreen.start()
@@ -123,14 +126,14 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       tabBar.hidden = true
       settingsAccess.hidden = true
       body.scrollTop = 0
-      announce('Today’s battle')
+      announce('Legacy battle')
     } catch (error) {
       console.error('[tempered] battle failed to start', error)
       showFailure({
         title: 'Battle could not open',
-        detail: 'Nothing was lost. You can retry the battle or return to Character.',
+        detail: 'Nothing was lost. This legacy surface is no longer part of normal Tempered navigation.',
         retry: () => openBattle(),
-        back: () => show('character'),
+        back: () => show('today'),
       })
     } finally {
       body.setAttribute('aria-busy', 'false')
@@ -155,7 +158,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   }
 
   async function startSession(options) {
-    returnTab = active === 'settings' ? 'character' : active
+    returnTab = active === 'settings' ? 'today' : active
     session?.destroy()
     session = makeSessionScreen()
 
@@ -183,12 +186,11 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   }
 
   async function resumeSession(draft) {
-    returnTab = ['today', 'train', 'character', 'history'].includes(draft?.session?.returnTab)
+    returnTab = ['today', 'train', 'companion', 'history', 'character'].includes(draft?.session?.returnTab)
       ? draft.session.returnTab
       : 'today'
     session?.destroy()
     session = makeSessionScreen()
-
     body.setAttribute('aria-busy', 'true')
     try {
       await session.resume(draft)
@@ -216,13 +218,15 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     if (tab === 'train') { await train.refresh(); replace(body, [train.root]); return }
     if (tab === 'history') { await history.refresh(); replace(body, [history.root]); return }
     if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
+    if (tab === 'companion') { await companion.refresh(); replace(body, [companion.root]); return }
     if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
     await characterScreen.refresh()
     replace(body, [characterScreen.root])
   }
 
   async function show(tab) {
-    const target = tab === 'settings' || TABS.some((entry) => entry.id === tab) ? tab : 'today'
+    const visible = TABS.some((entry) => entry.id === tab)
+    const target = tab === 'settings' || tab === 'character' || visible ? tab : 'today'
     active = target
     session?.destroy()
     session = null

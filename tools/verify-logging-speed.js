@@ -22,7 +22,8 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const TYPES = {
   '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json',
-  '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webmanifest': 'application/manifest+json',
+  '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.webmanifest': 'application/manifest+json',
 }
 
 function serve() {

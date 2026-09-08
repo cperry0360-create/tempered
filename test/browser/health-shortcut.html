@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — Health Shortcut bridge</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/nutrition-today.css" />
+  <link rel="stylesheet" href="../../src/pivot.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+    import { HEALTH_SNAPSHOT_PREFIX, installHealthShortcutRuntime } from '../../src/ui/health-shortcut-runtime.js'
+
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (s) => document.querySelector(s)
+    const settle = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms))
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    async function waitFor(selector, timeout = 3000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      return null
+    }
+
+    try {
+      const snapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nWEIGHT_LB=164.2\nRESTING_HR=49\nHRV_MS=41\nRESP_RATE=12\nSPO2=97\nBODY_TEMP_C=36.4`
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { async readText() { return snapshot }, async writeText() {} },
+      })
+      const clock = fixedClock(new Date(2026, 8, 8, 10, 0, 0))
+      const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      installCalorieAiRuntime()
+      installHealthShortcutRuntime(context)
+      await context.app.show('today')
+
+      const button = await waitFor('.screen--today [data-health-bridge="import"]')
+      check('Today exposes one Health import gesture', Boolean(button), button?.textContent ?? 'missing')
+      button?.click()
+      await settle(220)
+      const day = await context.daily.dayLog('2026-09-08')
+      check('Shortcut imports steps through the canonical day log', day.steps === 10527, day.steps)
+      check('Shortcut imports decimal sleep hours', day.sleepHours === 7.75, day.sleepHours)
+      check('Shortcut imports weight', day.bodyMetrics?.weight === 164.2, day.bodyMetrics?.weight)
+      check('Shortcut stores resting heart rate for dashboard widgets', day.healthMetrics?.restingHr === 49, day.healthMetrics?.restingHr)
+      check('Shortcut stores HRV', day.healthMetrics?.hrvMs === 41, day.healthMetrics?.hrvMs)
+      check('Shortcut stores respiratory rate', day.healthMetrics?.respiratoryRate === 12, day.healthMetrics?.respiratoryRate)
+      check('Shortcut stores oxygen saturation', day.healthMetrics?.spo2 === 97, day.healthMetrics?.spo2)
+      check('Shortcut stores body temperature', day.healthMetrics?.bodyTempC === 36.4, day.healthMetrics?.bodyTempC)
+      check('Health import is identified as a Shortcuts bridge', day.healthBridge?.source === 'shortcuts', day.healthBridge?.source)
+
+      // Re-importing the same snapshot must replace steps/sleep/weight, not add them.
+      await context.app.show('today')
+      const again = await waitFor('.screen--today [data-health-bridge="import"]')
+      again?.click()
+      await settle(180)
+      const repeated = await context.daily.dayLog('2026-09-08')
+      check('Repeated Health sync does not double steps', repeated.steps === 10527, repeated.steps)
+      check('Repeated Health sync does not double sleep', repeated.sleepHours === 7.75, repeated.sleepHours)
+
+      await context.app.show('settings')
+      const settings = await waitFor('[data-health-bridge="settings"]')
+      check('Settings explains the light-touch Apple Health bridge', /light-touch sync/i.test(settings?.textContent ?? ''))
+      check('Settings offers the copyable Shortcut recipe', Boolean(q('[data-health-bridge="recipe"]')))
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+    } catch (error) {
+      check('Health bridge harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'health-shortcut', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

@@ -10,11 +10,14 @@
   <link rel="stylesheet" href="../../src/polish.css" />
   <link rel="stylesheet" href="../../src/battle.css" />
   <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/nutrition-today.css" />
   <link rel="stylesheet" href="../../src/uplift.css" />
   <link rel="stylesheet" href="../../src/progress.css" />
   <link rel="stylesheet" href="../../src/battle-fidelity.css" />
   <link rel="stylesheet" href="../../src/character.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/companion.css" />
+  <link rel="stylesheet" href="../../src/pivot.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -107,8 +110,6 @@
       const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
 
-      // The harness profile is intentionally minimal; make Water a daily item so
-      // this journey exercises the same three-button row the real user has.
       await tempered.daily.setCadence('water', 'daily', 1)
       await tempered.app.show('today')
       await waitFor('.screen--today')
@@ -118,6 +119,7 @@
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today renders', Boolean(q('.screen--today')))
+      check('Visible navigation has Companion instead of Character', Boolean(q('[data-tab="companion"]')) && !q('[data-tab="character"]'))
 
       const water = q('[data-activity="water"]')
       const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', water)
@@ -142,26 +144,12 @@
       await tempered.app.show('train')
       await settle(60)
 
-      await tab('character', '.screen--character')
-      const attr = q('[data-attr]')
-      thumbSized(attr, 'Character attribute')
-      const attrId = attr?.dataset.attr
-      await tapCenter(attr, 'Character attribute')
-      check('Attribute tap expands details', Boolean(attrId && q(`[data-detail="${attrId}"]`)))
-      const battleButton = q('[data-open="battle"]')
-      thumbSized(battleButton, 'Enter Battle')
-      await tapCenter(battleButton, 'Enter Battle')
-      const battle = await waitFor('.screen--battle')
-      check('Battle opens', Boolean(battle))
-      if (battle) {
-        const skip = q('[data-action="skip"]', battle)
-        thumbSized(skip, 'Battle Skip')
-        await tapCenter(skip, 'Battle Skip')
-        const done = await waitFor('[data-battle="close"]')
-        thumbSized(done, 'Battle Done')
-        await tapCenter(done, 'Battle Done')
-        check('Battle Done returns to Character', Boolean(await waitFor('.screen--character')))
-      }
+      await tab('companion', '.screen--companion')
+      const habitat = q('.companion-habitat')
+      check('Companion has a habitat', Boolean(habitat))
+      check('Companion exposes positive-only growth', /nothing ever decays/i.test(q('.screen--companion')?.textContent ?? ''))
+      const rename = q('.companion-name__save')
+      thumbSized(rename, 'Companion rename')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__button')

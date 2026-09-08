@@ -45,7 +45,8 @@ export function parseHealthSnapshot(text) {
   if (!raw.includes(HEALTH_SNAPSHOT_PREFIX)) return null
   const result = {}
   for (const line of raw.split(/\r?\n/)) {
-    const match = line.match(/^([A-Z_]+)\s*=\s*(.*?)\s*$/)
+    // Health tags include SPO2, so digits are intentionally valid in names.
+    const match = line.match(/^([A-Z0-9_]+)\s*=\s*(.*?)\s*$/)
     if (!match) continue
     const [, tag, value] = match
     const key = TAGS[tag]

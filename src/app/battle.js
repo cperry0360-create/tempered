@@ -1,16 +1,21 @@
 /**
- * The battle service — the seam between the pure resolver and stored state.
- *
- * One battle exists per day, keyed by date, generated the first time anything
- * asks for it. Rewards are granted at that moment. The optional turn-based
- * controls change only how the encounter is played on screen; they cannot
- * change tracker XP, reroll loot, or pay the day twice.
+ * The battle service — persistent daily rewards plus an optional run-only
+ * Expedition. Real-world activity still owns permanent character progression;
+ * Expedition upgrades exist only inside today's play session.
  */
 
 import { generateBattle } from '../domain/battle.js'
 import { createTurnBattle, takeTurn, autoTurnBattle, skipTurnBattle } from '../domain/turn-battle.js'
+import {
+  applyExpeditionUpgrades,
+  expeditionChoices,
+  splitGauntlet,
+} from '../domain/expedition.js'
 import { rankFromLevels } from '../domain/rank.js'
 import { ATTRIBUTE_IDS } from '../domain/tiers.js'
+
+const EXPEDITION_VERSION = 1
+const EXPEDITION_ENCOUNTERS = 3
 
 /**
  * @param {object} deps
@@ -62,36 +67,169 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
     await storage.put('profile', { ...(profile ?? { id: 'profile' }), id: 'profile', gold, loot })
   }
 
-  /**
-   * Loads or lazily creates the persistent turn state for the day. This also
-   * upgrades an already-generated passive battle without rerolling it.
-   */
-  async function stateForDate(date) {
-    const record = await forDate(date)
-    if (record.turnState?.version === 1) return record
-    const updated = { ...record, turnState: createTurnBattle(record, balance) }
-    await storage.put('battles', updated)
-    return updated
+  function groups(record) {
+    return splitGauntlet(record.gauntlet ?? [], EXPEDITION_ENCOUNTERS)
   }
 
-  /** Play one manual turn and persist it immediately. */
-  async function act(action, date) {
-    const record = await stateForDate(date)
-    const turnState = takeTurn(record.turnState, action, record, balance)
+  function expeditionFor(record) {
+    const count = groups(record).length
+    return {
+      version: EXPEDITION_VERSION,
+      phase: count ? 'battle' : 'complete',
+      encounterIndex: 0,
+      encounterCount: count,
+      upgrades: [],
+      choices: [],
+    }
+  }
+
+  function combatRecord(record, expedition = record.expedition) {
+    const encounterIndex = expedition?.encounterIndex ?? 0
+    const encounterGroups = groups(record)
+    const gauntlet = encounterGroups[encounterIndex] ?? []
+    const applied = applyExpeditionUpgrades(record.hero, expedition?.upgrades ?? [])
+    return {
+      ...record,
+      // Give each encounter a deterministic action stream without changing the
+      // canonical daily reward seed.
+      seed: ((record.seed >>> 0) ^ Math.imul(encounterIndex + 1, 0x45d9f3b)) >>> 0,
+      hero: applied.hero,
+      gauntlet,
+      expeditionModifiers: applied,
+    }
+  }
+
+  function globalOffset(record, encounterIndex) {
+    return groups(record).slice(0, encounterIndex).reduce((sum, group) => sum + group.length, 0)
+  }
+
+  function createEncounterState(record, expedition, previousHp = null) {
+    const combat = combatRecord(record, expedition)
+    const state = createTurnBattle(combat, balance)
+    const focusBonus = Math.max(0, Math.round(combat.expeditionModifiers?.focusBonus ?? 0))
+    const focusMax = state.focusMax + focusBonus
+    const healFraction = combat.expeditionModifiers?.healFraction ?? 0
+    const carriedHp = previousHp == null
+      ? state.heroMax
+      : Math.min(state.heroMax, Math.max(1, previousHp + Math.round(state.heroMax * healFraction)))
+    return {
+      ...state,
+      focus: focusMax,
+      focusMax,
+      heroHp: carriedHp,
+      globalOffset: globalOffset(record, expedition.encounterIndex),
+      expeditionEncounter: expedition.encounterIndex,
+    }
+  }
+
+  function finishEncounter(record, turnState, expedition) {
+    if (turnState.status !== 'finished') return { turnState, expedition }
+    const hasNext = turnState.won && expedition.encounterIndex + 1 < expedition.encounterCount
+    if (hasNext) {
+      return {
+        turnState,
+        expedition: {
+          ...expedition,
+          phase: 'choice',
+          choices: expeditionChoices(record.seed, expedition.encounterIndex, expedition.upgrades),
+        },
+      }
+    }
+    return {
+      turnState,
+      expedition: { ...expedition, phase: 'complete', choices: [] },
+    }
+  }
+
+  /** Loads or upgrades the persistent Expedition state for the day. */
+  async function stateForDate(date) {
+    const record = await forDate(date)
+    if (record.expedition?.version === EXPEDITION_VERSION && record.turnState?.version === 1) return record
+
+    const expedition = expeditionFor(record)
     const updated = {
       ...record,
-      turnState,
-      watched: record.watched || turnState.status === 'finished',
+      expedition,
+      turnState: createEncounterState(record, expedition),
+      watched: false,
     }
     await storage.put('battles', updated)
     return updated
   }
 
-  /** Let the tiny deterministic AI finish from the current state. */
-  async function auto(date) {
+  /** Play one manual turn. A won encounter pauses for a 1-of-3 upgrade choice. */
+  async function act(action, date) {
     const record = await stateForDate(date)
-    const turnState = autoTurnBattle(record.turnState, record, balance)
-    const updated = { ...record, turnState, watched: true }
+    if (record.expedition?.phase !== 'battle') return record
+    const combat = combatRecord(record)
+    const turnState = takeTurn(record.turnState, action, combat, balance)
+    const resolved = finishEncounter(record, turnState, record.expedition)
+    const updated = {
+      ...record,
+      ...resolved,
+      watched: resolved.expedition.phase === 'complete',
+    }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /** Take one of the three temporary upgrades and enter the next encounter. */
+  async function chooseUpgrade(upgradeId, date) {
+    const record = await stateForDate(date)
+    const expedition = record.expedition
+    if (expedition?.phase !== 'choice') return record
+    if (!expedition.choices?.some((choice) => choice.id === upgradeId)) return record
+
+    const nextExpedition = {
+      ...expedition,
+      phase: 'battle',
+      encounterIndex: expedition.encounterIndex + 1,
+      upgrades: [...expedition.upgrades, upgradeId],
+      choices: [],
+    }
+    const turnState = createEncounterState(record, nextExpedition, record.turnState.heroHp)
+    const updated = { ...record, expedition: nextExpedition, turnState }
+    await storage.put('battles', updated)
+    return updated
+  }
+
+  /**
+   * AUTO remains a convenience escape hatch. It resolves combat and chooses the
+   * first deterministic offer between encounters until the Expedition is done.
+   */
+  async function auto(date) {
+    let record = await stateForDate(date)
+    let safety = 0
+    while (record.expedition?.phase !== 'complete' && safety < 12) {
+      safety += 1
+      if (record.expedition.phase === 'choice') {
+        const choice = record.expedition.choices?.[0]
+        if (!choice) break
+        const nextExpedition = {
+          ...record.expedition,
+          phase: 'battle',
+          encounterIndex: record.expedition.encounterIndex + 1,
+          upgrades: [...record.expedition.upgrades, choice.id],
+          choices: [],
+        }
+        record = {
+          ...record,
+          expedition: nextExpedition,
+          turnState: createEncounterState(record, nextExpedition, record.turnState.heroHp),
+        }
+        continue
+      }
+
+      const combat = combatRecord(record)
+      const turnState = autoTurnBattle(record.turnState, combat, balance)
+      const resolved = finishEncounter(record, turnState, record.expedition)
+      record = { ...record, ...resolved }
+    }
+
+    const updated = {
+      ...record,
+      watched: record.expedition?.phase === 'complete',
+    }
     await storage.put('battles', updated)
     return updated
   }
@@ -99,16 +237,33 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
   /** Jump to the already-generated canonical daily result. */
   async function skip(date) {
     const record = await stateForDate(date)
-    const turnState = skipTurnBattle(record.turnState, record)
-    const updated = { ...record, turnState, watched: true }
+    const fullState = createTurnBattle(record, balance)
+    const turnState = skipTurnBattle(fullState, record)
+    const updated = {
+      ...record,
+      turnState: { ...turnState, globalOffset: 0, expeditionEncounter: Math.max(0, (record.expedition?.encounterCount ?? 1) - 1) },
+      expedition: {
+        ...(record.expedition ?? expeditionFor(record)),
+        phase: 'complete',
+        encounterIndex: Math.max(0, (record.expedition?.encounterCount ?? 1) - 1),
+        choices: [],
+      },
+      watched: true,
+    }
     await storage.put('battles', updated)
     return updated
   }
 
-  /** Replay for fun. The daily reward is already locked and is never repaid. */
+  /** Replay for fun. The daily reward is locked and is never repaid. */
   async function restart(date) {
     const record = await stateForDate(date)
-    const updated = { ...record, turnState: createTurnBattle(record, balance), watched: true }
+    const expedition = expeditionFor(record)
+    const updated = {
+      ...record,
+      expedition,
+      turnState: createEncounterState(record, expedition),
+      watched: true,
+    }
     await storage.put('battles', updated)
     return updated
   }
@@ -129,5 +284,7 @@ export function createBattleService({ storage, clock, balance, roster, items }) 
     return { gold: profile?.gold ?? 0, loot: profile?.loot ?? [] }
   }
 
-  return { forDate, stateForDate, act, auto, skip, restart, markWatched, purse }
+  return {
+    forDate, stateForDate, act, chooseUpgrade, auto, skip, restart, markWatched, purse,
+  }
 }

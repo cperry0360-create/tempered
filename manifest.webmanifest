@@ -1,13 +1,13 @@
 {
   "name": "Tempered",
   "short_name": "Tempered",
-  "description": "Training tracker with an RPG progression layer.",
+  "description": "Personal training, nutrition, and lifestyle tracking with a small positive companion.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1c1c1e",
-  "theme_color": "#1c1c1e",
+  "background_color": "#123744",
+  "theme_color": "#16495f",
   "icons": [
     {
       "src": "./icons/icon-512.png",

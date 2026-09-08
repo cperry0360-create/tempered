@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Seed stage companion">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Seed stage companion">
   <defs>
     <radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#fff5ca"/><stop offset="1" stop-color="#d6caa0"/></radialGradient>
     <radialGradient id="c"><stop offset="0" stop-color="#9ef5cf" stop-opacity=".9"/><stop offset="1" stop-color="#9ef5cf" stop-opacity="0"/></radialGradient>

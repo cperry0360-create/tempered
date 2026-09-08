@@ -20,13 +20,13 @@ const STAGES = [
 ]
 
 const ROOM_UNLOCKS = [
-  { min: 0, icon: '◌', name: 'Starter nest' },
-  { min: 25, icon: '🪴', name: 'Plant' },
-  { min: 70, icon: '💧', name: 'Water bottle' },
-  { min: 130, icon: '📚', name: 'Book nook' },
-  { min: 210, icon: '🏋️', name: 'Tiny dumbbell' },
-  { min: 340, icon: '💡', name: 'Warm lamp' },
-  { min: 500, icon: '✨', name: 'Glow garland' },
+  { key: 'nest', min: 0, icon: '◌', scene: '◜', name: 'Starter nest' },
+  { key: 'plant', min: 25, icon: '🪴', scene: '✿', name: 'Plant' },
+  { key: 'water', min: 70, icon: '💧', scene: '◒', name: 'Water bottle' },
+  { key: 'books', min: 130, icon: '📚', scene: '▤', name: 'Book nook' },
+  { key: 'dumbbell', min: 210, icon: '🏋️', scene: '━', name: 'Tiny dumbbell' },
+  { key: 'lamp', min: 340, icon: '💡', scene: '●', name: 'Warm lamp' },
+  { key: 'garland', min: 500, icon: '✨', scene: '✦', name: 'Glow garland' },
 ]
 
 function hasNumber(value) {
@@ -71,12 +71,12 @@ function clampPercent(value) {
 }
 
 function todayMoment({ trained, day, name }) {
-  if (trained) return { icon: '🏋️', title: 'Post-workout stretch', copy: 'Your training gave the room some energy today.' }
-  if ((day?.waterOz ?? 0) >= 80) return { icon: '💧', title: 'Hydration break', copy: `${name} found the oversized water bottle.` }
-  if ((day?.readingMinutes ?? 0) > 0) return { icon: '📖', title: 'Quiet reading', copy: 'A few pages became a tiny reading session.' }
-  if ((day?.proteinGrams ?? 0) > 0 || (day?.calories ?? 0) > 0) return { icon: '🥣', title: 'Snack time', copy: 'Nutrition logging turned into a little meal moment.' }
-  if ((day?.sleepHours ?? 0) > 0) return { icon: '😴', title: 'Well rested', copy: 'Sleep showed up as a calmer day in the habitat.' }
-  return { icon: '🌿', title: 'Hanging out', copy: `Nothing is due. ${name} simply keeps what you have already built.` }
+  if (trained) return { type: 'trained', icon: '🏋️', title: 'Post-workout stretch', copy: 'Your training gave the room some energy today.' }
+  if ((day?.waterOz ?? 0) >= 80) return { type: 'water', icon: '💧', title: 'Hydration break', copy: `${name} found the oversized water bottle.` }
+  if ((day?.readingMinutes ?? 0) > 0) return { type: 'reading', icon: '📖', title: 'Quiet reading', copy: 'A few pages became a tiny reading session.' }
+  if ((day?.proteinGrams ?? 0) > 0 || (day?.calories ?? 0) > 0) return { type: 'nutrition', icon: '🥣', title: 'Snack time', copy: 'Nutrition logging turned into a little meal moment.' }
+  if ((day?.sleepHours ?? 0) > 0) return { type: 'sleep', icon: '😴', title: 'Well rested', copy: 'Sleep showed up as a calmer day in the habitat.' }
+  return { type: 'idle', icon: '🌿', title: 'Hanging out', copy: `Nothing is due. ${name} simply keeps what you have already built.` }
 }
 
 export function createCompanionScreen({ storage, clock }) {
@@ -105,12 +105,22 @@ export function createCompanionScreen({ storage, clock }) {
       : 100
     const name = profile?.companionName || 'Pip'
 
+    // This is only a presentation checkpoint. It never controls growth; the
+    // real logs above do. That lets us celebrate a newly reached form once
+    // without creating a second progression system that can drift.
+    const seenStage = profile?.companionStageSeen ?? null
+    const evolved = Boolean(seenStage && seenStage !== stage.name)
+    if (seenStage !== stage.name) {
+      await storage.put('profile', { ...(profile ?? { id: 'profile' }), companionStageSeen: stage.name })
+    }
+
     model = {
       name,
       points,
       stage,
       next,
       growth,
+      evolved,
       unlocked: ROOM_UNLOCKS.filter((item) => points >= item.min),
       locked: ROOM_UNLOCKS.filter((item) => points < item.min),
       moment: todayMoment({ trained, day: today, name }),
@@ -126,6 +136,21 @@ export function createCompanionScreen({ storage, clock }) {
     await refresh()
   }
 
+  function habitatProps(m) {
+    return el('div.companion-habitat__props', { 'aria-hidden': 'true' }, m.unlocked.map((item) =>
+      el('span.companion-habitat__prop', {
+        dataset: { prop: item.key }, text: item.scene,
+      })))
+  }
+
+  function evolutionSparkles(m) {
+    if (!m.evolved) return null
+    return el('div.companion-evolve', { role: 'status', 'aria-label': `${m.name} grew into ${m.stage.name}` }, [
+      ...Array.from({ length: 8 }, (_, index) => el('i', { dataset: { sparkle: String(index + 1) }, 'aria-hidden': 'true' })),
+      el('strong', { text: `${m.stage.name}!` }),
+    ])
+  }
+
   function render() {
     const m = model
     if (!m) return
@@ -138,11 +163,20 @@ export function createCompanionScreen({ storage, clock }) {
         ]),
       ]),
 
-      el('section.companion-habitat', { dataset: { stage: m.stage.name.toLowerCase() } }, [
+      el('section.companion-habitat', {
+        dataset: {
+          stage: m.stage.name.toLowerCase(),
+          moment: m.moment.type,
+          evolved: String(m.evolved),
+          room: String(m.unlocked.length),
+        },
+      }, [
         el('div.companion-habitat__glow'),
+        habitatProps(m),
         el('img.companion-habitat__pet', {
           src: m.stage.art, alt: `${m.name}, ${m.stage.name} growth stage`,
         }),
+        evolutionSparkles(m),
         el('div.companion-moment', {}, [
           el('span.companion-moment__icon', { text: m.moment.icon }),
           el('div', {}, [

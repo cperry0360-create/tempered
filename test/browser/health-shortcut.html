@@ -16,7 +16,9 @@
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
     import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
-    import { HEALTH_SNAPSHOT_PREFIX, installHealthShortcutRuntime } from '../../src/ui/health-shortcut-runtime.js'
+    import {
+      HEALTH_SNAPSHOT_PREFIX, healthImportUrl, installHealthShortcutRuntime,
+    } from '../../src/ui/health-shortcut-runtime.js'
 
     const checks = []
     const errors = []
@@ -37,23 +39,33 @@
     }
 
     try {
-      const snapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nWEIGHT_LB=164.2\nRESTING_HR=49\nHRV_MS=41\nRESP_RATE=12\nSPO2=97\nBODY_TEMP_C=36.4`
+      const clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nWEIGHT_LB=164.2\nRESTING_HR=49\nHRV_MS=41\nRESP_RATE=12\nSPO2=97\nBODY_TEMP_C=36.4`
+      const querySnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=4321\nSLEEP=6.5\nSPO2=96%`
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
-        value: { async readText() { return snapshot }, async writeText() {} },
+        value: { async readText() { return clipboardSnapshot }, async writeText() {} },
       })
       const clock = fixedClock(new Date(2026, 8, 8, 10, 0, 0))
       const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       installCalorieAiRuntime()
-      installHealthShortcutRuntime(context)
-      await context.app.show('today')
 
+      // Recreate the preferred Shortcuts URL handoff on the local harness URL.
+      const handoff = new URL(healthImportUrl(querySnapshot, window.location.href))
+      history.replaceState(null, '', `${handoff.pathname}${handoff.search}${handoff.hash}`)
+      installHealthShortcutRuntime(context)
+      await settle(180)
+      const auto = await context.daily.dayLog('2026-09-08')
+      check('URL handoff auto-imports without tapping the clipboard button', auto.steps === 4321 && auto.sleepHours === 6.5, `${auto.steps} steps · ${auto.sleepHours} h`)
+      check('URL handoff preserves a percent health value', auto.healthMetrics?.spo2 === 96, auto.healthMetrics?.spo2)
+      check('URL handoff removes health payload from address bar after import', !window.location.search.includes('temperedHealth'), window.location.search)
+
+      await context.app.show('today')
       const button = await waitFor('.screen--today [data-health-bridge="import"]')
-      check('Today exposes one Health import gesture', Boolean(button), button?.textContent ?? 'missing')
+      check('Today keeps the clipboard Health fallback', Boolean(button), button?.textContent ?? 'missing')
       button?.click()
       await settle(220)
       const day = await context.daily.dayLog('2026-09-08')
-      check('Shortcut imports steps through the canonical day log', day.steps === 10527, day.steps)
+      check('Clipboard fallback imports steps through the canonical day log', day.steps === 10527, day.steps)
       check('Shortcut imports decimal sleep hours', day.sleepHours === 7.75, day.sleepHours)
       check('Shortcut imports weight', day.bodyMetrics?.weight === 164.2, day.bodyMetrics?.weight)
       check('Shortcut stores resting heart rate for dashboard widgets', day.healthMetrics?.restingHr === 49, day.healthMetrics?.restingHr)
@@ -74,7 +86,7 @@
 
       await context.app.show('settings')
       const settings = await waitFor('[data-health-bridge="settings"]')
-      check('Settings explains the light-touch Apple Health bridge', /light-touch sync/i.test(settings?.textContent ?? ''))
+      check('Settings explains preferred one-tap and reliable fallback', /one-tap handoff/i.test(settings?.textContent ?? '') && /fallback/i.test(settings?.textContent ?? ''), settings?.textContent ?? 'missing')
       check('Settings offers the copyable Shortcut recipe', Boolean(q('[data-health-bridge="recipe"]')))
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {

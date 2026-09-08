@@ -1,8 +1,9 @@
 export const HEALTH_SNAPSHOT_PREFIX = 'TEMPERED_HEALTH_V1'
+export const DEFAULT_HEALTH_IMPORT_URL = 'https://cperry0360-create.github.io/tempered/'
 
 export const HEALTH_SHORTCUT_RECIPE = `TEMPERED HEALTH — iPhone Shortcut recipe
 
-Goal: read Apple Health on-device, copy one small text snapshot, then import it into Tempered. No developer account, Mac, server, or AI provider is required.
+Goal: read Apple Health on-device and hand a tiny snapshot to Tempered. No developer account, Mac, server, or AI provider is required.
 
 1. In Shortcuts, create a shortcut named “Tempered Health”.
 2. Add “Find Health Samples” for Steps, filtered to today. Sum the sample values.
@@ -21,11 +22,21 @@ RESP_RATE=<breaths per minute>
 SPO2=<percent, e.g. 97>
 BODY_TEMP_C=<degrees C>
 
-6. Add “Copy to Clipboard” using that Text action.
-7. Optional: add “Open App” and choose Tempered if iOS offers the installed Home Screen app. If it does not, simply end the Shortcut after Copy to Clipboard.
-8. In Tempered tap IMPORT HEALTH. That is the normal sync gesture.
+PREFERRED ONE-TAP FINISH
+6. Add “URL Encode” and give it the Text action above.
+7. Add a Text action containing this URL, with the URL-encoded result inserted after the equals sign:
+https://cperry0360-create.github.io/tempered/?temperedHealth=<URL-encoded Text>
+8. Add “Open URLs” using that URL.
+9. Run the shortcut. Tempered will detect the temperedHealth parameter, import it, and immediately remove the health values from the address bar.
 
-Optional automation: Shortcuts personal automations can run without asking for several triggers, including App, Time of Day, Sleep, and Apple Watch Workout. If Tempered appears as an App trigger on your iPhone, you can run this shortcut automatically when Tempered opens; otherwise keep the one-tap shortcut on the Home Screen.`
+Whether iOS opens that HTTPS link inside the installed Home Screen Tempered or in Safari varies by web-app handoff behavior. If it opens your installed Tempered, normal use is one shortcut tap. If iOS opens Safari instead, use the guaranteed fallback below so your existing Home Screen app remains the data owner.
+
+GUARANTEED FALLBACK
+6. Add “Copy to Clipboard” using the original Text action.
+7. Open your Home Screen Tempered.
+8. Tap IMPORT HEALTH on Today. Tempered reads the snapshot locally and does not double-count replacement metrics on later syncs.
+
+Optional automation: personal automations can run this shortcut from triggers such as App, Time of Day, Sleep, and Apple Watch Workout. If an App automation can target your installed Tempered on your iPhone, try running Tempered Health when Tempered opens; otherwise keep Tempered Health as a Home Screen shortcut.`
 
 const TAGS = {
   DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb',
@@ -62,12 +73,24 @@ export function parseHealthSnapshot(text) {
   return meaningful ? result : null
 }
 
+/** Build the exact handoff URL the Shortcut's URL Encode + Open URLs path creates. */
+export function healthImportUrl(snapshot, base = DEFAULT_HEALTH_IMPORT_URL) {
+  const raw = String(snapshot ?? '').trim()
+  if (!parseHealthSnapshot(raw)) throw new Error('No Tempered Health snapshot found')
+  const url = new URL(base)
+  url.searchParams.set('temperedHealth', raw)
+  return url.toString()
+}
+
 export async function importHealthSnapshot(context, snapshot) {
   if (!context?.daily || !context?.storage || !context?.clock) throw new Error('Tempered is not ready')
   const parsed = typeof snapshot === 'string' ? parseHealthSnapshot(snapshot) : snapshot
   if (!parsed) throw new Error('No Tempered Health snapshot found')
   const date = parsed.date && parsed.date <= context.clock.today() ? parsed.date : context.clock.today()
 
+  // All three are replace-mode trackers. Re-running the Shortcut updates the
+  // same day's canonical value; it never adds yesterday's or an earlier sync's
+  // steps/sleep/weight a second time.
   if (Number.isFinite(parsed.steps) && parsed.steps >= 0) {
     await context.daily.logAt(date, 'steps', Math.round(parsed.steps))
   }
@@ -153,7 +176,7 @@ export function installHealthShortcutRuntime(context) {
     row.className = 'health-bridge__today'
     row.append(
       makeImportButton(),
-      Object.assign(document.createElement('span'), { textContent: 'Apple Health via iPhone Shortcut' }),
+      Object.assign(document.createElement('span'), { textContent: 'Apple Health · Shortcut sync' }),
     )
     snapshot.append(row)
   }
@@ -164,7 +187,7 @@ export function installHealthShortcutRuntime(context) {
     const section = document.createElement('section')
     section.className = 'card health-bridge__settings'
     section.dataset.healthBridge = 'settings'
-    section.innerHTML = '<h2 class="block__title">Apple Health Shortcut</h2><p class="block__hint">Light-touch sync for the Home Screen app. Health stays on your iPhone; the shortcut copies a tiny snapshot and Tempered imports it locally.</p><p class="block__hint"><strong>Normal use:</strong> run Tempered Health → tap IMPORT HEALTH. If iOS lets your shortcut open Tempered, that becomes one shortcut tap plus the import tap.</p>'
+    section.innerHTML = '<h2 class="block__title">Apple Health Shortcut</h2><p class="block__hint">No Mac or developer account required. Health stays on your iPhone. The preferred recipe passes the snapshot into Tempered by URL for a possible one-tap handoff; clipboard + IMPORT HEALTH remains the reliable fallback.</p><p class="block__hint"><strong>Best case:</strong> tap Tempered Health and iOS opens the installed Tempered with the data already imported. <strong>Fallback:</strong> the Shortcut copies the snapshot, then you tap IMPORT HEALTH here or on Today.</p>'
     const actions = document.createElement('div')
     actions.className = 'health-bridge__actions'
     const recipe = document.createElement('button')
@@ -185,10 +208,13 @@ export function installHealthShortcutRuntime(context) {
 
   async function importQuerySnapshot() {
     const url = new URL(window.location.href)
-    const encoded = url.searchParams.get('temperedHealth')
-    if (!encoded) return false
+    // URLSearchParams.get() already percent-decodes the value. Do NOT run
+    // decodeURIComponent again: a legitimate value such as SPO2=97% would then
+    // contain a bare percent sign and could throw URIError.
+    const snapshot = url.searchParams.get('temperedHealth')
+    if (!snapshot) return false
     try {
-      await importHealthSnapshot(context, decodeURIComponent(encoded))
+      await importHealthSnapshot(context, snapshot)
     } catch {
       url.searchParams.delete('temperedHealth')
       history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)

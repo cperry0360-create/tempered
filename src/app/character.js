@@ -5,10 +5,9 @@
  * awarded from, and joins both to the pure modules that know what they mean.
  * Nothing here decides what anything is worth.
  *
- * The one piece of state it writes is the `titles` store. A title is a record
- * of something that happened, so it is stamped with the day it was earned and
- * never recomputed for display — retuning a threshold later must not quietly
- * un-award something somebody already has.
+ * Titles and talent allocation are the two persistent RPG records. Talent
+ * points themselves are never stored: they are derived from real-world
+ * attribute levels so battle play can never mint character progression.
  */
 
 import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
@@ -19,6 +18,7 @@ import { explainSources, topContributors } from '../domain/sources.js'
 import { earnedTitles } from '../domain/titles.js'
 import { createInitialState } from '../domain/xp-engine.js'
 import { heroFor } from '../domain/battle.js'
+import { TALENTS, applyTalentsToHero, talentEffectText, talentState } from '../domain/talents.js'
 import { daysBetween } from '../adapters/clock/clock.js'
 
 const ATTRIBUTE_NAMES = {
@@ -53,6 +53,23 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
     return state
   }
 
+  function levelsFor(state) {
+    return Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, state[id].level]))
+  }
+
+  function talentsFor(levels, profile) {
+    const state = talentState(levels, profile?.talents, balance)
+    return {
+      ...state,
+      pointEveryTotalLevels: balance.talents.pointEveryTotalLevels,
+      items: TALENTS.map((talent) => ({
+        ...talent,
+        rank: state.ranks[talent.id] ?? 0,
+        effect: talentEffectText(talent, balance),
+      })),
+    }
+  }
+
   /**
    * The facts titles are awarded from, derived from what is actually logged.
    *
@@ -84,7 +101,7 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
       .find((record) => record.exerciseId === exerciseId)?.bestWeight?.weight ?? 0
 
     return {
-      levels: Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, state[id].level])),
+      levels: levelsFor(state),
       sessionCount: sessions.length,
       trainingHours: sessions.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0) / 60,
       milesCovered: days.reduce((sum, day) => sum
@@ -101,10 +118,7 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
     }
   }
 
-  /**
-   * Awards anything newly earned, stamped with today. Never removes anything:
-   * a stored title stays stored whatever the facts say later.
-   */
+  /** Awards anything newly earned, stamped with today. Never removes anything. */
   async function awardTitles(facts) {
     const held = new Map((await storage.getAll('titles')).map((row) => [row.id, row]))
     const fresh = earnedTitles(facts, titleCatalogue)
@@ -119,21 +133,49 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
     return Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, Math.max(1, state[id].xp / 30)]))
   }
 
-  /**
-   * The whole Character screen, as one value.
-   *
-   * `sources` and `contributors` are on every attribute rather than fetched on
-   * tap: the expanded view is `docs/03`'s mandatory one, and a screen that has
-   * to go and ask before it can answer "why did that go up" answers it late.
-   */
+  /** Spend one point. Allocation persists between Expeditions; earned points are derived. */
+  async function spendTalent(talentId) {
+    if (!TALENTS.some((talent) => talent.id === talentId)) return { ok: false, reason: 'unknown' }
+    const state = await loadState()
+    const levels = levelsFor(state)
+    const profile = await storage.get('profile', 'profile')
+    const current = talentState(levels, profile?.talents, balance)
+    if (current.available < 1) return { ok: false, reason: 'no-points', talents: talentsFor(levels, profile) }
+    if ((current.ranks[talentId] ?? 0) >= current.maxRank) {
+      return { ok: false, reason: 'max-rank', talents: talentsFor(levels, profile) }
+    }
+
+    const nextRanks = { ...current.ranks, [talentId]: (current.ranks[talentId] ?? 0) + 1 }
+    await storage.put('profile', {
+      ...(profile ?? { id: 'profile' }),
+      id: 'profile',
+      talents: nextRanks,
+    })
+    return { ok: true, talents: talentsFor(levels, { ...(profile ?? {}), talents: nextRanks }) }
+  }
+
+  /** Free respec: points remain earned from real life, only their battle allocation resets. */
+  async function resetTalents() {
+    const profile = await storage.get('profile', 'profile')
+    await storage.put('profile', {
+      ...(profile ?? { id: 'profile' }),
+      id: 'profile',
+      talents: {},
+    })
+    const state = await loadState()
+    return talentsFor(levelsFor(state), { ...(profile ?? {}), talents: {} })
+  }
+
+  /** The whole Character screen, as one value. */
   async function view() {
     const state = await loadState()
     const facts = await titleFacts(state)
     const held = await awardTitles(facts)
     const heldById = new Map(held.map((row) => [row.id, row]))
 
-    const levels = Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, state[id].level]))
+    const levels = levelsFor(state)
     const profile = await storage.get('profile', 'profile')
+    const talents = talentsFor(levels, profile)
 
     return {
       name: profile?.name ?? '',
@@ -141,9 +183,10 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
       totalLevels: totalLevels(levels),
       levels,
 
-      // The RPG sheet should show the same derived hero the battle actually
-      // uses, never a second set of invented display-only combat numbers.
-      combat: heroFor(levels, balance),
+      // Talents affect combat only. Attribute levels and XP remain the sole
+      // permanent record of real-world progress.
+      combat: applyTalentsToHero(heroFor(levels, balance), talents.ranks, balance),
+      talents,
       gold: profile?.gold ?? 0,
       loot: [...(profile?.loot ?? [])],
 
@@ -164,8 +207,6 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
         earned: titleCatalogue
           .filter((title) => heldById.has(title.id))
           .map((title) => ({ ...title, earnedOn: heldById.get(title.id).earnedOn })),
-        // The rest, so the screen can say what there is to earn rather than
-        // showing an empty list to someone who has not earned one yet.
         available: titleCatalogue.filter((title) => !heldById.has(title.id)),
       },
 
@@ -173,5 +214,5 @@ export function createCharacterService({ storage, clock, balance, catalogue }) {
     }
   }
 
-  return { view, titleFacts, awardTitles, titles: titleCatalogue }
+  return { view, titleFacts, awardTitles, spendTalent, resetTalents, titles: titleCatalogue }
 }

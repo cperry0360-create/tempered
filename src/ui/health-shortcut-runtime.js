@@ -185,12 +185,17 @@ export function installHealthShortcutRuntime(context) {
   async function importQuerySnapshot() {
     const url = new URL(window.location.href)
     const encoded = url.searchParams.get('temperedHealth')
-    if (!encoded) return
+    if (!encoded) return false
     try {
       await importHealthSnapshot(context, decodeURIComponent(encoded))
-    } catch { /* keep normal app launch */ }
+    } catch {
+      url.searchParams.delete('temperedHealth')
+      history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+      return false
+    }
     url.searchParams.delete('temperedHealth')
     history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+    return true
   }
 
   const enhance = () => {
@@ -204,7 +209,9 @@ export function installHealthShortcutRuntime(context) {
     requestAnimationFrame(enhance)
   }
 
-  importQuerySnapshot().then(() => context.app?.show('today')).catch(() => {})
+  importQuerySnapshot().then((imported) => {
+    if (imported) context.app?.show('today')
+  }).catch(() => {})
   const observer = new MutationObserver(schedule)
   observer.observe(mount, { childList: true, subtree: true })
   schedule()

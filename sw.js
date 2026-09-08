@@ -20,6 +20,7 @@ const PRECACHE = [
   './src/battle-fidelity.css',
   './src/character.css',
   './src/calm.css',
+  './src/nutrition-today.css',
   './src/uplift.css',
   './src/progress.css',
   './src/pwa/register.js',

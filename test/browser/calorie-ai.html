@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tempered — calorie AI handoff</title>
+  <title>Tempered — Nutrition AI handoff</title>
   <link rel="stylesheet" href="../../src/style.css" />
   <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/nutrition-today.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
   <link rel="stylesheet" href="../../src/ux-fixes.css" />
 </head>
@@ -15,12 +16,16 @@
     import { bootstrapHarness as bootstrap } from './harness.js'
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
-    import { CALORIE_PHOTO_PROMPT, installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+    import {
+      NUTRITION_PHOTO_PROMPT,
+      installCalorieAiRuntime,
+    } from '../../src/ui/calorie-ai-runtime.js'
 
     const checks = []
     const errors = []
     const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
     const q = (selector) => document.querySelector(selector)
+    const qa = (selector) => [...document.querySelectorAll(selector)]
     const settle = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
 
     window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
@@ -40,32 +45,59 @@
       const clipboard = {
         copied: '',
         async writeText(text) { this.copied = text },
-        async readText() { return 'TEMPERED_CALORIES=642' },
+        async readText() {
+          return '```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\n```'
+        },
       }
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard })
 
       const clock = fixedClock(new Date(2026, 8, 8, 9, 0, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      await tempered.daily.setCalorieTarget(2100)
       await tempered.daily.setCadence('calories_logged', 'daily', 1)
+      await tempered.daily.setCadence('protein_target', 'daily', 1)
+      await tempered.daily.setCadence('nutrition_logged', 'daily', 1)
+      await tempered.daily.logAt(clock.today(), 'body_metrics', 200)
       await tempered.app.show('today')
       installCalorieAiRuntime()
 
-      const prompt = await waitFor('[data-calorie-ai="prompt"]')
-      check('Calories gets a row-level Copy AI Prompt button', Boolean(prompt), prompt?.textContent?.trim() ?? 'missing')
-      check('Calories quick preset is hidden in favor of the photo flow', q('[data-activity="calories_logged"] .today-item__quick')?.hidden === true)
+      const nutrition = await waitFor('[data-activity="nutrition_combined"]')
+      const snapshot = await waitFor('[data-lifestyle="snapshot"]')
+      check('Today Habits becomes Lifestyle', q('[data-section="daily"] .today-section__title')?.textContent === 'Lifestyle')
+      check('Lifestyle snapshot is visible directly on Today', Boolean(snapshot))
+      check('Lifestyle snapshot includes five useful status blocks', qa('[data-lifestyle="snapshot"] [data-metric]').length === 5, qa('[data-lifestyle="snapshot"] [data-metric]').length)
+      check('Calories and protein are represented by one Nutrition tracker', Boolean(nutrition))
 
+      const visibleLegacy = ['calories_logged', 'protein_target', 'nutrition_logged']
+        .flatMap((id) => qa(`[data-activity="${id}"]`))
+        .filter((node) => !node.hidden)
+      check('Separate Calories, Protein and Logged food rows are collapsed away', visibleLegacy.length === 0, visibleLegacy.length)
+
+      const before = nutrition?.querySelector('.today-item__meta')?.textContent ?? ''
+      check('Nutrition row shows both daily goals', /0\s*\/\s*2100\s*kcal/i.test(before) && /0\s*\/\s*160\s*g protein/i.test(before), before)
+
+      const prompt = nutrition?.querySelector('[data-calorie-ai="prompt"]')
+      check('Nutrition has one-tap AI Photo prompt copy', Boolean(prompt), prompt?.textContent?.trim() ?? 'missing')
       prompt?.click()
       await settle(30)
-      check('Copy button writes the stored prompt to the clipboard', clipboard.copied === CALORIE_PHOTO_PROMPT)
-      check('Stored prompt requests the machine-readable Tempered result', /TEMPERED_CALORIES=/.test(clipboard.copied))
+      check('AI Photo writes the stored prompt to the clipboard', clipboard.copied === NUTRITION_PHOTO_PROMPT)
+      check('Prompt asks for both machine-readable outputs', /TEMPERED_CALORIES=/.test(clipboard.copied) && /TEMPERED_PROTEIN=/.test(clipboard.copied))
+      check('Prompt explicitly requests a fenced copy-button block', /fenced code block/i.test(clipboard.copied))
 
-      q('[data-activity="calories_logged"] .today-item__body')?.click()
-      const paste = await waitFor('[data-calorie-ai="paste"]')
-      check('Expanded Calories editor offers Paste AI Result', Boolean(paste))
+      nutrition?.querySelector('.today-item__body')?.click()
+      const paste = await waitFor('[data-activity="nutrition_combined"] [data-calorie-ai="paste"]')
+      check('Expanded Nutrition editor offers Paste AI Result', Boolean(paste))
+      check('Manual Nutrition editor has exactly two nutrient inputs', qa('[data-activity="nutrition_combined"] .nutrition-editor__field input').length === 2)
       paste?.click()
-      await settle(140)
-      const meta = q('[data-activity="calories_logged"] .today-item__meta')?.textContent ?? ''
-      check('Pasted AI result logs through the normal Calories path', /642\s*kcal/i.test(meta), meta)
+      await settle(220)
+
+      const refreshed = await waitFor('[data-activity="nutrition_combined"]')
+      const after = refreshed?.querySelector('.today-item__meta')?.textContent ?? ''
+      check('Pasted AI result updates calories and protein together', /642\s*\/\s*2100\s*kcal/i.test(after) && /42\s*\/\s*160\s*g protein/i.test(after), after)
+      const day = await tempered.daily.dayLog(clock.today())
+      check('Combined logger stores canonical calories', day.calories === 642, day.calories)
+      check('Combined logger stores canonical protein', day.proteinGrams === 42, day.proteinGrams)
+      check('Logging Nutrition also satisfies Logged your food', day.nutritionLogged === true, day.nutritionLogged)
 
       const img = document.createElement('img')
       img.className = 'exercise__thumb'
@@ -73,12 +105,12 @@
       img.style.height = '72px'
       document.body.append(img)
       const position = getComputedStyle(img).objectPosition
-      check('Exercise thumbnail crop is anchored to the first frame', position !== '50% 50%', position)
+      check('Exercise thumbnail crop remains anchored to the first frame', position !== '50% 50%', position)
       img.remove()
 
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
-      check('calorie AI harness threw', false, String(error?.stack ?? error).slice(0, 900))
+      check('Nutrition AI harness threw', false, String(error?.stack ?? error).slice(0, 900))
     }
 
     await fetch('/__report', {

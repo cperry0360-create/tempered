@@ -1,0 +1,124 @@
+/* Today lifestyle dashboard + unified Nutrition tracker. */
+.today-lifestyle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.today-lifestyle__metric {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid var(--calm-line, rgba(255,255,255,.075));
+  border-radius: 15px;
+  background: rgba(13, 34, 51, 0.68);
+}
+
+.today-lifestyle__metric--wide { grid-column: 1 / -1; }
+
+.today-lifestyle__label {
+  color: var(--calm-text-3, rgba(255,255,255,.42));
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: .11em;
+}
+
+.today-lifestyle__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-lifestyle__metric--wide .today-lifestyle__value {
+  white-space: normal;
+}
+
+.today-lifestyle__detail {
+  color: var(--calm-text-3, rgba(255,255,255,.42));
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.today-item--nutrition .today-item__ai-prompt {
+  flex: none;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(203, 220, 117, .28);
+  border-radius: 11px;
+  background: rgba(203, 220, 117, .09);
+  color: var(--calm-accent, #cbdc75);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .025em;
+}
+
+.today-item--nutrition .today-item__expand {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--calm-text-2, rgba(255,255,255,.62));
+  font-size: 18px;
+}
+
+.nutrition-editor {
+  padding-top: 12px;
+}
+
+.nutrition-editor__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.nutrition-editor__field {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--calm-text-2, rgba(255,255,255,.62));
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.nutrition-editor__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.nutrition-editor__add,
+.today-editor__ai-paste {
+  appearance: none;
+  min-height: 42px;
+  border: 1px solid var(--calm-line, rgba(255,255,255,.075));
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  color: var(--calm-accent, #cbdc75);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.today-editor__ai-paste {
+  color: rgba(255,255,255,.78);
+}
+
+.calorie-ai__status[data-state='error'] { color: #f0a5a5; }
+.calorie-ai__status[data-state='ready'] { color: var(--calm-text-2, rgba(255,255,255,.62)); }
+
+@media (max-width: 390px) {
+  .today-lifestyle { gap: 7px; }
+  .today-lifestyle__metric { padding: 10px; }
+  .today-item--nutrition .today-item__ai-prompt { padding-inline: 8px; font-size: 9px; }
+  .nutrition-editor__actions { grid-template-columns: 1fr; }
+}

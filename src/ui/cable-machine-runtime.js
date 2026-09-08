@@ -310,6 +310,10 @@ export async function installCableMachineRuntime(context) {
       cableResistanceKind: 'nominal',
     }
     await storage.put('setLogs', enriched)
+    // The core workout service may have just promoted this set to a record
+    // before cable metadata was added. Rebuild immediately so the PR pill and
+    // Progress page both retain the physical peg as well as nominal pounds.
+    await rebuildCableRecord(set.exerciseId)
     return enriched
   }
 
@@ -365,6 +369,22 @@ export async function installCableMachineRuntime(context) {
       ? `Nominal ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb total · ${load.stacks} stack${load.stacks === 1 ? '' : 's'} @ ${fmt(load.ratio)}:1`
       : `Enter peg 1–${machine.selectorPositions}`
     if (readout.textContent !== next) readout.textContent = next
+  }
+
+  async function decorateRecord(card) {
+    const exerciseId = card.dataset.exercise
+    const record = await storage.get('records', exerciseId)
+    const best = record?.bestWeight
+    if (!Number.isInteger(best?.cablePeg) || !Number.isFinite(Number(best?.weight)) || !card.isConnected) return
+
+    const token = `${best.cablePeg}:${best.weight}:${best.reps ?? ''}`
+    if (card.dataset.cableRecord === token) return
+    const pill = card.querySelector('[data-kind="pr"]')
+    const value = pill?.querySelector('.pill__value')
+    const unit = pill?.querySelector('.pill__unit')
+    if (value) value.textContent = `P${best.cablePeg} · ${fmt(Number(best.weight))}`
+    if (unit) unit.textContent = 'lb nominal'
+    card.dataset.cableRecord = token
   }
 
   function initialisePegInputs(card) {
@@ -425,6 +445,7 @@ export async function installCableMachineRuntime(context) {
     }
 
     updateReadout(card)
+    void decorateRecord(card)
   }
 
   function numberSetting(label, key, value, inputMode = 'decimal') {

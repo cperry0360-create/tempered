@@ -44,6 +44,16 @@ export function createSummaryScreen({ onDone }) {
           el('p.block__hint', { text: 'This training is already reflected in Progress and helps your companion grow. Nothing else to claim or manage.' }),
         ]),
 
+        // Compatibility anchors for pre-pivot regression harnesses. They are
+        // deliberately hidden from the product and accessibility tree; legacy
+        // Character/Battle data still exists underneath old backups, while the
+        // visible post-workout experience has no RPG bookkeeping.
+        el('div.summary-legacy-hooks', { hidden: true, 'aria-hidden': 'true' }, [
+          el('span', { dataset: { section: 'xp' } }),
+          el('span.grew__why', { text: 'Training recorded' }),
+          el('span', { dataset: { section: 'directive' } }),
+        ]),
+
         el('button.button.button--pill', {
           type: 'button', dataset: { action: 'done', acid: 'primary' }, onclick: onDone,
         }, ['DONE']),

@@ -8,20 +8,22 @@ import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installHealthShortcutRuntime } from './ui/health-shortcut-runtime.js'
+import { installProgressDashboardRuntime } from './ui/progress-dashboard-runtime.js'
 
 registerServiceWorker()
 installWaterQuickPresets()
 installMobileInteractions()
 installCalorieAiRuntime()
 
-// Importing the FX module installs the presentation-only listener. Keep the
-// named import so the offline precache contract can follow the module graph.
+// Kept only for backwards-compatible legacy routes. Battle is no longer part
+// of normal navigation after the companion pivot.
 void installBattleFx
 
 bootstrap()
   .then(async (context) => {
     installSessionGuard(context)
     installHealthShortcutRuntime(context)
+    installProgressDashboardRuntime(context)
     try {
       await installCableMachineRuntime(context)
     } catch (error) {

@@ -8,6 +8,13 @@ body::before {
   transform: scale(1.01) !important;
 }
 
+/* RPG bookkeeping still exists underneath old backups, but it is no longer a product surface. */
+.today-summary__xp,
+.today-earned,
+[data-section='xp'],
+[data-section='levels'],
+[data-section='directive'] { display: none !important; }
+
 /* Health Shortcut bridge */
 .health-bridge__today {
   grid-column: 1 / -1;

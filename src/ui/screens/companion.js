@@ -10,6 +10,20 @@ import { el, replace } from '../dom.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 const FORGE_SPRITES = art('companion-forge-stages.png')
+const TURTLE_SPRITES = art('companion-turtle-stages.png')
+
+const TURTLE_UNLOCKS = [
+  { key: 'nest', min: 0, icon: '◌', name: 'Reed nest' },
+  { key: 'moss', min: 24, icon: '◆', name: 'Moss lining' },
+  { key: 'roots', min: 50, icon: '⌁', name: 'Root shelter' },
+  { key: 'pond', min: 85, icon: '◉', name: 'Turtle pond' },
+  { key: 'steps', min: 130, icon: '●', name: 'Stepping stones' },
+  { key: 'log', min: 185, icon: '━', name: 'Climbing log' },
+  { key: 'sunning', min: 250, icon: '◇', name: 'Sunning shelf' },
+  { key: 'boulders', min: 330, icon: '⬟', name: 'Training boulders' },
+  { key: 'stream', min: 430, icon: '≈', name: 'Terraced stream' },
+  { key: 'crest', min: 550, icon: '⬡', name: 'Trailback crest' },
+]
 
 const SPROUT_UNLOCKS = [
   { key: 'nest', min: 0, icon: '◌', scene: '◜', name: 'Starter nest' },
@@ -65,6 +79,14 @@ function lifestyleSignals(day) {
 }
 
 function todayMoment({ trained, day, name, style }) {
+  if (style === 'turtle') {
+    if (trained) return { type: 'trained', icon: '⬡', title: 'Training registered', copy: 'Today’s work made the shell a little stronger.' }
+    if ((day?.waterOz ?? 0) >= 80) return { type: 'water', icon: '≈', title: 'Pond replenished', copy: 'Hydration keeps the habitat moving.' }
+    if ((day?.readingMinutes ?? 0) > 0) return { type: 'reading', icon: '▤', title: 'Quiet focus', copy: 'Time spent reading reinforced the day.' }
+    if ((day?.proteinGrams ?? 0) > 0 || (day?.calories ?? 0) > 0) return { type: 'nutrition', icon: '◇', title: 'Fuel logged', copy: 'Nutrition supports the next stage of growth.' }
+    if ((day?.sleepHours ?? 0) > 0) return { type: 'sleep', icon: '◒', title: 'Recovery logged', copy: 'Rest is part of getting stronger.' }
+    return { type: 'idle', icon: '☀', title: 'Basking', copy: `Nothing is due. ${name} keeps everything you have earned.` }
+  }
   if (style === 'forge') {
     if (trained) return { type: 'trained', icon: '◆', title: 'Training registered', copy: 'Today’s work added heat to the forge.' }
     if ((day?.waterOz ?? 0) >= 80) return { type: 'water', icon: '◉', title: 'Recovery supplied', copy: 'Hydration keeps the system ready.' }
@@ -105,10 +127,10 @@ export function createCompanionScreen({ storage, clock }) {
     const points = finished.length * 8 + workingSets.length * 2 + lifestyle * 2
     const style = companionStyle(profile.companionStyle)
     const { stage, next, percent: growth } = companionGrowth(points, style)
-    const unlocks = style === 'forge' ? FORGE_UNLOCKS : SPROUT_UNLOCKS
+    const unlocks = style === 'turtle' ? TURTLE_UNLOCKS : style === 'forge' ? FORGE_UNLOCKS : SPROUT_UNLOCKS
     const today = days.find((day) => day.date === clock.today()) ?? { date: clock.today() }
     const trained = finished.some((session) => session.date === clock.today())
-    const name = profile.companionName || (style === 'forge' ? 'Atlas' : 'Pip')
+    const name = profile.companionName || (style === 'turtle' ? 'Tank' : style === 'forge' ? 'Atlas' : 'Pip')
 
     // This checkpoint only controls the one-time celebration. The canonical
     // workout and lifestyle logs above remain the sole source of progression.
@@ -165,7 +187,7 @@ export function createCompanionScreen({ storage, clock }) {
   }
 
   function habitatProps(m) {
-    if (m.style === 'forge') return null
+    if (m.style !== 'sprout') return null
     return el('div.companion-habitat__props', { 'aria-hidden': 'true' }, m.unlocked.map((item) =>
       el('span.companion-habitat__prop', {
         dataset: { prop: item.key }, text: item.scene,
@@ -173,12 +195,13 @@ export function createCompanionScreen({ storage, clock }) {
   }
 
   function companionArt(m, className = 'companion-habitat__pet') {
-    if (m.style === 'forge') {
-      return el(`div.${className}.${className}--forge`, {
+    if (m.style !== 'sprout') {
+      const sprites = m.style === 'turtle' ? TURTLE_SPRITES : FORGE_SPRITES
+      return el(`div.${className}.${className}--sheet.${className}--${m.style}`, {
         role: 'img',
         'aria-label': `${m.name}, level ${m.stage.level} ${m.stage.name}`,
         dataset: { visual: String(m.stage.visual) },
-        style: `--forge-sprites:url("${FORGE_SPRITES}")`,
+        style: `--companion-sprites:url("${sprites}")`,
       })
     }
     return el(`img.${className}`, {
@@ -207,7 +230,9 @@ export function createCompanionScreen({ storage, clock }) {
       el('span.companion-style__preview', { 'aria-hidden': 'true' }),
       el('span', {}, [
         el('strong', { text: meta.label }),
-        el('small', { text: id === 'forge' ? 'Steel · bronze · teal' : 'Warm · playful · leafy' }),
+        el('small', { text: id === 'turtle'
+          ? 'Egg · hatchling · strong · shredded'
+          : id === 'forge' ? 'Steel · bronze · teal' : 'Warm · playful · leafy' }),
       ]),
       el('i', { text: selected ? '✓' : '' }),
     ])
@@ -219,7 +244,7 @@ export function createCompanionScreen({ storage, clock }) {
     replace(root, [
       el('header.companion-header', {}, [
         el('div', {}, [
-          el('span.companion-header__eyebrow', { text: m.style === 'forge' ? 'YOUR GUARDIAN' : 'YOUR COMPANION' }),
+          el('span.companion-header__eyebrow', { text: m.style === 'turtle' ? 'YOUR TRAILBACK' : m.style === 'forge' ? 'YOUR GUARDIAN' : 'YOUR COMPANION' }),
           el('h1.screen__title', { text: m.name }),
           el('p.companion-header__copy', { text: 'Real-life progress shapes this space. Nothing ever decays.' }),
         ]),
@@ -271,7 +296,7 @@ export function createCompanionScreen({ storage, clock }) {
       el('section.companion-room', {}, [
         el('div.companion-room__head', {}, [
           el('div', {}, [
-            el('h2', { text: m.style === 'forge' ? 'Training den' : 'Little room' }),
+            el('h2', { text: m.style === 'turtle' ? 'Lakeside habitat' : m.style === 'forge' ? 'Training den' : 'Little room' }),
             el('p', { text: 'The space upgrades from accumulated care, never streaks.' }),
           ]),
           el('span.companion-room__count', { text: `${m.unlocked.length}/${m.unlocks.length}` }),
@@ -288,10 +313,10 @@ export function createCompanionScreen({ storage, clock }) {
 
       el('section.companion-style', {}, [
         el('div.companion-style__head', {}, [
-          el('h2', { text: 'Visual style' }),
-          el('p', { text: 'Change the art anytime. Your name and progress stay put.' }),
+          el('h2', { text: 'Companion type' }),
+          el('p', { text: 'Choose anytime. Your name, care, and level stay put.' }),
         ]),
-        el('div.companion-style__options', {}, [styleOption('forge'), styleOption('sprout')]),
+        el('div.companion-style__options', {}, [styleOption('turtle'), styleOption('sprout'), styleOption('forge')]),
       ]),
 
       el('section.companion-foot', {}, [

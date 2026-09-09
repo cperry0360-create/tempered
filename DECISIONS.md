@@ -1915,3 +1915,29 @@ version 0.18.0 with build 14.
 caches and the native field build must advance together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-09 — Trailback Turtle restores the nature-forward default
+**Phase:** 0.18.1 companion correction
+**Decision:** Trailback Turtle replaces Forge Guardian as the default companion while
+Forge and Ember Sprout remain available options. The turtle has ten distinct forms from
+Egg and Breaking Through through Hatchling, Strong, Muscular, Cut, and Shredded. Its three
+habitat states evolve from a rugged lakeside nest into an established pond-side home and
+a broad natural training territory. The selector remains data-driven so additional animal
+species can be added without creating another progression system.
+**Reasoning:** Forge overcorrected the request for a more masculine workout companion and
+abandoned the nature theme and Cory's established visual language. The corrected art uses
+the Courjahan Defense rules: bold dark outlines, saturated cel shading, chunky readable
+forms, one hard shadow, blue and green emphasis, and "serious game, silly world." The
+animal growth itself now carries the strength-training reward without armor or an indoor
+gym.
+**Confidence:** specified by Cory; visual rules recovered from his prior project chats.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.18.1 (15)
+**Phase:** 0.18.1 companion correction
+**Decision:** `src/version.js` carries `0.18.1 (15)` and the native wrapper uses marketing
+version 0.18.1 with build 15.
+**Reasoning:** The default companion, runtime art, setup choices, and offline asset set
+changed after the 0.18.0 Forge release candidate.
+**Confidence:** implementation.
+**Needs Cory:** no

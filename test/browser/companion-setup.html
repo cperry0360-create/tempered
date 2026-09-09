@@ -36,10 +36,11 @@
       })
       await setup.start()
 
-      check('Setup offers both visual styles', Boolean(q('[data-style="forge"]') && q('[data-style="sprout"]')))
-      check('Forge Guardian is selected by default', q('[data-style="forge"]')?.dataset.selected === 'true')
-      check('Both setup options show first-party art previews',
-        getComputedStyle(q('[data-style="forge"] .setup__companionpreview')).backgroundImage !== 'none'
+      check('Setup offers all three companion styles', Boolean(q('[data-style="turtle"]') && q('[data-style="forge"]') && q('[data-style="sprout"]')))
+      check('Trailback Turtle is selected by default', q('[data-style="turtle"]')?.dataset.selected === 'true')
+      check('All setup options show first-party art previews',
+        getComputedStyle(q('[data-style="turtle"] .setup__companionpreview')).backgroundImage !== 'none'
+          && getComputedStyle(q('[data-style="forge"] .setup__companionpreview')).backgroundImage !== 'none'
           && getComputedStyle(q('[data-style="sprout"] .setup__companionpreview')).backgroundImage !== 'none')
 
       q('[data-style="sprout"]')?.click()

@@ -16,14 +16,17 @@
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.25));
 }
-.companion-header__mark--forge {
-  width: 42px;
+.companion-header__mark--sheet {
   height: auto;
-  aspect-ratio: 3 / 5;
-  background-image: var(--forge-sprites);
+  background-image: var(--companion-sprites);
   background-repeat: no-repeat;
   background-size: 500% 200%;
 }
+.companion-header__mark--forge {
+  width: 42px;
+  aspect-ratio: 3 / 5;
+}
+.companion-header__mark--turtle { width: 54px; aspect-ratio: 1; }
 .companion-header__eyebrow,
 .companion-growth__label {
   color: rgba(255,255,255,.52);
@@ -66,6 +69,16 @@
     linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
     url('../art/tempered/habitat-full.webp');
 }
+.companion-habitat[data-style='sprout'][data-room-state='mid'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
+    url('../art/tempered/habitat-mid.webp');
+}
+.companion-habitat[data-style='sprout'][data-room-state='full'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
+    url('../art/tempered/habitat-full.webp');
+}
 .companion-habitat[data-style='forge'] {
   min-height: 470px;
   background-image:
@@ -82,6 +95,23 @@
   background-image:
     linear-gradient(180deg, rgba(5,16,24,.02), rgba(4,15,22,.34)),
     url('../art/tempered/habitat-forge-full.webp');
+}
+.companion-habitat[data-style='turtle'] {
+  min-height: 470px;
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.02), rgba(6,28,30,.30)),
+    url('../art/tempered/habitat-turtle-starter.webp');
+  background-position: center, center 57%;
+}
+.companion-habitat[data-style='turtle'][data-room-state='mid'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.02), rgba(6,28,30,.30)),
+    url('../art/tempered/habitat-turtle-mid.webp');
+}
+.companion-habitat[data-style='turtle'][data-room-state='full'] {
+  background-image:
+    linear-gradient(180deg, rgba(7,31,43,.02), rgba(6,28,30,.30)),
+    url('../art/tempered/habitat-turtle-full.webp');
 }
 .companion-habitat::after {
   content: '';
@@ -153,35 +183,42 @@
   filter: drop-shadow(0 12px 18px rgba(0,0,0,.28));
   animation: companion-breathe 3.4s ease-in-out infinite;
 }
-.companion-habitat__pet--forge {
-  bottom: 68px;
-  width: min(58%, 220px);
+.companion-habitat__pet--sheet {
   height: auto;
-  aspect-ratio: 3 / 5;
-  background-image: var(--forge-sprites);
+  background-image: var(--companion-sprites);
   background-repeat: no-repeat;
   background-size: 500% 200%;
 }
-.companion-habitat__pet--forge[data-visual='1'],
-.companion-header__mark--forge[data-visual='1'] { background-position: 0% 0%; }
-.companion-habitat__pet--forge[data-visual='2'],
-.companion-header__mark--forge[data-visual='2'] { background-position: 25% 0%; }
-.companion-habitat__pet--forge[data-visual='3'],
-.companion-header__mark--forge[data-visual='3'] { background-position: 50% 0%; }
-.companion-habitat__pet--forge[data-visual='4'],
-.companion-header__mark--forge[data-visual='4'] { background-position: 75% 0%; }
-.companion-habitat__pet--forge[data-visual='5'],
-.companion-header__mark--forge[data-visual='5'] { background-position: 100% 0%; }
-.companion-habitat__pet--forge[data-visual='6'],
-.companion-header__mark--forge[data-visual='6'] { background-position: 0% 100%; }
-.companion-habitat__pet--forge[data-visual='7'],
-.companion-header__mark--forge[data-visual='7'] { background-position: 25% 100%; }
-.companion-habitat__pet--forge[data-visual='8'],
-.companion-header__mark--forge[data-visual='8'] { background-position: 50% 100%; }
-.companion-habitat__pet--forge[data-visual='9'],
-.companion-header__mark--forge[data-visual='9'] { background-position: 75% 100%; }
-.companion-habitat__pet--forge[data-visual='10'],
-.companion-header__mark--forge[data-visual='10'] { background-position: 100% 100%; }
+.companion-habitat__pet--forge {
+  bottom: 68px;
+  width: min(58%, 220px);
+  aspect-ratio: 3 / 5;
+}
+.companion-habitat__pet--turtle {
+  bottom: 64px;
+  width: min(76%, 300px);
+  aspect-ratio: 1;
+}
+.companion-habitat__pet--sheet[data-visual='1'],
+.companion-header__mark--sheet[data-visual='1'] { background-position: 0% 0%; }
+.companion-habitat__pet--sheet[data-visual='2'],
+.companion-header__mark--sheet[data-visual='2'] { background-position: 25% 0%; }
+.companion-habitat__pet--sheet[data-visual='3'],
+.companion-header__mark--sheet[data-visual='3'] { background-position: 50% 0%; }
+.companion-habitat__pet--sheet[data-visual='4'],
+.companion-header__mark--sheet[data-visual='4'] { background-position: 75% 0%; }
+.companion-habitat__pet--sheet[data-visual='5'],
+.companion-header__mark--sheet[data-visual='5'] { background-position: 100% 0%; }
+.companion-habitat__pet--sheet[data-visual='6'],
+.companion-header__mark--sheet[data-visual='6'] { background-position: 0% 100%; }
+.companion-habitat__pet--sheet[data-visual='7'],
+.companion-header__mark--sheet[data-visual='7'] { background-position: 25% 100%; }
+.companion-habitat__pet--sheet[data-visual='8'],
+.companion-header__mark--sheet[data-visual='8'] { background-position: 50% 100%; }
+.companion-habitat__pet--sheet[data-visual='9'],
+.companion-header__mark--sheet[data-visual='9'] { background-position: 75% 100%; }
+.companion-habitat__pet--sheet[data-visual='10'],
+.companion-header__mark--sheet[data-visual='10'] { background-position: 100% 100%; }
 @keyframes companion-breathe {
   0%,100% { transform: translateX(-50%) translateY(0) scale(1); }
   50% { transform: translateX(-50%) translateY(-4px) scale(1.012); }
@@ -322,8 +359,9 @@
 .companion-room__item[data-unlocked='false'] { opacity: .42; }
 .companion-style__head h2 { margin: 0 0 3px; font-size: 18px; }
 .companion-style__head p { margin: 0; color: rgba(255,255,255,.60); font-size: 11px; line-height: 1.4; }
-.companion-style__options { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.companion-style__options { display: grid; grid-template-columns: 1fr; gap: 9px; }
 .companion-style__option {
+  appearance: none;
   min-width: 0;
   min-height: 88px;
   display: grid;
@@ -335,6 +373,8 @@
   border-radius: 17px;
   background: rgba(255,255,255,.045);
   color: white;
+  cursor: pointer;
+  font: inherit;
   text-align: left;
 }
 .companion-style__option[data-selected='true'] {
@@ -360,6 +400,13 @@
   background-position: 100% 100%;
   background-size: 500% 200%;
 }
+.companion-style__option[data-style='turtle'] .companion-style__preview {
+  height: 42px;
+  aspect-ratio: 1;
+  background-image: url('../art/tempered/companion-turtle-stages.png');
+  background-position: 100% 100%;
+  background-size: 500% 200%;
+}
 .companion-style__option[data-style='sprout'] .companion-style__preview {
   background-image: url('../art/tempered/companion-stage-5.png');
   background-size: contain;
@@ -374,9 +421,9 @@
 
 @media (max-width: 390px) {
   .companion-habitat { min-height: 390px; }
-  .companion-habitat[data-style='forge'] { min-height: 440px; }
+  .companion-habitat[data-style='forge'],
+  .companion-habitat[data-style='turtle'] { min-height: 440px; }
   .companion-room__items { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .companion-style__options { grid-template-columns: 1fr; }
   .companion-habitat__prop[data-prop='books'],
   .companion-habitat__prop[data-prop='dumbbell'] { bottom: 166px; }
 }

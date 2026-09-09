@@ -38,16 +38,16 @@
 
       await context.app.show('companion')
       check('Companion screen renders', Boolean(q('.screen--companion')))
-      check('Fresh companion starts at Level 1 Core', q('.companion-growth__stage')?.textContent === 'Level 1 · Core', q('.companion-growth__stage')?.textContent)
-      check('Forge Guardian is the default visual style', q('.companion-habitat')?.dataset.style === 'forge', q('.companion-habitat')?.dataset.style)
+      check('Fresh companion starts as a Level 1 Egg', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg', q('.companion-growth__stage')?.textContent)
+      check('Trailback Turtle is the default visual style', q('.companion-habitat')?.dataset.style === 'turtle', q('.companion-habitat')?.dataset.style)
       check('Companion explicitly never decays', /nothing ever decays/i.test(q('.companion-header__copy')?.textContent ?? ''))
       check('Starter room has at least one unlocked object', qa('.companion-room__item[data-unlocked="true"]').length >= 1)
-      check('Forge habitat begins in its starter state', q('.companion-habitat')?.dataset.roomState === 'starter', q('.companion-habitat')?.dataset.roomState)
-      check('Current growth stage is checkpointed only for celebrations', (await storage.get('profile', 'profile'))?.companionStageSeen === 'Core')
-      check('Current art style is checkpointed with the growth stage', (await storage.get('profile', 'profile'))?.companionStageSeenStyle === 'forge')
-      check('Default visual style is saved for existing profiles', (await storage.get('profile', 'profile'))?.companionStyle === 'forge')
+      check('Turtle habitat begins in its starter state', q('.companion-habitat')?.dataset.roomState === 'starter', q('.companion-habitat')?.dataset.roomState)
+      check('Current growth stage is checkpointed only for celebrations', (await storage.get('profile', 'profile'))?.companionStageSeen === 'Egg')
+      check('Current art style is checkpointed with the growth stage', (await storage.get('profile', 'profile'))?.companionStageSeenStyle === 'turtle')
+      check('Default visual style is saved for existing profiles', (await storage.get('profile', 'profile'))?.companionStyle === 'turtle')
 
-      const pet = q('.companion-habitat__pet--forge')
+      const pet = q('.companion-habitat__pet--turtle')
       const spriteStyle = pet ? getComputedStyle(pet).backgroundImage : 'none'
       const spriteUrl = spriteStyle.match(/url\(["']?(.*?)["']?\)/)?.[1]
       const sprite = new Image()
@@ -55,7 +55,7 @@
         sprite.src = spriteUrl
         if (!sprite.complete) await new Promise((resolve) => { sprite.onload = resolve; sprite.onerror = resolve })
       }
-      check('Forge art resolves to a real first-party sprite sheet', Boolean(spriteUrl && sprite.complete && sprite.naturalWidth > 0), `${sprite.naturalWidth}px`)
+      check('Turtle art resolves to a real first-party sprite sheet', Boolean(spriteUrl && sprite.complete && sprite.naturalWidth > 0), `${sprite.naturalWidth}px`)
 
       // Add enough real-world evidence to cross the first growth threshold.
       for (let i = 0; i < 3; i += 1) {
@@ -74,9 +74,9 @@
       await context.app.show('companion')
       const stage = q('.companion-growth__stage')?.textContent ?? ''
       const stageName = stage.split('·').at(-1)?.trim()
-      check('Accumulated real activity grows the companion forward', stage === 'Level 3 · Formed', stage)
+      check('Accumulated real activity grows the companion forward', stage === 'Level 3 · Hatchling', stage)
       check('Growth unlocks more room objects', qa('.companion-room__item[data-unlocked="true"]').length > 1, qa('.companion-room__item[data-unlocked="true"]').length)
-      check('Growth selects the matching Forge sprite cell', q('.companion-habitat__pet--forge')?.dataset.visual === '3', q('.companion-habitat__pet--forge')?.dataset.visual)
+      check('Growth selects the matching turtle sprite cell', q('.companion-habitat__pet--turtle')?.dataset.visual === '3', q('.companion-habitat__pet--turtle')?.dataset.visual)
       check('A newly reached form gets a one-time evolution celebration', q('.companion-habitat')?.dataset.evolved === 'true' && Boolean(q('.companion-evolve')), q('.companion-habitat')?.dataset.evolved)
       check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
       check('Growth-stage checkpoint advances after celebration', (await storage.get('profile', 'profile'))?.companionStageSeen === stageName, (await storage.get('profile', 'profile'))?.companionStageSeen)
@@ -99,6 +99,7 @@
       check('Existing Ember Sprout art remains selectable', q('.companion-habitat')?.dataset.style === 'sprout' && Boolean(q('img.companion-habitat__pet')), q('.companion-habitat')?.dataset.style)
       check('Style preference persists without resetting care', (await storage.get('profile', 'profile'))?.companionStyle === 'sprout' && /Level 3/.test(q('.companion-growth__stage')?.textContent ?? ''), q('.companion-growth__stage')?.textContent)
       check('Renamed companion survives a visual-style change', q('.screen--companion .screen__title')?.textContent === 'Moss')
+      check('Forge Guardian remains available as an optional style', Boolean(q('.companion-style__option[data-style="forge"]')))
 
       const normalText = q('.screen--companion')?.textContent ?? ''
       check('Companion surface contains no combat or RPG management language', !/attack|battle|rank|skill point|xp|level up/i.test(normalText), normalText.slice(0, 220))

@@ -115,10 +115,11 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
         el('label.setup__label', { text: 'Name' }), name,
         el('span.setup__label', { text: 'Units' }),
         el('div.setup__choices', {}, [unitButton('imperial', 'LB / MI'), unitButton('metric', 'KG / KM')]),
-        el('span.setup__label', { text: 'Companion style' }),
+        el('span.setup__label', { text: 'Companion type' }),
         el('div.setup__companionchoices', {}, [
-          styleButton('forge', 'Forge Guardian', 'Mature steel, bronze, and teal'),
+          styleButton('turtle', 'Trailback Turtle', 'Egg to hatchling to shredded'),
           styleButton('sprout', 'Ember Sprout', 'Warm, playful, and leafy'),
+          styleButton('forge', 'Forge Guardian', 'Mature steel, bronze, and teal'),
         ]),
       ]),
     ]

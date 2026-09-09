@@ -8,12 +8,21 @@ test('companion growth has ten visible levels with frequent early changes', () =
   assert.equal(COMPANION_LEVELS.at(-1).min, 550)
 })
 
-test('Forge Guardian is the default while Ember Sprout remains selectable', () => {
-  assert.equal(companionStyle(undefined), 'forge')
-  assert.equal(companionStage(0).name, 'Core')
+test('Trailback Turtle is the default while both prior styles remain selectable', () => {
+  assert.equal(companionStyle(undefined), 'turtle')
+  assert.equal(companionStage(0).name, 'Egg')
+  assert.equal(companionStage(24).name, 'Breaking Through')
+  assert.equal(companionStage(550).name, 'Shredded')
+  assert.equal(companionStage(0, 'forge').name, 'Core')
   assert.equal(companionStage(0, 'sprout').name, 'Seed')
-  assert.equal(companionStage(550).name, 'Sentinel')
+  assert.equal(companionStage(550, 'forge').name, 'Sentinel')
   assert.equal(companionStage(550, 'sprout').name, 'Luminous')
+})
+
+test('Trailback Turtle and Forge use a different visual at every level', () => {
+  const thresholds = COMPANION_LEVELS.map((level) => level.min)
+  assert.deepEqual(thresholds.map((points) => companionStage(points, 'turtle').visual), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  assert.deepEqual(thresholds.map((points) => companionStage(points, 'forge').visual), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 })
 
 test('growth advances only from accumulated care and never runs backward inside a level', () => {

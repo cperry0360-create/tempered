@@ -34,7 +34,7 @@
 .setup__companionchoice { appearance: none; font-family: var(--font-display); cursor: pointer; }
 .setup__choice { min-height: 52px; border: 1px solid var(--edge); border-radius: var(--r-lg); background: var(--raised); color: var(--text-2); font-weight: 800; }
 .setup__choice[data-selected='true'] { border-color: var(--acid); color: var(--acid); background: color-mix(in srgb, var(--acid) 10%, var(--surface)); }
-.setup__companionchoices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.setup__companionchoices { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .setup__companionchoice {
   min-width: 0;
   min-height: 104px;
@@ -68,6 +68,13 @@
 .setup__companionchoice[data-style='forge'] .setup__companionpreview {
   aspect-ratio: 3 / 5;
   background-image: url('../art/tempered/companion-forge-stages.png');
+  background-position: 100% 100%;
+  background-size: 500% 200%;
+}
+.setup__companionchoice[data-style='turtle'] .setup__companionpreview {
+  height: 44px;
+  aspect-ratio: 1;
+  background-image: url('../art/tempered/companion-turtle-stages.png');
   background-position: 100% 100%;
   background-size: 500% 200%;
 }

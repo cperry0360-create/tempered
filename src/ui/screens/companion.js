@@ -5,7 +5,12 @@
  * progression, so changing the art never changes or resets earned progress.
  */
 
-import { companionGrowth, companionStyle, COMPANION_STYLES } from '../../domain/companion-growth.js'
+import {
+  companionGrowth,
+  companionRevealState,
+  companionStyle,
+  COMPANION_STYLES,
+} from '../../domain/companion-growth.js'
 import { el, replace } from '../dom.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
@@ -112,6 +117,8 @@ function roomState(level) {
 export function createCompanionScreen({ storage, clock }) {
   const root = el('div.screen.screen--companion')
   let model = null
+  let revealPhase = null
+  let revealTimer = null
 
   async function load() {
     const [storedProfile, sessions, setLogs, days] = await Promise.all([
@@ -126,25 +133,32 @@ export function createCompanionScreen({ storage, clock }) {
     const lifestyle = days.reduce((sum, day) => sum + lifestyleSignals(day), 0)
     const points = finished.length * 8 + workingSets.length * 2 + lifestyle * 2
     const style = companionStyle(profile.companionStyle)
-    const { stage, next, percent: growth } = companionGrowth(points, style)
+    const earnedGrowth = companionGrowth(points, style)
+    const reveal = companionRevealState(points, profile.companionRevealedLevel, style)
+    const stage = reveal.visible
+    const next = reveal.pending ? reveal.earned : earnedGrowth.next
+    const growth = reveal.pending ? 100 : earnedGrowth.percent
     const unlocks = style === 'turtle' ? TURTLE_UNLOCKS : style === 'forge' ? FORGE_UNLOCKS : SPROUT_UNLOCKS
     const today = days.find((day) => day.date === clock.today()) ?? { date: clock.today() }
     const trained = finished.some((session) => session.date === clock.today())
     const name = profile.companionName || (style === 'turtle' ? 'Tank' : style === 'forge' ? 'Atlas' : 'Pip')
 
-    // This checkpoint only controls the one-time celebration. The canonical
-    // workout and lifestyle logs above remain the sole source of progression.
-    const seenStage = profile.companionStageSeen ?? null
-    const seenStyle = profile.companionStageSeenStyle ?? null
-    const evolved = Boolean(seenStage && seenStyle === style && seenStage !== stage.name)
-    if (profile.companionStyle !== style || seenStage !== stage.name || seenStyle !== style) {
+    // Earned care and the visible form are deliberately separate. Activity can
+    // unlock a form anywhere in the app, but only Companion may reveal it.
+    // The numeric field is new: old silent name checkpoints are not trusted.
+    if (reveal.pending && revealPhase !== 'complete') revealPhase = 'ready'
+    else if (!reveal.pending && revealPhase !== 'complete') revealPhase = null
+    if (profile.companionStyle !== style || profile.companionRevealedLevel !== reveal.revealedLevel) {
       await storage.put('profile', {
         ...profile,
         companionStyle: style,
+        companionRevealedLevel: reveal.revealedLevel,
         companionStageSeen: stage.name,
         companionStageSeenStyle: style,
       })
     }
+
+    const visualPoints = reveal.pending ? stage.min : points
 
     model = {
       name,
@@ -152,11 +166,13 @@ export function createCompanionScreen({ storage, clock }) {
       style,
       styleMeta: COMPANION_STYLES[style],
       stage,
+      earnedStage: reveal.earned,
       next,
       growth,
-      evolved,
-      unlocked: unlocks.filter((item) => points >= item.min),
-      locked: unlocks.filter((item) => points < item.min),
+      pendingEvolution: reveal.pending,
+      evolved: revealPhase === 'complete',
+      unlocked: unlocks.filter((item) => visualPoints >= item.min),
+      locked: unlocks.filter((item) => visualPoints < item.min),
       unlocks,
       roomState: roomState(stage.level),
       moment: todayMoment({ trained, day: today, name, style }),
@@ -175,15 +191,45 @@ export function createCompanionScreen({ storage, clock }) {
   async function selectStyle(style) {
     const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
     const selected = companionStyle(style)
-    const { stage } = companionGrowth(model?.points ?? 0, selected)
+    const reveal = companionRevealState(model?.points ?? 0, profile.companionRevealedLevel, selected)
+    revealPhase = null
     await storage.put('profile', {
       ...profile,
       companionStyle: selected,
       companionName: profile.companionName ?? model?.name,
-      companionStageSeen: stage.name,
+      companionRevealedLevel: reveal.revealedLevel,
+      companionStageSeen: reveal.visible.name,
       companionStageSeenStyle: selected,
     })
     await refresh()
+  }
+
+  async function revealEvolution() {
+    if (!model?.pendingEvolution || revealPhase !== 'ready') return
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = null
+    revealPhase = 'revealing'
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const target = model.earnedStage
+    await storage.put('profile', {
+      ...profile,
+      companionStyle: model.style,
+      companionRevealedLevel: target.level,
+      companionStageSeen: target.name,
+      companionStageSeenStyle: model.style,
+    })
+    revealPhase = 'complete'
+    await load()
+    model.evolved = true
+    render()
+  }
+
+  function dismissEvolution() {
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = null
+    revealPhase = null
+    if (model) model.evolved = false
+    render()
   }
 
   function habitatProps(m) {
@@ -215,6 +261,45 @@ export function createCompanionScreen({ storage, clock }) {
     return el('div.companion-evolve', { role: 'status', 'aria-label': `${m.name} reached level ${m.stage.level}, ${m.stage.name}` }, [
       ...Array.from({ length: 8 }, (_, index) => el('i', { dataset: { sparkle: String(index + 1) }, 'aria-hidden': 'true' })),
       el('strong', { text: `Level ${m.stage.level} · ${m.stage.name}` }),
+    ])
+  }
+
+  function evolutionOverlay(m) {
+    if (!revealPhase) return null
+    const complete = revealPhase === 'complete'
+    const target = m.earnedStage
+    return el('div.companion-reveal', {
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-labelledby': 'companion-reveal-title',
+      dataset: { phase: revealPhase, style: m.style },
+    }, [
+      el('div.companion-reveal__wash', { 'aria-hidden': 'true' }),
+      el('section.companion-reveal__card', {}, [
+        el('span.companion-reveal__eyebrow', { text: complete ? 'EVOLUTION COMPLETE' : 'EVOLUTION READY' }),
+        complete
+          ? companionArt(m, 'companion-reveal__pet')
+          : el('div.companion-reveal__signal', { 'aria-hidden': 'true' }, [
+              companionArt(m, 'companion-reveal__current'),
+              el('span', { text: '✦' }),
+            ]),
+        el('h2', { id: 'companion-reveal-title', text: complete ? `${m.name} evolved!` : 'Something changed.' }),
+        el('strong.companion-reveal__stage', {
+          text: complete
+            ? `Level ${m.stage.level} · ${m.stage.name}`
+            : `Level ${target.level} · ${target.name} is ready`,
+        }),
+        el('p', {
+          text: complete
+            ? target.copy
+            : `Your real-world work carried ${m.name} beyond ${m.stage.name}. The new form waits for you here.`,
+        }),
+        el('button.companion-reveal__action', {
+          type: 'button',
+          onclick: complete ? dismissEvolution : revealEvolution,
+          text: complete ? 'KEEP GOING' : 'REVEAL NEW FORM',
+        }),
+      ]),
     ])
   }
 
@@ -282,14 +367,18 @@ export function createCompanionScreen({ storage, clock }) {
             el('strong.companion-growth__stage', { text: `Level ${m.stage.level} · ${m.stage.name}` }),
           ]),
           el('span.companion-growth__next', {
-            text: m.next ? `${m.points} / ${m.next.min} care` : `${m.points} care · fully grown`,
+            text: m.pendingEvolution
+              ? `${m.points} care · evolution ready`
+              : m.next ? `${m.points} / ${m.next.min} care` : `${m.points} care · fully grown`,
           }),
         ]),
         el('div.companion-growth__bar', {
           role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(m.growth),
         }, [el('span', { style: `width:${m.growth}%` })]),
         el('p.companion-growth__copy', {
-          text: m.next ? `${m.stage.copy} Next: Level ${m.next.level} · ${m.next.name}.` : m.stage.copy,
+          text: m.pendingEvolution
+            ? `${m.stage.copy} Reveal Level ${m.earnedStage.level} on this screen to transform.`
+            : m.next ? `${m.stage.copy} Next: Level ${m.next.level} · ${m.next.name}.` : m.stage.copy,
         }),
       ]),
 
@@ -335,7 +424,15 @@ export function createCompanionScreen({ storage, clock }) {
           ])
         })(),
       ]),
+      evolutionOverlay(m),
     ])
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = revealPhase === 'ready'
+      ? setTimeout(() => {
+          revealTimer = null
+          if (root.isConnected && revealPhase === 'ready') void revealEvolution()
+        }, 1100)
+      : null
   }
 
   async function refresh() {

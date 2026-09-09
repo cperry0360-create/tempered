@@ -1,6 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { COMPANION_LEVELS, companionGrowth, companionStage, companionStyle } from './companion-growth.js'
+import {
+  COMPANION_LEVELS,
+  companionGrowth,
+  companionRevealState,
+  companionStage,
+  companionStyle,
+} from './companion-growth.js'
 
 test('companion growth has ten visible levels with frequent early changes', () => {
   assert.equal(COMPANION_LEVELS.length, 10)
@@ -33,4 +39,26 @@ test('growth advances only from accumulated care and never runs backward inside 
   })
   assert.equal(companionGrowth(-100).stage.level, 1)
   assert.equal(companionGrowth(100000).percent, 100)
+})
+
+test('earned growth waits at the last revealed form until Companion presents it', () => {
+  const firstVisit = companionRevealState(340, undefined)
+  assert.equal(firstVisit.earned.level, 8)
+  assert.equal(firstVisit.visible.level, 1)
+  assert.equal(firstVisit.pending, true)
+
+  const returning = companionRevealState(340, 3)
+  assert.equal(returning.earned.level, 8)
+  assert.equal(returning.visible.level, 3)
+  assert.equal(returning.pending, true)
+})
+
+test('acknowledged forms stay visible and reveal state never exceeds earned care', () => {
+  const acknowledged = companionRevealState(340, 8)
+  assert.equal(acknowledged.visible.level, 8)
+  assert.equal(acknowledged.pending, false)
+
+  const resetData = companionRevealState(20, 8)
+  assert.equal(resetData.visible.level, 1)
+  assert.equal(resetData.pending, false)
 })

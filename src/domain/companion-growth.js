@@ -60,3 +60,24 @@ export function companionGrowth(points, styleValue = 'turtle') {
     : 100
   return { stage, next, percent }
 }
+
+/**
+ * Separates earned progress from the form the user has actually revealed.
+ *
+ * Older builds stored only a stage name after silently rendering it. An absent
+ * numeric checkpoint is therefore intentionally treated as Level 1, giving
+ * existing users the reveal moment they previously missed.
+ */
+export function companionRevealState(points, revealedLevel, styleValue = 'turtle') {
+  const style = companionStyle(styleValue)
+  const earned = companionStage(points, style)
+  const requested = Number.isInteger(revealedLevel) ? revealedLevel : 1
+  const visibleLevel = Math.max(1, Math.min(earned.level, requested, COMPANION_LEVELS.length))
+  const visible = companionStage(COMPANION_LEVELS[visibleLevel - 1].min, style)
+  return {
+    earned,
+    visible,
+    revealedLevel: visibleLevel,
+    pending: earned.level > visibleLevel,
+  }
+}

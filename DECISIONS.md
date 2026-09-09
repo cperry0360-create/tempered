@@ -1941,3 +1941,30 @@ version 0.18.1 with build 15.
 changed after the 0.18.0 Forge release candidate.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-09 — Companion evolution happens only as an on-screen reveal
+**Phase:** 0.18.2 evolution reveal
+**Decision:** Canonical care continues to accumulate from training and lifestyle logs,
+but the rendered companion and habitat remain at the last explicitly revealed level.
+Opening Companion with a newer earned level starts a visible evolution-ready takeover,
+automatically performs the transformation while that screen is mounted, and holds an
+evolution-complete splash until the user dismisses it. A Reveal button allows the short
+prelude to be advanced immediately. The numeric revealed-level checkpoint is persisted
+only when the on-screen transformation occurs. Profiles from the earlier silent system
+have no trusted numeric checkpoint and begin from Level 1 so their missed reveal is
+replayed rather than treating the already-rendered form as acknowledged.
+**Reasoning:** Quietly replacing the sprite in the background removes the emotional
+payoff of companion growth. Separating earned and revealed state preserves authoritative
+activity data while making every visual transformation noticeable and reload-safe.
+**Confidence:** specified by Cory; the 1.1-second automatic prelude and persistent
+completion card are the smallest low-friction cinematic implementation.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.18.2 (16)
+**Phase:** 0.18.2 evolution reveal
+**Decision:** `src/version.js` carries `0.18.2 (16)` and the native wrapper uses marketing
+version 0.18.2 with build 16.
+**Reasoning:** Companion persistence, interaction, and presentation changed, so the PWA
+cache and native field identity advance together.
+**Confidence:** implementation.
+**Needs Cory:** no

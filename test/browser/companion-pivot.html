@@ -43,7 +43,8 @@
       check('Companion explicitly never decays', /nothing ever decays/i.test(q('.companion-header__copy')?.textContent ?? ''))
       check('Starter room has at least one unlocked object', qa('.companion-room__item[data-unlocked="true"]').length >= 1)
       check('Turtle habitat begins in its starter state', q('.companion-habitat')?.dataset.roomState === 'starter', q('.companion-habitat')?.dataset.roomState)
-      check('Current growth stage is checkpointed only for celebrations', (await storage.get('profile', 'profile'))?.companionStageSeen === 'Egg')
+      check('Fresh visible form is checkpointed separately from earned care', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
+      check('Current growth stage remains available for backup compatibility', (await storage.get('profile', 'profile'))?.companionStageSeen === 'Egg')
       check('Current art style is checkpointed with the growth stage', (await storage.get('profile', 'profile'))?.companionStageSeenStyle === 'turtle')
       check('Default visual style is saved for existing profiles', (await storage.get('profile', 'profile'))?.companionStyle === 'turtle')
 
@@ -72,20 +73,48 @@
         date: '2026-09-08', sleepHours: 7.75, steps: 10527, waterOz: 100, proteinGrams: 140, calories: 1900, nutritionLogged: true, readingMinutes: 20,
       })
       await context.app.show('companion')
+      check('Accumulated activity does not transform the turtle behind the scenes', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg', q('.companion-growth__stage')?.textContent)
+      check('Unrevealed habitat remains at the last visible level', qa('.companion-room__item[data-unlocked="true"]').length === 1, qa('.companion-room__item[data-unlocked="true"]').length)
+      check('Unrevealed turtle remains on its prior sprite cell', q('.companion-habitat__pet--turtle')?.dataset.visual === '1', q('.companion-habitat__pet--turtle')?.dataset.visual)
+      check('Opening Companion presents an unmistakable evolution-ready takeover', q('.companion-reveal')?.dataset.phase === 'ready' && /Level 3 · Hatchling is ready/.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
+      check('Ready state does not advance the persisted visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
+
+      q('.companion-reveal__action')?.click()
+      await settle(120)
       const stage = q('.companion-growth__stage')?.textContent ?? ''
-      const stageName = stage.split('·').at(-1)?.trim()
-      check('Accumulated real activity grows the companion forward', stage === 'Level 3 · Hatchling', stage)
-      check('Growth unlocks more room objects', qa('.companion-room__item[data-unlocked="true"]').length > 1, qa('.companion-room__item[data-unlocked="true"]').length)
-      check('Growth selects the matching turtle sprite cell', q('.companion-habitat__pet--turtle')?.dataset.visual === '3', q('.companion-habitat__pet--turtle')?.dataset.visual)
-      check('A newly reached form gets a one-time evolution celebration', q('.companion-habitat')?.dataset.evolved === 'true' && Boolean(q('.companion-evolve')), q('.companion-habitat')?.dataset.evolved)
+      check('Reveal action performs the transformation on the Companion screen', stage === 'Level 3 · Hatchling', stage)
+      check('Revealed growth unlocks the matching habitat objects', qa('.companion-room__item[data-unlocked="true"]').length > 1, qa('.companion-room__item[data-unlocked="true"]').length)
+      check('Revealed growth selects the matching turtle sprite cell', q('.companion-habitat__pet--turtle')?.dataset.visual === '3', q('.companion-habitat__pet--turtle')?.dataset.visual)
+      check('Transformation receives a completion splash', q('.companion-reveal')?.dataset.phase === 'complete' && /evolved/i.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
       check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
-      check('Growth-stage checkpoint advances after celebration', (await storage.get('profile', 'profile'))?.companionStageSeen === stageName, (await storage.get('profile', 'profile'))?.companionStageSeen)
+      check('Visible-form checkpoint advances only after Reveal', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 3, (await storage.get('profile', 'profile'))?.companionRevealedLevel)
       check('Today activity creates a companion moment', /Training registered|Recovery supplied|Focus sharpened|Fuel logged|Recovery logged/.test(q('.companion-moment')?.textContent ?? ''), q('.companion-moment')?.textContent)
 
       // Re-opening the same stage should not replay evolution endlessly.
+      q('.companion-reveal__action')?.click()
+      await settle(60)
       await context.app.show('today')
       await context.app.show('companion')
-      check('Evolution celebration does not replay after the stage was seen', q('.companion-habitat')?.dataset.evolved === 'false' && !q('.companion-evolve'))
+      check('Evolution takeover does not replay after the form was revealed', !q('.companion-reveal') && q('.companion-habitat')?.dataset.evolved === 'false')
+
+      // A later unlock begins and completes on-screen without making the user
+      // hunt for or claim a background reward.
+      await storage.put('sessions', {
+        id: 'session-auto', date: '2026-09-08', startedAt: '2026-09-08T12:00:00', endedAt: '2026-09-08T13:00:00',
+      })
+      for (let set = 0; set < 8; set += 1) {
+        await storage.put('setLogs', {
+          id: `set-auto-${set}`, sessionId: 'session-auto', exerciseId: 'flat_bench_db', reps: 10, weight: 55, isWarmup: false,
+        })
+      }
+      await context.app.show('today')
+      await context.app.show('companion')
+      check('New earned form waits visibly before its automatic reveal', q('.companion-reveal')?.dataset.phase === 'ready' && q('.companion-habitat__pet--turtle')?.dataset.visual === '3')
+      await settle(1250)
+      check('Evolution advances automatically while Companion is on screen', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && q('.companion-reveal')?.dataset.phase === 'complete', q('.companion-growth__stage')?.textContent)
+      check('Automatic on-screen reveal persists the new visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 4)
+      q('.companion-reveal__action')?.click()
+      await settle(60)
 
       const input = q('.companion-name__input')
       input.value = 'Moss'
@@ -97,7 +126,7 @@
       q('.companion-style__option[data-style="sprout"]')?.click()
       await settle(120)
       check('Existing Ember Sprout art remains selectable', q('.companion-habitat')?.dataset.style === 'sprout' && Boolean(q('img.companion-habitat__pet')), q('.companion-habitat')?.dataset.style)
-      check('Style preference persists without resetting care', (await storage.get('profile', 'profile'))?.companionStyle === 'sprout' && /Level 3/.test(q('.companion-growth__stage')?.textContent ?? ''), q('.companion-growth__stage')?.textContent)
+      check('Style preference persists without resetting care', (await storage.get('profile', 'profile'))?.companionStyle === 'sprout' && /Level 4/.test(q('.companion-growth__stage')?.textContent ?? ''), q('.companion-growth__stage')?.textContent)
       check('Renamed companion survives a visual-style change', q('.screen--companion .screen__title')?.textContent === 'Moss')
       check('Forge Guardian remains available as an optional style', Boolean(q('.companion-style__option[data-style="forge"]')))
 

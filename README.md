@@ -60,7 +60,7 @@ That archive inherited its imagery, by way of [wrkout/exercises.json][wrkout], f
 
 ## First-party visual identity
 
-The post-RPG wellness and companion artwork lives under `art/tempered/`. Trailback Turtle is the default, evolving from egg to hatchling to shredded adult across ten visible forms in a growing lakeside habitat. Forge Guardian and the original Ember Sprout remain selectable alternatives. All styles use the same positive-only care total and ten-level progression. Production backgrounds are optimized WebP files; transparent companion stages and action icons remain PNG. The recovered generation originals, exact prompts, and design references live under `art/source/tempered-generated/` so a future session does not depend on expiring chat links.
+The post-RPG wellness and companion artwork lives under `art/tempered/`. Trailback Turtle is the default, evolving from egg to hatchling to shredded adult across ten visible forms in a growing lakeside habitat. Earned care accumulates throughout the tracker, but a form changes only during a visible Companion-screen reveal with a persistent completion splash. Forge Guardian and the original Ember Sprout remain selectable alternatives. All styles use the same positive-only care total and ten-level progression. Production backgrounds are optimized WebP files; transparent companion stages and action icons remain PNG. The recovered generation originals, exact prompts, and design references live under `art/source/tempered-generated/` so a future session does not depend on expiring chat links.
 
 ## Deployment
 

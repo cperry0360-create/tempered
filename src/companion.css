@@ -467,6 +467,20 @@
 .companion-growth__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #61d8b3, #cbdc75); }
 .companion-growth__copy,
 .companion-room__head p { margin: 0; color: rgba(255,255,255,.60); font-size: 11px; line-height: 1.4; }
+.companion-growth__replay {
+  justify-self: start;
+  min-height: 44px;
+  margin-top: -4px;
+  padding: 0 12px;
+  border: 1px solid rgba(203,220,117,.22);
+  border-radius: 12px;
+  background: rgba(203,220,117,.07);
+  color: #dce98d;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
 .companion-room__head h2 { margin: 0 0 3px; font-size: 18px; }
 .companion-room__items { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
 .companion-room__item { min-height: 76px; display: grid; place-items: center; align-content: center; gap: 5px; padding: 8px; border-radius: 16px; background: rgba(255,255,255,.055); text-align: center; }

@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.18.2 (16)
+**Current release:** 0.18.3 (17)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -52,7 +52,9 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 - Growth comes from completed training, working sets, and lifestyle logs.
 - Earned care may accumulate anywhere, but a form never changes silently. Companion holds
   the last revealed level, opens an evolution-ready takeover, then performs the change
-  visibly on that screen and leaves a completion splash until acknowledged.
+  visibly on that screen and leaves a completion splash until acknowledged. A separate
+  presentation receipt repairs older silent checkpoints, and Replay Evolution can run
+  the earned transformation again without changing care.
 - Each style has starter, mid, and fully upgraded habitat states. Turtle begins in a
   rugged lakeside nest and expands into a natural pond-side training territory.
 - Daily moments may reflect training, hydration, reading, nutrition, sleep, or idle time.

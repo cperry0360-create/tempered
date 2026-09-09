@@ -88,6 +88,7 @@
       check('Transformation receives a completion splash', q('.companion-reveal')?.dataset.phase === 'complete' && /evolved/i.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
       check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
       check('Visible-form checkpoint advances only after Reveal', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 3, (await storage.get('profile', 'profile'))?.companionRevealedLevel)
+      check('Reveal writes a presentation receipt separate from the level checkpoint', (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 1)
       check('Today activity creates a companion moment', /Training registered|Recovery supplied|Focus sharpened|Fuel logged|Recovery logged/.test(q('.companion-moment')?.textContent ?? ''), q('.companion-moment')?.textContent)
 
       // Re-opening the same stage should not replay evolution endlessly.
@@ -113,6 +114,33 @@
       await settle(1250)
       check('Evolution advances automatically while Companion is on screen', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && q('.companion-reveal')?.dataset.phase === 'complete', q('.companion-growth__stage')?.textContent)
       check('Automatic on-screen reveal persists the new visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 4)
+      check('A revealed form exposes a manual replay control', Boolean(q('.companion-growth__replay')))
+      q('.companion-reveal__action')?.click()
+      await settle(60)
+
+      const preReceiptProfile = await storage.get('profile', 'profile')
+      const { companionRevealPresentationVersion: _oldReceipt, ...profileWithoutReceipt } = preReceiptProfile
+      await storage.put('profile', {
+        ...profileWithoutReceipt,
+        companionRevealedLevel: 10,
+        companionStageSeen: 'Shredded',
+      })
+      await context.app.show('today')
+      await context.app.show('companion')
+      check('An old high-level checkpoint without a presentation receipt is repaired to the egg', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg' && (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
+      check('The repaired installed profile receives the missed evolution takeover', q('.companion-reveal')?.dataset.phase === 'ready')
+      q('.companion-reveal__action')?.click()
+      await settle(120)
+      q('.companion-reveal__action')?.click()
+      await settle(60)
+
+      q('.companion-growth__replay')?.click()
+      await settle(120)
+      check('Replay resets the visible form to the egg without changing earned care', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg' && /86 care/.test(q('.companion-growth')?.textContent ?? ''), q('.companion-growth')?.textContent)
+      check('Replay removes the old receipt and queues the evolution takeover again', q('.companion-reveal')?.dataset.phase === 'ready' && !(await storage.get('profile', 'profile'))?.companionRevealPresentationVersion)
+      q('.companion-reveal__action')?.click()
+      await settle(120)
+      check('A replayed transformation restores the earned form and receipt', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 1)
       q('.companion-reveal__action')?.click()
       await settle(60)
 

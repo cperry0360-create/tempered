@@ -1968,3 +1968,29 @@ version 0.18.2 with build 16.
 cache and native field identity advance together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-09 — Evolution requires a presentation receipt, not only a level
+**Phase:** 0.18.3 reveal migration repair
+**Decision:** A numeric revealed level is no longer sufficient evidence that an evolution
+was visibly presented. Companion now stores a separately versioned presentation receipt
+only when the on-screen transformation runs. Any existing above-Level-1 profile without
+that receipt is reset visually to the egg once and receives the evolution takeover again.
+The Growth card also exposes Replay Evolution for every evolved companion; replay removes
+the receipt and visible checkpoint, never care or canonical activity, then runs the same
+earned transformation again.
+**Reasoning:** The 0.18.2 clean-profile test passed, but Cory's installed profile did not
+replay the silently reached form. The earlier checkpoint could not distinguish a rendered
+sprite from a reveal the user actually saw. A presentation receipt makes that distinction
+explicit, while a replay control provides a deterministic recovery path on real devices.
+**Confidence:** failure observed by Cory; repair behavior is covered with an installed
+high-level checkpoint fixture that has no receipt.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.18.3 (17)
+**Phase:** 0.18.3 reveal migration repair
+**Decision:** `src/version.js` carries `0.18.3 (17)` and the native wrapper uses marketing
+version 0.18.3 with build 17.
+**Reasoning:** The installed-profile migration and public Companion controls changed, so
+the PWA cache and native field identity advance together.
+**Confidence:** implementation.
+**Needs Cory:** no

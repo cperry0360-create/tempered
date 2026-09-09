@@ -16,6 +16,7 @@ import { el, replace } from '../dom.js'
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 const FORGE_SPRITES = art('companion-forge-stages.png')
 const TURTLE_SPRITES = art('companion-turtle-stages.png')
+const REVEAL_PRESENTATION_VERSION = 1
 
 const TURTLE_UNLOCKS = [
   { key: 'nest', min: 0, icon: '◌', name: 'Reed nest' },
@@ -134,7 +135,13 @@ export function createCompanionScreen({ storage, clock }) {
     const points = finished.length * 8 + workingSets.length * 2 + lifestyle * 2
     const style = companionStyle(profile.companionStyle)
     const earnedGrowth = companionGrowth(points, style)
-    const reveal = companionRevealState(points, profile.companionRevealedLevel, style)
+    // A stored level proves only which sprite an older build rendered. The
+    // presentation receipt proves the user actually received the reveal. This
+    // one-time repair intentionally replays 0.18.2-era checkpoints from Level 1.
+    const needsPresentationRepair = earnedGrowth.stage.level > 1
+      && profile.companionRevealPresentationVersion !== REVEAL_PRESENTATION_VERSION
+    const revealedLevel = needsPresentationRepair ? 1 : profile.companionRevealedLevel
+    const reveal = companionRevealState(points, revealedLevel, style)
     const stage = reveal.visible
     const next = reveal.pending ? reveal.earned : earnedGrowth.next
     const growth = reveal.pending ? 100 : earnedGrowth.percent
@@ -215,6 +222,7 @@ export function createCompanionScreen({ storage, clock }) {
       ...profile,
       companionStyle: model.style,
       companionRevealedLevel: target.level,
+      companionRevealPresentationVersion: REVEAL_PRESENTATION_VERSION,
       companionStageSeen: target.name,
       companionStageSeenStyle: model.style,
     })
@@ -230,6 +238,22 @@ export function createCompanionScreen({ storage, clock }) {
     revealPhase = null
     if (model) model.evolved = false
     render()
+  }
+
+  async function replayEvolution() {
+    if (!model || model.earnedStage.level <= 1) return
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = null
+    revealPhase = null
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const { companionRevealPresentationVersion: _receipt, ...rest } = profile
+    await storage.put('profile', {
+      ...rest,
+      companionRevealedLevel: 1,
+      companionStageSeen: companionRevealState(model.points, 1, model.style).visible.name,
+      companionStageSeenStyle: model.style,
+    })
+    await refresh()
   }
 
   function habitatProps(m) {
@@ -380,6 +404,13 @@ export function createCompanionScreen({ storage, clock }) {
             ? `${m.stage.copy} Reveal Level ${m.earnedStage.level} on this screen to transform.`
             : m.next ? `${m.stage.copy} Next: Level ${m.next.level} · ${m.next.name}.` : m.stage.copy,
         }),
+        !m.pendingEvolution && m.stage.level > 1
+          ? el('button.companion-growth__replay', {
+              type: 'button',
+              onclick: replayEvolution,
+              text: 'REPLAY EVOLUTION',
+            })
+          : null,
       ]),
 
       el('section.companion-room', {}, [

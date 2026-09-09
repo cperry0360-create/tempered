@@ -113,9 +113,14 @@
         q('[data-task-detail] .task-detail__save')?.click(); await settle()
         const detailed = await storage.get('plannerItems', rolled.id)
         check('task details save notes and an optional due date', detailed?.notes === 'Bring the supporting file and call Alex.' && detailed?.dueDate === tempered.clock.today(), JSON.stringify(detailed))
-        q(`[data-planner="${rolled.id}"] .today-plan-item__check`)?.click(); await settle()
+        const exactRolledRow = qa('.today-plan-item').find((item) =>
+          q('.today-plan-item__title', item)?.textContent === rolled.title)
+        q('.today-plan-item__check', exactRolledRow)?.click(); await settle()
         const completedRolled = await storage.get('plannerItems', rolled.id)
-        check('a rolled task leaves Today once checked off', completedRolled?.done === true && !q(`[data-planner="${rolled.id}"]`))
+        const stillVisible = qa('.today-plan-item').some((item) =>
+          q('.today-plan-item__title', item)?.textContent === rolled.title)
+        check('a rolled task leaves Today once checked off', completedRolled?.done === true && !stillVisible,
+          `${completedRolled?.done ? 'stored complete' : 'still open'} · ${stillVisible ? 'still visible' : 'hidden'}`)
 
         const dailyIds = await tempered.daily.dailyIds()
         const renderedDaily = qa('[data-section="daily"] [data-activity]').length

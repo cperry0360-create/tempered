@@ -13,6 +13,7 @@
     <script type="module">
       import { bootstrapHarness as bootstrap } from './harness.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+      import { splitGauntlet } from '../../src/domain/expedition.js'
 
       const checks = []
       const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
@@ -68,11 +69,25 @@
         const resumed = await tempered.battle.stateForDate()
         check('Expedition resumes after leaving the screen', resumed.turnState.turn === afterAttack.turnState.turn)
 
-        // Make the current foe one hit from defeat so the acceptance harness can
-        // deterministically exercise the between-encounter choice UI.
+        // Put the current encounter on its final foe and make that foe one hit
+        // from defeat. An encounter can contain more than one enemy, so changing
+        // enemyHp alone would only advance to the next foe instead of opening
+        // the between-encounter choice UI.
+        const encounter = splitGauntlet(
+          resumed.gauntlet,
+          resumed.expedition.encounterCount,
+        )[resumed.expedition.encounterIndex]
+        const lastEnemyIndex = encounter.length - 1
+        const lastEnemy = encounter[lastEnemyIndex]
         await tempered.storage.put('battles', {
           ...resumed,
-          turnState: { ...resumed.turnState, enemyHp: 1 },
+          turnState: {
+            ...resumed.turnState,
+            enemyIndex: lastEnemyIndex,
+            enemyHp: 1,
+            enemyMax: lastEnemy.hp,
+            defeated: lastEnemyIndex,
+          },
         })
         q('[data-action="attack"]').click()
         await waitFor('.upgrade-choice')

@@ -228,13 +228,13 @@ export function installCalorieAiRuntime() {
     ]
   }
 
-  function syncLifestyle(section, view, weight) {
-    let grid = section.querySelector('[data-lifestyle="snapshot"]')
+  function syncLifestyle(host, view, weight) {
+    let grid = host.querySelector('[data-lifestyle="snapshot"]')
     if (!grid) {
       grid = document.createElement('div')
       grid.className = 'today-lifestyle'
       grid.dataset.lifestyle = 'snapshot'
-      section.querySelector('.today-section__head')?.after(grid)
+      host.append(grid)
     }
     for (const definition of lifestyleMetrics(view, weight)) {
       const [, value, detail, name] = definition
@@ -656,27 +656,31 @@ export function installCalorieAiRuntime() {
     const screen = todayRoot()
     const context = globalThis.tempered
     const date = selectedDate()
-    if (!screen || !context?.daily || !date || date !== context.clock.today()) return
+    if (!screen || !context?.daily || !date) return
     enhancing = true
     try {
       const section = screen.querySelector('[data-section="daily"]')
-      if (!section) return
-      const list = section.querySelector('.today-list')
-      if (!list) return
+      const list = section?.querySelector('.today-list')
+      const recapHost = screen.querySelector('[data-lifestyle-recap-host]')
+      if (!list && !recapHost) return
       const [view, weight] = await Promise.all([
         context.daily.forDate(date), latestWeight(date),
       ])
       if (screen !== todayRoot() || date !== selectedDate()) return
-      hideLegacyNutritionRows()
-      const title = section.querySelector('.today-section__title')
-      const detail = section.querySelector('.today-section__detail')
-      if (title) title.textContent = 'Lifestyle'
-      if (detail) detail.textContent = 'Sleep · movement · nutrition · hydration · recovery'
-      syncLifestyle(section, view, weight)
-      syncNutritionRow(list, view)
-      window.dispatchEvent(new CustomEvent('tempered:lifestyle-ready', {
-        detail: { date },
-      }))
+      if (date === context.clock.today() && section && list) {
+        hideLegacyNutritionRows()
+        const title = section.querySelector('.today-section__title')
+        const detail = section.querySelector('.today-section__detail')
+        if (title) title.textContent = 'Lifestyle'
+        if (detail) detail.textContent = 'Sleep · movement · nutrition · hydration · recovery'
+        syncNutritionRow(list, view)
+      }
+      if (recapHost) {
+        syncLifestyle(recapHost, view, weight)
+        window.dispatchEvent(new CustomEvent('tempered:lifestyle-ready', {
+          detail: { date },
+        }))
+      }
     } finally {
       enhancing = false
       if (rerenderRequested) {

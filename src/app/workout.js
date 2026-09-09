@@ -235,6 +235,37 @@ export function createWorkoutService({ storage, clock, balance }) {
     return totalsByAttributeFromSources(sources)
   }
 
+  /**
+   * Compact training facts for a calendar day.
+   *
+   * Full sessions carry their elapsed duration. Micro-set sessions can be
+   * settled more than once during the day, so their stored duration may only
+   * describe the latest settlement. In that case the timestamps across all of
+   * the session's sets are the safer floor.
+   *
+   * @param {string} date
+   */
+  async function dayTrainingStats(date = clock.today()) {
+    const sessions = (await storage.getAll('sessions')).filter((session) => session.date === date)
+    if (sessions.length === 0) return { minutes: 0, workingSets: 0, exercises: 0, sessions: 0 }
+
+    const sessionIds = new Set(sessions.map((session) => session.id))
+    const logs = (await storage.getAll('setLogs')).filter((log) => sessionIds.has(log.sessionId))
+    const work = logs.filter((log) => !log.isWarmup)
+    const minutes = sessions.reduce((total, session) => {
+      const sessionLogs = logs.filter((log) => log.sessionId === session.id)
+      const inferred = timeUnderLoad(sessionLogs.map((log) => log.completedAt), balance)
+      return total + Math.max(Number(session.durationMinutes) || 0, inferred)
+    }, 0)
+
+    return {
+      minutes: Math.round(minutes),
+      workingSets: work.length,
+      exercises: new Set(work.map((log) => log.exerciseId)).size,
+      sessions: new Set(work.map((log) => log.sessionId)).size,
+    }
+  }
+
   /** @param {string} sessionId */
   async function setsFor(sessionId) {
     const logs = await storage.getAllByIndex('setLogs', 'sessionId', sessionId)
@@ -495,7 +526,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   return {
     exerciseMap, recordMap, lastPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
-    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday,
+    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats,
     startSession, logSet, setsFor, finishSession,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },

@@ -68,6 +68,7 @@
 
         const summary = q('[data-summary="daily"]')
         check('Today opens with one calm daily summary', summary !== null)
+        check('the redundant Today heading and long date are removed', q('.today-header') === null)
         check('the summary exposes one progress bar rather than five attribute meters',
           qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0,
           `${qa('[role="progressbar"]', summary).length} daily progress bar`)
@@ -75,6 +76,17 @@
         check('Today opens with a seven-day calendar rail', qa('.today-calendar__day').length === 7,
           `${qa('.today-calendar__day').length} dates`)
         check('today is visibly identified in the rail', qa('.today-calendar__day[data-today="true"]').length === 1)
+        check('calendar and progress surfaces are compact',
+          q('.today-calendar')?.getBoundingClientRect().height < 90
+          && summary?.getBoundingClientRect().height < 82,
+          `${Math.round(q('.today-calendar')?.getBoundingClientRect().height ?? 0)}px calendar · ${Math.round(summary?.getBoundingClientRect().height ?? 0)}px progress`)
+        const stablePlanner = q('[data-section="planner"]')
+        q('[data-daily-recap="open"]')?.click(); await settle()
+        check('Daily Recap opens as a dedicated card with four exercise facts',
+          qa('[data-daily-recap="card"] .today-recap__stat').length === 4
+          && /MINUTES/.test(q('[data-daily-recap="card"]')?.textContent ?? ''))
+        check('opening Daily Recap leaves the Today cards mounted', q('[data-section="planner"]') === stablePlanner)
+        q('[data-daily-recap="close"]')?.click(); await settle()
 
         for (const name of ['planner', 'habits', 'training']) {
           const fold = q(`[data-fold="${name}"] .today-section__fold`)

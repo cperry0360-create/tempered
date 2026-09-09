@@ -1865,3 +1865,27 @@ version 0.16.0 with build 12.
 cache. Keeping native and web identities aligned makes field reports unambiguous.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-09 — Today prioritizes entry and moves status into Daily Recap
+**Phase:** 0.17.0 Today density
+**Decision:** Today removes its redundant visible title/date, compresses the seven-day
+calendar and daily progress into short rails, and keeps Plan and Lifestyle entry rows on
+the main surface. A one-tap Daily Recap card owns the read-only lifestyle snapshot, Apple
+Health actions, and selected-day exercise minutes, working sets, movements, and sessions.
+The recap is a stable overlay with no entrance animation.
+**Reasoning:** Calendar selection already communicates the date. Large status cards and
+read-only Lifestyle tiles displaced the actions people actually use, especially on an
+iPhone where the bottom navigation covered the first logging rows. Recap information is
+valuable once or twice a day, while entry needs to remain immediate.
+**Confidence:** specified by Cory; the four exercise facts are the smallest useful summary
+derived from canonical session and set logs.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.17.0 (13)
+**Phase:** 0.17.0 Today density
+**Decision:** `src/version.js` carries `0.17.0 (13)` and the native wrapper uses marketing
+version 0.17.0 with build 13.
+**Reasoning:** The Today information architecture and runtime assets changed, so the PWA
+cache and native field identity must advance together.
+**Confidence:** implementation.
+**Needs Cory:** no

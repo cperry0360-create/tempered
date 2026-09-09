@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.16.0 (12)
+**Current release:** 0.17.0 (13)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -82,6 +82,18 @@ Undo. Aggregate day fields remain canonical for existing Today, Progress, XP, an
 logic. Totals logged before 0.15.0 are preserved as an Earlier total rather than assigned
 an invented meal time.
 
+## Today screen density and Daily Recap
+
+Today begins with one compact calendar rail and progress strip. The redundant visible
+Today heading and long date are gone; the selected date remains explicit in the calendar
+and accessible screen heading. Plan and Lifestyle logging rows remain directly on Today.
+
+Read-only lifestyle totals no longer sit above those logging rows. `DAILY RECAP` opens a
+dedicated card with sleep, steps, nutrition, water, weight, Apple Health sync/setup, and
+four exercise facts for the selected day: training minutes, working sets, movements, and
+sessions. The recap has no entrance animation or nested navigation, so it opens and closes
+without the card flicker seen in earlier iPhone builds.
+
 ## Planner, training navigation, and active sessions
 
 Personal and work tasks roll onto later dates until checked off. A rolled task keeps its
@@ -103,8 +115,9 @@ and iPhone wrapper all enforce the same orientation contract.
 
 ## Apple Health sync
 
-Today now separates normal use from setup. `RUN HEALTH SYNC` invokes the saved Tempered
-Health Shortcut. Its preferred handoff opens Tempered with a `temperedHealth` URL
+Today now separates normal use from setup. `DAILY RECAP` keeps `RUN HEALTH SYNC` one level
+from Today and invokes the saved Tempered Health Shortcut. Its preferred handoff opens
+Tempered with a `temperedHealth` URL
 parameter, imports automatically, removes the health payload from the address bar, and
 requires no paste or second Import tap.
 

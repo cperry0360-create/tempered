@@ -65,10 +65,15 @@
       await tempered.app.show('today')
       installCalorieAiRuntime()
 
-      const nutrition = await waitFor('[data-activity="nutrition_combined"]')
-      const snapshot = await waitFor('[data-lifestyle="snapshot"]')
+      const directNutrition = await waitFor('[data-activity="nutrition_combined"]')
       check('Today Habits becomes Lifestyle', q('[data-section="daily"] .today-section__title')?.textContent === 'Lifestyle')
-      check('Lifestyle snapshot is visible directly on Today', Boolean(snapshot))
+      check('Lifestyle snapshot no longer clutters the direct logging screen', !q('[data-lifestyle="snapshot"]'))
+      check('Nutrition logging stays directly on Today', Boolean(directNutrition))
+      q('[data-daily-recap="open"]')?.click()
+      const snapshot = await waitFor('[data-lifestyle="snapshot"]')
+      const nutrition = await waitFor('[data-activity="nutrition_combined"]')
+      check('Daily Recap opens the Lifestyle snapshot in one tap', Boolean(snapshot) && Boolean(q('[data-daily-recap="card"]')))
+      check('Opening Daily Recap does not redraw direct logging rows', nutrition === directNutrition)
       check('Lifestyle snapshot includes five useful status blocks', qa('[data-lifestyle="snapshot"] [data-metric]').length === 5, qa('[data-lifestyle="snapshot"] [data-metric]').length)
       check('Calories and protein are represented by one Nutrition tracker', Boolean(nutrition))
 
@@ -145,7 +150,7 @@
       const underneath = q('[data-activity="nutrition_combined"] .today-item__meta')?.textContent ?? ''
       check('Today total updates in place behind the sub-screen', /742\s*\/\s*2100\s*kcal/i.test(underneath) && /52\s*\/\s*160\s*g protein/i.test(underneath), underneath)
       q('.nutrition-log-header__back')?.click()
-      check('Back closes Nutrition without redrawing Today', !q('[data-nutrition-screen]') && q('[data-lifestyle="snapshot"]') === stableSnapshot)
+      check('Back closes Nutrition without redrawing the open recap', !q('[data-nutrition-screen]') && q('[data-lifestyle="snapshot"]') === stableSnapshot)
 
       const img = document.createElement('img')
       img.className = 'exercise__thumb'

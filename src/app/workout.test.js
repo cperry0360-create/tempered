@@ -90,6 +90,28 @@ test('records are updated by finishing, so the next session sees them', async ()
   assert.equal(prepared.last.sets[0].weight, 145)
 })
 
+test('daily training stats summarize duration, working sets and exercises', async () => {
+  const { workout } = await freshApp()
+  const session = await workout.startSession('lower')
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 145, reps: 8, isWarmup: true })
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
+  await workout.logSet(session, { exerciseId: 'deadlift_bb', weight: 160, reps: 6 })
+  await workout.finishSession(session, { durationMinutes: 47 })
+
+  assert.deepEqual(await workout.dayTrainingStats('2026-09-04'), {
+    minutes: 47,
+    workingSets: 2,
+    exercises: 2,
+    sessions: 1,
+  })
+  assert.deepEqual(await workout.dayTrainingStats('2026-09-03'), {
+    minutes: 0,
+    workingSets: 0,
+    exercises: 0,
+    sessions: 0,
+  })
+})
+
 test('ACCEPTANCE: last performance and PR are available before any set is entered', async () => {
   const { workout } = await freshApp()
   const first = await workout.startSession('lower')

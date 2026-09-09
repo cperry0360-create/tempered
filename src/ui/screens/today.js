@@ -142,6 +142,8 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   let weeklyOpen = false
   let workedOpen = false
   let otherOpen = false
+  let dailyRecapOpen = false
+  let trainingStats = { minutes: 0, workingSets: 0, exercises: 0, sessions: 0 }
 
   const canLogSelected = () => selectedDate <= realToday
   const isRealToday = () => selectedDate === realToday
@@ -602,25 +604,80 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
 
   function summaryCard(done, total) {
     const percent = clampedPercent(done, total)
-    const remaining = Math.max(0, total - done)
     const xp = todayXp()
     return el('section.today-summary', { dataset: { summary: 'daily' } }, [
       el('div.today-summary__top', {}, [
-        el('div', {}, [
+        el('div.today-summary__copy', {}, [
           el('span.today-summary__eyebrow', { text: isRealToday() ? 'DAILY PROGRESS' : 'DAY PROGRESS' }),
-          el('p.today-summary__headline', {
-            text: total > 0 ? `${done} of ${total} complete` : 'This day is clear',
-          }),
+          el('strong.today-summary__headline', { text: total > 0 ? `${done}/${total}` : 'CLEAR' }),
+          total > 0 && el('span.today-summary__percent', { text: `${percent}%` }),
         ]),
         xp > 0 && el('span.today-summary__xp', { text: `+${formatXp(xp)} XP` }),
+        el('button.today-summary__recap', {
+          type: 'button', dataset: { dailyRecap: 'open' }, onclick: () => openDailyRecap(done, total),
+        }, ['DAILY RECAP']),
       ]),
       total > 0 && el('div.today-summary__bar', {
         role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total),
         'aria-valuenow': String(done), 'aria-label': `${done} of ${total} daily items complete`,
       }, [el('span.today-summary__fill', { style: `width:${percent}%` })]),
-      total > 0 && el('div.today-summary__foot', {}, [
-        el('span', { text: remaining === 0 ? 'Daily list complete' : `${remaining} left` }),
-        el('span', { text: percent === 100 ? 'Tempered.' : `${percent}%` }),
+    ])
+  }
+
+  function openDailyRecap(done, total) {
+    if (dailyRecapOpen) return
+    dailyRecapOpen = true
+    const overlay = dailyRecap(done, total)
+    if (overlay) root.append(overlay)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tempered:today-rendered', {
+        detail: { date: selectedDate },
+      }))
+    }
+    queueMicrotask(() => root.querySelector('[data-daily-recap="close"]')?.focus())
+  }
+
+  function closeDailyRecap() {
+    root.querySelector('[data-daily-recap="overlay"]')?.remove()
+    dailyRecapOpen = false
+    queueMicrotask(() => root.querySelector('[data-daily-recap="open"]')?.focus())
+  }
+
+  function dailyRecap(done, total) {
+    if (!dailyRecapOpen) return null
+    const stat = (label, value) => el('div.today-recap__stat', {}, [
+      el('strong', { text: String(value) }),
+      el('span', { text: label }),
+    ])
+    return el('div.today-recap-overlay', {
+      dataset: { dailyRecap: 'overlay' },
+      onclick: (event) => { if (event.target === event.currentTarget) closeDailyRecap() },
+      onkeydown: (event) => { if (event.key === 'Escape') closeDailyRecap() },
+    }, [
+      el('section.today-recap', {
+        role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'daily-recap-title',
+        dataset: { dailyRecap: 'card' },
+      }, [
+        el('header.today-recap__head', {}, [
+          el('div', {}, [
+            el('span.today-recap__eyebrow', { text: dateLabel(selectedDate) }),
+            el('h2.today-recap__title', { id: 'daily-recap-title', text: 'Daily recap' }),
+            el('p.today-recap__detail', {
+              text: total > 0 ? `${done} of ${total} daily trackers complete` : 'No daily trackers scheduled',
+            }),
+          ]),
+          el('button.today-recap__close', {
+            type: 'button', 'aria-label': 'Close daily recap', dataset: { dailyRecap: 'close' },
+            onclick: closeDailyRecap,
+          }, ['×']),
+        ]),
+        el('div.today-recap__training', { 'aria-label': 'Exercise summary' }, [
+          stat('MINUTES', trainingStats.minutes),
+          stat('WORK SETS', trainingStats.workingSets),
+          stat('MOVEMENTS', trainingStats.exercises),
+          stat('SESSIONS', trainingStats.sessions),
+        ]),
+        el('div.today-recap__lifestyle', { dataset: { lifestyleRecapHost: 'true' } }),
       ]),
     ])
   }
@@ -705,10 +762,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     const workedCount = dailyWorked.length + doneWeeklyLifestyle.length + offLogged.length
 
     replace(root, [
-      el('header.today-header', {}, [
-        el('h1.screen__title.today-header__title', { text: isRealToday() ? 'Today' : dateLabel(selectedDate).split(',')[0] }),
-        el('p.today-header__date', { text: dateLabel(selectedDate) }),
-      ]),
+      el('h1.sr-only', { text: isRealToday() ? 'Today' : dateLabel(selectedDate) }),
 
       calendarRail(),
       summaryCard(dailyDone, dailyTotal),
@@ -840,17 +894,19 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     openActivityId = null
     plannerComposerOpen = false
     plannerDetailId = null
+    dailyRecapOpen = false
     await reload()
   }
 
   async function reload() {
-    ;[todayProgram, weekProgram, day, weekActivities, plannerRows, quickPresets] = await Promise.all([
+    ;[todayProgram, weekProgram, day, weekActivities, plannerRows, quickPresets, trainingStats] = await Promise.all([
       workout.todayTasks(),
       workout.weekStatus(),
       daily.forDate(selectedDate),
       daily.week(selectedDate),
       planner.list(selectedDate),
       daily.quickAddPresets(),
+      workout.dayTrainingStats(selectedDate),
     ])
 
     const fromDay = totalsByAttributeFromSources(day?.day?.awarded ?? {})
@@ -866,6 +922,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     openActivityId = null
     plannerComposerOpen = false
     plannerDetailId = null
+    dailyRecapOpen = false
     await reload()
   }
 

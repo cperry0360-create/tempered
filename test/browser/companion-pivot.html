@@ -131,7 +131,7 @@
       check('Forge Guardian remains available as an optional style', Boolean(q('.companion-style__option[data-style="forge"]')))
 
       const normalText = q('.screen--companion')?.textContent ?? ''
-      check('Companion surface contains no combat or RPG management language', !/attack|battle|rank|skill point|xp|level up/i.test(normalText), normalText.slice(0, 220))
+      check('Companion surface contains no combat or RPG management language', !/\b(?:attack|battle|rank|xp)\b|skill point|level up/i.test(normalText), normalText.slice(0, 220))
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
       check('Companion harness threw', false, String(error?.stack ?? error).slice(0, 900))

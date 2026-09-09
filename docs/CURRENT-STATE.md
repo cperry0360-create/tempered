@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.17.0 (13)
+**Current release:** 0.18.0 (14)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -17,8 +17,8 @@ small positive companion layer. It is not an RPG battle game. The visible naviga
 
 1. **Today** for sleep, steps, nutrition, water, recovery, habits, and today's workout.
 2. **Train** for programs, ad-hoc exercises, fast set logging, history, and progression.
-3. **Companion** for a warm ember-sprout creature and habitat that grow from accumulated
-   real-world activity already stored by the tracker.
+3. **Companion** for a selectable Forge Guardian or Ember Sprout and habitat that grow
+   from accumulated real-world activity already stored by the tracker.
 4. **Progress** for a fixed recap plus a configurable widget dashboard.
 
 Character/Battle code remains only for backwards compatibility with existing IndexedDB
@@ -41,10 +41,15 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 
 ## Companion contract
 
-- One species: the cream, teal, green, and warm-gold ember-sprout companion.
-- Five stages: Seed, Hatchling, Sprout, Bloom, Radiant.
+- Two saved visual styles: Forge Guardian is the mature default; the original cream,
+  teal, green, and warm-gold Ember Sprout remains selectable.
+- The style can be chosen in setup or changed directly on Companion. Changing art keeps
+  the companion name, care total, and growth level.
+- Ten levels with early thresholds at 0, 24, 50, 85, and 130 care, then 185, 250, 330,
+  430, and 550. Forge has ten distinct forms. Sprout maps those levels onto its five
+  original forms while retaining a named checkpoint at every level.
 - Growth comes from completed training, working sets, and lifestyle logs.
-- The habitat upgrades from starter to mid to fully upgraded as care accumulates.
+- Each style has starter, mid, and fully upgraded habitat states.
 - Daily moments may reflect training, hydration, reading, nutrition, sleep, or idle time.
 - The user can rename the companion. Nothing decays.
 
@@ -134,15 +139,18 @@ Neither watches and rebuilds the DOM it creates, so controls and cards remain st
 
 ## Visual direction and recovered art
 
-The approved direction is warm, polished, premium wellness illustration: deep navy and
-blue, teal/aqua, fresh green, warm cream/gold, rounded shapes, soft shading, clear
-silhouettes, calm scenic backgrounds, and translucent dark cards. It is not pixel art,
-photorealism, office/corporate optimization, combat, or threat imagery.
+The product supports two polished illustration tracks. Forge Guardian is the default
+adult strength-training direction: blackened steel, muted bronze, deep navy, restrained
+teal energy, a broad disciplined silhouette, and an orderly industrial training den.
+Ember Sprout retains the warm wellness direction: teal/aqua, fresh green, cream/gold,
+rounded shapes, and a calm scenic room. Neither track is pixel art, photorealism,
+corporate optimization, combat, or threat imagery.
 
 Production uses screen-specific scenic art for Today, Train, Companion, and Progress;
-five transparent companion cutouts; three habitat states; and Companion, Progress, and
-AI Nutrition support icons. Originals and references recovered from the shared ChatGPT
-conversation are preserved in `art/source/tempered-generated/`. Several generated
+five transparent Sprout cutouts; one transparent ten-form Forge sheet; three habitat
+states for each style; and Companion, Progress, and AI Nutrition support icons. Originals
+and references recovered from the shared ChatGPT conversation are preserved in
+`art/source/tempered-generated/`. Several generated
 "transparent" animation and widget-reference files contain a baked gray checkerboard.
 They are preserved as references but must not be rendered directly in the app.
 

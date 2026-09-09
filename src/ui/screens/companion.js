@@ -1,32 +1,40 @@
 /**
- * COMPANION — a tiny positive-reinforcement layer, not a game.
+ * COMPANION — positive reinforcement for work already logged in Tempered.
  *
- * Growth is derived from real activity already stored in Tempered. Nothing
- * decays, no streak can hurt the companion, and missing a day never moves it
- * backwards. The whole point is to make progress feel alive without creating a
- * second product that needs game balancing.
+ * Care never decays. The selectable visual styles share the same ten-level
+ * progression, so changing the art never changes or resets earned progress.
  */
 
+import { companionGrowth, companionStyle, COMPANION_STYLES } from '../../domain/companion-growth.js'
 import { el, replace } from '../dom.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
+const FORGE_SPRITES = art('companion-forge-stages.png')
 
-const STAGES = [
-  { min: 0, name: 'Seed', art: art('companion-stage-1.png'), copy: 'A tiny beginning.' },
-  { min: 35, name: 'Hatchling', art: art('companion-stage-2.png'), copy: 'Curious and awake.' },
-  { min: 110, name: 'Sprout', art: art('companion-stage-3.png'), copy: 'Growing into its own.' },
-  { min: 260, name: 'Bloom', art: art('companion-stage-4.png'), copy: 'Steady progress made visible.' },
-  { min: 600, name: 'Radiant', art: art('companion-stage-5.png'), copy: 'A long run of care, accumulated.' },
+const SPROUT_UNLOCKS = [
+  { key: 'nest', min: 0, icon: '◌', scene: '◜', name: 'Starter nest' },
+  { key: 'plant', min: 24, icon: '🪴', scene: '✿', name: 'Plant' },
+  { key: 'water', min: 50, icon: '💧', scene: '◒', name: 'Water bottle' },
+  { key: 'books', min: 85, icon: '📚', scene: '▤', name: 'Book nook' },
+  { key: 'dumbbell', min: 130, icon: '🏋️', scene: '━', name: 'Tiny dumbbell' },
+  { key: 'lamp', min: 185, icon: '💡', scene: '●', name: 'Warm lamp' },
+  { key: 'garland', min: 250, icon: '✨', scene: '✦', name: 'Glow garland' },
+  { key: 'rug', min: 330, icon: '◇', scene: '◇', name: 'Woven rug' },
+  { key: 'shelf', min: 430, icon: '▦', scene: '▦', name: 'Display shelf' },
+  { key: 'stars', min: 550, icon: '✦', scene: '✦', name: 'Room glow' },
 ]
 
-const ROOM_UNLOCKS = [
-  { key: 'nest', min: 0, icon: '◌', scene: '◜', name: 'Starter nest' },
-  { key: 'plant', min: 25, icon: '🪴', scene: '✿', name: 'Plant' },
-  { key: 'water', min: 70, icon: '💧', scene: '◒', name: 'Water bottle' },
-  { key: 'books', min: 130, icon: '📚', scene: '▤', name: 'Book nook' },
-  { key: 'dumbbell', min: 210, icon: '🏋️', scene: '━', name: 'Tiny dumbbell' },
-  { key: 'lamp', min: 340, icon: '💡', scene: '●', name: 'Warm lamp' },
-  { key: 'garland', min: 500, icon: '✨', scene: '✦', name: 'Glow garland' },
+const FORGE_UNLOCKS = [
+  { key: 'foundation', min: 0, icon: '◇', name: 'Training floor' },
+  { key: 'plates', min: 24, icon: '●', name: 'Plate storage' },
+  { key: 'bench', min: 50, icon: '━', name: 'Recovery bench' },
+  { key: 'dumbbells', min: 85, icon: '◆', name: 'Adjustable dumbbells' },
+  { key: 'timer', min: 130, icon: '◷', name: 'Interval clock' },
+  { key: 'rack', min: 185, icon: '╫', name: 'Power rack' },
+  { key: 'kettlebells', min: 250, icon: '◒', name: 'Kettlebells' },
+  { key: 'bike', min: 330, icon: '◉', name: 'Air bike' },
+  { key: 'cable', min: 430, icon: '⌁', name: 'Cable station' },
+  { key: 'lighting', min: 550, icon: '✦', name: 'Forge lighting' },
 ]
 
 function hasNumber(value) {
@@ -56,21 +64,15 @@ function lifestyleSignals(day) {
   return count
 }
 
-function stageFor(points) {
-  let result = STAGES[0]
-  for (const stage of STAGES) if (points >= stage.min) result = stage
-  return result
-}
-
-function nextStage(points) {
-  return STAGES.find((stage) => stage.min > points) ?? null
-}
-
-function clampPercent(value) {
-  return Math.max(0, Math.min(100, Math.round(value)))
-}
-
-function todayMoment({ trained, day, name }) {
+function todayMoment({ trained, day, name, style }) {
+  if (style === 'forge') {
+    if (trained) return { type: 'trained', icon: '◆', title: 'Training registered', copy: 'Today’s work added heat to the forge.' }
+    if ((day?.waterOz ?? 0) >= 80) return { type: 'water', icon: '◉', title: 'Recovery supplied', copy: 'Hydration keeps the system ready.' }
+    if ((day?.readingMinutes ?? 0) > 0) return { type: 'reading', icon: '▤', title: 'Focus sharpened', copy: 'Time spent reading reinforced the day.' }
+    if ((day?.proteinGrams ?? 0) > 0 || (day?.calories ?? 0) > 0) return { type: 'nutrition', icon: '◇', title: 'Fuel logged', copy: 'Nutrition added another layer of care.' }
+    if ((day?.sleepHours ?? 0) > 0) return { type: 'sleep', icon: '◒', title: 'Recovery logged', copy: 'Rest is part of the build.' }
+    return { type: 'idle', icon: '○', title: 'Standing ready', copy: `Nothing is due. ${name} keeps everything you have earned.` }
+  }
   if (trained) return { type: 'trained', icon: '🏋️', title: 'Post-workout stretch', copy: 'Your training gave the room some energy today.' }
   if ((day?.waterOz ?? 0) >= 80) return { type: 'water', icon: '💧', title: 'Hydration break', copy: `${name} found the oversized water bottle.` }
   if ((day?.readingMinutes ?? 0) > 0) return { type: 'reading', icon: '📖', title: 'Quiet reading', copy: 'A few pages became a tiny reading session.' }
@@ -79,51 +81,63 @@ function todayMoment({ trained, day, name }) {
   return { type: 'idle', icon: '🌿', title: 'Hanging out', copy: `Nothing is due. ${name} simply keeps what you have already built.` }
 }
 
+function roomState(level) {
+  if (level >= 8) return 'full'
+  if (level >= 4) return 'mid'
+  return 'starter'
+}
+
 export function createCompanionScreen({ storage, clock }) {
   const root = el('div.screen.screen--companion')
   let model = null
 
   async function load() {
-    const [profile, sessions, setLogs, days] = await Promise.all([
+    const [storedProfile, sessions, setLogs, days] = await Promise.all([
       storage.get('profile', 'profile'),
       storage.getAll('sessions'),
       storage.getAll('setLogs'),
       storage.getAll('dayLogs'),
     ])
-
+    const profile = storedProfile ?? { id: 'profile' }
     const finished = sessions.filter((session) => session.endedAt)
     const workingSets = setLogs.filter((set) => !set.isWarmup)
     const lifestyle = days.reduce((sum, day) => sum + lifestyleSignals(day), 0)
     const points = finished.length * 8 + workingSets.length * 2 + lifestyle * 2
-    const stage = stageFor(points)
-    const next = nextStage(points)
+    const style = companionStyle(profile.companionStyle)
+    const { stage, next, percent: growth } = companionGrowth(points, style)
+    const unlocks = style === 'forge' ? FORGE_UNLOCKS : SPROUT_UNLOCKS
     const today = days.find((day) => day.date === clock.today()) ?? { date: clock.today() }
     const trained = finished.some((session) => session.date === clock.today())
-    const previousMin = stage.min
-    const growth = next
-      ? clampPercent(((points - previousMin) / Math.max(1, next.min - previousMin)) * 100)
-      : 100
-    const name = profile?.companionName || 'Pip'
+    const name = profile.companionName || (style === 'forge' ? 'Atlas' : 'Pip')
 
-    // This is only a presentation checkpoint. It never controls growth; the
-    // real logs above do. That lets us celebrate a newly reached form once
-    // without creating a second progression system that can drift.
-    const seenStage = profile?.companionStageSeen ?? null
-    const evolved = Boolean(seenStage && seenStage !== stage.name)
-    if (seenStage !== stage.name) {
-      await storage.put('profile', { ...(profile ?? { id: 'profile' }), companionStageSeen: stage.name })
+    // This checkpoint only controls the one-time celebration. The canonical
+    // workout and lifestyle logs above remain the sole source of progression.
+    const seenStage = profile.companionStageSeen ?? null
+    const seenStyle = profile.companionStageSeenStyle ?? null
+    const evolved = Boolean(seenStage && seenStyle === style && seenStage !== stage.name)
+    if (profile.companionStyle !== style || seenStage !== stage.name || seenStyle !== style) {
+      await storage.put('profile', {
+        ...profile,
+        companionStyle: style,
+        companionStageSeen: stage.name,
+        companionStageSeenStyle: style,
+      })
     }
 
     model = {
       name,
       points,
+      style,
+      styleMeta: COMPANION_STYLES[style],
       stage,
       next,
       growth,
       evolved,
-      unlocked: ROOM_UNLOCKS.filter((item) => points >= item.min),
-      locked: ROOM_UNLOCKS.filter((item) => points < item.min),
-      moment: todayMoment({ trained, day: today, name }),
+      unlocked: unlocks.filter((item) => points >= item.min),
+      locked: unlocks.filter((item) => points < item.min),
+      unlocks,
+      roomState: roomState(stage.level),
+      moment: todayMoment({ trained, day: today, name, style }),
       totals: { sessions: finished.length, sets: workingSets.length, lifestyle },
     }
   }
@@ -136,18 +150,66 @@ export function createCompanionScreen({ storage, clock }) {
     await refresh()
   }
 
+  async function selectStyle(style) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const selected = companionStyle(style)
+    const { stage } = companionGrowth(model?.points ?? 0, selected)
+    await storage.put('profile', {
+      ...profile,
+      companionStyle: selected,
+      companionName: profile.companionName ?? model?.name,
+      companionStageSeen: stage.name,
+      companionStageSeenStyle: selected,
+    })
+    await refresh()
+  }
+
   function habitatProps(m) {
+    if (m.style === 'forge') return null
     return el('div.companion-habitat__props', { 'aria-hidden': 'true' }, m.unlocked.map((item) =>
       el('span.companion-habitat__prop', {
         dataset: { prop: item.key }, text: item.scene,
       })))
   }
 
+  function companionArt(m, className = 'companion-habitat__pet') {
+    if (m.style === 'forge') {
+      return el(`div.${className}.${className}--forge`, {
+        role: 'img',
+        'aria-label': `${m.name}, level ${m.stage.level} ${m.stage.name}`,
+        dataset: { visual: String(m.stage.visual) },
+        style: `--forge-sprites:url("${FORGE_SPRITES}")`,
+      })
+    }
+    return el(`img.${className}`, {
+      src: art(`companion-stage-${m.stage.visual}.png`),
+      alt: `${m.name}, level ${m.stage.level} ${m.stage.name}`,
+    })
+  }
+
   function evolutionSparkles(m) {
     if (!m.evolved) return null
-    return el('div.companion-evolve', { role: 'status', 'aria-label': `${m.name} grew into ${m.stage.name}` }, [
+    return el('div.companion-evolve', { role: 'status', 'aria-label': `${m.name} reached level ${m.stage.level}, ${m.stage.name}` }, [
       ...Array.from({ length: 8 }, (_, index) => el('i', { dataset: { sparkle: String(index + 1) }, 'aria-hidden': 'true' })),
-      el('strong', { text: `${m.stage.name}!` }),
+      el('strong', { text: `Level ${m.stage.level} · ${m.stage.name}` }),
+    ])
+  }
+
+  function styleOption(id) {
+    const selected = model.style === id
+    const meta = COMPANION_STYLES[id]
+    return el('button.companion-style__option', {
+      type: 'button',
+      dataset: { selected: String(selected), style: id },
+      'aria-pressed': String(selected),
+      onclick: () => selectStyle(id),
+    }, [
+      el('span.companion-style__preview', { 'aria-hidden': 'true' }),
+      el('span', {}, [
+        el('strong', { text: meta.label }),
+        el('small', { text: id === 'forge' ? 'Steel · bronze · teal' : 'Warm · playful · leafy' }),
+      ]),
+      el('i', { text: selected ? '✓' : '' }),
     ])
   }
 
@@ -157,28 +219,27 @@ export function createCompanionScreen({ storage, clock }) {
     replace(root, [
       el('header.companion-header', {}, [
         el('div', {}, [
-          el('span.companion-header__eyebrow', { text: 'YOUR COMPANION' }),
+          el('span.companion-header__eyebrow', { text: m.style === 'forge' ? 'YOUR GUARDIAN' : 'YOUR COMPANION' }),
           el('h1.screen__title', { text: m.name }),
-          el('p.companion-header__copy', { text: 'Real-life progress grows this little world. Nothing ever decays.' }),
+          el('p.companion-header__copy', { text: 'Real-life progress shapes this space. Nothing ever decays.' }),
         ]),
-        el('img.companion-header__mark', {
-          src: art('icon-companion.png'), alt: '', 'aria-hidden': 'true',
-        }),
+        companionArt(m, 'companion-header__mark'),
       ]),
 
       el('section.companion-habitat', {
         dataset: {
+          style: m.style,
           stage: m.stage.name.toLowerCase(),
+          level: String(m.stage.level),
           moment: m.moment.type,
           evolved: String(m.evolved),
           room: String(m.unlocked.length),
+          roomState: m.roomState,
         },
       }, [
         el('div.companion-habitat__glow'),
         habitatProps(m),
-        el('img.companion-habitat__pet', {
-          src: m.stage.art, alt: `${m.name}, ${m.stage.name} growth stage`,
-        }),
+        companionArt(m),
         evolutionSparkles(m),
         el('div.companion-moment', {}, [
           el('span.companion-moment__icon', { text: m.moment.icon }),
@@ -193,7 +254,7 @@ export function createCompanionScreen({ storage, clock }) {
         el('div.companion-growth__head', {}, [
           el('div', {}, [
             el('span.companion-growth__label', { text: 'GROWTH' }),
-            el('strong.companion-growth__stage', { text: m.stage.name }),
+            el('strong.companion-growth__stage', { text: `Level ${m.stage.level} · ${m.stage.name}` }),
           ]),
           el('span.companion-growth__next', {
             text: m.next ? `${m.points} / ${m.next.min} care` : `${m.points} care · fully grown`,
@@ -202,16 +263,18 @@ export function createCompanionScreen({ storage, clock }) {
         el('div.companion-growth__bar', {
           role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(m.growth),
         }, [el('span', { style: `width:${m.growth}%` })]),
-        el('p.companion-growth__copy', { text: m.next ? `${m.stage.copy} Next: ${m.next.name}.` : m.stage.copy }),
+        el('p.companion-growth__copy', {
+          text: m.next ? `${m.stage.copy} Next: Level ${m.next.level} · ${m.next.name}.` : m.stage.copy,
+        }),
       ]),
 
       el('section.companion-room', {}, [
         el('div.companion-room__head', {}, [
           el('div', {}, [
-            el('h2', { text: 'Little room' }),
-            el('p', { text: 'Objects unlock from accumulated care, not streaks.' }),
+            el('h2', { text: m.style === 'forge' ? 'Training den' : 'Little room' }),
+            el('p', { text: 'The space upgrades from accumulated care, never streaks.' }),
           ]),
-          el('span.companion-room__count', { text: `${m.unlocked.length}/${ROOM_UNLOCKS.length}` }),
+          el('span.companion-room__count', { text: `${m.unlocked.length}/${m.unlocks.length}` }),
         ]),
         el('div.companion-room__items', {}, [
           ...m.unlocked.map((item) => el('div.companion-room__item', { dataset: { unlocked: 'true' } }, [
@@ -221,6 +284,14 @@ export function createCompanionScreen({ storage, clock }) {
             el('span', { text: '○' }), el('small', { text: `${item.min} care` }),
           ])),
         ]),
+      ]),
+
+      el('section.companion-style', {}, [
+        el('div.companion-style__head', {}, [
+          el('h2', { text: 'Visual style' }),
+          el('p', { text: 'Change the art anytime. Your name and progress stay put.' }),
+        ]),
+        el('div.companion-style__options', {}, [styleOption('forge'), styleOption('sprout')]),
       ]),
 
       el('section.companion-foot', {}, [

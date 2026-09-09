@@ -7,10 +7,11 @@ const root = new URL('../', import.meta.url)
 const backgrounds = [
   'bg-wellness.webp', 'bg-today.webp', 'bg-train.webp', 'bg-progress.webp',
   'habitat-starter.webp', 'habitat-mid.webp', 'habitat-full.webp',
+  'habitat-forge-starter.webp', 'habitat-forge-mid.webp', 'habitat-forge-full.webp',
 ]
 const transparent = [
   'companion-stage-1.png', 'companion-stage-2.png', 'companion-stage-3.png',
-  'companion-stage-4.png', 'companion-stage-5.png', 'icon-companion.png',
+  'companion-stage-4.png', 'companion-stage-5.png', 'companion-forge-stages.png', 'icon-companion.png',
   'icon-progress.png', 'icon-nutrition-ai.png',
 ]
 

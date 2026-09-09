@@ -1889,3 +1889,29 @@ version 0.17.0 with build 13.
 cache and native field identity must advance together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-09 — Companion art is selectable and growth has ten visible levels
+**Phase:** 0.18.0 companion direction
+**Decision:** Forge Guardian is the default companion style: a disciplined blackened-
+steel, bronze, and teal figure that develops through ten distinct forms inside a three-
+state industrial training den. The original Ember Sprout remains selectable in setup and
+directly on Companion. Both styles share one positive-only care total and ten named levels
+at 0, 24, 50, 85, 130, 185, 250, 330, 430, and 550 care. Switching the visual style does
+not reset the name, level, or earned progress.
+**Reasoning:** The original art was likable but read too cute for the intended adult
+strength-training product. More frequent early forms make growth perceptible within normal
+use rather than asking the user to wait roughly a month for visible change. A preference
+preserves the approved older art without forcing it on users who want the more mature
+direction.
+**Confidence:** specified by Cory; exact visual motifs and care spacing implemented from
+the existing positive-only progression contract.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.18.0 (14)
+**Phase:** 0.18.0 companion direction
+**Decision:** `src/version.js` carries `0.18.0 (14)` and the native wrapper uses marketing
+version 0.18.0 with build 14.
+**Reasoning:** Companion runtime modules and production art changed, so installed PWA
+caches and the native field build must advance together.
+**Confidence:** implementation.
+**Needs Cory:** no

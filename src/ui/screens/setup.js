@@ -6,6 +6,7 @@
  * selected program and Today aggregates repeated exercises across that week.
  */
 
+import { companionStyle } from '../../domain/companion-growth.js'
 import { el, replace } from '../dom.js'
 
 const STEP_COUNT = 5
@@ -98,13 +99,27 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       type: 'button', dataset: { selected: String(draft.units === value) },
       onclick: () => { draft.units = value; render() },
     }, [label])
+    const styleButton = (value, label, copy) => el('button.setup__companionchoice', {
+      type: 'button', dataset: { selected: String(draft.companionStyle === value), style: value },
+      'aria-pressed': String(draft.companionStyle === value),
+      onclick: () => { draft.companionStyle = value; render() },
+    }, [
+      el('span.setup__companionpreview', { 'aria-hidden': 'true' }),
+      el('span', {}, [el('strong', { text: label }), el('small', { text: copy })]),
+      el('i', { text: draft.companionStyle === value ? '✓' : '' }),
+    ])
 
     return [
-      ...heading('STEP 1 OF 5', 'MAKE IT YOURS', 'Name is optional. Pick the units you want everywhere else.'),
+      ...heading('STEP 1 OF 5', 'MAKE IT YOURS', 'Name is optional. Pick your units and the companion style that fits.'),
       el('section.setup__card', {}, [
         el('label.setup__label', { text: 'Name' }), name,
         el('span.setup__label', { text: 'Units' }),
         el('div.setup__choices', {}, [unitButton('imperial', 'LB / MI'), unitButton('metric', 'KG / KM')]),
+        el('span.setup__label', { text: 'Companion style' }),
+        el('div.setup__companionchoices', {}, [
+          styleButton('forge', 'Forge Guardian', 'Mature steel, bronze, and teal'),
+          styleButton('sprout', 'Ember Sprout', 'Warm, playful, and leafy'),
+        ]),
       ]),
     ]
   }
@@ -219,6 +234,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       ...profile,
       name: String(draft.name ?? '').trim(),
       units: draft.units,
+      companionStyle: companionStyle(draft.companionStyle),
       planTargetSessionsPerWeek: draft.sessionsPerWeek,
       activitySchedule: clone(draft.schedule),
       dailyActivityIds,
@@ -286,6 +302,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     draft = {
       name: profile?.name ?? '',
       units: profile?.units ?? 'imperial',
+      companionStyle: companionStyle(profile?.companionStyle),
       sessionsPerWeek: profile?.planTargetSessionsPerWeek ?? 4,
       programId,
       weights,

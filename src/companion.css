@@ -16,6 +16,14 @@
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.25));
 }
+.companion-header__mark--forge {
+  width: 42px;
+  height: auto;
+  aspect-ratio: 3 / 5;
+  background-image: var(--forge-sprites);
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
+}
 .companion-header__eyebrow,
 .companion-growth__label {
   color: rgba(255,255,255,.52);
@@ -57,6 +65,23 @@
   background-image:
     linear-gradient(180deg, rgba(7,31,43,.05), rgba(7,31,43,.40)),
     url('../art/tempered/habitat-full.webp');
+}
+.companion-habitat[data-style='forge'] {
+  min-height: 470px;
+  background-image:
+    linear-gradient(180deg, rgba(5,16,24,.02), rgba(4,15,22,.34)),
+    url('../art/tempered/habitat-forge-starter.webp');
+  background-position: center, center 58%;
+}
+.companion-habitat[data-style='forge'][data-room-state='mid'] {
+  background-image:
+    linear-gradient(180deg, rgba(5,16,24,.02), rgba(4,15,22,.34)),
+    url('../art/tempered/habitat-forge-mid.webp');
+}
+.companion-habitat[data-style='forge'][data-room-state='full'] {
+  background-image:
+    linear-gradient(180deg, rgba(5,16,24,.02), rgba(4,15,22,.34)),
+    url('../art/tempered/habitat-forge-full.webp');
 }
 .companion-habitat::after {
   content: '';
@@ -128,6 +153,35 @@
   filter: drop-shadow(0 12px 18px rgba(0,0,0,.28));
   animation: companion-breathe 3.4s ease-in-out infinite;
 }
+.companion-habitat__pet--forge {
+  bottom: 68px;
+  width: min(58%, 220px);
+  height: auto;
+  aspect-ratio: 3 / 5;
+  background-image: var(--forge-sprites);
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
+}
+.companion-habitat__pet--forge[data-visual='1'],
+.companion-header__mark--forge[data-visual='1'] { background-position: 0% 0%; }
+.companion-habitat__pet--forge[data-visual='2'],
+.companion-header__mark--forge[data-visual='2'] { background-position: 25% 0%; }
+.companion-habitat__pet--forge[data-visual='3'],
+.companion-header__mark--forge[data-visual='3'] { background-position: 50% 0%; }
+.companion-habitat__pet--forge[data-visual='4'],
+.companion-header__mark--forge[data-visual='4'] { background-position: 75% 0%; }
+.companion-habitat__pet--forge[data-visual='5'],
+.companion-header__mark--forge[data-visual='5'] { background-position: 100% 0%; }
+.companion-habitat__pet--forge[data-visual='6'],
+.companion-header__mark--forge[data-visual='6'] { background-position: 0% 100%; }
+.companion-habitat__pet--forge[data-visual='7'],
+.companion-header__mark--forge[data-visual='7'] { background-position: 25% 100%; }
+.companion-habitat__pet--forge[data-visual='8'],
+.companion-header__mark--forge[data-visual='8'] { background-position: 50% 100%; }
+.companion-habitat__pet--forge[data-visual='9'],
+.companion-header__mark--forge[data-visual='9'] { background-position: 75% 100%; }
+.companion-habitat__pet--forge[data-visual='10'],
+.companion-header__mark--forge[data-visual='10'] { background-position: 100% 100%; }
 @keyframes companion-breathe {
   0%,100% { transform: translateX(-50%) translateY(0) scale(1); }
   50% { transform: translateX(-50%) translateY(-4px) scale(1.012); }
@@ -234,6 +288,7 @@
 
 .companion-growth,
 .companion-room,
+.companion-style,
 .companion-foot {
   display: grid;
   gap: 13px;
@@ -265,6 +320,50 @@
 .companion-room__item > span { font-size: 24px; }
 .companion-room__item small { color: rgba(255,255,255,.64); font-size: 9px; line-height: 1.2; }
 .companion-room__item[data-unlocked='false'] { opacity: .42; }
+.companion-style__head h2 { margin: 0 0 3px; font-size: 18px; }
+.companion-style__head p { margin: 0; color: rgba(255,255,255,.60); font-size: 11px; line-height: 1.4; }
+.companion-style__options { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.companion-style__option {
+  min-width: 0;
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr) 18px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 17px;
+  background: rgba(255,255,255,.045);
+  color: white;
+  text-align: left;
+}
+.companion-style__option[data-selected='true'] {
+  border-color: rgba(107,226,194,.62);
+  background: rgba(58,151,139,.14);
+  box-shadow: inset 0 0 0 1px rgba(107,226,194,.12);
+}
+.companion-style__option > span:nth-child(2) { min-width: 0; }
+.companion-style__option strong,
+.companion-style__option small { display: block; }
+.companion-style__option strong { font-size: 11px; line-height: 1.25; }
+.companion-style__option small { margin-top: 4px; color: rgba(255,255,255,.50); font-size: 8px; line-height: 1.25; }
+.companion-style__option i { color: #70dfc0; font-size: 14px; font-style: normal; }
+.companion-style__preview {
+  width: 42px;
+  height: 62px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.companion-style__option[data-style='forge'] .companion-style__preview {
+  aspect-ratio: 3 / 5;
+  background-image: url('../art/tempered/companion-forge-stages.png');
+  background-position: 100% 100%;
+  background-size: 500% 200%;
+}
+.companion-style__option[data-style='sprout'] .companion-style__preview {
+  background-image: url('../art/tempered/companion-stage-5.png');
+  background-size: contain;
+}
 .companion-foot__stats { display: flex; flex-wrap: wrap; gap: 7px; }
 .companion-foot__stats span { padding: 7px 10px; border-radius: 999px; background: rgba(255,255,255,.055); color: rgba(255,255,255,.66); font-size: 10px; }
 .companion-name { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
@@ -275,7 +374,9 @@
 
 @media (max-width: 390px) {
   .companion-habitat { min-height: 390px; }
+  .companion-habitat[data-style='forge'] { min-height: 440px; }
   .companion-room__items { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .companion-style__options { grid-template-columns: 1fr; }
   .companion-habitat__prop[data-prop='books'],
   .companion-habitat__prop[data-prop='dumbbell'] { bottom: 166px; }
 }

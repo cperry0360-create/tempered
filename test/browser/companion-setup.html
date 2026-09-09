@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — companion setup preference</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { createSetupScreen } from '../../src/ui/screens/setup.js'
+
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const settle = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms))
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    try {
+      const storage = createMemoryStorage()
+      await storage.open()
+      await storage.put('profile', { id: 'profile', setupComplete: false })
+      let finished = false
+      const setup = createSetupScreen({
+        mount: q('#app'),
+        storage,
+        clock: fixedClock(new Date(2026, 8, 9, 9, 0, 0)),
+        activities: [],
+        onDone: async () => { finished = true },
+      })
+      await setup.start()
+
+      check('Setup offers both visual styles', Boolean(q('[data-style="forge"]') && q('[data-style="sprout"]')))
+      check('Forge Guardian is selected by default', q('[data-style="forge"]')?.dataset.selected === 'true')
+      check('Both setup options show first-party art previews',
+        getComputedStyle(q('[data-style="forge"] .setup__companionpreview')).backgroundImage !== 'none'
+          && getComputedStyle(q('[data-style="sprout"] .setup__companionpreview')).backgroundImage !== 'none')
+
+      q('[data-style="sprout"]')?.click()
+      await settle()
+      check('Setup visual preference can be changed', q('[data-style="sprout"]')?.dataset.selected === 'true')
+
+      for (let step = 0; step < 5; step += 1) {
+        q('.setup__next')?.click()
+        await settle()
+      }
+      const profile = await storage.get('profile', 'profile')
+      check('Chosen style is saved with setup', finished && profile?.setupComplete === true && profile?.companionStyle === 'sprout', profile?.companionStyle)
+
+      await setup.start({ rerun: true })
+      check('Saved style is restored when setup is reopened', q('[data-style="sprout"]')?.dataset.selected === 'true')
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+    } catch (error) {
+      check('Companion setup harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'companion-setup', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

@@ -99,7 +99,8 @@
       const screen = await waitFor('[data-nutrition-screen]')
       check('Nutrition opens a dedicated persistent sub-screen', Boolean(screen))
       check('Nutrition screen has a time field plus five nutrient fields', qa('[data-nutrition-form] input').length === 6, qa('[data-nutrition-form] input').length)
-      check('Legacy totals remain visible as an earlier total', /100 kcal/i.test(q('[data-nutrition-carryover]')?.textContent ?? '') && /10g protein/i.test(q('[data-nutrition-carryover]')?.textContent ?? ''))
+      const carryover = await waitFor('[data-nutrition-carryover]')
+      check('Legacy totals remain visible as an earlier total', /100 kcal/i.test(carryover?.textContent ?? '') && /10g protein/i.test(carryover?.textContent ?? ''))
 
       q('[data-calorie-ai="paste"]')?.click()
       await settle(120)

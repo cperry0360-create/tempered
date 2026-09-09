@@ -16,6 +16,7 @@ struct TemperedWebView: UIViewRepresentable {
 
         let userContent = WKUserContentController()
         userContent.add(context.coordinator, name: "temperedHealth")
+        userContent.add(context.coordinator, name: "temperedWakeLock")
         userContent.addUserScript(WKUserScript(
             source: "window.__TEMPERED_NATIVE_IOS__ = true;",
             injectionTime: .atDocumentStart,
@@ -61,9 +62,17 @@ struct TemperedWebView: UIViewRepresentable {
             if let foregroundObserver {
                 NotificationCenter.default.removeObserver(foregroundObserver)
             }
+            DispatchQueue.main.async {
+                UIApplication.shared.isIdleTimerDisabled = false
+            }
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "temperedWakeLock" {
+                let active = (message.body as? [String: Any])?["active"] as? Bool ?? false
+                UIApplication.shared.isIdleTimerDisabled = active
+                return
+            }
             guard
                 message.name == "temperedHealth",
                 let body = message.body as? [String: Any],

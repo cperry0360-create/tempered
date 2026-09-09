@@ -1807,3 +1807,61 @@ backdrop-filter creates a separate compositing layer even when JavaScript preser
 DOM nodes.
 **Confidence:** measured from the implementation loop and Cory's iPhone recording.
 **Needs Cory:** no
+
+## 2026-09-09 — Planner tasks persist until completed and open into details
+**Phase:** 0.16.0 planning and navigation
+**Decision:** Incomplete personal and work tasks retain one canonical record and appear on
+later dates until checked off. Tapping a row opens the full title, notes, task type, and an
+optional due date. Train shows the exercise library as one button leading to a dedicated
+searchable screen, and the product is portrait-only across the PWA and iPhone wrapper.
+**Reasoning:** A clipped title cannot carry real work, and copying unfinished tasks into
+each day would corrupt completion history. The large inline exercise catalogue made Train
+needlessly long for a secondary path.
+**Confidence:** specified by Cory.
+**Needs Cory:** no
+
+## 2026-09-09 — Health normal use is one tap and setup owns repair details
+**Phase:** 0.16.0 Health repair
+**Decision:** Today launches the saved Tempered Health Shortcut directly. The Shortcut's
+URL handoff imports on launch with no second tap. Setup is a dedicated screen reachable
+from Today, Settings, and Body Metrics. It documents the required Health Sample to numeric
+Value/Duration conversion, includes all body-metric tags, and retains paste and manual
+fallbacks.
+**Reasoning:** iOS does not permit a static web app to silently install a Shortcut or read
+the clipboard at launch. A Shortcut-initiated URL handoff is the reliable one-action path.
+The reported Calculate Statistics failure came from passing objects or Text where the
+action requires numbers.
+**Confidence:** measured from the error screenshot and implementation; platform boundary
+verified against Apple's Shortcuts documentation.
+**Needs Cory:** no
+
+## 2026-09-09 — Active workouts show elapsed time and hold the display awake
+**Phase:** 0.16.0 workout session
+**Decision:** Every open workout logger displays an elapsed timer. It requests the Screen
+Wake Lock API while visible, re-requests it after foregrounding, and releases it on close.
+The iOS wrapper mirrors the lifecycle with `UIApplication.isIdleTimerDisabled`.
+**Reasoning:** Rest and session context should remain readable without repeatedly waking
+the phone, but the display must return to normal system behavior as soon as logging ends.
+**Confidence:** specified by Cory.
+**Needs Cory:** no
+
+## 2026-09-09 — Light legs adds calves and rotates the ab slot
+**Phase:** 0.16.0 training program
+**Decision:** Minimal Legs + Abs adds three sets of Standing Calf Raise. Crunch is replaced
+by Ab-Wheel Rollout on odd program weeks and Cable Crunch on even program weeks. A
+versioned program migration carries this change into existing installs while preserving
+configured weights and the active program's start date.
+**Reasoning:** Weekly alternation is deterministic, visible before logging, and keeps one
+stable program slot identity. Updating only seed JSON would strand existing users on the
+old stored plan.
+**Confidence:** specified by Cory; odd/even starting order inferred from the order named.
+**Needs Cory:** no
+
+## 2026-09-09 — Release 0.16.0 (12)
+**Phase:** 0.16.0 continuity and workout usability
+**Decision:** `src/version.js` carries `0.16.0 (12)` and the native wrapper uses marketing
+version 0.16.0 with build 12.
+**Reasoning:** The release changes product behavior and must re-key the installed PWA
+cache. Keeping native and web identities aligned makes field reports unambiguous.
+**Confidence:** implementation.
+**Needs Cory:** no

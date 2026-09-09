@@ -437,6 +437,20 @@ body::before {
   line-height: 1.05;
 }
 .sessionbar__meta { margin: 0; font-size: var(--text-sm); color: var(--text-2); }
+.sessionbar__elapsed {
+  flex: none;
+  min-width: 76px;
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.sessionbar__elapsed-label { color: var(--text-3); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.sessionbar__elapsed-value { color: var(--acid); font-size: var(--text-lg); line-height: 1; }
 
 .exercise { padding-bottom: var(--s4); }
 

@@ -108,9 +108,45 @@ export async function ensureProfile(storage, clock, defaults = {}) {
  * @returns {Promise<{programs: number, started: string|null}>}
  */
 export async function seedPrograms(storage, catalogue, clock) {
-  const existing = new Set((await storage.getAll('programs')).map((p) => p.id))
-  const fresh = catalogue.programs.filter((p) => !existing.has(p.id))
+  const stored = new Map((await storage.getAll('programs')).map((p) => [p.id, p]))
+  const fresh = catalogue.programs.filter((p) => !stored.has(p.id))
   await storage.putAll('programs', fresh)
+
+  // Seeded programs can evolve between releases. Apply only explicitly
+  // versioned upgrades and carry forward any starting weights the user set in
+  // onboarding. Program state is separate, so its start date and current week
+  // remain untouched.
+  for (const latest of catalogue.programs) {
+    const previous = stored.get(latest.id)
+    if (!previous || (previous.schemaVersion ?? 1) >= (latest.schemaVersion ?? 1)) continue
+
+    const weights = new Map()
+    for (const day of previous.days ?? []) {
+      for (const slot of day.exercises ?? []) {
+        if (typeof slot.weight === 'number') weights.set(slot.exerciseId, slot.weight)
+        for (const choice of slot.rotation ?? []) {
+          if (typeof choice.weight === 'number') weights.set(choice.exerciseId, choice.weight)
+        }
+      }
+    }
+    const upgraded = {
+      ...latest,
+      days: (latest.days ?? []).map((day) => ({
+        ...day,
+        exercises: (day.exercises ?? []).map((slot) => ({
+          ...slot,
+          ...(weights.has(slot.exerciseId) ? { weight: weights.get(slot.exerciseId) } : {}),
+          ...(Array.isArray(slot.rotation) ? {
+            rotation: slot.rotation.map((choice) => ({
+              ...choice,
+              ...(weights.has(choice.exerciseId) ? { weight: weights.get(choice.exerciseId) } : {}),
+            })),
+          } : {}),
+        })),
+      })),
+    }
+    await storage.put('programs', upgraded)
+  }
 
   const state = await storage.getAll('programState')
   if (state.some((row) => row.active)) return { programs: fresh.length, started: null }

@@ -16,6 +16,7 @@
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
     import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+    import { installProgressDashboardRuntime } from '../../src/ui/progress-dashboard-runtime.js'
     import {
       HEALTH_SNAPSHOT_PREFIX, healthImportUrl, installHealthShortcutRuntime,
     } from '../../src/ui/health-shortcut-runtime.js'
@@ -48,6 +49,7 @@
       const clock = fixedClock(new Date(2026, 8, 8, 10, 0, 0))
       const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       installCalorieAiRuntime()
+      installProgressDashboardRuntime(context)
 
       // Recreate the preferred Shortcuts URL handoff on the local harness URL.
       const handoff = new URL(healthImportUrl(querySnapshot, window.location.href))
@@ -60,76 +62,54 @@
       check('URL handoff removes health payload from address bar after import', !window.location.search.includes('temperedHealth'), window.location.search)
 
       await context.app.show('today')
-      const button = await waitFor('.screen--today [data-health-bridge="import"]')
-      check('Today keeps the clipboard Health fallback', Boolean(button), button?.textContent ?? 'missing')
+      const run = await waitFor('.screen--today [data-health-bridge="run"]')
+      const setup = q('.screen--today [data-health-bridge="setup"]')
+      check('Today has a direct one-tap Shortcut launcher', /RUN HEALTH SYNC/i.test(run?.textContent ?? '') && /^shortcuts:/.test(run?.getAttribute('href') ?? ''), run?.getAttribute('href') ?? 'missing')
+      check('Today keeps setup separate from normal sync', Boolean(setup), setup?.textContent ?? 'missing')
       const stableSnapshot = q('[data-lifestyle="snapshot"]')
       await settle(320)
       check('Health and Nutrition helpers do not rebuild the Today card while idle', q('[data-lifestyle="snapshot"]') === stableSnapshot)
-      check('Health button remains the same working DOM node while idle', q('.screen--today [data-health-bridge="import"]') === button)
-      button?.click()
-      check('Health Import responds immediately with a visible sheet', Boolean(q('[data-health-import-overlay]')))
-      await settle(220)
-      const day = await context.daily.dayLog('2026-09-08')
-      check('Clipboard fallback imports steps through the canonical day log', day.steps === 10527, day.steps)
-      check('Shortcut imports decimal sleep hours', day.sleepHours === 7.75, day.sleepHours)
-      check('Shortcut imports weight', day.bodyMetrics?.weight === 164.2, day.bodyMetrics?.weight)
-      check('Shortcut stores resting heart rate for dashboard widgets', day.healthMetrics?.restingHr === 49, day.healthMetrics?.restingHr)
-      check('Shortcut stores HRV', day.healthMetrics?.hrvMs === 41, day.healthMetrics?.hrvMs)
-      check('Shortcut stores respiratory rate', day.healthMetrics?.respiratoryRate === 12, day.healthMetrics?.respiratoryRate)
-      check('Shortcut stores oxygen saturation', day.healthMetrics?.spo2 === 97, day.healthMetrics?.spo2)
-      check('Shortcut stores body temperature', day.healthMetrics?.bodyTempC === 36.4, day.healthMetrics?.bodyTempC)
-      check('Health import is identified as a Shortcuts bridge', day.healthBridge?.source === 'shortcuts', day.healthBridge?.source)
+      check('Health controls remain the same working DOM nodes while idle', q('.screen--today [data-health-bridge="run"]') === run && q('.screen--today [data-health-bridge="setup"]') === setup)
 
-      // Re-importing the same snapshot must replace steps/sleep/weight, not add them.
-      await context.app.show('today')
-      const again = await waitFor('.screen--today [data-health-bridge="import"]')
-      again?.click()
-      await settle(180)
-      const repeated = await context.daily.dayLog('2026-09-08')
-      check('Repeated Health sync does not double steps', repeated.steps === 10527, repeated.steps)
-      check('Repeated Health sync does not double sleep', repeated.sleepHours === 7.75, repeated.sleepHours)
+      setup?.click()
+      const setupScreen = await waitFor('[data-health-setup-overlay]')
+      check('Setup opens on the first tap as a dedicated screen', Boolean(setupScreen))
+      check('Setup diagnoses the observed Calculate Statistics conversion failure', /Conversion Error/i.test(setupScreen?.textContent ?? '') && /Get Details of Health Samples/i.test(setupScreen?.textContent ?? ''))
+      check('Setup makes the automatic URL handoff the normal path', /no Paste button and no second Import tap/i.test(setupScreen?.textContent ?? ''))
+      check('Setup includes all five Progress body metrics', ['Resting heart rate', 'HRV', 'Respiration', 'SpO₂', 'Body temperature'].every((label) => setupScreen?.textContent?.includes(label)))
+      check('Setup offers exact instructions and the Shortcut editor', Boolean(q('[data-health-bridge="recipe"]')) && Boolean(q('[data-health-bridge="create"]')))
 
-      // Installed iPhone PWAs can deny programmatic clipboard reads even when
-      // the user tapped the button. The fallback must offer a real paste field,
-      // not merely change the button label.
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: { async readText() { throw new Error('clipboard permission denied') }, async writeText() {} },
-      })
-      await context.app.show('today')
-      const denied = await waitFor('.screen--today [data-health-bridge="import"]')
-      denied?.click()
-      const pasteSheet = await waitFor('[data-health-import-overlay]')
-      check('Denied clipboard access opens an iPhone-friendly paste sheet', Boolean(pasteSheet))
-      const manualSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11888\nSLEEP=8.25\nRESTING_HR=48`
+      const manualSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11,888 steps\nSLEEP=8.25 hours\nWEIGHT_LB=164.2 lb\nRESTING_HR=48 bpm\nHRV_MS=42 ms\nRESP_RATE=12 breaths/min\nSPO2=0.98\nBODY_TEMP_F=98.6 F`
       const pasteInput = q('[data-health-import-input]')
       if (pasteInput) pasteInput.value = manualSnapshot
       q('[data-health-import-submit]')?.click()
       await settle(240)
       const manual = await context.daily.dayLog('2026-09-08')
       check('Manual paste fallback imports through the canonical day log', manual.steps === 11888 && manual.sleepHours === 8.25, `${manual.steps} steps · ${manual.sleepHours} h`)
-      check('Manual paste fallback closes after a successful import', !q('[data-health-import-overlay]'))
+      check('Unit-formatted weight imports', manual.bodyMetrics?.weight === 164.2, manual.bodyMetrics?.weight)
+      check('Body metrics populate from unit-formatted Shortcut values', manual.healthMetrics?.restingHr === 48 && manual.healthMetrics?.hrvMs === 42 && manual.healthMetrics?.respiratoryRate === 12, JSON.stringify(manual.healthMetrics))
+      check('Fractional SpO2 normalizes to percent', manual.healthMetrics?.spo2 === 98, manual.healthMetrics?.spo2)
+      check('Fahrenheit body temperature normalizes to Celsius', manual.healthMetrics?.bodyTempC === 37, manual.healthMetrics?.bodyTempC)
+      check('Health import is identified as a Shortcuts bridge', manual.healthBridge?.source === 'shortcuts', manual.healthBridge?.source)
 
-      // Some installed iPhone versions leave readText pending forever. The
-      // manual sheet must remain usable instead of leaving a disabled button.
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: { readText() { return new Promise(() => {}) }, async writeText() {} },
-      })
-      await context.app.show('today')
-      const pending = await waitFor('.screen--today [data-health-bridge="import"]')
-      pending?.click()
-      check('A pending iPhone clipboard request still opens the paste sheet synchronously', Boolean(q('[data-health-import-overlay]')))
-      await settle(140)
-      check('The paste sheet stays available while iOS clipboard access is pending', Boolean(q('[data-health-import-overlay]')))
-      check('The underlying Health button is not left disabled', pending?.disabled === false)
-      q('[data-health-import-cancel]')?.click()
-      check('The pending clipboard sheet can be cancelled', !q('[data-health-import-overlay]'))
+      // Re-importing replacement values never doubles them.
+      q('[data-health-import-submit]')?.click()
+      await settle(180)
+      const repeated = await context.daily.dayLog('2026-09-08')
+      check('Repeated Health sync does not double steps or sleep', repeated.steps === 11888 && repeated.sleepHours === 8.25, `${repeated.steps}/${repeated.sleepHours}`)
+
+      q('[data-health-setup-close]')?.click()
+      check('Health Setup closes back to the app', !q('[data-health-setup-overlay]'))
+
+      await context.app.show('history')
+      await waitFor('[data-widget="body"]')
+      check('Progress Body metrics renders the imported Health values', /48/.test(q('[data-widget="body"]')?.textContent ?? '') && /42/.test(q('[data-widget="body"]')?.textContent ?? '') && /98/.test(q('[data-widget="body"]')?.textContent ?? ''), q('[data-widget="body"]')?.textContent ?? 'missing')
+      check('Body metrics card is never a dead end', Boolean(q('[data-widget="body"] [data-health-setup="progress"]')))
 
       await context.app.show('settings')
       const settings = await waitFor('[data-health-bridge="settings"]')
-      check('Settings explains preferred one-tap and reliable fallback', /one-tap handoff/i.test(settings?.textContent ?? '') && /fallback/i.test(settings?.textContent ?? ''), settings?.textContent ?? 'missing')
-      check('Settings offers the copyable Shortcut recipe', Boolean(q('[data-health-bridge="recipe"]')))
+      check('Settings puts a short Apple Health entry card at the top', settings?.previousElementSibling?.classList.contains('screen__title') === true, settings?.textContent ?? 'missing')
+      check('Settings opens the dedicated Health Setup instead of burying the recipe', Boolean(settings?.querySelector('[data-health-bridge="setup"]')))
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
       check('Health bridge harness threw', false, String(error?.stack ?? error).slice(0, 900))

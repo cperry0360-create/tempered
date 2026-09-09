@@ -57,6 +57,35 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   /** @type {string|null} */ let openPanel = null   // `${exerciseId}:${panel}`
   let confirmingFinish = false
   let ticker
+  let activeSince = null
+  let wakeLock = null
+
+  function tellNativeWorkoutActive(active) {
+    try {
+      window.webkit?.messageHandlers?.temperedWakeLock?.postMessage({ active })
+    } catch { /* The browser wake lock remains available outside the wrapper. */ }
+  }
+
+  async function requestWorkoutWakeLock() {
+    if (activeSince === null || document.visibilityState !== 'visible' || wakeLock) return
+    try {
+      wakeLock = await navigator.wakeLock?.request?.('screen') ?? null
+      wakeLock?.addEventListener?.('release', () => { wakeLock = null }, { once: true })
+    } catch { /* iOS may decline; the native wrapper has its own idle-timer bridge. */ }
+  }
+
+  function activateWorkoutScreen() {
+    activeSince = activeSince ?? timeSource.now()
+    tellNativeWorkoutActive(true)
+    requestWorkoutWakeLock()
+  }
+
+  function releaseWorkoutWakeLock() {
+    tellNativeWorkoutActive(false)
+    const held = wakeLock
+    wakeLock = null
+    held?.release?.().catch?.(() => {})
+  }
 
   function persistDraft() {
     if (!session) return
@@ -68,11 +97,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       isFirstOfDay,
       rest,
       openPanel,
+      activeSince,
     })
   }
 
   function checkpointWhenHidden() {
     if (document.visibilityState === 'hidden') persistDraft()
+    else requestWorkoutWakeLock()
   }
   function checkpointOnPageHide() { persistDraft() }
   document.addEventListener('visibilitychange', checkpointWhenHidden)
@@ -95,6 +126,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   }
 
   function tick() {
+    const elapsed = root.querySelector('[data-session-elapsed]')
+    if (elapsed && activeSince !== null) {
+      elapsed.textContent = clock(Math.max(0, (timeSource.now() - activeSince) / 1000))
+    }
     if (!rest) return
     const remaining = Math.max(0, (rest.endsAt - timeSource.now()) / 1000)
     const node = root.querySelector(`[data-rest="${rest.exerciseId}"]`)
@@ -551,6 +586,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
             text: [session?.weekLabel, `${loggedCount()} sets logged`].filter(Boolean).join(' · '),
           }),
         ]),
+        el('div.sessionbar__elapsed', { 'aria-label': 'Workout elapsed time' }, [
+          el('span.sessionbar__elapsed-label', { text: 'ELAPSED' }),
+          el('strong.sessionbar__elapsed-value', {
+            dataset: { sessionElapsed: 'true' },
+            text: clock(Math.max(0, (timeSource.now() - (activeSince ?? timeSource.now())) / 1000)),
+          }),
+        ]),
       ]),
 
       session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — this week is recovery, and it is half the work.' }),
@@ -620,6 +662,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
     async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
+      activeSince = timeSource.now()
+      activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       plan = []
       loggedHere = []
@@ -701,6 +745,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     },
 
     async resume(draft) {
+      activeSince = Number.isFinite(draft.activeSince) ? draft.activeSince : timeSource.now()
+      activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       session = { ...draft.session }
       plan = Array.isArray(draft.plan) ? draft.plan : []
@@ -742,6 +788,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     destroy() {
       clearInterval(ticker)
       ticker = undefined
+      releaseWorkoutWakeLock()
       document.removeEventListener('visibilitychange', checkpointWhenHidden)
       window.removeEventListener('pagehide', checkpointOnPageHide)
     },

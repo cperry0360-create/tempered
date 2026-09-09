@@ -223,6 +223,16 @@ export function installProgressDashboardRuntime(context) {
         grid.append(item)
       }
       card.append(grid)
+      const hasAnyMetric = metrics.some(([, value]) => Number.isFinite(value))
+      const setup = document.createElement('button')
+      setup.type = 'button'
+      setup.className = 'progress-widget__health-setup'
+      setup.dataset.healthSetup = 'progress'
+      setup.textContent = hasAnyMetric ? 'UPDATE HEALTH SYNC' : 'SET UP HEALTH SYNC'
+      setup.onclick = () => window.dispatchEvent(new CustomEvent('tempered:open-health-setup', {
+        detail: { trigger: setup },
+      }))
+      card.append(setup)
     } else if (id === 'consistency') {
       headline(card, `${data.habitRate}%`, `${data.range}-day configured lifestyle completion`)
       const bar = document.createElement('div')
@@ -419,11 +429,14 @@ export function installProgressDashboardRuntime(context) {
     const target = event.target instanceof Element ? event.target : null
     if (target?.closest('.progress-range__button, .progress-views .segmented__option')) schedule()
   }
+  const healthImported = () => schedule()
   window.addEventListener('tempered:screen-shown', screenShown)
+  window.addEventListener('tempered:health-imported', healthImported)
   mount.addEventListener('click', progressControlClicked)
   schedule()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
+    window.removeEventListener('tempered:health-imported', healthImported)
     mount.removeEventListener('click', progressControlClicked)
   }
 }

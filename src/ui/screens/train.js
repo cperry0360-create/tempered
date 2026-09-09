@@ -20,6 +20,7 @@ import { lbs, since } from '../format.js'
 export function createTrainScreen({ workout, storage, clock, onStart }) {
   const root = el('div.screen.screen--train')
   let query = ''
+  let libraryOpen = false
   /** @type {{program: any, week: number, deload: boolean}|null} */ let active = null
   /** @type {any} */ let guide = null
   /** @type {any} */ let weekView = null
@@ -146,6 +147,32 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
       ? exercises.filter((e) => `${e.name} ${e.group ?? ''} ${e.pattern ?? ''}`.toLowerCase().includes(query))
       : exercises
 
+    if (libraryOpen) {
+      replace(root, [
+        el('header.train-library-header', {}, [
+          el('button.train-library-header__back', {
+            type: 'button', 'aria-label': 'Back to Train',
+            onclick: () => { libraryOpen = false; query = ''; render() },
+          }, ['‹']),
+          el('div', {}, [
+            el('span.train-library-header__eyebrow', { text: 'TRAIN' }),
+            el('h1.screen__title', { text: 'Exercise library' }),
+          ]),
+        ]),
+        el('section.block.train-library-screen', { dataset: { exerciseLibrary: 'screen' } }, [
+          el('p.block__hint', { text: 'Search the library or tap any movement to log it on its own.' }),
+          el('input.search', {
+            type: 'search', placeholder: 'Search exercises', value: query,
+            'aria-label': 'Search exercises', dataset: { search: 'library' },
+            oninput: (event) => { query = event.target.value.trim().toLowerCase(); render() },
+          }),
+          el('div.library', {}, filtered.map(exerciseRow)),
+          filtered.length === 0 && el('p.block__hint', { text: 'Nothing matches that yet.' }),
+        ]),
+      ])
+      return
+    }
+
     replace(root, [
       el('h1.screen__title', { text: 'Train' }),
 
@@ -157,15 +184,17 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
       ]),
 
       el('section.block', {}, [
-        el('h2.block__title', { text: 'Exercise library' }),
-        el('p.block__hint', { text: 'Tap any exercise to work it on its own.' }),
-        el('input.search', {
-          type: 'search', placeholder: 'Search exercises', value: query,
-          'aria-label': 'Search exercises', dataset: { search: 'library' },
-          oninput: (event) => { query = event.target.value.trim().toLowerCase(); render() },
-        }),
-        el('div.library', {}, filtered.map(exerciseRow)),
-        filtered.length === 0 && el('p.block__hint', { text: 'Nothing matches that yet.' }),
+        el('button.train-library-link', {
+          type: 'button', dataset: { exerciseLibrary: 'open' },
+          onclick: () => { libraryOpen = true; query = ''; render() },
+        }, [
+          el('span.train-library-link__icon', {}, [icon('train')]),
+          el('span.train-library-link__main', {}, [
+            el('span.train-library-link__title', { text: 'Exercise library' }),
+            el('span.train-library-link__meta', { text: `${exercises.length} movements · Search or start one exercise` }),
+          ]),
+          el('span.train-library-link__arrow', { 'aria-hidden': 'true', text: '›' }),
+        ]),
       ]),
     ])
   }
@@ -192,6 +221,8 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     },
 
     async refresh() {
+      libraryOpen = false
+      query = ''
       active = await workout.activeProgram()
       todayDay = (await workout.todayTasks())?.day ?? null
       guide = await workout.programGuide()

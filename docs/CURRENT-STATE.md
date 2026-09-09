@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.15.0 (11)
+**Current release:** 0.16.0 (12)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -35,8 +35,8 @@ data and regression fixtures. Do not put it back in navigation or expand it.
   create a second shadow tracker.
 - Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
   and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
-- Apple Health uses the lightweight iPhone Shortcut handoff in the static PWA. A native
-  wrapper remains optional future work.
+- Apple Health uses the lightweight iPhone Shortcut handoff in the static PWA. The iOS
+  wrapper can read its supported HealthKit metrics directly.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
 
 ## Companion contract
@@ -82,16 +82,42 @@ Undo. Aggregate day fields remain canonical for existing Today, Progress, XP, an
 logic. Totals logged before 0.15.0 are preserved as an Earlier total rather than assigned
 an invented meal time.
 
-## Apple Health Shortcut import
+## Planner, training navigation, and active sessions
 
-The preferred Shortcut handoff opens Tempered with a `temperedHealth` URL parameter and
-imports automatically. `IMPORT HEALTH` opens the in-app paste sheet synchronously, then
-tries to read and import a valid clipboard snapshot when iOS permits it. If installed
-Safari denies the read or leaves it pending, the visible sheet remains usable: touch and
-hold, Paste, and Import. Clipboard access must never gate the button's visible response.
-The Health and Nutrition enhancements now coordinate through explicit Today lifecycle
-events; neither watches and rebuilds the DOM it creates. Their controls and Lifestyle
-card must remain the same mounted nodes while idle.
+Personal and work tasks roll onto later dates until checked off. A rolled task keeps its
+original date and can be opened to read or edit its full title, notes, type, and optional
+due date. Due dates provide context and ordering; they never create an overdue penalty.
+
+Train keeps the active program and routines on its main surface. The exercise library is
+a single button that opens a dedicated searchable screen. Full sessions show a persistent
+elapsed timer. While any workout logger is open, the PWA requests a screen wake lock and
+the iOS wrapper disables the idle timer; both are released when the workout closes.
+
+The November Physique light leg day adds Standing Calf Raise. Its former Crunch slot now
+alternates by program week: Ab-Wheel Rollout in odd weeks and Cable Crunch in even weeks.
+The seeded-program schema upgrade applies this to existing installs without resetting the
+program start date or user-configured working weights.
+
+Tempered is portrait-only: the manifest, runtime orientation request, landscape guard,
+and iPhone wrapper all enforce the same orientation contract.
+
+## Apple Health sync
+
+Today now separates normal use from setup. `RUN HEALTH SYNC` invokes the saved Tempered
+Health Shortcut. Its preferred handoff opens Tempered with a `temperedHealth` URL
+parameter, imports automatically, removes the health payload from the address bar, and
+requires no paste or second Import tap.
+
+Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
+Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,
+the six latest body-data fields, a paste fallback, and manual entry for the five Body
+Metrics signals. The Shortcut must pass numeric `Value` or `Duration` results into
+Calculate Statistics, never Health Sample objects or Text. Body Metrics populates from
+Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature tags; a dash
+means the sync omitted that tag or Apple Health has no sample.
+
+The Health and Nutrition enhancements coordinate through explicit lifecycle events.
+Neither watches and rebuilds the DOM it creates, so controls and cards remain stable.
 
 ## Visual direction and recovered art
 

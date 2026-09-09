@@ -1,15 +1,40 @@
 export const HEALTH_SNAPSHOT_PREFIX = 'TEMPERED_HEALTH_V1'
 export const DEFAULT_HEALTH_IMPORT_URL = 'https://cperry0360-create.github.io/tempered/'
+export const HEALTH_SHORTCUT_NAME = 'Tempered Health'
+export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%20Health'
+export const HEALTH_SHORTCUT_CREATE_URL = 'shortcuts://create-shortcut'
 
 export const HEALTH_SHORTCUT_RECIPE = `TEMPERED HEALTH — iPhone Shortcut recipe
 
-Goal: read Apple Health on-device and hand a tiny snapshot to Tempered. No developer account, Mac, server, or AI provider is required.
+This Shortcut reads Apple Health on-device and opens Tempered with the result. No Mac, developer account, server, or AI provider is required.
 
-1. In Shortcuts, create a shortcut named “Tempered Health”.
-2. Add “Find Health Samples” for Steps, filtered to today. Sum the sample values.
-3. Add “Find Health Samples” for Sleep, filtered to the most recent overnight sleep. Sum the durations of asleep samples and convert seconds/minutes to decimal hours.
-4. Optional: fetch the latest Weight, Resting Heart Rate, Heart Rate Variability, Respiratory Rate, Oxygen Saturation, and Body Temperature samples.
-5. Add a Text action with this exact shape, replacing each value with the Shortcut variables. Leave a line blank if you are not collecting that metric:
+IMPORTANT FIX FOR “CONVERSION ERROR”
+Never send Find Health Samples directly into Calculate Statistics. Health samples are objects, not numbers. Insert Get Details of Health Samples first and choose Value (or Duration for sleep). Calculate Statistics must receive that numeric Details result, never a Text action.
+
+1. Create a shortcut named “Tempered Health”.
+
+2. STEPS
+• Find Health Samples where Type is Steps and Start Date is today.
+• Get Details of Health Samples and choose Value.
+• Calculate Statistics: Sum. Its input must be the Value output from Get Details. Rename the result Steps Total.
+
+3. SLEEP
+• Find Health Samples where Type is Sleep and Start Date is in the last 2 days. Include the asleep states, not In Bed.
+• Get Details of Health Samples and choose Duration.
+• Calculate Statistics: Sum using those Duration values. Convert the result to decimal hours if needed. Rename it Sleep Hours.
+
+4. LATEST BODY DATA
+For each type below, Find Health Samples sorted newest first with Limit 1, then Get Details of Health Samples → Value. Do not use Calculate Statistics for these latest-value metrics.
+• Weight: convert the Value to pounds.
+• Resting Heart Rate: keep the numeric bpm value.
+• Heart Rate Variability: keep the numeric milliseconds value.
+• Respiratory Rate: keep the numeric breaths/minute value.
+• Oxygen Saturation: use percent, such as 97 or 97%.
+• Body Temperature: use degrees C or use the BODY_TEMP_F line below for Fahrenheit.
+
+5. Add Current Date, then Format Date with custom format yyyy-MM-dd.
+
+6. Add one Text action with this exact shape. Insert the named Shortcut variables after each equals sign. A line may be blank only when Apple Health truly has no sample:
 
 TEMPERED_HEALTH_V1
 DATE=<yyyy-mm-dd>
@@ -22,32 +47,34 @@ RESP_RATE=<breaths per minute>
 SPO2=<percent, e.g. 97>
 BODY_TEMP_C=<degrees C>
 
-PREFERRED ONE-TAP FINISH
-6. Add “URL Encode” and give it the Text action above.
-7. Add a Text action containing this URL, with the URL-encoded result inserted after the equals sign:
-https://cperry0360-create.github.io/tempered/?temperedHealth=<URL-encoded Text>
-8. Add “Open URLs” using that URL.
-9. Run the shortcut. Tempered will detect the temperedHealth parameter, import it, and immediately remove the health values from the address bar.
+For Fahrenheit, replace the last line with BODY_TEMP_F=<degrees F>.
 
-Whether iOS opens that HTTPS link inside the installed Home Screen Tempered or in Safari varies by web-app handoff behavior. If it opens your installed Tempered, normal use is one shortcut tap. If iOS opens Safari instead, use the guaranteed fallback below so your existing Home Screen app remains the data owner.
+7. ONE-TAP FINISH
+• Add URL Encode and give it the completed Text action.
+• Add another Text action containing this URL, inserting the URL-encoded result after the equals sign:
+https://cperry0360-create.github.io/tempered/?temperedHealth=<URL-encoded Text>
+• Add Open URLs using that URL.
+• Run the Shortcut. It opens Tempered, which imports the data automatically and removes it from the address bar. There is no paste or second import tap.
 
 GUARANTEED FALLBACK
-6. Add “Copy to Clipboard” using the original Text action.
-7. Open your Home Screen Tempered.
-8. Tap IMPORT HEALTH on Today. Tempered reads the snapshot locally and does not double-count replacement metrics on later syncs.
+• Add Copy to Clipboard using the original Text action.
+• In Tempered, open Health Setup and use Paste Snapshot.
 
-Optional automation: personal automations can run this shortcut from triggers such as App, Time of Day, Sleep, and Apple Watch Workout. If an App automation can target your installed Tempered on your iPhone, try running Tempered Health when Tempered opens; otherwise keep Tempered Health as a Home Screen shortcut.`
+PASSIVE OPTION
+In Shortcuts → Automation, use a Time of Day, Sleep, Apple Watch Workout, or App trigger to run Tempered Health without asking. The installed web app may not appear as an App trigger, so a daily or workout trigger is the more dependable passive option.`
 
 const TAGS = {
-  DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb',
+  DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb', WEIGHT_KG: 'weightKg',
   RESTING_HR: 'restingHr', HRV_MS: 'hrvMs', RESP_RATE: 'respiratoryRate',
-  SPO2: 'spo2', BODY_TEMP_C: 'bodyTempC',
+  SPO2: 'spo2', BODY_TEMP_C: 'bodyTempC', BODY_TEMP_F: 'bodyTempF',
 }
 
 function numberValue(raw) {
   if (raw === null || raw === undefined || raw === '') return null
-  const cleaned = String(raw).replace(/,/g, '').replace(/%/g, '').trim()
-  const value = Number(cleaned)
+  const cleaned = String(raw).replace(/,/g, '').trim()
+  const match = cleaned.match(/-?\d+(?:\.\d+)?/)
+  if (!match) return null
+  const value = Number(match[0])
   return Number.isFinite(value) ? value : null
 }
 
@@ -87,24 +114,30 @@ export async function importHealthSnapshot(context, snapshot) {
   const parsed = typeof snapshot === 'string' ? parseHealthSnapshot(snapshot) : snapshot
   if (!parsed) throw new Error('No Tempered Health snapshot found')
   const date = parsed.date && parsed.date <= context.clock.today() ? parsed.date : context.clock.today()
+  const normalized = {
+    ...parsed,
+    ...(Number.isFinite(parsed.weightLb) ? {} : (Number.isFinite(parsed.weightKg) ? { weightLb: parsed.weightKg * 2.2046226218 } : {})),
+    ...(Number.isFinite(parsed.bodyTempC) ? {} : (Number.isFinite(parsed.bodyTempF) ? { bodyTempC: (parsed.bodyTempF - 32) * (5 / 9) } : {})),
+    ...(Number.isFinite(parsed.spo2) && parsed.spo2 > 0 && parsed.spo2 <= 1 ? { spo2: parsed.spo2 * 100 } : {}),
+  }
 
   // All three are replace-mode trackers. Re-running the Shortcut updates the
   // same day's canonical value; it never adds yesterday's or an earlier sync's
   // steps/sleep/weight a second time.
-  if (Number.isFinite(parsed.steps) && parsed.steps >= 0) {
-    await context.daily.logAt(date, 'steps', Math.round(parsed.steps))
+  if (Number.isFinite(normalized.steps) && normalized.steps >= 0) {
+    await context.daily.logAt(date, 'steps', Math.round(normalized.steps))
   }
-  if (Number.isFinite(parsed.sleepHours) && parsed.sleepHours > 0 && parsed.sleepHours < 24) {
-    await context.daily.logAt(date, 'sleep', Math.round(parsed.sleepHours * 100) / 100)
+  if (Number.isFinite(normalized.sleepHours) && normalized.sleepHours > 0 && normalized.sleepHours < 24) {
+    await context.daily.logAt(date, 'sleep', Math.round(normalized.sleepHours * 100) / 100)
   }
-  if (Number.isFinite(parsed.weightLb) && parsed.weightLb > 0) {
-    await context.daily.logAt(date, 'body_metrics', Math.round(parsed.weightLb * 10) / 10)
+  if (Number.isFinite(normalized.weightLb) && normalized.weightLb > 0) {
+    await context.daily.logAt(date, 'body_metrics', Math.round(normalized.weightLb * 10) / 10)
   }
 
   const current = await context.daily.dayLog(date)
   const healthMetrics = { ...(current.healthMetrics ?? {}) }
   for (const key of ['restingHr', 'hrvMs', 'respiratoryRate', 'spo2', 'bodyTempC']) {
-    if (Number.isFinite(parsed[key])) healthMetrics[key] = parsed[key]
+    if (Number.isFinite(normalized[key])) healthMetrics[key] = Math.round(normalized[key] * 100) / 100
   }
   const next = {
     ...current,
@@ -112,7 +145,7 @@ export async function importHealthSnapshot(context, snapshot) {
     healthBridge: { source: 'shortcuts', importedAt: context.clock.nowIso() },
   }
   await context.storage.put('dayLogs', next)
-  return { date, ...parsed }
+  return { date, ...normalized }
 }
 
 async function copyText(text) {
@@ -137,149 +170,202 @@ export function installHealthShortcutRuntime(context) {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
   let scheduled = false
+  let activeOverlay = null
 
-  function openImportSheet(button, initialText = '') {
-    document.querySelector('[data-health-import-overlay]')?.remove()
+  function announceImport(result) {
+    window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
+  }
 
+  function openHealthSetup(trigger = null) {
+    activeOverlay?.remove()
+    document.querySelector('[data-health-setup-overlay]')?.remove()
     const overlay = document.createElement('div')
-    overlay.className = 'health-import-overlay'
+    overlay.className = 'health-setup-overlay'
+    overlay.dataset.healthSetupOverlay = 'true'
     overlay.dataset.healthImportOverlay = 'true'
+    overlay.innerHTML = `
+      <section class="health-setup-screen" role="dialog" aria-modal="true" aria-labelledby="health-setup-title">
+        <header class="health-setup-header">
+          <button type="button" class="health-setup-header__back" data-health-setup-close aria-label="Close Health Setup">‹</button>
+          <div><span>APPLE HEALTH</span><h2 id="health-setup-title">Health Setup</h2></div>
+        </header>
 
-    const sheet = document.createElement('section')
-    sheet.className = 'health-import-sheet'
-    sheet.setAttribute('role', 'dialog')
-    sheet.setAttribute('aria-modal', 'true')
-    sheet.setAttribute('aria-labelledby', 'health-import-title')
-    sheet.setAttribute('aria-describedby', 'health-import-copy')
+        <section class="health-setup-hero">
+          <span class="health-setup-hero__eyebrow">NORMAL USE · ONE TAP</span>
+          <h3>Run the Shortcut. Tempered imports automatically.</h3>
+          <p>The finished Shortcut opens Tempered with its data. There is no Paste button and no second Import tap.</p>
+          <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">RUN TEMPERED HEALTH</a>
+        </section>
 
-    const eyebrow = document.createElement('span')
-    eyebrow.className = 'health-import-sheet__eyebrow'
-    eyebrow.textContent = 'APPLE HEALTH'
-    const title = document.createElement('h2')
-    title.id = 'health-import-title'
-    title.className = 'health-import-sheet__title'
-    title.textContent = 'PASTE HEALTH SNAPSHOT'
-    const copy = document.createElement('p')
-    copy.id = 'health-import-copy'
-    copy.className = 'health-import-sheet__copy'
-    copy.textContent = 'Run the Tempered Health Shortcut, then touch and hold in the box and tap Paste.'
+        <section class="health-setup-section" data-health-setup="instructions">
+          <h3>SET UP OR REPAIR THE SHORTCUT</h3>
+          <p class="health-setup__warning"><strong>Seeing “Conversion Error”?</strong> Add <em>Get Details of Health Samples → Value</em> before <em>Calculate Statistics → Sum</em>. The Sum input must be the numeric Value result, never Find Health Samples or Text.</p>
+          <ol class="health-setup-steps">
+            <li><strong>Steps:</strong> Find today’s Steps → Get Details: Value → Calculate Statistics: Sum.</li>
+            <li><strong>Sleep:</strong> Find asleep samples from the last 2 days → Get Details: Duration → Sum → decimal hours.</li>
+            <li><strong>Latest body data:</strong> Find newest sample, Limit 1, then Get Details: Value for Weight, Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature. Do not sum these.</li>
+            <li><strong>Build the Text:</strong> include the exact TEMPERED tags from the copied instructions.</li>
+            <li><strong>Finish:</strong> URL Encode that Text, add it after <code>?temperedHealth=</code>, then Open URLs.</li>
+          </ol>
+          <div class="health-setup__actions">
+            <button type="button" class="button" data-health-bridge="recipe">COPY EXACT INSTRUCTIONS</button>
+            <a class="button" data-health-bridge="create" href="${HEALTH_SHORTCUT_CREATE_URL}">OPEN SHORTCUT EDITOR</a>
+          </div>
+          <p class="health-setup__note">iOS requires you to approve the Shortcut. A web app can open the editor but cannot silently install or build Health actions for you.</p>
+        </section>
 
-    const input = document.createElement('textarea')
-    input.className = 'health-import-sheet__input'
-    input.dataset.healthImportInput = 'true'
-    input.value = parseHealthSnapshot(initialText) ? initialText : ''
-    input.placeholder = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75`
-    input.rows = 8
-    input.autocapitalize = 'off'
-    input.autocomplete = 'off'
-    input.spellcheck = false
-    input.setAttribute('aria-label', 'Tempered Health snapshot')
+        <section class="health-setup-section" data-health-setup="metrics">
+          <h3>WHAT FILLS BODY METRICS</h3>
+          <p>The standard Shortcut should pull all five signals shown on Progress. A dash means the last sync did not include that Health type or Apple Health has no sample for it.</p>
+          <div class="health-setup-metrics">
+            <span>Resting heart rate</span><span>HRV</span><span>Respiration</span><span>SpO₂</span><span>Body temperature</span>
+          </div>
+        </section>
 
-    const status = document.createElement('p')
-    status.className = 'health-import-sheet__status'
-    status.dataset.healthImportStatus = 'true'
-    status.setAttribute('role', 'status')
-    status.textContent = 'Your Health data stays on this device.'
+        <section class="health-setup-section">
+          <details class="health-setup-details" data-health-manual-details>
+            <summary>ENTER BODY METRICS MANUALLY</summary>
+            <form class="health-manual-form" data-health-manual-form>
+              <label>Resting HR<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="restingHr" placeholder="bpm"></label>
+              <label>HRV<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="hrvMs" placeholder="ms"></label>
+              <label>Respiration<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="respiratoryRate" placeholder="per min"></label>
+              <label>SpO₂<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-health-manual="spo2" placeholder="%"></label>
+              <label>Temperature<input type="number" inputmode="decimal" step="0.1" data-health-manual="bodyTempC" placeholder="°C"></label>
+              <button type="submit" class="button health-setup__primary">SAVE METRICS</button>
+            </form>
+          </details>
+        </section>
 
-    const actions = document.createElement('div')
-    actions.className = 'health-import-sheet__actions'
-    const cancel = document.createElement('button')
-    cancel.type = 'button'
-    cancel.className = 'button health-import-sheet__cancel'
-    cancel.dataset.healthImportCancel = 'true'
-    cancel.textContent = 'CANCEL'
-    const submit = document.createElement('button')
-    submit.type = 'button'
-    submit.className = 'button health-import-sheet__submit'
-    submit.dataset.healthImportSubmit = 'true'
-    submit.textContent = 'IMPORT'
-    actions.append(cancel, submit)
-    sheet.append(eyebrow, title, copy, input, status, actions)
-    overlay.append(sheet)
+        <section class="health-setup-section">
+          <details class="health-setup-details" data-health-paste-details>
+            <summary>PASTE SNAPSHOT FALLBACK</summary>
+            <p>Use this only if iOS opens Safari instead of the installed Tempered app.</p>
+            <textarea class="health-import-sheet__input" data-health-import-input rows="8" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Tempered Health snapshot" placeholder="${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-09\nSTEPS=10527\nSLEEP=7.75"></textarea>
+            <button type="button" class="button health-setup__primary" data-health-import-submit>IMPORT SNAPSHOT</button>
+          </details>
+        </section>
 
-    let closed = false
+        <p class="health-setup-status" data-health-import-status role="status">Health data stays on this device.</p>
+      </section>`
+
+    activeOverlay = overlay
     const close = () => {
-      if (closed) return
-      closed = true
+      if (activeOverlay === overlay) activeOverlay = null
       document.removeEventListener('keydown', onKeyDown)
       overlay.remove()
-      if (button?.isConnected) button.focus()
+      if (trigger?.isConnected) trigger.focus()
     }
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') close()
-    }
-    cancel.onclick = close
+    const onKeyDown = (event) => { if (event.key === 'Escape') close() }
+    overlay.querySelector('[data-health-setup-close]').onclick = close
     overlay.onclick = (event) => { if (event.target === overlay) close() }
-    submit.onclick = async () => {
-      submit.disabled = true
-      status.textContent = 'Importing…'
-      try {
-        await importHealthSnapshot(context, input.value)
-      } catch {
-        status.textContent = `Paste text beginning with ${HEALTH_SNAPSHOT_PREFIX}, then try again.`
-        submit.disabled = false
-        input.focus()
+
+    const status = overlay.querySelector('[data-health-import-status]')
+    const recipe = overlay.querySelector('[data-health-bridge="recipe"]')
+    recipe.onclick = async () => {
+      const ok = await copyText(HEALTH_SHORTCUT_RECIPE)
+      recipe.textContent = ok ? 'INSTRUCTIONS COPIED' : 'COPY FAILED'
+      status.textContent = ok ? 'Exact build instructions copied.' : 'Could not copy. The instructions remain visible above.'
+    }
+
+    const manual = overlay.querySelector('[data-health-manual-form]')
+    manual.onsubmit = async (event) => {
+      event.preventDefault()
+      const values = {}
+      for (const input of manual.querySelectorAll('[data-health-manual]')) {
+        const value = numberValue(input.value)
+        if (value !== null) values[input.dataset.healthManual] = value
+      }
+      if (Object.keys(values).length === 0) {
+        status.textContent = 'Enter at least one body metric first.'
         return
       }
-      close()
-      await context.app?.show('today')
+      status.textContent = 'Saving body metrics…'
+      const result = await importHealthSnapshot(context, { date: context.clock.today(), ...values })
+      status.textContent = `Body metrics saved for ${result.date}.`
+      announceImport(result)
+    }
+
+    const input = overlay.querySelector('[data-health-import-input]')
+    const submit = overlay.querySelector('[data-health-import-submit]')
+    submit.onclick = async () => {
+      submit.disabled = true
+      status.textContent = 'Importing snapshot…'
+      try {
+        const result = await importHealthSnapshot(context, input.value)
+        status.textContent = `Health data imported for ${result.date}.`
+        announceImport(result)
+      } catch {
+        status.textContent = `Paste text beginning with ${HEALTH_SNAPSHOT_PREFIX}, then try again.`
+        input.focus()
+      } finally {
+        submit.disabled = false
+      }
     }
 
     document.addEventListener('keydown', onKeyDown)
     document.body.append(overlay)
-    requestAnimationFrame(() => input.focus())
-    return { overlay, input, status, submit, close }
+    requestAnimationFrame(() => overlay.querySelector('[data-health-setup-close]')?.focus())
+    return overlay
   }
 
-  async function importClipboard(button) {
-    // Installed iPhone web apps can leave navigator.clipboard.readText()
-    // pending instead of rejecting it. Mount the manual paste path first so
-    // tapping IMPORT HEALTH always has an immediate, visible result.
-    const sheet = openImportSheet(button)
-    try {
-      if (!navigator.clipboard?.readText) throw new Error('clipboard')
-      const text = await navigator.clipboard.readText()
-      if (!sheet.overlay.isConnected) return
-      if (!parseHealthSnapshot(text)) throw new Error('snapshot')
-      sheet.input.value = text
-      sheet.submit.disabled = true
-      sheet.status.textContent = 'Snapshot found. Importing…'
-      const result = await importHealthSnapshot(context, text)
-      sheet.close()
-      button.textContent = `SYNCED ${result.date}`
-      button.dataset.state = 'success'
-    } catch {
-      if (sheet.overlay.isConnected) {
-        sheet.status.textContent = `Touch and hold in the box, tap Paste, then tap IMPORT.`
-      }
-      return
-    }
-    await context.app?.show('today')
-  }
-
-  function makeImportButton(className = 'health-bridge__import') {
+  function makeSetupButton(className = 'health-bridge__setup') {
     const button = document.createElement('button')
     button.type = 'button'
     button.className = className
-    button.dataset.healthBridge = 'import'
-    button.textContent = 'IMPORT HEALTH'
-    button.setAttribute('aria-label', 'Import Apple Health snapshot')
-    button.onclick = () => importClipboard(button)
+    button.dataset.healthBridge = 'setup'
+    button.textContent = 'SETUP'
+    button.onclick = () => openHealthSetup(button)
     return button
   }
 
-  function enhanceToday() {
+  function makeSyncControl() {
+    if (context.healthSync && typeof context.syncHealth === 'function') {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'health-bridge__run'
+      button.dataset.healthBridge = 'run'
+      button.textContent = 'SYNC HEALTH'
+      button.onclick = async () => {
+        button.disabled = true
+        button.textContent = 'SYNCING…'
+        const result = await context.syncHealth({ refreshToday: true })
+        button.disabled = false
+        button.textContent = result ? 'SYNCED' : 'TRY AGAIN'
+      }
+      return button
+    }
+    const link = document.createElement('a')
+    link.className = 'health-bridge__run'
+    link.dataset.healthBridge = 'run'
+    link.href = HEALTH_SHORTCUT_RUN_URL
+    link.textContent = 'RUN HEALTH SYNC'
+    link.setAttribute('aria-label', 'Run the Tempered Health Shortcut')
+    return link
+  }
+
+  async function enhanceToday() {
     const screen = mount.querySelector('.screen--today')
     if (screen?.dataset?.date && screen.dataset.date !== context.clock.today()) return
     const snapshot = screen?.querySelector('[data-lifestyle="snapshot"]')
-    if (!snapshot || snapshot.querySelector('[data-health-bridge="import"]')) return
+    if (!snapshot || snapshot.querySelector('[data-health-bridge="run"]')) return
     const row = document.createElement('div')
     row.className = 'health-bridge__today'
-    row.append(
-      makeImportButton(),
-      Object.assign(document.createElement('span'), { textContent: 'Apple Health · Shortcut sync' }),
-    )
+    const actions = document.createElement('div')
+    actions.className = 'health-bridge__today-actions'
+    actions.append(makeSyncControl(), makeSetupButton())
+    const status = document.createElement('span')
+    status.textContent = 'Apple Health · Setup available'
+    row.append(actions, status)
     snapshot.append(row)
+    const day = await context.daily.dayLog(context.clock.today())
+    if (!row.isConnected) return
+    const synced = day.healthBridge?.importedAt ?? day.healthSyncedAt
+    if (synced) {
+      const at = new Date(synced)
+      status.textContent = Number.isNaN(at.getTime())
+        ? 'Apple Health · Synced today'
+        : `Apple Health · Synced ${new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(at)}`
+    }
   }
 
   function enhanceSettings() {
@@ -288,23 +374,9 @@ export function installHealthShortcutRuntime(context) {
     const section = document.createElement('section')
     section.className = 'card health-bridge__settings'
     section.dataset.healthBridge = 'settings'
-    section.innerHTML = '<h2 class="block__title">Apple Health Shortcut</h2><p class="block__hint">No Mac or developer account required. Health stays on your iPhone. The preferred recipe passes the snapshot into Tempered by URL for a possible one-tap handoff; clipboard + IMPORT HEALTH remains the reliable fallback.</p><p class="block__hint"><strong>Best case:</strong> tap Tempered Health and iOS opens the installed Tempered with the data already imported. <strong>Fallback:</strong> the Shortcut copies the snapshot, then you tap IMPORT HEALTH here or on Today.</p>'
-    const actions = document.createElement('div')
-    actions.className = 'health-bridge__actions'
-    const recipe = document.createElement('button')
-    recipe.type = 'button'
-    recipe.className = 'button'
-    recipe.dataset.healthBridge = 'recipe'
-    recipe.textContent = 'COPY SHORTCUT RECIPE'
-    recipe.onclick = async () => {
-      const ok = await copyText(HEALTH_SHORTCUT_RECIPE)
-      recipe.textContent = ok ? 'RECIPE COPIED' : 'COPY FAILED'
-      window.setTimeout(() => { if (recipe.isConnected) recipe.textContent = 'COPY SHORTCUT RECIPE' }, 1800)
-    }
-    actions.append(recipe, makeImportButton('button health-bridge__import'))
-    section.append(actions)
-    const targets = screen.querySelector('[data-section="targets"]')
-    ;(targets ?? screen.querySelector('.card'))?.after(section)
+    section.innerHTML = '<h2 class="block__title">Apple Health</h2><p class="block__hint">One-tap sync, complete Shortcut setup, conversion-error repair, and manual body metrics.</p>'
+    section.append(makeSetupButton('button health-bridge__setup health-bridge__settings-open'))
+    screen.querySelector('.screen__title')?.after(section)
   }
 
   async function importQuerySnapshot() {
@@ -328,7 +400,7 @@ export function installHealthShortcutRuntime(context) {
 
   const enhance = () => {
     scheduled = false
-    enhanceToday()
+    enhanceToday().catch(() => {})
     enhanceSettings()
   }
   const schedule = () => {
@@ -347,14 +419,18 @@ export function installHealthShortcutRuntime(context) {
   const lifestyleReady = (event) => {
     if (!event?.detail?.date || event.detail.date === context.clock.today()) schedule()
   }
+  const openSetup = (event) => openHealthSetup(event?.detail?.trigger ?? null)
   window.addEventListener('tempered:screen-shown', screenShown)
   window.addEventListener('tempered:today-rendered', todayRendered)
   window.addEventListener('tempered:lifestyle-ready', lifestyleReady)
+  window.addEventListener('tempered:open-health-setup', openSetup)
   schedule()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
     window.removeEventListener('tempered:today-rendered', todayRendered)
     window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
-    document.querySelector('[data-health-import-overlay]')?.remove()
+    window.removeEventListener('tempered:open-health-setup', openSetup)
+    activeOverlay?.remove()
+    document.querySelector('[data-health-setup-overlay]')?.remove()
   }
 }

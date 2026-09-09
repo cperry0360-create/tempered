@@ -40,6 +40,10 @@ SET   RECORD        LBS    REPS    ✓
 - Tapping the check logs the set, starts the rest timer, and advances focus.
 - Tapping a number opens a numeric keypad, not a system keyboard.
 - Rest timer counts down inline on the exercise, not as a modal.
+- The session header continuously shows total elapsed workout time.
+- While the workout screen is active, request a browser screen wake lock. The native iOS
+  wrapper disables its idle timer for the same interval. Release either lock immediately
+  when the session closes or fails to open.
 - An active workout is continuously checkpointed. Locking the phone, backgrounding the installed app, or an iOS process restart must reopen the same workout with checked sets and in-progress fields intact instead of routing to Today.
 
 ### Ad-hoc single exercise

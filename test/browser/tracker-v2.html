@@ -67,9 +67,9 @@
         const active = await tempered.workout.activeProgram()
         check('the November Physique program is active', active?.program.id === 'november-physique',
           active ? `week ${active.week} of ${active.program.weeks}` : 'none')
-        check('the program has five days and thirty slots',
+        check('the program has five days and thirty-one slots',
           active.program.days.length === 5 &&
-          active.program.days.reduce((n, d) => n + d.exercises.length, 0) === 30)
+          active.program.days.reduce((n, d) => n + d.exercises.length, 0) === 31)
 
         await waitFor('[data-programday]')
         check('program days are startable from Train', qa('[data-programday]').length === 5)

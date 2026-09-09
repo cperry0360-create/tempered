@@ -51,7 +51,7 @@ test('slot keys are stable and distinguish day from index', () => {
 
 test('the week view counts across every day', () => {
   const week = weekTasks(november, [...logs('monday', 0, 4), ...logs('tuesday', 0, 4, 'lat_pulldown')])
-  assert.equal(week.total, 30)
+  assert.equal(week.total, 31)
   assert.equal(week.done, 2)
   assert.equal(week.days[0].done, 1)
 })

@@ -5,6 +5,16 @@
 
 let installed = false
 
+function attemptPortraitLock() {
+  const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches
+    || navigator.standalone === true
+  if (!standalone || typeof screen?.orientation?.lock !== 'function') return
+  try {
+    const request = screen.orientation.lock('portrait')
+    request?.catch?.(() => {})
+  } catch { /* The CSS rotation guard remains the iPhone fallback. */ }
+}
+
 function selectExistingNumber(input) {
   if (!(input instanceof HTMLInputElement)) return
   if (input.readOnly || input.disabled || !input.value) return
@@ -91,4 +101,10 @@ export function installMobileInteractions() {
     const input = event.target?.closest?.('.setrow__num[data-field][data-set][data-exercise]')
     cascadeWorkingSetForward(input)
   })
+
+  attemptPortraitLock()
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') attemptPortraitLock()
+  })
+  document.addEventListener('pointerdown', attemptPortraitLock, { once: true, passive: true })
 }

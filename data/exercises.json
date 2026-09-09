@@ -717,6 +717,33 @@
         "core": 1.5
       },
       "art": "crunch.jpg"
+    },
+    {
+      "id": "ab_wheel_rollout",
+      "name": "Ab-Wheel Rollout",
+      "variant": "Bodyweight",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Anti-Extension",
+      "unit": "bodyweight",
+      "notionalLoad": 60,
+      "progression": "reps",
+      "activation": {
+        "core": 1.5
+      }
+    },
+    {
+      "id": "cable_crunch",
+      "name": "Cable Crunch",
+      "variant": "Cable",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Trunk Flexion",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "core": 1.5
+      }
     }
   ],
   "cardio": [

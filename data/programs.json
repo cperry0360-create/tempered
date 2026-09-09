@@ -3,6 +3,7 @@
   "programs": [
     {
       "id": "november-physique",
+      "schemaVersion": 2,
       "name": "November Physique Sprint",
       "weeks": 8,
       "note": "Upper-body-biased hypertrophy. Deload at week 8.",
@@ -257,18 +258,50 @@
               "cue": "Push the hips back and keep the bar close to the legs."
             },
             {
-              "exerciseId": "crunch",
-              "name": "Crunch",
+              "exerciseId": "calf_raise",
+              "name": "Standing Calf Raise",
               "sets": 3,
-              "repMin": 12,
-              "repMax": 20,
+              "repMin": 10,
+              "repMax": 15,
               "perSide": false,
               "restSec": [
                 60,
-                60
+                90
               ],
-              "setup": "Floor / mat",
-              "cue": "Curl the rib cage toward the pelvis. Do not pull the neck."
+              "setup": "Standing calf-raise machine",
+              "cue": "Use a full stretch at the bottom and pause at the top."
+            },
+            {
+              "exerciseId": "ab_wheel_rollout",
+              "name": "Ab-Wheel Rollout",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "perSide": false,
+              "restSec": [
+                60,
+                90
+              ],
+              "setup": "Ab wheel + floor / mat",
+              "cue": "Keep the ribs down and stop before the lower back extends.",
+              "rotation": [
+                {
+                  "exerciseId": "ab_wheel_rollout",
+                  "name": "Ab-Wheel Rollout",
+                  "repMin": 8,
+                  "repMax": 12,
+                  "setup": "Ab wheel + floor / mat",
+                  "cue": "Keep the ribs down and stop before the lower back extends."
+                },
+                {
+                  "exerciseId": "cable_crunch",
+                  "name": "Cable Crunch",
+                  "repMin": 10,
+                  "repMax": 15,
+                  "setup": "High pulley + rope",
+                  "cue": "Curl the rib cage toward the pelvis without pulling with the arms."
+                }
+              ]
             }
           ]
         },

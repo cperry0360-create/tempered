@@ -60,6 +60,7 @@
         await waitFor('[data-start="lower"]')
         tap(q('[data-start="lower"]'), 'START lower')
         await waitFor('.setrow__check')
+        check('active workouts show an elapsed timer', /^\d+:\d{2}$/.test(q('[data-session-elapsed]')?.textContent ?? ''), q('[data-session-elapsed]')?.textContent ?? 'missing')
 
         // docs/05: last performance and PR visible BEFORE the first set.
         check('last performance is shown before the first set',
@@ -158,6 +159,7 @@
         taps = 0
         const opened = performance.now()
         await tempered.app.show('train')
+        tap(await waitFor('[data-exercise-library="open"]'), 'open exercise library')
         await waitFor('[data-exercise="curl_db"]')
         tap(q('[data-exercise="curl_db"]'), 'open curls ad-hoc')
         const firstCheck = await waitFor('.setrow__check')

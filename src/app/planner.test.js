@@ -45,3 +45,40 @@ test('planner completion is reversible and completed tasks sort after open tasks
   assert.equal(reopened.done, false)
   assert.equal(reopened.completedAt, null)
 })
+
+test('unfinished work and personal tasks roll forward until checked off', async () => {
+  const storage = createMemoryStorage()
+  await storage.open()
+  const planner = createPlannerService({ storage, clock: fixedClock() })
+
+  const work = await planner.add({ date: '2026-09-03', title: 'Finish proposal', kind: 'work' })
+  const personal = await planner.add({ date: '2026-09-04', title: 'Call dentist', kind: 'personal' })
+  await planner.add({ date: '2026-09-05', title: 'Today task', kind: 'personal' })
+
+  const today = await planner.list('2026-09-05')
+  assert.deepEqual(today.map((row) => row.title), ['Finish proposal', 'Call dentist', 'Today task'])
+  assert.deepEqual(today.slice(0, 2).map((row) => row.rolloverFrom), ['2026-09-03', '2026-09-04'])
+
+  await planner.toggle(work.id)
+  assert.deepEqual((await planner.list('2026-09-05')).map((row) => row.title), ['Call dentist', 'Today task'])
+  assert.equal((await storage.get('plannerItems', personal.id)).date, '2026-09-04')
+})
+
+test('planner details preserve notes and optional due dates', async () => {
+  const storage = createMemoryStorage()
+  await storage.open()
+  const planner = createPlannerService({ storage, clock: fixedClock() })
+  const row = await planner.add({ title: 'Draft memo', kind: 'work' })
+
+  const updated = await planner.update(row.id, {
+    title: 'Draft the long international tax memo',
+    notes: 'Cover the safe harbor and review comments.',
+    dueDate: '2026-09-10',
+  })
+  assert.equal(updated.title, 'Draft the long international tax memo')
+  assert.equal(updated.notes, 'Cover the safe harbor and review comments.')
+  assert.equal(updated.dueDate, '2026-09-10')
+
+  const cleared = await planner.update(row.id, { dueDate: '' })
+  assert.equal(cleared.dueDate, null)
+})

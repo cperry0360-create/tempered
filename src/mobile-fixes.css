@@ -50,6 +50,33 @@
   scroll-margin-bottom: 96px;
 }
 
+.portrait-lock { display: none; }
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .portrait-lock {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 8px;
+    padding: 28px;
+    background: #082535;
+    color: #eff8f6;
+    text-align: center;
+  }
+  .portrait-lock__phone {
+    display: block;
+    color: #cbdc75;
+    font-size: 54px;
+    line-height: 1;
+    transform: rotate(0deg);
+  }
+  .portrait-lock strong { font-size: 22px; }
+  .portrait-lock span:last-child { color: rgba(239, 248, 246, .62); font-size: 13px; }
+}
+
 @media (max-width: 430px) {
   .today-item__quick { min-width: 44px; }
 }

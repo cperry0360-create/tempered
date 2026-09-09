@@ -15,6 +15,8 @@ test('native iOS target carries the HealthKit entitlement and privacy copy', () 
   assert.match(info, /steps and sleep/i)
   assert.match(project, /HealthKit\.framework/)
   assert.match(project, /CODE_SIGN_ENTITLEMENTS = Tempered\/Tempered\.entitlements/)
+  assert.match(info, /UISupportedInterfaceOrientations[\s\S]*UIInterfaceOrientationPortrait/)
+  assert.doesNotMatch(info, /UIInterfaceOrientationLandscape/)
 })
 
 test('native wrapper exposes only the expected read-only bridge actions', () => {
@@ -28,6 +30,16 @@ test('native wrapper exposes only the expected read-only bridge actions', () => 
   assert.match(health, /\.stepCount/)
   assert.match(health, /\.sleepAnalysis/)
   assert.match(health, /Set<HKSampleType>\(\)/, 'no HealthKit sample types are requested for writing')
+})
+
+test('native wrapper keeps the screen awake only while a workout is active', () => {
+  const webView = read('native/ios/Tempered/TemperedWebView.swift')
+  const session = read('src/ui/screens/session.js')
+  assert.match(webView, /name: "temperedWakeLock"/)
+  assert.match(webView, /UIApplication\.shared\.isIdleTimerDisabled = active/)
+  assert.match(session, /navigator\.wakeLock.*request.*['"]screen['"]/s)
+  assert.match(session, /releaseWorkoutWakeLock\(\)/)
+  assert.match(session, /data-session-elapsed|sessionElapsed/)
 })
 
 test('sleep import uses wake-date noon-to-noon and merges overlapping asleep stages', () => {

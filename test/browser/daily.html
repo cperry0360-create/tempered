@@ -97,6 +97,25 @@
         const afterTask = (await Promise.all(['might', 'wind', 'grit', 'vitality', 'mind'].map((id) => xpOf(id)))).reduce((a, b) => a + b, 0)
         check('checking off a work task does not mint RPG XP', afterTask === beforeTask, `${beforeTask} -> ${afterTask}`)
 
+        const rolled = await tempered.planner.add({
+          date: '2026-01-01', kind: 'personal',
+          title: 'This is a deliberately long personal task that cannot fit on one phone row',
+        })
+        await tempered.app.show('today'); await settle()
+        const rolledRow = q(`[data-kind="personal"] .today-plan-item__main`)
+        check('unfinished personal and work tasks roll into Today', /Rolled from/i.test(rolledRow?.textContent ?? ''), rolledRow?.textContent ?? 'missing')
+        rolledRow?.click(); await settle()
+        check('tapping a long task opens its complete title in a detail card', q('[data-task-detail] .task-detail__title')?.value === rolled.title, q('[data-task-detail] .task-detail__title')?.value ?? 'missing')
+        const notes = q('[data-task-detail] .task-detail__notes')
+        const due = q('[data-task-detail] .task-detail__due')
+        if (notes) notes.value = 'Bring the supporting file and call Alex.'
+        if (due) due.value = tempered.clock.today()
+        q('[data-task-detail] .task-detail__save')?.click(); await settle()
+        const detailed = await storage.get('plannerItems', rolled.id)
+        check('task details save notes and an optional due date', detailed?.notes === 'Bring the supporting file and call Alex.' && detailed?.dueDate === tempered.clock.today(), JSON.stringify(detailed))
+        q(`[data-kind="personal"] .today-plan-item__check`)?.click(); await settle()
+        check('a rolled task leaves Today once checked off', !document.body.textContent.includes(rolled.title))
+
         const dailyIds = await tempered.daily.dailyIds()
         const renderedDaily = qa('[data-section="daily"] [data-activity]').length
         check('the whole daily schedule is present when Habits is open', renderedDaily === dailyIds.length,

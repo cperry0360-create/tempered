@@ -78,6 +78,7 @@ export async function bootstrap(options = {}) {
     app: null,
     setup: null,
     startSetup: null,
+    syncHealth: null,
   }
   globalThis.tempered = exposed
   let stopDailyWorkoutEnhancer = null
@@ -97,6 +98,7 @@ export async function bootstrap(options = {}) {
       return null
     }
   }
+  exposed.syncHealth = syncNativeHealth
 
   async function showApp() {
     stopDailyWorkoutEnhancer?.()

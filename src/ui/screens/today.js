@@ -136,6 +136,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   let plannerOpen = true
   let plannerComposerOpen = false
   let plannerKind = 'personal'
+  let plannerDetailId = null
   let trainingOpen = false
   let trainingDoneOpen = false
   let weeklyOpen = false
@@ -452,8 +453,18 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
 
   async function removePlannerTask(id) {
     await planner.remove(id)
+    if (plannerDetailId === id) plannerDetailId = null
     plannerRows = await planner.list(selectedDate)
     render()
+  }
+
+  async function updatePlannerTask(id, values) {
+    const updated = await planner.update(id, values)
+    if (!updated) return false
+    plannerDetailId = null
+    plannerRows = await planner.list(selectedDate)
+    render()
+    return true
   }
 
   function plannerComposer() {
@@ -486,13 +497,91 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
         type: 'button', 'aria-label': `${row.done ? 'Reopen' : 'Complete'} ${row.title}`,
         onclick: () => togglePlannerTask(row.id),
       }, [row.done ? icon('check') : '']),
-      el('span.today-plan-item__main', {}, [
+      el('button.today-plan-item__main', {
+        type: 'button', 'aria-label': `Open details for ${row.title}`,
+        onclick: () => { plannerDetailId = row.id; render() },
+      }, [
         el('span.today-plan-item__title', { text: row.title }),
-        el('span.today-plan-item__kind', { text: row.kind === 'work' ? 'WORK' : 'PERSONAL' }),
+        el('span.today-plan-item__meta', {}, [
+          el('span.today-plan-item__kind', { text: row.kind === 'work' ? 'WORK' : 'PERSONAL' }),
+          row.rolloverFrom && el('span.today-plan-item__rolled', {
+            text: `Rolled from ${new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parseDate(row.rolloverFrom))}`,
+          }),
+          row.dueDate && el('span.today-plan-item__due', {
+            text: `Due ${new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parseDate(row.dueDate))}`,
+          }),
+        ]),
       ]),
       el('button.today-plan-item__remove', {
         type: 'button', 'aria-label': `Delete ${row.title}`, onclick: () => removePlannerTask(row.id),
       }, ['×']),
+    ])
+  }
+
+  function plannerDetail() {
+    const row = plannerRows.find((item) => item.id === plannerDetailId)
+    if (!row) return null
+    const title = el('textarea.task-detail__title', {
+      rows: 3, 'aria-label': 'Task title', value: row.title,
+    })
+    const notes = el('textarea.task-detail__notes', {
+      rows: 6, 'aria-label': 'Task notes', placeholder: 'Add notes or details…', value: row.notes ?? '',
+    })
+    const due = el('input.task-detail__due', {
+      type: 'date', value: row.dueDate ?? '', 'aria-label': 'Optional due date',
+    })
+    let kind = row.kind === 'work' ? 'work' : 'personal'
+    const kindButtons = ['personal', 'work'].map((value) => el('button.task-detail__kind', {
+      type: 'button', dataset: { active: String(kind === value), kind: value },
+      onclick: () => {
+        kind = value
+        for (const button of kindButtons) button.dataset.active = String(button.dataset.kind === kind)
+      },
+    }, [value === 'work' ? 'WORK' : 'PERSONAL']))
+    const close = () => { plannerDetailId = null; render() }
+    return el('div.task-detail-overlay', {
+      dataset: { taskDetail: row.id }, onclick: (event) => { if (event.target === event.currentTarget) close() },
+    }, [
+      el('section.task-detail-card', {
+        role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'task-detail-heading',
+      }, [
+        el('div.task-detail-card__head', {}, [
+          el('div', {}, [
+            el('span.task-detail-card__eyebrow', { text: row.rolloverFrom ? 'ROLLED TASK' : 'TASK DETAILS' }),
+            el('h2.task-detail-card__heading', { id: 'task-detail-heading', text: 'Edit task' }),
+          ]),
+          el('button.task-detail-card__close', {
+            type: 'button', 'aria-label': 'Close task details', onclick: close,
+          }, ['×']),
+        ]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Task' }), title]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Notes' }), notes]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Optional due date' }), due]),
+        el('div.task-detail__field', {}, [
+          el('span', { text: 'Type' }),
+          el('div.task-detail__kinds', { role: 'group', 'aria-label': 'Task type' }, kindButtons),
+        ]),
+        row.rolloverFrom && el('p.task-detail__rollover', {
+          text: `Created ${dateLabel(row.rolloverFrom)}. It will keep rolling forward until you check it off.`,
+        }),
+        el('div.task-detail__actions', {}, [
+          el('button.button.task-detail__delete', {
+            type: 'button', onclick: () => removePlannerTask(row.id),
+          }, ['DELETE']),
+          el('button.button', { type: 'button', onclick: close }, ['CANCEL']),
+          el('button.button.task-detail__save', {
+            type: 'button', onclick: async () => {
+              const saved = await updatePlannerTask(row.id, {
+                title: title.value, notes: notes.value, dueDate: due.value, kind,
+              })
+              if (!saved) {
+                title.setAttribute('aria-invalid', 'true')
+                title.focus()
+              }
+            },
+          }, ['SAVE']),
+        ]),
+      ]),
     ])
   }
 
@@ -735,6 +824,8 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
           ...offLogged.map((a) => workedItem(a)),
         ]),
       ]),
+
+      plannerDetail(),
     ])
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('tempered:today-rendered', {
@@ -748,6 +839,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     justEarned = null
     openActivityId = null
     plannerComposerOpen = false
+    plannerDetailId = null
     await reload()
   }
 
@@ -773,6 +865,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     justEarned = null
     openActivityId = null
     plannerComposerOpen = false
+    plannerDetailId = null
     await reload()
   }
 

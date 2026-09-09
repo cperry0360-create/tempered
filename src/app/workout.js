@@ -9,7 +9,7 @@
 import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource, totalsByAttributeFromSources } from '../domain/xp-engine.js'
 import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
 import { proposeNext } from '../domain/progression.js'
-import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets } from '../domain/programs.js'
+import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets, programForWeek } from '../domain/programs.js'
 import { dayTasks, weekTasks, weeklyHardSetsCompleted, isInSameProgramWeek } from '../domain/tasks.js'
 import { levelFromXp, levelProgress } from '../domain/levels.js'
 import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
@@ -107,9 +107,10 @@ export function createWorkoutService({ storage, clock, balance }) {
   async function activeProgram() {
     const state = (await storage.getAll('programState')).find((row) => row.active)
     if (!state) return null
-    const program = await storage.get('programs', state.programId)
-    if (!program) return null
-    const week = weekFromStart(daysBetween(state.startedOn, clock.today()), program.weeks)
+    const storedProgram = await storage.get('programs', state.programId)
+    if (!storedProgram) return null
+    const week = weekFromStart(daysBetween(state.startedOn, clock.today()), storedProgram.weeks)
+    const program = programForWeek(storedProgram, week)
     return { program, state, week, deload: isDeloadWeek(week, program) }
   }
 

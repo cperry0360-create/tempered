@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { loadBalance, loadExercises } from '../../test/helpers/balance.js'
-import { weekFromStart, isDeloadWeek, prescribeFromProgram, weeklyHardSets } from './programs.js'
+import { weekFromStart, isDeloadWeek, prescribeFromProgram, weeklyHardSets, programForWeek } from './programs.js'
 
 const balance = loadBalance()
 const exercises = loadExercises()
@@ -14,15 +14,30 @@ const perSideSlot = november.days[1].exercises[2] // One-Arm Dumbbell Row, 3 x 8
 test('the seeded program is the one docs/09 describes', () => {
   assert.equal(november.weeks, 8)
   assert.equal(november.days.length, 5)
-  assert.equal(november.days.reduce((n, d) => n + d.exercises.length, 0), 30)
+  assert.equal(november.days.reduce((n, d) => n + d.exercises.length, 0), 31)
   const unique = new Set(november.days.flatMap((d) => d.exercises.map((e) => e.exerciseId)))
-  assert.equal(unique.size, 17)
+  assert.equal(unique.size, 18)
+})
+
+test('light legs adds calves and alternates ab wheel with cable crunch by week', () => {
+  const first = programForWeek(november, 1).days.find((day) => day.id === 'wednesday')
+  const second = programForWeek(november, 2).days.find((day) => day.id === 'wednesday')
+  const third = programForWeek(november, 3).days.find((day) => day.id === 'wednesday')
+
+  assert.ok(first.exercises.some((slot) => slot.exerciseId === 'calf_raise'))
+  assert.equal(first.exercises.at(-1).exerciseId, 'ab_wheel_rollout')
+  assert.equal(second.exercises.at(-1).exerciseId, 'cable_crunch')
+  assert.equal(third.exercises.at(-1).exerciseId, 'ab_wheel_rollout')
+  assert.ok(!first.exercises.some((slot) => slot.exerciseId === 'crunch'))
 })
 
 test('every program slot resolves to a real exercise', () => {
   for (const day of november.days) {
     for (const entry of day.exercises) {
       assert.ok(exercises.get(entry.exerciseId), `${entry.name} -> ${entry.exerciseId} is not in the library`)
+      for (const choice of entry.rotation ?? []) {
+        assert.ok(exercises.get(choice.exerciseId), `${choice.name} -> ${choice.exerciseId} is not in the library`)
+      }
     }
   }
 })

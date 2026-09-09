@@ -41,8 +41,13 @@
         check('the Train screen rendered its routines',
           document.querySelectorAll('[data-start]').length >= 2,
           `${document.querySelectorAll('[data-start]').length} routines`)
-        check('the exercise library rendered',
-          document.querySelectorAll('.libraryrow').length > 20,
+        check('the Train overview links to the Exercise Library without rendering every row',
+          document.querySelector('[data-exercise-library="open"]') !== null
+          && document.querySelectorAll('.libraryrow').length === 0)
+        document.querySelector('[data-exercise-library="open"]')?.click()
+        check('the Exercise Library renders on its dedicated screen',
+          document.querySelector('[data-exercise-library="screen"]') !== null
+          && document.querySelectorAll('.libraryrow').length > 20,
           `${document.querySelectorAll('.libraryrow').length} rows`)
         check('the pre-boot placeholder was replaced',
           document.querySelector('.shell__wordmark') === null)

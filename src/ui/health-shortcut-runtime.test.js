@@ -28,6 +28,18 @@ test('allows partial snapshots because Health permissions are per metric', () =>
   assert.deepEqual(parseHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSTEPS=3210\nSLEEP=`), { steps: 3210 })
 })
 
+test('accepts the unit-formatted values Shortcuts commonly emits', () => {
+  assert.deepEqual(parseHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSTEPS=10,527 steps\nWEIGHT_KG=74.5 kg\nRESTING_HR=49 bpm\nHRV_MS=41 ms\nRESP_RATE=12 breaths/min\nSPO2=97%\nBODY_TEMP_F=98.6 °F`), {
+    steps: 10527,
+    weightKg: 74.5,
+    restingHr: 49,
+    hrvMs: 41,
+    respiratoryRate: 12,
+    spo2: 97,
+    bodyTempF: 98.6,
+  })
+})
+
 test('builds a one-tap import URL whose search parameter round-trips exactly', () => {
   const snapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nSPO2=97%`
   const handoff = healthImportUrl(snapshot)

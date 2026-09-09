@@ -14,8 +14,10 @@ stay. This is the tracker surface and the program data above it.
 The active plan changed. It is a **time-boxed program**, which the current model cannot
 express.
 
-`data/programs.json` now holds *November Physique Sprint* — five days, thirty exercise
-slots, seventeen unique movements, eight weeks with a deload at week 8.
+`data/programs.json` now holds *November Physique Sprint* — five days, thirty-one exercise
+slots, eighteen directly scheduled movements plus the rotating Cable Crunch, eight weeks
+with a deload at week 8. The light leg day includes calves and alternates its ab movement
+by week between Ab-Wheel Rollout and Cable Crunch.
 
 What a program has that a routine does not:
 

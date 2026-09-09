@@ -34,6 +34,12 @@ OFF, DAILY or X/week in the profile's `activitySchedule`. X/week counts distinct
 days on which the activity was logged. Cadence controls placement and frequency display,
 not XP.
 
+It is also separate from the **personal/work planner**. Planner tasks keep their original
+date and roll onto each later day until checked off. Tapping one opens its full title,
+notes, type, and optional due date. A due date sorts and explains the task but never marks
+it late, creates debt, or changes rewards. Completing a rolled task completes the one
+canonical stored item rather than creating a copy for every date it appeared on.
+
 ## Weekly hard-set targets
 
 The program specifies weekly volume ranges per muscle group — Chest 12–16, Back 14–18,

@@ -45,6 +45,34 @@ export function isDeloadWeek(week, program) {
 }
 
 /**
+ * Resolve a slot that deliberately alternates movements by program week.
+ * Week 1 uses the first option, week 2 the second, and so on. Keeping the
+ * rotation on the slot preserves one stable day/slot identity for completion
+ * while exercise history remains attached to the movement actually performed.
+ *
+ * @param {ProgramSlot & {rotation?: Partial<ProgramSlot>[]}} slot
+ * @param {number} week
+ * @returns {ProgramSlot}
+ */
+export function slotForWeek(slot, week) {
+  const choices = Array.isArray(slot?.rotation) ? slot.rotation.filter(Boolean) : []
+  if (choices.length === 0) return slot
+  const index = (Math.max(1, Math.trunc(week || 1)) - 1) % choices.length
+  return { ...slot, ...choices[index] }
+}
+
+/** Resolve every rotating slot once so all program surfaces show the same week. */
+export function programForWeek(program, week) {
+  return {
+    ...program,
+    days: (program?.days ?? []).map((day) => ({
+      ...day,
+      exercises: (day.exercises ?? []).map((slot) => slotForWeek(slot, week)),
+    })),
+  }
+}
+
+/**
  * Turns one program slot into the sets a session should show.
  *
  * The prescription is the range. Weight comes from last performance where there

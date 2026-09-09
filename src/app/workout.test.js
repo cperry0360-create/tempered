@@ -243,7 +243,7 @@ test('ACCEPTANCE: at the week boundary outstanding slots clear rather than carry
   clock.advanceDays(7) // the next program week
   const fresh = await workout.weekStatus()
   assert.equal(fresh.week.done, 0, 'the new week starts clear')
-  assert.equal(fresh.week.total, 30, 'and is prescribed in full again')
+  assert.equal(fresh.week.total, 31, 'and is prescribed in full again')
   const monday = fresh.week.days.find((d) => d.day.id === 'monday')
   assert.equal(monday.tasks.every((task) => !task.done && !task.started), true,
     'nothing carried over as debt')

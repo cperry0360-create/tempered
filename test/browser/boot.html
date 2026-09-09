@@ -67,9 +67,9 @@
         check('the tab bar has real height', tabbar.getBoundingClientRect().height > 30,
           `${Math.round(tabbar.getBoundingClientRect().height)}px`)
 
-        const startButton = document.querySelector('[data-start]')
-        check('primary actions are thumb-sized', startButton.getBoundingClientRect().height >= 44,
-          `${Math.round(startButton.getBoundingClientRect().height)}px tall`)
+        const primaryAction = document.querySelector('.libraryrow')
+        check('primary actions are thumb-sized', primaryAction?.getBoundingClientRect().height >= 44,
+          `${Math.round(primaryAction?.getBoundingClientRect().height ?? 0)}px tall`)
 
         check('the page does not scroll sideways',
           document.documentElement.scrollWidth <= window.innerWidth + 1,

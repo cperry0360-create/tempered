@@ -86,15 +86,24 @@ export function installProgressDashboardRuntime(context) {
   let rerenderRequested = false
   let editing = false
   let galleryOpen = false
+  let pendingSave = Promise.resolve()
 
   async function widgetOrder() {
+    await pendingSave
     const profile = await context.storage.get('profile', 'profile')
     const saved = Array.isArray(profile?.progressWidgets) ? profile.progressWidgets.filter((id) => CATALOG[id]) : null
-    return saved?.length ? [...new Set(saved)] : [...DEFAULT_WIDGETS]
+    return saved ? [...new Set(saved)] : [...DEFAULT_WIDGETS]
   }
   async function saveOrder(order) {
     const profile = (await context.storage.get('profile', 'profile')) ?? { id: 'profile' }
     await context.storage.put('profile', { ...profile, progressWidgets: [...order] })
+  }
+  function persistOrder(order) {
+    const snapshot = [...order]
+    pendingSave = pendingSave
+      .then(() => saveOrder(snapshot))
+      .catch((error) => console.warn('[tempered] dashboard order could not be saved', error))
+    return pendingSave
   }
 
   async function model(range) {
@@ -228,24 +237,101 @@ export function installProgressDashboardRuntime(context) {
     return card
   }
 
-  function editControls(card, id, order, index) {
-    if (!editing) return
+  function editControls(card, id, order, dashboard) {
+    const index = order.indexOf(id)
     const remove = document.createElement('button')
     remove.type = 'button'
     remove.className = 'progress-widget__remove'
     remove.setAttribute('aria-label', `Remove ${CATALOG[id].title} widget`)
     remove.textContent = '−'
-    remove.onclick = async () => { order.splice(index, 1); await saveOrder(order); schedule() }
+    remove.onclick = () => {
+      const current = order.indexOf(id)
+      if (current < 0) return
+      order.splice(current, 1)
+      card.remove()
+      syncEditMode(dashboard, order)
+      persistOrder(order)
+    }
     const move = document.createElement('div')
     move.className = 'progress-widget__move'
     const up = document.createElement('button')
-    up.type = 'button'; up.textContent = '↑'; up.disabled = index === 0
-    up.onclick = async () => { [order[index - 1], order[index]] = [order[index], order[index - 1]]; await saveOrder(order); schedule() }
+    up.type = 'button'; up.textContent = '↑'; up.disabled = index === 0; up.dataset.widgetMove = 'up'
+    up.setAttribute('aria-label', `Move ${CATALOG[id].title} widget up`)
+    up.onclick = () => moveWidget(dashboard, order, id, -1)
     const down = document.createElement('button')
-    down.type = 'button'; down.textContent = '↓'; down.disabled = index === order.length - 1
-    down.onclick = async () => { [order[index + 1], order[index]] = [order[index], order[index + 1]]; await saveOrder(order); schedule() }
+    down.type = 'button'; down.textContent = '↓'; down.disabled = index === order.length - 1; down.dataset.widgetMove = 'down'
+    down.setAttribute('aria-label', `Move ${CATALOG[id].title} widget down`)
+    down.onclick = () => moveWidget(dashboard, order, id, 1)
     move.append(up, down)
     card.append(remove, move)
+  }
+
+  function syncEditMode(dashboard, order) {
+    const cards = [...dashboard.querySelectorAll('[data-widget]')]
+    for (const card of cards) {
+      if (!editing) {
+        card.querySelector('.progress-widget__remove')?.remove()
+        card.querySelector('.progress-widget__move')?.remove()
+        delete card.dataset.editing
+        continue
+      }
+      card.dataset.editing = 'true'
+      if (!card.querySelector('.progress-widget__remove')) {
+        editControls(card, card.dataset.widget, order, dashboard)
+      }
+      const index = order.indexOf(card.dataset.widget)
+      const up = card.querySelector('[data-widget-move="up"]')
+      const down = card.querySelector('[data-widget-move="down"]')
+      if (up) up.disabled = index === 0
+      if (down) down.disabled = index === order.length - 1
+    }
+    const edit = dashboard.querySelector('.progress-dashboard__edit')
+    if (edit) edit.textContent = editing ? 'DONE' : 'EDIT'
+  }
+
+  function moveWidget(dashboard, order, id, offset) {
+    const index = order.indexOf(id)
+    const next = index + offset
+    if (index < 0 || next < 0 || next >= order.length) return
+    ;[order[index], order[next]] = [order[next], order[index]]
+    const grid = dashboard.querySelector('.progress-dashboard__grid')
+    if (!grid) return
+    const cards = new Map([...grid.querySelectorAll('[data-widget]')].map((card) => [card.dataset.widget, card]))
+    for (const widgetId of order) {
+      const card = cards.get(widgetId)
+      if (card) grid.append(card)
+    }
+    syncEditMode(dashboard, order)
+    persistOrder(order)
+  }
+
+  function syncGallery(dashboard, data, order) {
+    dashboard.querySelector('.progress-widget-gallery')?.remove()
+    if (!galleryOpen) return
+    const gallery = document.createElement('div')
+    gallery.className = 'progress-widget-gallery'
+    gallery.innerHTML = '<div class="progress-widget-gallery__head"><strong>Add widget</strong><span>Tap one to add it below the recap.</span></div>'
+    const choices = document.createElement('div')
+    choices.className = 'progress-widget-gallery__choices'
+    for (const [id, spec] of Object.entries(CATALOG)) {
+      if (order.includes(id)) continue
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.textContent = `+ ${spec.title}`
+      button.onclick = () => {
+        order.push(id)
+        const grid = dashboard.querySelector('.progress-dashboard__grid')
+        if (grid) grid.append(buildCard(id, data))
+        galleryOpen = false
+        syncGallery(dashboard, data, order)
+        syncEditMode(dashboard, order)
+        persistOrder(order)
+      }
+      choices.append(button)
+    }
+    if (!choices.children.length) choices.textContent = 'All widgets are already on your dashboard.'
+    gallery.append(choices)
+    dashboard.querySelector('.progress-dashboard__toolbar')?.after(gallery)
   }
 
   async function renderDashboard(screen, range) {
@@ -271,38 +357,27 @@ export function installProgressDashboardRuntime(context) {
     actions.className = 'progress-dashboard__actions'
     const plus = document.createElement('button')
     plus.type = 'button'; plus.className = 'progress-dashboard__plus'; plus.textContent = '+'; plus.setAttribute('aria-label', 'Add dashboard widget')
-    plus.onclick = () => { galleryOpen = !galleryOpen; schedule() }
+    plus.onclick = () => { galleryOpen = !galleryOpen; syncGallery(dashboard, data, order) }
     const edit = document.createElement('button')
     edit.type = 'button'; edit.className = 'progress-dashboard__edit'; edit.textContent = editing ? 'DONE' : 'EDIT'
-    edit.onclick = () => { editing = !editing; galleryOpen = false; schedule() }
-    actions.append(plus, edit); toolbar.append(copy, actions); dashboard.append(toolbar)
-
-    if (galleryOpen) {
-      const gallery = document.createElement('div')
-      gallery.className = 'progress-widget-gallery'
-      gallery.innerHTML = '<div class="progress-widget-gallery__head"><strong>Add widget</strong><span>Tap one to add it below the recap.</span></div>'
-      const choices = document.createElement('div')
-      choices.className = 'progress-widget-gallery__choices'
-      for (const [id, spec] of Object.entries(CATALOG)) {
-        if (order.includes(id)) continue
-        const button = document.createElement('button')
-        button.type = 'button'; button.textContent = `+ ${spec.title}`
-        button.onclick = async () => { order.push(id); await saveOrder(order); galleryOpen = false; schedule() }
-        choices.append(button)
-      }
-      if (!choices.children.length) choices.textContent = 'All widgets are already on your dashboard.'
-      gallery.append(choices); dashboard.append(gallery)
+    edit.onclick = () => {
+      editing = !editing
+      galleryOpen = false
+      syncGallery(dashboard, data, order)
+      syncEditMode(dashboard, order)
     }
+    actions.append(plus, edit); toolbar.append(copy, actions); dashboard.append(toolbar)
 
     const grid = document.createElement('div')
     grid.className = 'progress-dashboard__grid'
     for (let index = 0; index < order.length; index += 1) {
       const id = order[index]
       const card = buildCard(id, data)
-      editControls(card, id, order, index)
       grid.append(card)
     }
     dashboard.append(grid)
+    syncGallery(dashboard, data, order)
+    syncEditMode(dashboard, order)
     const existing = screen.querySelector('[data-progress-dashboard]')
     if (existing) existing.replaceWith(dashboard)
     else recap.after(dashboard)

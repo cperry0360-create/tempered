@@ -186,6 +186,7 @@ export function installHealthShortcutRuntime(context) {
     const cancel = document.createElement('button')
     cancel.type = 'button'
     cancel.className = 'button health-import-sheet__cancel'
+    cancel.dataset.healthImportCancel = 'true'
     cancel.textContent = 'CANCEL'
     const submit = document.createElement('button')
     submit.type = 'button'
@@ -227,20 +228,30 @@ export function installHealthShortcutRuntime(context) {
     document.addEventListener('keydown', onKeyDown)
     document.body.append(overlay)
     requestAnimationFrame(() => input.focus())
+    return { overlay, input, status, submit, close }
   }
 
   async function importClipboard(button) {
-    let text = ''
-    button.disabled = true
+    // Installed iPhone web apps can leave navigator.clipboard.readText()
+    // pending instead of rejecting it. Mount the manual paste path first so
+    // tapping IMPORT HEALTH always has an immediate, visible result.
+    const sheet = openImportSheet(button)
     try {
       if (!navigator.clipboard?.readText) throw new Error('clipboard')
-      text = await navigator.clipboard.readText()
+      const text = await navigator.clipboard.readText()
+      if (!sheet.overlay.isConnected) return
+      if (!parseHealthSnapshot(text)) throw new Error('snapshot')
+      sheet.input.value = text
+      sheet.submit.disabled = true
+      sheet.status.textContent = 'Snapshot found. Importing…'
       const result = await importHealthSnapshot(context, text)
+      sheet.close()
       button.textContent = `SYNCED ${result.date}`
       button.dataset.state = 'success'
     } catch {
-      button.disabled = false
-      openImportSheet(button, text)
+      if (sheet.overlay.isConnected) {
+        sheet.status.textContent = `Touch and hold in the box, tap Paste, then tap IMPORT.`
+      }
       return
     }
     await context.app?.show('today')
@@ -252,7 +263,7 @@ export function installHealthShortcutRuntime(context) {
     button.className = className
     button.dataset.healthBridge = 'import'
     button.textContent = 'IMPORT HEALTH'
-    button.setAttribute('aria-label', 'Import Apple Health snapshot from the clipboard')
+    button.setAttribute('aria-label', 'Import Apple Health snapshot')
     button.onclick = () => importClipboard(button)
     return button
   }

@@ -42,7 +42,7 @@ body:has(.screen--companion)::before {
 }
 .health-bridge__today > span { color: rgba(255,255,255,.46); font-size: 9px; }
 .health-bridge__import {
-  min-height: 38px;
+  min-height: 44px;
   appearance: none;
   border: 1px solid rgba(127,225,190,.24);
   border-radius: 999px;
@@ -170,8 +170,7 @@ body:has(.screen--companion)::before {
 .progress-widget[data-widget='consistency'] { --widget-accent: #d5e77f; }
 .progress-widget[data-widget='cardio'] { --widget-accent: #ffb477; }
 .progress-widget--wide { grid-column: 1 / -1; min-height: 155px; }
-.progress-widget[data-editing='true'] { outline: 1px solid rgba(255,255,255,.08); animation: widget-wiggle 1.2s ease-in-out infinite alternate; }
-@keyframes widget-wiggle { from { transform: rotate(-.15deg); } to { transform: rotate(.15deg); } }
+.progress-widget[data-editing='true'] { outline: 1px solid rgba(255,255,255,.08); }
 .progress-widget__title { color: rgba(255,255,255,.58); font-size: 11px; font-weight: 670; }
 .progress-widget__value { font-size: clamp(27px, 8vw, 42px); line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .progress-widget__detail { color: rgba(255,255,255,.58); font-size: 10px; line-height: 1.3; }
@@ -227,7 +226,4 @@ body:has(.screen--companion)::before {
   .progress-widget__bodymetrics { grid-template-columns: repeat(3,1fr); }
   .health-bridge__actions { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .progress-widget[data-editing='true'] { animation: none; }
-  body::before { transition: none; }
-}
+@media (prefers-reduced-motion: reduce) { body::before { transition: none; } }

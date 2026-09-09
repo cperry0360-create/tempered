@@ -1761,3 +1761,16 @@ controls unstable. The old Health fallback only changed button copy after a clip
 error, which supplied no usable import path on installed iPhone PWAs.
 **Confidence:** measured from the reported iPhone state and reproduced render lifecycle
 **Needs Cory:** no
+
+## 2026-09-08 — Dashboard editing is in-place and Health never waits to show its fallback
+**Phase:** 0.14.4 iPhone interaction repair
+**Decision:** Add, Edit/Done, remove, and reorder now mutate the mounted Progress dashboard
+in place and serialize only the persistence writes. Edit mode no longer applies continuous
+transform animation to backdrop-filtered cards. `IMPORT HEALTH` mounts the paste sheet
+before requesting clipboard text; a valid readable snapshot still imports automatically.
+**Reasoning:** Cory's iPhone recording showed full-dashboard replacements making the page
+jump during customization. The code confirmed that every control reread seven stores and
+replaced the whole dashboard. Installed iOS can also leave `clipboard.readText()` pending
+without resolving or rejecting, so a catch-only fallback can still appear to do nothing.
+**Confidence:** measured from the recording and implementation path
+**Needs Cory:** no

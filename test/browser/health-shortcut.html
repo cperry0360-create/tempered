@@ -63,6 +63,7 @@
       const button = await waitFor('.screen--today [data-health-bridge="import"]')
       check('Today keeps the clipboard Health fallback', Boolean(button), button?.textContent ?? 'missing')
       button?.click()
+      check('Health Import responds immediately with a visible sheet', Boolean(q('[data-health-import-overlay]')))
       await settle(220)
       const day = await context.daily.dayLog('2026-09-08')
       check('Clipboard fallback imports steps through the canonical day log', day.steps === 10527, day.steps)
@@ -104,6 +105,22 @@
       const manual = await context.daily.dayLog('2026-09-08')
       check('Manual paste fallback imports through the canonical day log', manual.steps === 11888 && manual.sleepHours === 8.25, `${manual.steps} steps · ${manual.sleepHours} h`)
       check('Manual paste fallback closes after a successful import', !q('[data-health-import-overlay]'))
+
+      // Some installed iPhone versions leave readText pending forever. The
+      // manual sheet must remain usable instead of leaving a disabled button.
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { readText() { return new Promise(() => {}) }, async writeText() {} },
+      })
+      await context.app.show('today')
+      const pending = await waitFor('.screen--today [data-health-bridge="import"]')
+      pending?.click()
+      check('A pending iPhone clipboard request still opens the paste sheet synchronously', Boolean(q('[data-health-import-overlay]')))
+      await settle(140)
+      check('The paste sheet stays available while iOS clipboard access is pending', Boolean(q('[data-health-import-overlay]')))
+      check('The underlying Health button is not left disabled', pending?.disabled === false)
+      q('[data-health-import-cancel]')?.click()
+      check('The pending clipboard sheet can be cancelled', !q('[data-health-import-overlay]'))
 
       await context.app.show('settings')
       const settings = await waitFor('[data-health-bridge="settings"]')

@@ -587,6 +587,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   }
 
   function render() {
+    root.dataset.date = selectedDate
     const allActivities = sortActivities([
       ...(day?.outstanding ?? []),
       ...(day?.logged ?? []),
@@ -735,6 +736,11 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
         ]),
       ]),
     ])
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tempered:today-rendered', {
+        detail: { date: selectedDate },
+      }))
+    }
   }
 
   async function selectDate(dateKey) {

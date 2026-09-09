@@ -1,9 +1,10 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-08  
+**Last recovered and verified:** 2026-09-09
+
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.14.4 (10)
+**Current release:** 0.15.0 (11)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -32,8 +33,8 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 - Completion is undoable, history is preserved, and reloads must not lose work.
 - Workout completion and Today use the same canonical logs. Never duplicate rewards or
   create a second shadow tracker.
-- Nutrition tracks calories and protein together. The meal-photo helper copies a prompt
-  to a vision-capable AI app and imports only the small machine-readable result.
+- Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
+  and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
 - Apple Health uses the lightweight iPhone Shortcut handoff in the static PWA. A native
   wrapper remains optional future work.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
@@ -68,6 +69,18 @@ rebuilt the dashboard, leaving it absent most of the time and its controls untap
 Release 0.14.4 keeps the same dashboard element and cards mounted while Add, Edit/Done,
 remove, and reorder controls run. These interactions update immediately and persist in
 sequence, without the scroll jumps and card flicker caused by asynchronous replacement.
+Release 0.15.0 also removes backdrop filtering and all animation from the card layer so
+iOS does not re-composite and flash cards while controls or DOM order change.
+
+## Nutrition log
+
+Tapping Nutrition on Today opens a dedicated sub-screen. It shows daily totals, a meal
+form with time plus calories/protein/carbs/fat/fiber, and timestamped meal history. Paste
+AI Result fills all five fields and waits for review; Add Meal is the only save action and
+the screen stays open afterward. Entries can be deleted and immediately restored with
+Undo. Aggregate day fields remain canonical for existing Today, Progress, XP, and export
+logic. Totals logged before 0.15.0 are preserved as an Earlier total rather than assigned
+an invented meal time.
 
 ## Apple Health Shortcut import
 
@@ -76,6 +89,9 @@ imports automatically. `IMPORT HEALTH` opens the in-app paste sheet synchronousl
 tries to read and import a valid clipboard snapshot when iOS permits it. If installed
 Safari denies the read or leaves it pending, the visible sheet remains usable: touch and
 hold, Paste, and Import. Clipboard access must never gate the button's visible response.
+The Health and Nutrition enhancements now coordinate through explicit Today lifecycle
+events; neither watches and rebuilds the DOM it creates. Their controls and Lifestyle
+card must remain the same mounted nodes while idle.
 
 ## Visual direction and recovered art
 

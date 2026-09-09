@@ -10,8 +10,8 @@ const v1Fixture = Object.freeze({
   sessions: [{ id: 's1' }],
 })
 
-test('schema 3 is current, and every step from 1 exists', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 4)
+test('schema 5 is current, and every step from 1 exists', () => {
+  assert.equal(CURRENT_SCHEMA_VERSION, 5)
   for (let version = 1; version < CURRENT_SCHEMA_VERSION; version++) {
     assert.equal(typeof MIGRATIONS[version], 'function', `no migration from ${version}`)
   }
@@ -112,8 +112,18 @@ test('2 -> 3 leaves version 2 set logs untouched, unattributed', () => {
     'an old log belongs to no program slot, which is what it always meant')
 })
 
-test('a version 1 backup walks all the way to 3', () => {
-  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 3)
+test('4 -> 5 leaves aggregate-only nutrition days untouched for lazy carryover', () => {
+  const v4 = {
+    ...structuredClone(V1_BACKUP),
+    dayLogs: [{ date: '2026-09-04', calories: 850, proteinGrams: 62, nutritionLogged: true }],
+  }
+  const upgraded = migrate(structuredClone(v4), 4, 5)
+  assert.deepEqual(upgraded, v4)
+  assert.equal(upgraded.dayLogs[0].nutritionEntries, undefined)
+})
+
+test('a version 1 backup walks all the way to 5', () => {
+  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 5)
   assert.deepEqual(upgraded.programs, [])
   assert.equal(upgraded.profile.name, 'Cory')
 })

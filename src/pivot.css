@@ -148,8 +148,13 @@ body:has(.screen--companion)::before {
     radial-gradient(circle at 90% 10%, rgba(80,199,167,.10), transparent 42%),
     rgba(8,27,38,.84);
   box-shadow: 0 13px 34px rgba(0,0,0,.19);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* iOS can visibly re-composite backdrop-filtered cards when edit controls
+     are inserted or DOM order changes. Keep this layer deliberately static. */
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .progress-widget::after {
   content: '';

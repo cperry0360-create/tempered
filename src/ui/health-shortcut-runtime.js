@@ -269,7 +269,9 @@ export function installHealthShortcutRuntime(context) {
   }
 
   function enhanceToday() {
-    const snapshot = mount.querySelector('.screen--today [data-lifestyle="snapshot"]')
+    const screen = mount.querySelector('.screen--today')
+    if (screen?.dataset?.date && screen.dataset.date !== context.clock.today()) return
+    const snapshot = screen?.querySelector('[data-lifestyle="snapshot"]')
     if (!snapshot || snapshot.querySelector('[data-health-bridge="import"]')) return
     const row = document.createElement('div')
     row.className = 'health-bridge__today'
@@ -338,8 +340,21 @@ export function installHealthShortcutRuntime(context) {
   importQuerySnapshot().then((imported) => {
     if (imported) context.app?.show('today')
   }).catch(() => {})
-  const observer = new MutationObserver(schedule)
-  observer.observe(mount, { childList: true, subtree: true })
+  const screenShown = (event) => {
+    if (event?.detail?.tab === 'today' || event?.detail?.tab === 'settings') schedule()
+  }
+  const todayRendered = () => schedule()
+  const lifestyleReady = (event) => {
+    if (!event?.detail?.date || event.detail.date === context.clock.today()) schedule()
+  }
+  window.addEventListener('tempered:screen-shown', screenShown)
+  window.addEventListener('tempered:today-rendered', todayRendered)
+  window.addEventListener('tempered:lifestyle-ready', lifestyleReady)
   schedule()
-  return () => observer.disconnect()
+  return () => {
+    window.removeEventListener('tempered:screen-shown', screenShown)
+    window.removeEventListener('tempered:today-rendered', todayRendered)
+    window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
+    document.querySelector('[data-health-import-overlay]')?.remove()
+  }
 }

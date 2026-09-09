@@ -15,6 +15,9 @@ import {
 import { tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
 import { proteinGoalGrams, proteinGoalMet } from '../domain/protein.js'
+import {
+  addNutritionEntry, nutritionLedger, removeNutritionEntry, restoreNutritionEntry,
+} from '../domain/nutrition.js'
 
 /** @type {import('../domain/types.js').AttributeId[]} */
 const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
@@ -251,6 +254,46 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     return settleDay(await dayLog(clock.today()))
   }
 
+  function nutritionId(day, loggedAt) {
+    const base = `nutrition:${loggedAt}`
+    const existing = new Set(nutritionLedger(day).entries.map((entry) => entry.id))
+    if (!existing.has(base)) return base
+    let suffix = 2
+    while (existing.has(`${base}:${suffix}`)) suffix += 1
+    return `${base}:${suffix}`
+  }
+
+  /** Add one itemized meal while keeping the aggregate activity fields canonical. */
+  async function addNutrition(date, values, options = {}) {
+    const day = await dayLog(date)
+    if (date > clock.today()) return emptyResult(day)
+    const loggedAt = options.loggedAt ?? clock.nowIso()
+    const next = addNutritionEntry(day, values, {
+      id: options.id ?? nutritionId(day, loggedAt),
+      loggedAt,
+      source: options.source,
+    })
+    return settleDay(next)
+  }
+
+  /** Remove one itemized meal. Previously paid XP is intentionally never revoked. */
+  async function removeNutrition(date, entryId) {
+    const day = await dayLog(date)
+    const ledger = nutritionLedger(day)
+    const index = ledger.entries.findIndex((entry) => entry.id === entryId)
+    if (index < 0) return { ...emptyResult(day), removed: null, index: -1 }
+    const removed = ledger.entries[index]
+    const result = await settleDay(removeNutritionEntry(day, entryId))
+    return { ...result, removed, index }
+  }
+
+  /** Restore a just-deleted item at the same position. */
+  async function restoreNutrition(date, entry, index) {
+    const day = await dayLog(date)
+    if (date > clock.today()) return emptyResult(day)
+    return settleDay(restoreNutritionEntry(day, entry, index))
+  }
+
   /** Decorate one catalogue row against one day. */
   function decorate(activity, day, schedule, dynamicProteinGoal = null, dynamicCalorieTarget = null) {
     const cadence = schedule[activity.id]?.cadence ?? 'off'
@@ -335,6 +378,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   return {
     activities, today, forDate, week, log, logAt, settle, dayLog, sample,
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
-    quickAddPresets, setQuickAddPreset,
+    quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition,
   }
 }

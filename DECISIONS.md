@@ -1774,3 +1774,36 @@ replaced the whole dashboard. Installed iOS can also leave `clipboard.readText()
 without resolving or rejecting, so a catch-only fallback can still appear to do nothing.
 **Confidence:** measured from the recording and implementation path
 **Needs Cory:** no
+
+## 2026-09-09 — Itemized Nutrition is reviewable, compatible, and undoable
+**Phase:** 0.15.0 Nutrition ledger
+**Decision:** Nutrition now stores timestamped meal entries with calories, protein,
+carbohydrates, fat, and fiber. Pasting an AI result only fills the form; Add Meal is the
+sole save action and the dedicated Nutrition sub-screen remains open to show the entry.
+Deleting a meal recalculates daily aggregates and offers immediate Undo. Existing
+aggregate-only calories/protein are captured as an Earlier total on the first itemized
+write, without inventing a timestamp or double-counting them. Day-level aggregate fields
+remain canonical for existing Progress and reward logic.
+**Reasoning:** The previous inline editor disappeared as soon as clipboard text was read,
+which hid what had been logged and removed the chance to review an estimate. Optional
+macro fields add no extra step to the existing AI handoff, while itemized entries make the
+data understandable and correctable. Lazy carryover preserves every pre-release total.
+**Confidence:** specified by Cory; carryover treatment inferred from the local-first and
+history-preservation rules.
+**Needs Cory:** no
+
+## 2026-09-09 — Today enhancements and Progress cards use stable render layers
+**Phase:** 0.15.0 iPhone visual repair
+**Decision:** Calorie/Nutrition and Health no longer use subtree mutation observers.
+They respond to explicit app screen events plus a `tempered:today-rendered` event for the
+Today calendar and fold controls, then update existing Lifestyle nodes in place. Progress
+cards explicitly disable animation, transforms, transitions, and backdrop filtering so
+iOS does not re-composite them while edit controls or card order change.
+**Reasoning:** The two Today observers watched the DOM they altered: Nutrition replaced
+the Lifestyle snapshot, Health appended its button, and each mutation scheduled the next
+rebuild. This made the card flicker and the Health button disappear or lose the tap. The
+recording also showed iOS artifacts around translucent Progress cards during edit/reorder;
+backdrop-filter creates a separate compositing layer even when JavaScript preserves the
+DOM nodes.
+**Confidence:** measured from the implementation loop and Cory's iPhone recording.
+**Needs Cory:** no

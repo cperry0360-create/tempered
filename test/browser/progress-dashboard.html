@@ -62,10 +62,13 @@
       check('Dashboard includes health and training widgets', ['training','sleep','steps','nutrition','water','weight','body'].every((id) => q(`[data-widget="${id}"]`)))
       check('Body Metrics renders Shortcut-imported health data', /49/.test(q('[data-widget="body"]')?.textContent ?? '') && /41/.test(q('[data-widget="body"]')?.textContent ?? ''), q('[data-widget="body"]')?.textContent)
       check('Dashboard has a prominent add control', q('.progress-dashboard__plus')?.textContent === '+')
+      const stableTraining = q('[data-widget="training"]')
+      const stableSleep = q('[data-widget="sleep"]')
 
       q('.progress-dashboard__edit')?.click()
       await settle(120)
       check('Edit mode keeps the mounted dashboard stable', q('[data-progress-dashboard]') === dashboard)
+      check('Edit mode keeps existing card nodes stable', q('[data-widget="training"]') === stableTraining && q('[data-widget="sleep"]') === stableSleep)
       check('Edit mode shows iOS-like minus controls', qa('.progress-widget__remove').length === qa('[data-widget]').length, `${qa('.progress-widget__remove').length} minus controls`)
       check('Edit mode gives touch-friendly reorder controls', qa('.progress-widget__move button').length >= 2)
 
@@ -88,6 +91,7 @@
       addBody?.click()
       await settle(180)
       check('Adding a widget does not remount the dashboard', q('[data-progress-dashboard]') === dashboard)
+      check('Adding one widget does not rebuild existing cards', q('[data-widget="training"]') === stableTraining && q('[data-widget="sleep"]') === stableSleep)
       check('Gallery can add the widget back', Boolean(q('[data-widget="body"]')))
 
       const beforeOrder = (await storage.get('profile', 'profile'))?.progressWidgets ?? []
@@ -97,6 +101,7 @@
       secondDown?.click()
       await settle(150)
       check('Reordering widgets does not remount the dashboard', q('[data-progress-dashboard]') === dashboard)
+      check('Reordering moves the same card nodes', q('[data-widget="training"]') === stableTraining && q('[data-widget="sleep"]') === stableSleep)
       const afterOrder = (await storage.get('profile', 'profile'))?.progressWidgets ?? []
       check('Reorder controls persist a changed widget order', beforeOrder.join('|') !== afterOrder.join('|'), `${beforeOrder.join(',')} -> ${afterOrder.join(',')}`)
 

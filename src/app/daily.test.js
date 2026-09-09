@@ -201,3 +201,44 @@ test('a day of honest logging levels Vitality, and says so once', async () => {
   const again = await daily.log('journal')
   assert.deepEqual(again.levelledUp, [], 'and never a second time for the same level')
 })
+
+test('itemized nutrition keeps legacy totals and all macro aggregates canonical', async () => {
+  const { daily } = await freshDay()
+  await daily.log('calories_logged', 100)
+  await daily.log('protein_target', 10)
+  await daily.log('nutrition_logged')
+
+  await daily.addNutrition('2026-09-04', {
+    calories: 642, protein: 42, carbs: 61, fat: 24, fiber: 9,
+  }, { loggedAt: '2026-09-04T12:30:00.000Z', source: 'ai' })
+  const day = await daily.dayLog('2026-09-04')
+  assert.equal(day.calories, 742)
+  assert.equal(day.proteinGrams, 52)
+  assert.equal(day.carbsGrams, 61)
+  assert.equal(day.fatGrams, 24)
+  assert.equal(day.fiberGrams, 9)
+  assert.equal(day.nutritionEntries.length, 1)
+  assert.equal(day.nutritionCarryover.calories, 100)
+  assert.equal(day.nutritionCarryover.proteinGrams, 10)
+})
+
+test('deleting nutrition recalculates the day, never revokes XP, and is undoable', async () => {
+  const { daily, storage } = await freshDay()
+  await daily.log('body_metrics', 100)
+  const added = await daily.addNutrition('2026-09-04', { protein: 90, calories: 500 }, {
+    loggedAt: '2026-09-04T12:30:00.000Z', source: 'manual',
+  })
+  const paid = await vitalityXp(storage)
+  assert.equal(added.day.proteinTargetMet, true)
+
+  const removed = await daily.removeNutrition('2026-09-04', added.day.nutritionEntries[0].id)
+  assert.equal(removed.day.proteinGrams, undefined)
+  assert.equal(removed.day.proteinTargetMet, undefined)
+  assert.equal(await vitalityXp(storage), paid, 'correcting nutrition down never claws XP back')
+
+  await daily.restoreNutrition('2026-09-04', removed.removed, removed.index)
+  const restored = await daily.dayLog('2026-09-04')
+  assert.equal(restored.proteinGrams, 90)
+  assert.equal(restored.nutritionEntries.length, 1)
+  assert.equal(await vitalityXp(storage), paid, 'Undo cannot pay the same finish line twice')
+})

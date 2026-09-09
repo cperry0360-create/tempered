@@ -7,21 +7,24 @@ import {
   parseTemperedNutrition,
 } from './calorie-ai-runtime.js'
 
-test('nutrition photo prompt asks for a copy-button code block with both values', () => {
+test('nutrition photo prompt asks for a copy-button code block with calories and macros', () => {
   assert.equal(CALORIE_PHOTO_PROMPT, NUTRITION_PHOTO_PROMPT)
   assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_CALORIES=<whole-number calories>/)
-  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_PROTEIN=<whole-number grams of protein>/)
+  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_PROTEIN=<grams of protein>/)
+  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_CARBS=<grams of carbohydrates>/)
+  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_FAT=<grams of fat>/)
+  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_FIBER=<grams of fiber>/)
   assert.match(NUTRITION_PHOTO_PROMPT, /exactly ONE fenced code block/i)
 })
 
-test('parses calories and protein from a fenced or plain AI result', () => {
+test('parses calories and macros from a fenced or plain AI result', () => {
   assert.deepEqual(
-    parseTemperedNutrition('```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\n```'),
-    { calories: 642, protein: 42 },
+    parseTemperedNutrition('```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'),
+    { calories: 642, protein: 42, carbs: 61, fat: 24, fiber: 9 },
   )
   assert.deepEqual(
     parseTemperedNutrition('TEMPERED_PROTEIN: 31\nTEMPERED_CALORIES: 510'),
-    { calories: 510, protein: 31 },
+    { calories: 510, protein: 31, carbs: null, fat: null, fiber: null },
   )
 })
 

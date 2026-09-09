@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tempered — Nutrition AI handoff</title>
+  <title>Tempered — itemized Nutrition</title>
   <link rel="stylesheet" href="../../src/style.css" />
   <link rel="stylesheet" href="../../src/calm.css" />
   <link rel="stylesheet" href="../../src/nutrition-today.css" />
@@ -46,18 +46,22 @@
         copied: '',
         async writeText(text) { this.copied = text },
         async readText() {
-          return '```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\n```'
+          return '```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'
         },
       }
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard })
 
-      const clock = fixedClock(new Date(2026, 8, 8, 9, 0, 0))
+      const clock = fixedClock(new Date(2026, 8, 9, 9, 15, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       await tempered.daily.setCalorieTarget(2100)
       await tempered.daily.setCadence('calories_logged', 'daily', 1)
       await tempered.daily.setCadence('protein_target', 'daily', 1)
       await tempered.daily.setCadence('nutrition_logged', 'daily', 1)
       await tempered.daily.logAt(clock.today(), 'body_metrics', 200)
+      // Simulate nutrition saved by 0.14.4 before itemized meal history existed.
+      await tempered.daily.logAt(clock.today(), 'calories_logged', 100, { mode: 'add' })
+      await tempered.daily.logAt(clock.today(), 'protein_target', 10, { mode: 'add' })
+      await tempered.daily.logAt(clock.today(), 'nutrition_logged')
       await tempered.app.show('today')
       installCalorieAiRuntime()
 
@@ -74,30 +78,73 @@
       check('Separate Calories, Protein and Logged food rows are collapsed away', visibleLegacy.length === 0, visibleLegacy.length)
 
       const before = nutrition?.querySelector('.today-item__meta')?.textContent ?? ''
-      check('Nutrition row shows both daily goals', /0\s*\/\s*2100\s*kcal/i.test(before) && /0\s*\/\s*160\s*g protein/i.test(before), before)
+      check('Nutrition row shows both daily goals', /100\s*\/\s*2100\s*kcal/i.test(before) && /10\s*\/\s*160\s*g protein/i.test(before), before)
 
       const prompt = nutrition?.querySelector('[data-calorie-ai="prompt"]')
       check('Nutrition has one-tap AI Photo prompt copy', Boolean(prompt), prompt?.textContent?.trim() ?? 'missing')
       prompt?.click()
       await settle(30)
       check('AI Photo writes the stored prompt to the clipboard', clipboard.copied === NUTRITION_PHOTO_PROMPT)
-      check('Prompt asks for both machine-readable outputs', /TEMPERED_CALORIES=/.test(clipboard.copied) && /TEMPERED_PROTEIN=/.test(clipboard.copied))
-      check('Prompt explicitly requests a fenced copy-button block', /fenced code block/i.test(clipboard.copied))
+      check('Prompt requests calories and all four macro values',
+        ['CALORIES', 'PROTEIN', 'CARBS', 'FAT', 'FIBER'].every((tag) => clipboard.copied.includes(`TEMPERED_${tag}=`)))
+
+      // Idle runtimes must not replace the card they just mounted.
+      const stableSnapshot = q('[data-lifestyle="snapshot"]')
+      const stableNutrition = q('[data-activity="nutrition_combined"]')
+      await settle(320)
+      check('Lifestyle card remains the same DOM node while idle', q('[data-lifestyle="snapshot"]') === stableSnapshot)
+      check('Nutrition row remains the same DOM node while idle', q('[data-activity="nutrition_combined"]') === stableNutrition)
 
       nutrition?.querySelector('.today-item__body')?.click()
-      const paste = await waitFor('[data-activity="nutrition_combined"] [data-calorie-ai="paste"]')
-      check('Expanded Nutrition editor offers Paste AI Result', Boolean(paste))
-      check('Manual Nutrition editor has exactly two nutrient inputs', qa('[data-activity="nutrition_combined"] .nutrition-editor__field input').length === 2)
-      paste?.click()
-      await settle(220)
+      const screen = await waitFor('[data-nutrition-screen]')
+      check('Nutrition opens a dedicated persistent sub-screen', Boolean(screen))
+      check('Nutrition screen has a time field plus five nutrient fields', qa('[data-nutrition-form] input').length === 6, qa('[data-nutrition-form] input').length)
+      check('Legacy totals remain visible as an earlier total', /100 kcal/i.test(q('[data-nutrition-carryover]')?.textContent ?? '') && /10g protein/i.test(q('[data-nutrition-carryover]')?.textContent ?? ''))
 
-      const refreshed = await waitFor('[data-activity="nutrition_combined"]')
-      const after = refreshed?.querySelector('.today-item__meta')?.textContent ?? ''
-      check('Pasted AI result updates calories and protein together', /642\s*\/\s*2100\s*kcal/i.test(after) && /42\s*\/\s*160\s*g protein/i.test(after), after)
+      q('[data-calorie-ai="paste"]')?.click()
+      await settle(120)
+      const dayBeforeConfirm = await tempered.daily.dayLog(clock.today())
+      check('Paste fills all nutrition fields',
+        q('[data-entry="nutrition_calories"]')?.value === '642'
+        && q('[data-entry="nutrition_protein"]')?.value === '42'
+        && q('[data-entry="nutrition_carbs"]')?.value === '61'
+        && q('[data-entry="nutrition_fat"]')?.value === '24'
+        && q('[data-entry="nutrition_fiber"]')?.value === '9')
+      check('Paste waits for review instead of instantly logging', dayBeforeConfirm.calories === 100 && qa('[data-nutrition-entry]').length === 0, dayBeforeConfirm.calories)
+      check('Paste explicitly asks for review before Add Meal', /review.*add meal/i.test(q('[data-nutrition-status]')?.textContent ?? ''))
+
+      q('[data-action="nutrition-log"]')?.click()
+      await settle(260)
+      check('Nutrition screen stays open after adding a meal', Boolean(q('[data-nutrition-screen]')))
+      check('Meal history shows its time and calorie amount', /9:15/i.test(q('[data-nutrition-entry]')?.textContent ?? '') && /642 kcal/i.test(q('[data-nutrition-entry]')?.textContent ?? ''))
+      check('Meal history shows protein, carbs, fat and fiber',
+        /42g protein/i.test(q('[data-nutrition-entry]')?.textContent ?? '')
+        && /61g carbs/i.test(q('[data-nutrition-entry]')?.textContent ?? '')
+        && /24g fat/i.test(q('[data-nutrition-entry]')?.textContent ?? '')
+        && /9g fiber/i.test(q('[data-nutrition-entry]')?.textContent ?? ''))
+
       const day = await tempered.daily.dayLog(clock.today())
-      check('Combined logger stores canonical calories', day.calories === 642, day.calories)
-      check('Combined logger stores canonical protein', day.proteinGrams === 42, day.proteinGrams)
-      check('Logging Nutrition also satisfies Logged your food', day.nutritionLogged === true, day.nutritionLogged)
+      check('Itemized logger preserves old calories and adds the meal', day.calories === 742, day.calories)
+      check('Itemized logger preserves old protein and adds the meal', day.proteinGrams === 52, day.proteinGrams)
+      check('Itemized logger stores carb, fat and fiber totals', day.carbsGrams === 61 && day.fatGrams === 24 && day.fiberGrams === 9,
+        `${day.carbsGrams}/${day.fatGrams}/${day.fiberGrams}`)
+      check('Meal keeps its timestamp and AI source', day.nutritionEntries?.[0]?.loggedAt.includes('T09:15:') && day.nutritionEntries?.[0]?.source === 'ai', JSON.stringify(day.nutritionEntries?.[0]))
+      check('Logging Nutrition still satisfies Logged your food', day.nutritionLogged === true, day.nutritionLogged)
+
+      q('[data-nutrition-entry] .nutrition-entry__delete')?.click()
+      await settle(180)
+      const deleted = await tempered.daily.dayLog(clock.today())
+      check('Deleting a meal recalculates back to the earlier total', deleted.calories === 100 && deleted.proteinGrams === 10, `${deleted.calories}/${deleted.proteinGrams}`)
+      check('Deleting offers an Undo action', Boolean(q('[data-nutrition-undo]:not([hidden]) .nutrition-undo__button')))
+      q('.nutrition-undo__button')?.click()
+      await settle(180)
+      const restored = await tempered.daily.dayLog(clock.today())
+      check('Undo restores the itemized meal and totals', restored.calories === 742 && restored.nutritionEntries?.length === 1, `${restored.calories}/${restored.nutritionEntries?.length}`)
+
+      const underneath = q('[data-activity="nutrition_combined"] .today-item__meta')?.textContent ?? ''
+      check('Today total updates in place behind the sub-screen', /742\s*\/\s*2100\s*kcal/i.test(underneath) && /52\s*\/\s*160\s*g protein/i.test(underneath), underneath)
+      q('.nutrition-log-header__back')?.click()
+      check('Back closes Nutrition without redrawing Today', !q('[data-nutrition-screen]') && q('[data-lifestyle="snapshot"]') === stableSnapshot)
 
       const img = document.createElement('img')
       img.className = 'exercise__thumb'

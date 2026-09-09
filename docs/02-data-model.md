@@ -58,6 +58,22 @@ interface DayLog {
   activities: Record<string, number | true>;  // activityId -> value, or true if marked
   restDay: boolean;
   bodyMetrics?: { weight?: number; bodyFat?: number };  // stored, NEVER scored
+  calories?: number;             // aggregate mirror for existing views/scoring
+  proteinGrams?: number;
+  carbsGrams?: number;
+  fatGrams?: number;
+  fiberGrams?: number;
+  nutritionEntries?: Array<{
+    id: string;
+    loggedAt: ISODateTime;
+    source: 'manual' | 'ai';
+    calories?: number;
+    proteinGrams?: number;
+    carbsGrams?: number;
+    fatGrams?: number;
+    fiberGrams?: number;
+  }>;
+  nutritionCarryover?: Record<string, number | boolean>; // pre-itemization totals
 }
 
 interface AttributeState {

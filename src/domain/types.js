@@ -31,6 +31,18 @@
  */
 
 /**
+ * @typedef {object} NutritionEntry
+ * @property {string} id
+ * @property {string} loggedAt
+ * @property {'manual'|'ai'} source
+ * @property {number} [calories]
+ * @property {number} [proteinGrams]
+ * @property {number} [carbsGrams]
+ * @property {number} [fatGrams]
+ * @property {number} [fiberGrams]
+ */
+
+/**
  * A calendar day's non-workout logging. Body metric values round-trip through
  * storage but are never used for scoring; only bodyMetricsLogged is scored.
  *
@@ -47,7 +59,13 @@
  * @property {boolean} [journalLogged]
  * @property {boolean} [nutritionLogged]
  * @property {boolean} [caloriesLogged]
+ * @property {number|null} [calories]
  * @property {number|null} [proteinGrams]
+ * @property {number|null} [carbsGrams]
+ * @property {number|null} [fatGrams]
+ * @property {number|null} [fiberGrams]
+ * @property {NutritionEntry[]} [nutritionEntries]
+ * @property {Record<string, number|boolean>} [nutritionCarryover]
  * @property {number|null} [proteinGoalGrams]
  * @property {boolean} [proteinTargetMet]
  * @property {boolean} [alcoholFree]

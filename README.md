@@ -10,7 +10,7 @@ It is built around one practical idea: **make the healthy things easy to record,
 
 The visible app has four primary surfaces:
 
-- **Today** — day planning, Lifestyle status, Nutrition, hydration, habits, and today's workout queue.
+- **Today** — day planning, Lifestyle status, itemized Nutrition with calories and macros, hydration, habits, and today's workout queue.
 - **Train** — programs, exercise history, fast set logging, progression tools, cable-machine support, and ad-hoc training.
 - **Companion** — a small creature that grows only from accumulated real-world activity. It never loses progress, gets sick, or punishes a missed day.
 - **Progress** — recap plus a configurable health/training widget dashboard.
@@ -25,7 +25,7 @@ A native iOS wrapper also exists in the repository for a future signed/TestFligh
 
 ## Data and privacy
 
-Tempered is local-first. Canonical app data is stored in IndexedDB on the device, with JSON backup/restore available in Settings. The nutrition photo helper does not upload photos from Tempered or embed an AI key; it copies a provider-neutral prompt for use in a vision-capable AI app and imports the small machine-readable result.
+Tempered is local-first. Canonical app data is stored in IndexedDB on the device, with JSON backup/restore available in Settings. Nutrition keeps timestamped meal entries for calories, protein, carbohydrates, fat, and fiber. The photo helper does not upload photos from Tempered or embed an AI key; it copies a provider-neutral prompt for use in a vision-capable AI app, then pastes the small machine-readable result into a reviewable form before anything is saved.
 
 ## Repository documents
 

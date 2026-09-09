@@ -14,8 +14,10 @@
  *
  * 2 — programs and programState added.
  * 3 — set logs may carry programDayId and slotIndex.
+ * 4 — sessions may carry xpBySource.
+ * 5 — day logs may carry an itemized nutrition ledger and macro totals.
  */
-export const CURRENT_SCHEMA_VERSION = 4
+export const CURRENT_SCHEMA_VERSION = 5
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -55,6 +57,15 @@ export const MIGRATIONS = Object.freeze({
    * which is the truthful answer for a session finished before the app kept it.
    */
   3: (data) => data,
+
+  /**
+   * 4 -> 5: itemized nutrition and macros.
+   *
+   * Day logs gained optional nutritionEntries, nutritionCarryover, carbsGrams,
+   * fatGrams, and fiberGrams. Existing aggregate-only calorie/protein days are
+   * deliberately untouched; the first new meal captures them as carryover.
+   */
+  4: (data) => data,
 })
 
 /**

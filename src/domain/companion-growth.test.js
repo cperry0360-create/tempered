@@ -6,6 +6,7 @@ import {
   companionRevealState,
   companionStage,
   companionStyle,
+  companionWorkoutCare,
 } from './companion-growth.js'
 
 test('companion growth has ten visible levels with frequent early changes', () => {
@@ -61,4 +62,9 @@ test('acknowledged forms stay visible and reveal state never exceeds earned care
   const resetData = companionRevealState(20, 8)
   assert.equal(resetData.visible.level, 1)
   assert.equal(resetData.pending, false)
+})
+
+test('a workout can explain exactly how much care the session and sets supplied', () => {
+  assert.deepEqual(companionWorkoutCare(3), { earned: 14, session: 8, sets: 6 })
+  assert.deepEqual(companionWorkoutCare(2, { includeSession: false }), { earned: 4, session: 0, sets: 4 })
 })

@@ -72,7 +72,11 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       : startSession({ slotTask: slot }),
   })
 
-  const summary = createSummaryScreen({ onDone: async () => { await show(returnTab) } })
+  const summary = createSummaryScreen({
+    storage,
+    onDone: async () => { await show(returnTab) },
+    onCompanion: async () => { await show('companion') },
+  })
   let session = null
   const SCREENS = { today, train, companion, history, settings, character: characterScreen }
 
@@ -148,7 +152,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
         session?.destroy()
         session = null
         if (!result) { await show(returnTab); return }
-        summary.show(result)
+        await summary.show(result)
         replace(body, [summary.root])
         tabBar.hidden = true
         settingsAccess.hidden = true

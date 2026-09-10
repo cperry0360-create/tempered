@@ -240,6 +240,8 @@ test('the summary carries everything the one post-session screen needs', async (
   }
   assert.equal(summary.setsCompleted, 1)
   assert.equal(summary.totalVolume, 145 * 8)
+  assert.equal(summary.totalReps, 8)
+  assert.deepEqual(summary.companionCare, { earned: 10, session: 8, sets: 2 })
 })
 
 test('warmup sets are logged but do not score', async () => {

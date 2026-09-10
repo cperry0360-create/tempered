@@ -97,6 +97,12 @@
           Object.values(chain).every(Boolean), JSON.stringify(chain))
         check('2 ACCEPTANCE: and one dismiss, not four',
           qa('[data-action="done"]').length === 1 && qa('.screen--summary').length === 1)
+        check('2 workout payoff names the companion growth it earned',
+          /TURTLE POWER/.test(q('[data-section="companion-growth"]', summary)?.textContent ?? '')
+          && Number(q('[data-companion-care]', summary)?.dataset.companionCare) > 0)
+        check('2 the recap can go directly to Companion without silently evolving there',
+          q('[data-action="view-companion"]', summary) !== null
+          && q('[data-section="companion-growth"]', summary)?.dataset.evolutionReady != null)
 
         taps = 0
         tap(q('[data-action="done"]'), 'DONE')

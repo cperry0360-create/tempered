@@ -11,6 +11,7 @@ import {
   companionStyle,
   COMPANION_STYLES,
 } from '../../domain/companion-growth.js'
+import { companionCarePoints, companionLifestyleSignals } from '../../app/companion-care.js'
 import { el, replace } from '../dom.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
@@ -58,33 +59,6 @@ const FORGE_UNLOCKS = [
   { key: 'cable', min: 430, icon: '⌁', name: 'Cable station' },
   { key: 'lighting', min: 550, icon: '✦', name: 'Forge lighting' },
 ]
-
-function hasNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value)
-}
-
-function lifestyleSignals(day) {
-  if (!day) return 0
-  const values = [
-    day.sleepHours,
-    day.steps,
-    day.waterOz,
-    day.proteinGrams,
-    day.calories,
-    day.microCardioMinutes,
-    day.mobilityMinutes,
-    day.readingMinutes,
-    day.studyMinutes,
-    day.meditationMinutes,
-    day.instrumentMinutes,
-    day.bodyMetrics?.weight,
-  ]
-  let count = values.filter((value) => hasNumber(value) && value > 0).length
-  for (const key of ['nutritionLogged', 'alcoholFree', 'saunaLogged', 'restDay', 'journalLogged']) {
-    if (day[key] === true) count += 1
-  }
-  return count
-}
 
 function todayMoment({ trained, day, name, style }) {
   if (style === 'turtle') {
@@ -134,8 +108,8 @@ export function createCompanionScreen({ storage, clock, overlayHost }) {
     const profile = storedProfile ?? { id: 'profile' }
     const finished = sessions.filter((session) => session.endedAt)
     const workingSets = setLogs.filter((set) => !set.isWarmup)
-    const lifestyle = days.reduce((sum, day) => sum + lifestyleSignals(day), 0)
-    const points = finished.length * 8 + workingSets.length * 2 + lifestyle * 2
+    const lifestyle = days.reduce((sum, day) => sum + companionLifestyleSignals(day), 0)
+    const points = companionCarePoints({ sessions, setLogs, days })
     const style = companionStyle(profile.companionStyle)
     const earnedGrowth = companionGrowth(points, style)
     // A stored level proves only which sprite an older build rendered. The

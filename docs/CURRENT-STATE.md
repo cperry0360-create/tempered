@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.19.0 (20)
+**Current release:** 0.20.0 (21)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -50,6 +50,9 @@ data and regression fixtures. Do not put it back in navigation or expand it.
   hatchling and athletic stages to Shredded. Sprout maps those levels onto its five
   original forms while retaining a named checkpoint at every level.
 - Growth comes from completed training, working sets, and lifestyle logs.
+- The workout-complete screen makes that relationship explicit: session stats and new
+  records lead into the selected companion, exact care earned, the session/set split,
+  current growth, and a direct route to Companion when an evolution is ready.
 - Earned care may accumulate anywhere, but a form never changes silently. Companion holds
   the last revealed level, opens an evolution-ready takeover, then performs the change
   inside a fixed phone-safe stage over a 3.2-second old-to-new morph. The takeover is

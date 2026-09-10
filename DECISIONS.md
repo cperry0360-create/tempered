@@ -2077,3 +2077,42 @@ version 0.19.0 with build 20.
 cable-machine integration, and offline assets changed, so PWA and native identities advance.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-10 — Cable redraws keep the workout draft's current peg values
+**Phase:** 0.20.0 completion payoff and equipment correction
+**Decision:** The cable adapter reverse-converts nominal pounds only when a movement first
+enters peg mode. Later redraws treat the workout draft's rendered selector values as
+canonical and refresh the adapter state from them. Browser checks also reacquire the
+movement card after METHOD redraws before choosing Cable.
+**Reasoning:** Restoring older per-row adapter entries after set one had already cascaded a
+new peg replaced valid values with stale empty state. The readout cleared and logging was
+blocked despite a valid selector.
+**Confidence:** reproduced in the hosted app; the cable harness covers redraw, cascade,
+readout, nominal conversion, method selection, and stored peg metadata.
+**Needs Cory:** no
+
+## 2026-09-10 — Workout completion pays off performance and companion growth together
+**Phase:** 0.20.0 completion payoff and equipment correction
+**Decision:** The single post-workout screen now celebrates completion with restrained
+motion, shows duration, sets, reps, volume, and new records, then gives the selected
+companion equal visual weight. It names exact care earned, separates the workout and
+working-set contributions, shows current growth, and opens Companion directly. If care
+has unlocked a new form, the summary announces it but keeps the actual transformation on
+Companion so evolution remains deliberate and on-screen. Companion and the recap now use
+one shared care calculation.
+**Reasoning:** The workout should end with a visible payoff. A generic note that training
+"helps your companion grow" did not explain causality or create a satisfying finish. The
+reference video established the useful hierarchy—celebration, facts, records, progression—
+without requiring its social feed, calorie prompt, or visual identity.
+**Confidence:** specified by Cory and grounded in the supplied finish-screen recording;
+domain tests cover the shared care math and browser checks cover the visible causal link.
+**Needs Cory:** review the finish treatment on iPhone after deployment.
+
+## 2026-09-10 — Release 0.20.0 (21)
+**Phase:** 0.20.0 completion payoff and equipment correction
+**Decision:** `src/version.js` carries `0.20.0 (21)` and the native wrapper uses marketing
+version 0.20.0 with build 21.
+**Reasoning:** The completion screen, shared companion-care domain, cable runtime, browser
+coverage, and installed PWA assets changed together.
+**Confidence:** implementation.
+**Needs Cory:** no

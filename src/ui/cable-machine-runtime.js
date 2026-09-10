@@ -408,14 +408,21 @@ export async function installCableMachineRuntime(context) {
       if (!(input instanceof HTMLInputElement)) continue
       const key = rowKey(exerciseId, input)
 
-      if (pegState.has(key)) {
+      if (!firstPass) {
+        // Once this exercise has entered peg mode, the workout screen's set
+        // draft already contains selector numbers. A set-1 change also
+        // cascades into the later draft rows before the screen redraws. Treat
+        // those freshly rendered values as canonical instead of restoring the
+        // older per-row map (whose empty values would erase that cascade).
+        pegState.set(key, validPeg(input.value, machine))
+      } else if (pegState.has(key)) {
         const peg = pegState.get(key)
         const next = peg == null ? '' : String(peg)
         if (input.value !== next) {
           input.value = next
           input.dispatchEvent(new Event('input', { bubbles: true }))
         }
-      } else if (firstPass) {
+      } else {
         const previousWeight = Number(input.value)
         const peg = pegForCableLoad(previousWeight, { profile: machine, stacks })
         pegState.set(key, peg)

@@ -26,6 +26,19 @@ export const COMPANION_LEVELS = Object.freeze([
   { min: 550, turtle: ['Shredded', 'Peak turtle. Progress still accumulates.'], forge: ['Sentinel', 'Fully forged. Progress still accumulates.'], sprout: ['Luminous', 'Fully grown. Care still accumulates.'], sproutVisual: 5 },
 ])
 
+export const COMPANION_CARE = Object.freeze({
+  trainingSession: 8,
+  workingSet: 2,
+  lifestyleSignal: 2,
+})
+
+/** Explain the exact care contribution of one workout settlement. */
+export function companionWorkoutCare(setsCompleted, { includeSession = true } = {}) {
+  const sets = Math.max(0, Math.round(Number(setsCompleted) || 0)) * COMPANION_CARE.workingSet
+  const session = includeSession ? COMPANION_CARE.trainingSession : 0
+  return { earned: session + sets, session, sets }
+}
+
 export function companionStyle(value) {
   return value === 'forge' || value === 'sprout' ? value : 'turtle'
 }

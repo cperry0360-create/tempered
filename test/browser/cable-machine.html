@@ -138,6 +138,7 @@
       let inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
       q('button.actionpill[data-method]', inclineCard)?.click()
       await settle(80)
+      inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
       q('[data-methodchoice="Cable"]', inclineCard)?.click()
       await settle(180)
       inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')

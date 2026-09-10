@@ -29,7 +29,7 @@
       await settle(100)
 
       let card = q('.screen--session [data-exercise="incline_bench_db"]')
-      check('the movement title is independent of equipment', q('.exercise__name', card)?.textContent === 'INCLINE BENCH PRESS', q('.exercise__name', card)?.textContent)
+      check('the movement title is independent of equipment', q('.exercise__name', card)?.textContent === 'Incline Bench Press', q('.exercise__name', card)?.textContent)
       check('the shipped method is visible', card?.dataset.method === 'Dumbbell' && /DUMBBELL/.test(q('.exercise__method', card)?.textContent ?? ''))
 
       q('button.actionpill[data-method]', card)?.click()
@@ -41,7 +41,7 @@
       q('[data-methodchoice="Cable"]', card)?.click()
       await settle(120)
       card = q('.screen--session [data-exercise="incline_bench_db"]')
-      check('selecting cable does not replace the movement', card?.dataset.exercise === 'incline_bench_db' && q('.exercise__name', card)?.textContent === 'INCLINE BENCH PRESS')
+      check('selecting cable does not replace the movement', card?.dataset.exercise === 'incline_bench_db' && q('.exercise__name', card)?.textContent === 'Incline Bench Press')
       check('the selected method is immediately visible', card?.dataset.method === 'Cable' && /CABLE/.test(q('.exercise__method', card)?.textContent ?? ''))
       check('barbell plate controls are absent for cable', q('button.actionpill[data-equipment]', card) === null)
 

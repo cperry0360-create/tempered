@@ -19,6 +19,7 @@ import { daysBetween } from '../adapters/clock/clock.js'
 import { timeUnderLoad } from '../domain/duration.js'
 import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
+import { companionWorkoutCare } from '../domain/companion-growth.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
 function weekStart(date) {
@@ -487,11 +488,16 @@ export function createWorkoutService({ storage, clock, balance }) {
     const totalVolume = [...volumes.values()].reduce((sum, v) => sum + v, 0)
     const levels = Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, after[id].level]))
 
+    const completedSets = workingSets(input.sets)
     return {
       session: completed,
       durationMinutes,
-      setsCompleted: workingSets(input.sets).length,
+      setsCompleted: completedSets.length,
+      totalReps: completedSets.reduce((sum, set) => sum + (Number(set.reps) || 0), 0),
       totalVolume,
+      companionCare: companionWorkoutCare(completedSets.length, {
+        includeSession: options.isFirstOfDay !== false,
+      }),
       awards,
       xpByAttribute: totalsByAttribute(awards),
       xpBySource: totalsBySource(awards),

@@ -43,6 +43,7 @@ const PRECACHE = [
   './src/app/character.js',
   './src/app/daily.js',
   './src/app/health-sync.js',
+  './src/app/companion-care.js',
   './src/app/planner.js',
   './src/app/seed.js',
   './src/app/workout.js',

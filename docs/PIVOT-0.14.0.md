@@ -40,7 +40,7 @@ Normal product surfaces now use first-party wellness and companion art under `ar
 
 ## Workout completion
 
-The visible post-workout summary is tracker-first: session recap, new records, and a small note that the work is already reflected in Progress and Companion. No visible character XP, ranks, combat stats, or RPG directives remain in the completion flow.
+The visible post-workout summary is tracker-first: session recap, new records, and an explicit companion-growth payoff showing exact care from the workout and its working sets. It can route directly to Companion for an earned evolution, while the transformation itself still waits for that dedicated screen. No visible character XP, ranks, combat stats, or RPG directives remain in the completion flow.
 
 ## Compatibility
 

@@ -44,6 +44,7 @@ interface SetLog {
   id: string;
   sessionId: string;
   exerciseId: string;
+  method?: string;               // equipment used; movement id does not change
   setIndex: number;
   weight: number | null;         // null for bodyweight
   reps: number | null;
@@ -51,6 +52,14 @@ interface SetLog {
   distance: number | null;       // for carries and cardio
   completedAt: ISODateTime;
   isWarmup: boolean;
+}
+
+interface Exercise {
+  id: string;
+  name: string;                  // catalog name, may describe the shipped variant
+  movementName?: string;         // equipment-neutral active-session title
+  variant?: string;              // original/default method
+  methods?: string[];            // curated switchable methods, default first
 }
 
 interface DayLog {
@@ -104,6 +113,11 @@ the engine's session input type must not include body weight at all.
 
 **Dates are calendar-local, not UTC.** A workout at 11pm belongs to that day. Use the
 clock adapter so this is testable.
+
+**Method is not movement identity.** A set can record Barbell, Dumbbell, Cable, or Machine
+without changing `exerciseId`, program completion, muscle activation, or XP. Last loads and
+PR comparisons are method-scoped because unlike equipment loads are not interchangeable.
+Legacy sets with no `method` belong to the exercise's original `variant`.
 
 **Battles are keyed and seeded by date.** `seed = hash(profileId + date)`. Re-resolving
 must produce an identical result, so a battle can never be rerolled for better loot.

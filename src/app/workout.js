@@ -17,6 +17,8 @@ import { rankFromLevels } from '../domain/rank.js'
 import { generateDirective } from '../domain/directive.js'
 import { daysBetween } from '../adapters/clock/clock.js'
 import { timeUnderLoad } from '../domain/duration.js'
+import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
+import { estimateOneRepMax } from '../domain/e1rm.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
 function weekStart(date) {
@@ -67,8 +69,10 @@ export function createWorkoutService({ storage, clock, balance }) {
    * The last time this exercise was performed, for the prefill and the header.
    * @param {string} exerciseId
    */
-  async function lastPerformance(exerciseId) {
-    const logs = await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId)
+  async function lastPerformance(exerciseId, method = null) {
+    const exercise = method ? await storage.get('exercises', exerciseId) : null
+    const logs = (await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId))
+      .filter((log) => setUsesMethod(log, exercise, method))
     if (logs.length === 0) return null
     const sessions = new Map((await storage.getAll('sessions')).map((s) => [s.id, s]))
 
@@ -85,19 +89,86 @@ export function createWorkoutService({ storage, clock, balance }) {
     return sets.length > 0 ? { date: latestDate, sets } : null
   }
 
+  /** A PR scoped to one equipment method, so unlike loads are not compared. */
+  async function methodRecord(exerciseId, method, excludedLogIds = new Set()) {
+    const exercise = await storage.get('exercises', exerciseId)
+    if (!exercise || methodsForExercise(exercise).length < 2) {
+      return (await recordMap()).get(exerciseId) ?? null
+    }
+
+    const logs = (await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId))
+      .filter((log) => !excludedLogIds.has(log.id) && !log.isWarmup && setUsesMethod(log, exercise, method))
+    if (logs.length === 0) return null
+    const sessions = new Map((await storage.getAll('sessions')).map((row) => [row.id, row]))
+    let best = null
+    let bestE1RM = null
+    let lastPerformance = null
+    let latestDate = ''
+    const volumeBySession = new Map()
+    for (const log of logs) {
+      const weight = Number(log.weight)
+      const reps = Number(log.reps)
+      const date = sessions.get(log.sessionId)?.date
+      if (!date || !Number.isFinite(weight) || weight <= 0 || !Number.isFinite(reps) || reps <= 0) continue
+      if (!best || weight > best.weight) {
+        best = {
+          weight,
+          reps,
+          date,
+          ...(log.cablePeg != null ? {
+            cablePeg: log.cablePeg,
+            cablePerHandle: log.cablePerHandle,
+            cableStacks: log.cableStacks,
+          } : {}),
+        }
+      }
+      const e1rm = estimateOneRepMax(weight, reps)
+      if (!bestE1RM || e1rm > bestE1RM.value) bestE1RM = { value: e1rm, date }
+      volumeBySession.set(log.sessionId, (volumeBySession.get(log.sessionId) ?? 0) + weight * reps)
+      if (date > latestDate) {
+        latestDate = date
+        lastPerformance = { weight, reps, date }
+      } else if (date === latestDate && weight > (lastPerformance?.weight ?? 0)) {
+        lastPerformance = { weight, reps, date }
+      }
+    }
+    let bestVolume = null
+    for (const [sessionId, volume] of volumeBySession) {
+      const date = sessions.get(sessionId)?.date
+      if (date && (!bestVolume || volume > bestVolume.volume)) bestVolume = { volume, date }
+    }
+    return best ? {
+      exerciseId,
+      bestWeight: best,
+      bestVolume,
+      bestE1RM,
+      lastPerformance,
+    } : null
+  }
+
+  /** Last and best load for one movement performed with one equipment method. */
+  async function methodPerformance(exerciseId, method) {
+    return {
+      last: await lastPerformance(exerciseId, method),
+      record: await methodRecord(exerciseId, method),
+    }
+  }
+
   /**
    * Everything the set row needs before a single set is entered: what you did
    * last time, what your best is, and what to try today.
    * @param {string} exerciseId
    * @param {{sets?: number, reps?: number|null, weight?: number|null, distance?: number|null}} [prescribed]
    */
-  async function prepareExercise(exerciseId, prescribed = {}) {
+  async function prepareExercise(exerciseId, prescribed = {}, selectedMethod = null) {
     const exercises = await exerciseMap()
     const exercise = exercises.get(exerciseId)
-    const last = await lastPerformance(exerciseId)
-    const record = (await recordMap()).get(exerciseId) ?? null
+    const method = methodForExercise(exercise, selectedMethod)
+    const scoped = methodsForExercise(exercise).length > 1 ? method : null
+    const last = await lastPerformance(exerciseId, scoped)
+    const record = scoped ? await methodRecord(exerciseId, method) : (await recordMap()).get(exerciseId) ?? null
     const proposal = proposeNext({ exercise, last, prescribed: { sets: 3, reps: null, weight: null, ...prescribed } }, balance)
-    return { exercise, last, record, proposal }
+    return { exercise, method, last, record, proposal }
   }
 
   /**
@@ -120,13 +191,15 @@ export function createWorkoutService({ storage, clock, balance }) {
    * @param {number} week
    * @param {any} program
    */
-  async function prepareSlot(slot, week, program) {
+  async function prepareSlot(slot, week, program, selectedMethod = null) {
     const exercises = await exerciseMap()
     const exercise = exercises.get(slot.exerciseId)
-    const last = await lastPerformance(slot.exerciseId)
-    const record = (await recordMap()).get(slot.exerciseId) ?? null
+    const method = methodForExercise(exercise, selectedMethod)
+    const scoped = methodsForExercise(exercise).length > 1 ? method : null
+    const last = await lastPerformance(slot.exerciseId, scoped)
+    const record = scoped ? await methodRecord(slot.exerciseId, method) : (await recordMap()).get(slot.exerciseId) ?? null
     const proposal = prescribeFromProgram({ slot, week, program, last, exercise }, balance)
-    return { exercise, last, record, proposal, slot }
+    return { exercise, method, last, record, proposal, slot }
   }
 
   /**
@@ -134,8 +207,10 @@ export function createWorkoutService({ storage, clock, balance }) {
    * @param {string} exerciseId
    * @param {number} [limit]
    */
-  async function exerciseHistory(exerciseId, limit = 6) {
-    const logs = await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId)
+  async function exerciseHistory(exerciseId, limit = 6, method = null) {
+    const exercise = method ? await storage.get('exercises', exerciseId) : null
+    const logs = (await storage.getAllByIndex('setLogs', 'exerciseId', exerciseId))
+      .filter((log) => setUsesMethod(log, exercise, method))
     const sessions = new Map((await storage.getAll('sessions')).map((s) => [s.id, s]))
 
     /** @type {Map<string, any[]>} */
@@ -195,6 +270,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       id: `sl_${session.id}_${existing.length}_${Math.round(clock.now() % 1000000)}`,
       sessionId: session.id,
       exerciseId: set.exerciseId,
+      method: set.method ?? null,
       setIndex: set.setIndex ?? existing.length,
       weight: set.weight ?? null,
       reps: set.reps ?? null,
@@ -308,6 +384,23 @@ export function createWorkoutService({ storage, clock, balance }) {
 
     const exercises = await exerciseMap()
     const records = await recordMap()
+    const scoringRecords = new Map(records)
+    const excludedLogIds = new Set(sets.map((set) => set.id).filter(Boolean))
+    const methodsByExercise = new Map()
+    for (const set of sets) {
+      const exercise = exercises.get(set.exerciseId)
+      if (methodsForExercise(exercise).length < 2) continue
+      if (!methodsByExercise.has(set.exerciseId)) methodsByExercise.set(set.exerciseId, new Set())
+      methodsByExercise.get(set.exerciseId).add(methodForSet(set, exercise))
+    }
+    for (const [exerciseId, methods] of methodsByExercise) {
+      // The session UI prevents mixed methods for one movement. If imported
+      // data does contain a mix, keep the canonical fallback rather than guess.
+      if (methods.size !== 1) continue
+      const previous = await methodRecord(exerciseId, [...methods][0], excludedLogIds)
+      if (previous) scoringRecords.set(exerciseId, previous)
+      else scoringRecords.delete(exerciseId)
+    }
 
     const endedAt = clock.nowIso()
     // docs/11 F1. Wall-clock from `startedAt` measured the day, not the work:
@@ -335,6 +428,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       durationMinutes,
       sets: sets.map((log) => ({
         exerciseId: log.exerciseId,
+        method: log.method ?? null,
         weight: log.weight,
         reps: log.reps,
         timeSec: log.timeSec,
@@ -345,7 +439,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     const context = {
       date: session.date,
       exercises,
-      records,
+      records: scoringRecords,
       daysSinceLastSession: previous ? daysBetween(previous, session.date) : Infinity,
       sessionsThisWeekBefore,
       planTargetSessionsPerWeek: profile?.planTargetSessionsPerWeek ?? 4,
@@ -354,7 +448,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       isFirstOfDay: options.isFirstOfDay !== false,
     }
 
-    const detected = detectRecords(input.sets, records, exercises)
+    const detected = detectRecords(input.sets, scoringRecords, exercises)
     const awards = awardsForSession(input, context, balance)
 
     // Load state, apply, persist.
@@ -524,7 +618,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   }
 
   return {
-    exerciseMap, recordMap, lastPerformance, prepareExercise,
+    exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats,
     startSession, logSet, setsFor, finishSession,

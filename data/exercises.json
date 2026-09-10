@@ -161,7 +161,9 @@
     {
       "id": "chest_press_bb",
       "name": "Chest Press (Barbell)",
+      "movementName": "Chest Press",
       "variant": "Barbell",
+      "methods": ["Barbell", "Dumbbell", "Cable", "Machine"],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -176,7 +178,9 @@
     {
       "id": "ohp_db",
       "name": "Overhead Press (Dumbbell)",
+      "movementName": "Overhead Press",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
       "group": "shoulders",
       "class": "compound",
       "pattern": "Vertical Pushing",
@@ -395,7 +399,9 @@
     {
       "id": "lateral_raise",
       "name": "Lateral Raise (Cable)",
+      "movementName": "Lateral Raise",
       "variant": "Cable",
+      "methods": ["Cable", "Dumbbell", "Machine"],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Shoulder Abduction",
@@ -522,7 +528,9 @@
     {
       "id": "incline_bench_bb",
       "name": "Incline Barbell Bench Press",
+      "movementName": "Incline Bench Press",
       "variant": "Barbell",
+      "methods": ["Barbell", "Dumbbell", "Cable", "Machine"],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -538,7 +546,9 @@
     {
       "id": "flat_bench_db",
       "name": "Flat Dumbbell Bench Press",
+      "movementName": "Flat Bench Press",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -554,7 +564,9 @@
     {
       "id": "incline_bench_db",
       "name": "Incline Dumbbell Bench Press",
+      "movementName": "Incline Bench Press",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -586,7 +598,9 @@
     {
       "id": "shoulder_press_db",
       "name": "Seated Dumbbell Shoulder Press",
+      "movementName": "Seated Shoulder Press",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
       "group": "shoulders",
       "class": "compound",
       "pattern": "Vertical Pushing",
@@ -602,7 +616,9 @@
     {
       "id": "lateral_raise_db",
       "name": "Dumbbell Lateral Raise",
+      "movementName": "Lateral Raise",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Cable", "Machine"],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Shoulder Abduction",
@@ -616,7 +632,9 @@
     {
       "id": "rear_delt_fly_db",
       "name": "Dumbbell Rear-Delt Fly",
+      "movementName": "Rear-Delt Fly",
       "variant": "Dumbbell",
+      "methods": ["Dumbbell", "Cable", "Machine"],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Horizontal Pulling",

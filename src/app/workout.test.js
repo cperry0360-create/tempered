@@ -38,6 +38,19 @@ test('a user-added exercise survives reseeding', async () => {
   assert.ok(await storage.get('exercises', 'zercher_squat'), 'user exercise was wiped')
 })
 
+test('new method metadata reaches a previously seeded exercise without replacing user-owned fields', async () => {
+  const { storage } = await freshApp()
+  const existing = await storage.get('exercises', 'incline_bench_db')
+  await storage.put('exercises', { ...existing, methods: undefined, movementName: undefined, note: 'My bench angle' })
+
+  await seedLibrary(storage, library)
+
+  const migrated = await storage.get('exercises', 'incline_bench_db')
+  assert.deepEqual(migrated.methods, ['Dumbbell', 'Barbell', 'Cable', 'Machine'])
+  assert.equal(migrated.movementName, 'Incline Bench Press')
+  assert.equal(migrated.note, 'My bench angle')
+})
+
 test('ACCEPTANCE: finishing a session produces exactly the Phase 1 XP', async () => {
   const { storage, clock, workout } = await freshApp()
   const session = await workout.startSession('lower')
@@ -139,6 +152,69 @@ test('a second session sees the first as history, not as a fresh start', async (
 
   assert.equal(summary.records.weightPrs.length, 1, 'beating 145 with 155 is a PR')
   assert.equal(summary.records.weightPrs[0].weight, 155)
+})
+
+test('equipment methods share a movement id but keep separate load history', async () => {
+  const { storage, clock, workout } = await freshApp()
+  const dumbbells = await workout.startSession('upper')
+  await workout.logSet(dumbbells, {
+    exerciseId: 'incline_bench_db', method: 'Dumbbell', weight: 45, reps: 10,
+  })
+  await workout.finishSession(dumbbells, { durationMinutes: 8 })
+
+  clock.advanceDays(2)
+  const cable = await workout.startSession('upper')
+  const cableLog = await workout.logSet(cable, {
+    exerciseId: 'incline_bench_db', method: 'Cable', weight: 70, reps: 12,
+  })
+  const firstCableSummary = await workout.finishSession(cable, { durationMinutes: 8 })
+
+  assert.equal(cableLog.exerciseId, 'incline_bench_db', 'the programmed movement remains canonical')
+  assert.equal(cableLog.method, 'Cable', 'the equipment is attached to the performed set')
+  assert.equal(firstCableSummary.records.weightPrs.length, 0, 'first Cable use is a baseline, not a PR over Dumbbell')
+
+  const db = await workout.methodPerformance('incline_bench_db', 'Dumbbell')
+  const machine = await workout.methodPerformance('incline_bench_db', 'Machine')
+  const cablePerformance = await workout.methodPerformance('incline_bench_db', 'Cable')
+  assert.equal(db.last.sets[0].weight, 45)
+  assert.equal(db.record.bestWeight.weight, 45)
+  assert.equal(cablePerformance.last.sets[0].weight, 70)
+  assert.equal(cablePerformance.record.bestWeight.weight, 70)
+  assert.equal(machine.last, null)
+  assert.equal(machine.record, null)
+
+  const cableHistory = await workout.exerciseHistory('incline_bench_db', 6, 'Cable')
+  assert.equal(cableHistory.length, 1)
+  assert.equal(cableHistory[0].sets[0].method, 'Cable')
+  assert.equal((await storage.getAllByIndex('setLogs', 'exerciseId', 'incline_bench_db')).length, 2)
+
+  clock.advanceDays(2)
+  const strongerCable = await workout.startSession('upper')
+  await workout.logSet(strongerCable, {
+    exerciseId: 'incline_bench_db', method: 'Cable', weight: 75, reps: 12,
+  })
+  const cablePr = await workout.finishSession(strongerCable, { durationMinutes: 8 })
+  assert.equal(cablePr.records.weightPrs.length, 1)
+  assert.equal(cablePr.records.weightPrs[0].previous, 70)
+
+  clock.advanceDays(2)
+  const strongerDumbbells = await workout.startSession('upper')
+  await workout.logSet(strongerDumbbells, {
+    exerciseId: 'incline_bench_db', method: 'Dumbbell', weight: 50, reps: 10,
+  })
+  const dumbbellPr = await workout.finishSession(strongerDumbbells, { durationMinutes: 8 })
+  assert.equal(dumbbellPr.records.weightPrs.length, 1, 'Dumbbell compares with Dumbbell, not the heavier Cable load')
+  assert.equal(dumbbellPr.records.weightPrs[0].previous, 45)
+})
+
+test('legacy sets belong to an exercise original method', async () => {
+  const { workout } = await freshApp()
+  const session = await workout.startSession('upper')
+  await workout.logSet(session, { exerciseId: 'lateral_raise_db', weight: 20, reps: 15 })
+  await workout.finishSession(session, { durationMinutes: 5 })
+
+  assert.equal((await workout.methodPerformance('lateral_raise_db', 'Dumbbell')).last.sets[0].weight, 20)
+  assert.equal((await workout.methodPerformance('lateral_raise_db', 'Cable')).last, null)
 })
 
 test('an ad-hoc session has no routine and still scores', async () => {

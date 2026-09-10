@@ -8,6 +8,7 @@ import {
   withCableExerciseSetting,
 } from '../domain/cable-machine.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
+import { methodForSet, methodsForExercise } from '../domain/exercise-method.js'
 
 const RUNTIME_KEY = Symbol.for('tempered.cableMachineRuntime')
 const HISTORY_MIGRATION_VERSION = 2
@@ -145,7 +146,7 @@ export async function installCableMachineRuntime(context) {
 
   const exerciseMap = await workout.exerciseMap()
   const cableExercises = [...exerciseMap.values()]
-    .filter((exercise) => exercise.variant === 'Cable' && exercise.unit !== 'time')
+    .filter((exercise) => methodsForExercise(exercise).includes('Cable') && exercise.unit !== 'time')
     .sort((a, b) => a.name.localeCompare(b.name))
   const cableExerciseIds = new Set(cableExercises.map((exercise) => exercise.id))
 
@@ -178,8 +179,10 @@ export async function installCableMachineRuntime(context) {
 
   /** Rebuild one cable record from canonical logs so migrated peg history fixes PR. */
   async function rebuildCableRecord(exerciseId) {
+    const exercise = exerciseMap.get(exerciseId)
     const allLogs = (await storage.getAll('setLogs'))
-      .filter((log) => log.exerciseId === exerciseId && log.isWarmup !== true)
+      .filter((log) => log.exerciseId === exerciseId && log.isWarmup !== true
+        && methodForSet(log, exercise) === 'Cable')
     if (allLogs.length === 0) return
 
     const sessions = new Map((await storage.getAll('sessions')).map((session) => [session.id, session]))
@@ -244,13 +247,18 @@ export async function installCableMachineRuntime(context) {
       }
     }
 
-    await storage.put('records', {
+    const record = {
       exerciseId,
       bestWeight,
       bestVolume,
       bestE1RM,
       lastPerformance,
-    })
+    }
+    // Single-method cable exercises still use the canonical record store.
+    // Multi-method movements get their method PR directly from set history so
+    // Cable cannot overwrite a Dumbbell or Barbell record.
+    if (methodsForExercise(exercise).length < 2) await storage.put('records', record)
+    return record
   }
 
   /**
@@ -286,7 +294,9 @@ export async function installCableMachineRuntime(context) {
   const originalFinishSession = workout.finishSession.bind(workout)
 
   workout.logSet = async (session, set) => {
-    if (!machine.enabled || !cableExerciseIds.has(set?.exerciseId)
+    const exercise = exerciseMap.get(set?.exerciseId)
+    if (!machine.enabled || methodForSet(set, exercise) !== 'Cable'
+      || !cableExerciseIds.has(set?.exerciseId)
       || !cablePegEnabledForExercise(set.exerciseId, machine)) {
       return originalLogSet(session, set)
     }
@@ -373,7 +383,9 @@ export async function installCableMachineRuntime(context) {
 
   async function decorateRecord(card) {
     const exerciseId = card.dataset.exercise
-    const record = await storage.get('records', exerciseId)
+    const record = methodsForExercise(exerciseMap.get(exerciseId)).length > 1
+      ? (await workout.methodPerformance(exerciseId, 'Cable')).record
+      : await storage.get('records', exerciseId)
     const best = record?.bestWeight
     if (!Number.isInteger(best?.cablePeg) || !Number.isFinite(Number(best?.weight)) || !card.isConnected) return
 
@@ -423,10 +435,34 @@ export async function installCableMachineRuntime(context) {
     initialisedExercises.add(exerciseId)
   }
 
+  function clearCableCard(card) {
+    if (!card.dataset.cableMachine && !card.querySelector('[data-cable-peg="true"]')) return
+    const exerciseId = card.dataset.exercise
+    delete card.dataset.cableMachine
+    delete card.dataset.cableRecord
+    card.querySelector('.cable-mode-note')?.remove()
+    card.querySelector('.cable-readout')?.remove()
+    const weightHead = card.querySelector('.setrow--head [data-col="weight"]')
+    if (weightHead) weightHead.textContent = 'LBS'
+    for (const input of card.querySelectorAll('.setrow__num[data-field="weight"]')) {
+      delete input.dataset.cablePeg
+      delete input.dataset.cableInvalid
+      input.inputMode = 'decimal'
+      input.setAttribute('aria-label', `LBS, set ${Number(input.dataset.set ?? 0) + 1}`)
+    }
+    initialisedExercises.delete(exerciseId)
+    for (const key of [...pegState.keys()]) {
+      if (key.startsWith(`${exerciseId}:`)) pegState.delete(key)
+    }
+  }
+
   function enhanceCableCard(card) {
     const exerciseId = card.dataset.exercise
-    if (!machine.enabled || !cableExerciseIds.has(exerciseId)
-      || !cablePegEnabledForExercise(exerciseId, machine)) return
+    if (!machine.enabled || card.dataset.method !== 'Cable' || !cableExerciseIds.has(exerciseId)
+      || !cablePegEnabledForExercise(exerciseId, machine)) {
+      clearCableCard(card)
+      return
+    }
 
     card.dataset.cableMachine = machine.id
     const weightHead = card.querySelector('.setrow--head [data-col="weight"]')
@@ -627,7 +663,7 @@ export async function installCableMachineRuntime(context) {
     const settings = app.querySelector('.screen--settings')
     if (settings) enhanceSettings(settings)
     const sessionRoot = currentSessionRoot
-    if (sessionRoot && machine.enabled) {
+    if (sessionRoot) {
       for (const card of sessionRoot.querySelectorAll('[data-exercise]')) enhanceCableCard(card)
     }
   }
@@ -646,7 +682,7 @@ export async function installCableMachineRuntime(context) {
     if (!(input instanceof HTMLInputElement)) return
     const card = input.closest('[data-exercise]')
     const exerciseId = card?.dataset.exercise
-    if (!exerciseId || !cableExerciseIds.has(exerciseId)
+    if (!exerciseId || card?.dataset.method !== 'Cable' || !cableExerciseIds.has(exerciseId)
       || !cablePegEnabledForExercise(exerciseId, machine)) return
     const peg = validPeg(input.value, machine)
     pegState.set(rowKey(exerciseId, input), peg)
@@ -659,7 +695,7 @@ export async function installCableMachineRuntime(context) {
     const row = button?.closest?.('.setrow')
     const card = row?.closest?.('[data-exercise]')
     const exerciseId = card?.dataset.exercise
-    if (!machine.enabled || !exerciseId || !cableExerciseIds.has(exerciseId)
+    if (!machine.enabled || !exerciseId || card?.dataset.method !== 'Cable' || !cableExerciseIds.has(exerciseId)
       || !cablePegEnabledForExercise(exerciseId, machine)) return
     const input = row.querySelector('.setrow__num[data-field="weight"]')
     if (!(input instanceof HTMLInputElement) || input.readOnly) return

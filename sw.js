@@ -63,6 +63,7 @@ const PRECACHE = [
   './src/domain/expedition.js',
   './src/domain/duration.js',
   './src/domain/e1rm.js',
+  './src/domain/exercise-method.js',
   './src/domain/grit.js',
   './src/domain/levels.js',
   './src/domain/might.js',

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — exercise method selector</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+    const qa = (selector, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(selector)] : []
+    const settle = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    try {
+      const storage = createMemoryStorage()
+      const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+      const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+      await tempered.app.startSession({ exerciseId: 'incline_bench_db' })
+      await settle(100)
+
+      let card = q('.screen--session [data-exercise="incline_bench_db"]')
+      check('the movement title is independent of equipment', q('.exercise__name', card)?.textContent === 'INCLINE BENCH PRESS', q('.exercise__name', card)?.textContent)
+      check('the shipped method is visible', card?.dataset.method === 'Dumbbell' && /DUMBBELL/.test(q('.exercise__method', card)?.textContent ?? ''))
+
+      q('button.actionpill[data-method]', card)?.click()
+      await settle()
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      const choices = qa('[data-methodchoice]', card).map((button) => button.dataset.methodchoice)
+      check('incline press offers only its curated methods', ['Dumbbell', 'Barbell', 'Cable', 'Machine'].every((method) => choices.includes(method)), choices.join(', '))
+
+      q('[data-methodchoice="Cable"]', card)?.click()
+      await settle(120)
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      check('selecting cable does not replace the movement', card?.dataset.exercise === 'incline_bench_db' && q('.exercise__name', card)?.textContent === 'INCLINE BENCH PRESS')
+      check('the selected method is immediately visible', card?.dataset.method === 'Cable' && /CABLE/.test(q('.exercise__method', card)?.textContent ?? ''))
+      check('barbell plate controls are absent for cable', q('button.actionpill[data-equipment]', card) === null)
+
+      const weight = q('.setrow__num[data-field="weight"]', card)
+      const reps = q('.setrow__num[data-field="reps"]', card)
+      weight.value = '70'
+      weight.dispatchEvent(new Event('input', { bubbles: true }))
+      reps.value = '12'
+      reps.dispatchEvent(new Event('input', { bubbles: true }))
+      q('.setrow__check', card)?.click()
+      await settle(120)
+      const logged = (await storage.getAll('setLogs')).at(-1)
+      check('the log keeps the original movement id', logged?.exerciseId === 'incline_bench_db', logged?.exerciseId)
+      check('the log records cable as the method', logged?.method === 'Cable', logged?.method)
+
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      q('button.actionpill[data-method]', card)?.click()
+      await settle()
+      check('method changes lock after a set is logged', qa('[data-methodchoice]', q('.screen--session [data-exercise="incline_bench_db"]')).every((button) => button.disabled))
+
+      await tempered.app.startSession({ exerciseId: 'ab_wheel_rollout' })
+      await settle(80)
+      const fixedMethod = q('.screen--session [data-exercise="ab_wheel_rollout"]')
+      check('fixed-equipment movements do not get a needless selector', q('button.actionpill[data-method]', fixedMethod) === null)
+    } catch (error) {
+      check('exercise method harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'exercise-method', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

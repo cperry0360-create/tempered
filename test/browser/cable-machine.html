@@ -128,12 +128,47 @@
       check('Tricep Pushdown can opt into peg mode independently',
         profileAfterExercise?.cableMachine?.exerciseSettings?.tricep_push?.enabled === true)
 
-      const addon = [...equipment.querySelectorAll('button')].find((button) => button.textContent === 'NO')
+      const incline = q('[data-cable-exercise="incline_bench_db"]', equipment)
+      check('a cable-capable press can opt into this machine profile', Boolean(incline))
+      q('button[aria-label="Incline Dumbbell Bench Press peg entry"]', incline)?.click()
+      await settle(120)
+
+      await tempered.app.startSession({ exerciseId: 'incline_bench_db' })
+      await settle(120)
+      let inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
+      q('button.actionpill[data-method]', inclineCard)?.click()
+      await settle(80)
+      q('[data-methodchoice="Cable"]', inclineCard)?.click()
+      await settle(180)
+      inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
+      check('switching the press to Cable activates configured peg entry',
+        inclineCard?.dataset.method === 'Cable' && q('.setrow--head [data-col="weight"]', inclineCard)?.textContent === 'PEG')
+
+      const inclineWeight = q('.setrow__num[data-field="weight"]', inclineCard)
+      const inclineReps = q('.setrow__num[data-field="reps"]', inclineCard)
+      inclineWeight.value = '6'
+      inclineWeight.dispatchEvent(new Event('input', { bubbles: true }))
+      inclineReps.value = '12'
+      inclineReps.dispatchEvent(new Event('input', { bubbles: true }))
+      q('.setrow__check', inclineCard)?.click()
+      await settle(180)
+      const inclineLog = (await storage.getAll('setLogs')).find((row) => row.exerciseId === 'incline_bench_db')
+      check('cable press keeps its movement id and method',
+        inclineLog?.exerciseId === 'incline_bench_db' && inclineLog?.method === 'Cable',
+        `${inclineLog?.exerciseId} / ${inclineLog?.method}`)
+      check('cable press peg is converted through the same machine profile',
+        inclineLog?.cablePeg === 6 && inclineLog?.weight === 37.5,
+        `${inclineLog?.cablePeg} / ${inclineLog?.weight}`)
+
+      await tempered.app.show('settings')
+      const refreshedEquipment = await waitFor('[data-section="cable-machine"]')
+
+      const addon = [...refreshedEquipment.querySelectorAll('button')].find((button) => button.textContent === 'NO')
       addon?.click()
       await settle(120)
       check('5 lb add-on toggle updates the Peg 6 preview to 80 lb total',
-        /80 lb Cable Fly total/.test(q('.cable-settings__example', equipment)?.textContent ?? ''),
-        q('.cable-settings__example', equipment)?.textContent)
+        /80 lb Cable Fly total/.test(q('.cable-settings__example', refreshedEquipment)?.textContent ?? ''),
+        q('.cable-settings__example', refreshedEquipment)?.textContent)
       const profile = await storage.get('profile', 'profile')
       check('correct FTX identity is persisted through the storage adapter', profile?.cableMachine?.id === 'inspire_ftx_centr2')
     } catch (error) {

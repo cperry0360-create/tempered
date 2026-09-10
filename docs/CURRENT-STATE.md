@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.18.5 (19)
+**Current release:** 0.19.0 (20)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -124,6 +124,13 @@ The November Physique light leg day adds Standing Calf Raise. Its former Crunch 
 alternates by program week: Ab-Wheel Rollout in odd weeks and Cable Crunch in even weeks.
 The seeded-program schema upgrade applies this to existing installs without resetting the
 program start date or user-configured working weights.
+
+Selected presses and shoulder movements expose a METHOD control inside the active workout.
+The movement and program slot stay canonical while the user can choose a sensible Barbell,
+Dumbbell, Cable, or Machine implementation. The method is stored on each set; last load,
+history, and PR comparisons remain scoped to that method. Existing pre-0.19.0 sets inherit
+the exercise's original method. Once any set for the movement is checked, its method locks
+until those sets are undone. A Cable choice can also use the configured peg-entry profile.
 
 Tempered is portrait-only: the manifest, runtime orientation request, landscape guard,
 and iPhone wrapper all enforce the same orientation contract.

@@ -2049,3 +2049,31 @@ version 0.18.5 with build 19.
 runtime styles changed, so installed PWA caches and the native field build advance.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-10 — Equipment method changes do not replace the movement
+**Phase:** 0.19.0 exercise method selection
+**Decision:** Selected presses and shoulder movements have a METHOD control in the active
+session. It changes only the performed equipment among curated Barbell, Dumbbell, Cable,
+and Machine choices. The canonical exercise id, program slot, activation, task completion,
+and XP stay unchanged. Each set stores its method, and LAST, history, PR display, and PR
+awards compare only like methods. Existing logs without a method inherit the exercise's
+original variant. A method locks after the first set is checked and unlocks when those sets
+are undone. Cable selections participate in the existing machine profile and optional peg
+entry. Additive seed metadata upgrades existing installs without replacing user fields.
+**Reasoning:** A gym station choice should not rewrite the workout. It does need explicit
+load context because 45 lb on dumbbells, a cable stack, and a machine are not equivalent
+progression records. Curated choices avoid nonsensical equipment options while keeping the
+change fast inside the logger.
+**Confidence:** specified by Cory; service tests cover method persistence, legacy history,
+method-scoped PRs, and stable movement identity, with browser harnesses for the selector,
+post-set lock, resume-safe state, and cable peg integration.
+**Needs Cory:** no
+
+## 2026-09-10 — Release 0.19.0 (20)
+**Phase:** 0.19.0 exercise method selection
+**Decision:** `src/version.js` carries `0.19.0 (20)` and the native wrapper uses marketing
+version 0.19.0 with build 20.
+**Reasoning:** Workout interaction, persisted set metadata, seeded exercise metadata,
+cable-machine integration, and offline assets changed, so PWA and native identities advance.
+**Confidence:** implementation.
+**Needs Cory:** no

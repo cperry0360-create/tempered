@@ -25,6 +25,7 @@ import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
+import { methodForExercise, methodsForExercise } from '../../domain/exercise-method.js'
 import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
 
 /** Art lives beside the repo root; resolve against this module so the path holds
@@ -34,8 +35,10 @@ const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.u
 /** What a home gym holds, per side. Editable from the EQUIPMENT pill. */
 const DEFAULT_PLATES = [45, 35, 25, 10, 5, 2.5, 1.25]
 
-/** A plate calculator is only meaningful on a loadable bar. */
-const isBarbell = (exercise) => exercise?.variant === 'Barbell' && exercise?.unit !== 'time'
+const activeMethod = (entry) => methodForExercise(entry?.exercise, entry?.method)
+
+/** A plate calculator is only meaningful when this movement is using a bar. */
+const isBarbell = (entry) => activeMethod(entry) === 'Barbell' && entry?.exercise?.unit !== 'time'
 
 /**
  * @param {object} deps
@@ -275,6 +278,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         }
         const logged = {
           exerciseId: entry.exercise.id,
+          method: activeMethod(entry),
           weight: set.weight ?? null, reps: set.reps ?? null,
           timeSec: set.timeSec ?? null, distance: set.distance ?? null,
           perSide: set.perSide === true,
@@ -319,7 +323,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         },
       }, [icon('minus')]),
       // Beside the weight field of the set actually being worked.
-      active && isBarbell(entry.exercise) && plateStrip(entry, set),
+      active && isBarbell(entry) && plateStrip(entry, set),
     ])
   }
 
@@ -361,7 +365,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     if (!entry.history) return el('div.panel', {}, [el('p.panel__note', { text: 'Loading…' })])
     if (entry.history.length === 0) {
       return el('div.panel', {}, [
-        el('p.panel__note', { text: 'No history for this movement yet. Today is the first entry.' }),
+        el('p.panel__note', { text: `No ${activeMethod(entry).toLowerCase()} history for this movement yet.` }),
       ])
     }
     return el('div.panel', {}, entry.history.map((day) => el('div.historyline', {}, [
@@ -370,6 +374,50 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         text: day.sets.map((s) => performance(s)).join('   '),
       }),
     ])))
+  }
+
+  function methodPanel(entry) {
+    const current = activeMethod(entry)
+    const locked = entry.sets.some((set) => set.logged === true)
+    return el('div.panel', {}, [
+      el('p.panel__note', {
+        text: locked
+          ? 'Undo the checked sets before changing method. Logged work keeps the equipment it used.'
+          : 'Same movement and program slot. Only the equipment and load history change.',
+      }),
+      el('div.methodlist', { role: 'group', 'aria-label': 'Exercise method' },
+        methodsForExercise(entry.exercise).map((method) => el('button.methodlist__option', {
+          type: 'button',
+          disabled: locked,
+          'aria-pressed': String(method === current),
+          dataset: { methodchoice: method, selected: String(method === current) },
+          onclick: async () => {
+            if (locked || method === current) {
+              if (method === current) togglePanel(entry, 'method')
+              return
+            }
+            const performanceForMethod = await workout.methodPerformance(entry.exercise.id, method)
+            entry.method = method
+            entry.last = performanceForMethod.last
+            entry.record = performanceForMethod.record
+            entry.history = null
+            entry.proposal = {
+              ...(entry.proposal ?? {}),
+              reason: entry.last
+                ? `Prefilled from your last ${method.toLowerCase()} session.`
+                : `No ${method.toLowerCase()} history yet. Your rep target stays the same.`,
+            }
+            entry.sets = entry.sets.map((set, index) => ({
+              ...set,
+              weight: entry.last?.sets?.[index]?.weight ?? entry.last?.sets?.[0]?.weight ?? null,
+            }))
+            openPanel = null
+            persistDraft()
+            render()
+          },
+        }, [method])),
+      ),
+    ])
   }
 
   function swapPanel(entry) {
@@ -388,8 +436,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
               weight: null,
             })
             entry.exercise = prepared.exercise
+            entry.method = prepared.method
             entry.last = prepared.last
             entry.record = prepared.record
+            entry.history = null
             entry.substitutedFor = substitutedFor
             // Structure preserved: same number of sets, same rep target.
             entry.sets = entry.sets.map((set) => ({
@@ -435,9 +485,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       actionPill(entry, {
         name: 'history', label: 'HISTORY', glyph: 'history',
         onclick: async () => {
-          if (!entry.history) entry.history = await workout.exerciseHistory(entry.exercise.id)
+          if (!entry.history) entry.history = await workout.exerciseHistory(entry.exercise.id, 6, activeMethod(entry))
           togglePanel(entry, 'history')
         },
+      }),
+      methodsForExercise(entry.exercise).length > 1 && actionPill(entry, {
+        name: 'method', label: 'METHOD', glyph: 'equipment',
+        value: el('span.actionpill__value', { text: activeMethod(entry).toUpperCase() }),
+        onclick: () => togglePanel(entry, 'method'),
       }),
       actionPill(entry, {
         name: 'swap', label: 'SWAP', glyph: 'swap',
@@ -448,8 +503,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         dataset: { editsets: entry.exercise.id, open: String(entry.editing === true) },
         onclick: () => { entry.editing = entry.editing !== true; persistDraft(); render() },
       }, [icon('sets'), entry.editing === true ? 'DONE EDITING' : 'EDIT SETS']),
-      isBarbell(entry.exercise) && actionPill(entry, {
-        name: 'equipment', label: 'EQUIPMENT', glyph: 'equipment',
+      isBarbell(entry) && actionPill(entry, {
+        name: 'equipment', label: 'PLATES', glyph: 'equipment',
         onclick: () => togglePanel(entry, 'equipment'),
       }),
     ])
@@ -463,7 +518,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     const range = slot ? `${slot.sets} × ${slot.repMin}–${slot.repMax}${slot.perSide ? ' / side' : ''}` : null
     const fields = fieldsFor(entry.exercise)
 
-    return el('section.card.exercise', { dataset: { exercise: entry.exercise.id } }, [
+    return el('section.card.exercise', {
+      dataset: { exercise: entry.exercise.id, method: activeMethod(entry) ?? '' },
+    }, [
       el('header.exercise__head', {}, [
         entry.exercise.art && el('button.exercise__art', {
           type: 'button', 'aria-label': `Show ${entry.exercise.name} reference`,
@@ -473,8 +530,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
           src: artUrl(entry.exercise.art), alt: '', loading: 'lazy',
         })]),
         el('div.exercise__title', {}, [
-          el('h2.exercise__name', { text: entry.exercise.name }),
+          el('h2.exercise__name', { text: entry.exercise.movementName ?? entry.exercise.name }),
           range && el('p.exercise__range', { text: range }),
+          methodsForExercise(entry.exercise).length > 1 && el('p.exercise__method', {
+            text: `METHOD · ${activeMethod(entry).toUpperCase()}`,
+          }),
           entry.substitutedFor && el('p.exercise__sub', {
             text: `swapped in for ${entry.substitutedFor.replace(/_/g, ' ')}`,
           }),
@@ -530,6 +590,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       ]),
 
       isOpen(entry, 'history') && historyPanel(entry),
+      isOpen(entry, 'method') && methodPanel(entry),
       isOpen(entry, 'swap') && swapPanel(entry),
       isOpen(entry, 'equipment') && equipmentPanel(entry),
       isOpen(entry, 'art') && el('div.panel.panel--art', {}, [
@@ -763,6 +824,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       // IndexedDB is canonical for checked sets. Reconcile the checkpoint in
       // case the app was killed after the set write but before its next paint.
       for (const entry of plan) {
+        const storedForEntry = logs.find((log) => log.exerciseId === entry.exercise.id
+          && (entry.programDayId == null || log.programDayId === entry.programDayId)
+          && (entry.slotIndex == null || log.slotIndex === entry.slotIndex))
+        entry.method = methodForExercise(entry.exercise, entry.method ?? storedForEntry?.method)
         for (const [index, set] of entry.sets.entries()) {
           const stored = logs.find((log) => log.exerciseId === entry.exercise.id
             && (entry.programDayId == null || log.programDayId === entry.programDayId)

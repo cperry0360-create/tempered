@@ -8,6 +8,7 @@
 /**
  * @typedef {object} SetInput
  * @property {string} exerciseId
+ * @property {string} [method] Equipment used without changing the movement.
  * @property {number|null} weight
  * @property {number|null} reps
  * @property {number|null} [timeSec]
@@ -97,6 +98,9 @@
  * @typedef {object} Exercise
  * @property {string} id
  * @property {string} name
+ * @property {string} [movementName]
+ * @property {string} [variant]
+ * @property {string[]} [methods]
  * @property {'compound'|'isolation'} class
  * @property {string} [metric]
  * @property {number} [notionalLoad]

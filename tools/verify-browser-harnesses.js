@@ -20,10 +20,24 @@ let totalChecks = 0
 let totalFailed = 0
 let failedHarnesses = 0
 
+function execute(command, args) {
+  return spawnSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+}
+
 function run(label, command, args) {
   console.log(`\n===== ${label} =====`)
-  const result = spawnSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`
+  let result = execute(command, args)
+  let output = `${result.stdout ?? ''}${result.stderr ?? ''}`
+
+  // The hosted runner occasionally leaves its first Chromium process stuck
+  // before it opens a page. A killed cold start warms the system profile and
+  // the next launch behaves normally. Retry only that zero-report watchdog
+  // condition; assertion failures and partial reports remain hard failures.
+  if (result.status !== 0 && output.includes('the harness never reported back')) {
+    console.warn('Chromium did not open the harness; retrying once after cold start.\n')
+    result = execute(command, args)
+    output = `${result.stdout ?? ''}${result.stderr ?? ''}`
+  }
   process.stdout.write(output)
 
   const matches = [...output.matchAll(/(\d+) checks, (\d+) failed/g)]

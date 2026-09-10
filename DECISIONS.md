@@ -2116,3 +2116,15 @@ version 0.20.0 with build 21.
 coverage, and installed PWA assets changed together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-10 — Release 0.20.1 (22)
+**Phase:** 0.20.1 cable carry-forward correction
+**Decision:** Peg entry now carries a valid set-one selector into every later unlogged set
+on input, before focus leaves the field. `src/version.js` carries `0.20.1 (22)` and the
+native wrapper uses marketing version 0.20.1 with build 22.
+**Reasoning:** Live testing confirmed that the entered peg survived redraw but later rows
+could remain blank when iOS focus movement did not produce the core logger's change event.
+Immediate propagation preserves the same one-entry workflow as ordinary load fields and
+requires a new PWA cache identity after the short-lived 0.20.0 deployment.
+**Confidence:** reproduced against 0.20.0 and verified through the hosted interaction.
+**Needs Cory:** no

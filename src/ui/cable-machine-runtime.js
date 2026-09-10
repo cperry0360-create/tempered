@@ -694,6 +694,21 @@ export async function installCableMachineRuntime(context) {
     const peg = validPeg(input.value, machine)
     pegState.set(rowKey(exerciseId, input), peg)
     input.dataset.cableInvalid = String(input.value.trim() !== '' && peg == null)
+
+    // Cable peg entry is an adapter around the session draft, so it must keep
+    // the logger's set-1 carry-forward promise too. Do this on input instead of
+    // waiting for blur: iOS can move focus after a DOM redraw without emitting
+    // the change sequence the core screen normally uses for decimal pounds.
+    if (input.dataset.set === '0' && peg != null) {
+      for (const other of card.querySelectorAll('.setrow__num[data-field="weight"]')) {
+        if (!(other instanceof HTMLInputElement) || other === input || other.readOnly) continue
+        const next = String(peg)
+        pegState.set(rowKey(exerciseId, other), peg)
+        if (other.value === next) continue
+        other.value = next
+        other.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+    }
     updateReadout(card)
   })
 

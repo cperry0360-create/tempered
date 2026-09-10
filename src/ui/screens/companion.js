@@ -16,7 +16,7 @@ import { el, replace } from '../dom.js'
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 const FORGE_SPRITES = art('companion-forge-stages.png')
 const TURTLE_SPRITES = art('companion-turtle-stages.png')
-const REVEAL_PRESENTATION_VERSION = 2
+const REVEAL_PRESENTATION_VERSION = 3
 const REVEAL_READY_MS = 2200
 const REVEAL_TRANSFORM_MS = 3200
 
@@ -117,7 +117,7 @@ function roomState(level) {
   return 'starter'
 }
 
-export function createCompanionScreen({ storage, clock }) {
+export function createCompanionScreen({ storage, clock, overlayHost }) {
   const root = el('div.screen.screen--companion')
   let model = null
   let revealPhase = null
@@ -251,6 +251,14 @@ export function createCompanionScreen({ storage, clock }) {
     revealFromStage = null
     if (model) model.evolved = false
     render()
+  }
+
+  function deactivate() {
+    if (revealTimer) clearTimeout(revealTimer)
+    revealTimer = null
+    revealFromStage = null
+    revealPhase = model?.pendingEvolution ? 'ready' : null
+    if (overlayHost) replace(overlayHost, [])
   }
 
   async function replayEvolution() {
@@ -493,8 +501,10 @@ export function createCompanionScreen({ storage, clock }) {
           ])
         })(),
       ]),
-      evolutionOverlay(m),
     ])
+    const overlay = evolutionOverlay(m)
+    if (overlayHost) replace(overlayHost, [overlay])
+    else if (overlay) root.append(overlay)
     if (revealTimer) clearTimeout(revealTimer)
     revealTimer = revealPhase === 'ready'
       ? setTimeout(() => {
@@ -514,5 +524,5 @@ export function createCompanionScreen({ storage, clock }) {
     render()
   }
 
-  return { root, refresh }
+  return { root, refresh, deactivate }
 }

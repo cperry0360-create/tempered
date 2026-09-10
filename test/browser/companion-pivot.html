@@ -77,6 +77,7 @@
       check('Unrevealed habitat remains at the last visible level', qa('.companion-room__item[data-unlocked="true"]').length === 1, qa('.companion-room__item[data-unlocked="true"]').length)
       check('Unrevealed turtle remains on its prior sprite cell', q('.companion-habitat__pet--turtle')?.dataset.visual === '1', q('.companion-habitat__pet--turtle')?.dataset.visual)
       check('Opening Companion presents an unmistakable evolution-ready takeover', q('.companion-reveal')?.dataset.phase === 'ready' && /Level 3 · Hatchling is ready/.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
+      check('Evolution takeover is portaled outside the animated scrolling screen', q('.companion-reveal')?.parentElement?.classList.contains('app__overlays'))
       check('Ready state does not advance the persisted visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
 
       q('.companion-reveal__action')?.click()
@@ -96,7 +97,7 @@
       check('Transformation receives a completion splash', q('.companion-reveal')?.dataset.phase === 'complete' && /evolved/i.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
       check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
       check('Visible-form checkpoint advances only after Reveal', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 3, (await storage.get('profile', 'profile'))?.companionRevealedLevel)
-      check('Reveal writes a presentation receipt separate from the level checkpoint', (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 2)
+      check('Reveal writes a presentation receipt separate from the level checkpoint', (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 3)
       check('Today activity creates a companion moment', /Training registered|Recovery supplied|Focus sharpened|Fuel logged|Recovery logged/.test(q('.companion-moment')?.textContent ?? ''), q('.companion-moment')?.textContent)
 
       // Re-opening the same stage should not replay evolution endlessly.
@@ -151,7 +152,7 @@
       check('Replay removes the old receipt and queues the evolution takeover again', q('.companion-reveal')?.dataset.phase === 'ready' && !(await storage.get('profile', 'profile'))?.companionRevealPresentationVersion)
       q('.companion-reveal__action')?.click()
       await settle(3250)
-      check('A replayed transformation restores the earned form and receipt', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 2)
+      check('A replayed transformation restores the earned form and receipt', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 3)
       q('.companion-reveal__action')?.click()
       await settle(60)
 

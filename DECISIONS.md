@@ -2021,3 +2021,31 @@ version 0.18.4 with build 18.
 assets changed, so installed PWA caches and the native field build advance together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-10 — Evolution is portaled above the scrolling app shell
+**Phase:** 0.18.5 iPhone reveal positioning correction
+**Decision:** Companion no longer renders its evolution takeover as a descendant of the
+screen. The app owns a fixed, viewport-sized overlay host as a direct shell child, and
+Companion portals the ready, transforming, and complete states into it. The host sits
+above both navigation and Settings, clears when Companion deactivates, and clips all
+presentation graphics to the dynamic viewport. Presentation receipt version 3 gives
+affected installs one corrected replay.
+**Reasoning:** The global screen-entry animation retains a transform on every screen.
+On iOS, a fixed descendant of that transformed screen is positioned against the entire
+scrolling Companion page instead of the phone viewport. That is why the completion card
+appeared below the fold and the navigation bar crossed over it even though the card's own
+dimensions were bounded. A shell-level portal removes the transformed ancestor from the
+positioning and stacking chain instead of attempting another size adjustment.
+**Confidence:** root cause confirmed from Cory's iPhone screenshot and the shipped CSS;
+the browser harness now requires the takeover to be owned by the shell overlay and remain
+fully inside the viewport.
+**Needs Cory:** no
+
+## 2026-09-10 — Release 0.18.5 (19)
+**Phase:** 0.18.5 iPhone reveal positioning correction
+**Decision:** `src/version.js` carries `0.18.5 (19)` and the native wrapper uses marketing
+version 0.18.5 with build 19.
+**Reasoning:** App-shell structure, Companion mounting, presentation migration, and
+runtime styles changed, so installed PWA caches and the native field build advance.
+**Confidence:** implementation.
+**Needs Cory:** no

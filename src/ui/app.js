@@ -34,6 +34,7 @@ const tabLabel = (id) => {
 
 export function createApp({ mount, workout, daily, planner, character, battle, maintenance, storage, clock, onSetup }) {
   const body = el('main.app__body', { 'aria-busy': 'false' })
+  const overlays = el('div.app__overlays')
   const announcer = liveRegion()
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const tabs = el('div.tabbar__tabs')
@@ -49,7 +50,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })
-  const companion = createCompanionScreen({ storage, clock })
+  const companion = createCompanionScreen({ storage, clock, overlayHost: overlays })
 
   // Legacy RPG surfaces are kept out of navigation. Keeping the route alive is
   // deliberate: old stored battles/titles remain harmless and backups stay
@@ -227,6 +228,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   async function show(tab) {
     const visible = TABS.some((entry) => entry.id === tab)
     const target = tab === 'settings' || tab === 'character' || visible ? tab : 'today'
+    if (target !== 'companion') companion.deactivate()
     active = target
     session?.destroy()
     session = null
@@ -266,6 +268,6 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     }
   }
 
-  replace(mount, [body, announcer, settingsAccess, tabBar])
+  replace(mount, [body, announcer, settingsAccess, tabBar, overlays])
   return { show, startSession, resumeSession }
 }

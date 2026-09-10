@@ -1994,3 +1994,30 @@ version 0.18.3 with build 17.
 the PWA cache and native field identity advance together.
 **Confidence:** implementation.
 **Needs Cory:** no
+
+## 2026-09-10 — Evolution stays inside a phone-safe cinematic stage
+**Phase:** 0.18.4 evolution presentation correction
+**Decision:** Evolution now has three explicit states: a 2.2-second ready prelude, a
+3.2-second transformation, and a completion card that remains until dismissed. Both the
+old and earned forms stay inside the same compact circular stage, and the surrounding
+card is bounded to the available viewport with internal overflow as a last resort. The
+visible-level checkpoint and presentation receipt are written only after the full morph
+finishes. Presentation receipt version 2 replays this corrected reveal once for installs
+that recorded the earlier broken presentation as seen.
+**Reasoning:** The first reveal saved immediately and used a 0.7-second appearance flash
+whose artwork could scale outside the useful phone area. That made most of the change
+happen off screen and provided no readable old-to-new transformation. A fixed stage,
+deliberate pacing, and post-animation persistence keep the entire event visible and make
+the saved checkpoint match what the user actually saw.
+**Confidence:** failure observed by Cory; timing, state, persistence order, and viewport
+bounds are covered by the Companion browser harness.
+**Needs Cory:** no
+
+## 2026-09-10 — Release 0.18.4 (18)
+**Phase:** 0.18.4 evolution presentation correction
+**Decision:** `src/version.js` carries `0.18.4 (18)` and the native wrapper uses marketing
+version 0.18.4 with build 18.
+**Reasoning:** Companion presentation, migration behavior, runtime styles, and offline
+assets changed, so installed PWA caches and the native field build advance together.
+**Confidence:** implementation.
+**Needs Cory:** no

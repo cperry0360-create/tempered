@@ -80,7 +80,15 @@
       check('Ready state does not advance the persisted visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
 
       q('.companion-reveal__action')?.click()
-      await settle(120)
+      await settle(140)
+      check('Reveal enters a visible transformation phase before completing', q('.companion-reveal')?.dataset.phase === 'transforming', q('.companion-reveal')?.dataset.phase)
+      check('Transformation shows the old and earned forms together', q('.companion-reveal__old')?.dataset.visual === '1' && q('.companion-reveal__new')?.dataset.visual === '3')
+      check('Visible-form checkpoint waits for the transformation to finish', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
+      const revealCard = q('.companion-reveal__card')?.getBoundingClientRect()
+      const revealStage = q('.companion-reveal__stageview')?.getBoundingClientRect()
+      check('Evolution card stays fully inside the viewport', revealCard && revealCard.top >= 0 && revealCard.left >= 0 && revealCard.bottom <= innerHeight && revealCard.right <= innerWidth, revealCard ? `${revealCard.left},${revealCard.top} ${revealCard.width}x${revealCard.height}` : 'missing')
+      check('Evolution art stays inside a compact stage', revealStage && revealCard && revealStage.width <= 191 && revealStage.height <= 191 && revealStage.left >= revealCard.left && revealStage.right <= revealCard.right && revealStage.top >= revealCard.top && revealStage.bottom <= revealCard.bottom, revealStage ? `${revealStage.left},${revealStage.top} ${revealStage.width}x${revealStage.height}` : 'missing')
+      await settle(3250)
       const stage = q('.companion-growth__stage')?.textContent ?? ''
       check('Reveal action performs the transformation on the Companion screen', stage === 'Level 3 · Hatchling', stage)
       check('Revealed growth unlocks the matching habitat objects', qa('.companion-room__item[data-unlocked="true"]').length > 1, qa('.companion-room__item[data-unlocked="true"]').length)
@@ -88,7 +96,7 @@
       check('Transformation receives a completion splash', q('.companion-reveal')?.dataset.phase === 'complete' && /evolved/i.test(q('.companion-reveal')?.textContent ?? ''), q('.companion-reveal')?.textContent)
       check('Today workout selects the active companion reaction', q('.companion-habitat')?.dataset.moment === 'trained', q('.companion-habitat')?.dataset.moment)
       check('Visible-form checkpoint advances only after Reveal', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 3, (await storage.get('profile', 'profile'))?.companionRevealedLevel)
-      check('Reveal writes a presentation receipt separate from the level checkpoint', (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 1)
+      check('Reveal writes a presentation receipt separate from the level checkpoint', (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 2)
       check('Today activity creates a companion moment', /Training registered|Recovery supplied|Focus sharpened|Fuel logged|Recovery logged/.test(q('.companion-moment')?.textContent ?? ''), q('.companion-moment')?.textContent)
 
       // Re-opening the same stage should not replay evolution endlessly.
@@ -111,7 +119,10 @@
       await context.app.show('today')
       await context.app.show('companion')
       check('New earned form waits visibly before its automatic reveal', q('.companion-reveal')?.dataset.phase === 'ready' && q('.companion-habitat__pet--turtle')?.dataset.visual === '3')
-      await settle(1250)
+      await settle(2300)
+      check('Automatic reveal spends time in the transformation phase', q('.companion-reveal')?.dataset.phase === 'transforming', q('.companion-reveal')?.dataset.phase)
+      check('Automatic transformation does not checkpoint its target early', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 3)
+      await settle(3250)
       check('Evolution advances automatically while Companion is on screen', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && q('.companion-reveal')?.dataset.phase === 'complete', q('.companion-growth__stage')?.textContent)
       check('Automatic on-screen reveal persists the new visible form', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 4)
       check('A revealed form exposes a manual replay control', Boolean(q('.companion-growth__replay')))
@@ -130,7 +141,7 @@
       check('An old high-level checkpoint without a presentation receipt is repaired to the egg', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg' && (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)
       check('The repaired installed profile receives the missed evolution takeover', q('.companion-reveal')?.dataset.phase === 'ready')
       q('.companion-reveal__action')?.click()
-      await settle(120)
+      await settle(3250)
       q('.companion-reveal__action')?.click()
       await settle(60)
 
@@ -139,8 +150,8 @@
       check('Replay resets the visible form to the egg without changing earned care', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg' && /86 care/.test(q('.companion-growth')?.textContent ?? ''), q('.companion-growth')?.textContent)
       check('Replay removes the old receipt and queues the evolution takeover again', q('.companion-reveal')?.dataset.phase === 'ready' && !(await storage.get('profile', 'profile'))?.companionRevealPresentationVersion)
       q('.companion-reveal__action')?.click()
-      await settle(120)
-      check('A replayed transformation restores the earned form and receipt', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 1)
+      await settle(3250)
+      check('A replayed transformation restores the earned form and receipt', q('.companion-growth__stage')?.textContent === 'Level 4 · Young Shell' && (await storage.get('profile', 'profile'))?.companionRevealPresentationVersion === 2)
       q('.companion-reveal__action')?.click()
       await settle(60)
 

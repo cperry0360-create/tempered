@@ -2227,3 +2227,19 @@ arbitrarily dividing by two.
 **Confidence:** Apple HealthKit documentation and regression tests for 19.55h.
 **Needs Cory:** inspect the actual Shortcuts Sleep action and show its filters
 or resulting stage list; then repair the installed action sequence on-device.
+
+## 2026-09-12 — Iterative sleep diagnostics and temperature removal
+**Phase:** 0.22.3 Health Shortcut experiment
+**Decision:** Pause automatic sleep calculations in the copied recipe with
+`SLEEP=` blank until an independent sleep-only probe establishes sample count,
+stage values and duration units. Remove body temperature from the visible
+Shortcut recipe, Health Setup manual form, and Progress Body Metrics tile.
+Preserve old stored temperature values and parsing for backward compatibility.
+**Reasoning:** A replacement Shortcut copied an implausible `SLEEP=809.292677...`
+after an earlier 19.55h result. That may reflect a filter, unit conversion, or
+both. No safe arithmetic correction can be inferred from the final number.
+Cory does not capture body temperature, so it should not occupy UI or setup.
+**Confidence:** snapshot evidence and regression coverage for the UI omission;
+sleep probe needs a real-device result before a new import recipe is offered.
+**Needs Cory:** run the sleep-only probe and share its count, stage labels,
+duration list and Find Health Samples filter screenshot.

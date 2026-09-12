@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.2 (27)
+**Current release:** 0.22.3 (28)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -77,7 +77,7 @@ and local persistence. The default widgets are:
 - Nutrition, showing calories and protein together
 - Water
 - Weight
-- Body Metrics, including resting HR, HRV, respiratory rate, SpO2, and temperature
+- Body Metrics, including resting HR, HRV, respiratory rate, and SpO2
 - Consistency
 
 Micro Cardio is available from the Add gallery. The dashboard must render on the first
@@ -184,13 +184,15 @@ sample/source/date inspection and advises a blank SLEEP line until corrected.
 
 Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
 Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,
-the six latest body-data fields, a paste fallback, and manual entry for the five Body
+the latest body-data fields, a paste fallback, and manual entry for the four Body
 Metrics signals. The Shortcut must pass numeric `Value` or `Duration` results into
 Calculate Statistics, never Health Sample objects or Text. It should use one sleep source,
 only asleep stages, and a 6 PM-to-noon overnight window. Implausible sleep over 16 hours is
 rejected with an explanation rather than shown as a 21-hour night. Body Metrics populates from
-Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature tags; a dash
+Resting HR, HRV, Respiratory Rate, and Oxygen Saturation tags; a dash
 means the sync omitted that tag or Apple Health has no sample.
+Body temperature is no longer prompted for in the Shortcut, manual form, or
+Progress tile; old stored values remain for backward compatibility.
 
 The Health and Nutrition enhancements coordinate through explicit lifecycle events.
 Neither watches and rebuilds the DOM it creates, so controls and cards remain stable.

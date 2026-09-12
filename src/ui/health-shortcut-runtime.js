@@ -40,7 +40,6 @@ For each type below, Find Health Samples sorted newest first with Limit 1, then 
 • Heart Rate Variability: keep the numeric milliseconds value.
 • Respiratory Rate: keep the numeric breaths/minute value.
 • Oxygen Saturation: use percent, such as 97 or 97%.
-• Body Temperature: use degrees C or use the BODY_TEMP_F line below for Fahrenheit.
 
 5. Add Current Date, then Format Date with custom format yyyy-MM-dd.
 
@@ -55,9 +54,8 @@ RESTING_HR=<bpm>
 HRV_MS=<milliseconds>
 RESP_RATE=<breaths per minute>
 SPO2=<percent, e.g. 97>
-BODY_TEMP_C=<degrees C>
 
-For Fahrenheit, replace the last line with BODY_TEMP_F=<degrees F>.
+Leave SLEEP= blank while we verify its Health sample filters and duration units. No body temperature action or tag is needed.
 
 7. FINISH FOR THE HOME SCREEN WEB APP
 • Add Copy to Clipboard using the completed Text action.
@@ -314,7 +312,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
           <ol class="health-setup-steps">
             <li><strong>Steps:</strong> Find today’s Steps → Get Details: Value → Calculate Statistics: Sum.</li>
             <li><strong>Sleep:</strong> Use one source and Core/Deep/REM samples from 6 PM yesterday to noon today → Get Details: Duration → Sum → decimal hours.</li>
-            <li><strong>Latest body data:</strong> Find newest sample, Limit 1, then Get Details: Value for Weight, Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature. Do not sum these.</li>
+            <li><strong>Latest body data:</strong> Find newest sample, Limit 1, then Get Details: Value for Weight, Resting HR, HRV, Respiratory Rate, and Oxygen Saturation. Do not sum these. Skip temperature.</li>
             <li><strong>Build the Text:</strong> include the exact TEMPERED tags from the copied instructions.</li>
             <li><strong>Finish:</strong> Copy that Text to Clipboard. Do not Open URLs; iOS sends those to Safari, not this installed copy.</li>
           </ol>
@@ -328,9 +326,9 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
 
         <section class="health-setup-section" data-health-setup="metrics">
           <h3>WHAT FILLS BODY METRICS</h3>
-          <p>The standard Shortcut should pull all five signals shown on Progress. A dash means the last sync did not include that Health type or Apple Health has no sample for it.</p>
+          <p>The standard Shortcut should pull the four signals shown on Progress. A dash means the last sync did not include that Health type or Apple Health has no sample for it.</p>
           <div class="health-setup-metrics">
-            <span>Resting heart rate</span><span>HRV</span><span>Respiration</span><span>SpO₂</span><span>Body temperature</span>
+            <span>Resting heart rate</span><span>HRV</span><span>Respiration</span><span>SpO₂</span>
           </div>
         </section>
 
@@ -352,7 +350,6 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
               <label>HRV<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="hrvMs" placeholder="ms"></label>
               <label>Respiration<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="respiratoryRate" placeholder="per min"></label>
               <label>SpO₂<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-health-manual="spo2" placeholder="%"></label>
-              <label>Temperature<input type="number" inputmode="decimal" step="0.1" data-health-manual="bodyTempC" placeholder="°C"></label>
               <button type="submit" class="button health-setup__primary">SAVE METRICS</button>
             </form>
           </details>

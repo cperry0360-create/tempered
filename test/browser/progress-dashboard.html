@@ -61,6 +61,7 @@
       check('Dashboard starts with a useful widget set', widgets.length >= 6, widgets.map((node) => node.dataset.widget).join(' | '))
       check('Dashboard includes health and training widgets', ['training','sleep','steps','nutrition','water','weight','body'].every((id) => q(`[data-widget="${id}"]`)))
       check('Body Metrics renders Shortcut-imported health data', /49/.test(q('[data-widget="body"]')?.textContent ?? '') && /41/.test(q('[data-widget="body"]')?.textContent ?? ''), q('[data-widget="body"]')?.textContent)
+      check('Body Metrics omits the unused temperature tile', !/Temp/.test(q('[data-widget="body"] .progress-widget__bodymetrics')?.textContent ?? ''))
       check('Dashboard has a prominent add control', q('.progress-dashboard__plus')?.textContent === '+')
       const stableTraining = q('[data-widget="training"]')
       const stableSleep = q('[data-widget="sleep"]')

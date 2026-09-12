@@ -213,7 +213,7 @@ export function installProgressDashboardRuntime(context) {
     } else if (id === 'body') {
       const h = data.latestHealth
       const metrics = [
-        ['♥', h.restingHr, 'bpm', 'Resting HR'], ['⌁', h.hrvMs, 'ms', 'HRV'], ['◌', h.respiratoryRate, '/min', 'Respiration'], ['◉', h.spo2, '%', 'SpO₂'], ['°', h.bodyTempC, '°C', 'Temp'],
+        ['♥', h.restingHr, 'bpm', 'Resting HR'], ['⌁', h.hrvMs, 'ms', 'HRV'], ['◌', h.respiratoryRate, '/min', 'Respiration'], ['◉', h.spo2, '%', 'SpO₂'],
       ]
       const grid = document.createElement('div')
       grid.className = 'progress-widget__bodymetrics'

@@ -87,7 +87,7 @@
       check('Setup diagnoses the observed Calculate Statistics conversion failure', /Conversion Error/i.test(setupScreen?.textContent ?? '') && /Get Details of Health Samples/i.test(setupScreen?.textContent ?? ''))
       check('Setup accurately warns that Open URLs leaves the installed app', /Do not Open URLs/i.test(setupScreen?.textContent ?? '') && /Safari/i.test(setupScreen?.textContent ?? ''))
       check('Setup has a one-tap clipboard import action', Boolean(q('[data-health-clipboard-import]')))
-      check('Setup includes all five Progress body metrics', ['Resting heart rate', 'HRV', 'Respiration', 'SpO₂', 'Body temperature'].every((label) => setupScreen?.textContent?.includes(label)))
+      check('Setup lists four supported Progress body metrics and omits temperature', ['Resting heart rate', 'HRV', 'Respiration', 'SpO₂'].every((label) => setupScreen?.textContent?.includes(label)) && !setupScreen?.textContent?.includes('Body temperature'))
       check('Setup offers exact instructions and opens the existing Shortcut for repair', Boolean(q('[data-health-bridge="recipe"]')) && /^shortcuts:\/\/open-shortcut\?name=Tempered%20Health$/.test(q('[data-health-bridge="edit"]')?.getAttribute('href') ?? ''))
       q('[data-health-inspect]')?.click()
       await settle(90)

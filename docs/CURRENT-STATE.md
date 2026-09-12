@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.3 (28)
+**Current release:** 0.22.4 (29)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -154,48 +154,16 @@ and iPhone wrapper all enforce the same orientation contract.
 
 ## Apple Health sync
 
-Today now separates normal use from setup. For the installed Home Screen PWA, the reliable
-flow is Run Health Sync, return to the installed icon, then tap Import Copy. The Shortcut
-copies a snapshot, and that one app tap reads and saves it without a textarea or confirmation.
-An iOS Shortcut automation can prepare the copy on a time, sleep, or workout trigger,
-but a Home Screen web app cannot launch that Shortcut and silently read its clipboard
-on app open. Import Copy still needs a user gesture. The Health parser accepts only
-snapshots starting with its exact marker; copied setup instructions are never imported.
-An HTTPS Shortcut handoff opens Safari, whose storage is separate from the installed PWA;
-it cannot silently transfer HealthKit data into the Home Screen copy. The native iOS wrapper
-reads HealthKit directly on launch and foreground without the Shortcut.
+The Apple Health Shortcut experiment is dormant in the production PWA. The launch Ready
+screen, Today import controls, Settings setup/repair card, paste fallback, and Progress Body
+Metrics widget are not installed or offered. Manual sleep, steps, weight, nutrition, and
+other lifestyle logging remain unchanged. Existing imported values and the parser/runtime
+implementation remain stored and tested for backward compatibility; nothing is deleted.
 
-The installed Home Screen PWA now greets a fresh launch with an art-backed Ready
-screen. Its main button begins the clipboard read directly in that user gesture
-and imports only a dated snapshot for today, then opens Today. Run Health Shortcut
-can prepare a new copy first; Continue Without Sync never blocks the tracker.
-iOS can still display its own Paste permission UI. A Shortcut automation may
-prepare the copy but the web app cannot start the Shortcut itself. Native HealthKit
-skips this gate.
-Health Setup now links to the *existing* named Shortcut rather than a blank new
-editor. Its Inspect Copy control previews the Clipboard output without importing
-it, so incorrect Shortcut actions can be diagnosed before changing the tracker.
-The app does not own or remotely replace the Shortcut saved in iOS Shortcuts.
-Inspect Copy now flags an implausible sleep result beside the raw output rather
-than displaying a generic success. The import path already skips sleep above
-16 hours, preserving a credible existing entry and clearing an older bad value
-above that limit on a new import. The Shortcut recipe explicitly asks for
-sample/source/date inspection and advises a blank SLEEP line until corrected.
-
-Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
-Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,
-the latest body-data fields, a paste fallback, and manual entry for the four Body
-Metrics signals. The Shortcut must pass numeric `Value` or `Duration` results into
-Calculate Statistics, never Health Sample objects or Text. It should use one sleep source,
-only asleep stages, and a 6 PM-to-noon overnight window. Implausible sleep over 16 hours is
-rejected with an explanation rather than shown as a 21-hour night. Body Metrics populates from
-Resting HR, HRV, Respiratory Rate, and Oxygen Saturation tags; a dash
-means the sync omitted that tag or Apple Health has no sample.
-Body temperature is no longer prompted for in the Shortcut, manual form, or
-Progress tile; old stored values remain for backward compatibility.
-
-The Health and Nutrition enhancements coordinate through explicit lifecycle events.
-Neither watches and rebuilds the DOM it creates, so controls and cards remain stable.
+The reason is platform-level: a Home Screen web app cannot read HealthKit, launch a Shortcut,
+or silently consume its clipboard on open. The attempted handoff therefore added visible
+setup and an extra gesture without delivering passive sync. Tempered will revisit automatic
+Health data through its native iOS wrapper when private signing/TestFlight work begins.
 
 ## Visual direction and recovered art
 

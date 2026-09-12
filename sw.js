@@ -91,7 +91,6 @@ const PRECACHE = [
   './src/ui/battle-fx-runtime.js',
   './src/ui/cable-machine-runtime.js',
   './src/ui/calorie-ai-runtime.js',
-  './src/ui/health-shortcut-runtime.js',
   './src/ui/progress-dashboard-runtime.js',
   './src/ui/dom.js',
   './src/ui/format.js',

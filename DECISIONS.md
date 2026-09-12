@@ -2243,3 +2243,25 @@ Cory does not capture body temperature, so it should not occupy UI or setup.
 sleep probe needs a real-device result before a new import recipe is offered.
 **Needs Cory:** run the sleep-only probe and share its count, stage labels,
 duration list and Find Health Samples filter screenshot.
+
+## 2026-09-12 — Hide the PWA Health experiment until native distribution
+**Phase:** 0.22.4 product cleanup
+**Decision:** Do not install the Health Shortcut runtime in the production Home Screen PWA.
+Hide its launch Ready screen, Today import controls, Settings setup and repair flow, and the
+Progress Body Metrics widget. Keep manual sleep, steps and weight logging. Preserve the
+underlying Shortcut parser/runtime, native HealthKit wrapper and previously stored values so
+the work can be resumed without a destructive migration.
+**Reasoning:** Real-device testing confirmed that the Shortcut and clipboard handoff could
+not provide the passive launch sync the product promised. Its setup burden and empty advanced
+metrics created more friction than value. Native HealthKit remains the appropriate long-term
+implementation and does not require the app to be publicly released during development.
+**Confidence:** the visible Health surfaces share one runtime installer, while the independent
+Progress widget is now absent from both defaults and the add-widget catalogue.
+**Needs Cory:** no
+
+## 2026-09-12 — Release 0.22.4 (29) hides experimental Health UI
+**Phase:** 0.22.4 PWA cleanup
+**Decision:** Version 0.22.4 (29) advances the cache identity for the Health UI retirement.
+**Reasoning:** The installed PWA must replace the cached entry module and Progress dashboard.
+**Confidence:** implementation and local regression checks.
+**Needs Cory:** no

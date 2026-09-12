@@ -19,9 +19,9 @@ The earlier Character/Battle RPG implementation is retained internally for backw
 
 ## Health data
 
-The production app is a static Home Screen PWA, so it cannot read HealthKit directly. Tempered includes a **light-touch Apple Health Shortcut bridge** instead: an iPhone Shortcut reads selected Health samples on-device, copies a tiny text snapshot, and Tempered imports it locally. This path needs no Mac, Apple Developer membership, server, or embedded AI provider.
+The production Home Screen PWA currently uses manual sleep, steps, and weight logging. The experimental Apple Health Shortcut bridge remains in the repository but is intentionally hidden because iOS cannot provide a reliable automatic handoff to an installed web app.
 
-A native iOS wrapper also exists in the repository for a future signed/TestFlight build if direct HealthKit access eventually becomes worthwhile.
+A native iOS wrapper also exists for a future signed/TestFlight build. That is the intended path for direct, passive HealthKit access when Tempered is ready for native distribution.
 
 ## Data and privacy
 

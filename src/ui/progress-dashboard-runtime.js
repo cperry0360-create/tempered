@@ -1,6 +1,6 @@
 import { ACTIVITY_FIELDS, isLogged } from '../domain/activities.js'
 
-const DEFAULT_WIDGETS = ['training', 'sleep', 'steps', 'nutrition', 'water', 'weight', 'body', 'consistency']
+const DEFAULT_WIDGETS = ['training', 'sleep', 'steps', 'nutrition', 'water', 'weight', 'consistency']
 const CATALOG = {
   training: { title: 'Training load', size: 'wide' },
   sleep: { title: 'Sleep', size: 'small' },
@@ -8,7 +8,6 @@ const CATALOG = {
   nutrition: { title: 'Nutrition', size: 'wide' },
   water: { title: 'Water', size: 'small' },
   weight: { title: 'Weight', size: 'small' },
-  body: { title: 'Body metrics', size: 'wide' },
   consistency: { title: 'Consistency', size: 'wide' },
   cardio: { title: 'Micro cardio', size: 'small' },
 }
@@ -135,7 +134,6 @@ export function installProgressDashboardRuntime(context) {
     const dailyActivities = (context.daily.activities ?? []).filter((activity) => schedule[activity.id]?.cadence === 'daily')
     const opportunities = days.length * dailyActivities.length
     const done = days.reduce((sum, day) => sum + dailyActivities.filter((activity) => completion(activity, day)).length, 0)
-    const latestHealth = [...days].reverse().find((day) => day.healthMetrics)?.healthMetrics ?? {}
     const latestWeight = [...days].reverse().find((day) => typeof day.bodyMetrics?.weight === 'number')?.bodyMetrics?.weight ?? null
     const firstWeight = days.find((day) => typeof day.bodyMetrics?.weight === 'number')?.bodyMetrics?.weight ?? null
     const caloriesGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'calories_logged')?.dailyCap ?? profile?.calorieTarget ?? null
@@ -147,7 +145,7 @@ export function installProgressDashboardRuntime(context) {
       steps: days.map((d) => d.steps), sleep: days.map((d) => d.sleepHours),
       water: days.map((d) => d.waterOz), calories: days.map((d) => d.calories), protein: days.map((d) => d.proteinGrams),
       weights: days.map((d) => d.bodyMetrics?.weight), cardio: days.map((d) => d.microCardioMinutes ?? 0),
-      latestHealth, latestWeight, weightChange: latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null,
+      latestWeight, weightChange: latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null,
       habitRate: opportunities ? Math.round((done / opportunities) * 100) : 0,
       calorieGoal: Number(caloriesGoal) || null, proteinGoal: Number(proteinGoal) || null, waterGoal: Number(waterGoal) || null,
     }
@@ -210,29 +208,6 @@ export function installProgressDashboardRuntime(context) {
     } else if (id === 'weight') {
       headline(card, data.latestWeight === null ? '—' : `${data.latestWeight.toFixed(1)} lb`, data.weightChange === null ? 'latest weigh-in' : `${data.weightChange >= 0 ? '+' : ''}${data.weightChange.toFixed(1)} lb in range`)
       chart(card, data.weights)
-    } else if (id === 'body') {
-      const h = data.latestHealth
-      const metrics = [
-        ['♥', h.restingHr, 'bpm', 'Resting HR'], ['⌁', h.hrvMs, 'ms', 'HRV'], ['◌', h.respiratoryRate, '/min', 'Respiration'], ['◉', h.spo2, '%', 'SpO₂'],
-      ]
-      const grid = document.createElement('div')
-      grid.className = 'progress-widget__bodymetrics'
-      for (const [icon, value, unit, label] of metrics) {
-        const item = document.createElement('span')
-        item.innerHTML = `<i>${icon}</i><b>${Number.isFinite(value) ? value : '—'}</b><small>${unit}<br>${label}</small>`
-        grid.append(item)
-      }
-      card.append(grid)
-      const hasAnyMetric = metrics.some(([, value]) => Number.isFinite(value))
-      const setup = document.createElement('button')
-      setup.type = 'button'
-      setup.className = 'progress-widget__health-setup'
-      setup.dataset.healthSetup = 'progress'
-      setup.textContent = hasAnyMetric ? 'UPDATE HEALTH SYNC' : 'SET UP HEALTH SYNC'
-      setup.onclick = () => window.dispatchEvent(new CustomEvent('tempered:open-health-setup', {
-        detail: { trigger: setup },
-      }))
-      card.append(setup)
     } else if (id === 'consistency') {
       headline(card, `${data.habitRate}%`, `${data.range}-day configured lifestyle completion`)
       const bar = document.createElement('div')

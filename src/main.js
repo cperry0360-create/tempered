@@ -7,7 +7,6 @@ import { installWaterQuickPresets } from './ui/water-quick-presets.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
-import { installHealthShortcutRuntime } from './ui/health-shortcut-runtime.js'
 import { installProgressDashboardRuntime } from './ui/progress-dashboard-runtime.js'
 
 registerServiceWorker()
@@ -22,7 +21,10 @@ void installBattleFx
 bootstrap()
   .then(async (context) => {
     installSessionGuard(context)
-    installHealthShortcutRuntime(context)
+    // The Home Screen Health/Shortcuts bridge is intentionally dormant until
+    // Tempered is ready to ship its native HealthKit wrapper. Keeping the
+    // implementation in the repository preserves the work without exposing a
+    // broken launch gate, import controls, or setup flow in the current PWA.
     installProgressDashboardRuntime(context)
     try {
       await installCableMachineRuntime(context)

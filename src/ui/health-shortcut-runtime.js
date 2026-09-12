@@ -60,8 +60,8 @@ For Fahrenheit, replace the last line with BODY_TEMP_F=<degrees F>.
 AUTOMATIC OPTION
 The native Tempered iOS build reads HealthKit directly on launch and when returning to the foreground. It does not need this Shortcut. iOS does not let a Home Screen web app read HealthKit or register a private return URL.
 
-PASSIVE OPTION
-In Shortcuts → Automation, use a Time of Day, Sleep, Apple Watch Workout, or App trigger to run Tempered Health without asking. The installed web app may not appear as an App trigger, so a daily or workout trigger is the more dependable passive option.`
+AUTOMATED COPY (IMPORT COPY IS STILL REQUIRED)
+In Shortcuts → Automation, a Time of Day, Sleep, or Apple Watch Workout trigger can run Tempered Health and copy its snapshot. An App Opened trigger may not list the installed Home Screen web app. Either way, return to Tempered and tap Import Copy: iOS requires a user action before the web app can read the clipboard. A Shortcut cannot make the Home Screen web app silently paste on launch. For automatic Health import on launch, use the native Tempered iOS build with HealthKit instead.`
 
 const TAGS = {
   DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb', WEIGHT_KG: 'weightKg',
@@ -80,7 +80,10 @@ function numberValue(raw) {
 
 export function parseHealthSnapshot(text) {
   const raw = String(text ?? '').trim()
-  if (!raw.includes(HEALTH_SNAPSHOT_PREFIX)) return null
+  // A copied setup recipe contains the marker and example values, but is not
+  // a Health export. Only a snapshot whose first line is the exact marker can
+  // be imported; never turn instructions or unrelated clipboard text into data.
+  if (raw.split(/\r?\n/, 1)[0] !== HEALTH_SNAPSHOT_PREFIX) return null
   const result = {}
   for (const line of raw.split(/\r?\n/)) {
     // Health tags include SPO2, so digits are intentionally valid in names.
@@ -93,7 +96,7 @@ export function parseHealthSnapshot(text) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(value)) result.date = value
       continue
     }
-    const parsed = numberValue(value)
+    const parsed = /^-?\d/.test(value) ? numberValue(value) : null
     if (parsed !== null) result[key] = parsed
   }
   const meaningful = Object.keys(result).some((key) => key !== 'date')
@@ -214,6 +217,7 @@ export function installHealthShortcutRuntime(context) {
           <span class="health-setup-hero__eyebrow">HOME SCREEN WEB APP · TWO STEPS</span>
           <h3>Run the Shortcut, then import its copy.</h3>
           <p>Return to this installed Tempered icon after the Shortcut copies its snapshot. Import Copy reads and saves it immediately—no text box or confirmation.</p>
+          <p>A Shortcut automation can prepare the copy, but this web app cannot auto-paste on launch. The Import Copy tap is required by iOS clipboard privacy.</p>
           <div class="health-setup__actions">
             <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">1 · RUN SHORTCUT</a>
             <button type="button" class="button health-setup__primary" data-health-clipboard-import>2 · IMPORT COPY</button>

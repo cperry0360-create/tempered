@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, parseHealthSnapshot,
+  HEALTH_SHORTCUT_RECIPE, HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, parseHealthSnapshot,
 } from './health-shortcut-runtime.js'
 
 test('parses the iPhone Shortcut Health snapshot format', () => {
@@ -22,6 +22,9 @@ test('parses the iPhone Shortcut Health snapshot format', () => {
 test('rejects unrelated clipboard text and empty snapshots', () => {
   assert.equal(parseHealthSnapshot('STEPS=1234'), null)
   assert.equal(parseHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08`), null)
+  assert.equal(parseHealthSnapshot(HEALTH_SHORTCUT_RECIPE), null)
+  assert.equal(parseHealthSnapshot(`Here are your results:\n${HEALTH_SNAPSHOT_PREFIX}\nSLEEP=7.75`), null)
+  assert.equal(parseHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSLEEP=<decimal hours, e.g. 7.75>`), null)
 })
 
 test('allows partial snapshots because Health permissions are per metric', () => {

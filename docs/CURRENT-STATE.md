@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.21.0 (23)
+**Current release:** 0.21.1 (24)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -157,6 +157,10 @@ and iPhone wrapper all enforce the same orientation contract.
 Today now separates normal use from setup. For the installed Home Screen PWA, the reliable
 flow is Run Health Sync, return to the installed icon, then tap Import Copy. The Shortcut
 copies a snapshot, and that one app tap reads and saves it without a textarea or confirmation.
+An iOS Shortcut automation can prepare the copy on a time, sleep, or workout trigger,
+but a Home Screen web app cannot launch that Shortcut and silently read its clipboard
+on app open. Import Copy still needs a user gesture. The Health parser accepts only
+snapshots starting with its exact marker; copied setup instructions are never imported.
 An HTTPS Shortcut handoff opens Safari, whose storage is separate from the installed PWA;
 it cannot silently transfer HealthKit data into the Home Screen copy. The native iOS wrapper
 reads HealthKit directly on launch and foreground without the Shortcut.

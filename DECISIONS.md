@@ -2171,3 +2171,17 @@ identity for these changes.
 **Reasoning:** Runtime logic, styles, test contracts, and offline module inventory changed.
 **Confidence:** implementation, pending CI and deployment verification.
 **Needs Cory:** no
+
+## 2026-09-12 — Health clipboard safety and launch automation
+**Phase:** 0.21.1 Health handoff clarification
+**Decision:** A Home Screen web app must wait for an Import Copy tap to read a Shortcut's
+clipboard snapshot. Shortcuts automations may prepare the copy on a time, sleep, or
+workout trigger, but cannot make the PWA launch a Shortcut and silently paste on open.
+The native iOS HealthKit wrapper remains the automatic on-launch route. Only clipboard
+text whose first line exactly matches the Health snapshot marker can be imported;
+the copied setup recipe and its example numbers are explicitly rejected.
+**Reasoning:** iOS clipboard access requires user interaction, and the setup recipe
+previously contained enough marker/example text for the permissive parser to accept it.
+**Confidence:** parser regression tests and full local unit suite pass; iPhone workflow
+still needs device validation.
+**Needs Cory:** confirm native-wrapper availability if zero-tap Health sync is desired.

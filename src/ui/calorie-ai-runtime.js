@@ -506,7 +506,7 @@ export function installCalorieAiRuntime() {
     if (rows.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'nutrition-history__empty'
-      empty.textContent = 'No meals logged yet. Add one below and it will stay visible here.'
+      empty.textContent = 'No meals logged yet. Add a meal above and it will stay visible here.'
       rows.push(empty)
     }
     list.replaceChildren(...rows)

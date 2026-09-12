@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.1 (26)
+**Current release:** 0.22.2 (27)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -176,6 +176,11 @@ Health Setup now links to the *existing* named Shortcut rather than a blank new
 editor. Its Inspect Copy control previews the Clipboard output without importing
 it, so incorrect Shortcut actions can be diagnosed before changing the tracker.
 The app does not own or remotely replace the Shortcut saved in iOS Shortcuts.
+Inspect Copy now flags an implausible sleep result beside the raw output rather
+than displaying a generic success. The import path already skips sleep above
+16 hours, preserving a credible existing entry and clearing an older bad value
+above that limit on a new import. The Shortcut recipe explicitly asks for
+sample/source/date inspection and advises a blank SLEEP line until corrected.
 
 Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
 Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,

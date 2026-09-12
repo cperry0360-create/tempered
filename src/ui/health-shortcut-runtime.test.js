@@ -85,3 +85,17 @@ test('implausible Shortcut sleep is skipped and an earlier bad import is cleared
   assert.equal(day.steps, 1234)
   assert.match(result.warnings[0], /Sleep was skipped/)
 })
+
+test('a 19-hour Shortcut result never overwrites a credible sleep entry', async () => {
+  let day = { date: '2026-09-12', sleepHours: 8 }
+  const daily = {
+    async logAt(date, activity, value) { day = { ...day, ...(activity === 'steps' ? { steps: value } : {}) } },
+    async dayLog() { return { ...day } },
+  }
+  const storage = { async put(store, value) { if (store === 'dayLogs') day = { ...value } } }
+  const clock = { today: () => '2026-09-12', nowIso: () => '2026-09-12T11:47:00.000Z' }
+  const result = await importHealthSnapshot({ storage, clock, daily }, `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-12\nSTEPS=11278\nSLEEP=19.549565571083`)
+  assert.equal(day.sleepHours, 8)
+  assert.equal(day.steps, 11278)
+  assert.match(result.warnings[0], /Sleep was skipped/)
+})

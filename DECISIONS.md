@@ -2211,3 +2211,19 @@ Shortcuts stored on the iPhone. A preview exposes a bad numeric output safely.
 **Confidence:** Apple documents the URL scheme; unit/browser regression checks.
 **Needs Cory:** show which fields or raw snapshot are wrong, then fix those actions
 in the installed Shortcut. Do not share anything sensitive beyond what is needed.
+
+## 2026-09-12 — Implausible sleep from the iPhone Shortcut
+**Phase:** 0.22.2 Health preview guard
+**Decision:** A screenshot shows the Shortcut copied `SLEEP=19.549565571083` for
+2026-09-12. The app did not calculate that number. The existing >16-hour importer
+guard must remain, and Inspect Copy now flags such sleep values inline before
+import, without changing data. Repair guidance calls for inspecting sample
+value, source and date, filtering one source plus Core/Deep/REM sleep stages,
+and leaving the SLEEP field blank until the Shortcut output agrees with Health.
+**Reasoning:** HealthKit In Bed can overlap detailed sleep stages; an unfiltered
+sum can count overlapping time. The snapshot alone does not prove which filter
+or transformation caused this particular 19.55-hour result. Do not "fix" by
+arbitrarily dividing by two.
+**Confidence:** Apple HealthKit documentation and regression tests for 19.55h.
+**Needs Cory:** inspect the actual Shortcuts Sleep action and show its filters
+or resulting stage list; then repair the installed action sequence on-device.

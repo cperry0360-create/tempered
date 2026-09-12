@@ -29,8 +29,9 @@ Never send Find Health Samples directly into Calculate Statistics. Health sample
 • Find Health Samples where Type is Sleep and Start Date is between 6 PM yesterday and noon today.
 • Use one source (normally Apple Watch) so the same night is not counted again from another device.
 • Include Asleep Core, Asleep Deep, and Asleep REM. Exclude In Bed, Awake, and overlapping Asleep Unspecified summaries.
-• Get Details of Health Samples and choose Duration.
-• Calculate Statistics: Sum using those Duration values. Convert the result to decimal hours if needed. Rename it Sleep Hours.
+• In Find Health Samples, verify the Start Date filter actually narrows the results to last night. Inspect the found samples' Value, Start Date, End Date, and Source before summing; do not total every Sleep sample Health returns.
+• Get Details of Health Samples and choose Duration from that filtered list. Calculate Statistics: Sum using only those numeric Duration values. Convert the result to decimal hours if needed. Rename it Sleep Hours.
+• Before Copy to Clipboard, use Quick Look on Sleep Hours and compare with Apple Health's last-night asleep duration. If it is implausible (for example 19 hours), leave SLEEP= blank until you repair the filters. Never divide the sum by two as a fix: the cause may be overlapping sources or the wrong date range.
 
 4. LATEST BODY DATA
 For each type below, Find Health Samples sorted newest first with Limit 1, then Get Details of Health Samples → Value. Do not use Calculate Statistics for these latest-value metrics.
@@ -309,6 +310,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
         <section class="health-setup-section" data-health-setup="instructions">
           <h3>SET UP OR REPAIR THE SHORTCUT</h3>
           <p class="health-setup__warning"><strong>Seeing “Conversion Error”?</strong> Add <em>Get Details of Health Samples → Value</em> before <em>Calculate Statistics → Sum</em>. The Sum input must be the numeric Value result, never Find Health Samples or Text.</p>
+          <p class="health-setup__warning"><strong>Sleep looks doubled?</strong> The Shortcut must filter to one source and last night's Core, Deep, and REM stages. In Bed and other summaries can overlap those stages. Inspect the samples before summing. Leave SLEEP blank until its result matches Health; Tempered rejects values above 16 hours.</p>
           <ol class="health-setup-steps">
             <li><strong>Steps:</strong> Find today’s Steps → Get Details: Value → Calculate Statistics: Sum.</li>
             <li><strong>Sleep:</strong> Use one source and Core/Deep/REM samples from 6 PM yesterday to noon today → Get Details: Duration → Sum → decimal hours.</li>
@@ -337,6 +339,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
             <summary>CHECK WHAT YOUR SHORTCUT COPIED</summary>
             <p>Run Tempered Health first, then tap Inspect Copy. This only displays its output; it never imports or changes your logs. If the numbers are wrong here, edit the Shortcut before syncing.</p>
             <button type="button" class="button health-setup__primary" data-health-inspect>INSPECT COPY</button>
+            <p class="health-setup__warning" data-health-inspect-warning role="status" hidden></p>
             <textarea class="health-import-sheet__input" data-health-inspect-output rows="11" readonly aria-label="Copied Health data preview" placeholder="The Shortcut's copied output will appear here."></textarea>
           </details>
         </section>
@@ -382,14 +385,23 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     const inspect = overlay.querySelector('[data-health-inspect]')
     inspect.onclick = async () => {
       const output = overlay.querySelector('[data-health-inspect-output]')
+      const warning = overlay.querySelector('[data-health-inspect-warning]')
       try {
         const raw = await navigator.clipboard.readText()
         output.value = raw
         const parsed = parseHealthSnapshot(raw)
+        const invalidSleep = Number.isFinite(parsed?.sleepHours) && (parsed.sleepHours <= 0 || parsed.sleepHours > MAX_SHORTCUT_SLEEP_HOURS)
+        warning.hidden = !invalidSleep
+        warning.textContent = invalidSleep
+          ? `The Shortcut copied ${parsed.sleepHours.toFixed(2)} hours of sleep. That is not a credible overnight result, so Tempered will skip sleep on import. Check its date, sleep-stage, and source filters; leave SLEEP blank until fixed.`
+          : ''
         status.textContent = parsed
           ? `Preview only · ${parsed.date ?? 'no date'} · ${Object.keys(parsed).filter((key) => key !== 'date').length} metric(s). Nothing imported.`
           : 'This is not a valid Tempered Health copy. Nothing imported.'
       } catch {
+        output.value = ''
+        warning.hidden = true
+        warning.textContent = ''
         status.textContent = 'Could not read the copy. Allow Paste if iOS asks, then try again.'
       }
     }

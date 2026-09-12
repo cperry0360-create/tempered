@@ -92,6 +92,12 @@
       q('[data-health-inspect]')?.click()
       await settle(90)
       check('Inspect Copy previews Health output without changing the daily log', q('[data-health-inspect-output]')?.value === clipboardSnapshot && (await context.daily.dayLog('2026-09-08')).steps === 10527)
+      const originalCopy = clipboardSnapshot
+      clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11278\nSLEEP=19.549565571083`
+      q('[data-health-inspect]')?.click()
+      await settle(90)
+      check('Inspect Copy flags 19-hour sleep before import, preserving the log', /19\.55 hours/.test(q('[data-health-inspect-warning]')?.textContent ?? '') && !q('[data-health-inspect-warning]')?.hidden && (await context.daily.dayLog('2026-09-08')).sleepHours === 7.75)
+      clipboardSnapshot = originalCopy
 
       const manualSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11,888 steps\nSLEEP=8.25 hours\nWEIGHT_LB=164.2 lb\nRESTING_HR=48 bpm\nHRV_MS=42 ms\nRESP_RATE=12 breaths/min\nSPO2=0.98\nBODY_TEMP_F=98.6 F`
       const pasteInput = q('[data-health-import-input]')

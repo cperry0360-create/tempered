@@ -175,7 +175,7 @@
 
         // Existing product rule: rollover lives inside the current workout week,
         // then the next week starts clean rather than creating permanent debt.
-        clock.advanceDays(7)
+        clock.advanceDays(11) // Thu setup retains its starter Sunday; Mon begins week two.
         status = await tempered.workout.weekStatus()
         check('the next workout week starts clean', status.week.done === 0 && status.week.total === 31,
           `${status.week.done} of ${status.week.total} done`)

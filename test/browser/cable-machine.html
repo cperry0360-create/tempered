@@ -157,8 +157,8 @@
         inclineLog?.exerciseId === 'incline_bench_db' && inclineLog?.method === 'Cable',
         `${inclineLog?.exerciseId} / ${inclineLog?.method}`)
       check('cable press peg is converted through the same machine profile',
-        inclineLog?.cablePeg === 6 && inclineLog?.weight === 37.5,
-        `${inclineLog?.cablePeg} / ${inclineLog?.weight}`)
+        inclineLog?.cablePeg === 6 && inclineLog?.cableStacks === 2 && inclineLog?.weight === 75,
+        `${inclineLog?.cablePeg} / ${inclineLog?.cableStacks} stacks / ${inclineLog?.weight} lb`)
 
       await tempered.app.show('settings')
       const refreshedEquipment = await waitFor('[data-section="cable-machine"]')

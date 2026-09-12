@@ -40,7 +40,7 @@
     }
 
     try {
-      const clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nWEIGHT_LB=164.2\nRESTING_HR=49\nHRV_MS=41\nRESP_RATE=12\nSPO2=97\nBODY_TEMP_C=36.4`
+      let clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=10527\nSLEEP=7.75\nWEIGHT_LB=164.2\nRESTING_HR=49\nHRV_MS=41\nRESP_RATE=12\nSPO2=97\nBODY_TEMP_C=36.4`
       const querySnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=4321\nSLEEP=6.5\nSPO2=96%`
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
@@ -54,7 +54,7 @@
       // Recreate the preferred Shortcuts URL handoff on the local harness URL.
       const handoff = new URL(healthImportUrl(querySnapshot, window.location.href))
       history.replaceState(null, '', `${handoff.pathname}${handoff.search}${handoff.hash}`)
-      installHealthShortcutRuntime(context)
+      const stopHealth = installHealthShortcutRuntime(context)
       await settle(180)
       const auto = await context.daily.dayLog('2026-09-08')
       check('URL handoff auto-imports without tapping the clipboard button', auto.steps === 4321 && auto.sleepHours === 6.5, `${auto.steps} steps · ${auto.sleepHours} h`)
@@ -121,6 +121,30 @@
       const settings = await waitFor('[data-health-bridge="settings"]')
       check('Settings puts a short Apple Health entry card at the top', settings?.previousElementSibling?.classList.contains('screen__title') === true, settings?.textContent ?? 'missing')
       check('Settings opens the dedicated Health Setup instead of burying the recipe', Boolean(settings?.querySelector('[data-health-bridge="setup"]')))
+      stopHealth()
+
+      // The installed PWA gets one launch action; no clipboard read happens
+      // until the person taps it. Harness forces standalone mode explicitly.
+      let reads = 0
+      const realRead = navigator.clipboard.readText
+      navigator.clipboard.readText = async () => { reads += 1; return realRead() }
+      const stopGate = installHealthShortcutRuntime(context, { showLaunchGate: true })
+      check('Launch scene opens with a working Shortcut and skip path', Boolean(q('[data-health-launch] [data-health-launch-ready]')) && Boolean(q('[data-health-launch-run]')) && Boolean(q('[data-health-launch-skip]')))
+      check('Launch scene does not read the clipboard before a tap', reads === 0, reads)
+      clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=9999`
+      q('[data-health-launch-ready]')?.click()
+      await settle(230)
+      check('Ready tap imports today’s copy and enters the app', !q('[data-health-launch]') && (await context.daily.dayLog('2026-09-08')).steps === 9999 && reads === 1, reads)
+      stopGate()
+
+      const stopStaleGate = installHealthShortcutRuntime(context, { showLaunchGate: true })
+      clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-07\nSTEPS=1234`
+      q('[data-health-launch-ready]')?.click()
+      await settle(140)
+      check('An old copy stays out of the log and never traps the user', Boolean(q('[data-health-launch-skip]')) && (await context.daily.dayLog('2026-09-08')).steps === 9999, q('[data-health-launch-status]')?.textContent)
+      q('[data-health-launch-skip]')?.click()
+      check('Skip enters the app without a Health copy', !q('[data-health-launch]'))
+      stopStaleGate()
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
       check('Health bridge harness threw', false, String(error?.stack ?? error).slice(0, 900))

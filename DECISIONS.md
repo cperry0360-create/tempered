@@ -2185,3 +2185,16 @@ previously contained enough marker/example text for the permissive parser to acc
 **Confidence:** parser regression tests and full local unit suite pass; iPhone workflow
 still needs device validation.
 **Needs Cory:** confirm native-wrapper availability if zero-tap Health sync is desired.
+
+## 2026-09-12 — Release 0.22.0 (25) launch readiness card
+**Phase:** PWA one-tap Health import on launch
+**Decision:** Installed Home Screen web app launches into an art-backed motivational
+Ready card after onboarding. The main tap requests clipboard access and imports a
+Health snapshot dated today; stale or unrelated copies do not change logs. Run
+Health Shortcut and Continue Without Sync are always available. The native iOS
+HealthKit wrapper does not show the card and continues direct launch sync.
+**Reasoning:** The user gesture makes the clipboard handoff feel like one app entry,
+while respecting WebKit paste privacy and avoiding a misleading background-sync claim.
+**Confidence:** unit and browser harness coverage, with real-device paste prompt
+and standalone foreground behavior awaiting user validation.
+**Needs Cory:** try the installed Home Screen flow on iPhone and report any paste prompt.

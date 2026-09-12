@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.21.1 (24)
+**Current release:** 0.22.0 (25)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -164,6 +164,14 @@ snapshots starting with its exact marker; copied setup instructions are never im
 An HTTPS Shortcut handoff opens Safari, whose storage is separate from the installed PWA;
 it cannot silently transfer HealthKit data into the Home Screen copy. The native iOS wrapper
 reads HealthKit directly on launch and foreground without the Shortcut.
+
+The installed Home Screen PWA now greets a fresh launch with an art-backed Ready
+screen. Its main button begins the clipboard read directly in that user gesture
+and imports only a dated snapshot for today, then opens Today. Run Health Shortcut
+can prepare a new copy first; Continue Without Sync never blocks the tracker.
+iOS can still display its own Paste permission UI. A Shortcut automation may
+prepare the copy but the web app cannot start the Shortcut itself. Native HealthKit
+skips this gate.
 
 Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
 Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,

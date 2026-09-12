@@ -4,6 +4,12 @@ export const HEALTH_SHORTCUT_NAME = 'Tempered Health'
 export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%20Health'
 export const HEALTH_SHORTCUT_CREATE_URL = 'shortcuts://create-shortcut'
 export const MAX_SHORTCUT_SLEEP_HOURS = 16
+export const LAUNCH_MOTIVATIONS = [
+  ['SHOW UP STRONG.', 'The first rep is showing up.'],
+  ['BUILD WHAT LASTS.', 'Small effort. Real momentum.'],
+  ['MAKE TODAY COUNT.', 'Your next move is the one that matters.'],
+  ['KEEP FORGING.', 'Progress is built one day at a time.'],
+]
 
 export const HEALTH_SHORTCUT_RECIPE = `TEMPERED HEALTH — iPhone Shortcut recipe
 
@@ -60,8 +66,8 @@ For Fahrenheit, replace the last line with BODY_TEMP_F=<degrees F>.
 AUTOMATIC OPTION
 The native Tempered iOS build reads HealthKit directly on launch and when returning to the foreground. It does not need this Shortcut. iOS does not let a Home Screen web app read HealthKit or register a private return URL.
 
-AUTOMATED COPY (IMPORT COPY IS STILL REQUIRED)
-In Shortcuts → Automation, a Time of Day, Sleep, or Apple Watch Workout trigger can run Tempered Health and copy its snapshot. An App Opened trigger may not list the installed Home Screen web app. Either way, return to Tempered and tap Import Copy: iOS requires a user action before the web app can read the clipboard. A Shortcut cannot make the Home Screen web app silently paste on launch. For automatic Health import on launch, use the native Tempered iOS build with HealthKit instead.`
+AUTOMATED COPY (ONE READY TAP IS STILL REQUIRED)
+In Shortcuts → Automation, a Time of Day, Sleep, or Apple Watch Workout trigger can run Tempered Health and copy its snapshot. An App Opened trigger may not list the installed Home Screen web app. When you launch the installed Tempered icon, tap Yes, I'm Ready on the launch card to read and import a copy dated today. iOS may also ask you to allow Paste. If no automation ran, use Run Health Shortcut on that card, then return and tap Yes, I'm Ready. The Home Screen web app cannot itself launch the Shortcut or silently paste on launch. For automatic Health import on launch, use the native Tempered iOS build with HealthKit instead.`
 
 const TAGS = {
   DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb', WEIGHT_KG: 'weightKg',
@@ -101,6 +107,12 @@ export function parseHealthSnapshot(text) {
   }
   const meaningful = Object.keys(result).some((key) => key !== 'date')
   return meaningful ? result : null
+}
+
+/** A launch import must not silently replay an old copy left on the pasteboard. */
+export function launchHealthSnapshot(text, today) {
+  const parsed = parseHealthSnapshot(text)
+  return parsed?.date === today ? parsed : null
 }
 
 /** Build the exact handoff URL the Shortcut's URL Encode + Open URLs path creates. */
@@ -176,11 +188,12 @@ async function copyText(text) {
   }
 }
 
-export function installHealthShortcutRuntime(context) {
+export function installHealthShortcutRuntime(context, { showLaunchGate = null } = {}) {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
   let scheduled = false
   let activeOverlay = null
+  let launchOverlay = null
 
   function announceImport(result) {
     window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
@@ -197,6 +210,74 @@ export function installHealthShortcutRuntime(context) {
     const result = await importHealthSnapshot(context, await navigator.clipboard.readText())
     announceImport(result)
     return result
+  }
+
+  function openLaunchGate() {
+    if (launchOverlay || !context.app || context.healthSync) return
+    const [headline, line] = LAUNCH_MOTIVATIONS[Math.floor(Math.random() * LAUNCH_MOTIVATIONS.length)]
+    const overlay = document.createElement('div')
+    overlay.className = 'health-launch'
+    overlay.dataset.healthLaunch = 'true'
+    overlay.innerHTML = `
+      <section class="health-launch__scene" role="dialog" aria-modal="true" aria-labelledby="health-launch-title">
+        <div class="health-launch__brand">TEMPERED <span>· TODAY STARTS HERE</span></div>
+        <div class="health-launch__center">
+          <div class="health-launch__symbol" aria-hidden="true">✦</div>
+          <p class="health-launch__eyebrow">A NEW DAY TO GET BETTER</p>
+          <h2 id="health-launch-title">${headline}</h2>
+          <p class="health-launch__line">${line}</p>
+        </div>
+        <div class="health-launch__bottom">
+          <p class="health-launch__hint">If your Health Shortcut has copied today's data, your next tap brings it in.</p>
+          <p class="health-launch__status" role="status" data-health-launch-status></p>
+          <button type="button" class="health-launch__ready" data-health-launch-ready>YES, I'M READY <span aria-hidden="true">↗</span></button>
+          <div class="health-launch__options">
+            <a href="${HEALTH_SHORTCUT_RUN_URL}" data-health-launch-run>RUN HEALTH SHORTCUT</a>
+            <button type="button" data-health-launch-skip>CONTINUE WITHOUT SYNC</button>
+          </div>
+        </div>
+      </section>`
+    const priorFocus = document.activeElement
+    const close = () => {
+      overlay.remove()
+      launchOverlay = null
+      document.removeEventListener('keydown', onKeyDown)
+      if (priorFocus?.isConnected && priorFocus !== document.body) priorFocus.focus()
+    }
+    const onKeyDown = (event) => { if (event.key === 'Escape') close() }
+    const ready = overlay.querySelector('[data-health-launch-ready]')
+    const status = overlay.querySelector('[data-health-launch-status]')
+    ready.onclick = async () => {
+      ready.disabled = true
+      ready.textContent = 'GETTING READY…'
+      // Begin the clipboard request inside this click handler. Do not await a
+      // storage read or an animation first; WebKit requires a user gesture.
+      try {
+        const clipboardRead = navigator.clipboard?.readText?.()
+        if (!clipboardRead) throw new Error('Clipboard unavailable')
+        const snapshot = launchHealthSnapshot(await clipboardRead, context.clock.today())
+        if (!snapshot) {
+          status.textContent = 'No Health copy for today. Run the Shortcut, then tap again, or continue.'
+          ready.textContent = 'TRY HEALTH COPY AGAIN'
+          return
+        }
+        const result = await importHealthSnapshot(context, snapshot)
+        announceImport(result)
+        status.textContent = result.warnings?.length ? 'Health imported. Check the sleep note in Today.' : 'Health imported. Let’s go.'
+        await context.app?.show('today')
+        close()
+      } catch {
+        status.textContent = 'Could not read the copy. If iOS asks to Paste, allow it, then try again.'
+        ready.textContent = 'TRY HEALTH COPY AGAIN'
+      } finally {
+        ready.disabled = false
+      }
+    }
+    overlay.querySelector('[data-health-launch-skip]').onclick = close
+    document.addEventListener('keydown', onKeyDown)
+    document.body.append(overlay)
+    launchOverlay = overlay
+    ready.focus()
   }
 
   function openHealthSetup(trigger = null) {
@@ -217,7 +298,7 @@ export function installHealthShortcutRuntime(context) {
           <span class="health-setup-hero__eyebrow">HOME SCREEN WEB APP · TWO STEPS</span>
           <h3>Run the Shortcut, then import its copy.</h3>
           <p>Return to this installed Tempered icon after the Shortcut copies its snapshot. Import Copy reads and saves it immediately—no text box or confirmation.</p>
-          <p>A Shortcut automation can prepare the copy, but this web app cannot auto-paste on launch. The Import Copy tap is required by iOS clipboard privacy.</p>
+          <p>A Shortcut automation can prepare the copy. The installed web app opens with a Ready card; its button imports today's copy in one tap. iOS may still ask you to allow Paste. The app cannot run the Shortcut or paste by itself on launch.</p>
           <div class="health-setup__actions">
             <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">1 · RUN SHORTCUT</a>
             <button type="button" class="button health-setup__primary" data-health-clipboard-import>2 · IMPORT COPY</button>
@@ -490,12 +571,15 @@ export function installHealthShortcutRuntime(context) {
   window.addEventListener('tempered:lifestyle-ready', lifestyleReady)
   window.addEventListener('tempered:open-health-setup', openSetup)
   schedule()
+  const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true
+  if (showLaunchGate ?? standalone) openLaunchGate()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
     window.removeEventListener('tempered:today-rendered', todayRendered)
     window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
     window.removeEventListener('tempered:open-health-setup', openSetup)
     activeOverlay?.remove()
+    launchOverlay?.remove()
     document.querySelector('[data-health-setup-overlay]')?.remove()
   }
 }

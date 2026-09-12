@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  HEALTH_SHORTCUT_RECIPE, HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, parseHealthSnapshot,
+  HEALTH_SHORTCUT_RECIPE, HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, launchHealthSnapshot, parseHealthSnapshot,
 } from './health-shortcut-runtime.js'
 
 test('parses the iPhone Shortcut Health snapshot format', () => {
@@ -29,6 +29,14 @@ test('rejects unrelated clipboard text and empty snapshots', () => {
 
 test('allows partial snapshots because Health permissions are per metric', () => {
   assert.deepEqual(parseHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSTEPS=3210\nSLEEP=`), { steps: 3210 })
+})
+
+test('launch only imports a real snapshot dated today, not an old clipboard copy', () => {
+  const today = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-12\nSTEPS=7777`
+  assert.deepEqual(launchHealthSnapshot(today, '2026-09-12'), { date: '2026-09-12', steps: 7777 })
+  assert.equal(launchHealthSnapshot(today, '2026-09-13'), null)
+  assert.equal(launchHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSTEPS=7777`, '2026-09-12'), null)
+  assert.equal(launchHealthSnapshot(HEALTH_SHORTCUT_RECIPE, '2026-09-12'), null)
 })
 
 test('accepts the unit-formatted values Shortcuts commonly emits', () => {

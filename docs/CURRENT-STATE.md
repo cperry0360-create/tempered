@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.0 (25)
+**Current release:** 0.22.1 (26)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -172,6 +172,10 @@ can prepare a new copy first; Continue Without Sync never blocks the tracker.
 iOS can still display its own Paste permission UI. A Shortcut automation may
 prepare the copy but the web app cannot start the Shortcut itself. Native HealthKit
 skips this gate.
+Health Setup now links to the *existing* named Shortcut rather than a blank new
+editor. Its Inspect Copy control previews the Clipboard output without importing
+it, so incorrect Shortcut actions can be diagnosed before changing the tracker.
+The app does not own or remotely replace the Shortcut saved in iOS Shortcuts.
 
 Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
 Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,

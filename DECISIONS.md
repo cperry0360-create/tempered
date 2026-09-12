@@ -2198,3 +2198,16 @@ while respecting WebKit paste privacy and avoiding a misleading background-sync 
 **Confidence:** unit and browser harness coverage, with real-device paste prompt
 and standalone foreground behavior awaiting user validation.
 **Needs Cory:** try the installed Home Screen flow on iPhone and report any paste prompt.
+
+## 2026-09-12 — Shortcut repair must edit the installed action sequence
+**Phase:** 0.22.1 Health setup correction
+**Decision:** Health Setup and the launch card deep-link to the user's existing
+`Tempered Health` Shortcut using Apple's `open-shortcut` URL. Health Setup can also
+inspect the current clipboard snapshot without importing it or changing any log.
+**Reasoning:** The former “Open Shortcut Editor” linked to `create-shortcut`, which
+opened a blank editor and could not repair the already-installed Shortcut. The
+updated app recipe is guidance only; app deployments cannot modify personal
+Shortcuts stored on the iPhone. A preview exposes a bad numeric output safely.
+**Confidence:** Apple documents the URL scheme; unit/browser regression checks.
+**Needs Cory:** show which fields or raw snapshot are wrong, then fix those actions
+in the installed Shortcut. Do not share anything sensitive beyond what is needed.

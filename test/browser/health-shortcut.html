@@ -88,7 +88,10 @@
       check('Setup accurately warns that Open URLs leaves the installed app', /Do not Open URLs/i.test(setupScreen?.textContent ?? '') && /Safari/i.test(setupScreen?.textContent ?? ''))
       check('Setup has a one-tap clipboard import action', Boolean(q('[data-health-clipboard-import]')))
       check('Setup includes all five Progress body metrics', ['Resting heart rate', 'HRV', 'Respiration', 'SpO₂', 'Body temperature'].every((label) => setupScreen?.textContent?.includes(label)))
-      check('Setup offers exact instructions and the Shortcut editor', Boolean(q('[data-health-bridge="recipe"]')) && Boolean(q('[data-health-bridge="create"]')))
+      check('Setup offers exact instructions and opens the existing Shortcut for repair', Boolean(q('[data-health-bridge="recipe"]')) && /^shortcuts:\/\/open-shortcut\?name=Tempered%20Health$/.test(q('[data-health-bridge="edit"]')?.getAttribute('href') ?? ''))
+      q('[data-health-inspect]')?.click()
+      await settle(90)
+      check('Inspect Copy previews Health output without changing the daily log', q('[data-health-inspect-output]')?.value === clipboardSnapshot && (await context.daily.dayLog('2026-09-08')).steps === 10527)
 
       const manualSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=11,888 steps\nSLEEP=8.25 hours\nWEIGHT_LB=164.2 lb\nRESTING_HR=48 bpm\nHRV_MS=42 ms\nRESP_RATE=12 breaths/min\nSPO2=0.98\nBODY_TEMP_F=98.6 F`
       const pasteInput = q('[data-health-import-input]')
@@ -129,7 +132,7 @@
       const realRead = navigator.clipboard.readText
       navigator.clipboard.readText = async () => { reads += 1; return realRead() }
       const stopGate = installHealthShortcutRuntime(context, { showLaunchGate: true })
-      check('Launch scene opens with a working Shortcut and skip path', Boolean(q('[data-health-launch] [data-health-launch-ready]')) && Boolean(q('[data-health-launch-run]')) && Boolean(q('[data-health-launch-skip]')))
+      check('Launch scene offers Run, Edit and Skip paths', Boolean(q('[data-health-launch] [data-health-launch-ready]')) && Boolean(q('[data-health-launch-run]')) && Boolean(q('[data-health-launch-edit]')) && Boolean(q('[data-health-launch-skip]')))
       check('Launch scene does not read the clipboard before a tap', reads === 0, reads)
       clipboardSnapshot = `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=9999`
       q('[data-health-launch-ready]')?.click()

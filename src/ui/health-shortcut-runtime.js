@@ -2,7 +2,7 @@ export const HEALTH_SNAPSHOT_PREFIX = 'TEMPERED_HEALTH_V1'
 export const DEFAULT_HEALTH_IMPORT_URL = 'https://cperry0360-create.github.io/tempered/'
 export const HEALTH_SHORTCUT_NAME = 'Tempered Health'
 export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%20Health'
-export const HEALTH_SHORTCUT_CREATE_URL = 'shortcuts://create-shortcut'
+export const HEALTH_SHORTCUT_EDIT_URL = 'shortcuts://open-shortcut?name=Tempered%20Health'
 export const MAX_SHORTCUT_SLEEP_HOURS = 16
 export const LAUNCH_MOTIVATIONS = [
   ['SHOW UP STRONG.', 'The first rep is showing up.'],
@@ -233,6 +233,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
           <button type="button" class="health-launch__ready" data-health-launch-ready>YES, I'M READY <span aria-hidden="true">↗</span></button>
           <div class="health-launch__options">
             <a href="${HEALTH_SHORTCUT_RUN_URL}" data-health-launch-run>RUN HEALTH SHORTCUT</a>
+            <a href="${HEALTH_SHORTCUT_EDIT_URL}" data-health-launch-edit>FIX SHORTCUT</a>
             <button type="button" data-health-launch-skip>CONTINUE WITHOUT SYNC</button>
           </div>
         </div>
@@ -317,8 +318,9 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
           </ol>
           <div class="health-setup__actions">
             <button type="button" class="button" data-health-bridge="recipe">COPY EXACT INSTRUCTIONS</button>
-            <a class="button" data-health-bridge="create" href="${HEALTH_SHORTCUT_CREATE_URL}">OPEN SHORTCUT EDITOR</a>
+            <a class="button" data-health-bridge="edit" href="${HEALTH_SHORTCUT_EDIT_URL}">EDIT TEMPERED HEALTH</a>
           </div>
+          <p class="health-setup__note">This opens your existing Shortcut to repair its actions. Updating Tempered does not modify a Shortcut already saved on your iPhone.</p>
           <p class="health-setup__note">A Home Screen web app cannot read HealthKit, silently install Health actions, or register its own return URL. The native iOS build syncs directly without a Shortcut.</p>
         </section>
 
@@ -328,6 +330,15 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
           <div class="health-setup-metrics">
             <span>Resting heart rate</span><span>HRV</span><span>Respiration</span><span>SpO₂</span><span>Body temperature</span>
           </div>
+        </section>
+
+        <section class="health-setup-section">
+          <details class="health-setup-details" data-health-inspect-details>
+            <summary>CHECK WHAT YOUR SHORTCUT COPIED</summary>
+            <p>Run Tempered Health first, then tap Inspect Copy. This only displays its output; it never imports or changes your logs. If the numbers are wrong here, edit the Shortcut before syncing.</p>
+            <button type="button" class="button health-setup__primary" data-health-inspect>INSPECT COPY</button>
+            <textarea class="health-import-sheet__input" data-health-inspect-output rows="11" readonly aria-label="Copied Health data preview" placeholder="The Shortcut's copied output will appear here."></textarea>
+          </details>
         </section>
 
         <section class="health-setup-section">
@@ -368,6 +379,20 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     overlay.onclick = (event) => { if (event.target === overlay) close() }
 
     const status = overlay.querySelector('[data-health-import-status]')
+    const inspect = overlay.querySelector('[data-health-inspect]')
+    inspect.onclick = async () => {
+      const output = overlay.querySelector('[data-health-inspect-output]')
+      try {
+        const raw = await navigator.clipboard.readText()
+        output.value = raw
+        const parsed = parseHealthSnapshot(raw)
+        status.textContent = parsed
+          ? `Preview only · ${parsed.date ?? 'no date'} · ${Object.keys(parsed).filter((key) => key !== 'date').length} metric(s). Nothing imported.`
+          : 'This is not a valid Tempered Health copy. Nothing imported.'
+      } catch {
+        status.textContent = 'Could not read the copy. Allow Paste if iOS asks, then try again.'
+      }
+    }
     const recipe = overlay.querySelector('[data-health-bridge="recipe"]')
     recipe.onclick = async () => {
       const ok = await copyText(HEALTH_SHORTCUT_RECIPE)

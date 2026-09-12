@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  HEALTH_SHORTCUT_RECIPE, HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, launchHealthSnapshot, parseHealthSnapshot,
+  HEALTH_SHORTCUT_EDIT_URL, HEALTH_SHORTCUT_RECIPE, HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, launchHealthSnapshot, parseHealthSnapshot,
 } from './health-shortcut-runtime.js'
 
 test('parses the iPhone Shortcut Health snapshot format', () => {
@@ -37,6 +37,10 @@ test('launch only imports a real snapshot dated today, not an old clipboard copy
   assert.equal(launchHealthSnapshot(today, '2026-09-13'), null)
   assert.equal(launchHealthSnapshot(`${HEALTH_SNAPSHOT_PREFIX}\nSTEPS=7777`, '2026-09-12'), null)
   assert.equal(launchHealthSnapshot(HEALTH_SHORTCUT_RECIPE, '2026-09-12'), null)
+})
+
+test('repair action opens the existing named Shortcut rather than a blank editor', () => {
+  assert.equal(HEALTH_SHORTCUT_EDIT_URL, 'shortcuts://open-shortcut?name=Tempered%20Health')
 })
 
 test('accepts the unit-formatted values Shortcuts commonly emits', () => {

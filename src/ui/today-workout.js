@@ -207,8 +207,10 @@ function summaryText(queue) {
     if (queue.completed.length > 0) return `${queue.completed.length} of ${queue.today.length} movements complete`
     return 'No workout scheduled today'
   }
+  const today = queue.today.filter((row) => !row.done).length
   const rolled = queue.rollover.length
-  return `${queue.active.length} movement${queue.active.length === 1 ? '' : 's'} left${rolled ? ` · ${rolled} rolled over` : ''}`
+  if (rolled) return `${today} today · ${rolled} available from earlier this week`
+  return `${today} movement${today === 1 ? '' : 's'} available today`
 }
 
 /**
@@ -260,15 +262,30 @@ export function installDailyWorkoutEnhancer({ mount, workout, app, clock }) {
 
     const body = section.querySelector('.today-training')
     if (!body) return
+    const previousOpen = body.querySelector('[data-workout-earlier]')?.open
     body.replaceChildren()
 
-    const rows = [...queue.active, ...queue.completed]
-    if (rows.length > 0) {
+    const todayRows = [...queue.today.filter((row) => !row.done), ...queue.completed]
+    if (todayRows.length > 0) {
       const list = document.createElement('div')
       list.className = 'today-list today-workout-list'
-      for (const row of rows) list.append(workoutRow(row, app))
+      for (const row of todayRows) list.append(workoutRow(row, app))
       body.append(list)
-    } else {
+    }
+    if (queue.rollover.length > 0) {
+      const earlier = document.createElement('details')
+      earlier.className = 'today-workout-earlier'
+      earlier.dataset.workoutEarlier = 'true'
+      earlier.open = previousOpen ?? queue.rollover.length < 6
+      const label = document.createElement('summary')
+      label.textContent = `${queue.rollover.length} movement${queue.rollover.length === 1 ? '' : 's'} from earlier this week`
+      const list = document.createElement('div')
+      list.className = 'today-list today-workout-list'
+      for (const row of queue.rollover) list.append(workoutRow(row, app))
+      earlier.append(label, list)
+      body.append(earlier)
+    }
+    if (todayRows.length === 0 && queue.rollover.length === 0) {
       const empty = document.createElement('div')
       empty.className = 'today-empty'
       empty.textContent = 'No workout work is waiting today.'

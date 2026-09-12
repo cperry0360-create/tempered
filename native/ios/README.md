@@ -20,7 +20,7 @@ capability a home-screen PWA cannot provide directly: HealthKit.
 Sleep is assigned to the **wake date**. The native reader looks from noon the previous
 day to noon on the requested date, counts only asleep stages, and unions overlapping
 samples so `inBed`/`awake` records and overlapping sleep-stage records do not inflate the
-total.
+total. A result above 16 hours is treated as an invalid source summary and is not imported.
 
 ## First install
 

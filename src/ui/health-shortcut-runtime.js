@@ -3,10 +3,11 @@ export const DEFAULT_HEALTH_IMPORT_URL = 'https://cperry0360-create.github.io/te
 export const HEALTH_SHORTCUT_NAME = 'Tempered Health'
 export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%20Health'
 export const HEALTH_SHORTCUT_CREATE_URL = 'shortcuts://create-shortcut'
+export const MAX_SHORTCUT_SLEEP_HOURS = 16
 
 export const HEALTH_SHORTCUT_RECIPE = `TEMPERED HEALTH — iPhone Shortcut recipe
 
-This Shortcut reads Apple Health on-device and opens Tempered with the result. No Mac, developer account, server, or AI provider is required.
+This Shortcut reads Apple Health on-device and copies a snapshot for Tempered. No Mac, developer account, server, or AI provider is required.
 
 IMPORTANT FIX FOR “CONVERSION ERROR”
 Never send Find Health Samples directly into Calculate Statistics. Health samples are objects, not numbers. Insert Get Details of Health Samples first and choose Value (or Duration for sleep). Calculate Statistics must receive that numeric Details result, never a Text action.
@@ -19,7 +20,9 @@ Never send Find Health Samples directly into Calculate Statistics. Health sample
 • Calculate Statistics: Sum. Its input must be the Value output from Get Details. Rename the result Steps Total.
 
 3. SLEEP
-• Find Health Samples where Type is Sleep and Start Date is in the last 2 days. Include the asleep states, not In Bed.
+• Find Health Samples where Type is Sleep and Start Date is between 6 PM yesterday and noon today.
+• Use one source (normally Apple Watch) so the same night is not counted again from another device.
+• Include Asleep Core, Asleep Deep, and Asleep REM. Exclude In Bed, Awake, and overlapping Asleep Unspecified summaries.
 • Get Details of Health Samples and choose Duration.
 • Calculate Statistics: Sum using those Duration values. Convert the result to decimal hours if needed. Rename it Sleep Hours.
 
@@ -49,16 +52,13 @@ BODY_TEMP_C=<degrees C>
 
 For Fahrenheit, replace the last line with BODY_TEMP_F=<degrees F>.
 
-7. ONE-TAP FINISH
-• Add URL Encode and give it the completed Text action.
-• Add another Text action containing this URL, inserting the URL-encoded result after the equals sign:
-https://cperry0360-create.github.io/tempered/?temperedHealth=<URL-encoded Text>
-• Add Open URLs using that URL.
-• Run the Shortcut. It opens Tempered, which imports the data automatically and removes it from the address bar. There is no paste or second import tap.
+7. FINISH FOR THE HOME SCREEN WEB APP
+• Add Copy to Clipboard using the completed Text action.
+• Run the Shortcut, return to the installed Tempered icon, and tap Import Copy. That one tap reads and saves the snapshot immediately.
+• Do not use Open URLs: iOS opens an HTTPS URL in Safari, whose local Tempered data is separate from the installed Home Screen copy.
 
-GUARANTEED FALLBACK
-• Add Copy to Clipboard using the original Text action.
-• In Tempered, open Health Setup and use Paste Snapshot.
+AUTOMATIC OPTION
+The native Tempered iOS build reads HealthKit directly on launch and when returning to the foreground. It does not need this Shortcut. iOS does not let a Home Screen web app read HealthKit or register a private return URL.
 
 PASSIVE OPTION
 In Shortcuts → Automation, use a Time of Day, Sleep, Apple Watch Workout, or App trigger to run Tempered Health without asking. The installed web app may not appear as an App trigger, so a daily or workout trigger is the more dependable passive option.`
@@ -120,6 +120,12 @@ export async function importHealthSnapshot(context, snapshot) {
     ...(Number.isFinite(parsed.bodyTempC) ? {} : (Number.isFinite(parsed.bodyTempF) ? { bodyTempC: (parsed.bodyTempF - 32) * (5 / 9) } : {})),
     ...(Number.isFinite(parsed.spo2) && parsed.spo2 > 0 && parsed.spo2 <= 1 ? { spo2: parsed.spo2 * 100 } : {}),
   }
+  const warnings = []
+  const validSleep = Number.isFinite(normalized.sleepHours)
+    && normalized.sleepHours > 0 && normalized.sleepHours <= MAX_SHORTCUT_SLEEP_HOURS
+  if (Number.isFinite(normalized.sleepHours) && !validSleep) {
+    warnings.push(`Sleep was skipped because the Shortcut returned ${normalized.sleepHours} hours. Use one Health source and exclude overlapping summary samples.`)
+  }
 
   // All three are replace-mode trackers. Re-running the Shortcut updates the
   // same day's canonical value; it never adds yesterday's or an earlier sync's
@@ -127,7 +133,7 @@ export async function importHealthSnapshot(context, snapshot) {
   if (Number.isFinite(normalized.steps) && normalized.steps >= 0) {
     await context.daily.logAt(date, 'steps', Math.round(normalized.steps))
   }
-  if (Number.isFinite(normalized.sleepHours) && normalized.sleepHours > 0 && normalized.sleepHours < 24) {
+  if (validSleep) {
     await context.daily.logAt(date, 'sleep', Math.round(normalized.sleepHours * 100) / 100)
   }
   if (Number.isFinite(normalized.weightLb) && normalized.weightLb > 0) {
@@ -141,11 +147,12 @@ export async function importHealthSnapshot(context, snapshot) {
   }
   const next = {
     ...current,
+    ...(!validSleep && Number(current.sleepHours) > MAX_SHORTCUT_SLEEP_HOURS ? { sleepHours: null } : {}),
     ...(Object.keys(healthMetrics).length ? { healthMetrics } : {}),
-    healthBridge: { source: 'shortcuts', importedAt: context.clock.nowIso() },
+    healthBridge: { source: 'shortcuts', importedAt: context.clock.nowIso(), ...(warnings.length ? { warnings } : {}) },
   }
   await context.storage.put('dayLogs', next)
-  return { date, ...normalized }
+  return { date, ...normalized, warnings }
 }
 
 async function copyText(text) {
@@ -176,6 +183,19 @@ export function installHealthShortcutRuntime(context) {
     window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
   }
 
+  function importMessage(result) {
+    return result.warnings?.length
+      ? `Health imported for ${result.date}. ${result.warnings.join(' ')}`
+      : `Health data imported for ${result.date}.`
+  }
+
+  async function importClipboard() {
+    if (!navigator.clipboard?.readText) throw new Error('Clipboard access is unavailable')
+    const result = await importHealthSnapshot(context, await navigator.clipboard.readText())
+    announceImport(result)
+    return result
+  }
+
   function openHealthSetup(trigger = null) {
     activeOverlay?.remove()
     document.querySelector('[data-health-setup-overlay]')?.remove()
@@ -191,10 +211,13 @@ export function installHealthShortcutRuntime(context) {
         </header>
 
         <section class="health-setup-hero">
-          <span class="health-setup-hero__eyebrow">NORMAL USE · ONE TAP</span>
-          <h3>Run the Shortcut. Tempered imports automatically.</h3>
-          <p>The finished Shortcut opens Tempered with its data. There is no Paste button and no second Import tap.</p>
-          <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">RUN TEMPERED HEALTH</a>
+          <span class="health-setup-hero__eyebrow">HOME SCREEN WEB APP · TWO STEPS</span>
+          <h3>Run the Shortcut, then import its copy.</h3>
+          <p>Return to this installed Tempered icon after the Shortcut copies its snapshot. Import Copy reads and saves it immediately—no text box or confirmation.</p>
+          <div class="health-setup__actions">
+            <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">1 · RUN SHORTCUT</a>
+            <button type="button" class="button health-setup__primary" data-health-clipboard-import>2 · IMPORT COPY</button>
+          </div>
         </section>
 
         <section class="health-setup-section" data-health-setup="instructions">
@@ -202,16 +225,16 @@ export function installHealthShortcutRuntime(context) {
           <p class="health-setup__warning"><strong>Seeing “Conversion Error”?</strong> Add <em>Get Details of Health Samples → Value</em> before <em>Calculate Statistics → Sum</em>. The Sum input must be the numeric Value result, never Find Health Samples or Text.</p>
           <ol class="health-setup-steps">
             <li><strong>Steps:</strong> Find today’s Steps → Get Details: Value → Calculate Statistics: Sum.</li>
-            <li><strong>Sleep:</strong> Find asleep samples from the last 2 days → Get Details: Duration → Sum → decimal hours.</li>
+            <li><strong>Sleep:</strong> Use one source and Core/Deep/REM samples from 6 PM yesterday to noon today → Get Details: Duration → Sum → decimal hours.</li>
             <li><strong>Latest body data:</strong> Find newest sample, Limit 1, then Get Details: Value for Weight, Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature. Do not sum these.</li>
             <li><strong>Build the Text:</strong> include the exact TEMPERED tags from the copied instructions.</li>
-            <li><strong>Finish:</strong> URL Encode that Text, add it after <code>?temperedHealth=</code>, then Open URLs.</li>
+            <li><strong>Finish:</strong> Copy that Text to Clipboard. Do not Open URLs; iOS sends those to Safari, not this installed copy.</li>
           </ol>
           <div class="health-setup__actions">
             <button type="button" class="button" data-health-bridge="recipe">COPY EXACT INSTRUCTIONS</button>
             <a class="button" data-health-bridge="create" href="${HEALTH_SHORTCUT_CREATE_URL}">OPEN SHORTCUT EDITOR</a>
           </div>
-          <p class="health-setup__note">iOS requires you to approve the Shortcut. A web app can open the editor but cannot silently install or build Health actions for you.</p>
+          <p class="health-setup__note">A Home Screen web app cannot read HealthKit, silently install Health actions, or register its own return URL. The native iOS build syncs directly without a Shortcut.</p>
         </section>
 
         <section class="health-setup-section" data-health-setup="metrics">
@@ -285,6 +308,21 @@ export function installHealthShortcutRuntime(context) {
       announceImport(result)
     }
 
+    const clipboardImport = overlay.querySelector('[data-health-clipboard-import]')
+    clipboardImport.onclick = async () => {
+      clipboardImport.disabled = true
+      status.textContent = 'Reading the copied Health snapshot…'
+      try {
+        const result = await importClipboard()
+        status.textContent = importMessage(result)
+        clipboardImport.textContent = 'IMPORTED'
+      } catch {
+        status.textContent = `Could not read a ${HEALTH_SNAPSHOT_PREFIX} copy. Run the Shortcut first, then return and tap Import Copy.`
+      } finally {
+        clipboardImport.disabled = false
+      }
+    }
+
     const input = overlay.querySelector('[data-health-import-input]')
     const submit = overlay.querySelector('[data-health-import-submit]')
     submit.onclick = async () => {
@@ -292,7 +330,7 @@ export function installHealthShortcutRuntime(context) {
       status.textContent = 'Importing snapshot…'
       try {
         const result = await importHealthSnapshot(context, input.value)
-        status.textContent = `Health data imported for ${result.date}.`
+        status.textContent = importMessage(result)
         announceImport(result)
       } catch {
         status.textContent = `Paste text beginning with ${HEALTH_SNAPSHOT_PREFIX}, then try again.`
@@ -343,6 +381,27 @@ export function installHealthShortcutRuntime(context) {
     return link
   }
 
+  function makeClipboardControl() {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'health-bridge__import'
+    button.dataset.healthBridge = 'import'
+    button.textContent = 'IMPORT COPY'
+    button.onclick = async () => {
+      button.disabled = true
+      button.textContent = 'IMPORTING…'
+      try {
+        const result = await importClipboard()
+        button.textContent = result.warnings?.length ? 'IMPORTED · CHECK SLEEP' : 'IMPORTED'
+      } catch {
+        button.textContent = 'RUN SHORTCUT FIRST'
+      } finally {
+        button.disabled = false
+      }
+    }
+    return button
+  }
+
   async function enhanceToday() {
     const screen = mount.querySelector('.screen--today')
     if (screen?.dataset?.date && screen.dataset.date !== context.clock.today()) return
@@ -352,7 +411,9 @@ export function installHealthShortcutRuntime(context) {
     row.className = 'health-bridge__today'
     const actions = document.createElement('div')
     actions.className = 'health-bridge__today-actions'
-    actions.append(makeSyncControl(), makeSetupButton())
+    actions.append(makeSyncControl())
+    if (!context.healthSync) actions.append(makeClipboardControl())
+    actions.append(makeSetupButton())
     const status = document.createElement('span')
     status.textContent = 'Apple Health · Setup available'
     row.append(actions, status)

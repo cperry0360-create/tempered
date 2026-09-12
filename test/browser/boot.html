@@ -41,6 +41,12 @@
         check('the Train screen rendered its routines',
           document.querySelectorAll('[data-start]').length >= 2,
           `${document.querySelectorAll('[data-start]').length} routines`)
+        const rhythm = document.querySelector('[data-training-rhythm="calendar"]')
+        check('Train opens with a compact monthly training rhythm calendar',
+          rhythm !== null && rhythm.querySelectorAll('.training-calendar__day').length >= 28,
+          `${rhythm?.querySelectorAll('.training-calendar__day').length ?? 0} days`)
+        check('a fresh calendar explains the four-day week and streak keeper',
+          /0 of 4 days at 30\+ min/i.test(rhythm?.textContent ?? '') && /keeper/i.test(rhythm?.textContent ?? ''))
         check('the Train overview links to the Exercise Library without rendering every row',
           document.querySelector('[data-exercise-library="open"]') !== null
           && document.querySelectorAll('.libraryrow').length === 0)

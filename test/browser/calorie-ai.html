@@ -46,7 +46,7 @@
         copied: '',
         async writeText(text) { this.copied = text },
         async readText() {
-          return '```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'
+          return '```text\nTEMPERED_DESCRIPTION=Chicken rice bowl with avocado\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'
         },
       }
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard })
@@ -92,6 +92,7 @@
       check('AI Photo writes the stored prompt to the clipboard', clipboard.copied === NUTRITION_PHOTO_PROMPT)
       check('Prompt requests calories and all four macro values',
         ['CALORIES', 'PROTEIN', 'CARBS', 'FAT', 'FIBER'].every((tag) => clipboard.copied.includes(`TEMPERED_${tag}=`)))
+      check('Prompt requests the meal description used by history and quick log', clipboard.copied.includes('TEMPERED_DESCRIPTION='))
 
       // Idle runtimes must not replace the card they just mounted.
       const stableSnapshot = q('[data-lifestyle="snapshot"]')
@@ -103,7 +104,7 @@
       nutrition?.querySelector('.today-item__body')?.click()
       const screen = await waitFor('[data-nutrition-screen]')
       check('Nutrition opens a dedicated persistent sub-screen', Boolean(screen))
-      check('Nutrition screen has a time field plus five nutrient fields', qa('[data-nutrition-form] input').length === 6, qa('[data-nutrition-form] input').length)
+      check('Nutrition screen has description, time, and five nutrient fields', qa('[data-nutrition-form] input').length === 7, qa('[data-nutrition-form] input').length)
       const carryover = await waitFor('[data-nutrition-carryover]')
       check('Legacy totals remain visible as an earlier total', /100 kcal/i.test(carryover?.textContent ?? '') && /10g protein/i.test(carryover?.textContent ?? ''))
 
@@ -111,7 +112,8 @@
       await settle(120)
       const dayBeforeConfirm = await tempered.daily.dayLog(clock.today())
       check('Paste fills all nutrition fields',
-        q('[data-entry="nutrition_calories"]')?.value === '642'
+        q('[data-entry="nutrition_description"]')?.value === 'Chicken rice bowl with avocado'
+        && q('[data-entry="nutrition_calories"]')?.value === '642'
         && q('[data-entry="nutrition_protein"]')?.value === '42'
         && q('[data-entry="nutrition_carbs"]')?.value === '61'
         && q('[data-entry="nutrition_fat"]')?.value === '24'
@@ -123,6 +125,7 @@
       await settle(260)
       check('Nutrition screen stays open after adding a meal', Boolean(q('[data-nutrition-screen]')))
       check('Meal history shows its time and calorie amount', /9:15/i.test(q('[data-nutrition-entry]')?.textContent ?? '') && /642 kcal/i.test(q('[data-nutrition-entry]')?.textContent ?? ''))
+      check('Meal history keeps the useful AI description', /Chicken rice bowl with avocado/i.test(q('[data-nutrition-entry]')?.textContent ?? ''))
       check('Meal history shows protein, carbs, fat and fiber',
         /42g protein/i.test(q('[data-nutrition-entry]')?.textContent ?? '')
         && /61g carbs/i.test(q('[data-nutrition-entry]')?.textContent ?? '')
@@ -135,6 +138,7 @@
       check('Itemized logger stores carb, fat and fiber totals', day.carbsGrams === 61 && day.fatGrams === 24 && day.fiberGrams === 9,
         `${day.carbsGrams}/${day.fatGrams}/${day.fiberGrams}`)
       check('Meal keeps its timestamp and AI source', day.nutritionEntries?.[0]?.loggedAt.includes('T09:15:') && day.nutritionEntries?.[0]?.source === 'ai', JSON.stringify(day.nutritionEntries?.[0]))
+      check('Recent meals immediately become a one-tap quick log', Boolean(q('[data-nutrition-suggestion="Chicken rice bowl with avocado"]')))
       check('Logging Nutrition still satisfies Logged your food', day.nutritionLogged === true, day.nutritionLogged)
 
       q('[data-nutrition-entry] .nutrition-entry__delete')?.click()

@@ -121,17 +121,16 @@
 
       const pushdown = q('[data-cable-exercise="tricep_push"]', equipment)
       check('other cable exercises are configurable from the same equipment profile', Boolean(pushdown))
-      check('Tricep Pushdown starts as normal lb entry', /normal lb entry/.test(pushdown?.textContent ?? ''), pushdown?.textContent)
+      check('Cable movements default to physical peg entry', /peg entry/.test(pushdown?.textContent ?? ''), pushdown?.textContent)
       q('button[aria-label="Tricep Pushdown (Cable) peg entry"]', pushdown)?.click()
       await settle(120)
       const profileAfterExercise = await storage.get('profile', 'profile')
-      check('Tricep Pushdown can opt into peg mode independently',
-        profileAfterExercise?.cableMachine?.exerciseSettings?.tricep_push?.enabled === true)
+      check('Tricep Pushdown can opt back into generic pounds independently',
+        profileAfterExercise?.cableMachine?.exerciseSettings?.tricep_push?.enabled === false)
 
       const incline = q('[data-cable-exercise="incline_bench_db"]', equipment)
-      check('a cable-capable press can opt into this machine profile', Boolean(incline))
-      q('button[aria-label="Incline Dumbbell Bench Press peg entry"]', incline)?.click()
-      await settle(120)
+      check('a cable-capable press defaults to this machine profile',
+        Boolean(incline) && /2 stacks · peg entry/.test(incline?.textContent ?? ''), incline?.textContent)
 
       await tempered.app.startSession({ exerciseId: 'incline_bench_db' })
       await settle(120)

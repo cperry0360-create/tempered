@@ -74,12 +74,17 @@ test('at the week boundary outstanding work clears rather than carrying', () => 
   assert.equal(tasks.length, monday.exercises.length, 'the new week is prescribed in full again')
 })
 
-test('program weeks are bounded by the start date, not the calendar week', () => {
+test('program starter week lasts through Sunday before later Monday boundaries', () => {
   const started = '2026-09-07'
   assert.equal(isInSameProgramWeek(started, '2026-09-07', '2026-09-13', daysBetween), true)
   assert.equal(isInSameProgramWeek(started, '2026-09-13', '2026-09-07', daysBetween), true)
   assert.equal(isInSameProgramWeek(started, '2026-09-14', '2026-09-13', daysBetween), false,
-    'day 8 begins a new program week')
+    'Monday begins a new program week')
+  assert.equal(isInSameProgramWeek('2026-09-05', '2026-09-05', '2026-09-12', daysBetween), true,
+    'Saturday setup does not flip the next Saturday')
+  assert.equal(isInSameProgramWeek('2026-09-05', '2026-09-12', '2026-09-13', daysBetween), true,
+    'the starter week still includes Sunday')
+  assert.equal(isInSameProgramWeek('2026-09-05', '2026-09-13', '2026-09-14', daysBetween), false)
 })
 
 // --- weekly hard sets ------------------------------------------------------

@@ -49,4 +49,5 @@ test('sleep import uses wake-date noon-to-noon and merges overlapping asleep sta
   assert.match(health, /asleepDeep/)
   assert.match(health, /asleepREM/)
   assert.match(health, /if interval\.0 <= current\.1/)
+  assert.match(health, /guard hours <= 16 else \{ return nil \}/)
 })

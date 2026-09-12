@@ -142,6 +142,9 @@ final class HealthKitBridge {
         total += current.1.timeIntervalSince(current.0)
 
         let hours = total / 3600
+        // Third-party summaries can still span most of a day. Do not replace a
+        // good manual value with a physically implausible Health result.
+        guard hours <= 16 else { return nil }
         return (hours * 100).rounded() / 100
     }
 

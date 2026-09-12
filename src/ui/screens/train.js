@@ -30,6 +30,67 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   /** @type {any[]} */ let exercises = []
   /** @type {Map<string, any>} */ let records = new Map()
   /** @type {Map<string, string>} */ const lastByExercise = new Map()
+  /** @type {any} */ let rhythm = null
+
+  function addUtcDays(date, count) {
+    const at = new Date(`${date}T00:00:00Z`)
+    at.setUTCDate(at.getUTCDate() + count)
+    return at.toISOString().slice(0, 10)
+  }
+
+  function trainingCalendar() {
+    if (!rhythm) return null
+    const today = clock.today()
+    const month = today.slice(0, 7)
+    const first = `${month}-01`
+    const firstAt = new Date(`${first}T00:00:00Z`)
+    const leading = (firstAt.getUTCDay() + 6) % 7
+    const nextMonth = new Date(Date.UTC(firstAt.getUTCFullYear(), firstAt.getUTCMonth() + 1, 1))
+    const days = Math.round((nextMonth - firstAt) / 86400000)
+    const trained = new Set(rhythm.qualifyingDates)
+    const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(firstAt)
+    const cells = Array.from({ length: leading }, () => el('span.training-calendar__blank', { 'aria-hidden': 'true' }))
+    for (let index = 0; index < days; index += 1) {
+      const date = addUtcDays(first, index)
+      const minutes = Math.round(rhythm.minutesByDate?.[date] ?? 0)
+      cells.push(el('span.training-calendar__day', {
+        text: String(index + 1),
+        title: trained.has(date) ? `${minutes} training minutes` : undefined,
+        'aria-label': `${monthLabel.split(' ')[0]} ${index + 1}${trained.has(date) ? `, ${minutes} training minutes` : ''}`,
+        dataset: { trained: String(trained.has(date)), today: String(date === today) },
+      }))
+    }
+
+    return el('section.card.training-rhythm', { dataset: { trainingRhythm: 'calendar' } }, [
+      el('div.training-rhythm__head', {}, [
+        el('div', {}, [
+          el('span.training-rhythm__eyebrow', { text: 'TRAINING RHYTHM' }),
+          el('strong.training-rhythm__streak', {
+            text: rhythm.streakWeeks === 1 ? '1 week strong' : `${rhythm.streakWeeks} weeks strong`,
+          }),
+        ]),
+        el('span.training-rhythm__keeper', {
+          dataset: { ready: String(rhythm.keepers > 0) },
+          text: rhythm.keepers > 0
+            ? `◆ ${rhythm.keepers} keeper${rhythm.keepers === 1 ? '' : 's'} ready`
+            : `${rhythm.keeperProgress}/${rhythm.keeperEvery} to keeper`,
+        }),
+      ]),
+      el('p.training-rhythm__week', {
+        text: `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min this week`,
+      }),
+      el('div.training-calendar__month', { text: monthLabel }),
+      el('div.training-calendar', { role: 'group', 'aria-label': `${monthLabel} training days` }, [
+        ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.training-calendar__weekday', { text: day })),
+        ...cells,
+      ]),
+      el('p.training-rhythm__note', {
+        text: rhythm.keepers > 0
+          ? 'Your keeper automatically protects one quiet completed week.'
+          : 'Five strong weeks earns a keeper for a vacation or recovery week.',
+      }),
+    ])
+  }
 
   function routineCard(routine) {
     const setCount = (routine.exercises ?? []).reduce((sum, e) => sum + (e.sets ?? 0), 0)
@@ -176,6 +237,8 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     replace(root, [
       el('h1.screen__title', { text: 'Train' }),
 
+      trainingCalendar(),
+
       programBlock(),
 
       el('section.block', {}, [
@@ -227,6 +290,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
       todayDay = (await workout.todayTasks())?.day ?? null
       guide = await workout.programGuide()
       weekView = await workout.weekStatus()
+      rhythm = await workout.trainingRhythm()
       routines = await storage.getAll('routines')
       exercises = (await storage.getAll('exercises')).sort((a, b) => a.name.localeCompare(b.name))
       records = await workout.recordMap()

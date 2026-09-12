@@ -349,6 +349,21 @@ test('ACCEPTANCE: at the week boundary outstanding slots clear rather than carry
     'nothing carried over as debt')
 })
 
+test('Saturday start stays in week one through the following Sunday with completed sets intact', async () => {
+  const { workout, clock } = await freshApp('2026-09-05T09:00:00.000Z')
+  await workout.completeSlot({ dayId: 'monday', slotIndex: 0, exerciseId: 'incline_bench_bb' },
+    [{ weight: 135, reps: 8 }, { weight: 135, reps: 8 }, { weight: 135, reps: 8 }, { weight: 135, reps: 8 }])
+  clock.advanceDays(7)
+  assert.equal((await workout.activeProgram()).week, 1)
+  assert.equal((await workout.weekStatus()).week.done, 1, 'Saturday has not dropped week-one sets')
+  clock.advanceDays(1)
+  assert.equal((await workout.activeProgram()).week, 1)
+  assert.equal((await workout.weekStatus()).week.done, 1, 'Sunday remains in week one')
+  clock.advanceDays(1)
+  assert.equal((await workout.activeProgram()).week, 2)
+  assert.equal((await workout.weekStatus()).week.done, 0, 'Monday opens a clean week, not rolled debt')
+})
+
 test('ACCEPTANCE: the weekly view derives hard sets from logged data', async () => {
   const { workout } = await freshApp('2026-09-07T09:00:00.000Z')
   await workout.completeSlot({ dayId: 'monday', slotIndex: 0, exerciseId: 'incline_bench_bb' },

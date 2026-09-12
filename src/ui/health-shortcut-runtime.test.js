@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  HEALTH_SNAPSHOT_PREFIX, healthImportUrl, parseHealthSnapshot,
+  HEALTH_SNAPSHOT_PREFIX, MAX_SHORTCUT_SLEEP_HOURS, healthImportUrl, importHealthSnapshot, parseHealthSnapshot,
 } from './health-shortcut-runtime.js'
 
 test('parses the iPhone Shortcut Health snapshot format', () => {
@@ -51,4 +51,22 @@ test('builds a one-tap import URL whose search parameter round-trips exactly', (
 
 test('refuses to build a handoff URL for unrelated data', () => {
   assert.throws(() => healthImportUrl('hello world'), /No Tempered Health snapshot/)
+})
+
+test('implausible Shortcut sleep is skipped and an earlier bad import is cleared', async () => {
+  let day = { date: '2026-09-08', sleepHours: 21 }
+  const daily = {
+    async logAt(date, activity, value) {
+      day = { ...day, date, ...(activity === 'steps' ? { steps: value } : {}), ...(activity === 'sleep' ? { sleepHours: value } : {}) }
+    },
+    async dayLog() { return { ...day } },
+  }
+  const storage = { async put(store, value) { if (store === 'dayLogs') day = { ...value } } }
+  const clock = { today: () => '2026-09-08', nowIso: () => '2026-09-08T09:00:00.000Z' }
+
+  const result = await importHealthSnapshot({ storage, clock, daily }, `${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-08\nSTEPS=1234\nSLEEP=21`)
+  assert.equal(MAX_SHORTCUT_SLEEP_HOURS, 16)
+  assert.equal(day.sleepHours, null)
+  assert.equal(day.steps, 1234)
+  assert.match(result.warnings[0], /Sleep was skipped/)
 })

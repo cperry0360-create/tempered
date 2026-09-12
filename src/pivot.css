@@ -41,8 +41,9 @@ body:has(.screen--companion)::before {
   border-top: 1px solid rgba(255,255,255,.07);
 }
 .health-bridge__today > span { color: rgba(255,255,255,.46); font-size: 9px; }
-.health-bridge__today-actions { display: flex; align-items: center; gap: 7px; }
+.health-bridge__today-actions { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 7px; }
 .health-bridge__run,
+.health-bridge__import,
 .health-bridge__setup {
   min-height: 44px;
   display: inline-flex;
@@ -60,6 +61,7 @@ body:has(.screen--companion)::before {
   padding: 0 12px;
   text-decoration: none;
 }
+.health-bridge__import { padding-inline: 9px; border-color: rgba(203,220,117,.24); background: rgba(203,220,117,.08); color: #e6f2aa; }
 .health-bridge__setup { padding-inline: 10px; border-color: rgba(255,255,255,.10); background: rgba(255,255,255,.035); color: rgba(255,255,255,.68); }
 .health-bridge__settings { order: -1; }
 .health-bridge__settings-open { width: 100%; margin-top: 12px; border-radius: 13px; }

@@ -133,6 +133,8 @@ test('REGRESSION: Health sync has a one-tap handoff and a dedicated repair scree
   assert.match(health, /Get Details of Health Samples/i)
   assert.match(health, /Conversion Error/i)
   assert.match(health, /data-health-manual-form/)
+  assert.match(health, /Do not use Open URLs/i)
+  assert.match(health, /data-health-clipboard-import/)
   assert.match(health, /data-health-setup-overlay/)
   assert.match(health, /addEventListener\('tempered:screen-shown'/)
   assert.match(health, /addEventListener\('tempered:today-rendered'/)

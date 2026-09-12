@@ -13,6 +13,13 @@
 
 const DEFAULT_EXERCISE_SETTINGS = Object.freeze({
   cable_fly: Object.freeze({ enabled: true, stacks: 2 }),
+  chest_press_bb: Object.freeze({ enabled: true, stacks: 2 }),
+  ohp_db: Object.freeze({ enabled: true, stacks: 2 }),
+  incline_bench_bb: Object.freeze({ enabled: true, stacks: 2 }),
+  flat_bench_db: Object.freeze({ enabled: true, stacks: 2 }),
+  incline_bench_db: Object.freeze({ enabled: true, stacks: 2 }),
+  shoulder_press_db: Object.freeze({ enabled: true, stacks: 2 }),
+  rear_delt_fly_db: Object.freeze({ enabled: true, stacks: 2 }),
 })
 
 export const INSPIRE_FTX_PROFILE = Object.freeze({
@@ -43,7 +50,10 @@ function integer(value, fallback, { min = 1, max = 100 } = {}) {
 }
 
 function exerciseSetting(value, exerciseId) {
-  const fallback = DEFAULT_EXERCISE_SETTINGS[exerciseId] ?? { enabled: false, stacks: 1 }
+  // Selecting Cable means using the configured physical cable machine. Peg
+  // entry is therefore the safe default for every cable-capable movement;
+  // Settings still permits an explicit per-exercise return to generic pounds.
+  const fallback = DEFAULT_EXERCISE_SETTINGS[exerciseId] ?? { enabled: true, stacks: 1 }
   return {
     enabled: value?.enabled === undefined ? fallback.enabled : value.enabled === true,
     stacks: integer(value?.stacks, fallback.stacks, { min: 1, max: 4 }),

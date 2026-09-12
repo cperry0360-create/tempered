@@ -2,7 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { loadBalance, loadExercises } from '../../test/helpers/balance.js'
-import { weekFromStart, isDeloadWeek, prescribeFromProgram, weeklyHardSets, programForWeek } from './programs.js'
+import { weekFromStart, programWeekIndex, isDeloadWeek, prescribeFromProgram, weeklyHardSets, programForWeek } from './programs.js'
+import { daysBetween } from '../adapters/clock/clock.js'
 
 const balance = loadBalance()
 const exercises = loadExercises()
@@ -52,6 +53,15 @@ test('weeks roll over on the calendar, not per session', () => {
 
 test('a program does not run past its last week', () => {
   assert.equal(weekFromStart(365, 8), 8)
+})
+
+test('a midweek start stays in week one through Sunday and rolls on Monday', () => {
+  const started = '2026-09-05' // Saturday
+  assert.equal(programWeekIndex(started, '2026-09-12', daysBetween), 0)
+  assert.equal(programWeekIndex(started, '2026-09-13', daysBetween), 0)
+  assert.equal(programWeekIndex(started, '2026-09-14', daysBetween), 1)
+  assert.equal(programWeekIndex(started, '2026-09-20', daysBetween), 1)
+  assert.equal(programWeekIndex(started, '2026-09-21', daysBetween), 2)
 })
 
 test('the final week is a deload', () => {

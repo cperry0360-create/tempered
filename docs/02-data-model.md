@@ -76,6 +76,7 @@ interface DayLog {
     id: string;
     loggedAt: ISODateTime;
     source: 'manual' | 'ai';
+    description?: string;         // short meal label used for repeat logging
     calories?: number;
     proteinGrams?: number;
     carbsGrams?: number;

@@ -1,11 +1,12 @@
-import { nutritionLedger } from '../domain/nutrition.js'
+import { nutritionLedger, nutritionSuggestions } from '../domain/nutrition.js'
 
 export const NUTRITION_PHOTO_PROMPT = `Estimate the total calories and macros in the food and drink visible in the attached meal photo or photos for my Tempered food log.
 
 Use any readable nutrition labels or menu information in the image. Otherwise estimate realistic portion sizes from what is visible. Include sauces, dressings, cooking oil, drinks, and sides when they appear. Do not ask follow-up questions. If there is uncertainty, choose one reasonable midpoint estimate rather than returning a range.
 
-Return exactly ONE fenced code block and nothing else. The code block must contain exactly these five lines so I get a one-tap Copy button in the AI app:
+Return exactly ONE fenced code block and nothing else. The code block must contain exactly these six lines so I get a one-tap Copy button in the AI app:
 \`\`\`text
+TEMPERED_DESCRIPTION=<brief plain-language meal description>
 TEMPERED_CALORIES=<whole-number calories>
 TEMPERED_PROTEIN=<grams of protein>
 TEMPERED_CARBS=<grams of carbohydrates>
@@ -37,20 +38,27 @@ function taggedNumber(raw, tag) {
   return match ? Number(match[1]) : null
 }
 
+function taggedText(raw, tag) {
+  const match = raw.match(new RegExp(`^${tag}\\s*[:=]\\s*(.+?)\\s*$`, 'im'))
+  const value = match?.[1]?.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim()
+  return value ? value.slice(0, 120) : null
+}
+
 export function parseTemperedNutrition(text) {
   const raw = String(text ?? '').trim()
   const parsed = {
+    description: taggedText(raw, 'TEMPERED_DESCRIPTION'),
     calories: taggedNumber(raw, 'TEMPERED_CALORIES'),
     protein: taggedNumber(raw, 'TEMPERED_PROTEIN'),
     carbs: taggedNumber(raw, 'TEMPERED_CARBS'),
     fat: taggedNumber(raw, 'TEMPERED_FAT'),
     fiber: taggedNumber(raw, 'TEMPERED_FIBER'),
   }
-  if (Object.values(parsed).some((value) => value !== null)) return parsed
+  if (Object.entries(parsed).some(([key, value]) => key !== 'description' && value !== null)) return parsed
 
   // Backwards compatibility with the first calorie-only handoff.
   if (/^[0-9]{1,5}(?:\s*(?:kcal|calories?))?$/i.test(raw)) {
-    return { calories: Number(raw.match(/[0-9]{1,5}/)?.[0]), protein: null, carbs: null, fat: null, fiber: null }
+    return { description: null, calories: Number(raw.match(/[0-9]{1,5}/)?.[0]), protein: null, carbs: null, fat: null, fiber: null }
   }
   return null
 }
@@ -357,6 +365,12 @@ export function installCalorieAiRuntime() {
     item.dataset.nutritionEntry = entry.id
     item.dataset.entryTime = entry.loggedAt
     const body = document.createElement('div')
+    if (entry.description) {
+      const description = document.createElement('h4')
+      description.className = 'nutrition-entry__description'
+      description.textContent = entry.description
+      body.append(description)
+    }
     const time = document.createElement('strong')
     time.className = 'nutrition-entry__time'
     time.textContent = formattedTime(entry.loggedAt)
@@ -427,11 +441,49 @@ export function installCalorieAiRuntime() {
     host.append(message, undo)
   }
 
+  function renderSuggestions(date, days) {
+    const section = nutritionScreen?.querySelector('[data-nutrition-suggestions-section]')
+    const host = nutritionScreen?.querySelector('[data-nutrition-suggestions]')
+    if (!section || !host) return
+    const suggestions = nutritionSuggestions(days, 4)
+    section.hidden = suggestions.length === 0
+    host.replaceChildren(...suggestions.map((suggestion) => {
+      const button = makeButton('nutrition-suggestion', '', `Log ${suggestion.description} again`)
+      button.dataset.nutritionSuggestion = suggestion.description
+      const name = document.createElement('strong')
+      name.textContent = suggestion.description
+      const detail = document.createElement('span')
+      detail.textContent = nutrientLine(suggestion)
+      const use = document.createElement('small')
+      use.textContent = suggestion.count > 1 ? `${suggestion.count}× logged · ADD` : 'RECENT · ADD'
+      button.append(name, detail, use)
+      button.onclick = async () => {
+        button.disabled = true
+        try {
+          await globalThis.tempered.daily.addNutrition(date, suggestion, {
+            loggedAt: timestampFor(date, localTimeValue(globalThis.tempered.clock.now()), globalThis.tempered.clock.nowIso()),
+            source: 'manual',
+          })
+          lastDeleted = null
+          await renderNutritionData()
+          await enhance()
+          setScreenStatus(`${suggestion.description} added.`, 'success')
+        } catch {
+          button.disabled = false
+          setScreenStatus('Could not repeat that meal. Your saved data was not changed.', 'error')
+        }
+      }
+      return button
+    }))
+  }
+
   async function renderNutritionData() {
     if (!nutritionScreen?.isConnected) return
     const context = globalThis.tempered
     const date = nutritionScreen.dataset.date
-    const [view, day] = await Promise.all([context.daily.forDate(date), context.daily.dayLog(date)])
+    const [view, day, days] = await Promise.all([
+      context.daily.forDate(date), context.daily.dayLog(date), context.storage.getAll('dayLogs'),
+    ])
     if (!nutritionScreen?.isConnected || nutritionScreen.dataset.date !== date) return
     const ledger = nutritionLedger(day)
     const calories = activityById(view, 'calories_logged')
@@ -458,6 +510,7 @@ export function installCalorieAiRuntime() {
       rows.push(empty)
     }
     list.replaceChildren(...rows)
+    renderSuggestions(date, days)
     renderUndo()
   }
 
@@ -479,6 +532,8 @@ export function installCalorieAiRuntime() {
       for (const field of FIELD_DEFINITIONS) {
         if (parsed[field.key] !== null) inputs.get(field.key).value = String(parsed[field.key])
       }
+      const description = form.querySelector('[data-entry="nutrition_description"]')
+      if (description && parsed.description) description.value = parsed.description
       form.dataset.source = 'ai'
       setScreenStatus('AI values pasted. Review them, then tap Add Meal.', 'ready')
     } catch {
@@ -517,6 +572,17 @@ export function installCalorieAiRuntime() {
     totals.className = 'nutrition-totals'
     totals.dataset.nutritionTotals = 'true'
 
+    const suggestionSection = document.createElement('section')
+    suggestionSection.className = 'nutrition-suggestions'
+    suggestionSection.dataset.nutritionSuggestionsSection = 'true'
+    suggestionSection.hidden = true
+    const suggestionTitle = document.createElement('h3')
+    suggestionTitle.textContent = 'QUICK LOG · RECENT + FREQUENT'
+    const suggestions = document.createElement('div')
+    suggestions.className = 'nutrition-suggestions__list'
+    suggestions.dataset.nutritionSuggestions = 'true'
+    suggestionSection.append(suggestionTitle, suggestions)
+
     const historySection = document.createElement('section')
     historySection.className = 'nutrition-history'
     const historyTitle = document.createElement('h3')
@@ -535,6 +601,18 @@ export function installCalorieAiRuntime() {
     const fields = document.createElement('div')
     fields.className = 'nutrition-meal-form__fields'
     const inputs = new Map()
+
+    const descriptionLabel = document.createElement('label')
+    descriptionLabel.className = 'nutrition-meal-field nutrition-meal-field--description'
+    descriptionLabel.innerHTML = '<span>Meal</span>'
+    const descriptionInput = document.createElement('input')
+    descriptionInput.type = 'text'
+    descriptionInput.maxLength = 120
+    descriptionInput.placeholder = 'Protein shake, chicken bowl…'
+    descriptionInput.dataset.entry = 'nutrition_description'
+    descriptionInput.addEventListener('input', () => { form.dataset.source = 'manual' })
+    descriptionLabel.append(descriptionInput)
+    fields.append(descriptionLabel)
 
     const timeLabel = document.createElement('label')
     timeLabel.className = 'nutrition-meal-field nutrition-meal-field--time'
@@ -572,7 +650,7 @@ export function installCalorieAiRuntime() {
     status.textContent = 'Enter what you know. Every macro is optional.'
     const actions = document.createElement('div')
     actions.className = 'nutrition-meal-form__actions'
-    const paste = makeButton('nutrition-meal-form__paste', 'PASTE AI RESULT', 'Paste AI nutrition result for review')
+    const paste = makeButton('nutrition-meal-form__paste', 'IMPORT AI COPY', 'Read copied AI nutrition result for review')
     paste.dataset.calorieAi = 'paste'
     paste.onclick = () => pasteNutrition(form, inputs)
     const add = makeButton('nutrition-meal-form__add', 'ADD MEAL', 'Add meal to Nutrition history')
@@ -582,7 +660,10 @@ export function installCalorieAiRuntime() {
     form.append(formTitle, fields, status, actions)
     form.onsubmit = async (event) => {
       event.preventDefault()
-      const values = Object.fromEntries(FIELD_DEFINITIONS.map(({ key }) => [key, inputs.get(key).value]))
+      const values = {
+        description: descriptionInput.value,
+        ...Object.fromEntries(FIELD_DEFINITIONS.map(({ key }) => [key, inputs.get(key).value])),
+      }
       if (!Object.values(values).some((value) => Number(value) > 0)) {
         inputs.get('calories').focus()
         setScreenStatus('Enter at least one amount before adding the meal.', 'error')
@@ -597,6 +678,7 @@ export function installCalorieAiRuntime() {
           source: form.dataset.source,
         })
         for (const input of inputs.values()) input.value = ''
+        descriptionInput.value = ''
         timeInput.value = localTimeValue(globalThis.tempered.clock.now())
         form.dataset.source = 'manual'
         lastDeleted = null
@@ -615,7 +697,7 @@ export function installCalorieAiRuntime() {
     undo.className = 'nutrition-undo'
     undo.dataset.nutritionUndo = 'true'
     undo.hidden = true
-    screen.append(header, totals, form, historySection, undo)
+    screen.append(header, totals, suggestionSection, form, historySection, undo)
     overlay.append(screen)
     overlay.onclick = (event) => { if (event.target === overlay) closeNutritionScreen() }
     return overlay

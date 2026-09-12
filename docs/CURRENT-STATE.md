@@ -1,10 +1,10 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-10
+**Last recovered and verified:** 2026-09-12
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.20.1 (22)
+**Current release:** 0.21.0 (23)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -93,12 +93,14 @@ iOS does not re-composite and flash cards while controls or DOM order change.
 ## Nutrition log
 
 Tapping Nutrition on Today opens a dedicated sub-screen. It shows daily totals, a meal
-form with time plus calories/protein/carbs/fat/fiber, and timestamped meal history. Paste
-AI Result fills all five fields and waits for review; Add Meal is the only save action and
-the screen stays open afterward. Entries can be deleted and immediately restored with
-Undo. Aggregate day fields remain canonical for existing Today, Progress, XP, and export
-logic. Totals logged before 0.15.0 are preserved as an Earlier total rather than assigned
-an invented meal time.
+form with a short description, time, and calories/protein/carbs/fat/fiber, plus timestamped
+meal history. Import AI Copy fills the description and nutrient fields and waits for review;
+Add Meal is the only save action and the screen stays open afterward. Once an entry has a
+description, recent/frequent meals appear as one-tap Quick Log choices with their saved
+amounts. The AI prompt requests a brief description in its copyable result. Entries can be
+deleted and immediately restored with Undo. Aggregate day fields remain canonical for
+existing Today, Progress, XP, and export logic. Totals logged before 0.15.0 are preserved
+as an Earlier total rather than assigned an invented meal time.
 
 ## Today screen density and Daily Recap
 
@@ -110,7 +112,8 @@ Read-only lifestyle totals no longer sit above those logging rows. `DAILY RECAP`
 dedicated card with sleep, steps, nutrition, water, weight, Apple Health sync/setup, and
 four exercise facts for the selected day: training minutes, working sets, movements, and
 sessions. The recap has no entrance animation or nested navigation, so it opens and closes
-without the card flicker seen in earlier iPhone builds.
+without the card flicker seen in earlier iPhone builds. Mobility logging opens a card with
+four ready-to-use short flows, each showing its movements and filling its duration.
 
 ## Planner, training navigation, and active sessions
 
@@ -118,8 +121,12 @@ Personal and work tasks roll onto later dates until checked off. A rolled task k
 original date and can be opened to read or edit its full title, notes, type, and optional
 due date. Due dates provide context and ordering; they never create an overdue penalty.
 
-Train keeps the active program and routines on its main surface. The exercise library is
-a single button that opens a dedicated searchable screen. Full sessions show a persistent
+Train opens with a small monthly training calendar. Days with 30 or more completed workout
+minutes are circled. Four such days make a strong week; five strong weeks bank a streak
+keeper. A keeper automatically protects one completed quiet week, and an unfinished week
+never spends one. The system is positive-only. Train keeps the active program and routines
+on its main surface. The exercise library is a single button that opens a dedicated
+searchable screen. Full sessions show a persistent
 elapsed timer. While any workout logger is open, the PWA requests a screen wake lock and
 the iOS wrapper disables the idle timer; both are released when the workout closes.
 
@@ -133,24 +140,34 @@ The movement and program slot stay canonical while the user can choose a sensibl
 Dumbbell, Cable, or Machine implementation. The method is stored on each set; last load,
 history, and PR comparisons remain scoped to that method. Existing pre-0.19.0 sets inherit
 the exercise's original method. Once any set for the movement is checked, its method locks
-until those sets are undone. A Cable choice can also use the configured peg-entry profile.
+until those sets are undone. Choosing Cable uses the configured machine's PEG selector by
+default, with one or two stacks according to the movement. An explicit per-exercise setting
+can opt back into generic pounds.
+
+A program can start on any day. Its starter week lasts at least seven full days and remains
+active through Sunday; afterward weeks turn over Monday morning. Older sets are never
+reclassified as missed work. Today presents the current day's movements first and groups
+larger earlier-week lists behind a compact disclosure, still available if the user chooses.
 
 Tempered is portrait-only: the manifest, runtime orientation request, landscape guard,
 and iPhone wrapper all enforce the same orientation contract.
 
 ## Apple Health sync
 
-Today now separates normal use from setup. `DAILY RECAP` keeps `RUN HEALTH SYNC` one level
-from Today and invokes the saved Tempered Health Shortcut. Its preferred handoff opens
-Tempered with a `temperedHealth` URL
-parameter, imports automatically, removes the health payload from the address bar, and
-requires no paste or second Import tap.
+Today now separates normal use from setup. For the installed Home Screen PWA, the reliable
+flow is Run Health Sync, return to the installed icon, then tap Import Copy. The Shortcut
+copies a snapshot, and that one app tap reads and saves it without a textarea or confirmation.
+An HTTPS Shortcut handoff opens Safari, whose storage is separate from the installed PWA;
+it cannot silently transfer HealthKit data into the Home Screen copy. The native iOS wrapper
+reads HealthKit directly on launch and foreground without the Shortcut.
 
 Health Setup is a dedicated, visible screen reached from Today, Settings, or the Progress
 Body Metrics card. It includes exact build/repair instructions, the conversion-error fix,
 the six latest body-data fields, a paste fallback, and manual entry for the five Body
 Metrics signals. The Shortcut must pass numeric `Value` or `Duration` results into
-Calculate Statistics, never Health Sample objects or Text. Body Metrics populates from
+Calculate Statistics, never Health Sample objects or Text. It should use one sleep source,
+only asleep stages, and a 6 PM-to-noon overnight window. Implausible sleep over 16 hours is
+rejected with an explanation rather than shown as a 21-hour night. Body Metrics populates from
 Resting HR, HRV, Respiratory Rate, Oxygen Saturation, and Body Temperature tags; a dash
 means the sync omitted that tag or Apple Health has no sample.
 

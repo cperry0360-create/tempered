@@ -25,6 +25,13 @@ const DEFAULT_QUICK_ADD = Object.freeze({
   instrument: 10,
 })
 
+export const MOBILITY_ROUTINES = Object.freeze([
+  Object.freeze({ id: 'desk_reset', name: 'Desk reset', minutes: 5, moves: ['Wall slides', 'Thoracic rotations', 'Neck glides'] }),
+  Object.freeze({ id: 'hips_ankles', name: 'Hips + ankles', minutes: 8, moves: ['90/90 switches', 'Hip-flexor reach', 'Knee-to-wall rocks'] }),
+  Object.freeze({ id: 'full_body', name: 'Full-body flow', minutes: 10, moves: ['Cat-cow', 'World’s greatest stretch', 'Deep-squat pry'] }),
+  Object.freeze({ id: 'recovery', name: 'Recovery downshift', minutes: 12, moves: ['Couch stretch', 'Hamstring floss', 'Child’s pose breathing'] }),
+])
+
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
   return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal' }[activity.unit] ?? ''
@@ -143,6 +150,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   let workedOpen = false
   let otherOpen = false
   let dailyRecapOpen = false
+  let selectedMobilityRoutineId = null
   let trainingStats = { minutes: 0, workingSets: 0, exercises: 0, sessions: 0 }
 
   const canLogSelected = () => selectedDate <= realToday
@@ -198,12 +206,16 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
     const sleep = activity.id === 'sleep'
+    const mobility = activity.id === 'mobility'
+    const mobilityRoutine = mobility
+      ? MOBILITY_ROUTINES.find((routine) => routine.id === selectedMobilityRoutineId) ?? null
+      : null
     const input = el('input.today-editor__input', {
       type: sleep ? 'number' : 'text', inputmode: 'decimal',
       ...(sleep ? {
         min: '0', max: '24', step: '0.1',
         value: typeof activity.value === 'number' ? String(activity.value) : '',
-      } : {}),
+      } : (mobilityRoutine ? { value: String(mobilityRoutine.minutes) } : {})),
       placeholder: sleep ? 'Hours, e.g. 7.5' : (adding ? `Add ${unit || 'amount'}` : (unit || 'Value')),
       'aria-label': `${adding ? 'Add to' : 'Log'} ${activity.name}${activity.unit ? `, ${activity.unit}` : ''}`,
       dataset: { entry: activity.id },
@@ -229,12 +241,26 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
           dataset: { sleepquick: String(hours) },
           onclick: () => { input.value = String(hours); input.focus() },
         }, [`${hours} h`]))),
+      mobility && el('div.mobility-routines', { role: 'group', 'aria-label': 'Mobility routines' },
+        MOBILITY_ROUTINES.map((routine) => el('button.mobility-routine', {
+          type: 'button',
+          dataset: { mobilityRoutine: routine.id, selected: String(mobilityRoutine?.id === routine.id) },
+          'aria-pressed': String(mobilityRoutine?.id === routine.id),
+          onclick: () => { selectedMobilityRoutineId = routine.id; render() },
+        }, [
+          el('strong', { text: routine.name }),
+          el('span', { text: `${routine.minutes} min` }),
+        ]))),
+      mobilityRoutine && el('div.mobility-routine__detail', { role: 'status' }, [
+        el('span', { text: 'FLOW' }),
+        el('p', { text: mobilityRoutine.moves.join(' · ') }),
+      ]),
       el('div.today-editor__manual', {}, [
         input,
         el('button.today-editor__save', {
           type: 'button', disabled: !canLogSelected(), dataset: { action: 'log' },
           onclick: () => record(activity, input.value),
-        }, [adding ? 'Add' : 'Save']),
+        }, [mobilityRoutine ? 'Log routine' : (adding ? 'Add' : 'Save')]),
       ]),
       presetInput && el('div.today-editor__preset', {}, [
         el('span.today-editor__preset-label', { text: 'Quick add' }),
@@ -694,6 +720,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
         : null,
     }
     openActivityId = null
+    if (activity.id === 'mobility') selectedMobilityRoutineId = null
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       try { navigator.vibrate(10) } catch { /* optional */ }
     }
@@ -892,6 +919,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     selectedDate = dateKey
     justEarned = null
     openActivityId = null
+    selectedMobilityRoutineId = null
     plannerComposerOpen = false
     plannerDetailId = null
     dailyRecapOpen = false
@@ -920,6 +948,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     selectedDate = clock.today()
     justEarned = null
     openActivityId = null
+    selectedMobilityRoutineId = null
     plannerComposerOpen = false
     plannerDetailId = null
     dailyRecapOpen = false

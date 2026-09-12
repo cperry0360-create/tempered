@@ -65,9 +65,17 @@
       await waitFor('[data-daily-recap="open"]')
       q('[data-daily-recap="open"]')?.click()
       const run = await waitFor('.screen--today [data-health-bridge="run"]')
+      const importCopy = q('.screen--today [data-health-bridge="import"]')
       const setup = q('.screen--today [data-health-bridge="setup"]')
       check('Daily Recap has a direct one-tap Shortcut launcher', /RUN HEALTH SYNC/i.test(run?.textContent ?? '') && /^shortcuts:/.test(run?.getAttribute('href') ?? ''), run?.getAttribute('href') ?? 'missing')
+      check('Daily Recap can import the Shortcut copy without a text box', Boolean(importCopy), importCopy?.textContent ?? 'missing')
       check('Daily Recap keeps setup separate from normal sync', Boolean(setup), setup?.textContent ?? 'missing')
+      importCopy?.click()
+      await settle(220)
+      const copied = await context.daily.dayLog('2026-09-08')
+      check('Import Copy reads and saves the clipboard in that same tap',
+        copied.steps === 10527 && copied.sleepHours === 7.75,
+        `${copied.steps} steps · ${copied.sleepHours} h`)
       const stableSnapshot = q('[data-lifestyle="snapshot"]')
       await settle(320)
       check('Health and Nutrition helpers do not rebuild the Today card while idle', q('[data-lifestyle="snapshot"]') === stableSnapshot)
@@ -77,7 +85,8 @@
       const setupScreen = await waitFor('[data-health-setup-overlay]')
       check('Setup opens on the first tap as a dedicated screen', Boolean(setupScreen))
       check('Setup diagnoses the observed Calculate Statistics conversion failure', /Conversion Error/i.test(setupScreen?.textContent ?? '') && /Get Details of Health Samples/i.test(setupScreen?.textContent ?? ''))
-      check('Setup makes the automatic URL handoff the normal path', /no Paste button and no second Import tap/i.test(setupScreen?.textContent ?? ''))
+      check('Setup accurately warns that Open URLs leaves the installed app', /Do not Open URLs/i.test(setupScreen?.textContent ?? '') && /Safari/i.test(setupScreen?.textContent ?? ''))
+      check('Setup has a one-tap clipboard import action', Boolean(q('[data-health-clipboard-import]')))
       check('Setup includes all five Progress body metrics', ['Resting heart rate', 'HRV', 'Respiration', 'SpO₂', 'Body temperature'].every((label) => setupScreen?.textContent?.includes(label)))
       check('Setup offers exact instructions and the Shortcut editor', Boolean(q('[data-health-bridge="recipe"]')) && Boolean(q('[data-health-bridge="create"]')))
 

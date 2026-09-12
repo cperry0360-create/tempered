@@ -36,6 +36,23 @@ export function weekFromStart(daysElapsed, totalWeeks) {
 }
 
 /**
+ * Program setup can happen on any weekday. Give its first week at least seven
+ * full calendar days, then turn over on Monday after that first Sunday. This
+ * avoids advancing a Saturday setup on the next Saturday, before the weekend
+ * has finished. Thereafter every program week is Monday through Sunday.
+ *
+ * `daysBetween` is supplied by the clock adapter; domain code reads no clock.
+ */
+export function programWeekIndex(startedOn, date, daysBetween) {
+  const elapsed = daysBetween(startedOn, date)
+  if (elapsed < 7) return 0
+  const mondayAnchor = '1970-01-05'
+  const weekday = ((daysBetween(mondayAnchor, startedOn) % 7) + 7) % 7
+  const firstMonday = weekday === 0 ? 7 : 14 - weekday
+  return elapsed < firstMonday ? 0 : 1 + Math.floor((elapsed - firstMonday) / 7)
+}
+
+/**
  * The final week of a program is a deload: hold weight, do not add.
  * @param {number} week
  * @param {{weeks: number}} program

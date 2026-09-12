@@ -2128,3 +2128,46 @@ Immediate propagation preserves the same one-entry workflow as ordinary load fie
 requires a new PWA cache identity after the short-lived 0.20.0 deployment.
 **Confidence:** reproduced against 0.20.0 and verified through the hosted interaction.
 **Needs Cory:** no
+
+## 2026-09-12 — Program setup does not cut the first week off on Saturday
+**Phase:** 0.21.0 starter-week boundary correction
+**Decision:** A program started on any weekday keeps its first week for at least seven
+calendar days and through the following Sunday. The first rollover is Monday after that;
+subsequent program weeks are Monday through Sunday. Week-scoped completion and the visible
+week index use the same boundary. Today keeps current-day movement rows prominent and
+groups a long list of earlier-week opportunities in a collapsed disclosure.
+**Reasoning:** A Saturday setup previously advanced after exactly seven days, so the app
+showed Week 2 on Saturday, discarded the apparent current-week completion, and surfaced
+24 earlier-day rows as a giant rolled list. Preserving the starter weekend avoids a
+premature switch; grouping earlier opportunities retains access without making the screen
+look like a debt list.
+**Confidence:** reproduced from Cory's September 12 screenshot; service and domain tests
+cover Saturday, Sunday, and Monday with logged sets preserved until the real boundary.
+**Needs Cory:** verify the installed-app week label and Today density after deployment.
+
+## 2026-09-12 — Cable defaults to PEG; Health handoff is explicit; repeat meals are fast
+**Phase:** 0.21.0 feedback batch
+**Decision:** Selecting Cable enables the physical FTX PEG input by default, with
+movement-specific stack count and an explicit generic-LBS opt-out. Train adds a compact
+monthly 30-minute-day calendar and a positive four-days-per-week rhythm; five strong weeks
+bank a keeper protecting one quiet completed week. Mobility offers four short selectable
+flows. Nutrition keeps a brief AI-derived or manually entered meal description and exposes
+frequent/recent entries for one-tap repeat logging. The Home Screen PWA Shortcut copies a
+snapshot; the user returns to the installed icon and taps Import Copy. Native iOS reads
+HealthKit directly. Sleep outside 0–16 hours is not imported.
+**Reasoning:** The old Cable method's LBS field erased the peg convenience. An HTTPS
+Shortcut return opens Safari with storage separate from the installed PWA, so the purported
+automatic handoff could report success in the wrong app. Explicit clipboard import is
+honest and usable; native HealthKit remains the true passive route. Meal labels keep a
+history useful for repeat logging without adding friction to the AI photo flow.
+**Confidence:** unit tests cover cable defaults, streak accounting, nutrition, and sleep
+rejection; browser harnesses cover controls and copy flow. Live iPhone review remains useful.
+**Needs Cory:** confirm the two-step Home Screen Health flow and iOS visual fit.
+
+## 2026-09-12 — Release 0.21.0 (23)
+**Phase:** 0.21.0 feedback and starter-week correction
+**Decision:** Version 0.21.0 (23) advances the installed PWA cache and native wrapper
+identity for these changes.
+**Reasoning:** Runtime logic, styles, test contracts, and offline module inventory changed.
+**Confidence:** implementation, pending CI and deployment verification.
+**Needs Cory:** no

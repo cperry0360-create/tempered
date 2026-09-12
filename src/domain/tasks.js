@@ -18,6 +18,8 @@
  * different week and you get a different answer, with nothing to reset.
  */
 
+import { programWeekIndex } from './programs.js'
+
 /**
  * Coarse muscle groups the weekly targets are expressed in, mapped to the
  * activation keys the exercise library uses.
@@ -153,6 +155,6 @@ export function weeklyHardSetsCompleted(weekLogs, exercises, targets = {}) {
  * @param {(from: string, to: string) => number} daysBetween
  */
 export function isInSameProgramWeek(startedOn, date, reference, daysBetween) {
-  const weekOf = (day) => Math.floor(daysBetween(startedOn, day) / 7)
-  return weekOf(date) === weekOf(reference)
+  return date >= startedOn
+    && programWeekIndex(startedOn, date, daysBetween) === programWeekIndex(startedOn, reference, daysBetween)
 }

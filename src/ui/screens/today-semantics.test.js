@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dailyGoalComplete, staysEditableAfterComplete } from './today.js'
+import { MOBILITY_ROUTINES, dailyGoalComplete, staysEditableAfterComplete } from './today.js'
 
 test('calories complete on logging, not on reaching the calorie target', () => {
   assert.equal(dailyGoalComplete({ id: 'calories_logged', logged: false, value: 0, dailyCap: 2200 }), false)
@@ -17,4 +17,10 @@ test('additive numeric trackers stay editable after completion', () => {
   assert.equal(staysEditableAfterComplete({ spec: { entry: 'number', mode: 'add' } }), true)
   assert.equal(staysEditableAfterComplete({ spec: { entry: 'number', mode: 'replace' } }), false)
   assert.equal(staysEditableAfterComplete({ spec: { entry: 'mark' } }), false)
+})
+
+test('mobility offers four short, distinct routines with a usable flow', () => {
+  assert.equal(MOBILITY_ROUTINES.length, 4)
+  assert.deepEqual(MOBILITY_ROUTINES.map((routine) => routine.minutes), [5, 8, 10, 12])
+  assert.ok(MOBILITY_ROUTINES.every((routine) => routine.moves.length === 3))
 })

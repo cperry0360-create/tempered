@@ -62,6 +62,11 @@
 
         await openWorkout()
         let rows = qa('[data-daily-workout-task]')
+        const earlierGroup = q('[data-workout-earlier]')
+        check('a large earlier-week queue stays available without filling the screen',
+          earlierGroup !== null && earlierGroup.open === false
+          && earlierGroup.querySelectorAll('[data-daily-workout-task]').length >= 6,
+          `${earlierGroup?.querySelectorAll('[data-daily-workout-task]').length ?? 0} earlier movements; open ${earlierGroup?.open}`)
         check('Thursday shows both current work and earlier unfinished rollover work',
           rows.some((row) => row.dataset.rollover === 'false') && rows.some((row) => row.dataset.rollover === 'true'),
           `${rows.filter((row) => row.dataset.rollover === 'false').length} today + ${rows.filter((row) => row.dataset.rollover === 'true').length} rollover`)

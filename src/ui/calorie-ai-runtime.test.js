@@ -9,6 +9,7 @@ import {
 
 test('nutrition photo prompt asks for a copy-button code block with calories and macros', () => {
   assert.equal(CALORIE_PHOTO_PROMPT, NUTRITION_PHOTO_PROMPT)
+  assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_DESCRIPTION=<brief plain-language meal description>/)
   assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_CALORIES=<whole-number calories>/)
   assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_PROTEIN=<grams of protein>/)
   assert.match(NUTRITION_PHOTO_PROMPT, /TEMPERED_CARBS=<grams of carbohydrates>/)
@@ -19,12 +20,12 @@ test('nutrition photo prompt asks for a copy-button code block with calories and
 
 test('parses calories and macros from a fenced or plain AI result', () => {
   assert.deepEqual(
-    parseTemperedNutrition('```text\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'),
-    { calories: 642, protein: 42, carbs: 61, fat: 24, fiber: 9 },
+    parseTemperedNutrition('```text\nTEMPERED_DESCRIPTION=Chicken rice bowl with avocado\nTEMPERED_CALORIES=642\nTEMPERED_PROTEIN=42\nTEMPERED_CARBS=61\nTEMPERED_FAT=24\nTEMPERED_FIBER=9\n```'),
+    { description: 'Chicken rice bowl with avocado', calories: 642, protein: 42, carbs: 61, fat: 24, fiber: 9 },
   )
   assert.deepEqual(
     parseTemperedNutrition('TEMPERED_PROTEIN: 31\nTEMPERED_CALORIES: 510'),
-    { calories: 510, protein: 31, carbs: null, fat: null, fiber: null },
+    { description: null, calories: 510, protein: 31, carbs: null, fat: null, fiber: null },
   )
 })
 

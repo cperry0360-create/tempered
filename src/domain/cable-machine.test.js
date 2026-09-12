@@ -32,16 +32,20 @@ test('the optional 5 lb add-on raises the nominal per-pulley maximum to 85 lb', 
   assert.equal(load.perHandle, 85)
 })
 
-test('Cable Fly starts in peg mode on both stacks while other cable movements remain opt-in', () => {
+test('every Cable method starts in peg mode with movement-appropriate stack count', () => {
   assert.equal(cablePegEnabledForExercise('cable_fly'), true)
   assert.equal(cableStacksForExercise('cable_fly'), 2)
-  assert.equal(cablePegEnabledForExercise('tricep_push'), false)
+  assert.equal(cablePegEnabledForExercise('incline_bench_db'), true)
+  assert.equal(cableStacksForExercise('incline_bench_db'), 2)
+  assert.equal(cablePegEnabledForExercise('lateral_raise_db'), true)
+  assert.equal(cableStacksForExercise('lateral_raise_db'), 1)
+  assert.equal(cablePegEnabledForExercise('tricep_push'), true)
   assert.equal(cableStacksForExercise('tricep_push'), 1)
 })
 
-test('each cable exercise can independently enable peg mode and choose one or two stacks', () => {
-  const profile = withCableExerciseSetting(INSPIRE_FTX_PROFILE, 'tricep_push', { enabled: true, stacks: 2 })
-  assert.equal(cablePegEnabledForExercise('tricep_push', profile), true)
+test('each cable exercise can independently opt out of peg mode and choose one or two stacks', () => {
+  const profile = withCableExerciseSetting(INSPIRE_FTX_PROFILE, 'tricep_push', { enabled: false, stacks: 2 })
+  assert.equal(cablePegEnabledForExercise('tricep_push', profile), false)
   assert.equal(cableStacksForExercise('tricep_push', profile), 2)
   assert.equal(cableStacksForExercise('cable_fly', profile), 2)
 })

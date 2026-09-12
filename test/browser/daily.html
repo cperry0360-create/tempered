@@ -152,6 +152,16 @@
           tempered.daily.activities.every((activity) => reachable.has(activity.id)),
           `${reachable.size}/${tempered.daily.activities.length} trackers reachable`)
 
+        const mobilityEditor = await openEditor('mobility')
+        check('Mobility opens four useful routines instead of only a blank minutes field',
+          qa('[data-mobility-routine]', mobilityEditor).length === 4,
+          `${qa('[data-mobility-routine]', mobilityEditor).length} routines`)
+        q('[data-mobility-routine="full_body"]', mobilityEditor)?.click(); await settle()
+        check('choosing a mobility routine shows its flow and fills its duration',
+          q('[data-entry="mobility"]')?.value === '10'
+          && /World’s greatest stretch/.test(q('.mobility-routine__detail')?.textContent ?? ''),
+          q('.mobility-routine__detail')?.textContent ?? 'missing')
+
         const rest = await rowFor('rest_day')
         const restAction = markAction(rest)
         check('rest day is reachable in optional logging', restAction !== null)

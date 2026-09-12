@@ -50,6 +50,11 @@ function hasPositiveNutrient(values) {
   return NUTRIENTS.some(({ entryField }) => Number(values?.[entryField]) > 0)
 }
 
+function cleanDescription(value) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim()
+  return text ? text.slice(0, 120) : null
+}
+
 function legacyCarryover(day) {
   const carryover = {
     logged: day?.nutritionLogged === true,
@@ -80,6 +85,7 @@ function cleanEntry(entry) {
     id: String(entry.id),
     loggedAt: String(entry.loggedAt),
     source: entry.source === 'ai' ? 'ai' : 'manual',
+    ...(cleanDescription(entry.description) ? { description: cleanDescription(entry.description) } : {}),
     ...nutrients,
   }
 }
@@ -144,6 +150,7 @@ export function addNutritionEntry(day, values, meta) {
     id: meta.id,
     loggedAt: meta.loggedAt,
     source: meta.source,
+    description: values?.description ?? meta.description,
     ...nutrients,
   })
   return applyLedger(day, carryover, [...entries, entry])
@@ -164,4 +171,29 @@ export function restoreNutritionEntry(day, entry, index = Infinity) {
   const at = Math.max(0, Math.min(withoutDuplicate.length, Number(index)))
   withoutDuplicate.splice(Number.isFinite(at) ? at : withoutDuplicate.length, 0, clean)
   return applyLedger(day, carryover, withoutDuplicate)
+}
+
+/** Frequent entries first, then the most recent, for one-tap repeat logging. */
+export function nutritionSuggestions(days, limit = 4) {
+  const groups = new Map()
+  for (const day of Array.isArray(days) ? days : []) {
+    for (const entry of nutritionLedger(day).entries) {
+      if (!entry.description) continue
+      const nutrients = Object.fromEntries(NUTRIENTS.flatMap(({ entryField }) =>
+        Number.isFinite(entry[entryField]) ? [[entryField, entry[entryField]]] : []))
+      const key = JSON.stringify([entry.description.toLowerCase(), nutrients])
+      const existing = groups.get(key)
+      if (!existing) groups.set(key, { ...nutrients, description: entry.description, count: 1, lastLoggedAt: entry.loggedAt })
+      else {
+        existing.count += 1
+        if (entry.loggedAt > existing.lastLoggedAt) {
+          existing.lastLoggedAt = entry.loggedAt
+          existing.description = entry.description
+        }
+      }
+    }
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count || b.lastLoggedAt.localeCompare(a.lastLoggedAt))
+    .slice(0, Math.max(0, Number(limit) || 0))
 }

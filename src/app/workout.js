@@ -9,7 +9,7 @@
 import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource, totalsByAttributeFromSources } from '../domain/xp-engine.js'
 import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
 import { proposeNext } from '../domain/progression.js'
-import { prescribeFromProgram, weekFromStart, isDeloadWeek, weeklyHardSets, programForWeek } from '../domain/programs.js'
+import { prescribeFromProgram, programWeekIndex, isDeloadWeek, weeklyHardSets, programForWeek } from '../domain/programs.js'
 import { dayTasks, weekTasks, weeklyHardSetsCompleted, isInSameProgramWeek } from '../domain/tasks.js'
 import { levelFromXp, levelProgress } from '../domain/levels.js'
 import { ATTRIBUTE_IDS, tierName } from '../domain/tiers.js'
@@ -20,6 +20,7 @@ import { timeUnderLoad } from '../domain/duration.js'
 import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
 import { companionWorkoutCare } from '../domain/companion-growth.js'
+import { trainingRhythm as deriveTrainingRhythm } from './training-rhythm.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
 function weekStart(date) {
@@ -181,7 +182,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     if (!state) return null
     const storedProgram = await storage.get('programs', state.programId)
     if (!storedProgram) return null
-    const week = weekFromStart(daysBetween(state.startedOn, clock.today()), storedProgram.weeks)
+    const week = Math.min(programWeekIndex(state.startedOn, clock.today(), daysBetween) + 1, storedProgram.weeks)
     const program = programForWeek(storedProgram, week)
     return { program, state, week, deload: isDeloadWeek(week, program) }
   }
@@ -340,6 +341,23 @@ export function createWorkoutService({ storage, clock, balance }) {
       workingSets: work.length,
       exercises: new Set(work.map((log) => log.exerciseId)).size,
       sessions: new Set(work.map((log) => log.sessionId)).size,
+    }
+  }
+
+  /** Month calendar and weekly rhythm, derived from completed workout time. */
+  async function trainingRhythm() {
+    const sessions = (await storage.getAll('sessions')).filter((session) => session.endedAt)
+    const logs = await storage.getAll('setLogs')
+    const minutesByDate = {}
+    for (const session of sessions) {
+      const sessionLogs = logs.filter((log) => log.sessionId === session.id)
+      const inferred = timeUnderLoad(sessionLogs.map((log) => log.completedAt), balance)
+      const minutes = Math.max(Number(session.durationMinutes) || 0, inferred)
+      minutesByDate[session.date] = (minutesByDate[session.date] ?? 0) + minutes
+    }
+    return {
+      minutesByDate,
+      ...deriveTrainingRhythm(minutesByDate, clock.today()),
     }
   }
 
@@ -626,7 +644,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   return {
     exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
-    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats,
+    todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
     startSession, logSet, setsFor, finishSession,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },

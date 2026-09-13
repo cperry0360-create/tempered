@@ -2393,3 +2393,19 @@ intrinsically wide iOS time control to paint over Calories.
 **Reasoning:** Installed PWAs must replace the Train screen and responsive nutrition stylesheet.
 **Confidence:** implementation and regression suite.
 **Needs Cory:** no
+## 2026-09-13 — Steps has a personal daily target
+**Phase:** 0.23.4 target settings
+**Decision:** Add Steps beside Calories in Daily targets, default new and existing profiles to
+10,000, and use the saved target everywhere activity metadata drives Today and Progress. Keep the
+15,000-step XP cap separate so exceeding a personal goal can still earn the existing configured XP.
+**Reasoning:** A fixed 15,000-step completion target made honest 8,000–12,000-step days look
+unfinished and could not reflect the person's actual goal.
+**Confidence:** specified configurable behavior; inferred 10,000 default from recent recorded days.
+**Needs Cory:** no — the target can now be changed in Settings.
+
+## 2026-09-13 — Release 0.23.4 (35) adds configurable steps
+**Phase:** 0.23.4 release
+**Decision:** Advance the installed cache identity for the settings and activity metadata change.
+**Reasoning:** Installed PWAs must replace the Daily service, Settings screen, and activity seed.
+**Confidence:** implementation and regression suite.
+**Needs Cory:** no

@@ -94,7 +94,7 @@
       "daily": true,
       "kind": "derived",
       "unit": "steps",
-      "dailyCap": 15000
+      "dailyCap": 10000
     },
     {
       "id": "micro_cardio",

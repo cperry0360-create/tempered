@@ -4,6 +4,7 @@ import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { VERSION, BUILD_DATE } from '../../version.js'
 import { RESET_PHRASE } from '../../app/maintenance.js'
+import { DEFAULT_STEP_TARGET } from '../../app/daily.js'
 import { shortDate } from '../format.js'
 import { downloadExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
 
@@ -69,7 +70,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
 
       el('section.card', { dataset: { section: 'targets' } }, [
         el('h2.block__title', { text: 'Daily targets' }),
-        el('p.block__hint', { text: 'Protein is calculated from body weight. Calories are your configurable daily target.' }),
+        el('p.block__hint', { text: 'Protein is calculated from body weight. Calories and steps are configurable.' }),
         el('div.setting', {}, [
           el('span.setting__label', { text: 'Calories' }),
           (() => {
@@ -81,6 +82,21 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               input,
               el('button.setup__cadence', {
                 type: 'button', onclick: async () => { await daily.setCalorieTarget(input.value); await load() },
+              }, ['SAVE']),
+            ])
+          })(),
+        ]),
+        el('div.setting', {}, [
+          el('span.setting__label', { text: 'Steps' }),
+          (() => {
+            const input = el('input.entry__value', {
+              type: 'text', inputmode: 'numeric', value: profile?.stepTarget ?? DEFAULT_STEP_TARGET,
+              'aria-label': 'Daily step target',
+            })
+            return el('span.setting__value', {}, [
+              input,
+              el('button.setup__cadence', {
+                type: 'button', onclick: async () => { await daily.setStepTarget(input.value); await load() },
               }, ['SAVE']),
             ])
           })(),

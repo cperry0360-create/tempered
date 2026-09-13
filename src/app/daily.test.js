@@ -49,6 +49,19 @@ test('a fresh day is entirely outstanding, and nothing about that is a failure',
   assert.equal(today.date, '2026-09-04')
 })
 
+test('steps use a realistic configurable target without changing the scoring cap', async () => {
+  const { daily, storage } = await freshDay()
+  let steps = (await daily.today()).outstanding.find((activity) => activity.id === 'steps')
+  assert.equal(steps.dailyCap, 10000)
+
+  await daily.setStepTarget(8500)
+  steps = (await daily.today()).outstanding.find((activity) => activity.id === 'steps')
+  assert.equal(steps.dailyCap, 8500)
+  assert.equal((await storage.get('profile', 'profile')).stepTarget, 8500)
+  assert.equal(balance.wind.stepsDailyCap, 15000,
+    'the personal goal does not reduce the XP ceiling for a higher-step day')
+})
+
 test('one tap logs a marked activity and pays it once', async () => {
   const { daily, storage } = await freshDay()
   const result = await daily.log('journal')

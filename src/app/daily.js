@@ -22,6 +22,7 @@ import {
 /** @type {import('../domain/types.js').AttributeId[]} */
 const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
 const CADENCES = new Set(['off', 'daily', 'weekly'])
+export const DEFAULT_STEP_TARGET = 10000
 
 const clampTarget = (value) => Math.max(1, Math.min(7, Math.round(Number(value) || 1)))
 
@@ -93,6 +94,20 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const parsed = Number(value)
     const target = Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null
     await storage.put('profile', { ...profile, calorieTarget: target })
+    return target
+  }
+
+  async function stepTarget() {
+    const profile = await storage.get('profile', 'profile')
+    const value = Number(profile?.stepTarget)
+    return Number.isFinite(value) && value > 0 ? Math.round(value) : DEFAULT_STEP_TARGET
+  }
+
+  async function setStepTarget(value) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const parsed = Number(value)
+    const target = Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : DEFAULT_STEP_TARGET
+    await storage.put('profile', { ...profile, stepTarget: target })
     return target
   }
 
@@ -295,7 +310,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   }
 
   /** Decorate one catalogue row against one day. */
-  function decorate(activity, day, schedule, dynamicProteinGoal = null, dynamicCalorieTarget = null) {
+  function decorate(activity, day, schedule, dynamicProteinGoal = null,
+    dynamicCalorieTarget = null, dynamicStepTarget = DEFAULT_STEP_TARGET) {
     const cadence = schedule[activity.id]?.cadence ?? 'off'
     const decorated = {
       ...activity,
@@ -314,6 +330,9 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     if (activity.id === 'calories_logged') {
       return { ...decorated, dailyCap: dynamicCalorieTarget ?? null }
     }
+    if (activity.id === 'steps') {
+      return { ...decorated, dailyCap: dynamicStepTarget }
+    }
     return decorated
   }
 
@@ -323,14 +342,15 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const schedule = await activitySchedule()
     const proteinGoal = await proteinGoalFor(date, day)
     const caloriesGoal = await calorieTarget()
+    const stepsGoal = await stepTarget()
     const { outstanding, logged } = splitActivities(activities, day)
     return {
       date,
       day,
       schedule,
       dailyIds: activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily'),
-      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),
-      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal)),
+      outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
+      logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
     }
   }
 
@@ -350,6 +370,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const anchorDay = days.find((day) => day.date === anchorDate) ?? { date: anchorDate }
     const proteinGoal = await proteinGoalFor(anchorDate, anchorDay)
     const caloriesGoal = await calorieTarget()
+    const stepsGoal = await stepTarget()
     const completedOnDay = (activity, row) => activity.id === 'protein_target'
       ? row.proteinTargetMet === true
       : isLogged(activity, row)
@@ -360,7 +381,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
         const target = clampTarget(schedule[activity.id]?.target)
         const done = days.filter((day) => completedOnDay(activity, day)).length
         return {
-          ...decorate(activity, anchorDay, schedule, proteinGoal, caloriesGoal),
+          ...decorate(activity, anchorDay, schedule, proteinGoal, caloriesGoal, stepsGoal),
           weeklyDone: done,
           weeklyTarget: target,
           complete: done >= target,
@@ -378,6 +399,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   return {
     activities, today, forDate, week, log, logAt, settle, dayLog, sample,
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
+    stepTarget, setStepTarget,
     quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition,
   }
 }

@@ -42,7 +42,9 @@
       const recap = q('.progress-recap', screen)
 
       check('Progress opens on a dedicated recap surface', Boolean(recap))
-      check('Recap leads with the selected range', /30-DAY RECAP/.test(recap?.textContent ?? ''), recap?.textContent)
+      check('Recap leads with the selected range and honest coverage',
+        /30-DAY VIEW/.test(recap?.textContent ?? '') && /1 DAY OF DATA/.test(recap?.textContent ?? ''),
+        recap?.textContent)
       check('Recap makes training days the primary headline', /1 training day/.test(q('.progress-recap__headline', recap)?.textContent ?? ''))
       check('Recap surfaces working sets and training volume together',
         /1 working sets/.test(recap?.textContent ?? '') && /200 lb nominal training volume/.test(recap?.textContent ?? ''),

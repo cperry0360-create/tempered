@@ -122,9 +122,10 @@
       check('Health Setup closes back to the app', !q('[data-health-setup-overlay]'))
 
       await context.app.show('history')
-      await waitFor('[data-widget="body"]')
-      check('Progress Body metrics renders the imported Health values', /48/.test(q('[data-widget="body"]')?.textContent ?? '') && /42/.test(q('[data-widget="body"]')?.textContent ?? '') && /98/.test(q('[data-widget="body"]')?.textContent ?? ''), q('[data-widget="body"]')?.textContent ?? 'missing')
-      check('Body metrics card is never a dead end', Boolean(q('[data-widget="body"] [data-health-setup="progress"]')))
+      await waitFor('[data-progress-dashboard]')
+      check('Dormant Health values stay stored while Progress hides the experimental card',
+        !q('[data-widget="body"]') && manual.healthMetrics?.restingHr === 48 && manual.healthMetrics?.hrvMs === 42)
+      check('Progress does not expose a dead Health setup route', !q('[data-health-setup="progress"]'))
 
       await context.app.show('settings')
       const settings = await waitFor('[data-health-bridge="settings"]')

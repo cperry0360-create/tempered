@@ -16,8 +16,9 @@
  * 3 — set logs may carry programDayId and slotIndex.
  * 4 — sessions may carry xpBySource.
  * 5 — day logs may carry an itemized nutrition ledger and macro totals.
+ * 6 — dated personal and work planner items are included in backups.
  */
-export const CURRENT_SCHEMA_VERSION = 5
+export const CURRENT_SCHEMA_VERSION = 6
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -66,6 +67,14 @@ export const MIGRATIONS = Object.freeze({
    * deliberately untouched; the first new meal captures them as carryover.
    */
   4: (data) => data,
+
+  /**
+   * 5 -> 6: planner items join the complete local snapshot.
+   *
+   * Older exports accidentally omitted this store. There is no safe way to
+   * reconstruct those tasks, so the migration makes that absence explicit.
+   */
+  5: (data) => ({ ...data, plannerItems: data.plannerItems ?? [] }),
 })
 
 /**

@@ -25,7 +25,9 @@
  * fakes, and so the one place that touches those APIs is this file.
  */
 
-import { exportSnapshot } from '../adapters/storage/snapshot.js'
+import { exportSnapshot, applyImportPlan } from '../adapters/storage/snapshot.js'
+import { prepareImport } from '../domain/transfer.js'
+import { ACTIVE_SESSION_DRAFT_KEY } from '../ui/session-draft.js'
 import { DATABASE_NAME } from '../adapters/storage/stores.js'
 import { VERSION } from '../version.js'
 
@@ -71,6 +73,18 @@ function browserPlatform() {
         request.onblocked = done
       })
     },
+    async storagePersisted() {
+      return navigator?.storage?.persisted ? navigator.storage.persisted() : null
+    },
+    async persistStorage() {
+      return navigator?.storage?.persist ? navigator.storage.persist() : null
+    },
+    async storageEstimate() {
+      return navigator?.storage?.estimate ? navigator.storage.estimate() : null
+    },
+    clearActiveWorkout() {
+      try { localStorage?.removeItem(ACTIVE_SESSION_DRAFT_KEY) } catch {}
+    },
     session: (() => {
       try {
         if (typeof sessionStorage === 'undefined') return null
@@ -92,6 +106,7 @@ function browserPlatform() {
  */
 export function createMaintenanceService({ storage, clock, platform, version = VERSION }) {
   const host = platform ?? browserPlatform()
+  let protection = null
 
   /** Reads the stash without ever letting a refusing browser throw. */
   const stashed = () => {
@@ -139,6 +154,49 @@ export function createMaintenanceService({ storage, clock, platform, version = V
       json: JSON.stringify(document, null, 2),
       document,
     }
+  }
+
+  /** Ask the browser to protect local-first data from routine eviction. */
+  async function protectStorage() {
+    if (typeof host.storagePersisted !== 'function') {
+      protection = { supported: false, persisted: false, usage: null, quota: null }
+      return protection
+    }
+    try {
+      let persisted = await host.storagePersisted()
+      if (!persisted && typeof host.persistStorage === 'function') {
+        persisted = await host.persistStorage()
+      }
+      const estimate = typeof host.storageEstimate === 'function'
+        ? await host.storageEstimate()
+        : null
+      protection = {
+        supported: true,
+        persisted: Boolean(persisted),
+        usage: Number.isFinite(estimate?.usage) ? estimate.usage : null,
+        quota: Number.isFinite(estimate?.quota) ? estimate.quota : null,
+      }
+    } catch {
+      protection = { supported: true, persisted: false, usage: null, quota: null }
+    }
+    return protection
+  }
+
+  function storageProtection() {
+    return protection
+  }
+
+  /** Validate and describe a backup without touching live data. */
+  function previewRestore(raw) {
+    return prepareImport(raw)
+  }
+
+  /** Replace the database atomically after an explicit confirmation. */
+  async function restoreBackup(plan, options = {}) {
+    const written = await applyImportPlan(storage, plan, { confirm: options.confirm })
+    host.clearActiveWorkout?.()
+    host.reload?.()
+    return { ok: true, written }
   }
 
   /**
@@ -190,5 +248,8 @@ export function createMaintenanceService({ storage, clock, platform, version = V
     return { before, after: version, changed: before !== version }
   }
 
-  return { backup, resetEverything, checkForUpdates, updateResult, RESET_PHRASE }
+  return {
+    backup, previewRestore, restoreBackup, protectStorage, storageProtection,
+    resetEverything, checkForUpdates, updateResult, RESET_PHRASE,
+  }
 }

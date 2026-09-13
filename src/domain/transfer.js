@@ -19,7 +19,7 @@ export const SINGLETON_KEYS = Object.freeze(['profile', 'directive'])
 
 /** Stores exported as a list. */
 export const COLLECTION_KEYS = Object.freeze([
-  'sessions', 'setLogs', 'dayLogs', 'attributeState',
+  'sessions', 'setLogs', 'dayLogs', 'plannerItems', 'attributeState',
   'records', 'titles', 'battles', 'exercises', 'routines',
   'programs', 'programState',
 ])
@@ -51,6 +51,32 @@ export function summarise(data) {
   for (const key of SINGLETON_KEYS) counts[key] = data?.[key] ? 1 : 0
   for (const key of COLLECTION_KEYS) counts[key] = Array.isArray(data?.[key]) ? data[key].length : 0
   return counts
+}
+
+/**
+ * The calendar span represented by dated records in a backup.
+ * @param {Record<string, any>} data
+ * @returns {{from: string, to: string}|null}
+ */
+export function dateRange(data) {
+  const dates = []
+  const visit = (value) => {
+    if (typeof value === 'string') {
+      const match = value.match(/^\d{4}-\d{2}-\d{2}/)
+      if (match) dates.push(match[0])
+      return
+    }
+    if (Array.isArray(value)) { for (const item of value) visit(item); return }
+    if (value && typeof value === 'object') {
+      for (const [key, item] of Object.entries(value)) {
+        if (/date|At$/.test(key) || (item && typeof item === 'object')) visit(item)
+      }
+    }
+  }
+  visit(data)
+  if (dates.length === 0) return null
+  dates.sort()
+  return { from: dates[0], to: dates.at(-1) }
 }
 
 /**
@@ -149,6 +175,7 @@ export function prepareImport(raw, options = {}) {
     migratedFrom: version < target ? version : null,
     data,
     summary: summarise(data),
+    dateRange: dateRange(data),
     requiresConfirmation: true,
   }
 }

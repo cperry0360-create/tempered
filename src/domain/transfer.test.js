@@ -8,6 +8,7 @@ const sample = {
   sessions: [{ id: 's1', routineId: 'lower' }],
   setLogs: [{ id: 'sl1', sessionId: 's1', exerciseId: 'squat_bb', weight: 145, reps: 8 }],
   dayLogs: [{ date: '2026-09-04', steps: 8200 }],
+  plannerItems: [{ id: 'task-1', date: '2026-09-05', title: 'Pack gym bag', kind: 'personal' }],
   attributeState: [{ attribute: 'might', xp: 1200, level: 1, lifetimeSources: { 'might.volume': 1200 } }],
   records: [{ exerciseId: 'squat_bb', bestWeight: { weight: 145, reps: 8, date: '2026-09-04' } }],
   titles: [{ id: 'first_load' }],
@@ -40,6 +41,15 @@ test('a valid export imports back to exactly what went in', () => {
   assert.deepEqual(plan.data, doc.data)
   assert.equal(plan.summary.sessions, 1)
   assert.equal(plan.summary.profile, 1)
+  assert.equal(plan.summary.plannerItems, 1)
+  assert.deepEqual(plan.dateRange, { from: '2026-09-04', to: '2026-09-05' })
+})
+
+test('a backup with no dated history reports no invented date range', () => {
+  const doc = buildExportDocument({}, { exportedAt: 'now' })
+  const plan = prepareImport(doc)
+  assert.equal(plan.ok, true)
+  assert.equal(plan.dateRange, null)
 })
 
 // --- refusals ---------------------------------------------------------------

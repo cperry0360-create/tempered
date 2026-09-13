@@ -16,7 +16,7 @@ import { DATABASE_NAME } from '../adapters/storage/stores.js'
 
 /** A browser that records what was asked of it. */
 function fakePlatform(over = {}) {
-  const log = { unregistered: 0, deleted: [], databases: [], reloads: 0 }
+  const log = { unregistered: 0, deleted: [], databases: [], reloads: 0, activeClears: 0 }
   const session = new Map()
   return {
     log,
@@ -31,6 +31,7 @@ function fakePlatform(over = {}) {
     async cacheKeys() { return ['tempered-0.7.0', 'tempered-0.8.0'] },
     async deleteCache(key) { log.deleted.push(key); return true },
     async deleteDatabase(name) { log.databases.push(name) },
+    clearActiveWorkout() { log.activeClears += 1 },
     reload() { log.reloads += 1 },
     ...over,
   }
@@ -121,6 +122,53 @@ test('a backup can be taken before the reset, in the documented format', async (
   assert.equal(document.app, 'tempered')
   const parsed = JSON.parse(json)
   assert.equal(parsed.data.sessions.length, 1, 'the backup did not carry the data')
+})
+
+test('persistent storage is requested and its current result is retained for Settings', async () => {
+  let requests = 0
+  const { maintenance } = await service({
+    async storagePersisted() { return false },
+    async persistStorage() { requests += 1; return true },
+    async storageEstimate() { return { usage: 4096, quota: 1024 * 1024 } },
+  })
+  assert.deepEqual(await maintenance.protectStorage(), {
+    supported: true, persisted: true, usage: 4096, quota: 1024 * 1024,
+  })
+  assert.equal(requests, 1)
+  assert.deepEqual(maintenance.storageProtection(), {
+    supported: true, persisted: true, usage: 4096, quota: 1024 * 1024,
+  })
+})
+
+test('an unsupported persistence API degrades to a backup recommendation', async () => {
+  const { maintenance } = await service()
+  assert.deepEqual(await maintenance.protectStorage(), {
+    supported: false, persisted: false, usage: null, quota: null,
+  })
+})
+
+test('restore previews first, then atomically replaces data and clears a stale workout draft', async () => {
+  const { maintenance, storage, platform } = await service()
+  const incoming = createMemoryStorage()
+  await incoming.open()
+  await incoming.put('profile', { id: 'profile', name: 'Restored' })
+  await incoming.put('plannerItems', { id: 'task-1', date: '2026-09-05', title: 'Kept task' })
+  const incomingMaintenance = createMaintenanceService({
+    storage: incoming, clock: fixedClock('2026-09-05T09:00:00.000Z'), platform: fakePlatform(),
+  })
+  const file = await incomingMaintenance.backup()
+  const plan = maintenance.previewRestore(file.json)
+
+  assert.equal(plan.ok, true)
+  assert.equal(plan.summary.plannerItems, 1)
+  await assert.rejects(() => maintenance.restoreBackup(plan), /without confirmation/)
+  assert.equal((await storage.get('profile', 'profile')).name, 'Cory')
+
+  await maintenance.restoreBackup(plan, { confirm: 'replace' })
+  assert.equal((await storage.get('profile', 'profile')).name, 'Restored')
+  assert.equal((await storage.getAll('plannerItems'))[0].title, 'Kept task')
+  assert.equal(platform.log.activeClears, 1)
+  assert.equal(platform.log.reloads, 1)
 })
 
 // --- the update check ------------------------------------------------------

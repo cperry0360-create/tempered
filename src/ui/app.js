@@ -50,7 +50,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
 
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
-  const settings = createSettingsScreen({ storage, daily, workout, maintenance, onSetup })
+  const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup })
   const companion = createCompanionScreen({ storage, clock, overlayHost: overlays })
 
   // Legacy RPG surfaces are kept out of navigation. Keeping the route alive is

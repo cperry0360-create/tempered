@@ -62,6 +62,25 @@ export function createMemoryStorage() {
       for (const value of values) await this.put(store, value)
     },
 
+    async replaceAll(replacement) {
+      // Build and validate the entire replacement before touching live data,
+      // mirroring IndexedDB's all-or-nothing multi-store transaction.
+      const prepared = new Map()
+      for (const [store, values] of Object.entries(replacement)) {
+        const { keyPath } = specFor(store)
+        const table = new Map()
+        for (const value of values ?? []) {
+          const key = value?.[keyPath]
+          if (key === undefined || key === null) {
+            throw new Error(`Cannot store a record in "${store}" with no ${keyPath}`)
+          }
+          table.set(key, copy(value))
+        }
+        prepared.set(store, table)
+      }
+      for (const [store, table] of prepared) data.set(store, table)
+    },
+
     async delete(store, key) {
       tableFor(store).delete(key)
     },

@@ -53,6 +53,7 @@ const PRECACHE = [
   './src/adapters/storage/indexeddb-storage.js',
   './src/adapters/storage/memory-storage.js',
   './src/adapters/storage/snapshot.js',
+  './src/adapters/storage/file-transfer.js',
   './src/adapters/storage/stores.js',
   './src/domain/activities.js',
   './src/domain/cable-machine.js',
@@ -192,7 +193,7 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys()
     const oldTemperedCaches = keys.filter((key) => key.startsWith('tempered-') && key !== CACHE)
 
-    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
+    await Promise.all(oldTemperedCaches.map((key) => caches.delete(key)))
     await self.clients.claim()
 
     if (oldTemperedCaches.length > 0) {
@@ -207,22 +208,33 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   if (new URL(request.url).origin !== self.location.origin) return
 
-  const network = fetch(request).then(async (response) => {
+  const fetchAndCache = async (signal) => {
+    const response = await fetch(request, signal ? { signal } : undefined)
     if (response.ok && response.type === 'basic') {
       const cache = await caches.open(CACHE)
       await cache.put(request, response.clone())
     }
     return response
-  })
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      network.catch(() => caches.match(SHELL).then((cached) => cached ?? Response.error())),
+      (async () => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 2500)
+        try {
+          return await fetchAndCache(controller.signal)
+        } catch {
+          return await caches.match(SHELL) ?? Response.error()
+        } finally {
+          clearTimeout(timeout)
+        }
+      })(),
     )
     return
   }
 
   event.respondWith(
-    network.catch(() => caches.match(request).then((cached) => cached ?? Response.error())),
+    caches.match(request).then((cached) => cached ?? fetchAndCache()),
   )
 })

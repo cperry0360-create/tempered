@@ -15,6 +15,7 @@
  * @property {(store: string) => Promise<any[]>} getAll
  * @property {(store: string, value: any) => Promise<void>} put
  * @property {(store: string, values: any[]) => Promise<void>} putAll
+ * @property {(data: Record<string, any[]>) => Promise<void>} replaceAll
  * @property {(store: string, key: any) => Promise<void>} delete
  * @property {(store: string) => Promise<void>} clear
  * @property {(store: string) => Promise<number>} count

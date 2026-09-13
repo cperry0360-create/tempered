@@ -5,24 +5,20 @@ import { icon } from '../icons.js'
 import { VERSION, BUILD_DATE } from '../../version.js'
 import { RESET_PHRASE } from '../../app/maintenance.js'
 import { shortDate } from '../format.js'
+import { downloadExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 
-export function createSettingsScreen({ storage, daily, workout, maintenance, onSetup }) {
+export function createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup }) {
   const root = el('div.screen.screen--settings')
   let typed = ''
   let update = null
   let saved = null
   let busy = false
-
-  function download(filename, json) {
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
-    const link = el('a', { href: url, download: filename })
-    document.body.append(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
-  }
+  let restorePlan = null
+  let restoreName = ''
+  let restoreNotice = ''
+  let restoreBusy = false
 
   const armed = () => typed.trim().toUpperCase() === RESET_PHRASE
 
@@ -43,6 +39,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, onS
     const weekStatus = workout ? await workout.weekStatus() : null
     const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}
     const exerciseGroups = new Map()
+    const protection = maintenance?.storageProtection?.() ?? null
     for (const day of weekStatus?.week?.days ?? []) {
       for (const task of day.tasks ?? []) {
         const id = task.slot.exerciseId
@@ -140,6 +137,91 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, onS
           ]))),
       ]),
 
+      maintenance && el('section.card', { dataset: { section: 'data' } }, [
+        el('h2.block__title', { text: 'Your data' }),
+        el('p.block__hint', {
+          text: 'Save a complete Tempered backup or restore one you saved earlier. Restoring replaces the data currently on this device only after you confirm.',
+        }),
+        el('p.setting', {}, [
+          el('span.setting__label', { text: 'Device storage' }),
+          el('span.setting__value', {
+            dataset: { storageProtected: String(protection?.persisted === true) },
+            text: protection?.persisted
+              ? 'Protected'
+              : protection?.supported === false ? 'Browser managed' : 'Backup recommended',
+          }),
+        ]),
+        !protection?.persisted && el('p.block__hint', {
+          text: 'This browser did not guarantee permanent storage. Keep a recent backup.',
+        }),
+        el('div.confirm-sheet__actions', {}, [
+          el('button.button', {
+            type: 'button', dataset: { action: 'backup' },
+            onclick: async () => {
+              const file = await maintenance.backup()
+              saved = downloadExport(file.document, clock)
+              await load()
+            },
+          }, [icon('down'), saved ? 'SAVE AGAIN' : 'SAVE BACKUP']),
+          (() => {
+            const input = el('input', {
+              type: 'file', accept: 'application/json,.json', hidden: true,
+              dataset: { action: 'restore-file' },
+              onchange: async (event) => {
+                const file = event.target.files?.[0]
+                if (!file) return
+                restoreBusy = true
+                restoreNotice = ''
+                restorePlan = null
+                restoreName = file.name
+                await load()
+                try {
+                  const plan = maintenance.previewRestore(await readFileAsText(file))
+                  if (!plan.ok) restoreNotice = plan.message
+                  else restorePlan = plan
+                } catch {
+                  restoreNotice = 'That file could not be read. Nothing has been changed.'
+                }
+                restoreBusy = false
+                await load()
+              },
+            })
+            return el('label.button', { dataset: { action: 'restore-picker' } }, [
+              icon('history'), restoreBusy ? 'READING…' : 'RESTORE BACKUP', input,
+            ])
+          })(),
+        ]),
+        saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
+        restoreNotice && el('p.notice', { dataset: { restoreError: '' }, text: restoreNotice }),
+        restorePlan && el('div.notice', { dataset: { restorePreview: '' } }, [
+          el('strong', { text: restoreName || 'Tempered backup' }),
+          el('span', { text: [
+            `${restorePlan.summary.sessions ?? 0} workouts`,
+            `${restorePlan.summary.setLogs ?? 0} sets`,
+            `${restorePlan.summary.dayLogs ?? 0} daily logs`,
+            `${restorePlan.summary.plannerItems ?? 0} tasks`,
+          ].join(' · ') }),
+          restorePlan.dateRange && el('span', {
+            text: `History: ${shortDate(restorePlan.dateRange.from)} to ${shortDate(restorePlan.dateRange.to)}`,
+          }),
+          el('span', { text: 'This will replace the data currently on this device.' }),
+          el('button.button.button--danger', {
+            type: 'button', disabled: restoreBusy, dataset: { action: 'restore-confirm' },
+            onclick: async () => {
+              restoreBusy = true
+              await load()
+              try {
+                await maintenance.restoreBackup(restorePlan, { confirm: 'replace' })
+              } catch {
+                restoreBusy = false
+                restoreNotice = 'The restore could not be completed. Your existing data was left unchanged.'
+                await load()
+              }
+            },
+          }, [restoreBusy ? 'RESTORING…' : 'CONFIRM AND REPLACE']),
+        ]),
+      ]),
+
       el('section.card', { dataset: { section: 'credits' } }, [
         el('h2.block__title', { text: 'Credits' }),
         el('p.block__hint', {
@@ -193,16 +275,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, onS
         el('p.block__hint', {
           text: 'Erases every session, set, day and battle on this device and returns the app to first run. It cannot be undone.',
         }),
-        el('button.button', {
-          type: 'button', dataset: { action: 'backup' },
-          onclick: async () => {
-            const file = await maintenance.backup()
-            download(file.filename, file.json)
-            saved = file.filename
-            await load()
-          },
-        }, [icon('down'), saved ? 'SAVE ANOTHER BACKUP' : 'SAVE A BACKUP FIRST']),
-        saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
+        el('p.block__hint', { text: 'Save a backup from Your data above before erasing this device.' }),
         el('label.reset__confirm', {}, [
           el('span.setting__label', { text: `Type ${RESET_PHRASE} to confirm` }),
           el('input.entry__value.reset__input', {

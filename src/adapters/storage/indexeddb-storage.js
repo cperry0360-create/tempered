@@ -109,6 +109,23 @@ export function createIndexedDbStorage(options = {}) {
       await completed(transaction)
     },
 
+    async replaceAll(data) {
+      const stores = Object.keys(data)
+      for (const store of stores) specFor(store)
+      if (!db) throw new Error('Storage is not open. Call open() first.')
+
+      // One transaction across every imported store. IndexedDB rolls the whole
+      // operation back if any clear or put fails, so restore can never leave a
+      // half-old, half-imported database behind.
+      const transaction = db.transaction(stores, 'readwrite')
+      for (const store of stores) {
+        const objectStore = transaction.objectStore(store)
+        objectStore.clear()
+        for (const value of data[store] ?? []) objectStore.put(value)
+      }
+      await completed(transaction)
+    },
+
     async delete(store, key) {
       const { transaction, objectStore } = tx(store, 'readwrite')
       objectStore.delete(key)

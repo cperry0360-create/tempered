@@ -2017,6 +2017,12 @@ button.row__act { cursor: pointer; }
   background: var(--well);
 }
 .notice[data-update='true'] { color: var(--acid); }
+.notice[data-restore-preview] {
+  display: grid;
+  gap: var(--s2);
+  line-height: 1.45;
+}
+.notice[data-restore-preview] .button { justify-self: start; margin-top: var(--s1); }
 
 /* ---------------------------------------------------------------------------
    The daily-list chips in Settings.

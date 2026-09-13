@@ -43,9 +43,12 @@
       try {
         const tempered = await bootstrap({ storage: createMemoryStorage() })
         await tempered.app.show('settings')
-        await waitFor('[data-section="reset"]')
+        await waitFor('[data-section="data"]')
 
         check('Settings offers a reset', q('[data-section="reset"]') !== null)
+        check('Settings offers backup and restore together',
+          q('[data-section="data"] [data-action="backup"]') !== null
+          && q('[data-section="data"] [data-action="restore-file"]') !== null)
         check('Settings offers an update check', q('[data-action="check-updates"]') !== null)
         check('the version is shown beside the update check',
           (q('[data-version]')?.textContent ?? '').length > 0, q('[data-version]')?.textContent)
@@ -73,10 +76,9 @@
           refused.ok === false, refused.reason)
 
         const backupButton = q('[data-action="backup"]')
-        const order = [...q('[data-section="reset"]').querySelectorAll('button')]
-          .map((b) => b.dataset.action)
-        check('the backup is offered before the erase, not after',
-          order.indexOf('backup') < order.indexOf('reset'), order.join(' then '))
+        const sections = [...document.querySelectorAll('[data-section]')].map((node) => node.dataset.section)
+        check('the data safety controls are offered before erase',
+          sections.indexOf('data') < sections.indexOf('reset'), sections.join(' then '))
 
         let downloaded = null
         const realCreate = URL.createObjectURL

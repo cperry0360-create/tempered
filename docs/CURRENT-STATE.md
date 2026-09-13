@@ -195,6 +195,18 @@ They are preserved as references but must not be rendered directly in the app.
 
 ## Engineering contract
 
+Settings has a first-class Your data section. Backups include every canonical IndexedDB
+store, including dated personal/work planner items. Restore validates the file, previews
+record counts and its date range, requires an explicit replacement confirmation, and uses
+one transaction across all stores so a failed write leaves the existing database intact.
+On launch Tempered also asks supported browsers for persistent storage; Settings reports
+whether protection was granted and recommends a recent backup when it was not.
+
+The service worker keeps atomic release installation. Static application requests are
+cache-first within the versioned cache, while navigations use the network with a 2.5-second
+limit before falling back to the installed shell. Activation removes only older caches
+owned by Tempered. The page and precache use the same unqueried `src/main.js` cache key.
+
 - Plain browser ES modules, no framework, no dependencies, no build step.
 - `node --test` for automated logic tests.
 - IndexedDB behind a storage adapter; memory storage for tests.

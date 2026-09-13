@@ -70,6 +70,7 @@ export async function bootstrap(options = {}) {
     storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
   })
   const maintenance = createMaintenanceService({ storage, clock })
+  await maintenance.protectStorage()
 
   const exposed = {
     storage, clock, workout, daily, planner, character, battle, maintenance, health, healthSync,

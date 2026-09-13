@@ -17,6 +17,7 @@ async function populated() {
     { id: 'sl2', sessionId: 's1', exerciseId: 'deadlift_bb', weight: 160, reps: 8 },
   ])
   await storage.putAll('dayLogs', [{ date: '2026-09-04', steps: 8200, sleepHours: 7.8 }])
+  await storage.putAll('plannerItems', [{ id: 'task-1', date: '2026-09-05', title: 'Pack gym bag' }])
   await storage.putAll('attributeState', [{ attribute: 'might', xp: 1240, level: 1, lifetimeSources: { 'might.volume': 1240 } }])
   await storage.putAll('records', [{ exerciseId: 'squat_bb', bestWeight: { weight: 145, reps: 8, date: '2026-09-04' } }])
   await storage.putAll('titles', [{ id: 'first_load', earnedAt: '2026-09-04' }])
@@ -29,6 +30,7 @@ test('a snapshot reads every store', async () => {
   assert.equal(snapshot.sessions.length, 2)
   assert.equal(snapshot.setLogs.length, 2)
   assert.equal(snapshot.directive, null)
+  assert.equal(snapshot.plannerItems.length, 1)
 })
 
 test('export produces a complete, valid document', async () => {
@@ -97,6 +99,20 @@ test('applyImportPlan reports what it wrote', async () => {
   assert.equal(written.sessions, 2)
   assert.equal(written.setLogs, 2)
   assert.equal(written.profile, 1)
+  assert.equal(written.plannerItems, 1)
+})
+
+test('a malformed replacement cannot partially erase existing data', async () => {
+  const storage = await populated()
+  const original = await readSnapshot(storage)
+  const plan = prepareImport(JSON.stringify(await exportSnapshot(await populated(), clock)))
+  plan.data.sessions.push({ routineId: 'missing-key' })
+
+  await assert.rejects(
+    () => applyImportPlan(storage, plan, { confirm: 'replace' }),
+    /no id/,
+  )
+  assert.deepEqual(await readSnapshot(storage), original)
 })
 
 test('a round trip through a real JSON string survives intact', async () => {

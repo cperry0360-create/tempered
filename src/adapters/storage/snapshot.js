@@ -59,24 +59,23 @@ export async function applyImportPlan(storage, plan, options = {}) {
     )
   }
 
-  // Clear first so the result is the imported data exactly, not a silent merge.
-  for (const key of DATA_KEYS) await storage.clear(key)
-
   /** @type {Record<string, number>} */
   const written = {}
+  /** @type {Record<string, any[]>} */
+  const replacement = {}
   for (const key of SINGLETON_KEYS) {
     const record = plan.data[key]
-    if (record) {
-      await storage.put(key, record)
-      written[key] = 1
-    } else {
-      written[key] = 0
-    }
+    replacement[key] = record ? [record] : []
+    written[key] = record ? 1 : 0
   }
   for (const key of COLLECTION_KEYS) {
     const rows = plan.data[key] ?? []
-    await storage.putAll(key, rows)
+    replacement[key] = rows
     written[key] = rows.length
   }
+  if (typeof storage.replaceAll !== 'function') {
+    throw new Error('Refusing to import: this storage adapter cannot replace data atomically.')
+  }
+  await storage.replaceAll(replacement)
   return written
 }

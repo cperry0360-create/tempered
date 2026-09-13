@@ -10,8 +10,8 @@ const v1Fixture = Object.freeze({
   sessions: [{ id: 's1' }],
 })
 
-test('schema 5 is current, and every step from 1 exists', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 5)
+test('schema 6 is current, and every step from 1 exists', () => {
+  assert.equal(CURRENT_SCHEMA_VERSION, 6)
   for (let version = 1; version < CURRENT_SCHEMA_VERSION; version++) {
     assert.equal(typeof MIGRATIONS[version], 'function', `no migration from ${version}`)
   }
@@ -122,8 +122,20 @@ test('4 -> 5 leaves aggregate-only nutrition days untouched for lazy carryover',
   assert.equal(upgraded.dayLogs[0].nutritionEntries, undefined)
 })
 
-test('a version 1 backup walks all the way to 5', () => {
-  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 5)
+test('5 -> 6 adds the planner store older backups accidentally omitted', () => {
+  const upgraded = migrate(structuredClone(V1_BACKUP), 5, 6)
+  assert.deepEqual(upgraded.plannerItems, [])
+})
+
+test('5 -> 6 preserves planner items when a backup already carries them', () => {
+  const plannerItems = [{ id: 'task-1', date: '2026-09-13', title: 'Finish review' }]
+  const upgraded = migrate({ ...structuredClone(V1_BACKUP), plannerItems }, 5, 6)
+  assert.deepEqual(upgraded.plannerItems, plannerItems)
+})
+
+test('a version 1 backup walks all the way to 6', () => {
+  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 6)
   assert.deepEqual(upgraded.programs, [])
+  assert.deepEqual(upgraded.plannerItems, [])
   assert.equal(upgraded.profile.name, 'Cory')
 })

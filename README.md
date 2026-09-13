@@ -25,7 +25,7 @@ A native iOS wrapper also exists for a future signed/TestFlight build. That is t
 
 ## Data and privacy
 
-Tempered is local-first. Canonical app data is stored in IndexedDB on the device, with JSON backup/restore available in Settings. Nutrition keeps timestamped meal entries for calories, protein, carbohydrates, fat, and fiber. The photo helper does not upload photos from Tempered or embed an AI key; it copies a provider-neutral prompt for use in a vision-capable AI app, then pastes the small machine-readable result into a reviewable form before anything is saved.
+Tempered is local-first. Canonical app data is stored in IndexedDB on the device. Settings can save and restore a complete JSON backup, including workouts, lifestyle logs, programs, preferences, and personal/work planner tasks. Restore validates and previews the file first, requires explicit confirmation, and replaces every store in one atomic transaction. Tempered also requests persistent browser storage when the platform supports it and reports the result in Settings. Nutrition keeps timestamped meal entries for calories, protein, carbohydrates, fat, and fiber. The photo helper does not upload photos from Tempered or embed an AI key; it copies a provider-neutral prompt for use in a vision-capable AI app, then pastes the small machine-readable result into a reviewable form before anything is saved.
 
 ## Repository documents
 
@@ -68,7 +68,7 @@ The primary live app is served publicly by **GitHub Pages** from `main` at:
 
 `https://cperry0360-create.github.io/tempered/`
 
-Pages publishes the repository root directly. There is no application build step: `index.html`, `manifest.webmanifest`, `sw.js`, and runtime assets are served as committed. `.nojekyll` disables Jekyll processing, and runtime URLs are relative so the PWA works under the `/tempered/` project path.
+Pages publishes the repository root directly. There is no application build step: `index.html`, `manifest.webmanifest`, `sw.js`, and runtime assets are served as committed. `.nojekyll` disables Jekyll processing, and runtime URLs are relative so the PWA works under the `/tempered/` project path. The versioned service worker installs its shell atomically, serves installed static assets from that complete cache, and falls back to the cached shell after 2.5 seconds when a weak connection stalls navigation.
 
 ## Status
 

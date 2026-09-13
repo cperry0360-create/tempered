@@ -77,3 +77,17 @@ test('clear empties one store and leaves the others', async () => {
   assert.equal(await storage.count('sessions'), 0)
   assert.equal(await storage.count('dayLogs'), 1)
 })
+
+test('replaceAll validates everything before replacing anything', async () => {
+  const storage = await opened()
+  await storage.put('profile', { id: 'profile', name: 'Existing' })
+  await storage.put('sessions', { id: 'existing-session' })
+
+  await assert.rejects(() => storage.replaceAll({
+    profile: [{ id: 'profile', name: 'Incoming' }],
+    sessions: [{ routineId: 'missing-id' }],
+  }), /no id/)
+
+  assert.equal((await storage.get('profile', 'profile')).name, 'Existing')
+  assert.equal(await storage.count('sessions'), 1)
+})

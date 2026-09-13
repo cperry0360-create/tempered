@@ -22,14 +22,21 @@ test('installed PWA checks for updates without trusting the HTTP cache', async (
 
 test('service worker hands a release over atomically instead of mixing asset generations', async () => {
   const worker = await read('sw.js')
+  assert.match(worker, /cache\.addAll\(PRECACHE\)/, 'a release installs only when its whole offline shell is available')
   assert.match(worker, /oldTemperedCaches\.length\s*>\s*0/, 'worker detects replacement of an older Tempered cache')
   assert.match(worker, /client\.navigate\(client\.url\)/, 'open app windows restart after a version handoff')
-  assert.match(worker, /event\.respondWith\(\s*network\.catch/s, 'online asset requests are network-first')
-  assert.doesNotMatch(
-    worker,
-    /caches\.match\(request\)\.then\(\(cached\)\s*=>\s*cached\s*\?\?\s*network/,
-    'cache-first stale-while-revalidate must not return for app assets',
-  )
+  assert.match(worker, /oldTemperedCaches\.map\(\(key\)\s*=>\s*caches\.delete\(key\)\)/,
+    'activation removes only old Tempered caches')
+  assert.match(worker, /setTimeout\(\(\)\s*=>\s*controller\.abort\(\),\s*2500\)/,
+    'navigations stop waiting on a weak network')
+  assert.match(worker, /caches\.match\(request\)\.then\(\(cached\)\s*=>\s*cached\s*\?\?\s*fetchAndCache\(\)\)/,
+    'versioned app assets are served from the complete installed cache')
+})
+
+test('the page and offline shell use the same entry-point cache key', async () => {
+  const index = await read('index.html')
+  assert.match(index, /src="\.\/src\/main\.js"/)
+  assert.doesNotMatch(index, /main\.js\?/, 'a hand-maintained query string bypasses the precached entry point')
 })
 
 test('the rejected sunset trial is fully removed from the shipped app', async () => {

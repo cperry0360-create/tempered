@@ -2409,3 +2409,25 @@ unfinished and could not reflect the person's actual goal.
 **Reasoning:** Installed PWAs must replace the Daily service, Settings screen, and activity seed.
 **Confidence:** implementation and regression suite.
 **Needs Cory:** no
+
+## 2026-09-13 — ChatGPT Health replaces the failed Shortcut handoff
+**Phase:** 0.23.5 Health paste import
+**Decision:** Add one compact Import Health entry to the Today Daily Recap. It opens a bounded
+sheet that can copy the exact ChatGPT Health prompt, paste the nine-line `TEMPERED_HEALTH_V1`
+response, preview only populated metrics, and import after a separate confirmation. Blank
+fields are skipped. The Apple Shortcuts launch gate, setup screen, and deep links stay dormant.
+**Reasoning:** Connected ChatGPT Health produced credible steps, weight, resting HR, HRV,
+respiration, and SpO2 in the existing contract. Sleep was correctly blank on a night when no
+watch was worn. This makes the explicit paste path useful without reviving the unreliable
+Shortcut workflow or cluttering Settings.
+**Confidence:** real-device output supplied by Cory, snapshot unit coverage, full regression
+suite, and a dedicated mobile browser acceptance harness.
+**Needs Cory:** confirm the first live import and iPhone sheet fit.
+
+## 2026-09-13 — Release 0.23.5 (36) adds reviewed Health paste import
+**Phase:** 0.23.5 release
+**Decision:** Advance the installed cache identity for the ChatGPT Health importer and shared
+snapshot engine.
+**Reasoning:** Installed PWAs must receive the new runtime, styles, and offline cache entries.
+**Confidence:** implementation and regression suite.
+**Needs Cory:** no

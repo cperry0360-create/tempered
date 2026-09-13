@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — ChatGPT Health paste</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/nutrition-today.css" />
+  <link rel="stylesheet" href="../../src/pivot.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+    import { installHealthPasteRuntime } from '../../src/ui/health-paste-runtime.js'
+
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const settle = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms))
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    async function waitFor(selector, timeout = 3000) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
+      }
+      return null
+    }
+
+    try {
+      const snapshot = `TEMPERED_HEALTH_V1
+DATE=2026-09-13
+STEPS=701
+SLEEP=
+WEIGHT_LB=167.6
+RESTING_HR=60
+HRV_MS=60
+RESP_RATE=17
+SPO2=96`
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { async readText() { return snapshot }, async writeText() {} },
+      })
+      const clock = fixedClock(new Date(2026, 8, 13, 14, 15, 0))
+      const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      installCalorieAiRuntime()
+      const stop = installHealthPasteRuntime(context)
+      await context.daily.logAt('2026-09-13', 'sleep', 7.5)
+      await context.app.show('today')
+      await waitFor('[data-daily-recap="open"]')
+      q('[data-daily-recap="open"]')?.click()
+      const entry = await waitFor('[data-health-paste-entry]')
+      check('Daily Recap exposes one compact Health import entry', Boolean(entry))
+      check('retired Shortcut controls are absent', !q('[data-health-bridge="run"]') && !q('[data-health-launch]'))
+
+      q('[data-health-paste-open]')?.click()
+      check('Health import opens as a bounded review sheet', Boolean(await waitFor('[data-health-paste-overlay]')))
+      q('[data-health-paste-read]')?.click()
+      await settle(80)
+      check('clipboard snapshot is shown before import', q('[data-health-paste-input]')?.value === snapshot)
+      check('preview displays six populated fields and omits blank sleep', q('[data-health-paste-count]')?.textContent === '6 fields ready' && !q('[data-health-paste-metrics]')?.textContent.includes('Sleep'), q('[data-health-paste-metrics]')?.textContent)
+      check('import requires a separate explicit confirmation', q('[data-health-paste-submit]')?.disabled === false && (await context.daily.dayLog('2026-09-13')).steps !== 701)
+
+      q('[data-health-paste-submit]')?.click()
+      await settle(160)
+      const day = await context.daily.dayLog('2026-09-13')
+      check('confirmed snapshot updates steps and weight', day.steps === 701 && day.bodyMetrics?.weight === 167.6, `${day.steps}/${day.bodyMetrics?.weight}`)
+      check('confirmed snapshot stores body signals', day.healthMetrics?.restingHr === 60 && day.healthMetrics?.hrvMs === 60 && day.healthMetrics?.respiratoryRate === 17 && day.healthMetrics?.spo2 === 96, JSON.stringify(day.healthMetrics))
+      check('blank sleep preserves the existing sleep value', day.sleepHours === 7.5, day.sleepHours)
+      check('the import records ChatGPT Health as its source', day.healthBridge?.source === 'chatgpt-health', day.healthBridge?.source)
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+      stop()
+    } catch (error) {
+      check('ChatGPT Health paste harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'health-paste', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

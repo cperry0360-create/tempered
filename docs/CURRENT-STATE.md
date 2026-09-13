@@ -35,8 +35,9 @@ data and regression fixtures. Do not put it back in navigation or expand it.
   create a second shadow tracker.
 - Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
   and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
-- Apple Health import is hidden in the static PWA. The future signed iOS wrapper can read
-  supported HealthKit metrics directly; manual logging remains the current product path.
+- ChatGPT Health paste import is available from Daily Recap with an exact prompt, parsed
+  preview, and explicit confirmation. The failed Shortcut automation stays hidden. The
+  future signed iOS wrapper can read supported HealthKit metrics directly.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
 
 ## Companion contract
@@ -112,7 +113,7 @@ Today heading and long date are gone; the selected date remains explicit in the 
 and accessible screen heading. Plan and Lifestyle logging rows remain directly on Today.
 
 Read-only lifestyle totals no longer sit above those logging rows. `DAILY RECAP` opens a
-dedicated card with sleep, steps, nutrition, water, weight, Apple Health sync/setup, and
+dedicated card with sleep, steps, nutrition, water, weight, a compact Health import entry, and
 four exercise facts for the selected day: training minutes, working sets, movements, and
 sessions. The recap has no entrance animation or nested navigation, so it opens and closes
 without the card flicker seen in earlier iPhone builds. Mobility logging opens a card with
@@ -161,15 +162,19 @@ and iPhone wrapper all enforce the same orientation contract.
 
 ## Apple Health sync
 
-The Apple Health Shortcut experiment is dormant in the production PWA. The launch Ready
-screen, Today import controls, Settings setup/repair card, paste fallback, and Progress Body
-Metrics widget are not installed or offered. Manual sleep, steps, weight, nutrition, and
-other lifestyle logging remain unchanged. Existing imported values and the parser/runtime
-implementation remain stored and tested for backward compatibility; nothing is deleted.
+The failed Apple Health Shortcut automation remains dormant in the production PWA. Its launch
+gate, setup/repair instructions, Shortcut links, and Progress Body Metrics widget are not
+installed or offered. The parser is retained for backward compatibility.
 
-The reason is platform-level: a Home Screen web app cannot read HealthKit, launch a Shortcut,
-or silently consume its clipboard on open. The attempted handoff therefore added visible
-setup and an extra gesture without delivering passive sync. Tempered will revisit automatic
+Daily Recap now contains one compact **Import Health** entry for the working ChatGPT Health
+path. It opens a bounded sheet that can copy the exact connected-Health prompt, read the copied
+nine-line `TEMPERED_HEALTH_V1` response or accept a normal long-press paste, and preview every
+populated field before an explicit import. Missing fields are skipped rather than replaced with
+zero. Re-importing steps, sleep, or weight replaces that date's canonical value and never adds
+the same total twice. The source and import time are retained on the day log.
+
+This is intentionally not presented as passive sync. A Home Screen web app still cannot read
+HealthKit itself or silently consume the clipboard on launch. Tempered will revisit automatic
 Health data through its native iOS wrapper when private signing/TestFlight work begins.
 
 ## Visual direction and recovered art

@@ -1,9 +1,24 @@
-export const HEALTH_SNAPSHOT_PREFIX = 'TEMPERED_HEALTH_V1'
+import {
+  HEALTH_SNAPSHOT_PREFIX,
+  MAX_HEALTH_SLEEP_HOURS,
+  healthNumberValue,
+  importHealthSnapshot,
+  launchHealthSnapshot,
+  parseHealthSnapshot,
+} from './health-snapshot.js'
+
+export {
+  HEALTH_SNAPSHOT_PREFIX,
+  importHealthSnapshot,
+  launchHealthSnapshot,
+  parseHealthSnapshot,
+} from './health-snapshot.js'
+
 export const DEFAULT_HEALTH_IMPORT_URL = 'https://cperry0360-create.github.io/tempered/'
 export const HEALTH_SHORTCUT_NAME = 'Tempered Health'
 export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%20Health'
 export const HEALTH_SHORTCUT_EDIT_URL = 'shortcuts://open-shortcut?name=Tempered%20Health'
-export const MAX_SHORTCUT_SLEEP_HOURS = 16
+export const MAX_SHORTCUT_SLEEP_HOURS = MAX_HEALTH_SLEEP_HOURS
 export const LAUNCH_MOTIVATIONS = [
   ['SHOW UP STRONG.', 'The first rep is showing up.'],
   ['BUILD WHAT LASTS.', 'Small effort. Real momentum.'],
@@ -68,52 +83,6 @@ The native Tempered iOS build reads HealthKit directly on launch and when return
 AUTOMATED COPY (ONE READY TAP IS STILL REQUIRED)
 In Shortcuts → Automation, a Time of Day, Sleep, or Apple Watch Workout trigger can run Tempered Health and copy its snapshot. An App Opened trigger may not list the installed Home Screen web app. When you launch the installed Tempered icon, tap Yes, I'm Ready on the launch card to read and import a copy dated today. iOS may also ask you to allow Paste. If no automation ran, use Run Health Shortcut on that card, then return and tap Yes, I'm Ready. The Home Screen web app cannot itself launch the Shortcut or silently paste on launch. For automatic Health import on launch, use the native Tempered iOS build with HealthKit instead.`
 
-const TAGS = {
-  DATE: 'date', STEPS: 'steps', SLEEP: 'sleepHours', WEIGHT_LB: 'weightLb', WEIGHT_KG: 'weightKg',
-  RESTING_HR: 'restingHr', HRV_MS: 'hrvMs', RESP_RATE: 'respiratoryRate',
-  SPO2: 'spo2', BODY_TEMP_C: 'bodyTempC', BODY_TEMP_F: 'bodyTempF',
-}
-
-function numberValue(raw) {
-  if (raw === null || raw === undefined || raw === '') return null
-  const cleaned = String(raw).replace(/,/g, '').trim()
-  const match = cleaned.match(/-?\d+(?:\.\d+)?/)
-  if (!match) return null
-  const value = Number(match[0])
-  return Number.isFinite(value) ? value : null
-}
-
-export function parseHealthSnapshot(text) {
-  const raw = String(text ?? '').trim()
-  // A copied setup recipe contains the marker and example values, but is not
-  // a Health export. Only a snapshot whose first line is the exact marker can
-  // be imported; never turn instructions or unrelated clipboard text into data.
-  if (raw.split(/\r?\n/, 1)[0] !== HEALTH_SNAPSHOT_PREFIX) return null
-  const result = {}
-  for (const line of raw.split(/\r?\n/)) {
-    // Health tags include SPO2, so digits are intentionally valid in names.
-    const match = line.match(/^([A-Z0-9_]+)\s*=\s*(.*?)\s*$/)
-    if (!match) continue
-    const [, tag, value] = match
-    const key = TAGS[tag]
-    if (!key) continue
-    if (tag === 'DATE') {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) result.date = value
-      continue
-    }
-    const parsed = /^-?\d/.test(value) ? numberValue(value) : null
-    if (parsed !== null) result[key] = parsed
-  }
-  const meaningful = Object.keys(result).some((key) => key !== 'date')
-  return meaningful ? result : null
-}
-
-/** A launch import must not silently replay an old copy left on the pasteboard. */
-export function launchHealthSnapshot(text, today) {
-  const parsed = parseHealthSnapshot(text)
-  return parsed?.date === today ? parsed : null
-}
-
 /** Build the exact handoff URL the Shortcut's URL Encode + Open URLs path creates. */
 export function healthImportUrl(snapshot, base = DEFAULT_HEALTH_IMPORT_URL) {
   const raw = String(snapshot ?? '').trim()
@@ -121,52 +90,6 @@ export function healthImportUrl(snapshot, base = DEFAULT_HEALTH_IMPORT_URL) {
   const url = new URL(base)
   url.searchParams.set('temperedHealth', raw)
   return url.toString()
-}
-
-export async function importHealthSnapshot(context, snapshot) {
-  if (!context?.daily || !context?.storage || !context?.clock) throw new Error('Tempered is not ready')
-  const parsed = typeof snapshot === 'string' ? parseHealthSnapshot(snapshot) : snapshot
-  if (!parsed) throw new Error('No Tempered Health snapshot found')
-  const date = parsed.date && parsed.date <= context.clock.today() ? parsed.date : context.clock.today()
-  const normalized = {
-    ...parsed,
-    ...(Number.isFinite(parsed.weightLb) ? {} : (Number.isFinite(parsed.weightKg) ? { weightLb: parsed.weightKg * 2.2046226218 } : {})),
-    ...(Number.isFinite(parsed.bodyTempC) ? {} : (Number.isFinite(parsed.bodyTempF) ? { bodyTempC: (parsed.bodyTempF - 32) * (5 / 9) } : {})),
-    ...(Number.isFinite(parsed.spo2) && parsed.spo2 > 0 && parsed.spo2 <= 1 ? { spo2: parsed.spo2 * 100 } : {}),
-  }
-  const warnings = []
-  const validSleep = Number.isFinite(normalized.sleepHours)
-    && normalized.sleepHours > 0 && normalized.sleepHours <= MAX_SHORTCUT_SLEEP_HOURS
-  if (Number.isFinite(normalized.sleepHours) && !validSleep) {
-    warnings.push(`Sleep was skipped because the Shortcut returned ${normalized.sleepHours} hours. Use one Health source and exclude overlapping summary samples.`)
-  }
-
-  // All three are replace-mode trackers. Re-running the Shortcut updates the
-  // same day's canonical value; it never adds yesterday's or an earlier sync's
-  // steps/sleep/weight a second time.
-  if (Number.isFinite(normalized.steps) && normalized.steps >= 0) {
-    await context.daily.logAt(date, 'steps', Math.round(normalized.steps))
-  }
-  if (validSleep) {
-    await context.daily.logAt(date, 'sleep', Math.round(normalized.sleepHours * 100) / 100)
-  }
-  if (Number.isFinite(normalized.weightLb) && normalized.weightLb > 0) {
-    await context.daily.logAt(date, 'body_metrics', Math.round(normalized.weightLb * 10) / 10)
-  }
-
-  const current = await context.daily.dayLog(date)
-  const healthMetrics = { ...(current.healthMetrics ?? {}) }
-  for (const key of ['restingHr', 'hrvMs', 'respiratoryRate', 'spo2', 'bodyTempC']) {
-    if (Number.isFinite(normalized[key])) healthMetrics[key] = Math.round(normalized[key] * 100) / 100
-  }
-  const next = {
-    ...current,
-    ...(!validSleep && Number(current.sleepHours) > MAX_SHORTCUT_SLEEP_HOURS ? { sleepHours: null } : {}),
-    ...(Object.keys(healthMetrics).length ? { healthMetrics } : {}),
-    healthBridge: { source: 'shortcuts', importedAt: context.clock.nowIso(), ...(warnings.length ? { warnings } : {}) },
-  }
-  await context.storage.put('dayLogs', next)
-  return { date, ...normalized, warnings }
 }
 
 async function copyText(text) {
@@ -414,7 +337,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
       event.preventDefault()
       const values = {}
       for (const input of manual.querySelectorAll('[data-health-manual]')) {
-        const value = numberValue(input.value)
+      const value = healthNumberValue(input.value)
         if (value !== null) values[input.dataset.healthManual] = value
       }
       if (Object.keys(values).length === 0) {

@@ -160,11 +160,18 @@ test('REGRESSION: active workouts can add movements, minimize, and resume', () =
   assert.doesNotMatch(bootstrap, /clearActiveSessionDraft/)
 })
 
-test('REGRESSION: experimental Health UI is dormant while its implementation is preserved', () => {
+test('REGRESSION: ChatGPT Health paste is live while the failed Shortcut UI stays dormant', () => {
   const main = read('src/main.js')
   const dashboard = read('src/ui/progress-dashboard-runtime.js')
   const health = read('src/ui/health-shortcut-runtime.js')
-  assert.doesNotMatch(main, /health-shortcut-runtime|installHealthShortcutRuntime/)
+  const snapshot = read('src/ui/health-snapshot.js')
+  const paste = read('src/ui/health-paste-runtime.js')
+  assert.doesNotMatch(main, /installHealthShortcutRuntime/)
+  assert.match(main, /installHealthPasteRuntime\(context\)/)
+  assert.match(paste, /data-health-paste-input/)
+  assert.match(paste, /data-health-paste-preview/)
+  assert.match(paste, /source:\s*'chatgpt-health'/)
+  assert.doesNotMatch(paste, /shortcuts:\/\//)
   assert.doesNotMatch(dashboard, /body:\s*\{\s*title:\s*'Body metrics'/)
   assert.doesNotMatch(dashboard, /data\.healthSetup|tempered:open-health-setup/)
   // Preserve the dormant parser/setup implementation so native-distribution
@@ -172,6 +179,6 @@ test('REGRESSION: experimental Health UI is dormant while its implementation is 
   assert.match(health, /data-health-import-overlay|dataset\.healthImportOverlay/)
   assert.match(health, /data-health-import-input|dataset\.healthImportInput/)
   assert.match(health, /shortcuts:\/\/run-shortcut\?name=Tempered%20Health/)
-  assert.match(health, /export function parseHealthSnapshot/)
-  assert.match(health, /export async function importHealthSnapshot/)
+  assert.match(snapshot, /export function parseHealthSnapshot/)
+  assert.match(snapshot, /export async function importHealthSnapshot/)
 })

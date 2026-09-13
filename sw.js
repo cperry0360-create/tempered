@@ -78,6 +78,8 @@ const PRECACHE = [
   './src/ui/cable-machine-runtime.js',
   './src/ui/calorie-ai-runtime.js',
   './src/ui/progress-dashboard-runtime.js',
+  './src/ui/health-paste-runtime.js',
+  './src/ui/health-snapshot.js',
   './src/ui/dom.js',
   './src/ui/format.js',
   './src/ui/icons.js',

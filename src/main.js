@@ -7,6 +7,7 @@ import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installProgressDashboardRuntime } from './ui/progress-dashboard-runtime.js'
+import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 
 registerServiceWorker()
 installWaterQuickPresets()
@@ -16,10 +17,10 @@ installCalorieAiRuntime()
 bootstrap()
   .then(async (context) => {
     installSessionGuard(context)
-    // The Home Screen Health/Shortcuts bridge is intentionally dormant until
-    // Tempered is ready to ship its native HealthKit wrapper. Keeping the
-    // implementation in the repository preserves the work without exposing a
-    // broken launch gate, import controls, or setup flow in the current PWA.
+    // The failed iOS Shortcut experiment remains dormant. ChatGPT Health now
+    // supplies a predictable nine-line snapshot, so expose only the explicit
+    // review-and-paste bridge in Daily Recap.
+    installHealthPasteRuntime(context)
     installProgressDashboardRuntime(context)
     try {
       await installCableMachineRuntime(context)

@@ -19,9 +19,9 @@ The earlier Character/Battle RPG implementation is retained internally for backw
 
 ## Health data
 
-The production Home Screen PWA currently uses manual sleep, steps, and weight logging. The experimental Apple Health Shortcut bridge remains in the repository but is intentionally hidden because iOS cannot provide a reliable automatic handoff to an installed web app.
+The production Home Screen PWA supports an explicit ChatGPT Health paste import. From Today, open Daily Recap and choose **Import Health**. Tempered can copy the exact prompt, read or accept its nine-line `TEMPERED_HEALTH_V1` result, preview every populated field, and import only after confirmation. Blank fields are skipped, so a night without Apple Watch sleep data does not erase an existing entry. The failed Apple Shortcuts automation remains preserved but hidden.
 
-A native iOS wrapper also exists for a future signed/TestFlight build. That is the intended path for direct, passive HealthKit access when Tempered is ready for native distribution.
+A native iOS wrapper also exists for a future signed/TestFlight build. That remains the intended path for direct, passive HealthKit access when Tempered is ready for native distribution.
 
 ## Data and privacy
 

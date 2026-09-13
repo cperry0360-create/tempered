@@ -409,3 +409,91 @@ body:has(.screen--companion)::before {
   .health-bridge__today { align-items: flex-start; flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { body::before { transition: none; } }
+
+/* ChatGPT Health paste bridge: intentionally compact and recap-only. */
+.health-paste-entry {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 13px 2px 1px;
+  border-top: 1px solid rgba(255,255,255,.09);
+}
+.health-paste-entry > div { min-width: 0; display: grid; gap: 3px; }
+.health-paste-entry strong { color: #ddec92; font-size: 10px; letter-spacing: .14em; }
+.health-paste-entry span { color: rgba(255,255,255,.58); font-size: 11px; line-height: 1.35; }
+.health-paste-entry .button { flex: none; min-height: 42px; padding-inline: 14px; font-size: 10px; }
+.health-paste-overlay {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  overflow-y: auto;
+  padding: max(14px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
+  background: rgba(2,14,23,.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.health-paste-sheet {
+  width: min(100%, 560px);
+  max-height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(28px, env(safe-area-inset-bottom)));
+  overflow-y: auto;
+  display: grid;
+  gap: 13px;
+  padding: 18px;
+  border: 1px solid rgba(114,219,189,.28);
+  border-radius: 24px;
+  background: rgba(7,34,45,.98);
+  box-shadow: 0 24px 70px rgba(0,0,0,.55);
+}
+.health-paste-sheet__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.health-paste-sheet__head > div { display: grid; gap: 3px; }
+.health-paste-sheet__head span,
+.health-paste-sheet__label { color: #ddec92; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.health-paste-sheet__head h2 { margin: 0; color: white; font-size: 24px; line-height: 1.05; }
+.health-paste-sheet__head button {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
+  background: rgba(255,255,255,.05);
+  color: white;
+  font: inherit;
+  font-size: 24px;
+}
+.health-paste-sheet__intro,
+.health-paste-sheet__status { margin: 0; color: rgba(255,255,255,.66); font-size: 12px; line-height: 1.5; }
+.health-paste-sheet__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.health-paste-sheet__actions .button { min-width: 0; padding-inline: 8px; font-size: 9px; }
+.health-paste-sheet__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 190px;
+  resize: vertical;
+  padding: 13px;
+  border: 1px solid rgba(114,219,189,.25);
+  border-radius: 16px;
+  background: rgba(1,17,27,.78);
+  color: white;
+  font: 16px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.health-paste-preview { display: grid; gap: 10px; padding: 12px; border: 1px solid rgba(221,236,146,.19); border-radius: 16px; background: rgba(221,236,146,.05); }
+.health-paste-preview__head { display: flex; justify-content: space-between; gap: 10px; color: rgba(255,255,255,.62); font-size: 11px; }
+.health-paste-preview__head strong { color: white; }
+.health-paste-preview__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.health-paste-preview__metrics > div { min-width: 0; display: grid; gap: 2px; padding: 9px; border-radius: 11px; background: rgba(255,255,255,.045); }
+.health-paste-preview__metrics span { color: rgba(255,255,255,.48); font-size: 9px; }
+.health-paste-preview__metrics strong { overflow: hidden; color: white; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.health-paste-preview > p { margin: 0; color: #f0d895; font-size: 11px; line-height: 1.45; }
+.health-paste-sheet__import { width: 100%; border-color: rgba(221,236,146,.42); background: rgba(221,236,146,.12); color: #efffa4; }
+.health-paste-sheet__import:disabled { opacity: .45; }
+@media (max-width: 390px) {
+  .health-paste-entry { align-items: flex-start; flex-direction: column; }
+  .health-paste-entry .button { width: 100%; }
+  .health-paste-sheet__actions { grid-template-columns: 1fr; }
+}

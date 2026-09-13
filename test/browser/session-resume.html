@@ -17,6 +17,7 @@
       import { bootstrap } from '../../src/app/bootstrap.js'
       import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
       import { fixedClock } from '../../src/adapters/clock/clock.js'
+      import { installSessionGuard } from '../../src/ui/session-guard.js'
       import { clearActiveSessionDraft, loadActiveSessionDraft } from '../../src/ui/session-draft.js'
 
       const mount = document.getElementById('fixture')
@@ -43,6 +44,7 @@
         const clock = fixedClock('2026-09-05T18:00:00')
 
         const first = await bootstrap({ mount, storage, clock })
+        const firstGuard = installSessionGuard(first)
         await first.app.startSession({ exerciseId: 'incline_bench_db' })
         const weight1 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="0"][data-field="weight"]')
         const reps1 = mount.querySelector('[data-exercise="incline_bench_db"][data-set="0"][data-field="reps"]')
@@ -62,7 +64,9 @@
 
         // New shell + services, same durable stores. A cold launch should not
         // take over the product, but it must keep the workout resumable.
+        firstGuard?.destroy()
         const second = await bootstrap({ mount, storage, clock })
+        installSessionGuard(second)
         await settle()
         check('relaunch lands on Today', Boolean(mount.querySelector('.screen--today-calm')))
         check('relaunch does not auto-open the workout', mount.querySelector('.screen--session') === null)
@@ -92,7 +96,25 @@
         check('minimize returns to the app without finishing', Boolean(mount.querySelector('.screen--today-calm')))
         check('minimized workout remains resumable', Boolean(mount.querySelector('[data-active-workout]')))
 
-        clearActiveSessionDraft()
+        // Closed/background time is not workout time. This also covers old V1
+        // checkpoints whose absolute start timestamp produced 600+ minutes.
+        clock.advanceDays(1)
+        mount.querySelector('[data-active-workout]').click()
+        await settle()
+        check('time minimized or closed is excluded from workout elapsed time',
+          mount.querySelector('[data-session-elapsed]')?.textContent === '0:00',
+          mount.querySelector('[data-session-elapsed]')?.textContent ?? 'missing')
+
+        mount.querySelector('[data-action="cancel-session"]').click()
+        await settle()
+        document.querySelector('[data-confirm-action="discard"]').click()
+        await settle()
+        check('confirmed discard clears the resumable checkpoint', loadActiveSessionDraft() === null)
+        check('confirmed discard removes the active-workout card', !mount.querySelector('[data-active-workout]'))
+        check('confirmed discard removes this attempt set logs', sessionId
+          ? (await second.workout.setsFor(sessionId)).length === 0
+          : false)
+
         const passed = checks.every((entry) => entry.ok)
         await fetch('/__report', {
           method: 'POST', headers: { 'content-type': 'application/json' },

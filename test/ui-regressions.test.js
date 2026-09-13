@@ -89,6 +89,7 @@ test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () =
   assert.match(guard, /confirmDiscardExercise/)
   assert.match(guard, /aria-modal/)
   assert.match(guard, /DISCARD EXERCISE\?/)
+  assert.match(guard, /clearActiveSessionDraft\(\)/)
   assert.match(index, /\.confirm-overlay/)
   assert.match(index, /\.confirm-sheet/)
 })

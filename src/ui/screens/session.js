@@ -63,8 +63,24 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let addingMovement = false
   let addQuery = ''
   let ticker
+  let elapsedSec = 0
   let activeSince = null
   let wakeLock = null
+
+  function elapsedSeconds() {
+    const active = activeSince === null ? 0 : Math.max(0, (timeSource.now() - activeSince) / 1000)
+    return Math.max(0, elapsedSec + active)
+  }
+
+  function pauseElapsedTimer() {
+    if (activeSince === null) return
+    elapsedSec = elapsedSeconds()
+    activeSince = null
+  }
+
+  function resumeElapsedTimer() {
+    if (activeSince === null) activeSince = timeSource.now()
+  }
 
   function tellNativeWorkoutActive(active) {
     try {
@@ -81,7 +97,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function activateWorkoutScreen() {
-    activeSince = activeSince ?? timeSource.now()
+    resumeElapsedTimer()
     tellNativeWorkoutActive(true)
     requestWorkoutWakeLock()
   }
@@ -103,15 +119,24 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       isFirstOfDay,
       rest,
       openPanel,
-      activeSince,
+      elapsedSec: elapsedSeconds(),
     })
   }
 
   function checkpointWhenHidden() {
-    if (document.visibilityState === 'hidden') persistDraft()
-    else requestWorkoutWakeLock()
+    if (document.visibilityState === 'hidden') {
+      pauseElapsedTimer()
+      persistDraft()
+      releaseWorkoutWakeLock()
+    } else {
+      activateWorkoutScreen()
+    }
   }
-  function checkpointOnPageHide() { persistDraft() }
+  function checkpointOnPageHide() {
+    pauseElapsedTimer()
+    persistDraft()
+    releaseWorkoutWakeLock()
+  }
   document.addEventListener('visibilitychange', checkpointWhenHidden)
   window.addEventListener('pagehide', checkpointOnPageHide)
 
@@ -133,9 +158,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function tick() {
     const elapsed = root.querySelector('[data-session-elapsed]')
-    if (elapsed && activeSince !== null) {
-      elapsed.textContent = clock(Math.max(0, (timeSource.now() - activeSince) / 1000))
-    }
+    if (elapsed) elapsed.textContent = clock(elapsedSeconds())
     if (!rest) return
     const remaining = Math.max(0, (rest.endsAt - timeSource.now()) / 1000)
     const node = root.querySelector(`[data-rest="${rest.exerciseId}"]`)
@@ -704,7 +727,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           el('span.sessionbar__elapsed-label', { text: 'ELAPSED' }),
           el('strong.sessionbar__elapsed-value', {
             dataset: { sessionElapsed: 'true' },
-            text: clock(Math.max(0, (timeSource.now() - (activeSince ?? timeSource.now())) / 1000)),
+            text: clock(elapsedSeconds()),
           }),
         ]),
       ]),
@@ -788,7 +811,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
     async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
-      activeSince = timeSource.now()
+      elapsedSec = 0
+      activeSince = null
       activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       plan = []
@@ -871,7 +895,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     },
 
     async resume(draft) {
-      activeSince = Number.isFinite(draft.activeSince) ? draft.activeSince : timeSource.now()
+      // Old checkpoints stored an absolute start time, so time spent with the
+      // app closed inflated the workout into hundreds of minutes. Missing
+      // elapsedSec is intentionally treated as zero rather than repeating it.
+      elapsedSec = Number.isFinite(draft.elapsedSec) ? Math.max(0, draft.elapsedSec) : 0
+      activeSince = null
       activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       session = { ...draft.session }
@@ -919,6 +947,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     },
 
     destroy() {
+      pauseElapsedTimer()
       clearInterval(ticker)
       ticker = undefined
       releaseWorkoutWakeLock()

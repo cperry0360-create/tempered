@@ -7,6 +7,8 @@
  *  - finishing with zero newly logged sets is just an exit, never a scored session
  */
 
+import { clearActiveSessionDraft } from './session-draft.js'
+
 /**
  * A working set must contain actual work. Weight alone is not work: a bar can be
  * loaded without a rep happening. Bodyweight work is valid because reps alone
@@ -240,6 +242,7 @@ export function installSessionGuard({ app, workout, storage }) {
     })
     currentSession = null
     currentLogIds.clear()
+    clearActiveSessionDraft()
     await app.show(returnTab())
   }
 

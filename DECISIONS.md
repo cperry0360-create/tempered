@@ -2340,3 +2340,31 @@ query missed common 393px iPhones, allowing Time to render on top of Calories.
 **Reasoning:** Installed copies must replace the nutrition CSS, application shell, and precache.
 **Confidence:** implementation and local regression suite.
 **Needs Cory:** no
+
+## 2026-09-13 — Workout elapsed time counts only an open workout screen
+**Phase:** 0.23.2 active-session repair
+**Decision:** Persist accumulated active-screen seconds instead of an absolute start timestamp.
+Pause the timer whenever the workout is minimized, backgrounded, page-hidden, or destroyed;
+resume it from the accumulated value only when the workout screen is active again. Treat old
+checkpoints without the new elapsed value as zero.
+**Reasoning:** An absolute timestamp counted every hour the PWA was closed, producing a false
+600+ minute Delts workout. The feature was requested to show time spent in the active workout,
+not time since a card was first opened.
+**Confidence:** source lifecycle trace and browser acceptance coverage using a simulated full day minimized.
+**Needs Cory:** no
+
+## 2026-09-13 — Confirmed workout discard also deletes its screen checkpoint
+**Phase:** 0.23.2 active-session repair
+**Decision:** Clear the resumable local checkpoint after its set/session records are successfully
+discarded and before returning to the main app.
+**Reasoning:** The prior cancellation path deleted IndexedDB work but left localStorage intact,
+so the active-workout card immediately returned and could reopen the discarded Delts screen.
+**Confidence:** direct lifecycle trace plus an end-to-end cancel, confirm, checkpoint, dock, and set-log regression.
+**Needs Cory:** no
+
+## 2026-09-13 — Release 0.23.2 (33) repairs stuck workout sessions
+**Phase:** 0.23.2 release
+**Decision:** Advance the installed cache identity for active-time accounting and reliable discard.
+**Reasoning:** Installed PWAs must replace the session screen and guard modules.
+**Confidence:** implementation and regression suite.
+**Needs Cory:** confirm the old Delts card disappears after one confirmed discard on the updated build.

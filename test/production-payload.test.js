@@ -26,5 +26,5 @@ test('retired RPG features are lazy and absent from the startup payload', () => 
 test('nutrition inputs cannot overflow their responsive grid cells', () => {
   const css = read('src/nutrition-today.css')
   assert.match(css, /\.nutrition-meal-field input\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/)
-  assert.match(css, /@media \(max-width: 430px\)[\s\S]*?\.nutrition-meal-field--time\s*\{\s*grid-column:\s*1 \/ -1;/)
+  assert.match(css, /@media \(max-width: 520px\)[\s\S]*?\.nutrition-meal-field--time\s*\{\s*grid-column:\s*1 \/ -1;/)
 })

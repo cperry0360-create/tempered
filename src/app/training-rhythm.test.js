@@ -20,8 +20,9 @@ test('four distinct 30-minute days make one positive rhythm week', () => {
   assert.equal(result.keeperProgress, 1)
 })
 
-test('short sessions show on totals but do not light a qualifying day', () => {
+test('short sessions remain visible without counting as a qualifying day', () => {
   const result = trainingRhythm({ '2026-09-07': 29, '2026-09-08': 31 }, '2026-09-09')
+  assert.deepEqual(result.trainedDates, ['2026-09-07', '2026-09-08'])
   assert.deepEqual(result.qualifyingDates, ['2026-09-08'])
   assert.equal(result.currentWeekDays, 1)
 })

@@ -47,19 +47,32 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     const leading = (firstAt.getUTCDay() + 6) % 7
     const nextMonth = new Date(Date.UTC(firstAt.getUTCFullYear(), firstAt.getUTCMonth() + 1, 1))
     const days = Math.round((nextMonth - firstAt) / 86400000)
-    const trained = new Set(rhythm.qualifyingDates)
+    const trained = new Set(rhythm.trainedDates)
+    const qualified = new Set(rhythm.qualifyingDates)
     const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(firstAt)
     const cells = Array.from({ length: leading }, () => el('span.training-calendar__blank', { 'aria-hidden': 'true' }))
     for (let index = 0; index < days; index += 1) {
       const date = addUtcDays(first, index)
       const minutes = Math.round(rhythm.minutesByDate?.[date] ?? 0)
+      const hasTraining = trained.has(date)
+      const qualifies = qualified.has(date)
       cells.push(el('span.training-calendar__day', {
         text: String(index + 1),
-        title: trained.has(date) ? `${minutes} training minutes` : undefined,
-        'aria-label': `${monthLabel.split(' ')[0]} ${index + 1}${trained.has(date) ? `, ${minutes} training minutes` : ''}`,
-        dataset: { trained: String(trained.has(date)), today: String(date === today) },
+        title: hasTraining
+          ? `${minutes} training minutes${qualifies ? ', strong-week day' : ''}`
+          : undefined,
+        'aria-label': `${monthLabel.split(' ')[0]} ${index + 1}${hasTraining ? `, ${minutes} training minutes${qualifies ? ', strong-week day' : ''}` : ''}`,
+        dataset: {
+          trained: String(hasTraining),
+          qualified: String(qualifies),
+          today: String(date === today),
+        },
       }))
     }
+
+    const programWorkouts = weekView?.week?.days
+      ?.filter((entry) => entry.tasks.some((task) => task.logged > 0)).length ?? 0
+    const programWorkoutTotal = weekView?.week?.days?.length ?? 0
 
     return el('section.card.training-rhythm', { dataset: { trainingRhythm: 'calendar' } }, [
       el('div.training-rhythm__head', {}, [
@@ -77,7 +90,10 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
         }),
       ]),
       el('p.training-rhythm__week', {
-        text: `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min this week`,
+        text: [
+          programWorkoutTotal ? `${programWorkouts} of ${programWorkoutTotal} program workouts logged` : null,
+          `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min`,
+        ].filter(Boolean).join(' · '),
       }),
       el('div.training-calendar__month', { text: monthLabel }),
       el('div.training-calendar', { role: 'group', 'aria-label': `${monthLabel} training days` }, [

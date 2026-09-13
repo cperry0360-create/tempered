@@ -2368,3 +2368,28 @@ so the active-workout card immediately returned and could reopen the discarded D
 **Reasoning:** Installed PWAs must replace the session screen and guard modules.
 **Confidence:** implementation and regression suite.
 **Needs Cory:** confirm the old Delts card disappears after one confirmed discard on the updated build.
+## 2026-09-13 — Training rhythm shows workouts separately from qualifying days
+**Phase:** 0.23.3 accuracy and mobile UI repair
+**Decision:** Keep the forgiving strong-week rule at four distinct 30-minute days, but also show
+how many active-program workouts contain logged work. Mark every trained calendar date; reserve
+the solid acid fill for dates that reach the 30-minute threshold.
+**Reasoning:** A fifth completed program workout could be invisible when it was shorter than 30
+minutes or shared a calendar date. The app was accurately reporting qualifying days but looked as
+though it had lost the workout.
+**Confidence:** domain regression coverage and source-level UI verification.
+**Needs Cory:** confirm the card reports all five workouts from live history.
+
+## 2026-09-13 — Nutrition time gets a full row on large iPhones
+**Phase:** 0.23.3 accuracy and mobile UI repair
+**Decision:** Extend the full-width native Time input layout through 520 CSS pixels.
+**Reasoning:** Current Pro Max viewports can exceed the previous 430px breakpoint, allowing the
+intrinsically wide iOS time control to paint over Calories.
+**Confidence:** screenshot diagnosis and responsive CSS regression coverage.
+**Needs Cory:** confirm Time no longer overlaps Calories after the installed cache updates.
+
+## 2026-09-13 — Release 0.23.3 (34) repairs weekly reporting and nutrition layout
+**Phase:** 0.23.3 release
+**Decision:** Advance the installed cache identity for the Train and Nutrition fixes.
+**Reasoning:** Installed PWAs must replace the Train screen and responsive nutrition stylesheet.
+**Confidence:** implementation and regression suite.
+**Needs Cory:** no

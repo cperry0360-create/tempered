@@ -31,6 +31,10 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
   const minimumMinutes = Math.max(1, Number(options.minimumMinutes) || 30)
   const weeklyDays = Math.max(1, Number(options.weeklyDays) || 4)
   const keeperEvery = Math.max(1, Number(options.keeperEvery) || 5)
+  const trainedDates = Object.entries(minutesByDate ?? {})
+    .filter(([date, minutes]) => date <= today && Number(minutes) > 0)
+    .map(([date]) => date)
+    .sort()
   const qualifyingDates = Object.entries(minutesByDate ?? {})
     .filter(([date, minutes]) => date <= today && Number(minutes) >= minimumMinutes)
     .map(([date]) => date)
@@ -75,6 +79,7 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
     minimumMinutes,
     weeklyDays,
     keeperEvery,
+    trainedDates,
     qualifyingDates,
     currentWeek,
     currentWeekDays: daysByWeek.get(currentWeek)?.size ?? 0,

@@ -119,7 +119,7 @@
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today renders', Boolean(q('.screen--today')))
-      check('Visible navigation has Companion instead of Character', Boolean(q('[data-tab="companion"]')) && !q('[data-tab="character"]'))
+      check('Visible navigation has Fuel instead of Character', q('[data-tab="companion"]')?.textContent.trim() === 'FUEL' && !q('[data-tab="character"]'))
 
       const water = q('[data-activity="water"]')
       const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', water)

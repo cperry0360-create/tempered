@@ -2431,3 +2431,26 @@ snapshot engine.
 **Reasoning:** Installed PWAs must receive the new runtime, styles, and offline cache entries.
 **Confidence:** implementation and regression suite.
 **Needs Cory:** no
+
+## 2026-09-13 — Practical health controls replace passive and oversized surfaces
+**Phase:** 0.24.0 product utility pass
+**Decision:** Daily Recap refreshes immediately after Health import and includes recovery
+signals. Mobility opens a dedicated guided screen with routines, cues, timers, and explicit
+logging. Train shows only the prior and current week, followed by a transparent readiness
+estimate, recent training stats, and a bounded ChatGPT coaching handoff. The third navigation
+destination is now Fuel: calories, protein, water, and sleep lead, while the existing companion
+is retained below as an optional reward without resetting earned progress.
+**Reasoning:** Imported data must visibly land, high-frequency training controls deserve the
+screen space, and the former Companion tab did not offer enough repeat utility. Retaining the
+pet below Fuel avoids deleting earned history while testing a more practical destination.
+**Confidence:** user screenshots and direct product feedback, domain coverage, source-level
+regressions, and focused screen acceptance harnesses.
+**Needs Cory:** verify the installed iPhone handoff to ChatGPT and decide later whether the
+demoted companion earns a permanent place.
+
+## 2026-09-13 — Release 0.24.0 (37) ships the utility pass
+**Phase:** 0.24.0 release
+**Decision:** Advance the installed cache identity for recap, Mobility, Train, and Fuel changes.
+**Reasoning:** Installed Home Screen copies must atomically receive the new runtime and styles.
+**Confidence:** implementation and regression suite.
+**Needs Cory:** no

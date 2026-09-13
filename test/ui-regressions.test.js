@@ -182,3 +182,24 @@ test('REGRESSION: ChatGPT Health paste is live while the failed Shortcut UI stay
   assert.match(snapshot, /export function parseHealthSnapshot/)
   assert.match(snapshot, /export async function importHealthSnapshot/)
 })
+
+test('REGRESSION: Health import refreshes Daily Recap and exposes recovery signals', () => {
+  const recap = read('src/ui/calorie-ai-runtime.js')
+  assert.match(recap, /addEventListener\('tempered:health-imported'/)
+  assert.match(recap, /RECOVERY SIGNALS/)
+  assert.match(recap, /health\.restingHr/)
+  assert.match(recap, /health\.hrvMs/)
+  assert.match(recap, /health\.respiratoryRate/)
+  assert.match(recap, /health\.spo2/)
+})
+
+test('REGRESSION: practical surfaces lead while Companion remains optional', () => {
+  const app = read('src/ui/app.js')
+  const companion = read('src/ui/screens/companion.js')
+  const train = read('src/ui/screens/train.js')
+  assert.match(app, /id:\s*'companion',\s*label:\s*'FUEL'/)
+  assert.match(companion, /data.*fuelDashboard|fuelDashboard:\s*'true'/)
+  assert.match(train, /Array\.from\(\{ length: 14 \}/)
+  assert.match(train, /trainingReadiness/)
+  assert.match(train, /COPY \+ OPEN CHATGPT/)
+})

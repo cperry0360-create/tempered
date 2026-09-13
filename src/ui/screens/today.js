@@ -26,10 +26,46 @@ const DEFAULT_QUICK_ADD = Object.freeze({
 })
 
 export const MOBILITY_ROUTINES = Object.freeze([
-  Object.freeze({ id: 'desk_reset', name: 'Desk reset', minutes: 5, moves: ['Wall slides', 'Thoracic rotations', 'Neck glides'] }),
-  Object.freeze({ id: 'hips_ankles', name: 'Hips + ankles', minutes: 8, moves: ['90/90 switches', 'Hip-flexor reach', 'Knee-to-wall rocks'] }),
-  Object.freeze({ id: 'full_body', name: 'Full-body flow', minutes: 10, moves: ['Cat-cow', 'World’s greatest stretch', 'Deep-squat pry'] }),
-  Object.freeze({ id: 'recovery', name: 'Recovery downshift', minutes: 12, moves: ['Couch stretch', 'Hamstring floss', 'Child’s pose breathing'] }),
+  Object.freeze({
+    id: 'desk_reset', name: 'Desk reset', minutes: 5, focus: 'Neck · shoulders · upper back',
+    copy: 'A fast reset after laptop time or between calls.',
+    moves: ['Wall slides', 'Thoracic rotations', 'Neck glides'],
+    steps: [
+      { name: 'Wall slides', time: 120, cue: 'Keep ribs down. Slide only as high as the shoulders stay relaxed.' },
+      { name: 'Thoracic rotations', time: 120, cue: 'Move through the upper back. Keep hips quiet.' },
+      { name: 'Neck glides', time: 60, cue: 'Draw the chin straight back. Do not tip the head down.' },
+    ],
+  }),
+  Object.freeze({
+    id: 'hips_ankles', name: 'Hips + ankles', minutes: 8, focus: 'Hips · calves · ankles',
+    copy: 'Good before squats, running, or a long day on your feet.',
+    moves: ['90/90 switches', 'Hip-flexor reach', 'Knee-to-wall rocks'],
+    steps: [
+      { name: '90/90 switches', time: 180, cue: 'Rotate slowly between sides without forcing the end range.' },
+      { name: 'Hip-flexor reach', time: 180, cue: 'Tuck the pelvis, squeeze the back glute, then reach.' },
+      { name: 'Knee-to-wall rocks', time: 120, cue: 'Keep the heel down and track the knee over the toes.' },
+    ],
+  }),
+  Object.freeze({
+    id: 'full_body', name: 'Full-body flow', minutes: 10, focus: 'Spine · hips · shoulders',
+    copy: 'The all-purpose option when everything feels a little stiff.',
+    moves: ['Cat-cow', 'World’s greatest stretch', 'Deep-squat pry'],
+    steps: [
+      { name: 'Cat-cow', time: 120, cue: 'Move one segment at a time and pair each direction with your breath.' },
+      { name: 'World’s greatest stretch', time: 240, cue: 'Long lunge, elbow toward the floor, then rotate the chest open.' },
+      { name: 'Deep-squat pry', time: 240, cue: 'Hold a support if needed. Shift gently and keep both feet planted.' },
+    ],
+  }),
+  Object.freeze({
+    id: 'recovery', name: 'Recovery downshift', minutes: 12, focus: 'Quads · hamstrings · breathing',
+    copy: 'A slower flow for the evening or after a demanding training day.',
+    moves: ['Couch stretch', 'Hamstring floss', 'Child’s pose breathing'],
+    steps: [
+      { name: 'Couch stretch', time: 240, cue: 'Squeeze the back glute and stay tall. Switch halfway.' },
+      { name: 'Hamstring floss', time: 240, cue: 'Alternate a soft bend and extension. Never force the stretch.' },
+      { name: 'Child’s pose breathing', time: 240, cue: 'Take slow breaths into the sides and back of the rib cage.' },
+    ],
+  }),
 ])
 
 function unitLabel(activity) {
@@ -151,6 +187,10 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   let otherOpen = false
   let dailyRecapOpen = false
   let selectedMobilityRoutineId = null
+  let mobilityOverlay = null
+  let mobilityTimer = null
+  let mobilityRemaining = 0
+  let mobilityRunning = false
   let trainingStats = { minutes: 0, workingSets: 0, exercises: 0, sessions: 0 }
 
   const canLogSelected = () => selectedDate <= realToday
@@ -200,6 +240,133 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     await daily.setQuickAddPreset(activity.id, raw)
     quickPresets = await daily.quickAddPresets()
     render()
+  }
+
+  function timerText(seconds) {
+    const value = Math.max(0, Math.round(seconds))
+    return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`
+  }
+
+  function stopMobilityTimer() {
+    if (mobilityTimer) clearInterval(mobilityTimer)
+    mobilityTimer = null
+    mobilityRunning = false
+  }
+
+  function updateMobilityTimer() {
+    if (!mobilityOverlay) return
+    const time = mobilityOverlay.querySelector('[data-mobility-time]')
+    const control = mobilityOverlay.querySelector('[data-mobility-timer-toggle]')
+    if (time) time.textContent = timerText(mobilityRemaining)
+    if (control) control.textContent = mobilityRemaining <= 0 ? 'FLOW COMPLETE' : mobilityRunning ? 'PAUSE' : 'START TIMER'
+  }
+
+  function toggleMobilityTimer() {
+    if (mobilityRemaining <= 0) return
+    if (mobilityRunning) {
+      stopMobilityTimer()
+      updateMobilityTimer()
+      return
+    }
+    mobilityRunning = true
+    updateMobilityTimer()
+    mobilityTimer = setInterval(() => {
+      mobilityRemaining = Math.max(0, mobilityRemaining - 1)
+      if (mobilityRemaining <= 0) stopMobilityTimer()
+      updateMobilityTimer()
+    }, 1000)
+  }
+
+  function closeMobilityScreen() {
+    stopMobilityTimer()
+    mobilityOverlay?.remove()
+    mobilityOverlay = null
+    selectedMobilityRoutineId = null
+    mobilityRemaining = 0
+  }
+
+  function mobilityRoutineCard(routine) {
+    const selected = selectedMobilityRoutineId === routine.id
+    return el('button.mobility-screen__routine', {
+      type: 'button', dataset: { mobilityRoutine: routine.id, selected: String(selected) },
+      'aria-pressed': String(selected),
+      onclick: () => {
+        stopMobilityTimer()
+        selectedMobilityRoutineId = routine.id
+        mobilityRemaining = routine.minutes * 60
+        renderMobilityScreen()
+      },
+    }, [
+      el('span.mobility-screen__routine-mark', { 'aria-hidden': 'true', text: routine.id === 'desk_reset' ? '↟' : routine.id === 'hips_ankles' ? '◒' : routine.id === 'full_body' ? '◇' : '≈' }),
+      el('span.mobility-screen__routine-copy', {}, [
+        el('strong', { text: routine.name }),
+        el('small', { text: routine.focus }),
+      ]),
+      el('span.mobility-screen__routine-time', { text: `${routine.minutes} MIN` }),
+    ])
+  }
+
+  function renderMobilityScreen() {
+    if (!mobilityOverlay) return
+    const routine = MOBILITY_ROUTINES.find((item) => item.id === selectedMobilityRoutineId) ?? null
+    replace(mobilityOverlay, [
+      el('section.mobility-screen', {
+        role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'mobility-screen-title',
+      }, [
+        el('header.mobility-screen__head', {}, [
+          el('button.mobility-screen__back', { type: 'button', 'aria-label': 'Back to Today', onclick: closeMobilityScreen }, ['‹']),
+          el('div', {}, [
+            el('span', { text: 'MOVE BETTER TODAY' }),
+            el('h2', { id: 'mobility-screen-title', text: 'MOBILITY' }),
+          ]),
+          el('span.mobility-screen__minutes', { text: 'GUIDED FLOWS' }),
+        ]),
+        el('div.mobility-screen__hero', {}, [
+          el('span.mobility-screen__hero-art', { 'aria-hidden': 'true' }),
+          el('div', {}, [
+            el('strong', { text: 'Controlled range. Easy reset.' }),
+            el('p', { text: 'Pick the stiffness you want to solve, follow the cues, and log the time when you finish.' }),
+          ]),
+        ]),
+        el('div.mobility-screen__routines', {}, MOBILITY_ROUTINES.map(mobilityRoutineCard)),
+        routine && el('section.mobility-flow', { dataset: { routine: routine.id } }, [
+          el('div.mobility-flow__head', {}, [
+            el('div', {}, [
+              el('span', { text: 'SELECTED FLOW' }),
+              el('h3', { text: routine.name }),
+              el('p', { text: routine.copy }),
+            ]),
+            el('strong.mobility-flow__clock', { dataset: { mobilityTime: 'true' }, text: timerText(mobilityRemaining) }),
+          ]),
+          el('ol.mobility-flow__steps', {}, routine.steps.map((step) => el('li', {}, [
+            el('span.mobility-flow__step-time', { text: `${Math.round(step.time / 60)} min` }),
+            el('div', {}, [el('strong', { text: step.name }), el('p', { text: step.cue })]),
+          ]))),
+          el('div.mobility-flow__actions', {}, [
+            el('button.mobility-flow__timer', {
+              type: 'button', dataset: { mobilityTimerToggle: 'true' }, onclick: toggleMobilityTimer,
+            }, [mobilityRemaining <= 0 ? 'FLOW COMPLETE' : mobilityRunning ? 'PAUSE' : 'START TIMER']),
+            el('button.mobility-flow__complete', {
+              type: 'button', onclick: async () => {
+                const minutes = routine.minutes
+                closeMobilityScreen()
+                await record({ id: 'mobility', name: 'Mobility work', unit: 'min', spec: { entry: 'number', mode: 'add' } }, String(minutes))
+              },
+            }, [`COMPLETE + LOG ${routine.minutes} MIN`]),
+          ]),
+        ]),
+      ]),
+    ])
+  }
+
+  function openMobilityScreen() {
+    closeMobilityScreen()
+    mobilityOverlay = el('div.mobility-screen-overlay', {
+      dataset: { mobilityScreen: 'true' },
+      onclick: (event) => { if (event.target === event.currentTarget) closeMobilityScreen() },
+    })
+    document.body.append(mobilityOverlay)
+    renderMobilityScreen()
   }
 
   function editor(activity, weekly = null) {
@@ -318,10 +485,10 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
       }, [
         el('button.today-item__body', {
           type: 'button', disabled: !canLogSelected(), 'aria-expanded': String(open),
-          onclick: () => {
+          onclick: (event) => {
             if (!canLogSelected()) return
-            openActivityId = open ? null : activity.id
-            render()
+            if (activity.id === 'mobility') { openMobilityScreen(); return }
+            toggleNumberEditor(activity.id, open, event.currentTarget.closest('.today-item-wrap'))
           },
         }, [
           compactGlyph(activity, complete),
@@ -348,8 +515,11 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
         canLogSelected() && el('button.today-item__expand', {
           type: 'button', 'aria-label': `${open ? 'Close' : 'Open'} ${activity.name} details`,
           'aria-expanded': String(open),
-          onclick: () => { openActivityId = open ? null : activity.id; render() },
-        }, [icon(open ? 'up' : 'down')]),
+          onclick: (event) => {
+            if (activity.id === 'mobility') { openMobilityScreen(); return }
+            toggleNumberEditor(activity.id, open, event.currentTarget.closest('.today-item-wrap'))
+          },
+        }, [activity.id === 'mobility' ? '›' : icon(open ? 'up' : 'down')]),
       ]),
       open && editor(activity, weekly),
     ])
@@ -616,7 +786,8 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   function foldHeader({ title, detail, open, onToggle, action = null, dataset = {} }) {
     return el('div.today-section__head.today-section__head--fold', { dataset }, [
       el('button.today-section__fold', {
-        type: 'button', 'aria-expanded': String(open), onclick: onToggle,
+        type: 'button', 'aria-expanded': String(open),
+        onclick: (event) => toggleFold(open, onToggle, event.currentTarget.closest('.today-section')),
       }, [
         el('span.today-section__fold-copy', {}, [
           el('span.today-section__title', { text: title }),
@@ -626,6 +797,53 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
       ]),
       action,
     ])
+  }
+
+  function reducedMotion() {
+    return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
+  function reveal(node) {
+    if (!node || reducedMotion() || typeof node.animate !== 'function') return
+    const height = node.scrollHeight
+    node.animate([
+      { height: '0px', opacity: 0, transform: 'translateY(-4px)' },
+      { height: `${height}px`, opacity: 1, transform: 'translateY(0)' },
+    ], { duration: 210, easing: 'cubic-bezier(.2,.8,.2,1)' })
+  }
+
+  function conceal(node, update) {
+    if (!node || reducedMotion() || typeof node.animate !== 'function') { update(); return }
+    const animation = node.animate([
+      { height: `${node.getBoundingClientRect().height}px`, opacity: 1, transform: 'translateY(0)' },
+      { height: '0px', opacity: 0, transform: 'translateY(-4px)' },
+    ], { duration: 155, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' })
+    animation.finished.then(update, update)
+  }
+
+  function toggleNumberEditor(activityId, open, wrapper) {
+    if (open) {
+      conceal(wrapper?.querySelector('.today-editor'), () => {
+        openActivityId = null
+        render()
+      })
+      return
+    }
+    openActivityId = activityId
+    render()
+    requestAnimationFrame(() => reveal(root.querySelector(`[data-editor="${activityId}"]`)))
+  }
+
+  function toggleFold(open, update, section) {
+    if (open) {
+      conceal(section?.children?.[1], update)
+      return
+    }
+    const fold = section?.querySelector('[data-fold]')?.dataset.fold
+    update()
+    requestAnimationFrame(() => reveal(fold
+      ? root.querySelector(`[data-fold="${fold}"]`)?.parentElement?.children?.[1]
+      : null))
   }
 
   function summaryCard(done, total) {
@@ -916,6 +1134,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   }
 
   async function selectDate(dateKey) {
+    closeMobilityScreen()
     selectedDate = dateKey
     justEarned = null
     openActivityId = null
@@ -945,6 +1164,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
   }
 
   async function refresh() {
+    closeMobilityScreen()
     selectedDate = clock.today()
     justEarned = null
     openActivityId = null
@@ -959,5 +1179,6 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     root,
     primary() { return null },
     refresh,
+    deactivate: closeMobilityScreen,
   }
 }

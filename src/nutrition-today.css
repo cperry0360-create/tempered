@@ -138,6 +138,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 .nutrition-log-header h2 { margin: 0; font-size: 25px; line-height: 1; letter-spacing: -.025em; }
 
 .nutrition-log-header__ai {
+  text-decoration: none;
   min-height: 44px;
   display: inline-flex;
   align-items: center;

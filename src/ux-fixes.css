@@ -13,6 +13,7 @@
    meaningless one-tap preset. Keep it compact enough to coexist with the row's
    disclosure control on an iPhone. */
 .today-item__ai-prompt {
+  text-decoration: none;
   appearance: none;
   flex: none;
   min-height: 44px;

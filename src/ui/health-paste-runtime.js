@@ -104,7 +104,7 @@ export function installHealthPasteRuntime(context) {
         <p class="health-paste-sheet__intro">Run your pinned Tempered prompt in ChatGPT Health, copy its nine-line result, then paste it below. Blank fields are safely skipped.</p>
         <div class="health-paste-sheet__actions">
           <button type="button" class="button" data-health-paste-read>PASTE COPY</button>
-          <button type="button" class="button" data-health-prompt-copy>COPY HEALTH PROMPT</button>
+          <a class="button" data-health-prompt-copy href="https://chatgpt.com/" target="_blank" rel="noopener">COPY + OPEN CHATGPT</a>
         </div>
         <label class="health-paste-sheet__label" for="health-paste-input">HEALTH SNAPSHOT</label>
         <textarea id="health-paste-input" class="health-paste-sheet__input" data-health-paste-input rows="10" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${HEALTH_SNAPSHOT_PREFIX}\nDATE=${today}\nSTEPS=\nSLEEP=\nWEIGHT_LB=\nRESTING_HR=\nHRV_MS=\nRESP_RATE=\nSPO2="></textarea>
@@ -126,6 +126,7 @@ export function installHealthPasteRuntime(context) {
     const status = node.querySelector('[data-health-paste-status]')
     const submit = node.querySelector('[data-health-paste-submit]')
     let current = null
+    let imported = false
 
     const close = () => {
       document.removeEventListener('keydown', onKeyDown)
@@ -183,13 +184,14 @@ export function installHealthPasteRuntime(context) {
     node.querySelector('[data-health-prompt-copy]').onclick = async (event) => {
       try {
         await copyText(CHATGPT_HEALTH_PROMPT)
-        event.currentTarget.textContent = 'PROMPT COPIED'
-        status.textContent = 'Open ChatGPT Health and paste the prompt.'
+        event.currentTarget.textContent = 'PROMPT COPIED · OPENING CHATGPT'
+        status.textContent = 'Paste the copied prompt into ChatGPT Health.'
       } catch {
         status.textContent = 'Could not copy the prompt on this device.'
       }
     }
     submit.onclick = async () => {
+      if (imported) { close(); return }
       if (!current) return
       submit.disabled = true
       submit.textContent = 'IMPORTING…'
@@ -198,8 +200,10 @@ export function installHealthPasteRuntime(context) {
         window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
         status.textContent = result.warnings?.length
           ? `Imported for ${result.date}. ${result.warnings.join(' ')}`
-          : `Imported ${current.metrics.length} health fields for ${result.date}.`
-        submit.textContent = 'IMPORTED'
+          : `Imported ${current.metrics.length} health fields. The recap behind this sheet is updated.`
+        imported = true
+        submit.textContent = 'DONE · VIEW UPDATED RECAP'
+        submit.disabled = false
         await enhance()
       } catch {
         status.textContent = 'The health data could not be imported. Your existing logs were not changed.'

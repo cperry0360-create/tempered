@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.5 (30)
+**Current release:** 0.24.0 (37)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -16,9 +16,10 @@ Tempered is a mobile-first, local-first health, training, and lifestyle tracker 
 small positive companion layer. It is not an RPG battle game. The visible navigation is:
 
 1. **Today** for sleep, steps, nutrition, water, recovery, habits, and today's workout.
-2. **Train** for programs, ad-hoc exercises, fast set logging, history, and progression.
-3. **Companion** for a selectable Trailback Turtle, Forge Guardian, or Ember Sprout and
-   habitat that grow from accumulated real-world activity already stored by the tracker.
+2. **Train** for a compact two-week rhythm, readiness, concise ChatGPT coaching handoff,
+   programs, ad-hoc exercises, fast set logging, history, and progression.
+3. **Fuel** for calories, protein, water, and sleep at a glance with quick logging. The
+   selectable companion is retained below this practical dashboard as an optional reward.
 4. **Progress** for a fixed recap plus a configurable widget dashboard.
 
 Character/Battle code remains only for backwards compatibility with existing IndexedDB
@@ -36,8 +37,12 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 - Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
   and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
 - ChatGPT Health paste import is available from Daily Recap with an exact prompt, parsed
-  preview, and explicit confirmation. The failed Shortcut automation stays hidden. The
+  preview, explicit confirmation, immediate recap refresh, and visible recovery signals.
+  Copy actions open ChatGPT with the prompt on the clipboard because no supported public
+  prompt-prefill link is used. The failed Shortcut automation stays hidden. The
   future signed iOS wrapper can read supported HealthKit metrics directly.
+- Mobility opens a dedicated guided screen with four routines, movement cues, countdowns,
+  and explicit completion logging rather than expanding into an inline minutes field.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
 
 ## Companion contract

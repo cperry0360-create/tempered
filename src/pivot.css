@@ -469,7 +469,7 @@ body:has(.screen--companion)::before {
 .health-paste-sheet__intro,
 .health-paste-sheet__status { margin: 0; color: rgba(255,255,255,.66); font-size: 12px; line-height: 1.5; }
 .health-paste-sheet__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.health-paste-sheet__actions .button { min-width: 0; padding-inline: 8px; font-size: 9px; }
+.health-paste-sheet__actions .button { min-width: 0; padding-inline: 8px; font-size: 9px; text-decoration: none; }
 .health-paste-sheet__input {
   box-sizing: border-box;
   width: 100%;

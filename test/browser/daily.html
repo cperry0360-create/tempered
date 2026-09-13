@@ -152,15 +152,18 @@
           tempered.daily.activities.every((activity) => reachable.has(activity.id)),
           `${reachable.size}/${tempered.daily.activities.length} trackers reachable`)
 
-        const mobilityEditor = await openEditor('mobility')
-        check('Mobility opens four useful routines instead of only a blank minutes field',
-          qa('[data-mobility-routine]', mobilityEditor).length === 4,
-          `${qa('[data-mobility-routine]', mobilityEditor).length} routines`)
-        q('[data-mobility-routine="full_body"]', mobilityEditor)?.click(); await settle()
-        check('choosing a mobility routine shows its flow and fills its duration',
-          q('[data-entry="mobility"]')?.value === '10'
-          && /World’s greatest stretch/.test(q('.mobility-routine__detail')?.textContent ?? ''),
-          q('.mobility-routine__detail')?.textContent ?? 'missing')
+        const mobilityRow = await rowFor('mobility')
+        q('.today-item__body', mobilityRow)?.click(); await settle()
+        const mobilityScreen = q('[data-mobility-screen="true"]')
+        check('Mobility opens a dedicated guided screen with four routines',
+          mobilityScreen !== null && qa('[data-mobility-routine]', mobilityScreen).length === 4,
+          `${qa('[data-mobility-routine]', mobilityScreen).length} routines`)
+        q('[data-mobility-routine="full_body"]', mobilityScreen)?.click(); await settle()
+        check('choosing a mobility routine shows timed movement cues',
+          /World’s greatest stretch/.test(q('.mobility-flow', mobilityScreen)?.textContent ?? '')
+          && q('[data-mobility-timer-toggle]', mobilityScreen) !== null,
+          q('.mobility-flow', mobilityScreen)?.textContent ?? 'missing')
+        q('.mobility-screen__back', mobilityScreen)?.click(); await settle()
 
         const rest = await rowFor('rest_day')
         const restAction = markAction(rest)

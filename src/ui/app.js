@@ -1,5 +1,5 @@
 /**
- * The app shell. The visible product is now Today, Train, Companion and Progress.
+ * The app shell. The visible product is now Today, Train, Fuel and Progress.
  *
  * The old Character/Battle implementation remains reachable only as a legacy
  * internal route so existing data and regression fixtures do not need a risky
@@ -21,7 +21,7 @@ import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft
 const TABS = [
   { id: 'today', label: 'TODAY' },
   { id: 'train', label: 'TRAIN' },
-  { id: 'companion', label: 'COMPANION' },
+  { id: 'companion', label: 'FUEL' },
   { id: 'history', label: 'PROGRESS' },
 ]
 
@@ -65,7 +65,10 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup })
-  const companion = createCompanionScreen({ storage, clock, overlayHost: overlays })
+  const companion = createCompanionScreen({
+    storage, daily, clock, overlayHost: overlays,
+    onToday: async () => { await show('today') },
+  })
 
   let battleScreen = null
   let characterScreen = null
@@ -301,6 +304,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     const visible = TABS.some((entry) => entry.id === tab)
     const target = tab === 'settings' || tab === 'character' || visible ? tab : 'today'
     if (target !== 'companion') companion.deactivate()
+    if (target !== 'today') today.deactivate?.()
     active = target
     session?.destroy()
     session = null

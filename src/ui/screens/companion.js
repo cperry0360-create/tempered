@@ -91,12 +91,16 @@ function roomState(level) {
   return 'starter'
 }
 
-export function createCompanionScreen({ storage, clock, overlayHost }) {
+export function createCompanionScreen({ storage, daily, clock, overlayHost, onToday }) {
   const root = el('div.screen.screen--companion')
   let model = null
   let revealPhase = null
   let revealTimer = null
   let revealFromStage = null
+  const onFuelUpdated = (event) => {
+    if (root.isConnected && (!event?.detail?.date || event.detail.date === clock.today())) refresh().catch(() => {})
+  }
+  window.addEventListener('tempered:fuel-updated', onFuelUpdated)
 
   async function load() {
     const [storedProfile, sessions, setLogs, days] = await Promise.all([
@@ -160,6 +164,7 @@ export function createCompanionScreen({ storage, clock, overlayHost }) {
       unlocks,
       roomState: roomState(stage.level),
       moment: todayMoment({ trained, day: today, name, style }),
+      day: today,
       totals: { sessions: finished.length, sets: workingSets.length, lifestyle },
     }
   }
@@ -367,18 +372,60 @@ export function createCompanionScreen({ storage, clock, overlayHost }) {
     ])
   }
 
+  async function addWater(amount) {
+    await daily.logAt(clock.today(), 'water', amount)
+    await refresh()
+  }
+
+  function fuelDashboard(m) {
+    const day = m.day ?? {}
+    const number = (value) => typeof value === 'number' && Number.isFinite(value) ? value : 0
+    const metric = (label, value, detail) => el('div.fuel-dashboard__metric', {}, [
+      el('span', { text: label }), el('strong', { text: value }), el('small', { text: detail }),
+    ])
+    return el('section.fuel-dashboard', { dataset: { fuelDashboard: 'true' } }, [
+      el('div.fuel-dashboard__head', {}, [
+        el('div', {}, [
+          el('span', { text: 'TODAY' }),
+          el('h2', { text: 'Fuel & recovery' }),
+        ]),
+        el('button.fuel-dashboard__today', { type: 'button', onclick: onToday }, ['OPEN TODAY']),
+      ]),
+      el('div.fuel-dashboard__grid', {}, [
+        metric('CALORIES', `${Math.round(number(day.calories))}`, 'kcal logged'),
+        metric('PROTEIN', `${Math.round(number(day.proteinGrams))}`, 'grams logged'),
+        metric('WATER', `${Math.round(number(day.waterOz))}`, 'ounces logged'),
+        metric('SLEEP', day.sleepHours ? `${Number(day.sleepHours.toFixed(1))}` : '—', 'hours'),
+      ]),
+      el('div.fuel-dashboard__actions', {}, [
+        el('button.fuel-dashboard__nutrition', {
+          type: 'button',
+          onclick: (event) => window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
+            detail: { date: clock.today(), trigger: event.currentTarget },
+          })),
+        }, ['LOG A MEAL']),
+        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(8) }, ['+8 OZ']),
+        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(12) }, ['+12 OZ']),
+        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(25) }, ['+25 OZ']),
+      ]),
+      el('p.fuel-dashboard__note', { text: 'Nutrition and water live here as daily inputs. The companion is now the reward, not the job.' }),
+    ])
+  }
+
   function render() {
     const m = model
     if (!m) return
     replace(root, [
       el('header.companion-header', {}, [
         el('div', {}, [
-          el('span.companion-header__eyebrow', { text: m.style === 'turtle' ? 'YOUR TRAILBACK' : m.style === 'forge' ? 'YOUR GUARDIAN' : 'YOUR COMPANION' }),
-          el('h1.screen__title', { text: m.name }),
-          el('p.companion-header__copy', { text: 'Real-life progress shapes this space. Nothing ever decays.' }),
+          el('span.companion-header__eyebrow', { text: 'FUEL · HYDRATION · RECOVERY' }),
+          el('h1.screen__title', { text: 'Fuel' }),
+          el('p.companion-header__copy', { text: `${m.name} is a small reward for the work you already track. Nothing ever decays.` }),
         ]),
         companionArt(m, 'companion-header__mark'),
       ]),
+
+      fuelDashboard(m),
 
       el('section.companion-habitat', {
         dataset: {

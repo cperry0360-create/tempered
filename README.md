@@ -11,15 +11,15 @@ It is built around one practical idea: **make the healthy things easy to record,
 The visible app has four primary surfaces:
 
 - **Today** — day planning, Lifestyle status, itemized Nutrition with calories and macros, hydration, habits, and today's workout queue.
-- **Train** — programs, exercise history, fast set logging, add-anytime movements, resumable/minimizable sessions, progression tools, cable-machine support, and ad-hoc training.
-- **Companion** — a small creature that grows only from accumulated real-world activity. It never loses progress, gets sick, or punishes a missed day.
+- **Train** — a compact two-week rhythm, readiness and progress control center, concise ChatGPT coaching handoff, programs, exercise history, fast set logging, and progression tools.
+- **Fuel** — calories, protein, water, and sleep at a glance with fast logging. The optional companion remains below this practical dashboard as a small reward.
 - **Progress** — recap plus a configurable health/training widget dashboard that distinguishes missing history from recorded zeroes.
 
 The earlier Character/Battle RPG implementation is retained internally for backwards compatibility with existing local data and regression fixtures, but it is intentionally absent from normal navigation and loads only when an old internal route requests it. New product work should not expand the RPG.
 
 ## Health data
 
-The production Home Screen PWA supports an explicit ChatGPT Health paste import. From Today, open Daily Recap and choose **Import Health**. Tempered can copy the exact prompt, read or accept its nine-line `TEMPERED_HEALTH_V1` result, preview every populated field, and import only after confirmation. Blank fields are skipped, so a night without Apple Watch sleep data does not erase an existing entry. The failed Apple Shortcuts automation remains preserved but hidden.
+The production Home Screen PWA supports an explicit ChatGPT Health paste import. From Today, open Daily Recap and choose **Import Health**. Tempered can copy the exact prompt, open ChatGPT, read or accept its nine-line `TEMPERED_HEALTH_V1` result, preview every populated field, and import only after confirmation. The recap refreshes immediately and shows imported recovery signals. Blank fields are skipped, so a night without Apple Watch sleep data does not erase an existing entry. The failed Apple Shortcuts automation remains preserved but hidden.
 
 A native iOS wrapper also exists for a future signed/TestFlight build. That remains the intended path for direct, passive HealthKit access when Tempered is ready for native distribution.
 

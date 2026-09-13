@@ -9,6 +9,7 @@
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { lbs, since } from '../format.js'
+import { trainingReadiness } from '../../domain/readiness.js'
 
 /**
  * @param {object} deps
@@ -31,6 +32,9 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   /** @type {Map<string, any>} */ let records = new Map()
   /** @type {Map<string, string>} */ const lastByExercise = new Map()
   /** @type {any} */ let rhythm = null
+  /** @type {any[]} */ let dayLogs = []
+  /** @type {any[]} */ let sessions = []
+  /** @type {any[]} */ let setLogs = []
 
   function addUtcDays(date, count) {
     const at = new Date(`${date}T00:00:00Z`)
@@ -41,34 +45,32 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   function trainingCalendar() {
     if (!rhythm) return null
     const today = clock.today()
-    const month = today.slice(0, 7)
-    const first = `${month}-01`
-    const firstAt = new Date(`${first}T00:00:00Z`)
-    const leading = (firstAt.getUTCDay() + 6) % 7
-    const nextMonth = new Date(Date.UTC(firstAt.getUTCFullYear(), firstAt.getUTCMonth() + 1, 1))
-    const days = Math.round((nextMonth - firstAt) / 86400000)
+    const at = new Date(`${today}T00:00:00Z`)
+    const currentWeekStart = addUtcDays(today, -((at.getUTCDay() + 6) % 7))
+    const first = addUtcDays(currentWeekStart, -7)
+    const dates = Array.from({ length: 14 }, (_, index) => addUtcDays(first, index))
     const trained = new Set(rhythm.trainedDates)
     const qualified = new Set(rhythm.qualifyingDates)
-    const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(firstAt)
-    const cells = Array.from({ length: leading }, () => el('span.training-calendar__blank', { 'aria-hidden': 'true' }))
-    for (let index = 0; index < days; index += 1) {
-      const date = addUtcDays(first, index)
+    const shortDate = (date) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
+    const rangeLabel = `${shortDate(first)} – ${shortDate(dates.at(-1))}`
+    const cells = dates.map((date) => {
+      const dateAt = new Date(`${date}T00:00:00Z`)
       const minutes = Math.round(rhythm.minutesByDate?.[date] ?? 0)
       const hasTraining = trained.has(date)
       const qualifies = qualified.has(date)
-      cells.push(el('span.training-calendar__day', {
-        text: String(index + 1),
+      return el('span.training-calendar__day', {
+        text: String(dateAt.getUTCDate()),
         title: hasTraining
           ? `${minutes} training minutes${qualifies ? ', strong-week day' : ''}`
           : undefined,
-        'aria-label': `${monthLabel.split(' ')[0]} ${index + 1}${hasTraining ? `, ${minutes} training minutes${qualifies ? ', strong-week day' : ''}` : ''}`,
+        'aria-label': `${shortDate(date)}${hasTraining ? `, ${minutes} training minutes${qualifies ? ', strong-week day' : ''}` : ''}`,
         dataset: {
           trained: String(hasTraining),
           qualified: String(qualifies),
           today: String(date === today),
         },
-      }))
-    }
+      })
+    })
 
     const programWorkouts = weekView?.week?.days
       ?.filter((entry) => entry.tasks.some((task) => task.logged > 0)).length ?? 0
@@ -95,16 +97,137 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
           `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min`,
         ].filter(Boolean).join(' · '),
       }),
-      el('div.training-calendar__month', { text: monthLabel }),
-      el('div.training-calendar', { role: 'group', 'aria-label': `${monthLabel} training days` }, [
+      el('div.training-calendar__month', {}, [
+        el('span', { text: 'PRIOR + CURRENT WEEK' }),
+        el('strong', { text: rangeLabel }),
+      ]),
+      el('div.training-calendar', { role: 'group', 'aria-label': `${rangeLabel} training days` }, [
         ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.training-calendar__weekday', { text: day })),
         ...cells,
       ]),
-      el('p.training-rhythm__note', {
-        text: rhythm.keepers > 0
-          ? 'Your keeper automatically protects one quiet completed week.'
-          : 'Five strong weeks earns a keeper for a vacation or recovery week.',
+    ])
+  }
+
+  function datesSince(date, count) {
+    return Array.from({ length: count }, (_, index) => addUtcDays(date, index - count + 1))
+  }
+
+  function mean(values) {
+    const valid = values.filter((value) => typeof value === 'number' && Number.isFinite(value))
+    return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : null
+  }
+
+  function coachingPrompt(model) {
+    const today = clock.today()
+    const range = new Set(datesSince(today, 14))
+    const recentDays = dayLogs.filter((day) => range.has(day.date))
+    const recentSessions = sessions.filter((session) => session.endedAt && range.has(session.date))
+    const sessionIds = new Set(recentSessions.map((session) => session.id))
+    const workingSets = setLogs.filter((set) => sessionIds.has(set.sessionId) && !set.isWarmup).length
+    const sleepAverage = mean(recentDays.map((day) => day.sleepHours))
+    const stepAverage = mean(recentDays.map((day) => day.steps))
+    const weights = recentDays.filter((day) => typeof day.bodyMetrics?.weight === 'number').sort((a, b) => a.date.localeCompare(b.date))
+    const weightChange = weights.length >= 2 ? weights.at(-1).bodyMetrics.weight - weights[0].bodyMetrics.weight : null
+    const minutes = datesSince(today, 14).reduce((sum, date) => sum + Number(rhythm?.minutesByDate?.[date] ?? 0), 0)
+    const latest = [...recentDays].sort((a, b) => b.date.localeCompare(a.date)).find((day) => day.healthMetrics) ?? null
+    return `Use this Tempered app data to give me a concise training progress report and practical coaching tips.
+
+Return exactly these sections and nothing else:
+PROGRESS
+One sentence, maximum 28 words.
+
+COACHING
+Exactly three bullets, each under 16 words.
+
+NEXT WORKOUT
+One sentence, maximum 20 words.
+
+Do not diagnose medical conditions. Call out missing data instead of guessing. Balance training stress with recovery.
+
+TEMPERED_DATA
+DATE=${today}
+PROGRAM=${active?.program?.name ?? 'None'}
+PROGRAM_WEEK=${active?.week ?? ''}
+READINESS_SCORE=${model.score ?? ''}
+READINESS_LABEL=${model.label}
+TRAINING_MINUTES_14D=${Math.round(minutes)}
+SESSIONS_14D=${recentSessions.length}
+WORKING_SETS_14D=${workingSets}
+SLEEP_AVG_14D=${sleepAverage === null ? '' : sleepAverage.toFixed(1)}
+STEPS_AVG_14D=${stepAverage === null ? '' : Math.round(stepAverage)}
+WEIGHT_CHANGE_LB_14D=${weightChange === null ? '' : weightChange.toFixed(1)}
+LATEST_RHR=${latest?.healthMetrics?.restingHr ?? ''}
+LATEST_HRV_MS=${latest?.healthMetrics?.hrvMs ?? ''}`
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(text); return true } catch { /* use fallback */ }
+    }
+    const input = document.createElement('textarea')
+    input.value = text
+    input.setAttribute('readonly', '')
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    document.body.append(input)
+    input.select()
+    const copied = document.execCommand?.('copy') === true
+    input.remove()
+    return copied
+  }
+
+  function controlCenter() {
+    if (!rhythm) return null
+    const today = clock.today()
+    const sevenDates = new Set(datesSince(today, 7))
+    const sevenSessions = sessions.filter((session) => session.endedAt && sevenDates.has(session.date))
+    const sessionIds = new Set(sevenSessions.map((session) => session.id))
+    const sets = setLogs.filter((set) => sessionIds.has(set.sessionId) && !set.isWarmup).length
+    const minutes = [...sevenDates].reduce((sum, date) => sum + Number(rhythm.minutesByDate?.[date] ?? 0), 0)
+    const model = trainingReadiness(dayLogs, today)
+    const score = model.score === null ? '—' : String(model.score)
+    const status = el('span.training-coach__status', { text: 'Copies a compact 14-day report.' })
+    const handoff = el('a.training-coach__action', {
+      href: 'https://chatgpt.com/', target: '_blank', rel: 'noopener',
+      dataset: { trainingCoach: 'open' },
+      onclick: async () => {
+        const copied = await copyText(coachingPrompt(model))
+        status.textContent = copied ? 'Report copied. Paste it into ChatGPT.' : 'Could not copy. Try again.'
+      },
+    }, ['COPY + OPEN CHATGPT'])
+
+    const stat = (label, value) => el('div.training-control__stat', {}, [
+      el('strong', { text: String(value) }), el('span', { text: label }),
+    ])
+    return el('section.card.training-control', { dataset: { trainingControl: 'true' } }, [
+      el('div.training-control__head', {}, [
+        el('div', {}, [
+          el('span.training-control__eyebrow', { text: 'WORKOUT CONTROL CENTER' }),
+          el('h2', { text: 'This week at a glance' }),
+        ]),
+        el('div.training-readiness', { dataset: { readiness: model.label.toLowerCase().replaceAll(' ', '-') } }, [
+          el('strong', { text: score }),
+          el('span', { text: model.label }),
+        ]),
+      ]),
+      el('div.training-control__stats', {}, [
+        stat('7D MIN', Math.round(minutes)),
+        stat('WORK SETS', sets),
+        stat('SESSIONS', sevenSessions.length),
+        stat('SIGNALS', model.signals.length),
+      ]),
+      el('p.training-control__readiness-note', {
+        text: model.score === null
+          ? 'Import sleep and recovery signals to calculate readiness.'
+          : `${model.coverage === 'limited' ? 'Limited estimate' : 'Recovery estimate'} from ${model.signals.map((signal) => signal.label).join(', ')}.`,
       }),
+      el('div.training-coach', {}, [
+        el('div', {}, [
+          el('strong', { text: 'AI progress check' }),
+          status,
+        ]),
+        handoff,
+      ]),
     ])
   }
 
@@ -255,6 +378,8 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
 
       trainingCalendar(),
 
+      controlCenter(),
+
       programBlock(),
 
       el('section.block', {}, [
@@ -306,15 +431,16 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
       todayDay = (await workout.todayTasks())?.day ?? null
       guide = await workout.programGuide()
       weekView = await workout.weekStatus()
-      rhythm = await workout.trainingRhythm()
-      routines = await storage.getAll('routines')
-      exercises = (await storage.getAll('exercises')).sort((a, b) => a.name.localeCompare(b.name))
-      records = await workout.recordMap()
+      ;[rhythm, routines, exercises, records, dayLogs, sessions, setLogs] = await Promise.all([
+        workout.trainingRhythm(), storage.getAll('routines'), storage.getAll('exercises'), workout.recordMap(),
+        storage.getAll('dayLogs'), storage.getAll('sessions'), storage.getAll('setLogs'),
+      ])
+      exercises.sort((a, b) => a.name.localeCompare(b.name))
 
       lastByExercise.clear()
-      const sessions = new Map((await storage.getAll('sessions')).map((s) => [s.id, s]))
-      for (const log of await storage.getAll('setLogs')) {
-        const date = sessions.get(log.sessionId)?.date
+      const sessionsById = new Map(sessions.map((s) => [s.id, s]))
+      for (const log of setLogs) {
+        const date = sessionsById.get(log.sessionId)?.date
         if (!date) continue
         if (!lastByExercise.has(log.exerciseId) || date > lastByExercise.get(log.exerciseId)) {
           lastByExercise.set(log.exerciseId, date)

@@ -227,13 +227,29 @@ export function installCalorieAiRuntime() {
     const stepGoal = Number(steps?.dailyCap)
     const waterValue = typeof water?.value === 'number' ? `${shownNumber(water.value)} oz` : '0 oz'
     const waterGoal = Number(water?.dailyCap)
-    return [
+    const metrics = [
       ['SLEEP', sleepValue, '7–9 h target', 'sleep', false],
       ['STEPS', stepValue, Number.isFinite(stepGoal) ? `${stepGoal.toLocaleString()} target` : 'daily movement', 'steps', false],
       ['NUTRITION', nutritionText(calories, protein), 'tap below for meals + macros', 'nutrition', true],
       ['WATER', waterValue, Number.isFinite(waterGoal) ? `${waterGoal} oz target` : 'hydration', 'water', false],
       ['WEIGHT', typeof weight === 'number' ? `${weight} lb` : '— lb', 'latest weigh-in', 'weight', false],
     ]
+    const health = view?.day?.healthMetrics ?? {}
+    const primary = [
+      Number.isFinite(health.restingHr) ? `RHR ${shownNumber(health.restingHr)}` : null,
+      Number.isFinite(health.hrvMs) ? `HRV ${shownNumber(health.hrvMs)}` : null,
+    ].filter(Boolean)
+    const secondary = [
+      Number.isFinite(health.respiratoryRate) ? `Resp ${shownNumber(health.respiratoryRate)}` : null,
+      Number.isFinite(health.spo2) ? `SpO₂ ${shownNumber(health.spo2)}%` : null,
+    ].filter(Boolean)
+    if (primary.length || secondary.length) {
+      metrics.push([
+        'RECOVERY SIGNALS', primary.join(' · ') || 'Imported',
+        secondary.join(' · ') || 'from ChatGPT Health', 'vitals', true,
+      ])
+    }
+    return metrics
   }
 
   function syncLifestyle(host, view, weight) {
@@ -276,7 +292,12 @@ export function installCalorieAiRuntime() {
   }
 
   function promptButton(className = 'today-item__ai-prompt') {
-    const button = makeButton(className, '', 'Copy AI meal-photo nutrition prompt')
+    const button = document.createElement('a')
+    button.className = className
+    button.href = 'https://chatgpt.com/'
+    button.target = '_blank'
+    button.rel = 'noopener'
+    button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
     button.replaceChildren(
       Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
       Object.assign(document.createElement('span'), { textContent: 'AI PHOTO' }),
@@ -285,7 +306,7 @@ export function installCalorieAiRuntime() {
     button.onclick = async (event) => {
       event.stopPropagation()
       const copied = await copyText(NUTRITION_PHOTO_PROMPT)
-      button.querySelector('span').textContent = copied ? 'COPIED' : 'FAILED'
+      button.querySelector('span').textContent = copied ? 'OPENING' : 'FAILED'
       button.dataset.copied = String(copied)
       window.setTimeout(() => {
         if (!button.isConnected) return
@@ -512,6 +533,7 @@ export function installCalorieAiRuntime() {
     list.replaceChildren(...rows)
     renderSuggestions(date, days)
     renderUndo()
+    window.dispatchEvent(new CustomEvent('tempered:fuel-updated', { detail: { date } }))
   }
 
   async function pasteNutrition(form, inputs) {
@@ -703,9 +725,9 @@ export function installCalorieAiRuntime() {
     return overlay
   }
 
-  function openNutritionScreen(trigger) {
+  function openNutritionScreen(trigger, dateOverride = null) {
     if (nutritionScreen?.isConnected) return
-    const date = selectedDate()
+    const date = dateOverride ?? selectedDate()
     if (!date) return
     nutritionScreen = buildNutritionScreen(date, trigger)
     document.body.append(nutritionScreen)
@@ -777,12 +799,18 @@ export function installCalorieAiRuntime() {
     else closeNutritionScreen()
   }
   const todayRendered = () => schedule()
+  const healthImported = () => schedule()
+  const nutritionRequested = (event) => openNutritionScreen(event?.detail?.trigger ?? null, event?.detail?.date ?? null)
   window.addEventListener('tempered:screen-shown', screenShown)
   window.addEventListener('tempered:today-rendered', todayRendered)
+  window.addEventListener('tempered:health-imported', healthImported)
+  window.addEventListener('tempered:open-nutrition', nutritionRequested)
   schedule()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
     window.removeEventListener('tempered:today-rendered', todayRendered)
+    window.removeEventListener('tempered:health-imported', healthImported)
+    window.removeEventListener('tempered:open-nutrition', nutritionRequested)
     closeNutritionScreen()
   }
 }

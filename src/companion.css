@@ -56,9 +56,37 @@
   line-height: 1.45;
 }
 
+.fuel-dashboard {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid rgba(188,232,219,.15);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(23,72,82,.91), rgba(8,38,51,.92));
+  box-shadow: 0 16px 42px rgba(0,0,0,.18);
+}
+.fuel-dashboard__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fuel-dashboard__head > div { min-width: 0; }
+.fuel-dashboard__head span { color: #cbdc75; font-size: 9px; font-weight: 820; letter-spacing: .13em; }
+.fuel-dashboard__head h2 { margin: 2px 0 0; font-size: 19px; }
+.fuel-dashboard__today {
+  min-height: 38px; padding: 0 11px; border: 1px solid rgba(203,220,117,.22); border-radius: 12px;
+  background: rgba(203,220,117,.07); color: #dce98d; font: inherit; font-size: 9px; font-weight: 800;
+}
+.fuel-dashboard__grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+.fuel-dashboard__metric { min-width: 0; display: grid; gap: 2px; padding: 10px 5px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: rgba(2,22,31,.31); text-align: center; }
+.fuel-dashboard__metric span { color: rgba(255,255,255,.48); font-size: 7px; font-weight: 800; letter-spacing: .06em; }
+.fuel-dashboard__metric strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+.fuel-dashboard__metric small { overflow: hidden; color: rgba(255,255,255,.48); font-size: 8px; white-space: nowrap; }
+.fuel-dashboard__actions { display: grid; grid-template-columns: 1.55fr repeat(3,.72fr); gap: 6px; }
+.fuel-dashboard__actions button { min-height: 42px; padding: 0 8px; border-radius: 12px; font: inherit; font-size: 9px; font-weight: 820; }
+.fuel-dashboard__nutrition { border: 0; background: #cbdc75; color: #10292b; }
+.fuel-dashboard__water { border: 1px solid rgba(121,218,205,.22); background: rgba(75,180,172,.08); color: #9ce1d3; }
+.fuel-dashboard__note { margin: 0; color: rgba(255,255,255,.52); font-size: 10px; line-height: 1.4; }
+
 .companion-habitat {
   position: relative;
-  min-height: 430px;
+  min-height: 310px;
   overflow: hidden;
   display: grid;
   align-items: end;
@@ -94,7 +122,7 @@
     url('../art/tempered/habitat-full.webp');
 }
 .companion-habitat[data-style='forge'] {
-  min-height: 470px;
+  min-height: 340px;
   background-image:
     linear-gradient(180deg, rgba(5,16,24,.02), rgba(4,15,22,.34)),
     url('../art/tempered/habitat-forge-starter.webp');
@@ -111,7 +139,7 @@
     url('../art/tempered/habitat-forge-full.webp');
 }
 .companion-habitat[data-style='turtle'] {
-  min-height: 470px;
+  min-height: 340px;
   background-image:
     linear-gradient(180deg, rgba(7,31,43,.02), rgba(6,28,30,.30)),
     url('../art/tempered/habitat-turtle-starter.webp');
@@ -664,9 +692,11 @@
 .companion-name__save { min-width: 82px; padding: 0 14px; color: #cbdc75; font-size: 11px; font-weight: 760; }
 
 @media (max-width: 390px) {
-  .companion-habitat { min-height: 390px; }
+  .companion-habitat { min-height: 290px; }
   .companion-habitat[data-style='forge'],
-  .companion-habitat[data-style='turtle'] { min-height: 440px; }
+  .companion-habitat[data-style='turtle'] { min-height: 320px; }
+  .fuel-dashboard__grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .fuel-dashboard__actions { grid-template-columns: 1.4fr repeat(3,.8fr); }
   .companion-room__items { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .companion-habitat__prop[data-prop='books'],
   .companion-habitat__prop[data-prop='dumbbell'] { bottom: 166px; }

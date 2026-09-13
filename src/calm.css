@@ -367,6 +367,121 @@ button.today-item:disabled { opacity: 1; cursor: default; }
 .mobility-routine__detail span { color: var(--calm-accent); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .mobility-routine__detail p { margin: 4px 0 0; color: var(--calm-text-2); font-size: 11px; line-height: 1.4; }
 
+/* Mobility is a guided tool, not an accordion field inside Habits. */
+.mobility-screen-overlay {
+  position: fixed;
+  z-index: 1050;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #071f2c;
+}
+.mobility-screen {
+  width: min(100%, 640px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: max(18px, env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(4,26,37,.34), rgba(4,25,35,.94) 44%),
+    url('../art/tempered/bg-today.webp') center top / cover fixed;
+  animation: mobility-screen-in 180ms cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes mobility-screen-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mobility-screen__head {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.mobility-screen__back {
+  width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+  border: 1px solid rgba(255,255,255,.13); border-radius: 14px;
+  background: rgba(7,32,45,.72); color: var(--text); font: 400 34px/1 system-ui;
+}
+.mobility-screen__head > div { min-width: 0; display: grid; gap: 1px; }
+.mobility-screen__head span { color: var(--calm-text-3); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.mobility-screen__head h2 { margin: 0; font-size: 28px; line-height: 1; letter-spacing: -.03em; }
+.mobility-screen__minutes { text-align: right; color: var(--calm-accent) !important; }
+.mobility-screen__hero {
+  min-height: 116px;
+  display: grid;
+  grid-template-columns: 92px minmax(0,1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(203,233,229,.14);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(32,91,99,.84), rgba(9,41,55,.90));
+}
+.mobility-screen__hero-art {
+  width: 82px; aspect-ratio: 1; display: block; border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 24%, #dbe7b7 0 8%, transparent 9%),
+    linear-gradient(68deg, transparent 45%, #9fe0ca 46% 52%, transparent 53%) 50% 55% / 72% 72% no-repeat,
+    radial-gradient(circle, rgba(143,225,198,.20), rgba(143,225,198,.03) 64%, transparent 65%);
+  border: 1px solid rgba(168,231,211,.19);
+}
+.mobility-screen__hero strong { font-size: 16px; }
+.mobility-screen__hero p { margin: 5px 0 0; color: var(--calm-text-2); font-size: 12px; line-height: 1.45; }
+.mobility-screen__routines { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mobility-screen__routine {
+  min-width: 0; min-height: 84px; display: grid;
+  grid-template-columns: 34px minmax(0,1fr); grid-template-rows: 1fr auto;
+  gap: 3px 9px; padding: 12px;
+  border: 1px solid rgba(203,233,229,.13); border-radius: 17px;
+  background: rgba(12,49,63,.76); color: var(--text); text-align: left; font: inherit;
+}
+.mobility-screen__routine[data-selected='true'] { border-color: rgba(217,233,130,.55); background: rgba(39,78,73,.88); }
+.mobility-screen__routine-mark { grid-row: 1 / 3; align-self: center; color: var(--calm-accent); font-size: 25px; text-align: center; }
+.mobility-screen__routine-copy { min-width: 0; display: grid; gap: 3px; }
+.mobility-screen__routine-copy strong { font-size: 12px; }
+.mobility-screen__routine-copy small { overflow: hidden; color: var(--calm-text-3); font-size: 9px; line-height: 1.25; }
+.mobility-screen__routine-time { color: var(--calm-accent); font-size: 9px; font-weight: 800; letter-spacing: .09em; }
+.mobility-flow {
+  display: grid; gap: 14px; padding: 16px;
+  border: 1px solid rgba(217,233,130,.18); border-radius: 22px;
+  background: rgba(6,31,43,.91);
+  animation: mobility-flow-in 180ms ease-out both;
+}
+@keyframes mobility-flow-in { from { opacity: 0; transform: translateY(8px); } }
+.mobility-flow__head { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
+.mobility-flow__head > div { min-width: 0; }
+.mobility-flow__head span { color: var(--calm-accent); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.mobility-flow__head h3 { margin: 2px 0 0; font-size: 22px; }
+.mobility-flow__head p { margin: 5px 0 0; color: var(--calm-text-2); font-size: 11px; line-height: 1.4; }
+.mobility-flow__clock { min-width: 74px; color: var(--calm-accent); font-size: 24px; font-variant-numeric: tabular-nums; text-align: right; }
+.mobility-flow__steps { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.mobility-flow__steps li { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 11px; padding: 12px 0; border-top: 1px solid var(--calm-line); }
+.mobility-flow__step-time { color: var(--calm-accent); font-size: 10px; font-weight: 750; }
+.mobility-flow__steps strong { font-size: 13px; }
+.mobility-flow__steps p { margin: 3px 0 0; color: var(--calm-text-2); font-size: 10px; line-height: 1.4; }
+.mobility-flow__actions { display: grid; grid-template-columns: .78fr 1.22fr; gap: 8px; }
+.mobility-flow__timer,
+.mobility-flow__complete {
+  min-height: 48px; padding: 0 12px; border-radius: 14px; font: inherit;
+  font-size: 10px; font-weight: 820; letter-spacing: .05em;
+}
+.mobility-flow__timer { border: 1px solid var(--calm-line); background: rgba(255,255,255,.04); color: var(--text); }
+.mobility-flow__complete { border: 0; background: var(--calm-accent); color: #122c2c; }
+
+@media (max-width: 390px) {
+  .mobility-screen { padding-inline: 12px; }
+  .mobility-screen__routines { grid-template-columns: 1fr; }
+  .mobility-screen__routine { min-height: 70px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobility-screen, .mobility-flow { animation: none; }
+}
+
 .today-workout-earlier { overflow: hidden; border: 1px solid var(--calm-line); border-radius: 16px; background: rgba(6, 30, 42, .62); }
 .today-workout-earlier > summary {
   min-height: 48px; display: flex; align-items: center; padding: 12px 16px; cursor: pointer;

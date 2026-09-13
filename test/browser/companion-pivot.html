@@ -161,14 +161,14 @@
       input.value = 'Moss'
       q('.companion-name__save')?.click()
       await settle(120)
-      check('Companion can be renamed', q('.screen--companion .screen__title')?.textContent === 'Moss', q('.screen--companion .screen__title')?.textContent)
+      check('Companion can be renamed without replacing the practical Fuel heading', q('.screen--companion .screen__title')?.textContent === 'Fuel' && q('.companion-name__input')?.value === 'Moss', `${q('.screen--companion .screen__title')?.textContent} / ${q('.companion-name__input')?.value}`)
       check('Companion name persists in profile', (await storage.get('profile', 'profile'))?.companionName === 'Moss')
 
       q('.companion-style__option[data-style="sprout"]')?.click()
       await settle(120)
       check('Existing Ember Sprout art remains selectable', q('.companion-habitat')?.dataset.style === 'sprout' && Boolean(q('img.companion-habitat__pet')), q('.companion-habitat')?.dataset.style)
       check('Style preference persists without resetting care', (await storage.get('profile', 'profile'))?.companionStyle === 'sprout' && /Level 4/.test(q('.companion-growth__stage')?.textContent ?? ''), q('.companion-growth__stage')?.textContent)
-      check('Renamed companion survives a visual-style change', q('.screen--companion .screen__title')?.textContent === 'Moss')
+      check('Renamed companion survives a visual-style change', q('.companion-name__input')?.value === 'Moss', q('.companion-name__input')?.value)
       check('Forge Guardian remains available as an optional style', Boolean(q('.companion-style__option[data-style="forge"]')))
 
       const normalText = q('.screen--companion')?.textContent ?? ''

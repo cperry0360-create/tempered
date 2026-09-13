@@ -1,4 +1,9 @@
 import { ACTIVITY_FIELDS, isLogged } from '../domain/activities.js'
+import {
+  observedProgressDates,
+  progressDataStart,
+  recordedSampleCount,
+} from '../domain/progress-coverage.js'
 
 const DEFAULT_WIDGETS = ['training', 'sleep', 'steps', 'nutrition', 'water', 'weight', 'consistency']
 const CATALOG = {
@@ -39,16 +44,14 @@ function compact(value) {
   return new Intl.NumberFormat(undefined, { notation: Math.abs(value) >= 10000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value)
 }
 function spark(values) {
-  const clean = values.map((v) => typeof v === 'number' && Number.isFinite(v) ? v : null)
-  if (clean.filter((v) => v !== null).length < 2) return null
-  const numeric = clean.filter((v) => v !== null)
-  const min = Math.min(...numeric)
-  const max = Math.max(...numeric)
+  const clean = values.filter((v) => typeof v === 'number' && Number.isFinite(v))
+  if (clean.length < 2) return null
+  const min = Math.min(...clean)
+  const max = Math.max(...clean)
   const span = max - min || 1
   const points = clean.map((value, index) => {
-    const v = value ?? min
     const x = (index / Math.max(1, clean.length - 1)) * 100
-    const y = 38 - ((v - min) / span) * 32
+    const y = 38 - ((value - min) / span) * 32
     return `${x.toFixed(1)},${y.toFixed(1)}`
   }).join(' ')
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -107,8 +110,7 @@ export function installProgressDashboardRuntime(context) {
 
   async function model(range) {
     const today = context.clock.today()
-    const dates = rangeDates(today, range)
-    const dateSet = new Set(dates)
+    const requestedDates = rangeDates(today, range)
     const [daysRaw, sessionsRaw, sets, schedule, exercises, todayView, profile] = await Promise.all([
       context.storage.getAll('dayLogs'),
       context.storage.getAll('sessions'),
@@ -118,6 +120,9 @@ export function installProgressDashboardRuntime(context) {
       context.daily.forDate(today),
       context.storage.get('profile', 'profile'),
     ])
+    const dataStart = progressDataStart({ dayLogs: daysRaw, sessions: sessionsRaw, today })
+    const dates = observedProgressDates(requestedDates, dataStart)
+    const dateSet = new Set(dates)
     const byDate = new Map(daysRaw.map((day) => [day.date, day]))
     const days = dates.map((date) => byDate.get(date) ?? { date })
     const sessions = sessionsRaw.filter((s) => s.endedAt && dateSet.has(s.date))
@@ -140,13 +145,13 @@ export function installProgressDashboardRuntime(context) {
     const proteinGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'protein_target')?.dailyCap ?? null
     const waterGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'water')?.dailyCap ?? null
     return {
-      range, days, sessions, working,
+      range, days, sessions, working, trackedDays: days.length,
       volume: dates.map((date) => volumeByDate.get(date) ?? 0),
       steps: days.map((d) => d.steps), sleep: days.map((d) => d.sleepHours),
       water: days.map((d) => d.waterOz), calories: days.map((d) => d.calories), protein: days.map((d) => d.proteinGrams),
       weights: days.map((d) => d.bodyMetrics?.weight), cardio: days.map((d) => d.microCardioMinutes ?? 0),
       latestWeight, weightChange: latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null,
-      habitRate: opportunities ? Math.round((done / opportunities) * 100) : 0,
+      habitRate: opportunities ? Math.round((done / opportunities) * 100) : null,
       calorieGoal: Number(caloriesGoal) || null, proteinGoal: Number(proteinGoal) || null, waterGoal: Number(waterGoal) || null,
     }
   }
@@ -183,40 +188,45 @@ export function installProgressDashboardRuntime(context) {
     const card = cardBase(id, data)
     if (id === 'training') {
       const total = data.volume.reduce((a, b) => a + b, 0)
-      headline(card, `${data.sessions.length} sessions`, `${data.working.length} working sets · ${compact(total)} lb nominal`)
+      headline(card, data.trackedDays ? `${data.sessions.length} sessions` : '—', data.trackedDays ? `${data.working.length} working sets · ${compact(total)} lb nominal` : 'No recorded days in this range')
       chart(card, data.volume)
     } else if (id === 'sleep') {
       const avg = mean(data.sleep)
-      headline(card, avg === null ? '—' : `${avg.toFixed(1)} h`, `${data.range}-day average`)
+      const samples = recordedSampleCount(data.sleep)
+      headline(card, avg === null ? '—' : `${avg.toFixed(1)} h`, samples ? `${samples} logged ${samples === 1 ? 'night' : 'nights'}` : 'No sleep logged in this range')
       chart(card, data.sleep)
     } else if (id === 'steps') {
       const avg = mean(data.steps)
-      headline(card, avg === null ? '—' : compact(Math.round(avg)), 'average steps')
+      const samples = recordedSampleCount(data.steps)
+      headline(card, avg === null ? '—' : compact(Math.round(avg)), samples ? `average · ${samples} logged ${samples === 1 ? 'day' : 'days'}` : 'No steps logged in this range')
       chart(card, data.steps)
     } else if (id === 'nutrition') {
       const c = mean(data.calories)
       const p = mean(data.protein)
-      headline(card, c === null ? '— kcal' : `${Math.round(c)} kcal`, data.calorieGoal ? `${data.calorieGoal} target` : 'average calories')
+      const calorieSamples = recordedSampleCount(data.calories)
+      const proteinSamples = recordedSampleCount(data.protein)
+      headline(card, c === null ? '— kcal' : `${Math.round(c)} kcal`, calorieSamples ? `average · ${calorieSamples} logged ${calorieSamples === 1 ? 'day' : 'days'}` : 'No calories logged in this range')
       const pair = document.createElement('div')
       pair.className = 'progress-widget__pair'
-      pair.innerHTML = `<span><b>${p === null ? '—' : Math.round(p)}g</b><small>protein avg</small></span><span><b>${data.proteinGoal ?? '—'}g</b><small>current target</small></span>`
+      pair.innerHTML = `<span><b>${p === null ? '—' : Math.round(p)}g</b><small>protein avg · ${proteinSamples} ${proteinSamples === 1 ? 'day' : 'days'}</small></span><span><b>${data.proteinGoal ?? '—'}g</b><small>current target</small></span>`
       card.append(pair)
     } else if (id === 'water') {
       const avg = mean(data.water)
-      headline(card, avg === null ? '—' : `${Math.round(avg)} oz`, data.waterGoal ? `${data.waterGoal} oz target` : 'average')
+      const samples = recordedSampleCount(data.water)
+      headline(card, avg === null ? '—' : `${Math.round(avg)} oz`, samples ? `average · ${samples} logged ${samples === 1 ? 'day' : 'days'}` : 'No water logged in this range')
       chart(card, data.water)
     } else if (id === 'weight') {
       headline(card, data.latestWeight === null ? '—' : `${data.latestWeight.toFixed(1)} lb`, data.weightChange === null ? 'latest weigh-in' : `${data.weightChange >= 0 ? '+' : ''}${data.weightChange.toFixed(1)} lb in range`)
       chart(card, data.weights)
     } else if (id === 'consistency') {
-      headline(card, `${data.habitRate}%`, `${data.range}-day configured lifestyle completion`)
+      headline(card, data.habitRate === null ? '—' : `${data.habitRate}%`, data.trackedDays ? `${data.trackedDays} of ${data.range} days tracked` : 'No recorded days in this range')
       const bar = document.createElement('div')
       bar.className = 'progress-widget__bar'
-      bar.innerHTML = `<span style="width:${data.habitRate}%"></span>`
+      bar.innerHTML = `<span style="width:${data.habitRate ?? 0}%"></span>`
       card.append(bar)
     } else if (id === 'cardio') {
       const total = data.cardio.reduce((a, b) => a + b, 0)
-      headline(card, `${Math.round(total)} min`, `${data.range}-day total`)
+      headline(card, data.trackedDays ? `${Math.round(total)} min` : '—', data.trackedDays ? `${data.trackedDays}-day tracked total` : 'No recorded days in this range')
       chart(card, data.cardio)
     }
     return card

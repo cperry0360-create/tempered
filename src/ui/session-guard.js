@@ -220,6 +220,15 @@ export function installSessionGuard({ app, workout, storage }) {
     return result
   }
 
+  // A minimized workout can be resumed after a full PWA relaunch. Reattach
+  // the guard to that canonical session so CANCEL still knows exactly which
+  // logs belong to this active attempt.
+  workout.adoptActiveSession = (session, logIds = []) => {
+    currentSession = session
+    currentLogIds.clear()
+    for (const id of logIds) if (id) currentLogIds.add(id)
+  }
+
   async function discardAndExit({ confirm = true } = {}) {
     const count = currentLogIds.size
     if (confirm && !(await confirmDiscardExercise(count))) return

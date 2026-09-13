@@ -2265,3 +2265,41 @@ Progress widget is now absent from both defaults and the add-widget catalogue.
 **Reasoning:** The installed PWA must replace the cached entry module and Progress dashboard.
 **Confidence:** implementation and local regression checks.
 **Needs Cory:** no
+
+## 2026-09-13 — Unknown history is not zero and turtle heads stay attached
+**Phase:** 0.22.5 Progress accuracy and companion polish
+**Decision:** Trim every Progress range to Tempered's first recorded day before calculating
+habit percentages, training totals, charts, or other time-window statistics. Keep explicit
+numeric zeroes when the user actually logged them, label partial 7/30/90-day views with their
+real data coverage, show the sample count behind averages, and suppress prior-period
+comparisons until both periods have complete coverage. Correct the lower row of the turtle
+sprite sheet at render time with a slightly taller, undistorted viewport on every surface.
+**Reasoning:** Days before Tempered had any data are unknown, not missed or zero. Counting them
+made longer ranges artificially poor and comparisons falsely optimistic. The generated turtle
+lineup also lets Levels 6–10 cross above their nominal row boundary, which clipped Level 8 at
+the forehead under a square CSS crop.
+**Confidence:** shared coverage helpers, unit regressions, source-sheet inspection, and CSS
+coverage for habitat, header, evolution, workout summary, setup, and style picker renders.
+**Needs Cory:** confirm the installed iPhone view after its service worker updates.
+
+## 2026-09-13 — Open workouts are part of the shell, not a modal dead end
+**Phase:** 0.22.5 active workout navigation
+**Decision:** Let any open workout add unused movements without changing its saved routine or
+program. Minimize persists the full screen draft, returns to the prior Tempered tab, releases
+the screen wake lock, and shows a compact Resume control above navigation. A fresh launch goes
+to Today and offers Resume rather than deleting the draft or auto-opening the exercise screen.
+**Reasoning:** A live workout needs to coexist with planning and logging elsewhere in Tempered.
+Treating it as an inescapable full-screen route forced users to finish or cancel before doing
+anything else. Added movements remain ad-hoc so they count as training without falsely marking
+a prescribed program slot complete.
+**Confidence:** source lifecycle review, checkpoint regressions, full unit suite, and updated
+browser acceptance coverage; no local Chromium was available, so CI and real-device layout remain.
+**Needs Cory:** verify the Resume dock position and add-movement search on iPhone.
+
+## 2026-09-13 — Release 0.22.5 (30) fixes Progress, Companion, and workout flow
+**Phase:** 0.22.5 PWA release
+**Decision:** Version 0.22.5 (30) advances the installed cache for partial-history accuracy,
+turtle sprite framing, add-movement controls, and minimizable/resumable workouts.
+**Reasoning:** These changes touch precached application code, documentation, tests, and styles.
+**Confidence:** implementation and local regression suite.
+**Needs Cory:** no

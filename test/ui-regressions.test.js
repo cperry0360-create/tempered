@@ -123,6 +123,42 @@ test('REGRESSION: Progress widgets wake on the first mounted Progress screen', (
   assert.match(pivotCss, /\.progress-widget\s*\{[\s\S]*backdrop-filter:\s*none/)
 })
 
+test('REGRESSION: longer Progress ranges exclude unknown pre-Tempered history', () => {
+  const history = read('src/ui/screens/history.js')
+  const dashboard = read('src/ui/progress-dashboard-runtime.js')
+  assert.match(history, /progressDataStart/)
+  assert.match(history, /observedProgressDates/)
+  assert.match(history, /fullCoverage/)
+  assert.match(history, /'DAYS'\}\s+OF DATA/)
+  assert.match(dashboard, /progressDataStart/)
+  assert.match(dashboard, /recordedSampleCount/)
+  assert.doesNotMatch(dashboard, /value \?\? min/)
+})
+
+test('REGRESSION: lower-row turtle stages use a taller undistorted viewport', () => {
+  const companion = read('src/companion.css')
+  const setup = read('src/setup.css')
+  const style = read('src/style.css')
+  assert.match(companion, /data-visual='8'[\s\S]*aspect-ratio:\s*\.89/)
+  assert.match(companion, /background-size:\s*500% auto/)
+  assert.match(setup, /data-style='turtle'[\s\S]*background-size:\s*500% auto/)
+  assert.match(style, /summary-power__art--turtle[\s\S]*background-size:\s*500% auto/)
+})
+
+test('REGRESSION: active workouts can add movements, minimize, and resume', () => {
+  const session = read('src/ui/screens/session.js')
+  const app = read('src/ui/app.js')
+  const bootstrap = read('src/app/bootstrap.js')
+  assert.match(session, /data-action['"]?:\s*['"]add-movement|action:\s*'add-movement'/)
+  assert.match(session, /workout\.prepareExercise\(exercise\.id/)
+  assert.match(session, /action:\s*'minimize-workout'/)
+  assert.match(session, /onMinimize/)
+  assert.match(app, /loadActiveSessionDraft/)
+  assert.match(app, /data-active-workout|activeWorkout/)
+  assert.match(app, /resumeSession\(current\)/)
+  assert.doesNotMatch(bootstrap, /clearActiveSessionDraft/)
+})
+
 test('REGRESSION: experimental Health UI is dormant while its implementation is preserved', () => {
   const main = read('src/main.js')
   const dashboard = read('src/ui/progress-dashboard-runtime.js')

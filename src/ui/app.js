@@ -18,7 +18,7 @@ import { createSettingsScreen } from './screens/settings.js'
 import { createCharacterScreen } from './screens/character.js'
 import { createBattleScreen } from './screens/battle.js'
 import { createCompanionScreen } from './screens/companion.js'
-import { clearActiveSessionDraft } from './session-draft.js'
+import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
   { id: 'today', label: 'TODAY' },
@@ -37,6 +37,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   const overlays = el('div.app__overlays')
   const announcer = liveRegion()
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
+  const workoutDock = el('aside.active-workout-dock', { hidden: true })
   const tabs = el('div.tabbar__tabs')
   const settingsAccess = el('button.settings-access', {
     type: 'button', 'aria-label': 'Settings', title: 'Settings',
@@ -83,6 +84,35 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   function announce(text) {
     announcer.textContent = ''
     queueMicrotask(() => { announcer.textContent = text })
+  }
+
+  function renderWorkoutDock() {
+    const draft = session ? null : loadActiveSessionDraft()
+    if (!draft) {
+      workoutDock.hidden = true
+      replace(workoutDock, [])
+      return
+    }
+    const setCount = (draft.plan ?? []).reduce(
+      (total, entry) => total + (entry.sets ?? []).filter((set) => set.logged === true).length,
+      0,
+    )
+    workoutDock.hidden = false
+    replace(workoutDock, [el('button.active-workout-dock__button', {
+      type: 'button', dataset: { activeWorkout: 'true' },
+      'aria-label': `Resume ${draft.session.title ?? 'workout'}`,
+      onclick: () => {
+        const current = loadActiveSessionDraft()
+        if (current) resumeSession(current)
+        else renderWorkoutDock()
+      },
+    }, [
+      el('span.active-workout-dock__copy', {}, [
+        el('strong', { text: draft.session.title ?? 'Workout in progress' }),
+        el('small', { text: `${setCount} ${setCount === 1 ? 'set' : 'sets'} logged · tap to resume` }),
+      ]),
+      el('span.active-workout-dock__resume', { text: 'RESUME' }),
+    ])])
   }
 
   function openSettings() {
@@ -148,6 +178,12 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   function makeSessionScreen() {
     return createSessionScreen({
       workout, clock,
+      onMinimize: async () => {
+        const open = session
+        session = null
+        open?.destroy()
+        await show(returnTab)
+      },
       onFinish: async (result) => {
         session?.destroy()
         session = null
@@ -158,6 +194,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
         settingsAccess.hidden = true
         body.scrollTop = 0
         announce('Workout summary')
+        renderWorkoutDock()
       },
     })
   }
@@ -166,6 +203,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     returnTab = active === 'settings' ? 'today' : active
     session?.destroy()
     session = makeSessionScreen()
+    renderWorkoutDock()
 
     body.setAttribute('aria-busy', 'true')
     try {
@@ -175,6 +213,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       settingsAccess.hidden = true
       body.scrollTop = 0
       announce('Workout session')
+      renderWorkoutDock()
     } catch (error) {
       console.error('[tempered] session failed to start', error)
       session?.destroy()
@@ -196,6 +235,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       : 'today'
     session?.destroy()
     session = makeSessionScreen()
+    renderWorkoutDock()
     body.setAttribute('aria-busy', 'true')
     try {
       await session.resume(draft)
@@ -204,6 +244,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
       settingsAccess.hidden = true
       body.scrollTop = 0
       announce('Workout session resumed')
+      renderWorkoutDock()
     } catch (error) {
       console.error('[tempered] workout resume failed', error)
       session?.destroy()
@@ -250,6 +291,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     try {
       await refreshScreen(target)
       renderTabs(target)
+      renderWorkoutDock()
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)
       // Post-render integrations (notably the configurable Progress widgets)
@@ -272,6 +314,6 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     }
   }
 
-  replace(mount, [body, announcer, settingsAccess, tabBar, overlays])
+  replace(mount, [body, announcer, settingsAccess, workoutDock, tabBar, overlays])
   return { show, startSession, resumeSession }
 }

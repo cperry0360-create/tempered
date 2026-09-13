@@ -1,10 +1,10 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-12
+**Last recovered and verified:** 2026-09-13
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.22.4 (29)
+**Current release:** 0.22.5 (30)
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
@@ -35,8 +35,8 @@ data and regression fixtures. Do not put it back in navigation or expand it.
   create a second shadow tracker.
 - Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
   and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
-- Apple Health uses the lightweight iPhone Shortcut handoff in the static PWA. The iOS
-  wrapper can read its supported HealthKit metrics directly.
+- Apple Health import is hidden in the static PWA. The future signed iOS wrapper can read
+  supported HealthKit metrics directly; manual logging remains the current product path.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
 
 ## Companion contract
@@ -77,7 +77,6 @@ and local persistence. The default widgets are:
 - Nutrition, showing calories and protein together
 - Water
 - Weight
-- Body Metrics, including resting HR, HRV, respiratory rate, and SpO2
 - Consistency
 
 Micro Cardio is available from the Add gallery. The dashboard must render on the first
@@ -89,6 +88,10 @@ remove, and reorder controls run. These interactions update immediately and pers
 sequence, without the scroll jumps and card flicker caused by asynchronous replacement.
 Release 0.15.0 also removes backdrop filtering and all animation from the card layer so
 iOS does not re-composite and flash cards while controls or DOM order change.
+Longer ranges begin at Tempered's first recorded day rather than inventing zeroes before
+the app had data. Partial 30/90-day views state their actual coverage, averages show sample
+counts, missing samples remain missing in charts, and prior-period comparisons wait until
+both periods have complete coverage.
 
 ## Nutrition log
 
@@ -126,9 +129,13 @@ minutes are circled. Four such days make a strong week; five strong weeks bank a
 keeper. A keeper automatically protects one completed quiet week, and an unfinished week
 never spends one. The system is positive-only. Train keeps the active program and routines
 on its main surface. The exercise library is a single button that opens a dedicated
-searchable screen. Full sessions show a persistent
-elapsed timer. While any workout logger is open, the PWA requests a screen wake lock and
-the iOS wrapper disables the idle timer; both are released when the workout closes.
+searchable screen. Any open workout can add another movement from that library without
+rewriting the saved program or routine. Full sessions show a persistent elapsed timer.
+An open workout can be minimized into a compact Resume control above the main navigation;
+its draft, checked sets, elapsed start time, and exercise additions survive navigation and
+app relaunch without automatically trapping the user back in the logger. While the logger
+is visible, the PWA requests a screen wake lock and the iOS wrapper disables the idle timer;
+both are released while minimized or closed and reacquired when the workout resumes.
 
 The November Physique light leg day adds Standing Calf Raise. Its former Crunch slot now
 alternates by program week: Ab-Wheel Rollout in odd weeks and Cable Crunch in even weeks.

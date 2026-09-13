@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Tempered — launch returns to Today</title>
+    <title>Tempered — minimize and resume workout</title>
     <style>
       body { font: 14px system-ui; background: #0a0c10; color: #e6eaf2; padding: 20px; }
       .check[data-ok="true"]::before { content: "PASS  "; color: #4fc9a0; }
@@ -10,7 +10,7 @@
     </style>
   </head>
   <body>
-    <h1>launch returns to Today</h1>
+    <h1>minimize and resume workout</h1>
     <div id="fixture"></div>
     <div id="results"></div>
     <script type="module">
@@ -61,17 +61,36 @@
         check('a live checkpoint exists before the restart', Boolean(draftBeforeRestart))
 
         // New shell + services, same durable stores. A cold launch should not
-        // take over the product with the old exercise screen.
+        // take over the product, but it must keep the workout resumable.
         const second = await bootstrap({ mount, storage, clock })
         await settle()
         check('relaunch lands on Today', Boolean(mount.querySelector('.screen--today-calm')))
         check('relaunch does not auto-open the workout', mount.querySelector('.screen--session') === null)
         check('navigation is visible after relaunch', mount.querySelector('.tabbar')?.hidden === false)
         check('Today is the active tab', mount.querySelector('[data-tab="today"]')?.getAttribute('aria-current') === 'page')
-        check('the old screen checkpoint is cleared', loadActiveSessionDraft() === null)
+        check('the workout checkpoint survives relaunch', loadActiveSessionDraft()?.session?.id === sessionId)
+        check('a compact resume control is visible', Boolean(mount.querySelector('[data-active-workout]')))
         check('already logged canonical work is preserved', sessionId
           ? (await second.workout.setsFor(sessionId)).length === 1
           : false)
+
+        mount.querySelector('[data-active-workout]').click()
+        await settle()
+        check('resume reopens the same active workout', Boolean(mount.querySelector('.screen--session')))
+        check('logged set remains checked after resume', mount.querySelector('[data-log="incline_bench_db:0"]')?.dataset.done === 'true')
+
+        mount.querySelector('[data-action="add-movement"]').click()
+        const addChoice = mount.querySelector('[data-add-exercise]')
+        const addedId = addChoice?.dataset.addExercise
+        addChoice?.click()
+        await settle()
+        check('another movement can be added while the workout is open', Boolean(addedId && mount.querySelector(`[data-exercise="${addedId}"]`)))
+        check('the added movement is checkpointed', loadActiveSessionDraft()?.plan?.some((entry) => entry.exercise?.id === addedId))
+
+        mount.querySelector('[data-action="minimize-workout"]').click()
+        await settle()
+        check('minimize returns to the app without finishing', Boolean(mount.querySelector('.screen--today-calm')))
+        check('minimized workout remains resumable', Boolean(mount.querySelector('[data-active-workout]')))
 
         clearActiveSessionDraft()
         const passed = checks.every((entry) => entry.ok)

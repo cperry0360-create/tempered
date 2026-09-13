@@ -1,9 +1,9 @@
 /**
- * Short-lived checkpoint for an active workout.
+ * Local checkpoint for an active workout.
  *
  * Checked sets remain canonical in IndexedDB. This localStorage record only
- * preserves the screen state that would otherwise disappear if iOS evicts the
- * installed PWA while it is backgrounded between sets.
+ * preserves the screen state while the user minimizes into the rest of
+ * Tempered, and if iOS evicts the installed PWA between sets.
  */
 const KEY = 'tempered.activeWorkout.v1'
 const DRAFT_VERSION = 1

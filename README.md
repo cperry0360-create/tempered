@@ -11,9 +11,9 @@ It is built around one practical idea: **make the healthy things easy to record,
 The visible app has four primary surfaces:
 
 - **Today** — day planning, Lifestyle status, itemized Nutrition with calories and macros, hydration, habits, and today's workout queue.
-- **Train** — programs, exercise history, fast set logging, progression tools, cable-machine support, and ad-hoc training.
+- **Train** — programs, exercise history, fast set logging, add-anytime movements, resumable/minimizable sessions, progression tools, cable-machine support, and ad-hoc training.
 - **Companion** — a small creature that grows only from accumulated real-world activity. It never loses progress, gets sick, or punishes a missed day.
-- **Progress** — recap plus a configurable health/training widget dashboard.
+- **Progress** — recap plus a configurable health/training widget dashboard that distinguishes missing history from recorded zeroes.
 
 The earlier Character/Battle RPG implementation is retained internally for backwards compatibility with existing local data and regression fixtures, but it is intentionally absent from normal navigation. New product work should not expand the RPG.
 

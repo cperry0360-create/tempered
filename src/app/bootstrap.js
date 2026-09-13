@@ -18,7 +18,6 @@ import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
-import { clearActiveSessionDraft } from '../ui/session-draft.js'
 import { installDailyWorkoutEnhancer } from '../ui/today-workout.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
@@ -110,11 +109,9 @@ export async function bootstrap(options = {}) {
     exposed.setup = null
     stopDailyWorkoutEnhancer = installDailyWorkoutEnhancer({ mount, workout, app, clock })
 
-    // A fresh launch always starts on Today. The old screen checkpoint was only
-    // intended to survive iOS eviction, but auto-restoring it trapped people in
-    // whatever exercise happened to be open. Clearing this checkpoint does NOT
-    // remove completed set logs; those remain canonical in IndexedDB.
-    clearActiveSessionDraft()
+    // A fresh launch starts on Today without taking over the app. If a workout
+    // checkpoint exists, the shell offers a compact Resume control above the
+    // tab bar; the exercise screen opens only when the user asks for it.
     await app.show('today')
 
     // Native iOS asks for read-only HealthKit access here, after Today is

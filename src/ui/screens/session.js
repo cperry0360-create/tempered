@@ -45,8 +45,9 @@ const isBarbell = (entry) => activeMethod(entry) === 'Barbell' && entry?.exercis
  * @param {ReturnType<import('../../app/workout.js').createWorkoutService>} deps.workout
  * @param {import('../../adapters/clock/clock.js').Clock} deps.clock
  * @param {(summary: object|null) => void} deps.onFinish  `null` when nothing was logged.
+ * @param {() => void} deps.onMinimize Preserve the draft and return to Tempered.
  */
-export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
+export function createSessionScreen({ workout, clock: timeSource, onFinish, onMinimize }) {
   const root = el('div.screen.screen--session')
 
   /** @type {any} */ let session = null
@@ -59,6 +60,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
   /** @type {{exerciseId: string, endsAt: number}|null} */ let rest = null
   /** @type {string|null} */ let openPanel = null   // `${exerciseId}:${panel}`
   let confirmingFinish = false
+  let addingMovement = false
+  let addQuery = ''
   let ticker
   let activeSince = null
   let wakeLock = null
@@ -638,6 +641,56 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
     return plan.reduce((total, entry) => total + entry.sets.filter((s) => s.logged).length, 0)
   }
 
+  async function addMovement(exercise) {
+    const prepared = await workout.prepareExercise(exercise.id, {
+      sets: 3, reps: null, weight: null,
+    })
+    if (!prepared.exercise) return
+    plan.push({
+      ...prepared,
+      ...entryDefaults(),
+      restSec: 150,
+      sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
+    })
+    addingMovement = false
+    addQuery = ''
+    persistDraft()
+    render()
+    requestAnimationFrame(() => root.querySelector(`[data-exercise="${exercise.id}"]`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
+  }
+
+  function addMovementPanel() {
+    const used = new Set(plan.map((entry) => entry.exercise.id))
+    const query = addQuery.trim().toLowerCase()
+    const choices = library
+      .filter((exercise) => !used.has(exercise.id))
+      .filter((exercise) => !query || exercise.name.toLowerCase().includes(query))
+      .slice(0, 60)
+    return el('section.session-add', { dataset: { addMovementPanel: 'true' } }, [
+      el('div.session-add__head', {}, [
+        el('div', {}, [
+          el('h2.session-add__title', { text: 'Add movement' }),
+          el('p.session-add__note', { text: 'Add it to this workout without changing your saved program.' }),
+        ]),
+        el('button.iconbutton', {
+          type: 'button', 'aria-label': 'Close movement library',
+          onclick: () => { addingMovement = false; addQuery = ''; render() },
+        }, ['×']),
+      ]),
+      el('input.session-add__search', {
+        type: 'search', placeholder: 'Search exercises', value: addQuery,
+        'aria-label': 'Search exercises to add',
+        oninput: (event) => { addQuery = event.target.value; render(); root.querySelector('.session-add__search')?.focus() },
+      }),
+      el('div.swaplist', {}, choices.length
+        ? choices.map((exercise) => el('button.swaplist__option', {
+            type: 'button', dataset: { addExercise: exercise.id },
+            onclick: () => addMovement(exercise),
+          }, [exercise.name]))
+        : [el('p.panel__note', { text: query ? 'No matching unused movements.' : 'Every movement is already in this workout.' })]),
+    ])
+  }
+
   function render() {
     replace(root, [
       el('header.sessionbar', {}, [
@@ -656,9 +709,21 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
         ]),
       ]),
 
+      el('button.session-minimize', {
+        type: 'button', dataset: { action: 'minimize-workout' },
+        onclick: () => { persistDraft(); onMinimize?.() },
+      }, [icon('minus'), 'MINIMIZE · KEEP WORKOUT OPEN']),
+
       session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — this week is recovery, and it is half the work.' }),
 
       ...plan.map(exerciseCard),
+
+      addingMovement
+        ? addMovementPanel()
+        : el('button.button.button--wide.session-add__open', {
+            type: 'button', dataset: { action: 'add-movement' },
+            onclick: () => { addingMovement = true; render(); requestAnimationFrame(() => root.querySelector('.session-add__search')?.focus()) },
+          }, [icon('plus'), 'ADD MOVEMENT']),
 
       // FINISH lives below every set control, behind a confirm, because ending
       // a session by mis-tapping next to a checkmark is unacceptable. The tab
@@ -814,12 +879,15 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish }) {
       isFirstOfDay = draft.isFirstOfDay !== false
       openPanel = draft.openPanel ?? null
       confirmingFinish = false
+      addingMovement = false
+      addQuery = ''
       rest = draft.rest && Number(draft.rest.endsAt) > timeSource.now() ? { ...draft.rest } : null
 
       const logs = await workout.setsFor(session.id)
       const liveLogIds = new Set(logs.map((log) => log.id))
       const loggedHereIds = new Set(draft.loggedHereIds ?? [])
       loggedHere = logs.filter((log) => loggedHereIds.has(log.id))
+      workout.adoptActiveSession?.(session, loggedHere.map((log) => log.id))
 
       // IndexedDB is canonical for checked sets. Reconcile the checkpoint in
       // case the app was killed after the set write but before its next paint.

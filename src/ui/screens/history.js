@@ -6,6 +6,11 @@ import { el, replace } from '../dom.js'
 import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
+import {
+  observedProgressDates,
+  progressDataStart,
+  recordedSampleCount,
+} from '../../domain/progress-coverage.js'
 
 const progressIcon = new URL('../../../art/tempered/icon-progress.png', import.meta.url).href
 
@@ -140,7 +145,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   }
 
   function selectedDays() {
-    return daysForDates(selectedDates())
+    const dates = selectedDates()
+    const dataStart = progressDataStart({ dayLogs, sessions, today: clock.today() })
+    return daysForDates(observedProgressDates(dates, dataStart))
   }
 
   function dailyActivities() {
@@ -174,18 +181,22 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   }
 
   function summaryForDates(dates) {
-    const days = daysForDates(dates)
-    const dateSet = new Set(dates)
+    const dataStart = progressDataStart({ dayLogs, sessions, today: clock.today() })
+    const trackedDates = observedProgressDates(dates, dataStart)
+    const days = daysForDates(trackedDates)
+    const dateSet = new Set(trackedDates)
     const habits = dailyActivities()
     const opportunities = days.length * habits.length
     const habitDone = days.reduce((sum, day) => sum + habits.filter((activity) => completedActivity(activity, day)).length, 0)
-    const habitRate = opportunities ? Math.round((habitDone / opportunities) * 100) : 0
+    const habitRate = opportunities ? Math.round((habitDone / opportunities) * 100) : null
     const periodSessions = sessions.filter((session) => dateSet.has(session.date))
     const sessionIds = new Set(periodSessions.map((session) => session.id))
     const workingSets = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId)).length
     const trainingDays = new Set(periodSessions.map((session) => session.date)).size
     const avgSteps = average(days.map((day) => day.steps))
     const avgSleep = average(days.map((day) => day.sleepHours))
+    const stepSamples = recordedSampleCount(days.map((day) => day.steps))
+    const sleepSamples = recordedSampleCount(days.map((day) => day.sleepHours))
     const microMinutes = days.reduce((sum, day) => sum + (day.microCardioMinutes ?? 0), 0)
 
     const volumeByDate = new Map(days.map((day) => [day.date, 0]))
@@ -206,6 +217,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return {
       days, periodSessions, trainingDays, workingSets, habitRate, avgSteps, avgSleep,
       microMinutes, volumeValues, totalVolume, weights, latestWeight, weightChange,
+      trackedDays: trackedDates.length,
+      requestedDays: dates.length,
+      fullCoverage: trackedDates.length === dates.length,
+      stepSamples,
+      sleepSamples,
     }
   }
 
@@ -215,32 +231,47 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const sleepText = current.avgSleep === null ? '—' : `${current.avgSleep.toFixed(1)}h`
     const stepsText = current.avgSteps === null ? '—' : compactNumber(Math.round(current.avgSteps))
     const bodyText = current.latestWeight === null ? '—' : `${current.latestWeight.toFixed(1)} lb`
+    const hasData = current.trackedDays > 0
+    const comparable = current.fullCoverage && previous.fullCoverage
+    const recapLabel = current.fullCoverage
+      ? `${range}-DAY RECAP`
+      : `${range}-DAY VIEW · ${current.trackedDays} ${current.trackedDays === 1 ? 'DAY' : 'DAYS'} OF DATA`
+    const comparisonTraining = comparable
+      ? deltaText(current.trainingDays, previous.trainingDays, { suffix: ' days' })
+      : 'no prior comparison yet'
+    const comparisonHabits = comparable
+      ? deltaText(current.habitRate, previous.habitRate, { points: true })
+      : 'no prior comparison yet'
 
     return [
       el('section.progress-recap', { dataset: { recap: String(range) } }, [
         el('div.progress-recap__top', {}, [
           el('div', {}, [
-            el('span.progress-recap__eyebrow', { text: `${range}-DAY RECAP` }),
+            el('span.progress-recap__eyebrow', { text: recapLabel }),
             el('h2.progress-recap__headline', {
-              text: current.trainingDays === 1 ? '1 training day' : `${current.trainingDays} training days`,
+              text: hasData
+                ? current.trainingDays === 1 ? '1 training day' : `${current.trainingDays} training days`
+                : 'No recorded data yet',
             }),
             el('p.progress-recap__sub', {
-              text: `${current.workingSets} working sets · ${compactNumber(current.totalVolume)} lb nominal training volume`,
+              text: hasData
+                ? `${current.workingSets} working sets · ${compactNumber(current.totalVolume)} lb nominal training volume`
+                : 'Tempered will calculate this range from the first day you log.',
             }),
           ]),
           el('div.progress-recap__score', {}, [
-            el('strong', { text: `${current.habitRate}%` }),
+            el('strong', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
             el('span', { text: 'habits' }),
           ]),
         ]),
         el('div.progress-recap__compare', {}, [
-          el('span', { text: deltaText(current.trainingDays, previous.trainingDays, { suffix: ' days' }) }),
-          el('span', { text: deltaText(current.habitRate, previous.habitRate, { points: true }) }),
+          el('span', { text: comparisonTraining }),
+          el('span', { text: comparisonHabits }),
         ]),
         el('div.progress-recap__stats', {}, [
-          metric(String(current.periodSessions.length), 'sessions', `${current.workingSets} working sets`),
-          metric(stepsText, 'avg steps', current.avgSteps === null ? null : deltaText(current.avgSteps, previous.avgSteps)),
-          metric(sleepText, 'avg sleep', current.avgSleep === null ? null : deltaText(current.avgSleep, previous.avgSleep, { suffix: 'h' })),
+          metric(hasData ? String(current.periodSessions.length) : '—', 'sessions', hasData ? `${current.workingSets} working sets` : null),
+          metric(stepsText, 'avg steps', current.avgSteps === null ? null : `${current.stepSamples} logged ${current.stepSamples === 1 ? 'day' : 'days'}`),
+          metric(sleepText, 'avg sleep', current.avgSleep === null ? null : `${current.sleepSamples} logged ${current.sleepSamples === 1 ? 'night' : 'nights'}`),
           metric(bodyText, 'latest weight', current.weightChange === null ? 'log more days for a trend' : `${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb in range`),
         ]),
       ]),
@@ -251,7 +282,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
             el('h2.progress-panel__title', { text: 'Consistency' }),
             el('p.progress-panel__sub', { text: 'Each square is one day of configured daily habits.' }),
           ]),
-          el('strong.progress-panel__hero', { text: `${current.habitRate}%` }),
+          el('strong.progress-panel__hero', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
         ]),
         heatmap(current.days),
       ]),
@@ -292,6 +323,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const activities = dailyActivities()
     if (activities.length === 0) {
       return [emptyState('No daily habits configured', 'Set activities to DAILY in Settings to build consistency stats.')]
+    }
+    if (days.length === 0) {
+      return [emptyState('No habit history yet', 'Tempered will calculate consistency from the first day you log.')]
     }
     return activities.map((activity) => {
       const values = days.map((day) => completedActivity(activity, day))

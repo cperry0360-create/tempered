@@ -72,11 +72,11 @@
   background-size: 500% 200%;
 }
 .setup__companionchoice[data-style='turtle'] .setup__companionpreview {
-  height: 44px;
-  aspect-ratio: 1;
+  width: 42px;
+  height: 47px;
   background-image: url('../art/tempered/companion-turtle-stages.png');
   background-position: 100% 100%;
-  background-size: 500% 200%;
+  background-size: 500% auto;
 }
 .setup__companionchoice[data-style='sprout'] .setup__companionpreview {
   background-image: url('../art/tempered/companion-stage-5.png');

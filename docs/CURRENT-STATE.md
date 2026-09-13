@@ -213,6 +213,9 @@ owned by Tempered. The page and precache use the same unqueried `src/main.js` ca
 - Clock and health integrations stay behind adapters.
 - Relative URLs and explicit `.js` extensions are mandatory for GitHub Pages under
   `/tempered/`.
+- GitHub Actions stages only the runtime shell, source modules, data, icons, and
+  optimized runtime art for Pages. Generation originals under `art/source/` are retained
+  in git but never included in the deployed artifact.
 - The root `sw.js` owns the offline cache. Bump `src/version.js` whenever production
   assets or runtime behavior change.
 - Work is committed directly to `main`; this is Cory's standing instruction for this

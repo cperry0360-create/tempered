@@ -12,8 +12,6 @@ import { createWorkoutService } from './workout.js'
 import { createDailyService } from './daily.js'
 import { createHealthSyncService } from './health-sync.js'
 import { createPlannerService } from './planner.js'
-import { createCharacterService } from './character.js'
-import { createBattleService } from './battle.js'
 import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
@@ -42,14 +40,11 @@ export async function bootstrap(options = {}) {
     ?? (globalThis.indexedDB ? createIndexedDbStorage() : createMemoryStorage())
   await storage.open()
 
-  const [balance, library, catalogue, activities, titles, enemies, itemRoster] = await Promise.all([
+  const [balance, library, catalogue, activities] = await Promise.all([
     loadJson('data/balance.json', base),
     loadJson('data/exercises.json', base),
     loadJson('data/programs.json', base),
     loadJson('data/activities.json', base),
-    loadJson('data/titles.json', base),
-    loadJson('data/enemies.json', base),
-    loadJson('data/items.json', base),
   ])
 
   await seedLibrary(storage, library)
@@ -65,16 +60,13 @@ export async function bootstrap(options = {}) {
     ? createHealthSyncService({ storage, health, daily, clock })
     : null
   const planner = createPlannerService({ storage, clock })
-  const character = createCharacterService({ storage, clock, balance, catalogue: titles })
-  const battle = createBattleService({
-    storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
-  })
   const maintenance = createMaintenanceService({ storage, clock })
   await maintenance.protectStorage()
 
   const exposed = {
-    storage, clock, workout, daily, planner, character, battle, maintenance, health, healthSync,
-    balance, library, catalogue, activities, titles, enemies, itemRoster,
+    storage, clock, workout, daily, planner, character: null, battle: null,
+    maintenance, health, healthSync,
+    balance, library, catalogue, activities, titles: null, enemies: null, itemRoster: null,
     app: null,
     setup: null,
     startSetup: null,
@@ -82,6 +74,31 @@ export async function bootstrap(options = {}) {
   }
   globalThis.tempered = exposed
   let stopDailyWorkoutEnhancer = null
+  let legacyPromise = null
+
+  // The retired Character/Battle implementation remains available to old
+  // internal links and regression harnesses, but none of its code, catalogues,
+  // CSS, or art belongs to the normal tracker startup anymore.
+  async function loadLegacy() {
+    if (!legacyPromise) legacyPromise = (async () => {
+      const [characterModule, battleModule, titles, enemies, itemRoster] = await Promise.all([
+        import('./character.js'),
+        import('./battle.js'),
+        loadJson('data/titles.json', base),
+        loadJson('data/enemies.json', base),
+        loadJson('data/items.json', base),
+      ])
+      const character = characterModule.createCharacterService({
+        storage, clock, balance, catalogue: titles,
+      })
+      const battle = battleModule.createBattleService({
+        storage, clock, balance, roster: enemies.enemies, items: itemRoster.items,
+      })
+      Object.assign(exposed, { character, battle, titles, enemies, itemRoster })
+      return { character, battle }
+    })()
+    return legacyPromise
+  }
 
   async function syncNativeHealth({ refreshToday = true } = {}) {
     if (!healthSync) return null
@@ -103,7 +120,7 @@ export async function bootstrap(options = {}) {
   async function showApp() {
     stopDailyWorkoutEnhancer?.()
     const app = createApp({
-      mount, workout, daily, planner, character, battle, maintenance, storage, clock,
+      mount, workout, daily, planner, maintenance, storage, clock, loadLegacy,
       onSetup: () => showSetup(true),
     })
     exposed.app = app

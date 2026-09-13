@@ -103,9 +103,10 @@ test('PHASE 8: utility uplift loads after core polish and browser chrome matches
   const calm = index.indexOf('./src/calm.css')
   const uplift = index.indexOf('./src/uplift.css')
   const progress = index.indexOf('./src/progress.css')
-  const battleFidelity = index.indexOf('./src/battle-fidelity.css')
+  const mobileFixes = index.indexOf('./src/mobile-fixes.css')
   assert.ok(style < setup && setup < cadence && cadence < polish)
-  assert.ok(polish < calm && calm < uplift && uplift < progress && progress < battleFidelity)
+  assert.ok(polish < calm && calm < uplift && uplift < progress && progress < mobileFixes)
+  assert.doesNotMatch(index, /battle\.css|expedition\.css|battle-fidelity\.css|character\.css/)
   assert.match(index, /name="theme-color" content="#16495f"/)
 })
 

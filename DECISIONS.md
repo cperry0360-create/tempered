@@ -2303,3 +2303,40 @@ turtle sprite framing, add-movement controls, and minimizable/resumable workouts
 **Reasoning:** These changes touch precached application code, documentation, tests, and styles.
 **Confidence:** implementation and local regression suite.
 **Needs Cory:** no
+
+## 2026-09-13 — Retired RPG code leaves the startup and offline payload
+**Phase:** 0.23.1 production cleanup
+**Decision:** Keep the old Character and Battle routes available through dynamic imports for
+backward compatibility and regression fixtures, but remove their services, screens, effects,
+styles, catalogues, and art from normal startup and the service-worker precache. Load the old
+styles only if the hidden route is explicitly requested.
+**Reasoning:** The visible product no longer links to these routes. Loading and installing the
+retired feature on every launch added work without helping the tracker or Companion.
+**Confidence:** static-import and precache regression checks plus the full unit suite.
+**Needs Cory:** no
+
+## 2026-09-13 — Pages deploys runtime files, not the working repository
+**Phase:** 0.23.1 deployment cleanup
+**Decision:** Replace root publication and the unused Netlify configuration with a GitHub Pages
+artifact workflow. Publish the application shell, runtime modules, data, icons, and runtime art;
+retain generation originals under `art/source/` in git without publishing them.
+**Reasoning:** Original image generations are valuable project history but add roughly 80 MB to
+the public deploy. Tests, docs, native sources, and scratch material are not web-app assets.
+**Confidence:** deployment contract test and explicit staging list.
+**Needs Cory:** no
+
+## 2026-09-13 — Nutrition fields respect iPhone grid width
+**Phase:** 0.23.1 mobile UI fix
+**Decision:** Make form inputs shrink within their grid cell and give the native Time control a
+full row through 430 CSS pixels, with Calories and Protein sharing the following row.
+**Reasoning:** iOS gives `input[type=time]` an intrinsic minimum width. The former 390px media
+query missed common 393px iPhones, allowing Time to render on top of Calories.
+**Confidence:** screenshot diagnosis and CSS regression coverage.
+**Needs Cory:** confirm the installed iPhone layout after its service worker updates.
+
+## 2026-09-13 — Release 0.23.1 (32) reduces the production payload
+**Phase:** 0.23.1 release
+**Decision:** Advance the cache identity for the nutrition layout repair and startup cleanup.
+**Reasoning:** Installed copies must replace the nutrition CSS, application shell, and precache.
+**Confidence:** implementation and local regression suite.
+**Needs Cory:** no

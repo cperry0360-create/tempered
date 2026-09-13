@@ -15,8 +15,6 @@ import { createSummaryScreen } from './screens/summary.js'
 import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
-import { createCharacterScreen } from './screens/character.js'
-import { createBattleScreen } from './screens/battle.js'
 import { createCompanionScreen } from './screens/companion.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
@@ -32,7 +30,23 @@ const tabLabel = (id) => {
   return TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
 }
 
-export function createApp({ mount, workout, daily, planner, character, battle, maintenance, storage, clock, onSetup }) {
+const LEGACY_STYLES = ['battle.css', 'expedition.css', 'battle-fidelity.css', 'character.css']
+
+function loadLegacyStyles() {
+  return Promise.all(LEGACY_STYLES.map((file) => new Promise((resolve, reject) => {
+    const href = new URL(`../${file}`, import.meta.url).href
+    const existing = [...document.styleSheets].find((sheet) => sheet.href === href)
+    if (existing) { resolve(); return }
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = href
+    link.onload = () => resolve()
+    link.onerror = () => reject(new Error(`Could not load legacy stylesheet: ${file}`))
+    document.head.append(link)
+  })))
+}
+
+export function createApp({ mount, workout, daily, planner, maintenance, storage, clock, loadLegacy, onSetup }) {
   const body = el('main.app__body', { 'aria-busy': 'false' })
   const overlays = el('div.app__overlays')
   const announcer = liveRegion()
@@ -53,17 +67,29 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup })
   const companion = createCompanionScreen({ storage, clock, overlayHost: overlays })
 
-  // Legacy RPG surfaces are kept out of navigation. Keeping the route alive is
-  // deliberate: old stored battles/titles remain harmless and backups stay
-  // backwards compatible while the product pivots away from game mechanics.
-  const battleScreen = battle
-    ? createBattleScreen({ battle, onClose: () => show(returnTab === 'settings' ? 'today' : returnTab) })
-    : null
-  const characterScreen = createCharacterScreen({
-    character,
-    onSettings: () => openSettings(),
-    onBattle: battleScreen ? () => openBattle() : null,
-  })
+  let battleScreen = null
+  let characterScreen = null
+  let legacyUiPromise = null
+
+  async function ensureLegacy() {
+    if (!legacyUiPromise) legacyUiPromise = (async () => {
+      if (typeof loadLegacy !== 'function') throw new Error('Legacy screens are unavailable')
+      const [services, characterModule, battleModule] = await Promise.all([
+        loadLegacy(), import('./screens/character.js'), import('./screens/battle.js'),
+        import('./battle-fx-runtime.js'), loadLegacyStyles(),
+      ])
+      battleScreen = battleModule.createBattleScreen({
+        battle: services.battle,
+        onClose: () => show(returnTab === 'settings' ? 'today' : returnTab),
+      })
+      characterScreen = characterModule.createCharacterScreen({
+        character: services.character,
+        onSettings: () => openSettings(),
+        onBattle: () => openBattle(),
+      })
+    })()
+    await legacyUiPromise
+  }
 
   const today = createTodayScreen({
     workout, daily, planner, clock,
@@ -152,10 +178,10 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
   }
 
   async function openBattle() {
-    if (!battleScreen) return
     returnTab = active === 'settings' ? 'today' : active
     body.setAttribute('aria-busy', 'true')
     try {
+      await ensureLegacy()
       await battleScreen.start()
       replace(body, [battleScreen.root])
       tabBar.hidden = true
@@ -266,6 +292,7 @@ export function createApp({ mount, workout, daily, planner, character, battle, m
     if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
     if (tab === 'companion') { await companion.refresh(); replace(body, [companion.root]); return }
     if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
+    await ensureLegacy()
     await characterScreen.refresh()
     replace(body, [characterScreen.root])
   }

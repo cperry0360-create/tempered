@@ -15,7 +15,7 @@ The visible app has four primary surfaces:
 - **Companion** — a small creature that grows only from accumulated real-world activity. It never loses progress, gets sick, or punishes a missed day.
 - **Progress** — recap plus a configurable health/training widget dashboard that distinguishes missing history from recorded zeroes.
 
-The earlier Character/Battle RPG implementation is retained internally for backwards compatibility with existing local data and regression fixtures, but it is intentionally absent from normal navigation. New product work should not expand the RPG.
+The earlier Character/Battle RPG implementation is retained internally for backwards compatibility with existing local data and regression fixtures, but it is intentionally absent from normal navigation and loads only when an old internal route requests it. New product work should not expand the RPG.
 
 ## Health data
 
@@ -68,7 +68,7 @@ The primary live app is served publicly by **GitHub Pages** from `main` at:
 
 `https://cperry0360-create.github.io/tempered/`
 
-Pages publishes the repository root directly. There is no application build step: `index.html`, `manifest.webmanifest`, `sw.js`, and runtime assets are served as committed. `.nojekyll` disables Jekyll processing, and runtime URLs are relative so the PWA works under the `/tempered/` project path. The versioned service worker installs its shell atomically, serves installed static assets from that complete cache, and falls back to the cached shell after 2.5 seconds when a weak connection stalls navigation.
+The Pages workflow stages a runtime-only artifact from `main`; there is no application compile or bundle step. Tests, documentation, native-project files, uploads, and the large generation originals under `art/source/` stay in the repository but are not published. Runtime URLs remain relative so the PWA works under the `/tempered/` project path. The versioned service worker installs its shell atomically, serves installed static assets from that complete cache, and falls back to the cached shell after 2.5 seconds when a weak connection stalls navigation.
 
 ## Status
 

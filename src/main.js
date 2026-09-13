@@ -2,7 +2,6 @@ import { registerServiceWorker } from './pwa/register.js'
 import { bootstrap } from './app/bootstrap.js'
 import { installSessionGuard } from './ui/session-guard.js'
 import { errorState } from './ui/states.js'
-import { installBattleFx } from './ui/battle-fx-runtime.js'
 import { installWaterQuickPresets } from './ui/water-quick-presets.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
@@ -13,10 +12,6 @@ registerServiceWorker()
 installWaterQuickPresets()
 installMobileInteractions()
 installCalorieAiRuntime()
-
-// Kept only for backwards-compatible legacy routes. Battle is no longer part
-// of normal navigation after the companion pivot.
-void installBattleFx
 
 bootstrap()
   .then(async (context) => {

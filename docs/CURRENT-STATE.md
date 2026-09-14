@@ -1,10 +1,12 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-13
+**Last recovered and verified:** 2026-09-14
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.25.0 (38)
+**Current release:** 0.26.0 (39)
+
+Release 0.26 keeps Health import above Daily Recap and redraws Today after import so sleep, steps, and scheduled habit rows update immediately. Nutrition now has an explicit date picker for correcting earlier records, Today offers a neutral review route for recent prior days with open items, readiness has Ready/Steady/Recover colors, and the ChatGPT coaching handoff includes the latest workout, strongest sets, workload, and confirmed load or volume PRs.
 
 Release 0.25 restores imported recovery signals to Progress, explains the readiness estimate using the user's own baselines, separates Fuel, hydration, and recovery into practical cards, and excludes current or flagged-partial nutrition days from calorie averages. Nutrition days can be marked Complete or Still Logging from the meal journal.
 

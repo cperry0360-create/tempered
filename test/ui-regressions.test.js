@@ -210,6 +210,34 @@ test('REGRESSION: Daily Recap is viewport-fixed outside transformed screens', ()
   assert.match(today, /document\.body\.append\(overlay\)/)
   assert.match(css, /\.today-recap-overlay[\s\S]*height:\s*100dvh/)
   assert.match(css, /\.today-recap-overlay[\s\S]*z-index:\s*1300/)
+  const pasteCss = read('src/pivot.css')
+  assert.match(pasteCss, /\.health-paste-overlay[\s\S]*z-index:\s*1500/)
+})
+
+test('REGRESSION: Health import redraws Today and prior days can be reviewed', () => {
+  const health = read('src/ui/health-paste-runtime.js')
+  const nutrition = read('src/ui/calorie-ai-runtime.js')
+  const app = read('src/ui/app.js')
+  assert.match(health, /context\.app\?\.show/)
+  assert.match(nutrition, /dataPriorDayReview|dataset\.priorDayReview/)
+  assert.match(nutrition, /showTodayDate/)
+  assert.match(app, /showTodayDate/)
+})
+
+test('REGRESSION: Nutrition supports correcting an earlier date', () => {
+  const nutrition = read('src/ui/calorie-ai-runtime.js')
+  const css = read('src/nutrition-today.css')
+  assert.match(nutrition, /data\.nutritionDate|dataset\.nutritionDate/)
+  assert.match(nutrition, /switchNutritionDate/)
+  assert.match(css, /\.nutrition-date-picker/)
+})
+
+test('REGRESSION: AI coaching includes the latest workout and confirmed records', () => {
+  const train = read('src/ui/screens/train.js')
+  assert.match(train, /LATEST_WORKOUT_BEST_SETS/)
+  assert.match(train, /LATEST_WORKOUT_CONFIRMED_PRS/)
+  assert.match(train, /latestSession/)
+  assert.match(train, /specific next-session progression/)
 })
 
 test('REGRESSION: Fuel exposes practical hydration, meal, and recovery surfaces', () => {

@@ -134,6 +134,13 @@ function dateLabel(dateKey) {
   }).format(value)
 }
 
+function shiftedDate(dateKey, amount) {
+  const [year, month, day] = String(dateKey).split('-').map(Number)
+  const value = new Date(year, month - 1, day, 12)
+  value.setDate(value.getDate() + amount)
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+}
+
 function localTimeValue(epoch) {
   const date = new Date(epoch)
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
@@ -367,6 +374,53 @@ export function installCalorieAiRuntime() {
     status.textContent = message
   }
 
+  async function priorDayReview(context, date) {
+    if (date !== context.clock.today()) return null
+    const earliest = shiftedDate(date, -7)
+    const candidates = (await context.storage.getAll('dayLogs'))
+      .filter((row) => row?.date < date && row.date >= earliest)
+      .sort((a, b) => b.date.localeCompare(a.date))
+    for (const row of candidates) {
+      const hasRecordedData = Object.entries(row).some(([key, value]) =>
+        !['date', 'awarded', 'nutritionStatus'].includes(key)
+        && value !== null && value !== false && value !== '' && value !== undefined)
+        || row.nutritionStatus === 'partial'
+      if (!hasRecordedData) continue
+      const view = await context.daily.forDate(row.date)
+      const scheduled = new Set(view.dailyIds ?? [])
+      const remaining = (view.outstanding ?? []).filter((activity) => scheduled.has(activity.id)).length
+      const ledger = nutritionLedger(row)
+      const nutritionStarted = row.nutritionStatus === 'partial'
+        || row.nutritionLogged === true || row.caloriesLogged === true
+        || ledger.entries.length > 0 || ledger.hasCarryover
+      const nutritionNeedsReview = nutritionStarted && row.nutritionStatus !== 'complete'
+      if (remaining > 0 || nutritionNeedsReview) return { date: row.date, remaining, nutritionNeedsReview }
+    }
+    return null
+  }
+
+  function syncPriorDayReview(screen, review) {
+    screen.querySelector('[data-prior-day-review]')?.remove()
+    if (!review) return
+    const card = document.createElement('section')
+    card.className = 'prior-day-review'
+    card.dataset.priorDayReview = review.date
+    const copy = document.createElement('div')
+    const title = document.createElement('strong')
+    title.textContent = 'A prior day needs a quick review'
+    const parts = [
+      review.remaining ? `${review.remaining} daily item${review.remaining === 1 ? '' : 's'} still open` : null,
+      review.nutritionNeedsReview ? 'nutrition needs review' : null,
+    ].filter(Boolean)
+    const detail = document.createElement('span')
+    detail.textContent = `${dateLabel(review.date)} · ${parts.join(' · ')}`
+    copy.append(title, detail)
+    const button = makeButton('prior-day-review__button', 'REVIEW DAY', `Review ${dateLabel(review.date)}`)
+    button.onclick = () => globalThis.tempered?.app?.showTodayDate?.(review.date)
+    card.append(copy, button)
+    screen.querySelector('.today-summary')?.before(card)
+  }
+
   function totalCard(label, value, target, key) {
     const card = document.createElement('div')
     card.className = `nutrition-total nutrition-total--${key}`
@@ -576,6 +630,17 @@ export function installCalorieAiRuntime() {
     }
   }
 
+  async function switchNutritionDate(nextDate) {
+    const context = globalThis.tempered
+    if (!nutritionScreen?.isConnected || !/^\d{4}-\d{2}-\d{2}$/.test(nextDate)
+      || nextDate > context.clock.today() || nextDate === nutritionScreen.dataset.date) return
+    const replacement = buildNutritionScreen(nextDate, lastNutritionTrigger)
+    nutritionScreen.replaceWith(replacement)
+    nutritionScreen = replacement
+    await renderNutritionData()
+    requestAnimationFrame(() => nutritionScreen?.querySelector('[data-nutrition-date]')?.focus())
+  }
+
   function buildNutritionScreen(date, trigger) {
     lastNutritionTrigger = trigger
     lastDeleted = null
@@ -601,6 +666,19 @@ export function installCalorieAiRuntime() {
     heading.append(eyebrow, title)
     back.onclick = closeNutritionScreen
     header.append(back, heading, promptButton('nutrition-log-header__ai'))
+
+    const datePicker = document.createElement('label')
+    datePicker.className = 'nutrition-date-picker'
+    const dateCaption = document.createElement('span')
+    dateCaption.textContent = 'LOGGING DATE'
+    const dateInput = document.createElement('input')
+    dateInput.type = 'date'
+    dateInput.value = date
+    dateInput.max = globalThis.tempered.clock.today()
+    dateInput.dataset.nutritionDate = 'true'
+    dateInput.setAttribute('aria-label', 'Nutrition logging date')
+    dateInput.onchange = () => switchNutritionDate(dateInput.value)
+    datePicker.append(dateCaption, dateInput)
 
     const totals = document.createElement('div')
     totals.className = 'nutrition-totals'
@@ -750,7 +828,7 @@ export function installCalorieAiRuntime() {
     undo.className = 'nutrition-undo'
     undo.dataset.nutritionUndo = 'true'
     undo.hidden = true
-    screen.append(header, totals, dayStatus, suggestionSection, form, historySection, undo)
+    screen.append(header, datePicker, totals, dayStatus, suggestionSection, form, historySection, undo)
     overlay.append(screen)
     overlay.onclick = (event) => { if (event.target === overlay) closeNutritionScreen() }
     return overlay
@@ -798,10 +876,11 @@ export function installCalorieAiRuntime() {
       const list = section?.querySelector('.today-list')
       const recapHost = document.querySelector('[data-lifestyle-recap-host]')
       if (!list && !recapHost) return
-      const [view, weight] = await Promise.all([
-        context.daily.forDate(date), latestWeight(date),
+      const [view, weight, review] = await Promise.all([
+        context.daily.forDate(date), latestWeight(date), priorDayReview(context, date),
       ])
       if (screen !== todayRoot() || date !== selectedDate()) return
+      syncPriorDayReview(screen, review)
       if (date === context.clock.today() && section && list) {
         hideLegacyNutritionRows()
         const title = section.querySelector('.today-section__title')

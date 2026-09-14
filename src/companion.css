@@ -118,6 +118,12 @@
 .fuel-recovery__metric { min-width:0; display:grid; gap:4px; padding:9px 4px; border-radius:12px; background:rgba(2,22,31,.3); text-align:center; }
 .fuel-recovery__metric span { color:rgba(255,255,255,.45); font-size:6px; font-weight:800; letter-spacing:.04em; }
 .fuel-recovery__metric strong { font-size:13px; white-space:nowrap; }
+.fuel-recovery[data-readiness='ready'] { border-color:rgba(113,224,158,.34); }
+.fuel-recovery[data-readiness='ready'] .fuel-recovery__head h2 { color:#71e09e; }
+.fuel-recovery[data-readiness='steady'] { border-color:rgba(240,216,149,.34); }
+.fuel-recovery[data-readiness='steady'] .fuel-recovery__head h2 { color:#f0d895; }
+.fuel-recovery[data-readiness='recover'] { border-color:rgba(239,154,116,.38); }
+.fuel-recovery[data-readiness='recover'] .fuel-recovery__head h2 { color:#ef9a74; }
 
 .companion-habitat {
   position: relative;

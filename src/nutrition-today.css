@@ -155,6 +155,31 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 .nutrition-log-header__ai img { width: 20px; height: 20px; object-fit: contain; }
 
+.nutrition-date-picker {
+  margin: 2px 24px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 13px;
+  border: 1px solid rgba(203,220,117,.18);
+  border-radius: 14px;
+  background: rgba(5,30,40,.58);
+}
+.nutrition-date-picker > span { color: #cbdc75; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.nutrition-date-picker input {
+  min-height: 36px;
+  max-width: 168px;
+  padding: 0 9px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  color-scheme: dark;
+  font: inherit;
+  font-size: 12px;
+}
+
 .nutrition-totals {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

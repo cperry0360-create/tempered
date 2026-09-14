@@ -122,27 +122,87 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
     const range = new Set(datesSince(today, 14))
     const recentDays = dayLogs.filter((day) => range.has(day.date))
     const recentSessions = sessions.filter((session) => session.endedAt && range.has(session.date))
-    const sessionIds = new Set(recentSessions.map((session) => session.id))
-    const workingSets = setLogs.filter((set) => sessionIds.has(set.sessionId) && !set.isWarmup).length
+    const recentSessionIds = new Set(recentSessions.map((session) => session.id))
+    const recentWorkingSets = setLogs.filter((set) => recentSessionIds.has(set.sessionId) && !set.isWarmup)
     const sleepAverage = mean(recentDays.map((day) => day.sleepHours))
     const stepAverage = mean(recentDays.map((day) => day.steps))
     const weights = recentDays.filter((day) => typeof day.bodyMetrics?.weight === 'number').sort((a, b) => a.date.localeCompare(b.date))
     const weightChange = weights.length >= 2 ? weights.at(-1).bodyMetrics.weight - weights[0].bodyMetrics.weight : null
     const minutes = datesSince(today, 14).reduce((sum, date) => sum + Number(rhythm?.minutesByDate?.[date] ?? 0), 0)
-    const latest = [...recentDays].sort((a, b) => b.date.localeCompare(a.date)).find((day) => day.healthMetrics) ?? null
-    return `Use this Tempered app data to give me a concise training progress report and practical coaching tips.
+    const latestHealth = [...recentDays].sort((a, b) => b.date.localeCompare(a.date)).find((day) => day.healthMetrics) ?? null
+    const exerciseNames = new Map(exercises.map((exercise) => [exercise.id, exercise.name]))
+    const sessionById = new Map(sessions.map((session) => [session.id, session]))
+    const latestSession = [...recentSessions].sort((a, b) =>
+      String(b.endedAt ?? b.date).localeCompare(String(a.endedAt ?? a.date)))[0] ?? null
+    const latestSets = latestSession
+      ? setLogs.filter((set) => set.sessionId === latestSession.id && !set.isWarmup)
+      : []
+    const grouped = new Map()
+    for (const set of latestSets) {
+      const key = `${set.exerciseId}|${set.method ?? ''}`
+      if (!grouped.has(key)) grouped.set(key, [])
+      grouped.get(key).push(set)
+    }
+    const bestSets = [...grouped.values()].map((setsForExercise) => {
+      const exerciseId = setsForExercise[0].exerciseId
+      const loaded = setsForExercise.filter((set) => Number(set.weight) > 0 && Number(set.reps) > 0)
+        .sort((a, b) => Number(b.weight) - Number(a.weight) || Number(b.reps) - Number(a.reps))[0]
+      const representative = loaded ?? setsForExercise.find((set) => Number(set.reps) > 0)
+      if (!representative) return null
+      const load = Number(representative.weight) > 0 ? `${representative.weight} lb` : 'bodyweight'
+      return `${exerciseNames.get(exerciseId) ?? exerciseId}: ${load} × ${representative.reps}`
+    }).filter(Boolean)
+    const confirmedPrs = []
+    for (const [key, currentSets] of grouped) {
+      const [exerciseId, method] = key.split('|')
+      const previous = setLogs.filter((set) => {
+        if (set.sessionId === latestSession?.id || set.isWarmup || set.exerciseId !== exerciseId
+          || String(set.method ?? '') !== method) return false
+        const session = sessionById.get(set.sessionId)
+        return session?.endedAt && String(session.endedAt) < String(latestSession?.endedAt)
+      })
+      const currentWeight = Math.max(0, ...currentSets.map((set) => Number(set.weight) || 0))
+      const previousWeight = Math.max(0, ...previous.map((set) => Number(set.weight) || 0))
+      const name = exerciseNames.get(exerciseId) ?? exerciseId
+      if (previousWeight > 0 && currentWeight > previousWeight) {
+        confirmedPrs.push(`${name}: load PR ${currentWeight} lb (previous ${previousWeight} lb)`)
+      }
+      const currentVolume = currentSets.reduce((sum, set) => sum + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0)
+      const priorVolumes = new Map()
+      for (const set of previous) {
+        priorVolumes.set(set.sessionId, (priorVolumes.get(set.sessionId) ?? 0)
+          + (Number(set.weight) || 0) * (Number(set.reps) || 0))
+      }
+      const previousVolume = Math.max(0, ...priorVolumes.values())
+      if (previousVolume > 0 && currentVolume > previousVolume) {
+        confirmedPrs.push(`${name}: volume PR ${Math.round(currentVolume)} lb (previous ${Math.round(previousVolume)} lb)`)
+      }
+    }
+    const latestRoutine = routines.find((routine) => routine.id === latestSession?.routineId)
+    const latestTitle = latestRoutine?.name
+      ?? (bestSets.length ? [...new Set(latestSets.map((set) => exerciseNames.get(set.exerciseId) ?? set.exerciseId))].slice(0, 3).join(' + ') : '')
+    const latestVolume = latestSets.reduce((sum, set) => sum + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0)
+    const latestMovements = new Set(latestSets.map((set) => set.exerciseId)).size
+
+    return `Use this Tempered app data to give me a useful training review with special attention to the latest completed workout.
 
 Return exactly these sections and nothing else:
 PROGRESS
-One sentence, maximum 28 words.
+Two or three sentences, maximum 80 words, explaining the 14-day trend.
+
+LATEST WORKOUT
+Three to five bullets covering the session's strongest work, workload, and what it suggests.
+
+RECORDS
+List every confirmed PR supplied below. If none are supplied, say no confirmed PRs were detected.
 
 COACHING
-Exactly three bullets, each under 16 words.
+Exactly three bullets, each 12–28 words. Include one specific next-session progression recommendation grounded in the latest workout.
 
 NEXT WORKOUT
-One sentence, maximum 20 words.
+One or two sentences, maximum 45 words, balancing progression with readiness.
 
-Do not diagnose medical conditions. Call out missing data instead of guessing. Balance training stress with recovery.
+Do not diagnose medical conditions. Call out unavailable data instead of guessing. Do not invent PRs. Treat a same-day import as current and prioritize the latest workout over generic advice.
 
 TEMPERED_DATA
 DATE=${today}
@@ -152,12 +212,20 @@ READINESS_SCORE=${model.score ?? ''}
 READINESS_LABEL=${model.label}
 TRAINING_MINUTES_14D=${Math.round(minutes)}
 SESSIONS_14D=${recentSessions.length}
-WORKING_SETS_14D=${workingSets}
+WORKING_SETS_14D=${recentWorkingSets.length}
 SLEEP_AVG_14D=${sleepAverage === null ? '' : sleepAverage.toFixed(1)}
 STEPS_AVG_14D=${stepAverage === null ? '' : Math.round(stepAverage)}
 WEIGHT_CHANGE_LB_14D=${weightChange === null ? '' : weightChange.toFixed(1)}
-LATEST_RHR=${latest?.healthMetrics?.restingHr ?? ''}
-LATEST_HRV_MS=${latest?.healthMetrics?.hrvMs ?? ''}`
+LATEST_RHR=${latestHealth?.healthMetrics?.restingHr ?? ''}
+LATEST_HRV_MS=${latestHealth?.healthMetrics?.hrvMs ?? ''}
+LATEST_WORKOUT_DATE=${latestSession?.date ?? ''}
+LATEST_WORKOUT_TITLE=${latestTitle}
+LATEST_WORKOUT_MINUTES=${latestSession?.durationMinutes ?? ''}
+LATEST_WORKOUT_WORKING_SETS=${latestSets.length}
+LATEST_WORKOUT_MOVEMENTS=${latestMovements}
+LATEST_WORKOUT_VOLUME_LB=${Math.round(latestVolume)}
+LATEST_WORKOUT_BEST_SETS=${bestSets.join(' | ')}
+LATEST_WORKOUT_CONFIRMED_PRS=${confirmedPrs.join(' | ')}`
   }
 
   async function copyText(text) {
@@ -186,7 +254,7 @@ LATEST_HRV_MS=${latest?.healthMetrics?.hrvMs ?? ''}`
     const minutes = [...sevenDates].reduce((sum, date) => sum + Number(rhythm.minutesByDate?.[date] ?? 0), 0)
     const model = trainingReadiness(dayLogs, today)
     const score = model.score === null ? '—' : String(model.score)
-    const status = el('span.training-coach__status', { text: 'Copies a compact 14-day report.' })
+    const status = el('span.training-coach__status', { text: 'Copies a detailed 14-day and latest-workout report.' })
     const handoff = el('a.training-coach__action', {
       href: 'https://chatgpt.com/', target: '_blank', rel: 'noopener',
       dataset: { trainingCoach: 'open' },

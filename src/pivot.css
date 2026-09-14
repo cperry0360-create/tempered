@@ -432,7 +432,7 @@ body:has(.screen--companion)::before {
 .health-paste-entry .button { flex: none; min-height: 42px; padding-inline: 14px; font-size: 10px; }
 .health-paste-overlay {
   position: fixed;
-  z-index: 1100;
+  z-index: 1500;
   inset: 0;
   display: grid;
   align-items: end;
@@ -497,6 +497,7 @@ body:has(.screen--companion)::before {
 .health-paste-preview > p { margin: 0; color: #f0d895; font-size: 11px; line-height: 1.45; }
 .health-paste-sheet__import { width: 100%; border-color: rgba(221,236,146,.42); background: rgba(221,236,146,.12); color: #efffa4; }
 .health-paste-sheet__import:disabled { opacity: .45; }
+body[data-health-paste-open='true'] { overflow: hidden; }
 @media (max-width: 390px) {
   .health-paste-entry { align-items: flex-start; flex-direction: column; }
   .health-paste-entry .button { width: 100%; }

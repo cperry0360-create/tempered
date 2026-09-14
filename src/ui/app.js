@@ -345,6 +345,13 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     }
   }
 
+  async function showTodayDate(date) {
+    await show('today')
+    await today.showDate(date)
+    body.scrollTop = 0
+    announce(`${date} day review`)
+  }
+
   replace(mount, [body, announcer, settingsAccess, workoutDock, tabBar, overlays])
-  return { show, startSession, resumeSession }
+  return { show, showTodayDate, startSession, resumeSession }
 }

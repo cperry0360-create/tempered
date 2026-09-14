@@ -131,6 +131,7 @@ export function installHealthPasteRuntime(context) {
     const close = () => {
       document.removeEventListener('keydown', onKeyDown)
       node.remove()
+      delete document.body.dataset.healthPasteOpen
       if (overlay === node) overlay = null
       if (trigger?.isConnected) trigger.focus()
     }
@@ -197,10 +198,13 @@ export function installHealthPasteRuntime(context) {
       submit.textContent = 'IMPORTING…'
       try {
         const result = await importHealthSnapshot(context, current.parsed, { source: 'chatgpt-health' })
+        document.querySelector('[data-daily-recap="close"]')?.click()
+        if (result.date === context.clock.today() && context.app?.show) await context.app.show('today')
+        else if (context.app?.showTodayDate) await context.app.showTodayDate(result.date)
         window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
         status.textContent = result.warnings?.length
           ? `Imported for ${result.date}. ${result.warnings.join(' ')}`
-          : `Imported ${current.metrics.length} health fields. The recap behind this sheet is updated.`
+          : `Imported ${current.metrics.length} health fields. Today is updated.`
         imported = true
         submit.textContent = 'DONE · VIEW UPDATED RECAP'
         submit.disabled = false
@@ -214,6 +218,7 @@ export function installHealthPasteRuntime(context) {
 
     document.addEventListener('keydown', onKeyDown)
     document.body.append(node)
+    document.body.dataset.healthPasteOpen = 'true'
     requestAnimationFrame(() => input.focus())
   }
 
@@ -263,5 +268,6 @@ export function installHealthPasteRuntime(context) {
     window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
     window.removeEventListener('tempered:health-imported', healthImported)
     overlay?.remove()
+    delete document.body.dataset.healthPasteOpen
   }
 }

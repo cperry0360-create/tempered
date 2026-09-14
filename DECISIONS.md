@@ -2454,3 +2454,12 @@ demoted companion earns a permanent place.
 **Reasoning:** Installed Home Screen copies must atomically receive the new runtime and styles.
 **Confidence:** implementation and regression suite.
 **Needs Cory:** no
+
+
+## 2026-09-14 — Release 0.26 import, review, and coaching follow-through
+
+- ChatGPT Health import owns the top overlay layer and refreshes the mounted Today screen after confirmation. Imported sleep and steps therefore update the canonical habit rows immediately instead of only refreshing the recap enhancement.
+- The prior-day review prompt checks only the most recent seven days that contain recorded data. It is neutral, remains actionable until the day is reviewed, and never creates a penalty or lost-streak state.
+- Nutrition uses a native date input capped at today. Switching dates rebuilds the journal so every add, delete, restore, completion flag, and AI paste remains bound to the selected calendar date.
+- Readiness keeps the existing personal-baseline calculation and adds explicit green Ready, gold Steady, and warm-orange Recover presentation on Train and Fuel.
+- The coaching handoff now sends latest-session duration, working sets, movement count, volume, strongest sets, and reconstructable same-method load or volume PRs. It labels only improvements over earlier stored work as confirmed PRs.

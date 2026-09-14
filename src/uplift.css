@@ -215,6 +215,32 @@ body:has(.screen--today-calm)::before {
   -webkit-backdrop-filter: blur(10px);
 }
 body[data-daily-recap-open='true'] { overflow: hidden; }
+.prior-day-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 12px 13px;
+  border: 1px solid rgba(240,216,149,.24);
+  border-radius: 16px;
+  background: linear-gradient(135deg,rgba(91,74,35,.46),rgba(20,48,55,.72));
+}
+.prior-day-review > div { min-width: 0; display: grid; gap: 3px; }
+.prior-day-review strong { color: #f0d895; font-size: 12px; }
+.prior-day-review span { color: rgba(255,255,255,.62); font-size: 10px; line-height: 1.35; }
+.prior-day-review__button {
+  flex: none;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid rgba(240,216,149,.30);
+  border-radius: 11px;
+  background: rgba(240,216,149,.10);
+  color: #f5dfa4;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 820;
+}
 .today-recap {
   width: min(100%, 560px);
   max-height: min(82vh, 720px);

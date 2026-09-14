@@ -1183,6 +1183,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     root,
     primary() { return null },
     refresh,
+    showDate: selectDate,
     deactivate() { closeMobilityScreen(); closeDailyRecap() },
   }
 }

@@ -441,7 +441,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
         el('div.fuel-water__bar', {}, [el('i', { style: `width:${percent(water, waterGoal)}%` })]),
         el('div.fuel-water__actions', {}, [8, 12, 25].map((amount) => el('button', { type: 'button', onclick: () => addWater(amount), text: `+${amount} OZ` }))),
       ]),
-      el('section.fuel-recovery', {}, [
+      el('section.fuel-recovery', { dataset: { readiness: m.readiness.label.toLowerCase().replaceAll(' ', '-') } }, [
         el('div.fuel-recovery__head', {}, [el('div', {}, [el('span', { text: 'RECOVERY' }), el('h2', { text: m.readiness.score === null ? 'Not enough data' : `${m.readiness.score} · ${m.readiness.label}` })]), el('small', { text: m.readiness.action })]),
         el('div.fuel-recovery__grid', {}, [
           healthMetric('RESTING HR', health.restingHr, ' bpm'), healthMetric('HRV', health.hrvMs, ' ms'), healthMetric('RESPIRATION', health.respiratoryRate, '/min'), healthMetric('SPO₂', health.spo2, '%'),

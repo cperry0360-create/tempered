@@ -4,12 +4,14 @@ import {
   progressDataStart,
   recordedSampleCount,
 } from '../domain/progress-coverage.js'
+import { calorieQualitySummary } from '../domain/nutrition-quality.js'
 
-const DEFAULT_WIDGETS = ['training', 'sleep', 'steps', 'nutrition', 'water', 'weight', 'consistency']
+const DEFAULT_WIDGETS = ['training', 'sleep', 'steps', 'recovery', 'nutrition', 'water', 'weight', 'consistency']
 const CATALOG = {
   training: { title: 'Training load', size: 'wide' },
   sleep: { title: 'Sleep', size: 'small' },
   steps: { title: 'Steps', size: 'small' },
+  recovery: { title: 'Recovery signals', size: 'wide' },
   nutrition: { title: 'Nutrition', size: 'wide' },
   water: { title: 'Water', size: 'small' },
   weight: { title: 'Weight', size: 'small' },
@@ -94,6 +96,12 @@ export function installProgressDashboardRuntime(context) {
     await pendingSave
     const profile = await context.storage.get('profile', 'profile')
     const saved = Array.isArray(profile?.progressWidgets) ? profile.progressWidgets.filter((id) => CATALOG[id]) : null
+    if (saved && !saved.includes('recovery') && profile?.progressRecoveryWidgetVersion !== 1) {
+      const next = [...new Set(saved)]
+      next.splice(Math.max(0, next.indexOf('steps') + 1), 0, 'recovery')
+      await context.storage.put('profile', { ...profile, progressWidgets: next, progressRecoveryWidgetVersion: 1 })
+      return next
+    }
     return saved ? [...new Set(saved)] : [...DEFAULT_WIDGETS]
   }
   async function saveOrder(order) {
@@ -144,11 +152,14 @@ export function installProgressDashboardRuntime(context) {
     const caloriesGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'calories_logged')?.dailyCap ?? profile?.calorieTarget ?? null
     const proteinGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'protein_target')?.dailyCap ?? null
     const waterGoal = todayView.outstanding.concat(todayView.logged).find((a) => a.id === 'water')?.dailyCap ?? null
+    const calorieQuality = calorieQualitySummary(days, { today, goal: Number(caloriesGoal) || null })
     return {
       range, days, sessions, working, trackedDays: days.length,
       volume: dates.map((date) => volumeByDate.get(date) ?? 0),
       steps: days.map((d) => d.steps), sleep: days.map((d) => d.sleepHours),
-      water: days.map((d) => d.waterOz), calories: days.map((d) => d.calories), protein: days.map((d) => d.proteinGrams),
+      water: days.map((d) => d.waterOz), calories: calorieQuality.included.map((record) => record.day.calories), protein: days.map((d) => d.proteinGrams),
+      calorieQuality,
+      recovery: days.map((d) => ({ date: d.date, ...(d.healthMetrics ?? {}) })),
       weights: days.map((d) => d.bodyMetrics?.weight), cardio: days.map((d) => d.microCardioMinutes ?? 0),
       latestWeight, weightChange: latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null,
       habitRate: opportunities ? Math.round((done / opportunities) * 100) : null,
@@ -200,12 +211,23 @@ export function installProgressDashboardRuntime(context) {
       const samples = recordedSampleCount(data.steps)
       headline(card, avg === null ? '—' : compact(Math.round(avg)), samples ? `average · ${samples} logged ${samples === 1 ? 'day' : 'days'}` : 'No steps logged in this range')
       chart(card, data.steps)
+    } else if (id === 'recovery') {
+      const latest = [...data.recovery].reverse()
+      const signal = (label, key, unit) => {
+        const record = latest.find((item) => Number.isFinite(item[key]))
+        return `<span><b>${record ? compact(record[key]) : '—'}${record ? unit : ''}</b><small>${label}${record ? ` · ${record.date.slice(5)}` : ' · no data'}</small></span>`
+      }
+      const metrics = document.createElement('div')
+      metrics.className = 'progress-widget__recovery'
+      metrics.innerHTML = signal('Resting HR', 'restingHr', ' bpm') + signal('HRV', 'hrvMs', ' ms') + signal('Respiration', 'respiratoryRate', '/min') + signal('SpO₂', 'spo2', '%')
+      card.append(metrics)
     } else if (id === 'nutrition') {
       const c = mean(data.calories)
       const p = mean(data.protein)
       const calorieSamples = recordedSampleCount(data.calories)
       const proteinSamples = recordedSampleCount(data.protein)
-      headline(card, c === null ? '— kcal' : `${Math.round(c)} kcal`, calorieSamples ? `average · ${calorieSamples} logged ${calorieSamples === 1 ? 'day' : 'days'}` : 'No calories logged in this range')
+      const excluded = data.calorieQuality.excluded.length
+      headline(card, c === null ? '— kcal' : `${Math.round(c)} kcal`, calorieSamples ? `average · ${calorieSamples} complete ${calorieSamples === 1 ? 'day' : 'days'}${excluded ? ` · ${excluded} excluded` : ''}` : excluded ? `${excluded} incomplete ${excluded === 1 ? 'day needs' : 'days need'} review` : 'No calories logged in this range')
       const pair = document.createElement('div')
       pair.className = 'progress-widget__pair'
       pair.innerHTML = `<span><b>${p === null ? '—' : Math.round(p)}g</b><small>protein avg · ${proteinSamples} ${proteinSamples === 1 ? 'day' : 'days'}</small></span><span><b>${data.proteinGoal ?? '—'}g</b><small>current target</small></span>`

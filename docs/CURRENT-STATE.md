@@ -4,7 +4,9 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.24.0 (37)
+**Current release:** 0.25.0 (38)
+
+Release 0.25 restores imported recovery signals to Progress, explains the readiness estimate using the user's own baselines, separates Fuel, hydration, and recovery into practical cards, and excludes current or flagged-partial nutrition days from calorie averages. Nutrition days can be marked Complete or Still Logging from the meal journal.
 
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does

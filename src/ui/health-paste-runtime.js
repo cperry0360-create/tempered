@@ -220,7 +220,7 @@ export function installHealthPasteRuntime(context) {
   async function enhance() {
     const screen = mount.querySelector('.screen--today')
     if (!screen || screen.dataset.date !== context.clock.today()) return
-    const host = screen.querySelector('[data-lifestyle="snapshot"]')
+    const host = document.querySelector('[data-lifestyle="snapshot"]')
     if (!host) return
     let row = host.querySelector('[data-health-paste-entry]')
     const day = await context.daily.dayLog(context.clock.today())

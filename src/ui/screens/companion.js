@@ -12,6 +12,8 @@ import {
   COMPANION_STYLES,
 } from '../../domain/companion-growth.js'
 import { companionCarePoints, companionLifestyleSignals } from '../../app/companion-care.js'
+import { trainingReadiness } from '../../domain/readiness.js'
+import { nutritionLedger } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
@@ -103,11 +105,13 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
   window.addEventListener('tempered:fuel-updated', onFuelUpdated)
 
   async function load() {
-    const [storedProfile, sessions, setLogs, days] = await Promise.all([
+    const todayKey = clock.today()
+    const [storedProfile, sessions, setLogs, days, todayView] = await Promise.all([
       storage.get('profile', 'profile'),
       storage.getAll('sessions'),
       storage.getAll('setLogs'),
       storage.getAll('dayLogs'),
+      daily.forDate(todayKey),
     ])
     const profile = storedProfile ?? { id: 'profile' }
     const finished = sessions.filter((session) => session.endedAt)
@@ -127,7 +131,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
     const next = reveal.pending ? reveal.earned : earnedGrowth.next
     const growth = reveal.pending ? 100 : earnedGrowth.percent
     const unlocks = style === 'turtle' ? TURTLE_UNLOCKS : style === 'forge' ? FORGE_UNLOCKS : SPROUT_UNLOCKS
-    const today = days.find((day) => day.date === clock.today()) ?? { date: clock.today() }
+    const today = days.find((day) => day.date === todayKey) ?? { date: todayKey }
     const trained = finished.some((session) => session.date === clock.today())
     const name = profile.companionName || (style === 'turtle' ? 'Tank' : style === 'forge' ? 'Atlas' : 'Pip')
 
@@ -165,6 +169,8 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       roomState: roomState(stage.level),
       moment: todayMoment({ trained, day: today, name, style }),
       day: today,
+      todayView,
+      readiness: trainingReadiness(days, todayKey),
       totals: { sessions: finished.length, sets: workingSets.length, lifestyle },
     }
   }
@@ -380,35 +386,67 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
   function fuelDashboard(m) {
     const day = m.day ?? {}
     const number = (value) => typeof value === 'number' && Number.isFinite(value) ? value : 0
-    const metric = (label, value, detail) => el('div.fuel-dashboard__metric', {}, [
-      el('span', { text: label }), el('strong', { text: value }), el('small', { text: detail }),
+    const activities = [...(m.todayView?.logged ?? []), ...(m.todayView?.outstanding ?? [])]
+    const goal = (id, fallback = 0) => number(activities.find((item) => item.id === id)?.dailyCap) || fallback
+    const calorieGoal = goal('calories_logged', 2100)
+    const proteinGoal = goal('protein_target')
+    const waterGoal = goal('water', 100)
+    const calories = number(day.calories)
+    const protein = number(day.proteinGrams)
+    const water = number(day.waterOz)
+    const ledger = nutritionLedger(day)
+    const percent = (value, target) => target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0
+    const openNutrition = (event) => window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
+      detail: { date: clock.today(), trigger: event.currentTarget },
+    }))
+    const mealName = (entry) => {
+      const hour = new Date(entry.loggedAt).getHours()
+      return hour < 10 ? 'Breakfast' : hour < 15 ? 'Lunch' : hour < 20 ? 'Dinner' : 'Snack'
+    }
+    const meals = ledger.entries.slice(-4).reverse()
+    const health = day.healthMetrics ?? {}
+    const healthMetric = (label, value, unit) => el('div.fuel-recovery__metric', {}, [
+      el('span', { text: label }), el('strong', { text: Number.isFinite(value) ? `${Math.round(value)}${unit}` : '—' }),
     ])
-    return el('section.fuel-dashboard', { dataset: { fuelDashboard: 'true' } }, [
-      el('div.fuel-dashboard__head', {}, [
+    return el('div.fuel-stack', { dataset: { fuelDashboard: 'true' } }, [
+      el('section.fuel-dashboard', {}, [
+        el('div.fuel-dashboard__head', {}, [
         el('div', {}, [
           el('span', { text: 'TODAY' }),
-          el('h2', { text: 'Fuel & recovery' }),
+          el('h2', { text: 'Fuel' }),
         ]),
         el('button.fuel-dashboard__today', { type: 'button', onclick: onToday }, ['OPEN TODAY']),
       ]),
-      el('div.fuel-dashboard__grid', {}, [
-        metric('CALORIES', `${Math.round(number(day.calories))}`, 'kcal logged'),
-        metric('PROTEIN', `${Math.round(number(day.proteinGrams))}`, 'grams logged'),
-        metric('WATER', `${Math.round(number(day.waterOz))}`, 'ounces logged'),
-        metric('SLEEP', day.sleepHours ? `${Number(day.sleepHours.toFixed(1))}` : '—', 'hours'),
+      el('div.fuel-energy', {}, [
+        el('div.fuel-energy__ring', { style: `--fuel-progress:${percent(calories, calorieGoal)}` }, [
+          el('strong', { text: `${Math.max(0, Math.round(calorieGoal - calories))}` }), el('span', { text: 'KCAL LEFT' }),
+        ]),
+        el('div.fuel-energy__summary', {}, [
+          el('strong', { text: `${Math.round(calories)} / ${Math.round(calorieGoal)} kcal` }),
+          el('span', { text: proteinGoal ? `${Math.round(protein)} / ${Math.round(proteinGoal)} g protein` : `${Math.round(protein)} g protein` }),
+          el('div.fuel-energy__bar', {}, [el('i', { style: `width:${percent(calories, calorieGoal)}%` })]),
+        ]),
       ]),
-      el('div.fuel-dashboard__actions', {}, [
-        el('button.fuel-dashboard__nutrition', {
-          type: 'button',
-          onclick: (event) => window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
-            detail: { date: clock.today(), trigger: event.currentTarget },
-          })),
-        }, ['LOG A MEAL']),
-        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(8) }, ['+8 OZ']),
-        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(12) }, ['+12 OZ']),
-        el('button.fuel-dashboard__water', { type: 'button', onclick: () => addWater(25) }, ['+25 OZ']),
+      el('div.fuel-macros', {}, [
+        ['PROTEIN', ledger.totals.protein], ['CARBS', ledger.totals.carbs], ['FAT', ledger.totals.fat], ['FIBER', ledger.totals.fiber],
+      ].map(([label, value]) => el('span', {}, [el('b', { text: `${Math.round(value)}g` }), el('small', { text: label })]))),
+      el('button.fuel-dashboard__nutrition', { type: 'button', onclick: openNutrition }, ['+ LOG A MEAL']),
+      el('div.fuel-meals', {}, meals.length ? meals.map((entry) => el('button.fuel-meals__row', { type: 'button', onclick: openNutrition }, [
+        el('span', {}, [el('strong', { text: mealName(entry) }), el('small', { text: entry.description || 'Logged meal' })]),
+        el('b', { text: `${Math.round(entry.calories ?? 0)} kcal` }),
+      ])) : [el('button.fuel-meals__empty', { type: 'button', onclick: openNutrition, text: 'No meals yet · tap to start today’s journal' })]),
       ]),
-      el('p.fuel-dashboard__note', { text: 'Nutrition and water live here as daily inputs. The companion is now the reward, not the job.' }),
+      el('section.fuel-water', {}, [
+        el('div.fuel-water__head', {}, [el('div', {}, [el('span', { text: 'HYDRATION' }), el('h2', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` })]), el('strong', { text: `${percent(water, waterGoal)}%` })]),
+        el('div.fuel-water__bar', {}, [el('i', { style: `width:${percent(water, waterGoal)}%` })]),
+        el('div.fuel-water__actions', {}, [8, 12, 25].map((amount) => el('button', { type: 'button', onclick: () => addWater(amount), text: `+${amount} OZ` }))),
+      ]),
+      el('section.fuel-recovery', {}, [
+        el('div.fuel-recovery__head', {}, [el('div', {}, [el('span', { text: 'RECOVERY' }), el('h2', { text: m.readiness.score === null ? 'Not enough data' : `${m.readiness.score} · ${m.readiness.label}` })]), el('small', { text: m.readiness.action })]),
+        el('div.fuel-recovery__grid', {}, [
+          healthMetric('RESTING HR', health.restingHr, ' bpm'), healthMetric('HRV', health.hrvMs, ' ms'), healthMetric('RESPIRATION', health.respiratoryRate, '/min'), healthMetric('SPO₂', health.spo2, '%'),
+        ]),
+      ]),
     ])
   }
 

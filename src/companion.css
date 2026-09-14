@@ -83,6 +83,41 @@
 .fuel-dashboard__nutrition { border: 0; background: #cbdc75; color: #10292b; }
 .fuel-dashboard__water { border: 1px solid rgba(121,218,205,.22); background: rgba(75,180,172,.08); color: #9ce1d3; }
 .fuel-dashboard__note { margin: 0; color: rgba(255,255,255,.52); font-size: 10px; line-height: 1.4; }
+.fuel-stack { display:grid; gap:12px; }
+.fuel-energy { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:15px; }
+.fuel-energy__ring { --fuel-progress:0; width:92px; aspect-ratio:1; display:grid; place-content:center; gap:1px; border-radius:50%; text-align:center; background:radial-gradient(circle closest-side,#123846 76%,transparent 78% 99%),conic-gradient(#cbdc75 calc(var(--fuel-progress)*1%),rgba(255,255,255,.08) 0); }
+.fuel-energy__ring strong { font-size:24px; line-height:1; }
+.fuel-energy__ring span { color:rgba(255,255,255,.5); font-size:7px; font-weight:800; letter-spacing:.1em; }
+.fuel-energy__summary { min-width:0; display:grid; gap:6px; }
+.fuel-energy__summary > strong { font-size:21px; }
+.fuel-energy__summary > span { color:rgba(255,255,255,.62); font-size:11px; }
+.fuel-energy__bar,.fuel-water__bar { height:7px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.07); }
+.fuel-energy__bar i,.fuel-water__bar i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#61d8c0,#d7e778); }
+.fuel-macros { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+.fuel-macros span { min-width:0; display:grid; gap:2px; padding:9px 5px; border-radius:12px; background:rgba(2,22,31,.3); text-align:center; }
+.fuel-macros b { font-size:14px; }
+.fuel-macros small { color:rgba(255,255,255,.45); font-size:7px; letter-spacing:.06em; }
+.fuel-dashboard > .fuel-dashboard__nutrition { min-height:44px; border-radius:13px; font:inherit; font-size:10px; font-weight:850; }
+.fuel-meals { display:grid; gap:5px; }
+.fuel-meals__row,.fuel-meals__empty { width:100%; min-height:43px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 11px; border:1px solid rgba(255,255,255,.07); border-radius:12px; background:rgba(3,25,34,.35); color:inherit; text-align:left; font:inherit; }
+.fuel-meals__row span { min-width:0; display:grid; gap:1px; }
+.fuel-meals__row strong { font-size:11px; }
+.fuel-meals__row small { overflow:hidden; color:rgba(255,255,255,.5); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+.fuel-meals__row b { flex:none; color:#dce98d; font-size:10px; }
+.fuel-meals__empty { justify-content:center; color:rgba(255,255,255,.58); font-size:10px; }
+.fuel-water,.fuel-recovery { display:grid; gap:11px; padding:15px; border:1px solid rgba(188,232,219,.14); border-radius:22px; background:linear-gradient(145deg,rgba(19,62,75,.9),rgba(7,34,46,.92)); }
+.fuel-water__head,.fuel-recovery__head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.fuel-water__head > div,.fuel-recovery__head > div { display:grid; gap:2px; }
+.fuel-water__head span,.fuel-recovery__head span { color:#75dec9; font-size:8px; font-weight:820; letter-spacing:.12em; }
+.fuel-water__head h2,.fuel-recovery__head h2 { margin:0; font-size:19px; }
+.fuel-water__head > strong { color:#9ce1d3; font-size:18px; }
+.fuel-water__actions { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.fuel-water__actions button { min-height:40px; border:1px solid rgba(121,218,205,.22); border-radius:12px; background:rgba(75,180,172,.08); color:#9ce1d3; font:inherit; font-size:9px; font-weight:820; }
+.fuel-recovery__head > small { max-width:130px; color:rgba(255,255,255,.58); font-size:9px; line-height:1.35; text-align:right; }
+.fuel-recovery__grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+.fuel-recovery__metric { min-width:0; display:grid; gap:4px; padding:9px 4px; border-radius:12px; background:rgba(2,22,31,.3); text-align:center; }
+.fuel-recovery__metric span { color:rgba(255,255,255,.45); font-size:6px; font-weight:800; letter-spacing:.04em; }
+.fuel-recovery__metric strong { font-size:13px; white-space:nowrap; }
 
 .companion-habitat {
   position: relative;
@@ -224,6 +259,14 @@
   transform-origin: 50% 90%;
   filter: drop-shadow(0 12px 18px rgba(0,0,0,.28));
   animation: companion-breathe 3.4s ease-in-out infinite;
+}
+.companion-habitat[data-style='turtle'] .companion-habitat__pet[data-visual='6'],
+.companion-habitat[data-style='turtle'] .companion-habitat__pet[data-visual='7'],
+.companion-habitat[data-style='turtle'] .companion-habitat__pet[data-visual='8'],
+.companion-habitat[data-style='turtle'] .companion-habitat__pet[data-visual='9'],
+.companion-habitat[data-style='turtle'] .companion-habitat__pet[data-visual='10'] {
+  width: min(58%, 232px);
+  bottom: 68px;
 }
 .companion-habitat__pet--sheet {
   height: auto;

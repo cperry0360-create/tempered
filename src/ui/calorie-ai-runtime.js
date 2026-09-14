@@ -507,6 +507,18 @@ export function installCalorieAiRuntime() {
     ])
     if (!nutritionScreen?.isConnected || nutritionScreen.dataset.date !== date) return
     const ledger = nutritionLedger(day)
+    const dayStatus = nutritionScreen.querySelector('[data-nutrition-day-status]')
+    if (dayStatus) {
+      const state = day?.nutritionStatus ?? (date === context.clock.today() ? 'partial' : 'unreviewed')
+      dayStatus.dataset.state = state
+      const copy = dayStatus.querySelector('[data-nutrition-day-status-copy]')
+      if (copy) copy.textContent = state === 'complete'
+        ? 'Complete day · included in calorie averages'
+        : state === 'partial' ? 'In progress / partial · excluded from calorie averages' : 'Not reviewed · credible totals may be included'
+      dayStatus.querySelectorAll('[data-nutrition-day-state]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.nutritionDayState === state))
+      })
+    }
     const calories = activityById(view, 'calories_logged')
     const protein = activityById(view, 'protein_target')
     const caloriesGoal = Number(calories?.dailyCap)
@@ -593,6 +605,25 @@ export function installCalorieAiRuntime() {
     const totals = document.createElement('div')
     totals.className = 'nutrition-totals'
     totals.dataset.nutritionTotals = 'true'
+
+    const dayStatus = document.createElement('section')
+    dayStatus.className = 'nutrition-day-status'
+    dayStatus.dataset.nutritionDayStatus = 'true'
+    const dayStatusHead = document.createElement('div')
+    dayStatusHead.innerHTML = '<strong>DAY STATUS</strong><span data-nutrition-day-status-copy></span>'
+    const dayStatusActions = document.createElement('div')
+    for (const [state, label] of [['complete', 'COMPLETE'], ['partial', 'STILL LOGGING']]) {
+      const button = makeButton('nutrition-day-status__button', label, `Mark nutrition day ${state}`)
+      button.dataset.nutritionDayState = state
+      button.onclick = async () => {
+        const context = globalThis.tempered
+        const current = await context.daily.dayLog(date)
+        await context.storage.put('dayLogs', { ...(current ?? { date }), date, nutritionStatus: state })
+        await renderNutritionData()
+      }
+      dayStatusActions.append(button)
+    }
+    dayStatus.append(dayStatusHead, dayStatusActions)
 
     const suggestionSection = document.createElement('section')
     suggestionSection.className = 'nutrition-suggestions'
@@ -719,7 +750,7 @@ export function installCalorieAiRuntime() {
     undo.className = 'nutrition-undo'
     undo.dataset.nutritionUndo = 'true'
     undo.hidden = true
-    screen.append(header, totals, suggestionSection, form, historySection, undo)
+    screen.append(header, totals, dayStatus, suggestionSection, form, historySection, undo)
     overlay.append(screen)
     overlay.onclick = (event) => { if (event.target === overlay) closeNutritionScreen() }
     return overlay
@@ -765,7 +796,7 @@ export function installCalorieAiRuntime() {
     try {
       const section = screen.querySelector('[data-section="daily"]')
       const list = section?.querySelector('.today-list')
-      const recapHost = screen.querySelector('[data-lifestyle-recap-host]')
+      const recapHost = document.querySelector('[data-lifestyle-recap-host]')
       if (!list && !recapHost) return
       const [view, weight] = await Promise.all([
         context.daily.forDate(date), latestWeight(date),

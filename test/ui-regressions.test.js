@@ -203,3 +203,21 @@ test('REGRESSION: practical surfaces lead while Companion remains optional', () 
   assert.match(train, /trainingReadiness/)
   assert.match(train, /COPY \+ OPEN CHATGPT/)
 })
+
+test('REGRESSION: Daily Recap is viewport-fixed outside transformed screens', () => {
+  const today = read('src/ui/screens/today.js')
+  const css = read('src/uplift.css')
+  assert.match(today, /document\.body\.append\(overlay\)/)
+  assert.match(css, /\.today-recap-overlay[\s\S]*height:\s*100dvh/)
+  assert.match(css, /\.today-recap-overlay[\s\S]*z-index:\s*1300/)
+})
+
+test('REGRESSION: Fuel exposes practical hydration, meal, and recovery surfaces', () => {
+  const companion = read('src/ui/screens/companion.js')
+  const progress = read('src/ui/progress-dashboard-runtime.js')
+  assert.match(companion, /HYDRATION/)
+  assert.match(companion, /fuel-meals__row/)
+  assert.match(companion, /RESTING HR/)
+  assert.match(progress, /calorieQualitySummary/)
+  assert.match(progress, /recovery:\s*\{ title:\s*'Recovery signals'/)
+})

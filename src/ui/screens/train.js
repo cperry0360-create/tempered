@@ -218,9 +218,12 @@ LATEST_HRV_MS=${latest?.healthMetrics?.hrvMs ?? ''}`
       ]),
       el('p.training-control__readiness-note', {
         text: model.score === null
-          ? 'Import sleep and recovery signals to calculate readiness.'
-          : `${model.coverage === 'limited' ? 'Limited estimate' : 'Recovery estimate'} from ${model.signals.map((signal) => signal.label).join(', ')}.`,
+          ? 'Readiness is a 0–100 recovery estimate. Add sleep or Health data to calculate it.'
+          : `${model.action}. ${model.coverage === 'limited' ? 'Limited estimate' : 'Estimate'} from ${model.signals.map((signal) => signal.detail).join(' · ')}.`,
       }),
+      model.score !== null ? el('p.training-control__readiness-explainer', {
+        text: 'Higher means your sleep and recovery signals are near or better than your own recent baseline. It is guidance, not a medical score.',
+      }) : null,
       el('div.training-coach', {}, [
         el('div', {}, [
           el('strong', { text: 'AI progress check' }),

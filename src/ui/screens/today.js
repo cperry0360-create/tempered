@@ -872,17 +872,19 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     if (dailyRecapOpen) return
     dailyRecapOpen = true
     const overlay = dailyRecap(done, total)
-    if (overlay) root.append(overlay)
+    if (overlay) document.body.append(overlay)
+    document.body.dataset.dailyRecapOpen = 'true'
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('tempered:today-rendered', {
         detail: { date: selectedDate },
       }))
     }
-    queueMicrotask(() => root.querySelector('[data-daily-recap="close"]')?.focus())
+    queueMicrotask(() => document.querySelector('[data-daily-recap="close"]')?.focus())
   }
 
   function closeDailyRecap() {
-    root.querySelector('[data-daily-recap="overlay"]')?.remove()
+    document.querySelector('[data-daily-recap="overlay"]')?.remove()
+    delete document.body.dataset.dailyRecapOpen
     dailyRecapOpen = false
     queueMicrotask(() => root.querySelector('[data-daily-recap="open"]')?.focus())
   }
@@ -1135,6 +1137,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
 
   async function selectDate(dateKey) {
     closeMobilityScreen()
+    closeDailyRecap()
     selectedDate = dateKey
     justEarned = null
     openActivityId = null
@@ -1165,6 +1168,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
 
   async function refresh() {
     closeMobilityScreen()
+    closeDailyRecap()
     selectedDate = clock.today()
     justEarned = null
     openActivityId = null
@@ -1179,6 +1183,6 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     root,
     primary() { return null },
     refresh,
-    deactivate: closeMobilityScreen,
+    deactivate() { closeMobilityScreen(); closeDailyRecap() },
   }
 }

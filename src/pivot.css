@@ -332,6 +332,11 @@ body:has(.screen--companion)::before {
 .progress-widget[data-widget='sleep'] { --widget-accent: #9b91ff; }
 .progress-widget[data-widget='steps'] { --widget-accent: #52dfab; }
 .progress-widget[data-widget='nutrition'] { --widget-accent: #c98cff; }
+.progress-widget[data-widget='recovery'] { --widget-accent: #63dbc4; }
+.progress-widget__recovery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:10px; }
+.progress-widget__recovery span { min-width:0; display:grid; gap:2px; padding:10px; border-radius:14px; background:rgba(255,255,255,.045); }
+.progress-widget__recovery b { font-size:17px; font-variant-numeric:tabular-nums; }
+.progress-widget__recovery small { color:rgba(255,255,255,.52); font-size:9px; }
 .progress-widget[data-widget='water'] { --widget-accent: #53dff0; }
 .progress-widget[data-widget='weight'] { --widget-accent: #63c7ff; }
 .progress-widget[data-widget='body'] { --widget-accent: #58e4c0; }

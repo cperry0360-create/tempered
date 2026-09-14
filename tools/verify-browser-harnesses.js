@@ -11,8 +11,15 @@
 import { readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 
+// health-shortcut.html verifies the retired Shortcut experiment. Production
+// intentionally keeps that runtime dormant, and the Node regression suite
+// separately protects its parser/setup source for future native work.
+const archivedHarnesses = new Set(['health-shortcut.html'])
+
 const pages = readdirSync(new URL('../test/browser/', import.meta.url))
-  .filter((name) => name.endsWith('.html') && name !== 'persistence.html')
+  .filter((name) => name.endsWith('.html')
+    && name !== 'persistence.html'
+    && !archivedHarnesses.has(name))
   .sort()
 
 const summaries = []

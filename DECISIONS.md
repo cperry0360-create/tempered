@@ -2463,3 +2463,28 @@ demoted companion earns a permanent place.
 - Nutrition uses a native date input capped at today. Switching dates rebuilds the journal so every add, delete, restore, completion flag, and AI paste remains bound to the selected calendar date.
 - Readiness keeps the existing personal-baseline calculation and adds explicit green Ready, gold Steady, and warm-orange Recover presentation on Train and Fuel.
 - The coaching handoff now sends latest-session duration, working sets, movement count, volume, strongest sets, and reconstructable same-method load or volume PRs. It labels only improvements over earlier stored work as confirmed PRs.
+
+## 2026-09-14: Product Phase 2 is program foundation, not beta hardening
+
+**Phase:** Pre-beta product completion
+
+**Decision:** Withdraw the beta-ready classification. Product Phase 2 is Program Foundation
+and Guided First Use. Tempered must explain its tracker-first thesis during onboarding,
+support complete on-device program creation and management, offer several editable starting
+templates, and guide a new user into the first useful action before TestFlight beta work.
+
+**Reasoning:** The existing tracker has substantial logging, recovery, nutrition, workout,
+and progress capability, but it has only one seeded program and no mechanism to create,
+edit, duplicate, or archive a program. Setup begins with preferences and companion choice
+rather than explaining why Tempered exists and how a person should use it. A product cannot
+be considered beta-ready when its core training plan must be supplied by the developer.
+
+**Scope:** Follow `docs/12-pre-beta-product-foundation.md`. New companion content, additional
+AI handoffs, public beta positioning, and expanded native distribution remain deferred until
+the program and onboarding exit criteria pass.
+
+**Confidence:** Repository audit of the current seed data, setup flow, Train surface, program
+storage, and product history.
+
+**Needs Cory:** Validate the first program-builder prototype and the revised onboarding
+language on a physical iPhone.

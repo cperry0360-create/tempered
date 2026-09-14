@@ -4,7 +4,15 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.26.0 (39)
+**Current release:** 0.26.0 (39)  
+**Product maturity:** Pre-beta product completion
+
+Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
+program creation or editing system. First launch configures preferences but does not yet
+teach the current tracker-first thesis or guide a new user into a complete training plan.
+Product Phase 2 is therefore Program Foundation and Guided First Use. Expanded native
+distribution follows only after the exit criteria in
+[`docs/12-pre-beta-product-foundation.md`](12-pre-beta-product-foundation.md) pass.
 
 Release 0.26 keeps Health import above Daily Recap and redraws Today after import so sleep, steps, and scheduled habit rows update immediately. Nutrition now has an explicit date picker for correcting earlier records, Today offers a neutral review route for recent prior days with open items, readiness has Ready/Steady/Recover colors, and the ChatGPT coaching handoff includes the latest workout, strongest sets, workload, and confirmed load or volume PRs.
 

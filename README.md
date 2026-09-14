@@ -42,6 +42,7 @@ Some documents under `docs/` describe the earlier RPG-era product and remain use
 | `docs/05-workout-system.md` | Workout/routine/progression system. |
 | `docs/06-battle.md` | Legacy battle design; no longer a visible product feature. |
 | `docs/07-build-plan.md` | Original phased build plan. |
+| `docs/12-pre-beta-product-foundation.md` | Current product Phase 2 plan and beta-entry gates. |
 | `DECISIONS.md` | Running implementation decisions. |
 
 ## Exercise art
@@ -72,4 +73,11 @@ The Pages workflow stages a runtime-only artifact from `main`; there is no appli
 
 ## Status
 
-Tempered is an actively developed static PWA. The current direction is tracker-first: excellent logging and progress visibility, with the Companion as a deliberately small reward layer rather than a second game product.
+Tempered is an actively developed pre-beta static PWA. The current direction is
+tracker-first: excellent logging and progress visibility, with the Companion as a
+deliberately small reward layer rather than a second game product.
+
+It is not yet ready for beta distribution. The current release has one seeded training
+program, no on-device program builder, and first-launch setup that does not fully teach the
+product thesis or guide the user through creating a plan. Product Phase 2 closes those gaps
+before expanded HealthKit work or TestFlight distribution.

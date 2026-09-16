@@ -2506,3 +2506,15 @@ the local-first promise remains true.
 seed regression coverage.
 **Needs Cory:** yes — validate the first program-builder prototype and the revised onboarding
 language on a physical iPhone before the next release.
+
+
+## 2026-09-16 — Completed workout duration can be corrected
+**Phase:** 0.28.0 duration correction
+**Decision:** Add a bounded manual duration correction in Progress → Log. A correction replaces the
+inferred time-under-load value for that completed session and is constrained to 1–240 minutes.
+**Reasoning:** The active timer is useful, but a short prescribed workout with full rest can be
+legitimate training even when set timestamps undercount it. Conversely, forgetting to stop should
+not inflate history. A deliberate correction keeps the record honest without rewarding extra sets
+or shame-driven data manipulation.
+**Confidence:** implementation and regression coverage.
+**Needs Cory:** verify Wednesday's short leg day can be corrected to 30 minutes on the deployed build.

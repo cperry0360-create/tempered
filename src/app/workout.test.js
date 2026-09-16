@@ -458,6 +458,25 @@ test('abandoning one slot never destroys the day the other slots built', async (
   assert.equal((await storage.getAll('setLogs')).length, 1, 'the day lost its logged work')
 })
 
+test('a completed session duration can be corrected without changing its work', async () => {
+  const { storage, workout } = await freshApp('2026-09-16T07:00:00.000Z')
+  const session = await workout.startSession('lower')
+  await workout.logSet(session, { exerciseId: 'squat_bb', weight: 145, reps: 8 })
+  const summary = await workout.finishSession(session)
+
+  assert.equal(summary.durationMinutes, 2)
+  const adjusted = await workout.adjustSessionDuration(session.id, 30)
+  assert.equal(adjusted.durationMinutes, 30)
+  assert.equal(adjusted.durationMinutesSource, 'manual')
+  assert.equal((await workout.trainingRhythm()).minutesByDate['2026-09-16'], 30)
+  assert.equal((await storage.get('sessions', session.id)).durationMinutes, 30)
+
+  const capped = await workout.adjustSessionDuration(session.id, 999)
+  assert.equal(capped.durationMinutes, 240)
+  const floored = await workout.adjustSessionDuration(session.id, 0)
+  assert.equal(floored.durationMinutes, 1)
+})
+
 // --- docs/11 F1: duration is time under load, not wall clock ---------------
 
 test('THE BUG: a five-minute session across the day does not report hours', async () => {

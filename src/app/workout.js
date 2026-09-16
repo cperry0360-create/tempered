@@ -340,7 +340,11 @@ export function createWorkoutService({ storage, clock, balance }) {
     const minutes = sessions.reduce((total, session) => {
       const sessionLogs = logs.filter((log) => log.sessionId === session.id)
       const inferred = timeUnderLoad(sessionLogs.map((log) => log.completedAt), balance)
-      return total + Math.max(Number(session.durationMinutes) || 0, inferred)
+      const recorded = Number(session.durationMinutes) || 0
+      const minutesForSession = session.durationMinutesSource === 'manual'
+        ? Math.max(1, recorded)
+        : Math.max(recorded, inferred)
+      return total + minutesForSession
     }, 0)
 
     return {
@@ -359,13 +363,36 @@ export function createWorkoutService({ storage, clock, balance }) {
     for (const session of sessions) {
       const sessionLogs = logs.filter((log) => log.sessionId === session.id)
       const inferred = timeUnderLoad(sessionLogs.map((log) => log.completedAt), balance)
-      const minutes = Math.max(Number(session.durationMinutes) || 0, inferred)
+      const recorded = Number(session.durationMinutes) || 0
+      const minutes = session.durationMinutesSource === 'manual'
+        ? Math.max(1, recorded)
+        : Math.max(recorded, inferred)
       minutesByDate[session.date] = (minutesByDate[session.date] ?? 0) + minutes
     }
     return {
       minutesByDate,
       ...deriveTrainingRhythm(minutesByDate, clock.today()),
     }
+  }
+
+  /**
+   * Correct a completed session's duration without changing its logged work.
+   * Manual values intentionally replace the inferred estimate so a forgotten
+   * timer can be fixed downward as well as a well-rested session upward.
+   *
+   * @param {string} sessionId
+   * @param {number|string} minutes
+   */
+  async function adjustSessionDuration(sessionId, minutes) {
+    const session = await storage.get('sessions', sessionId)
+    if (!session) throw new Error('Session not found')
+    if (!session.endedAt) throw new Error('Only completed sessions can be adjusted')
+    const parsed = Number(minutes)
+    if (!Number.isFinite(parsed)) throw new Error('Duration must be a number')
+    const durationMinutes = Math.min(240, Math.max(1, Math.round(parsed)))
+    const updated = { ...session, durationMinutes, durationMinutesSource: 'manual' }
+    await storage.put('sessions', updated)
+    return updated
   }
 
   /** @param {string} sessionId */
@@ -506,7 +533,13 @@ export function createWorkoutService({ storage, clock, balance }) {
       xpBySourceTotal[source] = (xpBySourceTotal[source] ?? 0) + xp
     }
 
-    const completed = { ...session, endedAt, durationMinutes, xpBySource: xpBySourceTotal }
+    const completed = {
+      ...session,
+      endedAt,
+      durationMinutes,
+      durationMinutesSource: 'measured',
+      xpBySource: xpBySourceTotal,
+    }
     await storage.put('sessions', completed)
 
     const volumes = volumeByExercise(input.sets, exercises)
@@ -668,7 +701,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
-    startSession, logSet, setsFor, finishSession,
+    startSession, logSet, setsFor, finishSession, adjustSessionDuration,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },
     async attributeSummary() {

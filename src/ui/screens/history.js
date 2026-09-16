@@ -129,6 +129,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let dayLogs = []
   let setLogs = []
   let schedule = {}
+  let editingDurationId = null
 
   function selectedDates() {
     return rangeDates(clock.today(), range)
@@ -376,6 +377,41 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       })
   }
 
+  function durationEditor(session) {
+    if (editingDurationId !== session.id) {
+      return el('button.actionpill', {
+        type: 'button',
+        dataset: { adjustDuration: session.id },
+        onclick: () => { editingDurationId = session.id; render() },
+      }, ['ADJUST MINUTES'])
+    }
+
+    const input = el('input.today-editor__input', {
+      type: 'number',
+      min: '1',
+      max: '240',
+      step: '1',
+      value: String(Math.round(Number(session.durationMinutes) || 1)),
+      'aria-label': 'Correct workout minutes',
+    })
+    return el('div.historyrow__duration-editor', {}, [
+      input,
+      el('button.today-editor__save', {
+        type: 'button',
+        onclick: async () => {
+          const updated = await workout.adjustSessionDuration(session.id, input.value)
+          sessions = sessions.map((item) => item.id === updated.id ? { ...item, ...updated } : item)
+          editingDurationId = null
+          render()
+        },
+      }, ['SAVE']),
+      el('button.actionpill', {
+        type: 'button',
+        onclick: () => { editingDurationId = null; render() },
+      }, ['CANCEL']),
+    ])
+  }
+
   function sessionsView() {
     const dates = new Set(selectedDates())
     const period = sessions.filter((session) => dates.has(session.date))
@@ -392,10 +428,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         el('p.historyrow__meta', {
           text: [
             session.durationMinutes ? duration(session.durationMinutes) : null,
-            `${volume(stats.volume)} lbs`,
-            `${stats.sets ?? 0} sets`,
+            String(volume(stats.volume)) + ' lbs',
+            String(stats.sets ?? 0) + ' sets',
           ].filter(Boolean).join(' · '),
         }),
+        el('div.historyrow__actions', {}, [durationEditor(session)]),
       ])
     })
   }

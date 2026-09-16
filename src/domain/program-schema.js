@@ -211,3 +211,13 @@ export function validateProgram(program, { allowIncomplete = false } = {}) {
   }
   return { ok: errors.length === 0, errors }
 }
+
+/**
+ * Returns a copy suitable for attaching to a completed set log.
+ *
+ * @param {any} slot
+ * @returns {any}
+ */
+export function slotPrescription(slot) {
+  return copy(slot ?? {})
+}

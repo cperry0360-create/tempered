@@ -20,6 +20,7 @@ import { timeUnderLoad } from '../domain/duration.js'
 import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
 import { companionWorkoutCare } from '../domain/companion-growth.js'
+import { slotPrescription } from '../domain/program-schema.js'
 import { trainingRhythm as deriveTrainingRhythm } from './training-rhythm.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
@@ -248,15 +249,18 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   /**
    * @param {string|null} routineId
+   * @param {{programId?: string|null, programRevisionId?: string|null}} [programContext]
    * @returns {Promise<object>} the open session
    */
-  async function startSession(routineId) {
+  async function startSession(routineId, programContext = null) {
     const session = {
       id: `s_${clock.now()}_${Math.floor(clock.now() % 100000)}`,
       routineId,
       date: clock.today(),
       startedAt: clock.nowIso(),
       endedAt: null,
+      ...(programContext?.programId ? { programId: programContext.programId } : {}),
+      ...(programContext?.programRevisionId ? { programRevisionId: programContext.programRevisionId } : {}),
     }
     await storage.put('sessions', session)
     return session
@@ -288,6 +292,9 @@ export function createWorkoutService({ storage, clock, balance }) {
       // day of the week and still count against the day it was prescribed for.
       programDayId: set.programDayId ?? null,
       slotIndex: set.slotIndex ?? null,
+      programId: set.programId ?? session.programId ?? null,
+      programRevisionId: set.programRevisionId ?? session.programRevisionId ?? null,
+      prescribed: set.prescribed ? slotPrescription(set.prescribed) : null,
       completedAt: clock.nowIso(),
     }
     await storage.put('setLogs', log)
@@ -600,10 +607,10 @@ export function createWorkoutService({ storage, clock, balance }) {
    *
    * @returns {Promise<{session: any, isFirstOfDay: boolean}>}
    */
-  async function openDaySession() {
+  async function openDaySession(programContext = null) {
     const today = clock.today()
     const existing = (await storage.getAll('sessions')).find((s) => s.date === today)
-    return { session: existing ?? await startSession(null), isFirstOfDay: !existing }
+    return { session: existing ?? await startSession(null, programContext), isFirstOfDay: !existing }
   }
 
   /**
@@ -620,7 +627,16 @@ export function createWorkoutService({ storage, clock, balance }) {
    * @param {{durationMinutes?: number}} [options]
    */
   async function completeSlot(slot, sets, options = {}) {
-    const { session, isFirstOfDay } = await openDaySession()
+    const active = await activeProgram()
+    const plannedSlot = active?.program?.days
+      ?.find((day) => day.id === slot.dayId)?.exercises?.[slot.slotIndex] ?? slot
+    const programContext = active
+      ? {
+          programId: active.program.id,
+          programRevisionId: active.state.revisionId ?? active.program.currentRevisionId ?? null,
+        }
+      : null
+    const { session, isFirstOfDay } = await openDaySession(programContext)
     /** The written records, which carry the timestamps duration is measured from. */
     const logs = []
     for (const [index, set] of sets.entries()) {
@@ -629,6 +645,13 @@ export function createWorkoutService({ storage, clock, balance }) {
         exerciseId: slot.exerciseId,
         programDayId: slot.dayId,
         slotIndex: slot.slotIndex,
+        programId: programContext?.programId ?? null,
+        programRevisionId: programContext?.programRevisionId ?? null,
+        prescribed: slotPrescription({
+          dayId: slot.dayId,
+          slotIndex: slot.slotIndex,
+          ...plannedSlot,
+        }),
         setIndex: index,
       }))
     }

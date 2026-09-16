@@ -21,7 +21,7 @@ export const SINGLETON_KEYS = Object.freeze(['profile', 'directive'])
 export const COLLECTION_KEYS = Object.freeze([
   'sessions', 'setLogs', 'dayLogs', 'plannerItems', 'attributeState',
   'records', 'titles', 'battles', 'exercises', 'routines',
-  'programs', 'programState',
+  'programs', 'programRevisions', 'programState',
 ])
 
 /** Every store that travels in an export. */

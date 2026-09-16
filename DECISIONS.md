@@ -2488,3 +2488,21 @@ storage, and product history.
 
 **Needs Cory:** Validate the first program-builder prototype and the revised onboarding
 language on a physical iPhone.
+
+## 2026-09-16 — Phase 2.2: versioned program foundation
+**Phase:** Product Phase 2 / P2.2  
+**Decision:** Add a program ownership/lifecycle envelope, immutable prescription revisions,
+a programRevisions store, export schema 7 coverage, and scheduled workout snapshots that
+record the program, revision, day/slot, and prescription used. Migrate existing seeded
+programs in place without changing their start date, configured weights, completed sessions,
+set logs, records, or other history. Keep the builder UI unreleased until it can create and
+edit a complete plan.
+**Reasoning:** A future edit must affect future work only. Without an immutable revision,
+historical sessions can no longer explain what was prescribed when they happened. The
+migration adds metadata and a first revision for the current program but never invents an
+old prescription or rewrites a completed log. The new store is included in backup/restore so
+the local-first promise remains true.
+**Confidence:** specified architecture and migration behavior, implemented with domain and
+seed regression coverage.
+**Needs Cory:** yes — validate the first program-builder prototype and the revised onboarding
+language on a physical iPhone before the next release.

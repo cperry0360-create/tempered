@@ -17,6 +17,9 @@ records          PRs per exercise
 titles           earned titles
 battles          one per day, with seed and resolved result
 directive        one active record
+programs          seeded + user-owned program envelopes
+programRevisions  immutable prescription snapshots, keyed by revision id
+programState      active program and start/revision pointer
 ```
 
 ## Core shapes
@@ -35,9 +38,39 @@ interface Profile {
 interface Session {
   id: string;
   routineId: string | null;      // null for ad-hoc
+  programId?: string;            // the plan used, when scheduled
+  programRevisionId?: string;    // immutable prescription used
   startedAt: ISODateTime;
   endedAt: ISODateTime | null;
   notes?: string;
+}
+
+interface Program {
+  id: string;
+  name: string;
+  programSchemaVersion: number;
+  source: 'seed' | 'user';
+  status: 'draft' | 'active' | 'paused' | 'completed' | 'archived';
+  currentRevisionId: string;
+  revisionNumber: number;
+  weeks?: number;
+  repeating?: boolean;
+  days: object[];
+}
+
+interface ProgramRevision {
+  id: string;
+  programId: string;
+  version: number;
+  createdAt: ISODateTime;
+  snapshot: object;              // complete prescription at that point in time
+}
+
+interface ProgramState {
+  programId: string;
+  startedOn: ISODate;
+  active: boolean;
+  revisionId: string;
 }
 
 interface SetLog {
@@ -132,7 +165,7 @@ must produce an identical result, so a battle can never be rerolled for better l
   "exportedAt": "...",
   "data": { "profile": {}, "sessions": [], "setLogs": [], "dayLogs": [],
             "attributeState": [], "records": [], "titles": [], "battles": [],
-            "exercises": [], "routines": [] }
+            "exercises": [], "routines": [], "programs": [],\n            "programRevisions": [], "programState": [] }
 }
 ```
 
@@ -143,4 +176,5 @@ message. Never merge silently — always ask replace or cancel.
 
 Every schema change bumps `schemaVersion` and adds a migration in
 `src/domain/migrations/`. Migrations are pure functions and must be tested against a
-fixture of the previous version.
+fixture of the previous version. Export schema 7 adds `programRevisions`; legacy program
+records are wrapped at runtime by `src/domain/program-schema.js` without rewriting logs.

@@ -60,6 +60,7 @@ const PRECACHE = [
   './src/domain/might.js',
   './src/domain/mind.js',
   './src/domain/migrations/index.js',
+  './src/domain/program-schema.js',
   './src/domain/nutrition.js',
   './src/domain/nutrition-quality.js',
   './src/domain/plates.js',

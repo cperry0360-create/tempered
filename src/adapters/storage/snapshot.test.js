@@ -18,6 +18,15 @@ async function populated() {
   ])
   await storage.putAll('dayLogs', [{ date: '2026-09-04', steps: 8200, sleepHours: 7.8 }])
   await storage.putAll('plannerItems', [{ id: 'task-1', date: '2026-09-05', title: 'Pack gym bag' }])
+  await storage.putAll('programs', [{ id: 'november-physique', name: 'November Physique Sprint', weeks: 8 }])
+  await storage.putAll('programRevisions', [{
+    id: 'november-physique:r1', programId: 'november-physique', version: 1,
+    snapshot: { name: 'November Physique Sprint', weeks: 8 },
+  }])
+  await storage.putAll('programState', [{
+    programId: 'november-physique', startedOn: '2026-09-01', active: true,
+    revisionId: 'november-physique:r1',
+  }])
   await storage.putAll('attributeState', [{ attribute: 'might', xp: 1240, level: 1, lifetimeSources: { 'might.volume': 1240 } }])
   await storage.putAll('records', [{ exerciseId: 'squat_bb', bestWeight: { weight: 145, reps: 8, date: '2026-09-04' } }])
   await storage.putAll('titles', [{ id: 'first_load', earnedAt: '2026-09-04' }])
@@ -31,6 +40,9 @@ test('a snapshot reads every store', async () => {
   assert.equal(snapshot.setLogs.length, 2)
   assert.equal(snapshot.directive, null)
   assert.equal(snapshot.plannerItems.length, 1)
+  assert.equal(snapshot.programs.length, 1)
+  assert.equal(snapshot.programRevisions.length, 1)
+  assert.equal(snapshot.programState.length, 1)
 })
 
 test('export produces a complete, valid document', async () => {
@@ -100,6 +112,9 @@ test('applyImportPlan reports what it wrote', async () => {
   assert.equal(written.setLogs, 2)
   assert.equal(written.profile, 1)
   assert.equal(written.plannerItems, 1)
+  assert.equal(written.programs, 1)
+  assert.equal(written.programRevisions, 1)
+  assert.equal(written.programState, 1)
 })
 
 test('a malformed replacement cannot partially erase existing data', async () => {

@@ -26,6 +26,7 @@ export const STORES = Object.freeze({
   titles: { keyPath: 'id' },
   battles: { keyPath: 'date' },
   programs: { keyPath: 'id' },
+  programRevisions: { keyPath: 'id', indexes: { programId: 'programId' } },
   programState: { keyPath: 'programId' },
   directive: { keyPath: 'id' },
 })
@@ -41,8 +42,9 @@ export const DATABASE_NAME = 'tempered'
  *
  * 2 — added `programs` and `programState` for docs/09 time-boxed programs.
  * 3 — added dated `plannerItems` for day-specific personal/work tasks.
+ * 4 — added `programRevisions` for immutable prescription snapshots.
  */
-export const DATABASE_VERSION = 3
+export const DATABASE_VERSION = 4
 
 /**
  * @param {string} store

@@ -31,9 +31,19 @@ test('a versioned seeded-program upgrade reaches existing installs without reset
   const upgraded = await storage.get('programs', 'november-physique')
   assert.equal(result.programs, 0)
   assert.equal(upgraded.schemaVersion, 2)
+  assert.equal(upgraded.programSchemaVersion, 2)
+  assert.equal(upgraded.source, 'seed')
+  assert.equal(upgraded.status, 'active')
+  assert.equal(upgraded.revisionNumber, 2)
+  assert.equal(upgraded.currentRevisionId, 'november-physique:r2')
   assert.equal(upgraded.days[0].exercises[0].weight, 115, 'user-configured working weight survives')
   assert.equal(upgraded.days[1].exercises[0].exerciseId, 'calf_raise')
   assert.deepEqual(await storage.get('programState', 'november-physique'), {
     programId: 'november-physique', startedOn: '2026-08-31', active: true,
+    revisionId: 'november-physique:r2',
   })
+  const revision = await storage.get('programRevisions', 'november-physique:r2')
+  assert.equal(revision.programId, 'november-physique')
+  assert.equal(revision.version, 2)
+  assert.equal(revision.snapshot.days[0].exercises[0].weight, 115)
 })

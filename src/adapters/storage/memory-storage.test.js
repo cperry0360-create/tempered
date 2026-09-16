@@ -11,7 +11,8 @@ async function opened() {
 
 test('every store from docs/02 exists', () => {
   for (const name of ['profile', 'sessions', 'setLogs', 'dayLogs', 'exercises', 'routines',
-    'attributeState', 'records', 'titles', 'battles', 'directive']) {
+    'attributeState', 'records', 'titles', 'battles', 'directive', 'programs',
+    'programRevisions', 'programState']) {
     assert.ok(STORE_NAMES.includes(name), `missing store: ${name}`)
   }
 })

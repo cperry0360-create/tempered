@@ -135,4 +135,39 @@
  * @property {Record<string, any>} [battle]
  */
 
+
+/** @typedef {'draft'|'active'|'paused'|'completed'|'archived'} ProgramStatus */
+/** @typedef {'seed'|'user'} ProgramSource */
+
+/**
+ * @typedef {object} Program
+ * @property {string} id
+ * @property {string} name
+ * @property {number} programSchemaVersion
+ * @property {ProgramSource} source
+ * @property {ProgramStatus} status
+ * @property {string} currentRevisionId
+ * @property {number} revisionNumber
+ * @property {number} [weeks]
+ * @property {boolean} [repeating]
+ * @property {object[]} days
+ */
+
+/**
+ * @typedef {object} ProgramRevision
+ * @property {string} id
+ * @property {string} programId
+ * @property {number} version
+ * @property {string} [createdAt]
+ * @property {Record<string, any>} snapshot
+ */
+
+/**
+ * @typedef {object} ProgramState
+ * @property {string} programId
+ * @property {string} startedOn
+ * @property {boolean} active
+ * @property {string} [revisionId]
+ */
+
 export {}

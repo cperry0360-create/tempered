@@ -81,3 +81,8 @@ It is not yet ready for beta distribution. The current release has one seeded tr
 program, no on-device program builder, and first-launch setup that does not fully teach the
 product thesis or guide the user through creating a plan. Product Phase 2 closes those gaps
 before expanded HealthKit work or TestFlight distribution.
+
+The first Phase 2 engineering slice establishes versioned program ownership envelopes,
+immutable prescription revisions, and safe migration of the existing November program. The
+program builder and guided first-use flow remain intentionally unreleased until they are
+complete enough to use end to end.

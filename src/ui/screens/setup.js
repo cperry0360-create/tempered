@@ -7,6 +7,7 @@
  */
 
 import { companionStyle } from '../../domain/companion-growth.js'
+import { createProgramRevision } from '../../domain/program-schema.js'
 import { el, replace } from '../dom.js'
 
 const STEP_COUNT = 5
@@ -254,14 +255,27 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
         }
       }
       await storage.put('programs', updated)
+      if (updated.currentRevisionId) {
+        const revision = await storage.get('programRevisions', updated.currentRevisionId)
+        if (revision) {
+          await storage.put('programRevisions', createProgramRevision(updated, {
+            id: revision.id,
+            version: revision.version,
+            createdAt: revision.createdAt,
+          }))
+        }
+      }
 
       const byId = new Map(states.map((state) => [state.programId, state]))
       for (const program of programs) {
         const prior = byId.get(program.id)
+        const revisionId = prior?.revisionId ?? program.currentRevisionId
         await storage.put('programState', {
+          ...prior,
           programId: program.id,
           startedOn: prior?.startedOn ?? clock.today(),
           active: program.id === chosen.id,
+          ...(revisionId ? { revisionId } : {}),
         })
       }
     }

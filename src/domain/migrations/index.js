@@ -17,8 +17,9 @@
  * 4 — sessions may carry xpBySource.
  * 5 — day logs may carry an itemized nutrition ledger and macro totals.
  * 6 — dated personal and work planner items are included in backups.
+ * 7 — program revision snapshots are included in backups.
  */
-export const CURRENT_SCHEMA_VERSION = 6
+export const CURRENT_SCHEMA_VERSION = 7
 
 /**
  * Upgrades keyed by source version: `MIGRATIONS[n]` takes version n data and
@@ -75,6 +76,14 @@ export const MIGRATIONS = Object.freeze({
    * reconstruct those tasks, so the migration makes that absence explicit.
    */
   5: (data) => ({ ...data, plannerItems: data.plannerItems ?? [] }),
+
+  /**
+   * 6 -> 7: program revision snapshots join the complete local snapshot.
+   * Older exports carry the program itself but cannot contain immutable
+   * prescription history, so the absent collection is made explicit. The
+   * runtime seed migration creates the first revision without touching logs.
+   */
+  6: (data) => ({ ...data, programRevisions: data.programRevisions ?? [] }),
 })
 
 /**

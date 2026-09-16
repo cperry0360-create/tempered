@@ -1,16 +1,18 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-14
+**Last recovered and verified:** 2026-09-16
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.26.0 (39)  
+**Current release:** 0.27.0 (40)  
 **Product maturity:** Pre-beta product completion
 
 Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
 program creation or editing system. First launch configures preferences but does not yet
 teach the current tracker-first thesis or guide a new user into a complete training plan.
-Product Phase 2 is therefore Program Foundation and Guided First Use. Expanded native
+Product Phase 2 is therefore Program Foundation and Guided First Use. Release 0.27 establishes
+versioned program envelopes, immutable prescription revisions, and a safe migration for the
+existing November program. The builder and revised onboarding are still ahead. Expanded native
 distribution follows only after the exit criteria in
 [`docs/12-pre-beta-product-foundation.md`](12-pre-beta-product-foundation.md) pass.
 
@@ -169,7 +171,10 @@ until those sets are undone. Choosing Cable uses the configured machine's PEG se
 default, with one or two stacks according to the movement. An explicit per-exercise setting
 can opt back into generic pounds.
 
-A program can start on any day. Its starter week lasts at least seven full days and remains
+Program records now carry ownership/lifecycle metadata and point at an immutable prescription
+revision. Newly completed scheduled slots store the program id, revision id, and exact
+prescription snapshot alongside the actual set. Existing sessions remain untouched during
+migration; no historical prescription is invented. A program can start on any day. Its starter week lasts at least seven full days and remains
 active through Sunday; afterward weeks turn over Monday morning. Older sets are never
 reclassified as missed work. Today presents the current day's movements first and groups
 larger earlier-week lists behind a compact disclosure, still available if the user chooses.
@@ -230,6 +235,8 @@ limit before falling back to the installed shell. Activation removes only older 
 owned by Tempered. The page and precache use the same unqueried `src/main.js` cache key.
 
 - Plain browser ES modules, no framework, no dependencies, no build step.
+- Program revisions and scheduled-set prescription snapshots are part of the local backup;
+  export schema 7 adds the revision collection while older backups migrate safely.
 - `node --test` for automated logic tests.
 - IndexedDB behind a storage adapter; memory storage for tests.
 - Clock and health integrations stay behind adapters.

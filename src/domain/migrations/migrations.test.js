@@ -10,8 +10,8 @@ const v1Fixture = Object.freeze({
   sessions: [{ id: 's1' }],
 })
 
-test('schema 6 is current, and every step from 1 exists', () => {
-  assert.equal(CURRENT_SCHEMA_VERSION, 6)
+test('schema 7 is current, and every step from 1 exists', () => {
+  assert.equal(CURRENT_SCHEMA_VERSION, 7)
   for (let version = 1; version < CURRENT_SCHEMA_VERSION; version++) {
     assert.equal(typeof MIGRATIONS[version], 'function', `no migration from ${version}`)
   }
@@ -133,9 +133,23 @@ test('5 -> 6 preserves planner items when a backup already carries them', () => 
   assert.deepEqual(upgraded.plannerItems, plannerItems)
 })
 
-test('a version 1 backup walks all the way to 6', () => {
-  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 6)
+test('6 -> 7 adds the program revision collection without changing programs', () => {
+  const v6 = { ...structuredClone(V1_BACKUP), programs: [{ id: 'legacy' }] }
+  const upgraded = migrate(v6, 6, 7)
+  assert.deepEqual(upgraded.programs, v6.programs)
+  assert.deepEqual(upgraded.programRevisions, [])
+})
+
+test('6 -> 7 preserves existing program revisions', () => {
+  const revisions = [{ id: 'legacy:r1', programId: 'legacy', version: 1, snapshot: {} }]
+  const upgraded = migrate({ ...structuredClone(V1_BACKUP), programRevisions: revisions }, 6, 7)
+  assert.deepEqual(upgraded.programRevisions, revisions)
+})
+
+test('a version 1 backup walks all the way to 7', () => {
+  const upgraded = migrate(structuredClone(V1_BACKUP), 1, 7)
   assert.deepEqual(upgraded.programs, [])
+  assert.deepEqual(upgraded.programRevisions, [])
   assert.deepEqual(upgraded.plannerItems, [])
   assert.equal(upgraded.profile.name, 'Cory')
 })

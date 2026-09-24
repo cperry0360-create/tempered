@@ -2518,3 +2518,15 @@ not inflate history. A deliberate correction keeps the record honest without rew
 or shame-driven data manipulation.
 **Confidence:** implementation and regression coverage.
 **Needs Cory:** verify Wednesday's short leg day can be corrected to 30 minutes on the deployed build.
+
+
+## 2026-09-24 — Away weeks preserve rhythm without pretending to be training
+**Phase:** 0.29.0 forgiving rhythm
+**Decision:** Settings accepts dated Away ranges. If a completed week touched an Away range and
+did not reach four qualifying days, it preserves an existing rhythm without spending a keeper,
+adding workout days, or advancing keeper progress. Four real qualifying days still make the week
+strong normally. Away time alone never creates a streak.
+**Reasoning:** Travel, illness, and life interruptions should not turn a positive consistency system
+into punishment. Freezing continuity is honest; fabricating workouts or awarding progress is not.
+**Confidence:** domain and service regression coverage.
+**Needs Cory:** mark the recent travel dates in Settings and confirm Train shows “streak parked safely.”

@@ -95,6 +95,7 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
         text: [
           programWorkoutTotal ? `${programWorkouts} of ${programWorkoutTotal} program workouts logged` : null,
           `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min`,
+          rhythm.currentWeekAway ? 'Away week · streak parked safely' : null,
         ].filter(Boolean).join(' · '),
       }),
       el('div.training-calendar__month', {}, [

@@ -147,7 +147,9 @@ due date. Due dates provide context and ordering; they never create an overdue p
 Train opens with a small monthly training calendar. Days with 30 or more completed workout
 minutes are circled. Four such days make a strong week; five strong weeks bank a streak
 keeper. A keeper automatically protects one completed quiet week, and an unfinished week
-never spends one. The system is positive-only. Completed sessions can be corrected later from
+never spends one. Settings also accepts retroactive or planned Away ranges. A completed away
+week preserves an existing rhythm without inventing workouts, spending a keeper, or advancing
+keeper progress. The system is positive-only. Completed sessions can be corrected later from
 Progress → Log; a manual duration replaces the estimate and is bounded to a sensible 1–240 minutes.
 Train keeps the active program and routines on its main surface. The exercise library is a single button that opens a dedicated
 searchable screen. Any open workout can add another movement from that library without

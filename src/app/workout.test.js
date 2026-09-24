@@ -477,6 +477,22 @@ test('a completed session duration can be corrected without changing its work', 
   assert.equal(floored.durationMinutes, 1)
 })
 
+test('away periods are stored on the profile and can be removed', async () => {
+  const { storage, workout } = await freshApp('2026-09-24T07:00:00.000Z')
+  const added = await workout.addAwayPeriod('2026-09-23', '2026-09-20')
+
+  assert.deepEqual(added, [{
+    id: 'away_2026-09-20_2026-09-23',
+    start: '2026-09-20',
+    end: '2026-09-23',
+  }])
+  assert.deepEqual(await workout.awayPeriods(), added)
+  assert.deepEqual((await storage.get('profile', 'profile')).awayPeriods, added)
+
+  await workout.removeAwayPeriod(added[0].id)
+  assert.deepEqual(await workout.awayPeriods(), [])
+})
+
 // --- docs/11 F1: duration is time under load, not wall clock ---------------
 
 test('THE BUG: a five-minute session across the day does not report hours', async () => {

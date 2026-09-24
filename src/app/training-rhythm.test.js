@@ -61,3 +61,39 @@ test('an unfinished current week never consumes a keeper', () => {
   assert.equal(result.streakWeeks, 5)
   assert.equal(result.keepers, 1)
 })
+
+
+test('an away week protects an existing rhythm without earning keeper progress', () => {
+  const minutes = {
+    ...week('2026-08-03'),
+    ...week('2026-08-17'),
+  }
+  const result = trainingRhythm(minutes, '2026-08-23', {
+    awayPeriods: [{ start: '2026-08-11', end: '2026-08-13' }],
+  })
+  assert.equal(result.streakWeeks, 3)
+  assert.equal(result.keeperProgress, 2)
+  assert.equal(result.keepers, 0)
+  assert.deepEqual(result.awayProtectedWeeks, ['2026-08-10'])
+})
+
+test('training four qualifying days still makes an away week strong', () => {
+  const result = trainingRhythm({
+    ...week('2026-08-03'),
+    ...week('2026-08-10'),
+  }, '2026-08-16', {
+    awayPeriods: [{ start: '2026-08-11', end: '2026-08-13' }],
+  })
+  assert.equal(result.streakWeeks, 2)
+  assert.equal(result.keeperProgress, 2)
+  assert.deepEqual(result.awayProtectedWeeks, [])
+})
+
+test('away time never invents a streak or a qualifying workout day', () => {
+  const result = trainingRhythm({}, '2026-08-16', {
+    awayPeriods: [{ start: '2026-08-10', end: '2026-08-16' }],
+  })
+  assert.equal(result.streakWeeks, 0)
+  assert.deepEqual(result.qualifyingDates, [])
+  assert.deepEqual(result.trainedDates, [])
+})

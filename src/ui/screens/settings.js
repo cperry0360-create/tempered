@@ -20,6 +20,9 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
   let restoreName = ''
   let restoreNotice = ''
   let restoreBusy = false
+  let awayStart = ''
+  let awayEnd = ''
+  let awayNotice = ''
 
   const armed = () => typed.trim().toUpperCase() === RESET_PHRASE
 
@@ -39,6 +42,9 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
     const schedule = await daily.activitySchedule()
     const weekStatus = workout ? await workout.weekStatus() : null
     const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}
+    const awayPeriods = workout ? await workout.awayPeriods() : []
+    if (!awayStart) awayStart = clock.today()
+    if (!awayEnd) awayEnd = clock.today()
     const exerciseGroups = new Map()
     const protection = maintenance?.storageProtection?.() ?? null
     for (const day of weekStatus?.week?.days ?? []) {
@@ -66,6 +72,56 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         onSetup && el('button.button', {
           type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
         }, ['RE-RUN SETUP']),
+      ]),
+
+      workout && el('section.card', { dataset: { section: 'away' } }, [
+        el('h2.block__title', { text: 'Away mode' }),
+        el('p.block__hint', {
+          text: 'Travel, illness, or life stuff. An away week protects an existing rhythm without adding workouts or keeper progress.',
+        }),
+        el('div.setting', {}, [
+          el('label.setting__label', { text: 'From' }),
+          el('input.entry__value', {
+            type: 'date', value: awayStart, 'aria-label': 'Away start date',
+            oninput: (event) => { awayStart = event.target.value },
+          }),
+        ]),
+        el('div.setting', {}, [
+          el('label.setting__label', { text: 'Through' }),
+          el('input.entry__value', {
+            type: 'date', value: awayEnd, 'aria-label': 'Away end date',
+            oninput: (event) => { awayEnd = event.target.value },
+          }),
+        ]),
+        el('button.button', {
+          type: 'button', dataset: { action: 'mark-away' },
+          onclick: async () => {
+            try {
+              await workout.addAwayPeriod(awayStart, awayEnd)
+              awayNotice = 'Streak parked safely. No airport lunges required.'
+              await load()
+            } catch {
+              awayNotice = 'Choose a valid start and end date.'
+              await load()
+            }
+          },
+        }, ['MARK AWAY']),
+        awayNotice && el('p.notice', { text: awayNotice }),
+        ...awayPeriods.map((period) => el('div.setting', { dataset: { awayPeriod: period.id } }, [
+          el('span.setting__label', {
+            text: period.start === period.end
+              ? shortDate(period.start)
+              : `${shortDate(period.start)} – ${shortDate(period.end)}`,
+          }),
+          el('button.setup__cadence', {
+            type: 'button',
+            onclick: async () => {
+              await workout.removeAwayPeriod(period.id)
+              awayNotice = 'Away period removed.'
+              await load()
+            },
+          }, ['REMOVE']),
+        ])),
       ]),
 
       el('section.card', { dataset: { section: 'targets' } }, [

@@ -21,7 +21,7 @@ import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } fr
 import { estimateOneRepMax } from '../domain/e1rm.js'
 import { companionWorkoutCare } from '../domain/companion-growth.js'
 import { slotPrescription } from '../domain/program-schema.js'
-import { trainingRhythm as deriveTrainingRhythm } from './training-rhythm.js'
+import { normalizeAwayPeriods, trainingRhythm as deriveTrainingRhythm } from './training-rhythm.js'
 
 /** Monday-start week key, so "sessions this week" matches how people plan. */
 function weekStart(date) {
@@ -65,6 +65,27 @@ export function createWorkoutService({ storage, clock, balance }) {
     if (target === null || target === '' || !Number.isFinite(parsed) || parsed <= 0) delete next[exerciseId]
     else next[exerciseId] = Math.max(1, Math.min(7, Math.round(parsed)))
     await storage.put('profile', { ...profile, exerciseWeeklyTargets: next })
+    return next
+  }
+
+  async function awayPeriods() {
+    const profile = await storage.get('profile', 'profile')
+    return normalizeAwayPeriods(profile?.awayPeriods)
+  }
+
+  async function addAwayPeriod(start, end) {
+    const candidate = normalizeAwayPeriods([{ start, end }])[0]
+    if (!candidate) throw new Error('Choose a valid start and end date')
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const next = normalizeAwayPeriods([...(profile.awayPeriods ?? []), candidate])
+    await storage.put('profile', { ...profile, awayPeriods: next })
+    return next
+  }
+
+  async function removeAwayPeriod(id) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const next = normalizeAwayPeriods(profile.awayPeriods).filter((period) => period.id !== id)
+    await storage.put('profile', { ...profile, awayPeriods: next })
     return next
   }
 
@@ -359,6 +380,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   async function trainingRhythm() {
     const sessions = (await storage.getAll('sessions')).filter((session) => session.endedAt)
     const logs = await storage.getAll('setLogs')
+    const profile = await storage.get('profile', 'profile')
     const minutesByDate = {}
     for (const session of sessions) {
       const sessionLogs = logs.filter((log) => log.sessionId === session.id)
@@ -371,7 +393,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     }
     return {
       minutesByDate,
-      ...deriveTrainingRhythm(minutesByDate, clock.today()),
+      ...deriveTrainingRhythm(minutesByDate, clock.today(), { awayPeriods: profile?.awayPeriods }),
     }
   }
 
@@ -700,6 +722,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   return {
     exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
+    awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
     startSession, logSet, setsFor, finishSession, adjustSessionDuration,
     /** Removing a logged set, for the mistake that is currently unfixable. */

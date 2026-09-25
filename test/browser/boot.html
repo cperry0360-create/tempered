@@ -42,8 +42,11 @@
           document.querySelectorAll('[data-start]').length >= 2,
           `${document.querySelectorAll('[data-start]').length} routines`)
         const rhythm = document.querySelector('[data-training-rhythm="calendar"]')
-        check('Train opens with a compact prior and current week calendar',
-          rhythm !== null && rhythm.querySelectorAll('.training-calendar__day').length === 14,
+        check('Train opens on a compact, scrollable current-week calendar',
+          rhythm !== null
+          && rhythm.querySelector('.training-calendar-scroll') !== null
+          && rhythm.querySelectorAll('.training-calendar__day').length >= 7
+          && rhythm.querySelector('[data-current-week="true"]') !== null,
           `${rhythm?.querySelectorAll('.training-calendar__day').length ?? 0} days`)
         check('Train includes a workout control center and concise coaching handoff',
           document.querySelector('[data-training-control="true"]') !== null

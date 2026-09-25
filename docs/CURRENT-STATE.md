@@ -1,10 +1,10 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-16
+**Last recovered and verified:** 2026-09-25
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.27.0 (40)  
+**Current release:** 0.30.0 (43)  
 **Product maturity:** Pre-beta product completion
 
 Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
@@ -24,13 +24,15 @@ This is the short handoff for the live product. It records the decisions recover
 the long Tempered build conversation and the companion-art share so a new session does
 not have to reconstruct the pivot from legacy RPG documents.
 
+Release 0.30 replaces the fixed two-week Training calendar with a horizontally scrolling weekly history. It includes every week from the first recorded workout, opens on the current week, and preserves the established outline for logged work and solid fill for 30-minute qualifying days.
+
 ## Product direction
 
 Tempered is a mobile-first, local-first health, training, and lifestyle tracker with a
 small positive companion layer. It is not an RPG battle game. The visible navigation is:
 
 1. **Today** for sleep, steps, nutrition, water, recovery, habits, and today's workout.
-2. **Train** for a compact two-week rhythm, readiness, concise ChatGPT coaching handoff,
+2. **Train** for scrollable weekly rhythm history, readiness, concise ChatGPT coaching handoff,
    programs, ad-hoc exercises, fast set logging, history, and progression.
 3. **Fuel** for calories, protein, water, and sleep at a glance with quick logging. The
    selectable companion is retained below this practical dashboard as an optional reward.

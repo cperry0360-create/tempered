@@ -449,6 +449,20 @@ body::before {
 .training-rhythm__week, .training-rhythm__note { margin: 0; color: var(--text-2); font-size: var(--text-xs); }
 .training-calendar__month { display: flex; justify-content: space-between; gap: 10px; color: var(--text-3); font-size: 9px; font-weight: 800; letter-spacing: .09em; }
 .training-calendar__month strong { color: var(--text-2); font-size: 10px; letter-spacing: 0; }
+.training-calendar-scroll {
+  min-width: 0; display: flex; overflow-x: auto; overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x pan-y;
+}
+.training-calendar-scroll::-webkit-scrollbar { display: none; }
+.training-calendar__week-panel {
+  flex: 0 0 100%; min-width: 100%; display: grid; gap: 5px;
+  scroll-snap-align: start; scroll-snap-stop: always;
+}
+.training-calendar__week-label {
+  display: block; color: var(--text-2); font-size: 10px; font-weight: 800;
+  letter-spacing: .02em; text-align: right;
+}
+.training-calendar__week-panel[data-current-week='true'] .training-calendar__week-label { color: var(--acid); }
 .training-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
 .training-calendar__weekday { color: var(--text-3); font-size: 10px; font-weight: 800; }
 .training-calendar__day, .training-calendar__blank {

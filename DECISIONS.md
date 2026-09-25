@@ -2530,3 +2530,16 @@ strong normally. Away time alone never creates a streak.
 into punishment. Freezing continuity is honest; fabricating workouts or awarding progress is not.
 **Confidence:** domain and service regression coverage.
 **Needs Cory:** mark the recent travel dates in Settings and confirm Train shows “streak parked safely.”
+
+
+## 2026-09-25 — Training history scrolls by week
+**Phase:** 0.30.0 training history
+**Decision:** Replace the fixed prior-plus-current Training calendar with one horizontally
+scrolling, snap-aligned page per week. Include every week from the first recorded workout
+through the current week and open at the current week. Preserve the existing markers:
+an outline means work was logged and a solid fill means the day reached 30 qualifying minutes.
+**Reasoning:** A fixed 14-day window hid earlier completions and made the calendar a status
+snapshot rather than useful training history. Weekly pages keep the mobile card compact while
+making all recorded weeks reviewable.
+**Confidence:** source regression coverage, full CI, and deployed Pages verification.
+**Needs Cory:** confirm horizontal swiping and week labels on the installed iPhone.

@@ -45,32 +45,70 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
   function trainingCalendar() {
     if (!rhythm) return null
     const today = clock.today()
-    const at = new Date(`${today}T00:00:00Z`)
-    const currentWeekStart = addUtcDays(today, -((at.getUTCDay() + 6) % 7))
-    const first = addUtcDays(currentWeekStart, -7)
-    const dates = Array.from({ length: 14 }, (_, index) => addUtcDays(first, index))
+    const mondayOf = (date) => {
+      const at = new Date(`${date}T00:00:00Z`)
+      return addUtcDays(date, -((at.getUTCDay() + 6) % 7))
+    }
+    const currentWeekStart = mondayOf(today)
+    const recordedDates = [...(rhythm.trainedDates ?? [])]
+      .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today)
+      .sort()
+    const firstWeekStart = recordedDates.length ? mondayOf(recordedDates[0]) : currentWeekStart
+    const elapsedWeeks = Math.floor(
+      (Date.parse(`${currentWeekStart}T00:00:00Z`) - Date.parse(`${firstWeekStart}T00:00:00Z`))
+      / (7 * 24 * 60 * 60 * 1000),
+    )
+    const weekStarts = Array.from(
+      { length: Math.max(1, elapsedWeeks + 1) },
+      (_, index) => addUtcDays(firstWeekStart, index * 7),
+    )
     const trained = new Set(rhythm.trainedDates)
     const qualified = new Set(rhythm.qualifyingDates)
-    const shortDate = (date) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
-    const rangeLabel = `${shortDate(first)} – ${shortDate(dates.at(-1))}`
-    const cells = dates.map((date) => {
-      const dateAt = new Date(`${date}T00:00:00Z`)
-      const minutes = Math.round(rhythm.minutesByDate?.[date] ?? 0)
-      const hasTraining = trained.has(date)
-      const qualifies = qualified.has(date)
-      return el('span.training-calendar__day', {
-        text: String(dateAt.getUTCDate()),
-        title: hasTraining
-          ? `${minutes} training minutes${qualifies ? ', strong-week day' : ''}`
-          : undefined,
-        'aria-label': `${shortDate(date)}${hasTraining ? `, ${minutes} training minutes${qualifies ? ', strong-week day' : ''}` : ''}`,
-        dataset: {
-          trained: String(hasTraining),
-          qualified: String(qualifies),
-          today: String(date === today),
-        },
+    const shortDate = (date) => new Intl.DateTimeFormat(undefined, {
+      month: 'short', day: 'numeric', timeZone: 'UTC',
+    }).format(new Date(`${date}T00:00:00Z`))
+    const fullRangeLabel = `${shortDate(firstWeekStart)} – ${shortDate(addUtcDays(currentWeekStart, 6))}`
+
+    const weekPanels = weekStarts.map((weekStart) => {
+      const dates = Array.from({ length: 7 }, (_, index) => addUtcDays(weekStart, index))
+      const weekLabel = `${shortDate(weekStart)} – ${shortDate(dates.at(-1))}`
+      const cells = dates.map((date) => {
+        const dateAt = new Date(`${date}T00:00:00Z`)
+        const minutes = Math.round(rhythm.minutesByDate?.[date] ?? 0)
+        const hasTraining = trained.has(date)
+        const qualifies = qualified.has(date)
+        return el('span.training-calendar__day', {
+          text: String(dateAt.getUTCDate()),
+          title: hasTraining
+            ? `${minutes} training minutes${qualifies ? ', strong-week day' : ''}`
+            : undefined,
+          'aria-label': `${shortDate(date)}${hasTraining ? `, ${minutes} training minutes${qualifies ? ', strong-week day' : ''}` : ''}`,
+          dataset: {
+            trained: String(hasTraining),
+            qualified: String(qualifies),
+            today: String(date === today),
+          },
+        })
       })
+      return el('section.training-calendar__week-panel', {
+        'aria-label': `${weekLabel} training days`,
+        dataset: { currentWeek: String(weekStart === currentWeekStart) },
+      }, [
+        el('strong.training-calendar__week-label', {
+          text: weekStart === currentWeekStart ? `${weekLabel} · CURRENT` : weekLabel,
+        }),
+        el('div.training-calendar', {}, [
+          ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.training-calendar__weekday', { text: day })),
+          ...cells,
+        ]),
+      ])
     })
+    const scroller = el('div.training-calendar-scroll', {
+      role: 'region',
+      tabindex: '0',
+      'aria-label': `${fullRangeLabel} training history. Swipe horizontally for prior weeks.`,
+    }, weekPanels)
+    queueMicrotask(() => { scroller.scrollLeft = scroller.scrollWidth })
 
     const programWorkouts = weekView?.week?.days
       ?.filter((entry) => entry.tasks.some((task) => task.logged > 0)).length ?? 0
@@ -99,13 +137,10 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
         ].filter(Boolean).join(' · '),
       }),
       el('div.training-calendar__month', {}, [
-        el('span', { text: 'PRIOR + CURRENT WEEK' }),
-        el('strong', { text: rangeLabel }),
+        el('span', { text: 'TRAINING HISTORY · SWIPE' }),
+        el('strong', { text: weekStarts.length === 1 ? '1 WEEK' : `${weekStarts.length} WEEKS` }),
       ]),
-      el('div.training-calendar', { role: 'group', 'aria-label': `${rangeLabel} training days` }, [
-        ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.training-calendar__weekday', { text: day })),
-        ...cells,
-      ]),
+      scroller,
     ])
   }
 

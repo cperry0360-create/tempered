@@ -2543,3 +2543,20 @@ snapshot rather than useful training history. Weekly pages keep the mobile card 
 making all recorded weeks reviewable.
 **Confidence:** source regression coverage, full CI, and deployed Pages verification.
 **Needs Cory:** confirm horizontal swiping and week labels on the installed iPhone.
+
+
+## 2026-09-28 — Three qualifying days maintain the training streak
+**Phase:** 0.31.0 forgiving weekly rhythm
+**Decision:** Three distinct days with at least 30 completed training minutes start and
+maintain the weekly streak. A fourth qualifying day makes the week strong and advances the
+five-strong-week keeper meter. Three-day weeks preserve existing keeper progress but do not
+advance it. The rule is derived across stored history, so earlier three-day weeks count.
+Away and keeper protection continue to apply only when a completed week falls below the
+three-day minimum.
+**Reasoning:** Three days is Cory's realistic minimum during busy weeks. Treating that as
+failure made the streak stricter than the behavior the product is supposed to support.
+Keeping a fourth-day strong-week reward preserves a useful incentive without turning it
+into the baseline.
+**Confidence:** specified directly by Cory and covered by threshold, mixed-week, Away, and
+keeper regression tests.
+**Needs Cory:** confirm prior three-day weeks now remain in the visible streak history.

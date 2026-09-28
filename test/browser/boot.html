@@ -51,8 +51,10 @@
         check('Train includes a workout control center and concise coaching handoff',
           document.querySelector('[data-training-control="true"]') !== null
           && document.querySelector('[data-training-coach="open"]')?.getAttribute('href') === 'https://chatgpt.com/')
-        check('a fresh calendar explains the four-day week and streak keeper',
-          /0 of 4 days at 30\+ min/i.test(rhythm?.textContent ?? '') && /keeper/i.test(rhythm?.textContent ?? ''))
+        check('a fresh calendar explains the three-day minimum and four-day strong week',
+          /0 of 3 streak days at 30\+ min/i.test(rhythm?.textContent ?? '')
+          && /4 days = strong week/i.test(rhythm?.textContent ?? '')
+          && /keeper/i.test(rhythm?.textContent ?? ''))
         check('the Train overview links to the Exercise Library without rendering every row',
           document.querySelector('[data-exercise-library="open"]') !== null
           && document.querySelectorAll('.libraryrow').length === 0)

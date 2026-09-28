@@ -60,15 +60,17 @@ function awayWeeksFor(periods, today) {
 }
 
 /**
- * Four 30-minute days make one strong week. Every five strong weeks banks a
- * keeper; a keeper automatically protects the next quiet completed week.
+ * Three 30-minute days keep the weekly rhythm active. Four days make a strong
+ * week, and every five strong weeks bank a keeper. A keeper automatically
+ * protects the next quiet completed week.
  * An away week protects an existing rhythm without spending a keeper, adding
  * workout days, or advancing keeper progress. The current week is never judged
  * before it is over.
  */
 export function trainingRhythm(minutesByDate, today, options = {}) {
   const minimumMinutes = Math.max(1, Number(options.minimumMinutes) || 30)
-  const weeklyDays = Math.max(1, Number(options.weeklyDays) || 4)
+  const weeklyDays = Math.max(1, Number(options.weeklyDays) || 3)
+  const strongWeekDays = Math.max(weeklyDays, Number(options.strongWeekDays) || 4)
   const keeperEvery = Math.max(1, Number(options.keeperEvery) || 5)
   const awayPeriods = normalizeAwayPeriods(options.awayPeriods)
   const awayWeeks = awayWeeksFor(awayPeriods, today)
@@ -99,10 +101,12 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
     const days = daysByWeek.get(week)?.size ?? 0
     if (days >= weeklyDays) {
       streakWeeks += 1
-      keeperProgress += 1
-      if (keeperProgress >= keeperEvery) {
-        keepers += 1
-        keeperProgress = 0
+      if (days >= strongWeekDays) {
+        keeperProgress += 1
+        if (keeperProgress >= keeperEvery) {
+          keepers += 1
+          keeperProgress = 0
+        }
       }
     } else if (week === currentWeek) {
       // A week in progress is opportunity, never a broken streak.
@@ -123,6 +127,7 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
   return {
     minimumMinutes,
     weeklyDays,
+    strongWeekDays,
     keeperEvery,
     trainedDates,
     qualifyingDates,

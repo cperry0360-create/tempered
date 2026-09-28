@@ -13,7 +13,16 @@ test('weeks begin on Monday and cross month boundaries safely', () => {
   assert.equal(mondayOf('2026-10-01'), '2026-09-28')
 })
 
-test('four distinct 30-minute days make one positive rhythm week', () => {
+test('three distinct 30-minute days keep one positive rhythm week', () => {
+  const result = trainingRhythm(week('2026-09-07', 3), '2026-09-13')
+  assert.equal(result.weeklyDays, 3)
+  assert.equal(result.strongWeekDays, 4)
+  assert.equal(result.currentWeekDays, 3)
+  assert.equal(result.streakWeeks, 1)
+  assert.equal(result.keeperProgress, 0)
+})
+
+test('four distinct 30-minute days make a strong week and advance the keeper', () => {
   const result = trainingRhythm(week('2026-09-07'), '2026-09-13')
   assert.equal(result.currentWeekDays, 4)
   assert.equal(result.streakWeeks, 1)
@@ -25,6 +34,17 @@ test('short sessions remain visible without counting as a qualifying day', () =>
   assert.deepEqual(result.trainedDates, ['2026-09-07', '2026-09-08'])
   assert.deepEqual(result.qualifyingDates, ['2026-09-08'])
   assert.equal(result.currentWeekDays, 1)
+})
+
+test('three-day weeks preserve keeper progress without advancing it', () => {
+  const minutes = {
+    ...week('2026-08-03'),
+    ...week('2026-08-10', 3),
+    ...week('2026-08-17'),
+  }
+  const result = trainingRhythm(minutes, '2026-08-23')
+  assert.equal(result.streakWeeks, 3)
+  assert.equal(result.keeperProgress, 2)
 })
 
 test('five strong weeks bank a keeper', () => {

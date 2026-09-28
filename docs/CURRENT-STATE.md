@@ -1,10 +1,10 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-25
+**Last recovered and verified:** 2026-09-28
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.30.0 (43)  
+**Current release:** 0.31.0 (44)  
 **Product maturity:** Pre-beta product completion
 
 Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
@@ -23,6 +23,8 @@ Release 0.25 restores imported recovery signals to Progress, explains the readin
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
 not have to reconstruct the pivot from legacy RPG documents.
+
+Release 0.31 makes three distinct 30-minute days the weekly streak minimum. A fourth qualifying day makes it a strong week and advances keeper progress, so busy weeks count without removing the reward for doing more.
 
 Release 0.30 replaces the fixed two-week Training calendar with a horizontally scrolling weekly history. It includes every week from the first recorded workout, opens on the current week, and preserves the established outline for logged work and solid fill for 30-minute qualifying days.
 
@@ -146,9 +148,9 @@ Personal and work tasks roll onto later dates until checked off. A rolled task k
 original date and can be opened to read or edit its full title, notes, type, and optional
 due date. Due dates provide context and ordering; they never create an overdue penalty.
 
-Train opens with a small monthly training calendar. Days with 30 or more completed workout
-minutes are circled. Four such days make a strong week; five strong weeks bank a streak
-keeper. A keeper automatically protects one completed quiet week, and an unfinished week
+Train opens with a compact, horizontally scrolling weekly training calendar. Days with 30
+or more completed workout minutes are circled. Three such days maintain the streak. A fourth
+makes it a strong week, and five strong weeks bank a streak keeper. A keeper automatically protects one completed quiet week, and an unfinished week
 never spends one. Settings also accepts retroactive or planned Away ranges. A completed away
 week preserves an existing rhythm without inventing workouts, spending a keeper, or advancing
 keeper progress. The system is positive-only. Completed sessions can be corrected later from

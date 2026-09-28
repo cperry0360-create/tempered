@@ -126,13 +126,14 @@ export function createTrainScreen({ workout, storage, clock, onStart }) {
           dataset: { ready: String(rhythm.keepers > 0) },
           text: rhythm.keepers > 0
             ? `◆ ${rhythm.keepers} keeper${rhythm.keepers === 1 ? '' : 's'} ready`
-            : `${rhythm.keeperProgress}/${rhythm.keeperEvery} to keeper`,
+            : `${rhythm.keeperProgress}/${rhythm.keeperEvery} strong weeks to keeper`,
         }),
       ]),
       el('p.training-rhythm__week', {
         text: [
           programWorkoutTotal ? `${programWorkouts} of ${programWorkoutTotal} program workouts logged` : null,
-          `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} days at ${rhythm.minimumMinutes}+ min`,
+          `${rhythm.currentWeekDays} of ${rhythm.weeklyDays} streak days at ${rhythm.minimumMinutes}+ min`,
+          `${rhythm.strongWeekDays} days = strong week`,
           rhythm.currentWeekAway ? 'Away week · streak parked safely' : null,
         ].filter(Boolean).join(' · '),
       }),

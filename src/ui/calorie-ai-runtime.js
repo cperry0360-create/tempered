@@ -95,32 +95,6 @@ function makeButton(className, text, label) {
   return button
 }
 
-function promptButton(className = 'today-item__ai-prompt') {
-  const button = document.createElement('a')
-  button.className = className
-  button.href = 'https://chatgpt.com/'
-  button.target = '_blank'
-  button.rel = 'noopener'
-  button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
-  button.replaceChildren(
-    Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
-    Object.assign(document.createElement('span'), { textContent: 'AI PHOTO' }),
-  )
-  button.dataset.calorieAi = 'prompt'
-  button.onclick = async (event) => {
-    event.stopPropagation()
-    const copied = await copyText(NUTRITION_PHOTO_PROMPT)
-    button.querySelector('span').textContent = copied ? 'OPENING' : 'FAILED'
-    button.dataset.copied = String(copied)
-    window.setTimeout(() => {
-      if (!button.isConnected) return
-      button.querySelector('span').textContent = 'AI PHOTO'
-      delete button.dataset.copied
-    }, 1600)
-  }
-  return button
-}
-
 function dateLabel(dateKey) {
   const [year, month, day] = String(dateKey).split('-').map(Number)
   const value = new Date(year, month - 1, day, 12)
@@ -185,6 +159,32 @@ export function installCalorieAiRuntime() {
 
   function selectedDate() {
     return todayRoot()?.dataset?.date ?? globalThis.tempered?.clock?.today?.()
+  }
+
+  function promptButton(className = 'today-item__ai-prompt') {
+    const button = document.createElement('a')
+    button.className = className
+    button.href = 'https://chatgpt.com/'
+    button.target = '_blank'
+    button.rel = 'noopener'
+    button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
+    button.replaceChildren(
+      Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
+      Object.assign(document.createElement('span'), { textContent: 'AI photo' }),
+    )
+    button.dataset.calorieAi = 'prompt'
+    button.onclick = async (event) => {
+      event.stopPropagation()
+      const copied = await copyText(NUTRITION_PHOTO_PROMPT)
+      button.querySelector('span').textContent = copied ? 'Opening' : 'Failed'
+      button.dataset.copied = String(copied)
+      window.setTimeout(() => {
+        if (!button.isConnected) return
+        button.querySelector('span').textContent = 'AI photo'
+        delete button.dataset.copied
+      }, 1600)
+    }
+    return button
   }
 
   async function refreshUnderlyingSurfaces(date = nutritionScreen?.dataset.date) {

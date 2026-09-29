@@ -47,8 +47,11 @@ test('the rejected sunset trial is fully removed from the shipped app', async ()
   assert.equal(await exists('art/dist/bg-sunset-user.jpg'), false, 'sunset photo copy is deleted')
 })
 
-test('the production bootstrap really installs the daily Workout enhancer', async () => {
-  const bootstrap = await read('src/app/bootstrap.js')
-  assert.match(bootstrap, /import \{ installDailyWorkoutEnhancer \}/)
-  assert.match(bootstrap, /installDailyWorkoutEnhancer\(\{ mount, workout, app, clock \}\)/)
+test('R2 production bootstrap no longer installs the retired Today Workout enhancer', async () => {
+  const [bootstrap, today] = await Promise.all([
+    read('src/app/bootstrap.js'),
+    read('src/ui/screens/today.js'),
+  ])
+  assert.doesNotMatch(bootstrap, /installDailyWorkoutEnhancer/)
+  assert.match(today, /remainingProgramDay\(weekProgram, todayProgram\.day\)/)
 })

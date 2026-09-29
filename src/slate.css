@@ -1,0 +1,49 @@
+/* Tempered 0.37 — medium slate visual system. Loaded last intentionally. */
+:root {
+  --bg-0:#1F252C; --bg-1:#1F252C; --bg-2:#1F252C; --bg-3:#1F252C; --bg-4:#1F252C; --bg-5:#1F252C;
+  --bg:#1F252C; --canopy:#15191D;
+  --surface:#2A323B; --surface-2:#36404B; --raised:#36404B; --well:#36404B; --stone:#4A5562;
+  --acid:#E8833A; --blue:#7A8592;
+  --text:#F4F6F8; --text-2:#C2CAD2; --text-3:#A9B3BD;
+  --edge:#4A5562; --edge-strong:#566271; --active-tint:#414C58;
+  --lantern:#E8833A; --wisp:#7A8592; --moss:#4FB286; --cap:#7A8592;
+  --might:#E8833A; --wind:#7A8592; --grit:#7A8592; --vitality:#4FB286; --mind:#7A8592;
+}
+html,body,.app{background:#1F252C!important;color:#F4F6F8}
+body::before{display:none!important;background:none!important;opacity:0!important}
+.card,.block,.panel,.setup__card,.setup__program,.setup__cadencerow,.fuel-dashboard,.fuel-water,.fuel-recovery,
+.progress-widget,.progress-widget-gallery,.summary-recap,.summary-records,.train-card,.today-card,[class*="__card"]{
+  background-image:none!important;background-color:#2A323B!important;border-color:#4A5562!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+input,textarea,select,.row,.entry,[class*="__row"],[class*="__input"],[class*="__well"],[class*="__track"],
+.fuel-macros>span,.fuel-recovery__metric,.progress-widget__pair span,.progress-widget__recovery span{
+  background-image:none!important;background-color:#36404B!important;border-color:#4A5562!important;box-shadow:none!important
+}
+.confirm-sheet,.health-import-sheet,.health-paste-sheet,.health-setup-overlay,[class*="__sheet"]{
+  background-image:none!important;background-color:#414C58!important;border-color:#4A5562!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+.tabbar,.settings-access,.active-workout-dock__button{
+  background-image:none!important;background-color:#15191D!important;border-color:#4A5562!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+.settings-access[data-active="true"],.tabbar__tab[data-active="true"],[data-acid="primary"]{
+  color:#F4F6F8!important;border-color:#E8833A!important
+}
+.button[data-acid="primary"],[data-acid="primary"].button,.setup__next,.fuel-dashboard__nutrition{
+  background:#E8833A!important;color:#15191D!important;border-color:#E8833A!important
+}
+.screen__title,h1,h2,h3,strong,b{color:#F4F6F8;text-shadow:none!important}
+p,small,label,.screen__copy,[class*="__copy"],[class*="__detail"]{color:#C2CAD2;text-shadow:none!important}
+::placeholder,[class*="__eyebrow"],[class*="__label"],[class*="__meta"]{color:#A9B3BD!important}
+.fuel-energy__bar,.fuel-water__bar,.progress-widget__bar,[class*="__bar"]{background:#36404B!important;box-shadow:none!important}
+.fuel-energy__bar i,.fuel-water__bar i,.progress-widget__bar span{background:#7A8592!important}
+.fuel-energy__ring{background:#36404B!important;border:10px solid #7A8592!important;box-shadow:none!important}
+.fuel-recovery[data-readiness="ready"],.fuel-recovery[data-readiness="strong"],[data-status="complete"],[data-complete="true"]{--status-accent:#4FB286}
+hr,[class*="divider"],[class*="hairline"]{border-color:#4A5562!important;background:#4A5562!important}
+*{text-shadow:none!important}
+.fab,.summary-power,.companion-habitat,.companion-growth,.companion-room,.companion-style,.companion-foot,.companion-header__mark{display:none!important}
+.fuel-header{display:grid;gap:6px;margin-bottom:16px}
+.fuel-header__eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em}
+.fuel-header__copy{margin:0;max-width:42rem}

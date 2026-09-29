@@ -89,7 +89,6 @@ const PRECACHE = [
   './src/ui/format.js',
   './src/ui/icons.js',
   './src/ui/mobile-interactions.js',
-  './src/ui/water-quick-presets.js',
   './src/ui/states.js',
   './src/ui/session-guard.js',
   './src/ui/session-draft.js',

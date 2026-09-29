@@ -56,14 +56,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const workoutDock = el('aside.active-workout-dock', { hidden: true })
   const tabs = el('div.tabbar__tabs')
-  const settingsAccess = el('button.settings-access', {
-    type: 'button', 'aria-label': 'Settings', title: 'Settings',
-    dataset: { active: 'false' }, onclick: () => toggleSettings(),
-  }, [icon('gear')])
 
   let active = 'train'
   let returnTab = 'train'
-  let settingsReturnTab = 'today'
   let builder = null
   const openBuilder = async () => show('program-builder')
 
@@ -105,11 +100,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   const today = createTodayScreen({
-    workout, daily, planner, clock,
+    workout, daily, storage, clock,
     onStart: (options) => startSession(options),
-    onOpenSlot: (slot) => slot?.extra
-      ? startSession({ exerciseId: slot.exerciseId })
-      : startSession({ slotTask: slot }),
+    onCompanion: () => show('companion'),
+    onSettings: () => openSettings(),
+    onViewSummary: () => show('history'),
   })
 
   const summary = createSummaryScreen({
@@ -150,15 +145,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   function openSettings() {
-    if (active !== 'settings') {
-      settingsReturnTab = TABS.some((entry) => entry.id === active) ? active : 'today'
-    }
     return show('settings')
   }
 
-  function toggleSettings() {
-    return active === 'settings' ? show(settingsReturnTab) : openSettings()
-  }
 
   function renderTabs(tab) {
     replace(tabs, TABS.map((entry) => el('button.tabbar__tab', {
@@ -174,7 +163,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   function showFailure({ title, detail, retry, back }) {
     tabBar.hidden = false
-    settingsAccess.hidden = true
     replace(body, [errorState({ title, detail, onRetry: retry, onBack: back })])
     body.scrollTop = 0
     announce(title)
@@ -188,7 +176,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       await battleScreen.start()
       replace(body, [battleScreen.root])
       tabBar.hidden = true
-      settingsAccess.hidden = true
       body.scrollTop = 0
       announce('Legacy battle')
     } catch (error) {
@@ -220,7 +207,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         await summary.show(result)
         replace(body, [summary.root])
         tabBar.hidden = true
-        settingsAccess.hidden = true
         body.scrollTop = 0
         announce('Workout summary')
         renderWorkoutDock()
@@ -239,7 +225,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       await session.start({ ...(options ?? {}), returnTab })
       replace(body, [session.root])
       tabBar.hidden = true
-      settingsAccess.hidden = true
       body.scrollTop = 0
       announce('Workout session')
       renderWorkoutDock()
@@ -271,7 +256,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       await session.resume(draft)
       replace(body, [session.root])
       tabBar.hidden = true
-      settingsAccess.hidden = true
       body.scrollTop = 0
       announce('Workout session resumed')
       renderWorkoutDock()
@@ -316,12 +300,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     session = null
     battleScreen?.destroy()
     tabBar.hidden = false
-    settingsAccess.hidden = target !== 'today'
-    const settingsActive = false
-    settingsAccess.dataset.active = String(settingsActive)
-    settingsAccess.setAttribute('aria-current', settingsActive ? 'page' : 'false')
-    settingsAccess.setAttribute('aria-label', 'Settings')
-    settingsAccess.title = 'Settings'
     if (target === 'program-builder') tabBar.hidden = true
     renderTabs(target)
 
@@ -359,6 +337,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     announce(`${date} day review`)
   }
 
-  replace(mount, [body, announcer, settingsAccess, workoutDock, tabBar, overlays])
+  replace(mount, [body, announcer, workoutDock, tabBar, overlays])
   return { show, showTodayDate, startSession, resumeSession }
 }

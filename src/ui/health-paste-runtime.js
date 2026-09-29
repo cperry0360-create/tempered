@@ -74,17 +74,6 @@ export function installHealthPasteRuntime(context) {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
   let overlay = null
-  let scheduled = false
-
-  function importedAtLabel(day) {
-    const importedAt = day?.healthBridge?.source === 'chatgpt-health'
-      ? day.healthBridge.importedAt
-      : null
-    if (!importedAt) return 'Copy from ChatGPT Health, then paste here.'
-    const date = new Date(importedAt)
-    if (Number.isNaN(date.getTime())) return 'ChatGPT Health imported today.'
-    return `Imported ${new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(date)}`
-  }
 
   async function openImport(trigger = null) {
     overlay?.remove()
@@ -198,7 +187,6 @@ export function installHealthPasteRuntime(context) {
       submit.textContent = 'IMPORTING…'
       try {
         const result = await importHealthSnapshot(context, current.parsed, { source: 'chatgpt-health' })
-        document.querySelector('[data-daily-recap="close"]')?.click()
         if (result.date === context.clock.today() && context.app?.show) await context.app.show('today')
         else if (context.app?.showTodayDate) await context.app.showTodayDate(result.date)
         window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
@@ -206,7 +194,7 @@ export function installHealthPasteRuntime(context) {
           ? `Imported for ${result.date}. ${result.warnings.join(' ')}`
           : `Imported ${current.metrics.length} health fields. Today is updated.`
         imported = true
-        submit.textContent = 'DONE · VIEW UPDATED RECAP'
+        submit.textContent = 'DONE'
         submit.disabled = false
         await enhance()
       } catch {
@@ -222,51 +210,16 @@ export function installHealthPasteRuntime(context) {
     requestAnimationFrame(() => input.focus())
   }
 
-  async function enhance() {
-    const screen = mount.querySelector('.screen--today')
-    if (!screen || screen.dataset.date !== context.clock.today()) return
-    const host = document.querySelector('[data-lifestyle="snapshot"]')
-    if (!host) return
-    let row = host.querySelector('[data-health-paste-entry]')
-    const day = await context.daily.dayLog(context.clock.today())
-    if (!host.isConnected) return
-    if (!row) {
-      row = document.createElement('div')
-      row.className = 'health-paste-entry'
-      row.dataset.healthPasteEntry = 'true'
-      row.innerHTML = `<div><strong>APPLE HEALTH</strong><span data-health-paste-last></span></div><button type="button" class="button" data-health-paste-open>IMPORT HEALTH</button>`
-      row.querySelector('[data-health-paste-open]').onclick = (event) => openImport(event.currentTarget)
-      host.append(row)
-    }
-    row.querySelector('[data-health-paste-last]').textContent = importedAtLabel(day)
-  }
-
-  const schedule = () => {
-    if (scheduled) return
-    scheduled = true
-    requestAnimationFrame(() => {
-      scheduled = false
-      enhance().catch(() => {})
+  const openRequested = (event) => {
+    openImport(event?.detail?.trigger ?? null).catch((error) => {
+      console.error('[tempered] health import could not open', error)
     })
   }
-  const screenShown = (event) => { if (event?.detail?.tab === 'today') schedule() }
-  const todayRendered = () => schedule()
-  const lifestyleReady = (event) => {
-    if (!event?.detail?.date || event.detail.date === context.clock.today()) schedule()
-  }
-  const healthImported = () => schedule()
 
-  window.addEventListener('tempered:screen-shown', screenShown)
-  window.addEventListener('tempered:today-rendered', todayRendered)
-  window.addEventListener('tempered:lifestyle-ready', lifestyleReady)
-  window.addEventListener('tempered:health-imported', healthImported)
-  schedule()
+  window.addEventListener('tempered:open-health-import', openRequested)
 
   return () => {
-    window.removeEventListener('tempered:screen-shown', screenShown)
-    window.removeEventListener('tempered:today-rendered', todayRendered)
-    window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
-    window.removeEventListener('tempered:health-imported', healthImported)
+    window.removeEventListener('tempered:open-health-import', openRequested)
     overlay?.remove()
     delete document.body.dataset.healthPasteOpen
   }

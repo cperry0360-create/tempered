@@ -1,239 +1,151 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — day planner tracking acceptance</title>
-    <link rel="stylesheet" href="../../src/style.css" />
-    <link rel="stylesheet" href="../../src/calm.css" />
-    <link rel="stylesheet" href="../../src/uplift.css" />
-  </head>
-  <body>
-    <div id="app" class="app"></div>
-    <script type="module">
-      /**
-       * Today is now a dated day planner, habit tracker and flexible training
-       * surface. Detail is progressive disclosure; core actions stay fast.
-       */
-      import { bootstrapHarness as bootstrap } from './harness.js'
-      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R2 Today habits</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
 
-      const checks = []
-      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }); return Boolean(ok) }
-      const q = (s, root = document) => root?.querySelector(s) ?? null
-      const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 40))
+    const checks = []
+    const errors = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector(selector) ?? null
+    const settle = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms))
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
 
-      async function waitFor(selector, timeout = 5000) {
-        const deadline = Date.now() + timeout
-        while (Date.now() < deadline) {
-          const found = q(selector)
-          if (found) return found
-          await new Promise((r) => setTimeout(r, 10))
-        }
-        throw new Error(`timed out waiting for ${selector}`)
+    async function waitFor(selector, timeout = 3500) {
+      const end = Date.now() + timeout
+      while (Date.now() < end) {
+        const node = q(selector)
+        if (node) return node
+        await settle(20)
       }
+      return null
+    }
 
-      async function openOther() {
-        const toggle = q('[data-other="toggle"]')
-        if (toggle && toggle.dataset.open !== 'true') { toggle.click(); await settle() }
-      }
+    async function xpOf(attribute) {
+      return (await globalThis.tempered.storage.get('attributeState', attribute))?.xp ?? 0
+    }
 
-      async function rowFor(id) {
-        let row = q(`[data-activity="${id}"]`)
-        if (row) return row
-        await openOther()
-        return q(`[data-activity="${id}"]`)
-      }
+    async function rowFor(id) {
+      let row = q(`[data-activity="${id}"]`)
+      if (row) return row
+      const more = q('[data-other="toggle"]')
+      if (more?.dataset.open !== 'true') { more?.click(); await settle() }
+      return q(`[data-activity="${id}"]`)
+    }
 
-      function markAction(row) {
-        if (!row) return null
-        return row.matches?.('[data-action="mark"]') ? row : q('[data-action="mark"]', row)
-      }
+    async function openEditor(id) {
+      const row = await rowFor(id)
+      const body = q('.today-item__body', row)
+      body?.click()
+      await settle()
+      return q(`[data-editor="${id}"]`)
+    }
 
-      async function openEditor(id) {
-        const row = await rowFor(id)
-        const opener = q('.today-item__body', row)
-        if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
-        return q(`[data-editor="${id}"]`)
-      }
+    try {
+      const clock = fixedClock(new Date(2026, 8, 9, 9, 0, 0))
+      const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
+      await tempered.daily.setCadence('sleep', 'daily', 1)
+      await tempered.daily.setCadence('water', 'daily', 1)
+      await tempered.daily.setCadence('micro_cardio', 'daily', 1)
+      await tempered.daily.setCadence('mobility', 'daily', 1)
+      await tempered.daily.setCadence('rest_day', 'weekly', 1)
+      await tempered.app.show('today')
+      await waitFor('[data-section="daily"]')
 
-      try {
-        const storage = createMemoryStorage()
-        const tempered = await bootstrap({ storage, mount: document.getElementById('app') })
-        const xpOf = async (attribute) => (await storage.get('attributeState', attribute))?.xp ?? 0
+      const ordered = [...document.querySelectorAll('.screen--today > [data-section], .screen--today > .today-heading')]
+        .map((node) => node.dataset.section || 'heading')
+      check('R2 Today uses the approved top-to-bottom dashboard order',
+        ordered.join('|') === 'heading|next-session|readiness|week|fuel|daily', ordered.join(' | '))
+      check('removed Today surfaces are absent',
+        !q('.today-calendar') && !q('[data-summary="daily"]') && !q('[data-section="planner"]')
+        && !q('[data-section="training"]') && !q('[data-daily-recap]'))
+      check('Daily log is one card with extra logging inside it',
+        Boolean(q('[data-section="daily"].today-card .today-list')) && Boolean(q('[data-section="daily"] [data-other="toggle"]')))
 
-        await tempered.app.show('today')
-        await waitFor('.screen--today-calm')
+      let water = await rowFor('water')
+      let quick = q('[data-quickadd="20"]', water)
+      check('Water has one 20 oz quick action', Boolean(quick), quick?.textContent ?? 'missing')
+      const beforeWaterXp = await xpOf('vitality')
+      quick?.click(); await settle()
+      water = await rowFor('water')
+      q('[data-quickadd="20"]', water)?.click(); await settle()
+      let day = await tempered.daily.dayLog(clock.today())
+      check('two Water quick taps accumulate rather than replace', day.waterOz === 40, day.waterOz)
+      check('Water logging still earns its attribute reward', (await xpOf('vitality')) > beforeWaterXp)
 
-        const summary = q('[data-summary="daily"]')
-        check('Today opens with one calm daily summary', summary !== null)
-        check('the redundant Today heading and long date are removed', q('.today-header') === null)
-        check('the summary exposes one progress bar rather than five attribute meters',
-          qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0,
-          `${qa('[role="progressbar"]', summary).length} daily progress bar`)
+      let editor = await openEditor('water')
+      const preset = q('.today-editor__preset-input', editor)
+      preset.value = '24'
+      q('.today-editor__preset-save', editor)?.click(); await settle()
+      water = await rowFor('water')
+      check('Water quick action remains user configurable', q('[data-quickadd="24"]', water) !== null)
+      q('[data-quickadd="24"]', water)?.click(); await settle()
+      day = await tempered.daily.dayLog(clock.today())
+      check('custom Water quick action stays additive', day.waterOz === 64, day.waterOz)
 
-        check('Today opens with a seven-day calendar rail', qa('.today-calendar__day').length === 7,
-          `${qa('.today-calendar__day').length} dates`)
-        check('today is visibly identified in the rail', qa('.today-calendar__day[data-today="true"]').length === 1)
-        check('calendar and progress surfaces are compact',
-          q('.today-calendar')?.getBoundingClientRect().height < 90
-          && summary?.getBoundingClientRect().height < 82,
-          `${Math.round(q('.today-calendar')?.getBoundingClientRect().height ?? 0)}px calendar · ${Math.round(summary?.getBoundingClientRect().height ?? 0)}px progress`)
-        const stablePlanner = q('[data-section="planner"]')
-        q('[data-daily-recap="open"]')?.click(); await settle()
-        check('Daily Recap opens as a dedicated card with four exercise facts',
-          qa('[data-daily-recap="card"] .today-recap__stat').length === 4
-          && /MINUTES/.test(q('[data-daily-recap="card"]')?.textContent ?? ''))
-        check('opening Daily Recap leaves the Today cards mounted', q('[data-section="planner"]') === stablePlanner)
-        q('[data-daily-recap="close"]')?.click(); await settle()
+      editor = await openEditor('sleep')
+      const sleep = q('[data-entry="sleep"]', editor)
+      sleep.value = '7.75'
+      q('[data-action="log"]', editor)?.click(); await settle()
+      day = await tempered.daily.dayLog(clock.today())
+      check('measured Sleep logging still stores decimals', day.sleepHours === 7.75, day.sleepHours)
 
-        for (const name of ['planner', 'habits', 'training']) {
-          const fold = q(`[data-fold="${name}"] .today-section__fold`)
-          check(`${name} is independently foldable`, fold !== null && fold.hasAttribute('aria-expanded'))
-        }
+      const micro = await rowFor('micro_cardio')
+      const windBefore = await xpOf('wind')
+      q('[data-quickadd="2"]', micro)?.click(); await settle()
+      day = await tempered.daily.dayLog(clock.today())
+      check('Micro cardio one-tap logging stores minutes', day.microCardioMinutes === 2, day.microCardioMinutes)
+      check('Micro cardio logging still earns Wind', (await xpOf('wind')) > windBefore)
 
-        // Planner tasks are dated and are not health/RPG awards.
-        q('[data-section="planner"] .today-section__add')?.click(); await settle()
-        q('.today-plan-kind__button:nth-child(2)')?.click(); await settle()
-        const taskInput = q('.today-plan-compose__input')
-        taskInput.value = 'Draft memo'
-        q('.today-plan-compose__add')?.click(); await settle()
-        check('a work todo can be added to the selected day',
-          /Draft memo/.test(q('.today-plan-item')?.textContent ?? '')
-          && /WORK/.test(q('.today-plan-item')?.textContent ?? ''))
-        const xpBeforeTask = ['might', 'wind', 'grit', 'vitality', 'mind']
-          .map(async (id) => xpOf(id))
-        const beforeTask = (await Promise.all(xpBeforeTask)).reduce((a, b) => a + b, 0)
-        q('.today-plan-item__check')?.click(); await settle()
-        const afterTask = (await Promise.all(['might', 'wind', 'grit', 'vitality', 'mind'].map((id) => xpOf(id)))).reduce((a, b) => a + b, 0)
-        check('checking off a work task does not mint RPG XP', afterTask === beforeTask, `${beforeTask} -> ${afterTask}`)
+      const rest = await rowFor('rest_day')
+      const mark = rest?.matches('button.today-item') ? rest : q('button.today-item', rest)
+      mark?.click(); await settle()
+      const restView = (await tempered.daily.week(clock.today())).activities.find((activity) => activity.id === 'rest_day')
+      check('weekly mark activities still complete in one tap', restView?.loggedToday === true)
+      const completedRest = await rowFor('rest_day')
+      check('completed habit uses the green check treatment', q('.today-item__icon[data-complete="true"]', completedRest) !== null)
 
-        const rolled = await tempered.planner.add({
-          date: '2026-01-01', kind: 'personal',
-          title: 'This is a deliberately long personal task that cannot fit on one phone row',
-        })
-        await tempered.app.show('today'); await settle()
-        const rolledRow = q(`[data-kind="personal"] .today-plan-item__main`)
-        check('unfinished personal and work tasks roll into Today', /Rolled from/i.test(rolledRow?.textContent ?? ''), rolledRow?.textContent ?? 'missing')
-        rolledRow?.click(); await settle()
-        check('tapping a long task opens its complete title in a detail card', q('[data-task-detail] .task-detail__title')?.value === rolled.title, q('[data-task-detail] .task-detail__title')?.value ?? 'missing')
-        const notes = q('[data-task-detail] .task-detail__notes')
-        const due = q('[data-task-detail] .task-detail__due')
-        if (notes) notes.value = 'Bring the supporting file and call Alex.'
-        if (due) due.value = tempered.clock.today()
-        q('[data-task-detail] .task-detail__save')?.click(); await settle()
-        const detailed = await storage.get('plannerItems', rolled.id)
-        check('task details save notes and an optional due date', detailed?.notes === 'Bring the supporting file and call Alex.' && detailed?.dueDate === tempered.clock.today(), JSON.stringify(detailed))
-        const exactRolledRow = qa('.today-plan-item').find((item) =>
-          q('.today-plan-item__title', item)?.textContent === rolled.title)
-        q('.today-plan-item__check', exactRolledRow)?.click(); await settle()
-        const completedRolled = await storage.get('plannerItems', rolled.id)
-        const stillVisible = qa('.today-plan-item').some((item) =>
-          q('.today-plan-item__title', item)?.textContent === rolled.title)
-        check('a rolled task leaves Today once checked off', completedRolled?.done === true && !stillVisible,
-          `${completedRolled?.done ? 'stored complete' : 'still open'} · ${stillVisible ? 'still visible' : 'hidden'}`)
+      const mobility = await rowFor('mobility')
+      q('.today-item__body', mobility)?.click(); await settle()
+      const mobilityScreen = await waitFor('[data-mobility-screen]')
+      check('Mobility still opens the guided full-screen tool', Boolean(mobilityScreen))
+      q('[data-mobility-routine="desk_reset"]', mobilityScreen)?.click(); await settle()
+      q('.mobility-flow__complete', mobilityScreen)?.click(); await settle()
+      day = await tempered.daily.dayLog(clock.today())
+      check('completing a Mobility flow logs its minutes', day.mobilityMinutes === 5, day.mobilityMinutes)
 
-        const dailyIds = await tempered.daily.dailyIds()
-        const renderedDaily = qa('[data-section="daily"] [data-activity]').length
-        check('the whole daily schedule is present when Habits is open', renderedDaily === dailyIds.length,
-          `${renderedDaily}/${dailyIds.length} daily activities`)
-        check('Micro cardio is included in the default daily schedule', dailyIds.includes('micro_cardio'))
-        check('numeric fields are hidden until requested',
-          q('[data-entry="sleep"]') === null && q('[data-entry="water"]') === null,
-          'no always-open numeric controls')
-        check('the first view uses one shared daily list surface',
-          qa('[data-section="daily"] .today-list').length === 1,
-          `${qa('[data-section="daily"] .today-list').length} daily surface`)
+      const more = q('[data-other="toggle"]')
+      if (more?.dataset.open !== 'true') { more?.click(); await settle() }
+      editor = await openEditor('body_metrics')
+      const weight = q('[data-entry="body_metrics"]', editor)
+      weight.value = '184.2'
+      q('[data-action="log"]', editor)?.click(); await settle()
+      day = await tempered.daily.dayLog(clock.today())
+      check('optional Body logging still persists from Log something else', day.bodyMetrics?.weight === 184.2, day.bodyMetrics?.weight)
 
-        await openOther()
-        const reachable = new Set(qa('[data-activity]').map((node) => node.dataset.activity))
-        check('every lifestyle tracker remains reachable from Today',
-          tempered.daily.activities.every((activity) => reachable.has(activity.id)),
-          `${reachable.size}/${tempered.daily.activities.length} trackers reachable`)
+      const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
+      check('Today uses no punishment language', !forbidden.test(document.body.innerText))
+      check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
+    } catch (error) {
+      check('R2 Today habit harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
 
-        const mobilityRow = await rowFor('mobility')
-        q('.today-item__body', mobilityRow)?.click(); await settle()
-        const mobilityScreen = q('[data-mobility-screen="true"]')
-        check('Mobility opens a dedicated guided screen with four routines',
-          mobilityScreen !== null && qa('[data-mobility-routine]', mobilityScreen).length === 4,
-          `${qa('[data-mobility-routine]', mobilityScreen).length} routines`)
-        q('[data-mobility-routine="full_body"]', mobilityScreen)?.click(); await settle()
-        check('choosing a mobility routine shows timed movement cues',
-          /World’s greatest stretch/.test(q('.mobility-flow', mobilityScreen)?.textContent ?? '')
-          && q('[data-mobility-timer-toggle]', mobilityScreen) !== null,
-          q('.mobility-flow', mobilityScreen)?.textContent ?? 'missing')
-        q('.mobility-screen__back', mobilityScreen)?.click(); await settle()
-
-        const rest = await rowFor('rest_day')
-        const restAction = markAction(rest)
-        check('rest day is reachable in optional logging', restAction !== null)
-        const vitalityBeforeRest = await xpOf('vitality')
-        restAction?.click(); await settle()
-        check('a mark activity still completes in one tap', (await xpOf('vitality')) > vitalityBeforeRest)
-        check('the reward is shown as a small earned moment', /\+\d/.test(q('.today-earned')?.textContent ?? ''),
-          q('.today-earned')?.textContent ?? 'no earned message')
-
-        let editor = await openEditor('sleep')
-        const sleepField = q('[data-entry="sleep"]', editor)
-        check('a measured activity reveals its field after tapping the row', sleepField !== null)
-        const vitalityBeforeSleep = await xpOf('vitality')
-        sleepField.value = '8'
-        q('[data-action="log"]', editor)?.click(); await settle()
-        check('measured logging still awards XP after disclosure', (await xpOf('vitality')) > vitalityBeforeSleep)
-
-        // Water's normal + button is now one user-owned bottle size, not three
-        // generic game chips. It defaults to twenty ounces and stays additive.
-        let waterRow = await rowFor('water')
-        let quick = q('[data-quickadd]', waterRow)
-        check('Water exposes one direct one-tap preset', quick?.textContent?.includes('+20'), quick?.textContent ?? 'missing')
-        quick?.click(); await settle()
-        waterRow = await rowFor('water')
-        q('[data-quickadd]', waterRow)?.click(); await settle()
-        let afterWater = await tempered.daily.dayLog(tempered.clock.today())
-        check('two default bottle taps accumulate', afterWater.waterOz === 40, `${afterWater.waterOz ?? 0} oz stored`)
-
-        editor = await openEditor('water')
-        const presetField = q('.today-editor__preset-input', editor)
-        presetField.value = '24'
-        q('.today-editor__preset-save', editor)?.click(); await settle()
-        waterRow = await rowFor('water')
-        quick = q('[data-quickadd]', waterRow)
-        check('the one-tap amount can be customized', quick?.textContent?.includes('+24'), quick?.textContent ?? 'missing')
-        quick?.click(); await settle()
-        afterWater = await tempered.daily.dayLog(tempered.clock.today())
-        check('the customized preset remains additive', afterWater.waterOz === 64, `${afterWater.waterOz ?? 0} oz stored`)
-
-        const microRow = await rowFor('micro_cardio')
-        check('Micro cardio defaults to a two-minute one-tap action',
-          q('[data-quickadd="2"]', microRow) !== null)
-        const windBefore = await xpOf('wind')
-        q('[data-quickadd="2"]', microRow)?.click(); await settle()
-        const microDay = await tempered.daily.dayLog(tempered.clock.today())
-        check('a micro-cardio burst records minutes', microDay.microCardioMinutes === 2)
-        check('a micro-cardio burst rewards Wind', (await xpOf('wind')) > windBefore)
-
-        await openOther()
-        editor = await openEditor('body_metrics')
-        const bodyField = q('[data-entry="body_metrics"]', editor)
-        const beforeMetric = await xpOf('vitality')
-        bodyField.value = '184.2'
-        q('[data-action="log"]', editor)?.click(); await settle()
-        const afterMetric = await xpOf('vitality')
-        check('body metric awards the flat act-of-logging XP',
-          afterMetric - beforeMetric === tempered.balance.vitality.bodyMetricsLoggedXp,
-          `+${afterMetric - beforeMetric}`)
-
-        const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
-        check('Today uses no punishment language', !forbidden.test(document.body.innerText))
-      } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
-      }
-
-      await fetch('/__report', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: 'daily', passed: checks.every((c) => c.ok), checks }),
-      })
-    </script>
-  </body>
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'daily', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
 </html>

@@ -25,7 +25,6 @@
     import { bootstrapHarness as bootstrap } from './harness.js'
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
-    import { installWaterQuickPresets } from '../../src/ui/water-quick-presets.js'
     import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
 
     const checks = []
@@ -63,7 +62,7 @@
 
     async function bringIntoView(node) {
       if (!node) return
-      if (node.closest?.('.tabbar, .settings-access')) return
+      if (node.closest?.('.tabbar, .today-settings')) return
       node.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
       await settle(20)
     }
@@ -105,7 +104,6 @@
 
     try {
       await installShippedInlineCss()
-      installWaterQuickPresets()
       installMobileInteractions()
       const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
       const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
@@ -113,8 +111,6 @@
       await tempered.daily.setCadence('water', 'daily', 1)
       await tempered.app.show('today')
       await waitFor('.screen--today')
-      installWaterQuickPresets()
-      await waitFor('[data-activity="water"] [data-water-row-presets="true"]')
       await settle(80)
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
@@ -122,14 +118,15 @@
       check('Visible navigation is Today, Train, Fuel, Progress', qa('.tabbar__tab').map((n) => n.textContent.trim()).join('|') === 'Today|Train|Fuel|Progress' && !q('[data-tab="character"]'))
 
       const water = q('[data-activity="water"]')
-      const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', water)
-      check('Water shows +8, +12 and custom quick adds', waterButtons.length === 3,
-        waterButtons.map((button) => button.textContent.trim()).join(' | '))
-      thumbSized(waterButtons[0], 'Water +8')
+      const waterButton = q('[data-quickadd="20"]', water)
+      check('Water shows the single R2 quick action', qa('.today-item__quick', water).length === 1
+        && waterButton?.textContent.includes('+20'))
+      thumbSized(waterButton, 'Water +20')
       const before = q('.today-item__meta', water)?.textContent ?? ''
-      await tapCenter(waterButtons[0], 'Water +8')
+      await tapCenter(waterButton, 'Water +20')
       const after = q('[data-activity="water"] .today-item__meta')?.textContent ?? ''
-      check('Water tap actually changes the logged amount', after !== before, `${before} -> ${after}`)
+      check('Water tap actually changes the logged amount once', after !== before && /20\s*\/\s*120\s*oz/i.test(after),
+        `${before} -> ${after}`)
 
       await tab('train', '.screen--train')
       const programDay = q('[data-programday]')
@@ -155,7 +152,7 @@
       check('Progress keeps a selected range', qa('.progress-range__button[data-active="true"]').length === 1)
 
       await tab('today', '.screen--today')
-      const gear = q('.settings-access')
+      const gear = q('.today-settings')
       thumbSized(gear, 'Settings gear')
       await tapCenter(gear, 'Settings gear')
       const settings = await waitFor('.screen--settings')
@@ -168,9 +165,9 @@
         check('Settings cadence remains visible after scrolling', Boolean(info && info.top < innerHeight && info.bottom > 0),
           info ? `${Math.round(info.top)}..${Math.round(info.bottom)}` : 'missing')
       }
-      check('Settings gear is hidden while Settings is open', q('.settings-access')?.hidden === true)
+      check('Today-owned Settings gear leaves the DOM off Today', q('.today-settings') === null)
       await tempered.app.show('today')
-      check('Today restores the Settings gear', Boolean(await waitFor('.screen--today')) && q('.settings-access')?.hidden === false)
+      check('Today restores the Settings gear', Boolean(await waitFor('.today-settings')))
 
       check('No uncaught errors during mobile journey', runtimeErrors.length === 0, runtimeErrors.join(' | ') || 'none')
     } catch (error) {

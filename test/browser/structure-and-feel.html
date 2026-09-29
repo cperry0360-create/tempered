@@ -1,176 +1,96 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — planner structure and feel</title>
-    <link rel="stylesheet" href="../../src/style.css" />
-    <link rel="stylesheet" href="../../src/calm.css" />
-    <link rel="stylesheet" href="../../src/uplift.css" />
-  </head>
-  <body>
-    <div id="app" class="app"></div>
-    <script type="module">
-      /**
-       * The utility layer stays calm, but now has a brighter dusk palette and
-       * three independently foldable jobs: Plan, Habits and Workout.
-       */
-      import { bootstrapHarness as bootstrap } from './harness.js'
-      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
-      import { fixedClock } from '../../src/adapters/clock/clock.js'
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R2 Today structure and feel</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
 
-      const checks = []
-      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
-      const q = (s, root = document) => root?.querySelector(s) ?? null
-      const qa = (s, root = document) => root ? [...root.querySelectorAll(s)] : []
-      const settle = () => new Promise((r) => setTimeout(r, 40))
+    const checks=[]
+    const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+    const q=(s,root=document)=>root?.querySelector(s)??null
+    const qa=(s,root=document)=>root?[...root.querySelectorAll(s)]:[]
+    const parse=(css)=>(String(css).match(/[\d.]+/g)??[]).map(Number)
+    const settle=(ms=35)=>new Promise((resolve)=>setTimeout(resolve,ms))
+    async function waitFor(selector,timeout=4000){
+      const end=Date.now()+timeout
+      while(Date.now()<end){const node=q(selector);if(node)return node;await settle(15)}
+      return null
+    }
 
-      async function waitFor(selector, timeout = 5000) {
-        const deadline = Date.now() + timeout
-        while (Date.now() < deadline) {
-          const found = q(selector)
-          if (found) return found
-          await new Promise((r) => setTimeout(r, 10))
-        }
-        throw new Error(`timed out waiting for ${selector}`)
-      }
+    try{
+      const clock=fixedClock(new Date(2026,8,29,9,0,0))
+      const tempered=await bootstrap({storage:createMemoryStorage(),clock,mount:q('#app')})
+      await tempered.daily.setCadence('water','daily',1)
+      await tempered.daily.setCadence('sleep','daily',1)
+      await tempered.app.show('today')
+      const screen=await waitFor('.screen--today-calm')
 
-      async function ensureActivity(id) {
-        let row = q(`[data-activity="${id}"]`)
-        if (row) return row
-        const toggle = q('[data-other="toggle"]')
-        if (toggle && toggle.dataset.open !== 'true') { toggle.click(); await settle() }
-        return q(`[data-activity="${id}"]`)
-      }
+      const structure=[...screen.children].map((node)=>node.dataset.section||(
+        node.classList.contains('today-topbar')?'topbar':
+        node.classList.contains('today-heading')?'heading':node.className))
+      check('Today order matches the approved R2 stack',
+        structure.slice(0,7).join('|')==='topbar|heading|next-session|readiness|week|fuel|daily',
+        structure.slice(0,7).join(' | '))
+      check('header row contains companion chip and Today-only Settings gear',
+        Boolean(q('.today-companion',screen))&&Boolean(q('.today-settings',screen)))
+      check('the heading uses Today plus the compact date', q('.screen__title',screen)?.textContent==='Today'
+        && /Tuesday, 29 Sep/.test(q('.today-heading__date',screen)?.textContent??''))
 
-      async function openEditor(id) {
-        const row = await ensureActivity(id)
-        const opener = q('.today-item__body', row)
-        if (opener?.getAttribute('aria-expanded') !== 'true') { opener?.click(); await settle() }
-        return q(`[data-editor="${id}"]`)
-      }
+      const removed=['.today-calendar','[data-summary="daily"]','[data-section="planner"]','[data-section="training"]',
+        '[data-daily-recap]','.today-firstweek']
+      check('superseded Today modules are removed from the DOM', removed.every((selector)=>!q(selector,screen)))
 
-      try {
-        const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0)) // Monday, an actual program day
-        const tempered = await bootstrap({ storage: createMemoryStorage(), clock, mount: document.getElementById('app') })
-        await tempered.app.show('today')
-        await waitFor('.screen--today-calm .today-item')
-        await waitFor('[data-section="training"][data-daily-workout-fingerprint]')
+      const cards=qa('.today-card',screen)
+      check('the five dashboard cards render in the approved order',
+        cards.map((card)=>card.dataset.section).join('|')==='next-session|readiness|week|fuel|daily',
+        cards.map((card)=>card.dataset.section).join(' | '))
+      check('cards use opaque Surface 1 with 16px corners',
+        cards.every((card)=>{
+          const style=getComputedStyle(card)
+          return style.backgroundColor==='rgb(42, 50, 59)' && Math.round(parseFloat(style.borderRadius))===16
+            && (parse(style.backgroundColor)[3]??1)===1
+        }))
 
-        const bodyStyle = getComputedStyle(document.body)
-        check('Today uses the approved flat slate ground with no scenic image',
-          bodyStyle.backgroundImage === 'none'
-          && getComputedStyle(document.body, '::before').backgroundImage === 'none',
-          `${bodyStyle.backgroundColor} / ${bodyStyle.backgroundImage}`)
+      const rows=qa('[data-section="daily"] [data-activity]',screen)
+      check('Daily log is one shared card rather than one card per habit',
+        q('[data-section="daily"] .today-list',screen)!==null && rows.length>=2)
+      check('every visible Daily row has at most one quick action',
+        rows.every((row)=>qa('.today-item__quick',row).length<=1),
+        rows.map((row)=>qa('.today-item__quick',row).length).join(','))
+      check('Log something else is inside the Daily log card',
+        q('[data-section="daily"] [data-other="toggle"]',screen)?.textContent.includes('Log something else'))
 
-        const summary = q('[data-summary="daily"]')
-        check('Today opens with one clear summary card', summary !== null)
-        check('the summary has one progress signal, not five attribute meters',
-          qa('[role="progressbar"]', summary).length === 1 && qa('.strip__bar').length === 0)
+      const body=getComputedStyle(document.body)
+      check('Today is flat slate with no scenic background',
+        body.backgroundImage==='none'&&getComputedStyle(document.body,'::before').backgroundImage==='none',
+        `${body.backgroundColor} / ${body.backgroundImage}`)
+      const bar=q('.tabbar')
+      const barStyle=getComputedStyle(bar)
+      check('bottom navigation uses the approved dark solid bar',
+        barStyle.backgroundColor==='rgb(26, 31, 37)'
+        && !(barStyle.backdropFilter||barStyle.webkitBackdropFilter||'').includes('blur'),
+        barStyle.backgroundColor)
+      check('Today has no sideways scroll', document.documentElement.scrollWidth<=document.documentElement.clientWidth+1,
+        `${document.documentElement.scrollWidth}/${document.documentElement.clientWidth}`)
+    }catch(error){
+      check('harness threw',false,String(error?.stack??error).slice(0,700))
+    }
 
-        const sectionTitles = qa('.today-section__title').map((node) => node.textContent.trim())
-        check('the main hierarchy is Plan, Habits, then Workout',
-          sectionTitles[0] === 'Plan' && sectionTitles[1] === 'Habits' && sectionTitles[2] === 'Workout',
-          sectionTitles.join(' | '))
-        check('the calendar rail sits above the work surfaces', qa('.today-calendar__day').length === 7)
-
-        const dailyList = q('[data-section="daily"] .today-list')
-        const dailyRows = qa('.today-item', dailyList)
-        const icons = qa('.today-item__icon', dailyList)
-        check('daily work shares one list surface', dailyList !== null && dailyRows.length > 1,
-          `${dailyRows.length} rows on one surface`)
-        check('every visible daily row has one compact icon', icons.length === dailyRows.length,
-          `${icons.length}/${dailyRows.length} icons`)
-        const firstIcon = icons[0]?.getBoundingClientRect()
-        check('task icons are compact rather than large attribute tiles',
-          firstIcon && firstIcon.width <= 36 && firstIcon.height <= 36,
-          firstIcon ? `${Math.round(firstIcon.width)}x${Math.round(firstIcon.height)}` : 'no icon')
-        check('Today contains no progress rings', qa('.ring, .ring__fill').length === 0)
-        check('numeric controls are progressive disclosure', qa('.today-editor').length === 0)
-
-        const trainingFold = q('[data-fold="training"] .today-section__fold')
-        check('Workout is present but folded by default',
-          trainingFold !== null && trainingFold.getAttribute('aria-expanded') === 'false')
-        trainingFold?.click()
-        await waitFor('[data-daily-workout-task]')
-        const exerciseRows = qa('[data-daily-workout-task]')
-        check('opening Workout reveals today\'s individual prescribed movements',
-          exerciseRows.length > 1, `${exerciseRows.length} movements`)
-        check('movement rows show set-level progress rather than whole-week frequency',
-          exerciseRows.some((row) => /\d+ \/ \d+ sets/.test(row.textContent))
-          && exerciseRows.every((row) => !/this week/.test(row.textContent)),
-          exerciseRows.map((row) => row.textContent.trim()).join(' | '))
-        check('the full-session action remains beside the same Workout section',
-          /start full session/i.test(q('[data-section="training"] .today-section__start')?.textContent ?? ''))
-
-        const rest = await ensureActivity('rest_day')
-        const restAction = rest?.matches?.('[data-action="mark"]') ? rest : q('[data-action="mark"]', rest)
-        check('optional rest logging remains reachable', restAction !== null)
-        restAction?.click(); await settle()
-        const earned = q('.today-earned')
-        check('XP appears as a reward moment after logging', /\+\d+ XP/.test(earned?.textContent ?? ''),
-          earned?.textContent ?? 'no reward')
-        check('the reward is inline, not a modal', earned !== null && earned.closest('[role="dialog"]') === null)
-
-        let water = await ensureActivity('water')
-        let quick = q('[data-quickadd]', water)
-        check('water has one calm direct preset in the bootstrap harness',
-          qa('[data-quickadd]', water).length === 1 && quick?.textContent?.includes('+20'), quick?.textContent ?? 'missing')
-        quick?.click(); await settle()
-        water = await ensureActivity('water')
-        q('[data-quickadd]', water)?.click(); await settle()
-        const afterTwo = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('direct bottle presets accumulate safely', afterTwo === 40, `${afterTwo} oz`)
-
-        const editor = await openEditor('water')
-        const field = q('[data-entry="water"]', editor)
-        field.value = '4'
-        q('[data-action="log"]', editor)?.click(); await settle()
-        const afterManual = (await tempered.daily.dayLog(tempered.clock.today())).waterOz
-        check('typed additive amounts still add rather than replace the total',
-          afterManual === 44, `40 + 4 -> ${afterManual} oz`)
-        check('the expanded tracker exposes a user-owned preset field',
-          q('.today-editor__preset-input', await openEditor('water')) !== null)
-
-        // Workout ergonomics remain dense and fast in the immersive session.
-        await tempered.app.show('train')
-        await waitFor('[data-programday]')
-        q('[data-programday="monday"]')?.click()
-        await waitFor('.setrow__check')
-        const firstCard = q('[data-exercise]')
-        const firstWeights = qa('input.setrow__num[data-field="weight"]', firstCard)
-        if (firstWeights[0]) {
-          firstWeights[0].value = '95'
-          firstWeights[0].dispatchEvent(new Event('change'))
-        }
-        await settle()
-        q('.setrow__check')?.click(); await settle()
-        const kept = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('the logged set keeps what was logged', kept[0]?.value === '95', kept[0]?.value)
-
-        await tempered.app.show('train')
-        await waitFor('[data-programday]')
-        ;(q('[data-programday="tuesday"]') ?? q('[data-programday]'))?.click()
-        await waitFor('.setrow__check')
-        const fresh = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('there are several sets to cascade into', fresh.length >= 3, `${fresh.length} sets`)
-        if (fresh[0]) {
-          fresh[0].value = '135'
-          fresh[0].dispatchEvent(new Event('change'))
-          await settle()
-        }
-        const cascaded = qa('input.setrow__num[data-field="weight"]', q('[data-exercise]'))
-        check('editing set 1 fills the remaining sets',
-          cascaded.length > 1 && cascaded.slice(1).every((input) => input.value === '135'),
-          cascaded.map((input) => input.value || '-').join(', '))
-      } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
-      }
-
-      await fetch('/__report', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: 'structure-and-feel', passed: checks.every((c) => c.ok), checks }),
-      })
-    </script>
-  </body>
+    await fetch('/__report',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({label:'structure-and-feel',passed:checks.every((item)=>item.ok),checks}),
+    })
+  </script>
+</body>
 </html>

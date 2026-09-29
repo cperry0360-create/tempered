@@ -61,18 +61,13 @@ test('REGRESSION: Today preserves additive semantics for manual and custom quick
   assert.match(today, /daily\.logAt\(selectedDate, activity\.id, value, options\)/)
 })
 
-test('REGRESSION: Water shows +8 oz, +12 oz, and the editable custom quick add on the collapsed row', () => {
-  const water = read('src/ui/water-quick-presets.js')
+test('REGRESSION: Today keeps one additive Water quick action instead of the old three-button enhancer', () => {
+  const today = read('src/ui/screens/today.js')
   const main = read('src/main.js')
-  assert.match(water, /WATER_FIXED_PRESETS\s*=\s*\[8, 12\]/)
-  assert.match(water, /water-row-quickset/)
-  assert.match(water, /data-water-row-presets|dataset\.waterRowPresets/)
-  assert.match(water, /group\.append\(customButton\)/)
-  assert.match(water, /Add \$\{amount\} oz to Water/)
-  assert.match(water, /Third quick add/)
-  assert.match(water, /third row button/)
-  assert.match(main, /installWaterQuickPresets\(\)/)
-  assert.doesNotMatch(water, /setAttribute\('hidden'/)
+  assert.match(today, /water:\s*20/)
+  assert.match(today, /record\(activity, String\(preset\)\)/)
+  assert.match(today, /data(?:set)?:?\s*adding && preset !== null|quickadd/)
+  assert.doesNotMatch(main, /installWaterQuickPresets/)
 })
 
 test('REGRESSION: iOS Home Screen worker URL changes with every visible release', () => {
@@ -183,14 +178,16 @@ test('REGRESSION: ChatGPT Health paste is live while the failed Shortcut UI stay
   assert.match(snapshot, /export async function importHealthSnapshot/)
 })
 
-test('REGRESSION: Health import refreshes Daily Recap and exposes recovery signals', () => {
-  const recap = read('src/ui/calorie-ai-runtime.js')
-  assert.match(recap, /addEventListener\('tempered:health-imported'/)
-  assert.match(recap, /RECOVERY SIGNALS/)
-  assert.match(recap, /health\.restingHr/)
-  assert.match(recap, /health\.hrvMs/)
-  assert.match(recap, /health\.respiratoryRate/)
-  assert.match(recap, /health\.spo2/)
+test('REGRESSION: Health import is reached from the R2 Readiness card and redraws Today', () => {
+  const today = read('src/ui/screens/today.js')
+  const paste = read('src/ui/health-paste-runtime.js')
+  assert.match(today, /No recovery data today/)
+  assert.match(today, /Import from Health/)
+  assert.match(today, /tempered:open-health-import/)
+  assert.match(today, /healthMetrics\?\.restingHr/)
+  assert.match(today, /healthMetrics\?\.hrvMs/)
+  assert.match(paste, /addEventListener\('tempered:open-health-import'/)
+  assert.match(paste, /tempered:health-imported/)
 })
 
 test('REGRESSION: practical surfaces lead and Fuel is a first-class tab', () => {
@@ -207,23 +204,22 @@ test('REGRESSION: practical surfaces lead and Fuel is a first-class tab', () => 
   assert.match(style, /\.training-calendar-scroll\s*\{[\s\S]*overflow-x:\s*auto/)
 })
 
-test('REGRESSION: Daily Recap is viewport-fixed outside transformed screens', () => {
+test('REGRESSION: R2 Today removes Daily Recap and uses bounded Health import instead', () => {
   const today = read('src/ui/screens/today.js')
-  const css = read('src/uplift.css')
-  assert.match(today, /document\.body\.append\(overlay\)/)
-  assert.match(css, /\.today-recap-overlay[\s\S]*height:\s*100dvh/)
-  assert.match(css, /\.today-recap-overlay[\s\S]*z-index:\s*1300/)
+  const paste = read('src/ui/health-paste-runtime.js')
   const pasteCss = read('src/pivot.css')
+  assert.doesNotMatch(today, /Daily recap|today-recap|data-daily-recap/)
+  assert.match(today, /tempered:open-health-import/)
+  assert.match(paste, /health-paste-overlay/)
   assert.match(pasteCss, /\.health-paste-overlay[\s\S]*z-index:\s*1500/)
 })
 
-test('REGRESSION: Health import redraws Today and prior days can be reviewed', () => {
+test('REGRESSION: Health import redraws Today without injecting a prior-day card', () => {
   const health = read('src/ui/health-paste-runtime.js')
   const nutrition = read('src/ui/calorie-ai-runtime.js')
   const app = read('src/ui/app.js')
   assert.match(health, /context\.app\?\.show/)
-  assert.match(nutrition, /dataPriorDayReview|dataset\.priorDayReview/)
-  assert.match(nutrition, /showTodayDate/)
+  assert.doesNotMatch(nutrition, /dataPriorDayReview|dataset\.priorDayReview/)
   assert.match(app, /showTodayDate/)
 })
 

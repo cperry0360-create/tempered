@@ -95,35 +95,14 @@ function makeButton(className, text, label) {
   return button
 }
 
-function allActivities(view) {
-  return [...(view?.outstanding ?? []), ...(view?.logged ?? [])]
-}
-
 function activityById(view, id) {
-  return allActivities(view).find((activity) => activity.id === id) ?? null
-}
-
-function amount(value, fallback = 0) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  return [...(view?.outstanding ?? []), ...(view?.logged ?? [])]
+    .find((activity) => activity.id === id) ?? null
 }
 
 function shownNumber(value) {
-  const numeric = amount(value)
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 0
   return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '')
-}
-
-function nutritionText(calories, protein) {
-  const calorieValue = amount(calories?.value)
-  const calorieGoal = Number(calories?.dailyCap)
-  const proteinValue = amount(protein?.value)
-  const proteinGoal = Number(protein?.dailyCap)
-  const c = Number.isFinite(calorieGoal) && calorieGoal > 0
-    ? `${shownNumber(calorieValue)} / ${shownNumber(calorieGoal)} kcal`
-    : `${shownNumber(calorieValue)} kcal`
-  const p = Number.isFinite(proteinGoal) && proteinGoal > 0
-    ? `${shownNumber(proteinValue)} / ${shownNumber(proteinGoal)} g protein`
-    : `${shownNumber(proteinValue)} g protein`
-  return `${c} · ${p}`
 }
 
 function dateLabel(dateKey) {
@@ -179,21 +158,10 @@ function nutrientLine(values) {
 export function installCalorieAiRuntime() {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
-  let scheduled = false
-  let enhancing = false
-  let rerenderRequested = false
   let nutritionScreen = null
   let lastNutritionTrigger = null
   let lastDeleted = null
 
-  const schedule = () => {
-    if (scheduled) return
-    scheduled = true
-    requestAnimationFrame(() => {
-      scheduled = false
-      enhance().catch((error) => console.warn('[tempered] Nutrition Today enhancement unavailable', error))
-    })
-  }
 
   function todayRoot() {
     return mount.querySelector('.screen--today')
@@ -201,101 +169,6 @@ export function installCalorieAiRuntime() {
 
   function selectedDate() {
     return todayRoot()?.dataset?.date ?? globalThis.tempered?.clock?.today?.()
-  }
-
-  async function latestWeight(today) {
-    const storage = globalThis.tempered?.storage
-    if (!storage) return null
-    const days = (await storage.getAll('dayLogs'))
-      .filter((row) => row.date <= today && typeof row.bodyMetrics?.weight === 'number')
-      .sort((a, b) => b.date.localeCompare(a.date))
-    return days[0]?.bodyMetrics?.weight ?? null
-  }
-
-  function metric(label, value, detail, name, wide = false) {
-    const node = document.createElement('div')
-    node.className = `today-lifestyle__metric${wide ? ' today-lifestyle__metric--wide' : ''}`
-    node.dataset.metric = name
-    node.innerHTML = '<span class="today-lifestyle__label"></span><strong class="today-lifestyle__value"></strong><span class="today-lifestyle__detail"></span>'
-    node.querySelector('.today-lifestyle__label').textContent = label
-    node.querySelector('.today-lifestyle__value').textContent = value
-    node.querySelector('.today-lifestyle__detail').textContent = detail
-    return node
-  }
-
-  function lifestyleMetrics(view, weight) {
-    const sleep = activityById(view, 'sleep')
-    const steps = activityById(view, 'steps')
-    const water = activityById(view, 'water')
-    const calories = activityById(view, 'calories_logged')
-    const protein = activityById(view, 'protein_target')
-    const sleepValue = typeof sleep?.value === 'number' ? `${shownNumber(Number(sleep.value.toFixed(2)))} h` : '— h'
-    const stepValue = typeof steps?.value === 'number' ? steps.value.toLocaleString() : '0'
-    const stepGoal = Number(steps?.dailyCap)
-    const waterValue = typeof water?.value === 'number' ? `${shownNumber(water.value)} oz` : '0 oz'
-    const waterGoal = Number(water?.dailyCap)
-    const metrics = [
-      ['SLEEP', sleepValue, '7–9 h target', 'sleep', false],
-      ['STEPS', stepValue, Number.isFinite(stepGoal) ? `${stepGoal.toLocaleString()} target` : 'daily movement', 'steps', false],
-      ['NUTRITION', nutritionText(calories, protein), 'tap below for meals + macros', 'nutrition', true],
-      ['WATER', waterValue, Number.isFinite(waterGoal) ? `${waterGoal} oz target` : 'hydration', 'water', false],
-      ['WEIGHT', typeof weight === 'number' ? `${weight} lb` : '— lb', 'latest weigh-in', 'weight', false],
-    ]
-    const health = view?.day?.healthMetrics ?? {}
-    const primary = [
-      Number.isFinite(health.restingHr) ? `RHR ${shownNumber(health.restingHr)}` : null,
-      Number.isFinite(health.hrvMs) ? `HRV ${shownNumber(health.hrvMs)}` : null,
-    ].filter(Boolean)
-    const secondary = [
-      Number.isFinite(health.respiratoryRate) ? `Resp ${shownNumber(health.respiratoryRate)}` : null,
-      Number.isFinite(health.spo2) ? `SpO₂ ${shownNumber(health.spo2)}%` : null,
-    ].filter(Boolean)
-    if (primary.length || secondary.length) {
-      metrics.push([
-        'RECOVERY SIGNALS', primary.join(' · ') || 'Imported',
-        secondary.join(' · ') || 'from ChatGPT Health', 'vitals', true,
-      ])
-    }
-    return metrics
-  }
-
-  function syncLifestyle(host, view, weight) {
-    let grid = host.querySelector('[data-lifestyle="snapshot"]')
-    if (!grid) {
-      grid = document.createElement('div')
-      grid.className = 'today-lifestyle'
-      grid.dataset.lifestyle = 'snapshot'
-      host.append(grid)
-    }
-    for (const definition of lifestyleMetrics(view, weight)) {
-      const [, value, detail, name] = definition
-      let node = grid.querySelector(`[data-metric="${name}"]`)
-      if (!node) {
-        node = metric(...definition)
-        const health = grid.querySelector('.health-bridge__today')
-        health ? grid.insertBefore(node, health) : grid.append(node)
-      } else {
-        node.querySelector('.today-lifestyle__value').textContent = value
-        node.querySelector('.today-lifestyle__detail').textContent = detail
-      }
-    }
-    return grid
-  }
-
-  function hideLegacyNutritionRows() {
-    for (const id of ['calories_logged', 'protein_target', 'nutrition_logged']) {
-      mount.querySelectorAll(`[data-activity="${id}"]`).forEach((node) => { node.hidden = true })
-    }
-  }
-
-  function cloneFoodIcon() {
-    const source = mount.querySelector('[data-activity="calories_logged"] .today-item__icon')
-      ?? mount.querySelector('[data-activity="nutrition_logged"] .today-item__icon')
-    if (source) return source.cloneNode(true)
-    const icon = document.createElement('span')
-    icon.className = 'today-item__icon'
-    icon.textContent = 'N'
-    return icon
   }
 
   function promptButton(className = 'today-item__ai-prompt') {
@@ -307,64 +180,32 @@ export function installCalorieAiRuntime() {
     button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
     button.replaceChildren(
       Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
-      Object.assign(document.createElement('span'), { textContent: 'AI PHOTO' }),
+      Object.assign(document.createElement('span'), { textContent: 'AI photo' }),
     )
     button.dataset.calorieAi = 'prompt'
     button.onclick = async (event) => {
       event.stopPropagation()
       const copied = await copyText(NUTRITION_PHOTO_PROMPT)
-      button.querySelector('span').textContent = copied ? 'OPENING' : 'FAILED'
+      button.querySelector('span').textContent = copied ? 'Opening' : 'Failed'
       button.dataset.copied = String(copied)
       window.setTimeout(() => {
         if (!button.isConnected) return
-        button.querySelector('span').textContent = 'AI PHOTO'
+        button.querySelector('span').textContent = 'AI photo'
         delete button.dataset.copied
       }, 1600)
     }
     return button
   }
 
-  function buildNutritionRow(view) {
-    const calories = activityById(view, 'calories_logged')
-    const protein = activityById(view, 'protein_target')
-    const wrap = document.createElement('div')
-    wrap.className = 'today-item-wrap nutrition-combined'
-    wrap.dataset.activity = 'nutrition_combined'
-    const row = document.createElement('div')
-    row.className = 'today-item today-item--number today-item--nutrition'
-    const body = makeButton('today-item__body', '', 'Open Nutrition log')
-    const main = document.createElement('span')
-    main.className = 'today-item__main'
-    const name = document.createElement('span')
-    name.className = 'today-item__name'
-    name.textContent = 'Nutrition'
-    const meta = document.createElement('span')
-    meta.className = 'today-item__meta'
-    meta.textContent = nutritionText(calories, protein)
-    main.append(name, meta)
-    body.append(cloneFoodIcon(), main)
-    body.onclick = () => openNutritionScreen(body)
-    const open = makeButton('today-item__expand', '›', 'Open Nutrition log')
-    open.onclick = () => openNutritionScreen(open)
-    row.append(body, promptButton(), open)
-    wrap.append(row)
-    return wrap
-  }
-
-  function syncNutritionRow(list, view) {
-    let wrap = list.querySelector('[data-activity="nutrition_combined"]')
-    if (!wrap) {
-      wrap = buildNutritionRow(view)
-      const steps = list.querySelector('[data-activity="steps"]')
-      const stepsHost = steps?.classList?.contains('today-item-wrap') ? steps : steps?.closest('.today-item-wrap') ?? steps
-      if (stepsHost?.parentNode === list) stepsHost.after(wrap)
-      else list.prepend(wrap)
-      return
+  async function refreshUnderlyingSurfaces(date = nutritionScreen?.dataset.date) {
+    if (!date) return
+    window.dispatchEvent(new CustomEvent('tempered:fuel-updated', { detail: { date } }))
+    const context = globalThis.tempered
+    if (!context?.app) return
+    if (document.querySelector('.screen--today')) {
+      if (date === context.clock.today() && context.app.show) await context.app.show('today')
+      else if (context.app.showTodayDate) await context.app.showTodayDate(date)
     }
-    const calories = activityById(view, 'calories_logged')
-    const protein = activityById(view, 'protein_target')
-    const meta = wrap.querySelector('.today-item__meta')
-    if (meta) meta.textContent = nutritionText(calories, protein)
   }
 
   function setScreenStatus(message, state = '') {
@@ -372,53 +213,6 @@ export function installCalorieAiRuntime() {
     if (!status) return
     status.dataset.state = state
     status.textContent = message
-  }
-
-  async function priorDayReview(context, date) {
-    if (date !== context.clock.today()) return null
-    const earliest = shiftedDate(date, -7)
-    const candidates = (await context.storage.getAll('dayLogs'))
-      .filter((row) => row?.date < date && row.date >= earliest)
-      .sort((a, b) => b.date.localeCompare(a.date))
-    for (const row of candidates) {
-      const hasRecordedData = Object.entries(row).some(([key, value]) =>
-        !['date', 'awarded', 'nutritionStatus'].includes(key)
-        && value !== null && value !== false && value !== '' && value !== undefined)
-        || row.nutritionStatus === 'partial'
-      if (!hasRecordedData) continue
-      const view = await context.daily.forDate(row.date)
-      const scheduled = new Set(view.dailyIds ?? [])
-      const remaining = (view.outstanding ?? []).filter((activity) => scheduled.has(activity.id)).length
-      const ledger = nutritionLedger(row)
-      const nutritionStarted = row.nutritionStatus === 'partial'
-        || row.nutritionLogged === true || row.caloriesLogged === true
-        || ledger.entries.length > 0 || ledger.hasCarryover
-      const nutritionNeedsReview = nutritionStarted && row.nutritionStatus !== 'complete'
-      if (remaining > 0 || nutritionNeedsReview) return { date: row.date, remaining, nutritionNeedsReview }
-    }
-    return null
-  }
-
-  function syncPriorDayReview(screen, review) {
-    screen.querySelector('[data-prior-day-review]')?.remove()
-    if (!review) return
-    const card = document.createElement('section')
-    card.className = 'prior-day-review'
-    card.dataset.priorDayReview = review.date
-    const copy = document.createElement('div')
-    const title = document.createElement('strong')
-    title.textContent = 'A prior day needs a quick review'
-    const parts = [
-      review.remaining ? `${review.remaining} daily item${review.remaining === 1 ? '' : 's'} still open` : null,
-      review.nutritionNeedsReview ? 'nutrition needs review' : null,
-    ].filter(Boolean)
-    const detail = document.createElement('span')
-    detail.textContent = `${dateLabel(review.date)} · ${parts.join(' · ')}`
-    copy.append(title, detail)
-    const button = makeButton('prior-day-review__button', 'REVIEW DAY', `Review ${dateLabel(review.date)}`)
-    button.onclick = () => globalThis.tempered?.app?.showTodayDate?.(review.date)
-    card.append(copy, button)
-    screen.querySelector('.today-summary')?.before(card)
   }
 
   function totalCard(label, value, target, key) {
@@ -463,7 +257,7 @@ export function installCalorieAiRuntime() {
         const result = await globalThis.tempered.daily.removeNutrition(date, entry.id)
         lastDeleted = result.removed ? { entry: result.removed, index: result.index, date } : null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
       } catch {
         setScreenStatus('Could not delete that entry. Your saved data was not changed.', 'error')
       }
@@ -507,7 +301,7 @@ export function installCalorieAiRuntime() {
         await globalThis.tempered.daily.restoreNutrition(pending.date, pending.entry, pending.index)
         lastDeleted = null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
         setScreenStatus('Meal restored.', 'ready')
       } catch {
         setScreenStatus('Could not restore that entry.', 'error')
@@ -541,7 +335,7 @@ export function installCalorieAiRuntime() {
           })
           lastDeleted = null
           await renderNutritionData()
-          await enhance()
+          await refreshUnderlyingSurfaces()
           setScreenStatus(`${suggestion.description} added.`, 'success')
         } catch {
           button.disabled = false
@@ -814,7 +608,7 @@ export function installCalorieAiRuntime() {
         form.dataset.source = 'manual'
         lastDeleted = null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
         setScreenStatus('Meal added. It is saved in today’s history.', 'success')
       } catch {
         setScreenStatus('Could not add that meal. Your saved data was not changed.', 'error')
@@ -861,65 +655,17 @@ export function installCalorieAiRuntime() {
     lastDeleted = null
   }
 
-  async function enhance() {
-    if (enhancing) {
-      rerenderRequested = true
-      return
-    }
-    const screen = todayRoot()
-    const context = globalThis.tempered
-    const date = selectedDate()
-    if (!screen || !context?.daily || !date) return
-    enhancing = true
-    try {
-      const section = screen.querySelector('[data-section="daily"]')
-      const list = section?.querySelector('.today-list')
-      const recapHost = document.querySelector('[data-lifestyle-recap-host]')
-      if (!list && !recapHost) return
-      const [view, weight, review] = await Promise.all([
-        context.daily.forDate(date), latestWeight(date), priorDayReview(context, date),
-      ])
-      if (screen !== todayRoot() || date !== selectedDate()) return
-      syncPriorDayReview(screen, review)
-      if (date === context.clock.today() && section && list) {
-        hideLegacyNutritionRows()
-        const title = section.querySelector('.today-section__title')
-        const detail = section.querySelector('.today-section__detail')
-        if (title) title.textContent = 'Lifestyle'
-        if (detail) detail.textContent = 'Sleep · movement · nutrition · hydration · recovery'
-        syncNutritionRow(list, view)
-      }
-      if (recapHost) {
-        syncLifestyle(recapHost, view, weight)
-        window.dispatchEvent(new CustomEvent('tempered:lifestyle-ready', {
-          detail: { date },
-        }))
-      }
-    } finally {
-      enhancing = false
-      if (rerenderRequested) {
-        rerenderRequested = false
-        schedule()
-      }
-    }
-  }
-
   const screenShown = (event) => {
-    if (event?.detail?.tab === 'today') schedule()
-    else closeNutritionScreen()
+    if (event?.detail?.tab !== 'today' && event?.detail?.tab !== 'fuel') closeNutritionScreen()
   }
-  const todayRendered = () => schedule()
-  const healthImported = () => schedule()
-  const nutritionRequested = (event) => openNutritionScreen(event?.detail?.trigger ?? null, event?.detail?.date ?? null)
+  const nutritionRequested = (event) => openNutritionScreen(
+    event?.detail?.trigger ?? null,
+    event?.detail?.date ?? null,
+  )
   window.addEventListener('tempered:screen-shown', screenShown)
-  window.addEventListener('tempered:today-rendered', todayRendered)
-  window.addEventListener('tempered:health-imported', healthImported)
   window.addEventListener('tempered:open-nutrition', nutritionRequested)
-  schedule()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
-    window.removeEventListener('tempered:today-rendered', todayRendered)
-    window.removeEventListener('tempered:health-imported', healthImported)
     window.removeEventListener('tempered:open-nutrition', nutritionRequested)
     closeNutritionScreen()
   }

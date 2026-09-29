@@ -76,6 +76,10 @@
       check('Chosen style is saved with setup', finished && profile?.setupComplete === true && profile?.companionStyle === 'sprout', profile?.companionStyle)
 
       await setup.start({ rerun: true })
+      for (let step = 0; step < 6; step += 1) {
+        q('.setup__next')?.click()
+        await settle()
+      }
       check('Saved style is restored when setup is reopened', q('[data-style="sprout"]')?.dataset.selected === 'true')
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {

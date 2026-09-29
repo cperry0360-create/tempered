@@ -1,4 +1,4 @@
-Release 0.38.0 establishes Redesign V1 Phase R1: approved slate tokens, system type, opaque surfaces, a solid four-icon tab bar, Today-only Settings access, and the minimized-workout dock. Scenic backgrounds and the temporary slate override are removed. Screen rewiring continues in R2–R5.
+Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard now leads with companion/settings, next session, readiness, same-week training, Fuel, and the canonical Daily log. Legacy Today summary, calendar rail, planner, workout-control, Daily Recap, weekly-goal, and AI-check surfaces are removed from Today; logging and persistence remain canonical.
 
 # Tempered current state
 
@@ -6,7 +6,7 @@ Release 0.38.0 establishes Redesign V1 Phase R1: approved slate tokens, system t
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.38.0 (52) — Redesign V1 R1 foundation
+**Current release:** 0.39.0 (53) — Redesign V1 R2 Today
 
 **Product maturity:** Pre-beta product completion
 

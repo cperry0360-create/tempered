@@ -20,6 +20,8 @@ test('release evidence covers onboarding and every core product surface', () => 
 test('release evidence covers both supported iPhone viewport classes', () => {
   assert.match(capture, /390, height: 844/)
   assert.match(capture, /430, height: 932/)
+  assert.match(capture, /Emulation\.setDeviceMetricsOverride/)
+  assert.match(capture, /Page\.captureScreenshot/)
   assert.match(capture, /image\.width !== viewport\.width \|\| image\.height !== viewport\.height/)
 })
 

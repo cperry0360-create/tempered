@@ -55,6 +55,9 @@ real-world care grow a warm companion world. The tracker must stand on its own.
 - **Treat `docs/CURRENT-STATE.md` as current product scope.** The original
   `docs/07-build-plan.md` remains useful for acceptance criteria and history, but it
   must not reintroduce visible RPG work that the tracker-first pivot removed.
+- **Follow `docs/PRODUCT-TEAM.md` for every release.** It defines prioritization,
+  approval boundaries, required visual evidence, and live production verification.
+  A passing automated suite alone does not complete a release.
 - **Write the test first for anything in `src/domain/`.** The XP engine, progression
   curves and workout progression rules must be unit tested. UI need not be.
 - **Log every decision** you make that is not specified here into `DECISIONS.md`, with
@@ -110,6 +113,7 @@ Two consequences worth remembering:
 ## Repository map
 
 - `docs/CURRENT-STATE.md` — authoritative current product and continuity handoff.
+- `docs/PRODUCT-TEAM.md` — autonomous operating loop and release gates.
 - `docs/` — detailed specifications and history. Where an RPG-era document conflicts
   with `CURRENT-STATE.md`, the current-state document wins.
 - `data/` — seed content and balance config. JSON, hand-editable.

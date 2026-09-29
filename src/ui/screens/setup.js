@@ -128,7 +128,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepTwo() {
     return [
-      ...heading('STEP 2 OF 5', 'SET THE RHYTHM', 'This is a target, not a streak. It helps the RPG judge a training week.'),
+      ...heading('STEP 2 OF 5', 'SET THE RHYTHM', 'Choose a realistic weekly target. Flexible weeks create no debt, and recovery is part of the plan.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Training sessions per week' }),
         el('div.setup__numberchoices', {}, SESSION_OPTIONS.map((value) => el('button.setup__number', {

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Tempered — release visual</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/cadence.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/nutrition-today.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/ux-fixes.css" />
+  <link rel="stylesheet" href="../../src/companion.css" />
+  <link rel="stylesheet" href="../../src/pivot.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrap } from '../../src/app/bootstrap.js'
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const view = new URL(location.href).searchParams.get('view') ?? 'today'
+    const mount = document.querySelector('#app')
+    const clock = fixedClock(new Date(2026, 8, 7, 9, 0, 0))
+    const route = { today: 'today', train: 'train', fuel: 'companion', progress: 'history' }
+
+    async function installShippedInlineCss() {
+      const html = await fetch('../../index.html').then((response) => response.text())
+      for (const match of html.matchAll(/<style>([\s\S]*?)<\/style>/gi)) {
+        const style = document.createElement('style')
+        style.textContent = match[1]
+        document.head.append(style)
+      }
+    }
+
+    async function settle() {
+      await document.fonts?.ready
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      await new Promise((resolve) => setTimeout(resolve, 120))
+    }
+
+    async function report(ok, error = '') {
+      document.documentElement.dataset.visualReady = String(ok)
+      await fetch('/__visual-ready', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ view, ok, error }),
+      })
+    }
+
+    try {
+      await installShippedInlineCss()
+      const storage = createMemoryStorage()
+      if (view === 'setup-welcome' || view === 'setup-rhythm') {
+        await bootstrap({ storage, clock, mount })
+        if (view === 'setup-rhythm') {
+          mount.querySelector('.setup__next')?.click()
+        }
+      } else if (route[view]) {
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })
+        await tempered.app.show(route[view])
+      } else {
+        throw new Error(`Unknown release visual: ${view}`)
+      }
+      await settle()
+      if (!mount.firstElementChild) throw new Error('App did not render a surface')
+      await report(true)
+    } catch (error) {
+      mount.innerHTML = `<main style="padding:24px;color:white"><h1>Visual QA failed</h1><pre></pre></main>`
+      mount.querySelector('pre').textContent = String(error?.stack ?? error)
+      await report(false, String(error?.stack ?? error).slice(0, 1200))
+    }
+  </script>
+</body>
+</html>

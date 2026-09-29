@@ -2560,3 +2560,21 @@ into the baseline.
 **Confidence:** specified directly by Cory and covered by threshold, mixed-week, Away, and
 keeper regression tests.
 **Needs Cory:** confirm prior three-day weeks now remain in the visible streak history.
+
+
+## 2026-09-29 — Tempered uses an autonomous product-team release contract
+**Phase:** Product operations / 0.31.1
+
+**Decision:** Codex owns the routine product-manager, developer, and QA loop for the approved
+product phase. Every release must pass domain tests, browser acceptance, deterministic mobile
+captures at 390×844 and 430×932, direct visual inspection of those captures, and a live
+post-deploy inspection. CI preserves the capture matrix as a release artifact. Product promise,
+destructive data changes, new external services or permissions, public beta positioning, and
+other explicitly flagged product choices still require Cory's approval.
+**Reasoning:** Passing assertions did not reveal obsolete RPG language still visible during
+first launch. Treating visual inspection as release evidence catches copy, hierarchy, overflow,
+occlusion, and integration defects before Cory has to discover them in normal use.
+**Confidence:** repository and production audit, full regression suite, hosted CI status, and
+live visual inspection of onboarding plus Today, Train, Fuel, and Progress.
+**Needs Cory:** validate major product-direction prototypes and the eventual physical-iPhone
+pre-beta acceptance pass; routine fixes and release verification do not wait for approval.

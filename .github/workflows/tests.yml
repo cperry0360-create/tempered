@@ -38,6 +38,23 @@ jobs:
       - name: Run every browser harness
         run: node tools/verify-browser-harnesses.js
 
+  visual-evidence:
+    runs-on: ubuntu-latest
+    name: Mobile visual release evidence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Capture required release surfaces
+        run: node tools/capture-release-screens.js
+      - name: Preserve visual QA evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tempered-mobile-visuals
+          path: artifacts/release-visuals
+          retention-days: 14
+
   ios-native:
     runs-on: macos-latest
     name: Native iOS wrapper build

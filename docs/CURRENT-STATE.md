@@ -1,10 +1,11 @@
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-28
+**Last recovered and verified:** 2026-09-29
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.31.0 (44)  
+**Current release:** 0.31.1 (45)
+
 **Product maturity:** Pre-beta product completion
 
 Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
@@ -23,6 +24,12 @@ Release 0.25 restores imported recovery signals to Progress, explains the readin
 This is the short handoff for the live product. It records the decisions recovered from
 the long Tempered build conversation and the companion-art share so a new session does
 not have to reconstruct the pivot from legacy RPG documents.
+
+Release 0.31.1 removes the final visible RPG explanation from onboarding and establishes
+the autonomous product-team release contract. CI now captures every core surface at both
+supported iPhone viewport classes as reviewable evidence. A release is not complete until
+those captures and the deployed product have been visually inspected. The operating contract
+is in [`docs/PRODUCT-TEAM.md`](PRODUCT-TEAM.md).
 
 Release 0.31 makes three distinct 30-minute days the weekly streak minimum. A fourth qualifying day makes it a strong week and advances keeper progress, so busy weeks count without removing the reward for doing more.
 

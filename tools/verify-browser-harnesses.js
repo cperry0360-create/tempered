@@ -19,6 +19,7 @@ const archivedHarnesses = new Set(['health-shortcut.html'])
 const pages = readdirSync(new URL('../test/browser/', import.meta.url))
   .filter((name) => name.endsWith('.html')
     && name !== 'persistence.html'
+    && name !== 'release-visual.html'
     && !archivedHarnesses.has(name))
   .sort()
 

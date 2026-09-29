@@ -100,6 +100,11 @@ test('REQUIRED: no streak-shaming or punishment language anywhere', () => {
   assert.deepEqual(offenders, [])
 })
 
+test('REQUIRED: setup teaches the tracker, not the retired RPG', () => {
+  const setup = readFileSync(root + 'src/ui/screens/setup.js', 'utf8')
+  assert.doesNotMatch(setup, /\bRPG\b/i)
+})
+
 test('no red state is attached to an outstanding task', () => {
   const css = readFileSync(root + 'src/style.css', 'utf8')
   // The bad/vitality red may exist, but never on a task that is merely not done.

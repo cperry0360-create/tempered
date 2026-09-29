@@ -77,12 +77,22 @@ function serve() {
 
 const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms))
 
-async function devToolsPage(profile, browserError, timeoutMs = 15000) {
+function availablePort() {
+  return new Promise((resolvePort, rejectPort) => {
+    const probe = createServer()
+    probe.once('error', rejectPort)
+    probe.listen(0, '127.0.0.1', () => {
+      const port = probe.address().port
+      probe.close((error) => error ? rejectPort(error) : resolvePort(port))
+    })
+  })
+}
+
+async function devToolsPage(port, browserError, timeoutMs = 15000) {
   const deadline = Date.now() + timeoutMs
   let lastError = null
   while (Date.now() < deadline) {
     try {
-      const [port] = (await readFile(join(profile, 'DevToolsActivePort'), 'utf8')).trim().split('\n')
       const targets = await fetch(`http://127.0.0.1:${port}/json/list`).then((response) => response.json())
       const page = targets.find((target) => target.type === 'page')
       if (page?.webSocketDebuggerUrl) return page.webSocketDebuggerUrl
@@ -148,9 +158,11 @@ const profile = await mkdtemp(join(tmpdir(), 'tempered-release-visual-'))
 const { server, port, nextReport } = await serve()
 const manifest = []
 let browserError = ''
+const debugPort = await availablePort()
 const browser = spawn(chrome, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
-  '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=0',
+  '--no-first-run', '--no-default-browser-check', '--remote-debugging-address=127.0.0.1',
+  `--remote-debugging-port=${debugPort}`,
   `--user-data-dir=${profile}`, 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] })
 browser.stderr.on('data', (chunk) => { browserError += chunk })
@@ -158,7 +170,7 @@ const browserExit = new Promise((resolveExit) => browser.once('close', resolveEx
 let cdp = null
 
 try {
-  cdp = await connectCdp(await devToolsPage(profile, () => browserError.slice(-1600)))
+  cdp = await connectCdp(await devToolsPage(debugPort, () => browserError.slice(-1600)))
   await cdp.send('Page.enable')
   for (const viewport of VIEWPORTS) {
     await cdp.send('Emulation.setDeviceMetricsOverride', {

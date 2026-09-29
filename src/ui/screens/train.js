@@ -391,6 +391,12 @@ LATEST_WORKOUT_CONFIRMED_PRS=${confirmedPrs.join(' | ')}`
         ]),
         el('p.program__note', { text: program.note }),
         deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the process.' }),
+        todayDay && el('section.first-week-guide', {}, [
+          el('span.first-week-guide__eyebrow', { text: 'YOUR NEXT USEFUL SESSION' }),
+          el('strong', { text: todayDay.name }),
+          el('p', { text: 'Start when you have a useful window. Record what happened; the plan can meet you where you are.' }),
+          el('button.button', { type: 'button', onclick: () => onStart({ programDay: todayDay }) }, ['START THIS SESSION']),
+        ]),
 
         ...program.days.map((day) => el('button.programday', {
           type: 'button', dataset: { programday: day.id },

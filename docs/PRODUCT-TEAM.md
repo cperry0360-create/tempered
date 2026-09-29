@@ -82,7 +82,7 @@ Generating images is not visual sign-off; Codex must open and inspect them.
 | 1 | First launch teaches effort plus recovery and reaches a useful next action | Complete in 0.32.0 |
 | 2 | A user can choose a suitable template or begin with a blank program | Complete in 0.33.0 |
 | 3 | A user can create and edit a complete program on an iPhone | Complete in 0.34.0 |
-| 4 | Today and Train guide the first week without guilt or schedule debt | Planned |
+| 4 | Today and Train guide the first week without guilt or schedule debt | Complete in 0.35.0 |
 | 5 | Prove backup, week turnover, edits, and a 14-day daily-driver run | Exit gate |
 
 New companion mechanics, more AI handoffs, social features, cloud sync, advanced programming,

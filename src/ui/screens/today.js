@@ -634,6 +634,23 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
     }
   }
 
+  function firstWeekGuide(training) {
+    if (!isRealToday() || !todayProgram?.day) return null
+    const dayName = todayProgram.day.name ?? 'your next session'
+    const remaining = training.active.length
+    return el('section.today-section.today-firstweek', { dataset: { section: 'first-week' } }, [
+      el('div.today-firstweek__head', {}, [
+        el('div', {}, [el('span.today-firstweek__eyebrow', { text: 'FIRST WEEK' }), el('h2', { text: 'Make the next step obvious.' })]),
+        el('span.today-firstweek__badge', { text: remaining > 0 ? 'AVAILABLE' : 'COMPLETE' }),
+      ]),
+      el('p.today-firstweek__copy', { text: remaining > 0
+        ? `Today points to ${dayName}. Start it when you have a useful window, then record what actually happened.`
+        : 'You have finished the available work for today. Recovery is part of the plan; there is nothing to make up.' }),
+      remaining > 0 && el('p.today-firstweek__hint', { text: 'Enough means a repeatable session, not a perfect one. One set at a time still counts.' }),
+      training.canStart && el('button.today-firstweek__start', { type: 'button', onclick: () => onStart({ programDay: todayProgram.day }) }, [icon('play'), `START ${dayName.toUpperCase()}`]),
+    ])
+  }
+
   async function addPlannerTask(input) {
     const row = await planner.add({ date: selectedDate, title: input.value, kind: plannerKind })
     if (!row) return
@@ -1014,6 +1031,7 @@ export function createTodayScreen({ workout, daily, planner, clock, onStart, onO
       calendarRail(),
       summaryCard(dailyDone, dailyTotal),
       earnedBanner(),
+      firstWeekGuide(training),
 
       el('section.today-section.today-section--planner', { dataset: { section: 'planner' } }, [
         foldHeader({

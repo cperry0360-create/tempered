@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 41128)
-Total output lines: 2630
+Warning: truncated output (original token count: 41312)
+Total output lines: 2642
 
 # Decisions log
 
@@ -1015,19 +1015,7 @@ body-metric guard — it is worth having only while it has no exceptions.
 because `data/titles.json` is newly fetched at boot.
 ## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
 **Phase:** 3.5 D (unblocking)
-**Decis…11128 tokens truncated…or old data and regression coverage. The Companion is positive-only and cannot
-decay or punish missed days.
-**Reasoning:** The long build conversation and companion-art chat had superseded several
-RPG-era documents, while the repository's session contract still described a visible
-character progression and dark tactical art direction. Leaving the contradiction in the
-first file every new session reads was the most likely way to lose the pivot again.
-**Confidence:** specified
-**Needs Cory:** no
-
-## 2026-09-08 — Generated art originals are durable; production assets are selective
-**Phase:** 0.14.2 art integration
-**Decision:** Preserved the recovered generation originals under
-`art/source/tempered-generated/`. Production uses optimized WebP scenic backgrounds and
+**Decis…11312 tokens truncated… optimized WebP scenic backgrounds and
 habitats, true-alpha PNG companion stages, and the three UI support icons under
 `art/tempered/`. Baked-checkerboard files remain source references only.
 **Reasoning:** The shared-chat URLs expire and had already left one asset incomplete.
@@ -1930,3 +1918,15 @@ Today and Train, while the existing revision envelope protects completed history
 
 **Needs Cory:** physical-iPhone review of the builder's tap density and editing flow; richer
 progression rules and exercise substitutions remain future slices.
+## 2026-09-29 — Phase 2.4: First-Week Guidance
+**Phase:** Product Phase 2 / 0.35.0
+
+**Decision:** Add a small, derived guidance card to Today and Train that names the next useful
+program session, offers the existing start action, and explicitly frames repeatable work and
+recovery as sufficient. Guidance is visible only where an active program and current day exist.
+
+**Reasoning:** The builder can create a plan, but a new plan still needs a clear first action.
+The guidance reduces ambiguity without adding notifications, missed-goal language, debt, or
+streak pressure, and it remains derived from the same program state as the workout UI.
+
+**Needs Cory:** physical-iPhone review of hierarchy and copy during the first-week pass.

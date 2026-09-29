@@ -785,6 +785,18 @@ body[data-daily-recap-open='true'] { overflow: hidden; }
   box-shadow: 0 9px 28px rgba(3, 19, 29, 0.27);
 }
 .tabbar__tab[data-active='true'] { background: rgba(121, 190, 197, 0.12); }
+
+.today-firstweek { display: grid; gap: 9px; padding: 16px; border: 1px solid color-mix(in srgb, var(--acid) 24%, var(--edge)); border-radius: 20px; background: linear-gradient(145deg, color-mix(in srgb, var(--acid) 8%, var(--surface)), color-mix(in srgb, var(--surface-2) 72%, transparent)); box-shadow: 0 16px 36px rgba(0,0,0,.14); }
+.today-firstweek__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.today-firstweek__eyebrow,.first-week-guide__eyebrow { color: var(--acid); font-size: 9px; font-weight: 850; letter-spacing: .14em; }
+.today-firstweek h2 { margin: 3px 0 0; font-size: 20px; line-height: 1.05; }
+.today-firstweek__badge { flex: none; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--acid) 35%, transparent); border-radius: 999px; color: var(--acid); font-size: 8px; font-weight: 850; letter-spacing: .08em; }
+.today-firstweek__copy,.today-firstweek__hint { margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.4; }
+.today-firstweek__hint { color: var(--text-3); font-size: 11px; }
+.today-firstweek__start { min-height: 44px; border: 0; border-radius: 12px; background: var(--acid); color: var(--canopy); font: inherit; font-size: 10px; font-weight: 900; letter-spacing: .06em; }
+.first-week-guide { display: grid; gap: 7px; margin: 12px 0; padding: 13px; border: 1px solid color-mix(in srgb, var(--acid) 24%, var(--edge)); border-radius: 16px; background: color-mix(in srgb, var(--acid) 7%, var(--surface)); }
+.first-week-guide strong { font-size: 17px; }
+.first-week-guide p { margin: 0; color: var(--text-2); font-size: 12px; line-height: 1.4; }
 .settings-access {
   border-color: rgba(194, 229, 230, 0.13) !important;
   background: rgba(12, 45, 62, 0.72) !important;

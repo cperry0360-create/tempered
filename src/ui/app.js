@@ -16,6 +16,7 @@ import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createCompanionScreen } from './screens/companion.js'
+import { createProgramBuilderScreen } from './screens/program-builder.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
@@ -61,14 +62,17 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   let active = 'train'
   let returnTab = 'train'
   let settingsReturnTab = 'today'
+  let builder = null
+  const openBuilder = async () => show('program-builder')
 
   const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
   const history = createHistoryScreen({ storage, workout, daily, clock })
-  const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup })
+  const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup, onProgramBuilder: openBuilder })
   const companion = createCompanionScreen({
     storage, daily, clock, overlayHost: overlays,
     onToday: async () => { await show('today') },
   })
+  builder = createProgramBuilderScreen({ mount, storage, clock, onClose: () => show('settings') })
 
   let battleScreen = null
   let characterScreen = null
@@ -174,7 +178,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   function showFailure({ title, detail, retry, back }) {
     tabBar.hidden = false
-    settingsAccess.hidden = false
+    settingsAccess.hidden = target === 'program-builder'
     replace(body, [errorState({ title, detail, onRetry: retry, onBack: back })])
     body.scrollTop = 0
     announce(title)
@@ -295,6 +299,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
     if (tab === 'companion') { await companion.refresh(); replace(body, [companion.root]); return }
     if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
+    if (tab === 'program-builder') { await builder.start(); return }
     await ensureLegacy()
     await characterScreen.refresh()
     replace(body, [characterScreen.root])
@@ -302,7 +307,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   async function show(tab) {
     const visible = TABS.some((entry) => entry.id === tab)
-    const target = tab === 'settings' || tab === 'character' || visible ? tab : 'today'
+    const target = tab === 'settings' || tab === 'character' || tab === 'program-builder' || visible ? tab : 'today'
     if (target !== 'companion') companion.deactivate()
     if (target !== 'today') today.deactivate?.()
     active = target
@@ -316,6 +321,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     settingsAccess.setAttribute('aria-current', settingsActive ? 'page' : 'false')
     settingsAccess.setAttribute('aria-label', settingsActive ? 'Close Settings' : 'Settings')
     settingsAccess.title = settingsActive ? 'Close Settings' : 'Settings'
+    if (target === 'program-builder') tabBar.hidden = true
     renderTabs(target)
 
     body.setAttribute('aria-busy', 'true')

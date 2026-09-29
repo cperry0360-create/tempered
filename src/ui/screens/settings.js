@@ -10,7 +10,7 @@ import { downloadExport, readFileAsText } from '../../adapters/storage/file-tran
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 
-export function createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup }) {
+export function createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup, onProgramBuilder }) {
   const root = el('div.screen.screen--settings')
   let typed = ''
   let update = null
@@ -72,6 +72,9 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         onSetup && el('button.button', {
           type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
         }, ['RE-RUN SETUP']),
+        onProgramBuilder && el('button.button', {
+          type: 'button', dataset: { action: 'program-builder' }, onclick: () => onProgramBuilder(),
+        }, ['OPEN PROGRAM BUILDER']),
       ]),
 
       workout && el('section.card', { dataset: { section: 'away' } }, [

@@ -95,6 +95,16 @@ function makeButton(className, text, label) {
   return button
 }
 
+function activityById(view, id) {
+  return [...(view?.outstanding ?? []), ...(view?.logged ?? [])]
+    .find((activity) => activity.id === id) ?? null
+}
+
+function shownNumber(value) {
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 0
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '')
+}
+
 function dateLabel(dateKey) {
   const [year, month, day] = String(dateKey).split('-').map(Number)
   const value = new Date(year, month - 1, day, 12)

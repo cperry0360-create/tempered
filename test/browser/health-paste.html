@@ -52,7 +52,6 @@ SPO2=96`
       const clock = fixedClock(new Date(2026, 8, 13, 14, 15, 0))
       const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       const stop = installHealthPasteRuntime(context)
-      await context.daily.logAt('2026-09-13', 'sleep', 7.5)
       await context.app.show('today')
       const importButton = await waitFor('[data-section="readiness"] .today-text-button')
       check('Readiness exposes one compact Health import action when recovery is missing', Boolean(importButton))
@@ -71,6 +70,7 @@ SPO2=96`
         q('[data-health-paste-submit]')?.disabled === false
         && (await context.daily.dayLog('2026-09-13')).steps !== 701)
 
+      await context.daily.logAt('2026-09-13', 'sleep', 7.5)
       q('[data-health-paste-submit]')?.click()
       await settle(180)
       const day = await context.daily.dayLog('2026-09-13')

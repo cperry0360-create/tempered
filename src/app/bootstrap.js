@@ -16,7 +16,6 @@ import { createMaintenanceService } from './maintenance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
-import { installDailyWorkoutEnhancer } from '../ui/today-workout.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
 async function loadJson(path, base) {
@@ -73,7 +72,6 @@ export async function bootstrap(options = {}) {
     syncHealth: null,
   }
   globalThis.tempered = exposed
-  let stopDailyWorkoutEnhancer = null
   let legacyPromise = null
 
   // The retired Character/Battle implementation remains available to old
@@ -118,14 +116,12 @@ export async function bootstrap(options = {}) {
   exposed.syncHealth = syncNativeHealth
 
   async function showApp() {
-    stopDailyWorkoutEnhancer?.()
     const app = createApp({
       mount, workout, daily, planner, maintenance, storage, clock, loadLegacy,
       onSetup: () => showSetup(true),
     })
     exposed.app = app
     exposed.setup = null
-    stopDailyWorkoutEnhancer = installDailyWorkoutEnhancer({ mount, workout, app, clock })
 
     // A fresh launch starts on Today without taking over the app. If a workout
     // checkpoint exists, the shell offers a compact Resume control above the

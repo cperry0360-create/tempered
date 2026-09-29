@@ -180,7 +180,9 @@ function companionDefaultName(style) {
 
 function compactMetric(value, unit, digits = 0) {
   if (!Number.isFinite(value)) return '—'
-  return `${digits ? value.toFixed(digits) : Math.round(value)}${unit ? ` ${unit}` : ''}`
+  const shown = digits ? value.toFixed(digits) : Math.round(value)
+  if (!unit) return String(shown)
+  return unit === 'h' ? `${shown}h` : `${shown} ${unit}`
 }
 
 export function createTodayScreen({
@@ -660,7 +662,7 @@ export function createTodayScreen({
   }
 
   function deltaText(metric) {
-    if (!Number.isFinite(metric.delta)) return 'No 7-day avg'
+    if (!Number.isFinite(metric.delta)) return ''
     const shown = metric.digits ? oneDecimal(metric.delta) : Math.round(metric.delta)
     return `${shown > 0 ? '+' : ''}${shown}`
   }

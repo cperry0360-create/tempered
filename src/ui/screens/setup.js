@@ -26,6 +26,11 @@ const EQUIPMENT = [
   ['dumbbells', 'Dumbbells only'],
   ['bodyweight', 'Bodyweight'],
 ]
+const TEMPLATE_OPTIONS = [
+  ['foundation', 'Strength Foundation', 'Three repeatable days · full-body basics · easy to scale'],
+  ['physique', 'November Physique', 'Upper-body biased · 8 weeks · deload included'],
+  ['mercy', 'Mercy Mode', 'A gentler leg day for “I am scared of leg day” weeks'],
+]
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
 function defaultSchedule(activities, profile) {
@@ -89,6 +94,34 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function activeProgram() {
     return programs.find((program) => program.id === draft.programId) ?? programs[0] ?? null
+  }
+
+  function templateProgram() {
+    const source = activeProgram()
+    if (!source || draft.startPath === 'blank') return null
+    if (draft.templateId === 'physique') return source
+    const next = clone(source)
+    next.id = `tempered-${draft.templateId}`
+    next.templateId = draft.templateId
+    next.source = 'user'
+    next.status = 'draft'
+    if (draft.templateId === 'foundation') {
+      next.name = 'Strength Foundation'
+      next.note = 'Three repeatable full-body days. Build consistency before complexity.'
+      next.days = (next.days ?? []).slice(0, 3).map((day, index) => ({
+        ...day, id: `foundation-${index + 1}`,
+        name: ['Full Body A', 'Full Body B', 'Full Body C'][index],
+        exercises: (day.exercises ?? []).slice(0, 4),
+      }))
+    }
+    if (draft.templateId === 'mercy') {
+      next.name = 'Mercy Mode'
+      next.note = 'Keep the habit. Keep the leg day humane.'
+      next.days = (next.days ?? []).map((day) => /leg/i.test(day.name)
+        ? { ...day, name: 'Mercy Legs + Core', exercises: (day.exercises ?? []).slice(0, 3) }
+        : day)
+    }
+    return next
   }
 
   function progress() {
@@ -163,32 +196,20 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepFour() {
     return [
-      ...heading('STEP 4 OF 8', 'CHOOSE HOW TO BEGIN', 'Start with the current plan and adjust it as you learn, or explore Tempered first. Full plan creation is coming next.'),
+      ...heading('STEP 4 OF 8', 'CHOOSE HOW TO BEGIN', 'Pick a starting template, or open a blank draft and shape it yourself. Nothing activates until you save.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Starting path' }),
         el('div.setup__choices', {}, [
-          el('button.setup__choice', { type: 'button', dataset: { selected: String(draft.startPath === 'plan') }, onclick: () => { draft.startPath = 'plan'; render() } }, ['Use a plan']),
-          el('button.setup__choice', { type: 'button', dataset: { selected: String(draft.startPath === 'explore') }, onclick: () => { draft.startPath = 'explore'; render() } }, ['Explore first']),
+          el('button.setup__choice', { type: 'button', dataset: { selected: String(draft.startPath === 'template') }, onclick: () => { draft.startPath = 'template'; render() } }, ['Use a template']),
+          el('button.setup__choice', { type: 'button', dataset: { selected: String(draft.startPath === 'blank') }, onclick: () => { draft.startPath = 'blank'; render() } }, ['Start blank']),
         ]),
       ]),
-      el('div.setup__stack', {}, programs.length
-        ? programs.map((program) => el('button.setup__program', {
-            type: 'button', dataset: { selected: String(draft.programId === program.id) },
-            onclick: () => {
-              draft.programId = program.id
-              for (const slot of primarySlots(program)) {
-                if (!(slot.exerciseId in draft.weights)) draft.weights[slot.exerciseId] = storedWeight(program, slot.exerciseId)
-              }
-              render()
-            },
-          }, [
-            el('span.setup__programname', { text: program.name }),
-            el('span.setup__programmeta', { text: `${program.days?.length ?? 0} training days · ${program.weeks ?? 1} weeks` }),
-            el('span.setup__programnote', {
-              text: exerciseFrequency(program).slice(0, 5).map((item) => `${item.name} ${item.count}×`).join(' · '),
-            }),
-          ]))
-        : [el('section.setup__card', {}, [el('p.setup__copy', { text: 'No program is installed yet. You can skip this step.' })])]),
+      draft.startPath === 'blank'
+        ? el('section.setup__card', {}, [el('p.setup__copy', { text: 'Your blank draft will be saved safely. Add exercises and progression from Train when the builder is ready.' })])
+        : el('div.setup__stack', {}, TEMPLATE_OPTIONS.map(([value, label, copy]) => el('button.setup__program', {
+            type: 'button', dataset: { selected: String(draft.templateId === value) },
+            onclick: () => { draft.templateId = value; render() },
+          }, [el('span.setup__programname', { text: label }), el('span.setup__programmeta', { text: copy })]))),
     ]
   }
 
@@ -275,8 +296,8 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepEight() {
     const chosen = activeProgram()
-    const action = draft.startPath === 'explore'
-      ? 'Explore Today and Train, then choose your first session when you are ready.'
+    const action = draft.startPath === 'blank'
+      ? 'Open Train when you are ready to shape your blank program.'
       : chosen ? `Start with ${chosen.name} and run ${draft.sessionsPerWeek} realistic sessions this week.` : 'Explore Today and add your first workout when you are ready.'
     return [
       ...heading('STEP 8 OF 8', 'YOU HAVE A NEXT STEP', 'Tempered works best when the next action is obvious and the plan is forgiving.'),
@@ -309,14 +330,24 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       sessionLength: draft.sessionLength,
       equipment: draft.equipment,
       setupPath: draft.startPath,
+      templateId: draft.templateId,
       activitySchedule: clone(draft.schedule),
       dailyActivityIds,
       setupComplete: true,
     })
 
-    const chosen = draft.startPath === 'explore'
-      ? null
-      : programs.find((program) => program.id === draft.programId) ?? null
+    const chosen = draft.startPath === 'blank' ? null : templateProgram()
+    if (draft.startPath === 'blank') {
+      const existingBlank = programs.find((program) => program.templateId === 'blank')
+      if (!existingBlank) {
+        const blankId = `custom-${clock.today()}-${programs.length + 1}`
+        await storage.put('programs', {
+          id: blankId, programSchemaVersion: 2, source: 'user', status: 'draft',
+          templateId: 'blank', name: 'My blank program', weeks: 1, days: [],
+          revisionNumber: 1, currentRevisionId: `${blankId}:r1`,
+        })
+      }
+    }
     if (chosen) {
       const updated = clone(chosen)
       for (const day of updated.days ?? []) {
@@ -328,21 +359,24 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
         }
       }
       await storage.put('programs', updated)
-      if (updated.currentRevisionId) {
-        const revision = await storage.get('programRevisions', updated.currentRevisionId)
-        if (revision) {
-          await storage.put('programRevisions', createProgramRevision(updated, {
-            id: revision.id,
-            version: revision.version,
-            createdAt: revision.createdAt,
-          }))
-        }
+      const revision = await storage.get('programRevisions', updated.currentRevisionId)
+      if (revision && revision.programId === updated.id) {
+        await storage.put('programRevisions', createProgramRevision(updated, {
+          id: revision.id, version: revision.version, createdAt: revision.createdAt,
+        }))
+      } else {
+        updated.currentRevisionId = `${updated.id}:r1`
+        updated.revisionNumber = 1
+        await storage.put('programs', updated)
+        await storage.put('programRevisions', createProgramRevision(updated, {
+          id: updated.currentRevisionId, version: 1, createdAt: clock.nowIso(),
+        }))
       }
 
       const byId = new Map(states.map((state) => [state.programId, state]))
-      for (const program of programs) {
+      for (const program of [...programs, chosen]) {
         const prior = byId.get(program.id)
-        const revisionId = prior?.revisionId ?? program.currentRevisionId
+        const revisionId = prior?.revisionId ?? (program.id === updated.id ? updated.currentRevisionId : program.currentRevisionId)
         await storage.put('programState', {
           ...prior,
           programId: program.id,
@@ -395,7 +429,8 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       sessionsPerWeek: profile?.planTargetSessionsPerWeek ?? 4,
       sessionLength: profile?.sessionLength ?? 45,
       equipment: profile?.equipment ?? 'full-gym',
-      startPath: profile?.setupPath ?? 'plan',
+      startPath: profile?.setupPath === 'blank' ? 'blank' : 'template',
+      templateId: profile?.templateId ?? 'physique',
       programId,
       weights,
       schedule: defaultSchedule(activities, profile),

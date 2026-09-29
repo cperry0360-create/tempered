@@ -179,7 +179,7 @@ body:has(.screen--companion)::before {
   font-size: 31px;
 }
 .health-setup-header span,
-.health-setup-hero__eyebrow { color: #cbdc75; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.health-setup-hero__eyebrow { color: #ffb86b; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
 .health-setup-header h2 { margin: 2px 0 0; font-size: 27px; line-height: 1; }
 .health-setup-hero,
 .health-setup-section {
@@ -244,7 +244,7 @@ body:has(.screen--companion)::before {
   background: linear-gradient(160deg, rgba(19, 60, 72, .98), rgba(7, 28, 40, .99));
   box-shadow: 0 24px 70px rgba(0, 0, 0, .48);
 }
-.health-import-sheet__eyebrow { color: #cbdc75; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.health-import-sheet__eyebrow { color: #ffb86b; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
 .health-import-sheet__title { margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -.025em; }
 .health-import-sheet__copy,
 .health-import-sheet__status { margin: 0; color: rgba(255,255,255,.64); font-size: 12px; line-height: 1.45; }
@@ -293,7 +293,7 @@ body:has(.screen--companion)::before {
   font: inherit;
   font-weight: 760;
 }
-.progress-dashboard__plus { font-size: 28px; line-height: 1; color: #cbdc75; }
+.progress-dashboard__plus { font-size: 28px; line-height: 1; color: #ffb86b; }
 .progress-dashboard__edit { padding: 0 13px; font-size: 10px; letter-spacing: .06em; }
 .progress-dashboard__grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
 .progress-widget {
@@ -370,7 +370,7 @@ body:has(.screen--companion)::before {
   letter-spacing: .05em;
 }
 .progress-widget__bar { height: 10px; overflow: hidden; margin-top: auto; border-radius: 999px; background: rgba(255,255,255,.07); }
-.progress-widget__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--widget-accent),#cbdc75); }
+.progress-widget__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--widget-accent),#ffb86b); }
 .progress-widget__remove {
   position: absolute;
   top: 8px;

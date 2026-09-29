@@ -55,7 +55,7 @@
   border: 1px solid rgba(203, 220, 117, .28);
   border-radius: 11px;
   background: rgba(203, 220, 117, .09);
-  color: var(--calm-accent, #cbdc75);
+  color: var(--calm-accent, #ffb86b);
   font: inherit;
   font-size: 10px;
   font-weight: 760;
@@ -134,7 +134,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 
 .nutrition-log-header > div { min-width: 0; display: grid; gap: 1px; }
-.nutrition-log-header > div > span { color: #cbdc75; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.nutrition-log-header > div > span { color: #ffb86b; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
 .nutrition-log-header h2 { margin: 0; font-size: 25px; line-height: 1; letter-spacing: -.025em; }
 
 .nutrition-log-header__ai {
@@ -148,7 +148,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   border: 1px solid rgba(203,220,117,.26);
   border-radius: 999px;
   background: rgba(203,220,117,.10);
-  color: #e5f39e;
+  color: #ffd28a;
   font: inherit;
   font-size: 9px;
   font-weight: 800;
@@ -166,7 +166,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   border-radius: 14px;
   background: rgba(5,30,40,.58);
 }
-.nutrition-date-picker > span { color: #cbdc75; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.nutrition-date-picker > span { color: #ffb86b; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .nutrition-date-picker input {
   min-height: 36px;
   max-width: 168px;
@@ -201,7 +201,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 .nutrition-total--protein { grid-column: span 3; }
 .nutrition-total > span { color: rgba(255,255,255,.50); font-size: 9px; font-weight: 780; letter-spacing: .09em; }
 .nutrition-total > strong { overflow: hidden; color: #fff; font-size: 18px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
-.nutrition-total > small { color: #cbdc75; font-size: 9px; }
+.nutrition-total > small { color: #ffb86b; font-size: 9px; }
 
 .nutrition-meal-form,
 .nutrition-history,
@@ -219,7 +219,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 
 .nutrition-meal-form h3,
 .nutrition-history h3,
-.nutrition-suggestions h3 { margin: 0; color: #dceba0; font-size: 11px; letter-spacing: .12em; }
+.nutrition-suggestions h3 { margin: 0; color: #ffd28a; font-size: 11px; letter-spacing: .12em; }
 
 .nutrition-suggestions[hidden] { display: none; }
 .nutrition-suggestions__list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -230,7 +230,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 .nutrition-suggestion strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .nutrition-suggestion span { overflow: hidden; color: rgba(255,255,255,.58); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.nutrition-suggestion small { color: #dceba0; font-size: 8px; font-weight: 800; letter-spacing: .06em; }
+.nutrition-suggestion small { color: #ffd28a; font-size: 8px; font-weight: 800; letter-spacing: .06em; }
 .nutrition-suggestion:disabled { opacity: .54; }
 
 .nutrition-meal-form__fields {
@@ -280,7 +280,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 .nutrition-meal-form__status[data-state='error'] { color: #f0a5a5; }
 .nutrition-meal-form__status[data-state='success'] { color: #9ce5bd; }
-.nutrition-meal-form__status[data-state='ready'] { color: #dceba0; }
+.nutrition-meal-form__status[data-state='ready'] { color: #ffd28a; }
 
 .nutrition-meal-form__actions {
   display: grid;
@@ -351,7 +351,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   font-size: 12px;
 }
 .nutrition-undo[hidden] { display: none; }
-.nutrition-undo__button { min-height: 40px; border: 0; background: transparent; color: #dceba0; font: inherit; font-size: 11px; font-weight: 820; }
+.nutrition-undo__button { min-height: 40px; border: 0; background: transparent; color: #ffd28a; font: inherit; font-size: 11px; font-weight: 820; }
 
 /* Native iOS time inputs keep a large intrinsic width. Current Pro Max phones
    reach 440 CSS px, so the safe one-row treatment must cover them too. */
@@ -381,7 +381,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 .nutrition-day-status { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 24px 14px; padding:13px; border:1px solid rgba(255,255,255,.09); border-radius:16px; background:rgba(5,30,40,.66); }
 .nutrition-day-status > div:first-child { min-width:0; display:grid; gap:3px; }
-.nutrition-day-status strong { color:#dce98d; font-size:9px; letter-spacing:.12em; }
+.nutrition-day-status strong { color:#ffd28a; font-size:9px; letter-spacing:.12em; }
 .nutrition-day-status span { color:rgba(255,255,255,.58); font-size:9px; line-height:1.35; }
 .nutrition-day-status > div:last-child { flex:none; display:flex; gap:6px; }
 .nutrition-day-status__button { min-height:34px; padding:0 9px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(255,255,255,.04); color:rgba(255,255,255,.66); font:inherit; font-size:8px; font-weight:800; }

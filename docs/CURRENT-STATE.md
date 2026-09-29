@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.32.0 (46)
+**Current release:** 0.33.0 (47)
 
 **Product maturity:** Pre-beta product completion
 
@@ -31,6 +31,11 @@ the autonomous product-team release contract. CI now captures every core surface
 supported iPhone viewport classes as reviewable evidence. A release is not complete until
 those captures and the deployed product have been visually inspected. The operating contract
 is in [`docs/PRODUCT-TEAM.md`](PRODUCT-TEAM.md).
+
+Release 0.33.0 turns the starting path into a real template chooser. New users can choose
+Strength Foundation, November Physique, Mercy Mode, or start a safe blank draft. The visual
+system now uses warm amber action accents and lifted teal recovery accents instead of acid
+lime and moss green. Existing history and program records remain intact.
 
 Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
 plus recovery, keeps the local-first promise visible, captures the user's goal, realistic

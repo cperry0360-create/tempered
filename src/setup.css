@@ -15,7 +15,7 @@
 .setup__copy { margin: 0; color: var(--text-2); font-size: var(--text-md); line-height: 1.45; }
 
 .setup__card,
-.setup__program { border: 1px solid var(--edge); background: color-mix(in srgb, var(--surface) 90%, transparent); border-radius: var(--r-xl); padding: 20px; }
+.setup__program { border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--edge)); background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 55%, transparent)); border-radius: var(--r-xl); padding: 20px; box-shadow: 0 16px 36px rgba(0,0,0,.14); }
 .setup__card { display: grid; gap: 14px; }
 .setup__label { color: var(--text-3); font-size: var(--text-xs); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .setup__input,

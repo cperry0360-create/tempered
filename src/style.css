@@ -34,7 +34,7 @@
      primary action, the active state, and a value worth noticing. Nothing
      else. Painting acid is only possible through [data-acid], below, so a
      fourth use cannot be added by accident. */
-  --acid: #edfe73;
+  --acid: #ffb86b;
   /* The only other accent: secondary numeric data — prescribed versus actual. */
   --blue: #8db2dd;
 
@@ -49,13 +49,13 @@
 
   /* The active row's olive fill. 8% acid: enough to read as a lit row, light
      enough that blue prescribed-versus-actual text still clears AA on it. */
-  --active-tint: #3e4034;
+  --active-tint: #293f4a;
 
   /* The art's own accents, at the values sampled from the file. These are the
      palette; the attribute roles below are derived from them. */
   --lantern: #d2a44d;     /* lantern and window light — warm */
   --wisp: #3798a8;        /* moon glow and drifting wisps — cyan */
-  --moss: #306c59;        /* foliage — green */
+  --moss: #2b716d;        /* deep teal — recovery */
   --cap: #755e98;         /* mushroom caps — violet */
 
   /* The five attribute colours, re-derived from the art so the palette is one
@@ -72,7 +72,7 @@
   --might: #d2a44d;       /* --lantern, no lift needed   5.76:1 on surface */
   --wind: #3ba4b5;        /* --wisp,    +4% L            4.51:1 */
   --grit: #6f9db5;        /* --stone,   +14% L           4.51:1 */
-  --vitality: #4ba88a;    /* --moss,    +17% L           4.57:1 */
+  --vitality: #56c7b2;    /* --moss,    lifted teal */
   --mind: #a190ba;        /* --cap,     +16% L           4.54:1 */
 
   /* Type scale — six steps. The old five had no room for a number to dominate. */
@@ -1181,7 +1181,7 @@ input.setrow__num[readonly] { color: var(--text); }
   font-weight: 800;
   letter-spacing: .08em;
 }
-.summary-power__meter-head span:last-child { color: #dce98d; text-align: right; }
+.summary-power__meter-head span:last-child { color: #ffd28a; text-align: right; }
 .summary-power__bar {
   height: 9px;
   overflow: hidden;
@@ -1256,15 +1256,15 @@ input.setrow__num[readonly] { color: var(--text); }
   animation: summary-confetti-fall 900ms cubic-bezier(.2,.65,.4,1) both;
   animation-delay: var(--confetti-delay);
 }
-.summary-confetti i[data-piece='1'] { --confetti-x:7; --confetti-color:#edfe73; --confetti-rotate:18deg; --confetti-delay:20ms; }
+.summary-confetti i[data-piece='1'] { --confetti-x:7; --confetti-color:#ffb86b; --confetti-rotate:18deg; --confetti-delay:20ms; }
 .summary-confetti i[data-piece='2'] { --confetti-x:15; --confetti-color:#61d8b3; --confetti-rotate:-25deg; --confetti-delay:120ms; }
 .summary-confetti i[data-piece='3'] { --confetti-x:24; --confetti-color:#8db2dd; --confetti-rotate:42deg; --confetti-delay:65ms; }
 .summary-confetti i[data-piece='4'] { --confetti-x:34; --confetti-color:#d2a44d; --confetti-rotate:-12deg; --confetti-delay:170ms; }
-.summary-confetti i[data-piece='5'] { --confetti-x:44; --confetti-color:#edfe73; --confetti-rotate:54deg; --confetti-delay:85ms; }
+.summary-confetti i[data-piece='5'] { --confetti-x:44; --confetti-color:#ffb86b; --confetti-rotate:54deg; --confetti-delay:85ms; }
 .summary-confetti i[data-piece='6'] { --confetti-x:54; --confetti-color:#61d8b3; --confetti-rotate:-36deg; --confetti-delay:210ms; }
 .summary-confetti i[data-piece='7'] { --confetti-x:63; --confetti-color:#8db2dd; --confetti-rotate:24deg; --confetti-delay:40ms; }
 .summary-confetti i[data-piece='8'] { --confetti-x:71; --confetti-color:#d2a44d; --confetti-rotate:-45deg; --confetti-delay:145ms; }
-.summary-confetti i[data-piece='9'] { --confetti-x:79; --confetti-color:#edfe73; --confetti-rotate:9deg; --confetti-delay:230ms; }
+.summary-confetti i[data-piece='9'] { --confetti-x:79; --confetti-color:#ffb86b; --confetti-rotate:9deg; --confetti-delay:230ms; }
 .summary-confetti i[data-piece='10'] { --confetti-x:87; --confetti-color:#61d8b3; --confetti-rotate:-20deg; --confetti-delay:95ms; }
 .summary-confetti i[data-piece='11'] { --confetti-x:93; --confetti-color:#8db2dd; --confetti-rotate:38deg; --confetti-delay:190ms; }
 .summary-confetti i[data-piece='12'] { --confetti-x:49; --confetti-color:#d2a44d; --confetti-rotate:-52deg; --confetti-delay:260ms; }

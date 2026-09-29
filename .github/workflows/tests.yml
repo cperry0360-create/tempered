@@ -18,11 +18,39 @@ jobs:
     name: Node ${{ matrix.node }} full regression
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - name: Syntax check every JavaScript module
         run: find src test tools -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: R1 redesign foundation invariants
+        shell: bash
+        run: |
+          echo '$ grep -rE "#[0-9a-fA-F]{3,8}\\b" src/*.css'
+          HEX_OUTPUT="$(grep -rE '#[0-9a-fA-F]{3,8}\b' src/*.css || true)"
+          printf '%s\n' "$HEX_OUTPUT"
+          if printf '%s\n' "$HEX_OUTPUT" | grep -v '^src/tokens.css:' | grep -q .; then
+            echo 'Unexpected literal colour outside src/tokens.css'
+            exit 1
+          fi
+
+          echo '$ grep -r "uppercase" src/'
+          if grep -r "uppercase" src/; then
+            echo 'Unexpected uppercase marker remains under src/'
+            exit 1
+          fi
+          echo '(no output)'
+
+          echo '$ compare !important count to parent'
+          BEFORE_IMPORTANT="$(git grep -h -o '!important' HEAD^ -- 'src/*.css' | wc -l | tr -d ' ')"
+          AFTER_IMPORTANT="$(git grep -h -o '!important' HEAD -- 'src/*.css' | wc -l | tr -d ' ')"
+          echo "parent=$BEFORE_IMPORTANT current=$AFTER_IMPORTANT"
+          if [ "$AFTER_IMPORTANT" -gt "$BEFORE_IMPORTANT" ]; then
+            echo 'R1 increased !important usage'
+            exit 1
+          fi
       - name: Full test suite
         run: node --test
       - name: Battle art contract

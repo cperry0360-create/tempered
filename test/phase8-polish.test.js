@@ -95,7 +95,8 @@ test('PHASE 8: Progress has meaningful empty states and pressed-state semantics'
   assert.match(history, /'aria-pressed': String\(view === name\)/)
 })
 
-test('PHASE 8: utility uplift loads after core polish and browser chrome matches the brighter forest palette', () => {
+test('PHASE 8: Redesign V1 tokens load before the real styles and browser chrome uses the approved slate', () => {
+  const tokens = index.indexOf('./src/tokens.css')
   const style = index.indexOf('./src/style.css')
   const setup = index.indexOf('./src/setup.css')
   const cadence = index.indexOf('./src/cadence.css')
@@ -104,15 +105,15 @@ test('PHASE 8: utility uplift loads after core polish and browser chrome matches
   const uplift = index.indexOf('./src/uplift.css')
   const progress = index.indexOf('./src/progress.css')
   const mobileFixes = index.indexOf('./src/mobile-fixes.css')
-  assert.ok(style < setup && setup < cadence && cadence < polish)
+  assert.ok(tokens < style && style < setup && setup < cadence && cadence < polish)
   assert.ok(polish < calm && calm < uplift && uplift < progress && progress < mobileFixes)
   assert.doesNotMatch(index, /battle\.css|expedition\.css|battle-fidelity\.css|character\.css/)
-  assert.match(index, /name="theme-color" content="#16495f"/)
+  assert.match(index, /name="theme-color" content="#1F252C"/)
 })
 
 test('PHASE 8: new runtime files are available offline', () => {
   for (const path of [
-    './src/polish.css', './src/ui/states.js', './src/uplift.css', './src/progress.css', './src/app/planner.js',
+    './src/tokens.css', './src/polish.css', './src/ui/states.js', './src/uplift.css', './src/progress.css', './src/app/planner.js',
   ]) assert.ok(sw.includes(`'${path}'`), `${path} not precached`)
 })
 

@@ -1,0 +1,74 @@
+/* Redesign V1 foundation — approved palette, type, spacing, and shape tokens. */
+:root {
+  --bg: #1F252C;
+  --surface-1: #2A323B;
+  --surface-2: #36404B;
+  --surface-3: #414C58;
+  --hairline: #4A5562;
+  --tabbar: #1A1F25;
+  --text-1: #F4F6F8;
+  --text-2: #C2CAD2;
+  --text-3: #A9B3BD;
+  --accent: #E8833A;
+  --on-accent: #15191D;
+  --success: #4FB286;
+  --success-tint: rgba(79,178,134,0.14);
+  --warning: #E0B04A;
+  --danger: #E5484D;
+  --chart: #7A8592;
+
+  --bg-0: var(--bg);
+  --bg-1: var(--bg);
+  --bg-2: var(--bg);
+  --bg-3: var(--bg);
+  --bg-4: var(--bg);
+  --bg-5: var(--bg);
+  --canopy: var(--tabbar);
+  --surface: var(--surface-1);
+  --raised: var(--surface-2);
+  --well: var(--surface-2);
+  --stone: var(--hairline);
+  --edge: var(--hairline);
+  --edge-strong: var(--hairline);
+  --acid: var(--accent);
+  --blue: var(--text-2);
+  --active-tint: var(--surface-3);
+  --lantern: var(--chart);
+  --wisp: var(--chart);
+  --moss: var(--chart);
+  --cap: var(--chart);
+  --might: var(--chart);
+  --wind: var(--chart);
+  --grit: var(--chart);
+  --vitality: var(--success);
+  --mind: var(--chart);
+  --text: var(--text-1);
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 17px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-xxl: 34px;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+
+  --r-sm: 10px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 16px;
+  --r-full: 999px;
+
+  --motion-state: 120ms;
+  --motion-screen: 220ms;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-display: var(--font-ui);
+
+  color-scheme: dark;
+}

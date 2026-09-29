@@ -29,10 +29,10 @@ real-world care grow a warm companion world. The tracker must stand on its own.
    directly.
 7. **Legacy progression remains data-driven.** Retained XP values and curves stay in
    `data/balance.json`. Do not surface or expand the old Character/Battle system.
-8. **Warm premium wellness visual language.** Normal screens use deep navy, teal/aqua,
-   fresh green, warm cream/gold, translucent dark cards, scenic wellness backgrounds,
-   and the ember-sprout companion under `art/tempered/`. Avoid pixel art, combat,
-   monsters, office/corporate themes, threatening imagery, and baked UI text.
+8. **Approved Redesign V1 visual language.** Follow `docs/13-redesign-v1.md` as the
+   source of truth for current UI colour, type, surfaces, shell, and screen presentation.
+   The approved mockup is `docs/mockups/redesign-v1.png`; where the image and document
+   disagree, the document wins.
 9. **The name means something. Use it.** Tempering is strengthening through controlled
    stress followed by rest. Rest is therefore never framed as absence, failure or a
    break in a streak — it is half the process. Copy should reflect this. Words to

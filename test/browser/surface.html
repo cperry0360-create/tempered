@@ -40,13 +40,13 @@
 
         const bar = q('.tabbar')
         const barBox = bar.getBoundingClientRect()
-        check('bottom navigation floats clear of all phone edges',
-          barBox.left > 0 && innerWidth - barBox.right > 0 && innerHeight - barBox.bottom > 0,
-          `${Math.round(barBox.left)} / ${Math.round(innerWidth - barBox.right)} / ${Math.round(innerHeight - barBox.bottom)}px`)
+        check('bottom navigation is a full-width solid bar',
+          Math.round(barBox.left) === 0 && Math.round(document.documentElement.clientWidth - barBox.right) === 0,
+          `${Math.round(barBox.left)} / ${Math.round(document.documentElement.clientWidth - barBox.right)}px`)
         const barStyle = getComputedStyle(bar)
-        check('bottom navigation remains translucent and blurred',
-          (barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur')
-          && (parse(barStyle.backgroundColor)[3] ?? 1) < 1,
+        check('bottom navigation is opaque and unblurred',
+          !(barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur')
+          && (parse(barStyle.backgroundColor)[3] ?? 1) === 1,
           barStyle.backgroundColor)
 
         check('Today has no persistent global FAB competing with the tracker', q('.fab') === null)

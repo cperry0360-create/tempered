@@ -32,7 +32,7 @@
       await context.app.show('today')
 
       const visibleTabs = qa('.tabbar__tab').map((node) => node.textContent.trim())
-      check('Normal navigation is Today, Train, Fuel, Progress', visibleTabs.join('|') === 'TODAY|TRAIN|FUEL|PROGRESS', visibleTabs.join(' | '))
+      check('Normal navigation is Today, Train, Fuel, Progress', visibleTabs.join('|') === 'Today|Train|Fuel|Progress', visibleTabs.join(' | '))
       check('Character is no longer a visible navigation destination', !q('[data-tab="character"]'))
       check('Battle is not exposed from normal navigation', !/battle/i.test(visibleTabs.join(' ')))
 

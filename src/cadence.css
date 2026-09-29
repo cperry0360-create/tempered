@@ -20,9 +20,9 @@
 
 .sect[data-section='daily'] .sect__title,
 .sect[data-section='weekly'] .sect__title {
-  letter-spacing: .08em;
+  letter-spacing: 0;
 }
 
 @media (max-width: 390px) {
-  .weekly-row__count { font-size: 11px; }
+  .weekly-row__count { font-size: 12px; }
 }

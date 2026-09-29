@@ -1,10 +1,12 @@
+Release 0.38.0 establishes Redesign V1 Phase R1: approved slate tokens, system type, opaque surfaces, a solid four-icon tab bar, Today-only Settings access, and the minimized-workout dock. Scenic backgrounds and the temporary slate override are removed. Screen rewiring continues in R2–R5.
+
 # Tempered current state
 
 **Last recovered and verified:** 2026-09-29
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.36.0 (50)
+**Current release:** 0.38.0 (52) — Redesign V1 R1 foundation
 
 **Product maturity:** Pre-beta product completion
 

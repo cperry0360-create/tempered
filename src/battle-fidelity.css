@@ -13,7 +13,7 @@
   }
 
   .screen--battle .battle-shell {
-    border: 1px solid #34475a;
+    border: var(--hairline);
     border-radius: 10px;
   }
 
@@ -35,7 +35,7 @@
     display: block;
     width: 24px;
     height: 18px;
-    box-shadow: inset 0 -4px 0 #7894af;
+    box-shadow: none;
   }
 
   .screen--battle .battle__brand-name {
@@ -48,8 +48,8 @@
     min-width: 0;
     padding-left: 0;
     overflow: hidden;
-    font-size: 6px;
-    letter-spacing: 0.11em;
+    font-size: 12px;
+    letter-spacing: 0;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -60,7 +60,7 @@
   }
 
   .screen--battle .battle__daily-title {
-    font-size: 11px;
+    font-size: 12px;
     white-space: nowrap;
   }
 
@@ -68,7 +68,7 @@
     display: block;
     max-width: 92px;
     overflow: hidden;
-    font-size: 5px;
+    font-size: 12px;
     line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -102,7 +102,7 @@
     padding: 6px 7px 7px;
     border-width: 1px;
     border-radius: 5px;
-    box-shadow: 0 3px 0 rgba(9, 15, 21, 0.38);
+    box-shadow: none;
   }
 
   .screen--battle .fighter[data-side='hero'] .fighter__panel {
@@ -120,24 +120,24 @@
   }
 
   .screen--battle .fighter__name {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.05;
   }
 
   .screen--battle .fighter__meta {
-    font-size: 6px;
-    letter-spacing: 0.05em;
+    font-size: 12px;
+    letter-spacing: 0;
   }
 
   .screen--battle .battle__stat-row {
     gap: 3px;
-    font-size: 7px;
+    font-size: 12px;
     line-height: 1;
   }
 
   .screen--battle .battle__stat-icon {
     width: 10px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__focus {
@@ -168,14 +168,14 @@
   }
 
   .screen--battle .fighter__sprite {
-    filter: drop-shadow(0 4px 0 rgba(23, 34, 32, 0.18));
+    filter: drop-shadow(0 4px 0 var(--surface-2));
   }
 
   .screen--battle .fight__vs {
     top: auto;
     bottom: 7px;
     padding: 3px 7px;
-    font-size: 7px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__lower {
@@ -201,7 +201,7 @@
     padding: 5px 2px;
     border-width: 1px;
     border-radius: 4px;
-    box-shadow: 0 2px 0 rgba(3, 8, 12, 0.24);
+    box-shadow: none;
   }
 
   .screen--battle .battle-action__icon {
@@ -210,13 +210,13 @@
   }
 
   .screen--battle .battle-action__title {
-    font-size: 9px;
-    letter-spacing: 0.02em;
+    font-size: 12px;
+    letter-spacing: 0;
   }
 
   .screen--battle .battle-action__sub {
     min-height: 14px;
-    font-size: 5.5px;
+    font-size: 12px;
     line-height: 1.1;
   }
 
@@ -234,12 +234,12 @@
   .screen--battle .feed__line {
     min-height: 12px;
     gap: 6px;
-    font-size: 7px;
+    font-size: 12px;
     line-height: 1.2;
   }
 
   .screen--battle .feed__cursor {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__rewards-preview {
@@ -255,30 +255,30 @@
   .screen--battle .battle__rewards-title {
     grid-column: auto;
     margin: 0 0 1px;
-    font-size: 6px;
+    font-size: 12px;
     line-height: 1.15;
   }
 
   .screen--battle .battle__reward-row {
     grid-template-columns: 14px minmax(0, 1fr);
     gap: 4px;
-    font-size: 6px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__reward-glyph {
     width: 13px;
     height: 13px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__reward-row[data-noxp='true'] .battle__reward-glyph {
     border-width: 1px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__reward-note {
     grid-column: auto;
-    font-size: 5px;
+    font-size: 12px;
     line-height: 1.15;
   }
 
@@ -289,7 +289,7 @@
   .screen--battle .battle__utility .button {
     min-height: 28px;
     padding: 5px 8px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .screen--battle .battle__footer {
@@ -298,7 +298,7 @@
     flex-direction: row;
     gap: 8px;
     padding: 5px 8px;
-    font-size: 5.5px;
+    font-size: 12px;
   }
 
   .screen--battle .outcome {
@@ -347,10 +347,10 @@
   }
 
   .screen--battle .battle-action__title {
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .screen--battle .battle-action__sub {
-    font-size: 5px;
+    font-size: 12px;
   }
 }

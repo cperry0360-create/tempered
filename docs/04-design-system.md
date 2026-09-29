@@ -1,3 +1,5 @@
+> **Superseded for current UI by [13-redesign-v1.md](13-redesign-v1.md).** This file remains historical reference only where it conflicts with the approved redesign.
+
 # 04 — Design system
 
 **Superseded.** The previous version specified a muted, restrained, hairline-and-space

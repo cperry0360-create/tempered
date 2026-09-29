@@ -7,14 +7,15 @@ const index = read('index.html')
 const manifest = read('manifest.webmanifest')
 const mobile = read('src/ui/mobile-interactions.js')
 const mobileCss = read('src/mobile-fixes.css')
+const style = read('src/style.css')
 
 test('REGRESSION: installed app locks visual viewport against pinch zoom drift', () => {
   assert.match(index, /name="viewport"[^>]*maximum-scale=1[^>]*user-scalable=no/)
-  assert.match(index, /touch-action:\s*pan-x pan-y/)
+  assert.match(style, /touch-action:\s*pan-x pan-y/)
 })
 
-test('REGRESSION: content starts with a deliberate 32px gap below the safe area', () => {
-  assert.match(index, /padding-top:\s*calc\(max\(var\(--s4\), env\(safe-area-inset-top\)\) \+ var\(--s5\)\)/)
+test('REGRESSION: content starts below the safe area with the Redesign V1 16px gutter', () => {
+  assert.match(style, /padding:\s*calc\(env\(safe-area-inset-top\) \+ 16px\) 16px/)
 })
 
 test('REGRESSION: phone experiences stay in portrait', () => {

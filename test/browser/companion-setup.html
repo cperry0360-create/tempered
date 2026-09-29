@@ -54,34 +54,15 @@
       q('.setup__next')?.click()
       await settle()
 
-      for (let step = 0; step < 1; step += 1) {
+      check('Setup does not require a companion choice', !q('[data-style="turtle"]') && !q('[data-style="sprout"]') && !q('[data-style="forge"]'))
+
+      while (q('.setup__next')) {
         q('.setup__next')?.click()
         await settle()
-      }
-      check('Setup offers all three companion styles', Boolean(q('[data-style="turtle"]') && q('[data-style="forge"]') && q('[data-style="sprout"]')))
-      check('Trailback Turtle is selected by default', q('[data-style="turtle"]')?.dataset.selected === 'true')
-      check('All setup options show first-party art previews',
-        getComputedStyle(q('[data-style="turtle"] .setup__companionpreview')).backgroundImage !== 'none'
-          && getComputedStyle(q('[data-style="forge"] .setup__companionpreview')).backgroundImage !== 'none'
-          && getComputedStyle(q('[data-style="sprout"] .setup__companionpreview')).backgroundImage !== 'none')
-
-      q('[data-style="sprout"]')?.click()
-      await settle()
-      check('Setup visual preference can be changed', q('[data-style="sprout"]')?.dataset.selected === 'true')
-
-      for (let step = 0; step < 2; step += 1) {
-        q('.setup__next')?.click()
-        await settle()
+        if (finished) break
       }
       const profile = await storage.get('profile', 'profile')
-      check('Chosen style is saved with setup', finished && profile?.setupComplete === true && profile?.companionStyle === 'sprout', profile?.companionStyle)
-
-      await setup.start({ rerun: true })
-      for (let step = 0; step < 6; step += 1) {
-        q('.setup__next')?.click()
-        await settle()
-      }
-      check('Saved style is restored when setup is reopened', q('[data-style="sprout"]')?.dataset.selected === 'true')
+      check('Setup still completes and persists the profile', finished && profile?.setupComplete === true)
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
       check('Companion setup harness threw', false, String(error?.stack ?? error).slice(0, 900))

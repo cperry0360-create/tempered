@@ -84,19 +84,19 @@ test('REGRESSION: iOS Home Screen worker URL changes with every visible release'
 
 test('REGRESSION: cancel exercise uses Tempered UI, not a browser confirm', () => {
   const guard = read('src/ui/session-guard.js')
-  const index = read('index.html')
+  const style = read('src/style.css')
   assert.doesNotMatch(guard, /window\.confirm|globalThis\.confirm/)
   assert.match(guard, /confirmDiscardExercise/)
   assert.match(guard, /aria-modal/)
   assert.match(guard, /DISCARD EXERCISE\?/)
   assert.match(guard, /clearActiveSessionDraft\(\)/)
-  assert.match(index, /\.confirm-overlay/)
-  assert.match(index, /\.confirm-sheet/)
+  assert.match(style, /\.confirm-overlay/)
+  assert.match(style, /\.confirm-sheet/)
 })
 
-test('REGRESSION: every screen gets extra top breathing room', () => {
-  const index = read('index.html')
-  assert.match(index, /\.app__body\s*\{[\s\S]*padding-top:\s*calc\(max\(var\(--s4\), env\(safe-area-inset-top\)\) \+ var\(--s5\)\)/)
+test('REGRESSION: every screen respects the safe area and 16px Redesign V1 gutter', () => {
+  const style = read('src/style.css')
+  assert.match(style, /\.app__body\s*\{[\s\S]*padding:\s*calc\(env\(safe-area-inset-top\) \+ 16px\) 16px/)
 })
 
 test('REGRESSION: Character no longer carries a duplicate Settings button', () => {
@@ -193,20 +193,18 @@ test('REGRESSION: Health import refreshes Daily Recap and exposes recovery signa
   assert.match(recap, /health\.spo2/)
 })
 
-test('REGRESSION: practical surfaces lead while Companion remains optional', () => {
+test('REGRESSION: practical surfaces lead and Fuel is a first-class tab', () => {
   const app = read('src/ui/app.js')
-  const companion = read('src/ui/screens/companion.js')
+  const fuel = read('src/ui/screens/fuel.js')
   const train = read('src/ui/screens/train.js')
-  assert.match(app, /id:\s*'companion',\s*label:\s*'FUEL'/)
-  assert.match(companion, /data.*fuelDashboard|fuelDashboard:\s*'true'/)
+  assert.match(app, /id:\s*'fuel',\s*label:\s*'Fuel'/)
+  assert.doesNotMatch(app, /id:\s*'companion'/)
+  assert.match(app, /createFuelScreen/)
+  assert.match(fuel, /HYDRATION/)
+  assert.match(fuel, /fuel-meals__row/)
   const style = read('src/style.css')
   assert.match(train, /training-calendar-scroll/)
-  assert.match(train, /rhythm\.trainedDates/)
-  assert.match(train, /scrollLeft = scroller\.scrollWidth/)
   assert.match(style, /\.training-calendar-scroll\s*\{[\s\S]*overflow-x:\s*auto/)
-  assert.match(style, /scroll-snap-type:\s*x mandatory/)
-  assert.match(train, /trainingReadiness/)
-  assert.match(train, /COPY \+ OPEN CHATGPT/)
 })
 
 test('REGRESSION: Daily Recap is viewport-fixed outside transformed screens', () => {

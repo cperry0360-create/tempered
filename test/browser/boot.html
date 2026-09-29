@@ -67,14 +67,15 @@
         check('the pre-boot placeholder was replaced',
           document.querySelector('.shell__wordmark') === null)
 
-        // Cheap guards against gross CSS failure. A DOM assertion passes happily
-        // on a completely unstyled page, so check the current forest design system.
+        // Cheap guards against gross CSS failure. R1 is a flat slate system.
         const bodyStyle = getComputedStyle(document.body)
         const rootStyle = getComputedStyle(document.documentElement)
-        check('the night-forest ground is painted',
-          bodyStyle.backgroundImage.includes('gradient')
-          && rootStyle.getPropertyValue('--bg-3').trim() === '#237494',
-          `${rootStyle.getPropertyValue('--bg-0').trim()} -> ${rootStyle.getPropertyValue('--bg-3').trim()}`)
+        const beforeStyle = getComputedStyle(document.body, '::before')
+        check('the Redesign V1 slate ground is painted without scenic art',
+          bodyStyle.backgroundImage === 'none'
+          && rootStyle.getPropertyValue('--bg').trim() === '#1F252C'
+          && beforeStyle.backgroundImage === 'none',
+          `${rootStyle.getPropertyValue('--bg').trim()} / ${beforeStyle.backgroundImage}`)
         check('numbers are tabular, so weights do not shift as they change',
           bodyStyle.fontVariantNumeric.includes('tabular-nums'), bodyStyle.fontVariantNumeric)
 

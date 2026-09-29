@@ -1,3 +1,5 @@
+> **Partially superseded by [13-redesign-v1.md](13-redesign-v1.md).** Its colour, background, type, surface, and shell visual rules are historical; product structure not contradicted by the redesign remains useful context.
+
 # 11 — Structure and feel
 
 Written after real use. The tracker works and reads clearly; it does not feel like an

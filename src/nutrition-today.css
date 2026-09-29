@@ -10,18 +10,18 @@
   display: grid;
   gap: 3px;
   padding: 11px 12px;
-  border: 1px solid var(--calm-line, rgba(255,255,255,.075));
+  border: 1px solid var(--hairline);
   border-radius: 15px;
-  background: rgba(13, 34, 51, 0.68);
+  background: var(--surface-1);
 }
 
 .today-lifestyle__metric--wide { grid-column: 1 / -1; }
 
 .today-lifestyle__label {
-  color: var(--calm-text-3, rgba(255,255,255,.42));
-  font-size: 9px;
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 760;
-  letter-spacing: .11em;
+  letter-spacing: 0;
 }
 
 .today-lifestyle__value {
@@ -40,8 +40,8 @@
 }
 
 .today-lifestyle__detail {
-  color: var(--calm-text-3, rgba(255,255,255,.42));
-  font-size: 9px;
+  color: var(--text-2);
+  font-size: 12px;
   line-height: 1.25;
 }
 
@@ -52,14 +52,14 @@
   align-items: center;
   gap: 5px;
   padding: 0 10px;
-  border: 1px solid rgba(203, 220, 117, .28);
+  border: 1px solid var(--hairline);
   border-radius: 11px;
-  background: rgba(203, 220, 117, .09);
-  color: var(--calm-accent, #ffb86b);
+  background: var(--surface-1);
+  color: var(--text-2);
   font: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 760;
-  letter-spacing: .025em;
+  letter-spacing: 0;
 }
 .today-item--nutrition .today-item__ai-prompt img {
   width: 18px;
@@ -75,7 +75,7 @@
   place-items: center;
   border: 0;
   background: transparent;
-  color: var(--calm-text-2, rgba(255,255,255,.62));
+  color: var(--text-2);
   font-size: 18px;
 }
 
@@ -85,7 +85,7 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   position: fixed;
   z-index: 1100;
   inset: 0;
-  background: #071d29;
+  background: var(--surface-1);
 }
 
 .nutrition-log-screen {
@@ -100,10 +100,8 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   align-content: start;
   gap: 16px;
   padding: 0 16px calc(32px + env(safe-area-inset-bottom));
-  background:
-    linear-gradient(180deg, rgba(7, 31, 43, .82), rgba(7, 25, 37, .97)),
-    url('../art/tempered/bg-today.webp') center / cover fixed;
-  color: var(--text, #f4fbfa);
+  background: var(--surface-1);
+  color: var(--text-2);
 }
 
 .nutrition-log-header {
@@ -116,26 +114,26 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   gap: 10px;
   margin-inline: -16px;
   padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  background: rgba(5, 25, 36, .92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .nutrition-log-header__back {
   width: 44px;
   height: 44px;
   appearance: none;
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid var(--hairline);
   border-radius: 999px;
-  background: rgba(255,255,255,.055);
-  color: #fff;
+  background: var(--surface-1);
+  color: var(--text-2);
   font: 400 31px/1 var(--font, system-ui);
 }
 
 .nutrition-log-header > div { min-width: 0; display: grid; gap: 1px; }
-.nutrition-log-header > div > span { color: #ffb86b; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
-.nutrition-log-header h2 { margin: 0; font-size: 25px; line-height: 1; letter-spacing: -.025em; }
+.nutrition-log-header > div > span { color: var(--text-2); font-size: 12px; font-weight: 800; letter-spacing: 0; }
+.nutrition-log-header h2 { margin: 0; font-size: 25px; line-height: 1; letter-spacing: 0; }
 
 .nutrition-log-header__ai {
   text-decoration: none;
@@ -145,12 +143,12 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   gap: 6px;
   padding: 0 12px;
   appearance: none;
-  border: 1px solid rgba(203,220,117,.26);
+  border: 1px solid var(--hairline);
   border-radius: 999px;
-  background: rgba(203,220,117,.10);
-  color: #ffd28a;
+  background: var(--surface-1);
+  color: var(--text-2);
   font: inherit;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
 }
 .nutrition-log-header__ai img { width: 20px; height: 20px; object-fit: contain; }
@@ -162,19 +160,19 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   justify-content: space-between;
   gap: 14px;
   padding: 11px 13px;
-  border: 1px solid rgba(203,220,117,.18);
+  border: 1px solid var(--hairline);
   border-radius: 14px;
-  background: rgba(5,30,40,.58);
+  background: var(--surface-1);
 }
-.nutrition-date-picker > span { color: #ffb86b; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.nutrition-date-picker > span { color: var(--text-2); font-size: 12px; font-weight: 800; letter-spacing: 0; }
 .nutrition-date-picker input {
   min-height: 36px;
   max-width: 168px;
   padding: 0 9px;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid var(--hairline);
   border-radius: 10px;
-  background: rgba(255,255,255,.06);
-  color: #fff;
+  background: var(--surface-1);
+  color: var(--text-2);
   color-scheme: dark;
   font: inherit;
   font-size: 12px;
@@ -192,16 +190,16 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   display: grid;
   gap: 4px;
   padding: 12px;
-  border: 1px solid rgba(255,255,255,.09);
+  border: 1px solid var(--hairline);
   border-radius: 17px;
-  background: rgba(6, 32, 44, .78);
-  box-shadow: 0 12px 28px rgba(0,0,0,.12);
+  background: var(--surface-1);
+  box-shadow: none;
 }
 .nutrition-total--calories,
 .nutrition-total--protein { grid-column: span 3; }
-.nutrition-total > span { color: rgba(255,255,255,.50); font-size: 9px; font-weight: 780; letter-spacing: .09em; }
-.nutrition-total > strong { overflow: hidden; color: #fff; font-size: 18px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
-.nutrition-total > small { color: #ffb86b; font-size: 9px; }
+.nutrition-total > span { color: var(--text-2); font-size: 12px; font-weight: 780; letter-spacing: 0; }
+.nutrition-total > strong { overflow: hidden; color: var(--text-2); font-size: 18px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+.nutrition-total > small { color: var(--text-2); font-size: 12px; }
 
 .nutrition-meal-form,
 .nutrition-history,
@@ -209,28 +207,28 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid rgba(255,255,255,.09);
+  border: 1px solid var(--hairline);
   border-radius: 24px;
-  background: rgba(6, 30, 42, .84);
-  box-shadow: 0 16px 40px rgba(0,0,0,.18);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--surface-1);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .nutrition-meal-form h3,
 .nutrition-history h3,
-.nutrition-suggestions h3 { margin: 0; color: #ffd28a; font-size: 11px; letter-spacing: .12em; }
+.nutrition-suggestions h3 { margin: 0; color: var(--text-2); font-size: 12px; letter-spacing: 0; }
 
 .nutrition-suggestions[hidden] { display: none; }
 .nutrition-suggestions__list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .nutrition-suggestion {
   appearance: none; min-width: 0; min-height: 74px; display: grid; align-content: center; gap: 3px;
-  padding: 10px 12px; border: 1px solid rgba(203,220,117,.2); border-radius: 15px;
-  background: rgba(203,220,117,.065); color: #fff; text-align: left; font: inherit;
+  padding: 10px 12px; border: 1px solid var(--hairline); border-radius: 15px;
+  background: var(--surface-1); color: var(--text-2); text-align: left; font: inherit;
 }
 .nutrition-suggestion strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.nutrition-suggestion span { overflow: hidden; color: rgba(255,255,255,.58); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.nutrition-suggestion small { color: #ffd28a; font-size: 8px; font-weight: 800; letter-spacing: .06em; }
+.nutrition-suggestion span { overflow: hidden; color: var(--text-2); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.nutrition-suggestion small { color: var(--text-2); font-size: 12px; font-weight: 800; letter-spacing: 0; }
 .nutrition-suggestion:disabled { opacity: .54; }
 
 .nutrition-meal-form__fields {
@@ -244,8 +242,8 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   min-width: 0;
   display: grid;
   gap: 5px;
-  color: rgba(255,255,255,.60);
-  font-size: 10px;
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 690;
 }
 .nutrition-meal-field--time,
@@ -260,27 +258,27 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   width: 100%;
   min-height: 46px;
   padding: 0 10px;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid var(--hairline);
   border-radius: 13px;
   outline: none;
-  background: rgba(2, 18, 27, .76);
-  color: #f7fbfa;
+  background: var(--surface-1);
+  color: var(--text-2);
   font: 650 16px/1 var(--font, system-ui);
   font-variant-numeric: tabular-nums;
 }
-.nutrition-meal-field input:focus { border-color: rgba(122,225,191,.66); box-shadow: 0 0 0 3px rgba(82,211,170,.10); }
-.nutrition-meal-field input::placeholder { color: rgba(255,255,255,.28); }
+.nutrition-meal-field input:focus { border-color: var(--text-2); box-shadow: none; }
+.nutrition-meal-field input::placeholder { color: var(--text-2); }
 
 .nutrition-meal-form__status {
   min-height: 17px;
   margin: 0;
-  color: rgba(255,255,255,.54);
-  font-size: 11px;
+  color: var(--text-2);
+  font-size: 12px;
   line-height: 1.45;
 }
-.nutrition-meal-form__status[data-state='error'] { color: #f0a5a5; }
-.nutrition-meal-form__status[data-state='success'] { color: #9ce5bd; }
-.nutrition-meal-form__status[data-state='ready'] { color: #ffd28a; }
+.nutrition-meal-form__status[data-state='error'] { color: var(--text-2); }
+.nutrition-meal-form__status[data-state='success'] { color: var(--text-2); }
+.nutrition-meal-form__status[data-state='ready'] { color: var(--text-2); }
 
 .nutrition-meal-form__actions {
   display: grid;
@@ -291,16 +289,16 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 .nutrition-meal-form__add {
   min-height: 48px;
   appearance: none;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid var(--hairline);
   border-radius: 14px;
-  background: rgba(255,255,255,.055);
-  color: rgba(255,255,255,.82);
+  background: var(--surface-1);
+  color: var(--text-2);
   font: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: .045em;
+  letter-spacing: 0;
 }
-.nutrition-meal-form__add { border-color: rgba(203,220,117,.38); background: rgba(203,220,117,.13); color: #edf6b4; }
+.nutrition-meal-form__add { border-color: var(--text-2); background: var(--surface-1); color: var(--text-2); }
 .nutrition-meal-form__paste:disabled,
 .nutrition-meal-form__add:disabled { opacity: .52; }
 
@@ -312,28 +310,28 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   align-items: center;
   gap: 10px;
   padding: 12px;
-  border: 1px solid rgba(255,255,255,.075);
+  border: 1px solid var(--hairline);
   border-radius: 16px;
-  background: rgba(2, 19, 28, .56);
+  background: var(--surface-1);
 }
 .nutrition-entry > div { min-width: 0; display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 3px 8px; }
-.nutrition-entry__description { grid-column: 1 / -1; margin: 0 0 2px; color: #fff; font-size: 13px; line-height: 1.25; }
-.nutrition-entry__time { color: #fff; font-size: 14px; font-variant-numeric: tabular-nums; }
-.nutrition-entry__source { color: rgba(255,255,255,.40); font-size: 9px; }
-.nutrition-entry__nutrients { grid-column: 1 / -1; margin: 2px 0 0; color: rgba(255,255,255,.68); font-size: 11px; line-height: 1.35; }
+.nutrition-entry__description { grid-column: 1 / -1; margin: 0 0 2px; color: var(--text-2); font-size: 13px; line-height: 1.25; }
+.nutrition-entry__time { color: var(--text-2); font-size: 14px; font-variant-numeric: tabular-nums; }
+.nutrition-entry__source { color: var(--text-2); font-size: 12px; }
+.nutrition-entry__nutrients { grid-column: 1 / -1; margin: 2px 0 0; color: var(--text-2); font-size: 12px; line-height: 1.35; }
 .nutrition-entry__delete {
   min-height: 42px;
   appearance: none;
   border: 0;
   background: transparent;
-  color: rgba(255,255,255,.38);
+  color: var(--text-2);
   font: inherit;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 760;
 }
 .nutrition-entry--carryover { border-style: dashed; }
-.nutrition-entry--carryover .nutrition-entry__time { color: rgba(255,255,255,.72); }
-.nutrition-history__empty { margin: 0; padding: 8px 2px; color: rgba(255,255,255,.52); font-size: 12px; line-height: 1.5; }
+.nutrition-entry--carryover .nutrition-entry__time { color: var(--text-2); }
+.nutrition-history__empty { margin: 0; padding: 8px 2px; color: var(--text-2); font-size: 12px; line-height: 1.5; }
 
 .nutrition-undo {
   position: sticky;
@@ -343,22 +341,22 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid rgba(203,220,117,.26);
+  border: 1px solid var(--hairline);
   border-radius: 16px;
-  background: rgba(6, 27, 38, .97);
-  box-shadow: 0 16px 40px rgba(0,0,0,.40);
-  color: rgba(255,255,255,.76);
+  background: var(--surface-1);
+  box-shadow: none;
+  color: var(--text-2);
   font-size: 12px;
 }
 .nutrition-undo[hidden] { display: none; }
-.nutrition-undo__button { min-height: 40px; border: 0; background: transparent; color: #ffd28a; font: inherit; font-size: 11px; font-weight: 820; }
+.nutrition-undo__button { min-height: 40px; border: 0; background: transparent; color: var(--text-2); font: inherit; font-size: 12px; font-weight: 820; }
 
 /* Native iOS time inputs keep a large intrinsic width. Current Pro Max phones
    reach 440 CSS px, so the safe one-row treatment must cover them too. */
 @media (max-width: 520px) {
   .today-lifestyle { gap: 7px; }
   .today-lifestyle__metric { padding: 10px; }
-  .today-item--nutrition .today-item__ai-prompt { padding-inline: 8px; font-size: 9px; }
+  .today-item--nutrition .today-item__ai-prompt { padding-inline: 8px; font-size: 12px; }
   .nutrition-log-header__ai { padding-inline: 10px; }
   .nutrition-log-header__ai img { display: none; }
   .nutrition-meal-field--time,
@@ -369,8 +367,8 @@ body[data-nutrition-open='true'] { overflow: hidden; }
 }
 
 @media (min-width: 700px) {
-  .nutrition-log-overlay { padding: 18px; background: rgba(2, 12, 19, .78); }
-  .nutrition-log-screen { border: 1px solid rgba(255,255,255,.10); border-radius: 28px; }
+  .nutrition-log-overlay { padding: 18px; background: var(--surface-1); }
+  .nutrition-log-screen { border: 1px solid var(--hairline); border-radius: 28px; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -379,11 +377,11 @@ body[data-nutrition-open='true'] { overflow: hidden; }
   .nutrition-history,
   .nutrition-suggestions { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
-.nutrition-day-status { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 24px 14px; padding:13px; border:1px solid rgba(255,255,255,.09); border-radius:16px; background:rgba(5,30,40,.66); }
+.nutrition-day-status { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 24px 14px; padding:13px; border: 1px solid var(--hairline); border-radius:16px; background: var(--surface-1); }
 .nutrition-day-status > div:first-child { min-width:0; display:grid; gap:3px; }
-.nutrition-day-status strong { color:#ffd28a; font-size:9px; letter-spacing:.12em; }
-.nutrition-day-status span { color:rgba(255,255,255,.58); font-size:9px; line-height:1.35; }
+.nutrition-day-status strong { color: var(--text-2); font-size: 12px; letter-spacing: 0; }
+.nutrition-day-status span { color: var(--text-2); font-size: 12px; line-height:1.35; }
 .nutrition-day-status > div:last-child { flex:none; display:flex; gap:6px; }
-.nutrition-day-status__button { min-height:34px; padding:0 9px; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(255,255,255,.04); color:rgba(255,255,255,.66); font:inherit; font-size:8px; font-weight:800; }
-.nutrition-day-status__button[aria-pressed='true'] { border-color:rgba(203,220,117,.42); background:rgba(203,220,117,.16); color:#e7f49d; }
+.nutrition-day-status__button { min-height:34px; padding:0 9px; border: 1px solid var(--hairline); border-radius:10px; background: var(--surface-1); color: var(--text-2); font:inherit; font-size: 12px; font-weight:800; }
+.nutrition-day-status__button[aria-pressed='true'] { border-color: var(--text-2); background: var(--surface-1); color: var(--text-2); }
 @media (max-width:420px) { .nutrition-day-status { align-items:stretch; flex-direction:column; } .nutrition-day-status > div:last-child { display:grid; grid-template-columns:1fr 1fr; } }

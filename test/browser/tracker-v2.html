@@ -101,15 +101,15 @@
         const barBox = bar.getBoundingClientRect()
         const barStyle = getComputedStyle(bar)
         const gapBelow = window.innerHeight - barBox.bottom
-        check('the tab bar floats clear of the bottom edge', gapBelow >= 8, `${Math.round(gapBelow)}px below`)
-        check('the tab bar is inset from the sides', barBox.left >= 8 && window.innerWidth - barBox.right >= 8,
-          `${Math.round(barBox.left)}px / ${Math.round(window.innerWidth - barBox.right)}px`)
-        check('the tab bar respects the safe-area inset',
-          barStyle.bottom.includes('px') && /env\(|calc\(/.test(bar.style.bottom || barStyle.bottom) || gapBelow >= 8,
-          `bottom: ${barStyle.bottom}`)
-        check('the tab bar sits over a translucent, blurred surface',
-          (barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur'),
-          barStyle.backdropFilter || barStyle.webkitBackdropFilter)
+        check('the tab bar sits flush to the bottom edge', Math.abs(gapBelow) <= 1, `${Math.round(gapBelow)}px below`)
+        check('the tab bar spans the viewport width', Math.abs(barBox.left) <= 1 && Math.abs(document.documentElement.clientWidth - barBox.right) <= 1,
+          `${Math.round(barBox.left)}px / ${Math.round(document.documentElement.clientWidth - barBox.right)}px`)
+        check('the tab bar reserves safe-area padding',
+          Number.parseFloat(barStyle.paddingBottom) >= 8,
+          `padding-bottom: ${barStyle.paddingBottom}`)
+        check('the tab bar is solid and unblurred',
+          !(barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur'),
+          barStyle.backgroundColor)
 
         q('[data-programday="monday"]').click()
         await waitFor('.setrow__check')

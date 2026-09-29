@@ -1,6 +1,8 @@
 const NS = 'http://www.w3.org/2000/svg'
 
 const SHAPES = {
+  calendar: [['p', 'M5 4.5h14v15H5zM8 2.8v3.4M16 2.8v3.4M5 8.5h14']],
+  chart: [['p', 'M5 19V12M10 19V8M15 19V5M20 19V10']],
   check: [['p', 'M4.5 12.5 9.5 18 19.5 6.5']],
   plus: [['p', 'M12 5v14M5 12h14']],
   minus: [['p', 'M5 12h14']],

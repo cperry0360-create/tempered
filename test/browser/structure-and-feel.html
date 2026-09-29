@@ -58,8 +58,10 @@
         await waitFor('[data-section="training"][data-daily-workout-fingerprint]')
 
         const bodyStyle = getComputedStyle(document.body)
-        check('Today is visibly brighter than the old midnight shell',
-          /rgb/.test(bodyStyle.backgroundImage) || bodyStyle.backgroundImage !== 'none', bodyStyle.backgroundImage)
+        check('Today uses the approved flat slate ground with no scenic image',
+          bodyStyle.backgroundImage === 'none'
+          && getComputedStyle(document.body, '::before').backgroundImage === 'none',
+          `${bodyStyle.backgroundColor} / ${bodyStyle.backgroundImage}`)
 
         const summary = q('[data-summary="daily"]')
         check('Today opens with one clear summary card', summary !== null)

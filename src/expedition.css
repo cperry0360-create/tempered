@@ -7,8 +7,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 20px;
-  border-bottom: 1px solid #2d4051;
-  background: linear-gradient(90deg, #142331, #111d29);
+  border-bottom: var(--hairline);
+  background: var(--surface-1);
 }
 
 .screen--battle .expedition-strip__progress {
@@ -23,24 +23,24 @@
   height: 30px;
   display: grid;
   place-items: center;
-  border: 1px solid #3a5064;
+  border: var(--hairline);
   border-radius: 50%;
-  background: #101a24;
-  color: #7f95aa;
-  font-size: 11px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 900;
 }
 
 .screen--battle .expedition-dot[data-active='true'] {
-  border-color: #76adff;
-  color: #dcecff;
-  box-shadow: 0 0 0 2px rgba(86, 151, 255, 0.16);
+  border-color: var(--hairline);
+  color: var(--text-2);
+  box-shadow: none;
 }
 
 .screen--battle .expedition-dot[data-cleared='true'] {
-  border-color: #aabf66;
-  background: rgba(193, 213, 107, 0.12);
-  color: #dceb91;
+  border-color: var(--hairline);
+  background: var(--surface-1);
+  color: var(--text-2);
 }
 
 .screen--battle .expedition-strip__build {
@@ -53,15 +53,15 @@
 
 .screen--battle .expedition-strip__label {
   flex: none;
-  color: #758da3;
-  font-size: 9px;
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
 }
 
 .screen--battle .expedition-strip__empty {
-  color: #879caf;
-  font-size: 10px;
+  color: var(--text-2);
+  font-size: 12px;
 }
 
 .screen--battle .expedition-chips {
@@ -76,11 +76,11 @@
   max-width: 150px;
   overflow: hidden;
   padding: 6px 9px;
-  border: 1px solid #465c70;
+  border: var(--hairline);
   border-radius: 999px;
-  background: #1a2a38;
-  color: #dce7f1;
-  font-size: 9px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -90,9 +90,9 @@
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 2px solid #445b70;
+  border: var(--hairline);
   border-radius: 8px;
-  background: linear-gradient(145deg, #172839, #111d2a);
+  background: var(--surface-1);
 }
 
 .screen--battle .upgrade-choice__head {
@@ -101,25 +101,25 @@
 }
 
 .screen--battle .upgrade-choice__eyebrow {
-  color: #d9e982;
-  font-size: 9px;
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.13em;
+  letter-spacing: 0;
 }
 
 .screen--battle .upgrade-choice__title {
   margin: 0;
-  color: #f7fbff;
+  color: var(--text-2);
   font-family: var(--font-display);
   font-size: 21px;
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .screen--battle .upgrade-choice__copy {
   margin: 0;
-  color: #9cb0c2;
-  font-size: 10px;
+  color: var(--text-2);
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -137,19 +137,19 @@
   align-content: center;
   gap: 7px;
   padding: 13px;
-  border: 2px solid #415a70;
+  border: var(--hairline);
   border-radius: 8px;
-  background: #1a2a38;
-  color: #eef5fb;
+  background: var(--surface-1);
+  color: var(--text-2);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.025), 0 4px 0 rgba(3, 8, 12, 0.24);
+  box-shadow: none;
 }
 
 .screen--battle .upgrade-card:first-child {
-  border-color: #81965e;
-  background: #222d2b;
+  border-color: var(--hairline);
+  background: var(--surface-1);
 }
 
 .screen--battle .upgrade-card:active:not(:disabled) {
@@ -161,15 +161,15 @@
 }
 
 .screen--battle .upgrade-card__pick {
-  color: #8fa5b8;
-  font-size: 8px;
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
 }
 
 .screen--battle .upgrade-card__name {
   overflow: hidden;
-  color: #f8fbfe;
+  color: var(--text-2);
   font-family: var(--font-display);
   font-size: 16px;
   line-height: 1.05;
@@ -177,8 +177,8 @@
 }
 
 .screen--battle .upgrade-card__description {
-  color: #b0c2d1;
-  font-size: 10px;
+  color: var(--text-2);
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -209,7 +209,7 @@
     align-self: stretch;
     display: grid;
     place-items: center;
-    border-right: 1px solid #354c60;
+    border-right: var(--hairline);
   }
 
   .screen--battle .upgrade-card__name { font-size: 14px; }
@@ -225,7 +225,7 @@
   .screen--battle .expedition-dot {
     width: 27px;
     height: 27px;
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .screen--battle .expedition-chips {
@@ -235,7 +235,7 @@
   .screen--battle .expedition-chip {
     max-width: 86px;
     padding: 5px 7px;
-    font-size: 7px;
+    font-size: 12px;
   }
 
   .screen--battle .upgrade-choice {
@@ -244,7 +244,7 @@
   }
 
   .screen--battle .upgrade-choice__title { font-size: 17px; }
-  .screen--battle .upgrade-choice__copy { font-size: 8px; }
+  .screen--battle .upgrade-choice__copy { font-size: 12px; }
 
   .screen--battle .upgrade-card {
     min-height: 62px;
@@ -253,5 +253,5 @@
   }
 
   .screen--battle .upgrade-card__name { font-size: 12px; }
-  .screen--battle .upgrade-card__description { font-size: 8px; }
+  .screen--battle .upgrade-card__description { font-size: 12px; }
 }

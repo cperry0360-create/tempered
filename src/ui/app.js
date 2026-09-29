@@ -8,6 +8,7 @@
 
 import { el, replace } from '../ui/dom.js'
 import { errorState, liveRegion } from './states.js'
+import { clock as formatClock } from './format.js'
 import { icon } from './icons.js'
 import { createTrainScreen } from './screens/train.js'
 import { createSessionScreen } from './screens/session.js'
@@ -16,19 +17,20 @@ import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createFuelScreen } from './screens/fuel.js'
+import { createCompanionScreen } from './screens/companion.js'
 import { createProgramBuilderScreen } from './screens/program-builder.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
-  { id: 'today', label: 'TODAY' },
-  { id: 'train', label: 'TRAIN' },
-  { id: 'fuel', label: 'FUEL' },
-  { id: 'history', label: 'PROGRESS' },
+  { id: 'today', label: 'Today', icon: 'calendar' },
+  { id: 'train', label: 'Train', icon: 'train' },
+  { id: 'fuel', label: 'Fuel', icon: 'food' },
+  { id: 'history', label: 'Progress', icon: 'chart' },
 ]
 
 const tabLabel = (id) => {
-  if (id === 'character') return 'CHARACTER'
-  return TABS.find((entry) => entry.id === id)?.label ?? 'SETTINGS'
+  if (id === 'character') return 'Character'
+  return TABS.find((entry) => entry.id === id)?.label ?? 'Settings'
 }
 
 const LEGACY_STYLES = ['battle.css', 'expedition.css', 'battle-fidelity.css', 'character.css']
@@ -72,6 +74,10 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     storage, daily, clock,
     onToday: async () => { await show('today') },
   })
+  const companion = createCompanionScreen({
+    storage, daily, clock, overlayHost: overlays,
+    onToday: async () => { await show('today') },
+  })
   builder = createProgramBuilderScreen({ mount, storage, clock, onClose: () => show('settings') })
 
   let battleScreen = null
@@ -111,7 +117,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     onDone: async () => { await show(returnTab) },
   })
   let session = null
-  const SCREENS = { today, train, fuel, history, settings, character: characterScreen }
+  const SCREENS = { today, train, fuel, companion, history, settings, character: characterScreen }
 
   function announce(text) {
     announcer.textContent = ''
@@ -125,10 +131,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       replace(workoutDock, [])
       return
     }
-    const setCount = (draft.plan ?? []).reduce(
-      (total, entry) => total + (entry.sets ?? []).filter((set) => set.logged === true).length,
-      0,
-    )
+    const elapsed = formatClock(Number(draft.elapsedSec) || 0)
     workoutDock.hidden = false
     replace(workoutDock, [el('button.active-workout-dock__button', {
       type: 'button', dataset: { activeWorkout: 'true' },
@@ -140,10 +143,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       },
     }, [
       el('span.active-workout-dock__copy', {}, [
-        el('strong', { text: draft.session.title ?? 'Workout in progress' }),
-        el('small', { text: `${setCount} ${setCount === 1 ? 'set' : 'sets'} logged · tap to resume` }),
+        el('strong', { text: `${draft.session.title ?? 'Workout'} · ${elapsed}` }),
       ]),
-      el('span.active-workout-dock__resume', { text: 'RESUME' }),
+      el('span.active-workout-dock__resume', { text: 'Resume' }),
     ])])
   }
 
@@ -165,15 +167,14 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       'aria-current': tab === entry.id ? 'page' : null,
       'aria-label': `${entry.label.toLowerCase()} section`,
       onclick: () => show(entry.id),
-    }, [entry.label])))
+    }, [icon(entry.icon), el('span', { text: entry.label })])))
 
-    const primary = SCREENS[tab]?.primary?.() ?? null
     replace(tabBar, [tabs])
   }
 
   function showFailure({ title, detail, retry, back }) {
     tabBar.hidden = false
-    settingsAccess.hidden = target === 'program-builder'
+    settingsAccess.hidden = true
     replace(body, [errorState({ title, detail, onRetry: retry, onBack: back })])
     body.scrollTop = 0
     announce(title)
@@ -258,8 +259,8 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   async function resumeSession(draft) {
-    const savedReturn = draft?.session?.returnTab === 'companion' ? 'fuel' : draft?.session?.returnTab
-    returnTab = ['today', 'train', 'fuel', 'history', 'character'].includes(savedReturn)
+    const savedReturn = draft?.session?.returnTab
+    returnTab = ['today', 'train', 'fuel', 'companion', 'history', 'character'].includes(savedReturn)
       ? savedReturn
       : 'today'
     session?.destroy()
@@ -294,6 +295,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     if (tab === 'history') { await history.refresh(); replace(body, [history.root]); return }
     if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
     if (tab === 'fuel') { await fuel.refresh(); replace(body, [fuel.root]); return }
+    if (tab === 'companion') { await companion.refresh(); replace(body, [companion.root]); return }
     if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
     if (tab === 'program-builder') { await builder.start(); return }
     await ensureLegacy()
@@ -302,22 +304,24 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   async function show(tab) {
-    const requested = tab === 'companion' ? 'fuel' : tab
+    const requested = tab
     const visible = TABS.some((entry) => entry.id === requested)
-    const target = requested === 'settings' || requested === 'character' || requested === 'program-builder' || visible ? requested : 'today'
+    const target = requested === 'settings' || requested === 'character' || requested === 'companion'
+      || requested === 'program-builder' || visible ? requested : 'today'
     if (target !== 'fuel') fuel.deactivate()
+    if (target !== 'companion') companion.deactivate()
     if (target !== 'today') today.deactivate?.()
     active = target
     session?.destroy()
     session = null
     battleScreen?.destroy()
     tabBar.hidden = false
-    settingsAccess.hidden = false
-    const settingsActive = target === 'settings'
+    settingsAccess.hidden = target !== 'today'
+    const settingsActive = false
     settingsAccess.dataset.active = String(settingsActive)
     settingsAccess.setAttribute('aria-current', settingsActive ? 'page' : 'false')
-    settingsAccess.setAttribute('aria-label', settingsActive ? 'Close Settings' : 'Settings')
-    settingsAccess.title = settingsActive ? 'Close Settings' : 'Settings'
+    settingsAccess.setAttribute('aria-label', 'Settings')
+    settingsAccess.title = 'Settings'
     if (target === 'program-builder') tabBar.hidden = true
     renderTabs(target)
 

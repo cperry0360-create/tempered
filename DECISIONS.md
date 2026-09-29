@@ -1931,3 +1931,10 @@ release. A deterministic browser journey makes failures visible to the autonomou
 the 14-day proof and keeps beta readiness evidence separate from unit-test confidence.
 
 **Needs Cory:** physical iPhone acceptance and the eventual 14-day daily-driver observations.
+
+
+## 2026-09-29 — R1 redesign foundation
+
+- **Decision:** Implement the approved `docs/13-redesign-v1.md` foundation in the real styles and shell, remove `src/slate.css`, and centralize all CSS colour literals in `src/tokens.css`.
+- **Art exceptions:** None. Companion image URLs remain illustration references, but no `src/*.css` file outside `tokens.css` retains a hex colour literal.
+- **Needs Cory:** None for R1. The phase is fully specified by the approved redesign.

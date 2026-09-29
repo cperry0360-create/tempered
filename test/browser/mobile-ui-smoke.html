@@ -119,7 +119,7 @@
 
       check('viewport is phone-class', innerWidth <= 560, `${innerWidth}×${innerHeight}`)
       check('Today renders', Boolean(q('.screen--today')))
-      check('Visible navigation has Fuel instead of Character', q('[data-tab="companion"]')?.textContent.trim() === 'FUEL' && !q('[data-tab="character"]'))
+      check('Visible navigation is Today, Train, Fuel, Progress', qa('.tabbar__tab').map((n) => n.textContent.trim()).join('|') === 'Today|Train|Fuel|Progress' && !q('[data-tab="character"]'))
 
       const water = q('[data-activity="water"]')
       const waterButtons = qa('[data-water-row-presets="true"] .today-item__quick', water)
@@ -144,12 +144,9 @@
       await tempered.app.show('train')
       await settle(60)
 
-      await tab('companion', '.screen--companion')
-      const habitat = q('.companion-habitat')
-      check('Companion has a habitat', Boolean(habitat))
-      check('Companion exposes positive-only growth', /nothing ever decays/i.test(q('.screen--companion')?.textContent ?? ''))
-      const rename = q('.companion-name__save')
-      thumbSized(rename, 'Companion rename')
+      await tab('fuel', '.screen--fuel')
+      check('Fuel screen renders', Boolean(q('.screen--fuel')))
+      thumbSized(q('.fuel-dashboard__nutrition'), 'Fuel meal action')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__button')
@@ -171,8 +168,9 @@
         check('Settings cadence remains visible after scrolling', Boolean(info && info.top < innerHeight && info.bottom > 0),
           info ? `${Math.round(info.top)}..${Math.round(info.bottom)}` : 'missing')
       }
-      await tapCenter(q('.settings-access'), 'Settings gear close')
-      check('Settings closes back to Today', Boolean(await waitFor('.screen--today')))
+      check('Settings gear is hidden while Settings is open', q('.settings-access')?.hidden === true)
+      await tempered.app.show('today')
+      check('Today restores the Settings gear', Boolean(await waitFor('.screen--today')) && q('.settings-access')?.hidden === false)
 
       check('No uncaught errors during mobile journey', runtimeErrors.length === 0, runtimeErrors.join(' | ') || 'none')
     } catch (error) {

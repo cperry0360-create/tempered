@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.35.0 (49)
+**Current release:** 0.36.0 (50)
 
 **Product maturity:** Pre-beta product completion
 
@@ -45,6 +45,10 @@ not rewritten.
 Release 0.35.0 adds First-Week Guidance to Today and Train. The app now names the next useful
 session, explains that repeatable work is enough, and treats recovery as part of the plan when
 today's work is complete. It adds no reminders, debt, or punitive streak behavior.
+
+Release 0.36.0 adds a browser acceptance harness for the Program Builder's complete path:
+open, add a day, add an exercise, save a draft, and review/activate. This begins the pre-beta
+proof pass; hosted browser and visual inspection remain required before TestFlight.
 
 Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
 plus recovery, keeps the local-first promise visible, captures the user's goal, realistic

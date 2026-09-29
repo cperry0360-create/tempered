@@ -83,7 +83,7 @@ Generating images is not visual sign-off; Codex must open and inspect them.
 | 2 | A user can choose a suitable template or begin with a blank program | Complete in 0.33.0 |
 | 3 | A user can create and edit a complete program on an iPhone | Complete in 0.34.0 |
 | 4 | Today and Train guide the first week without guilt or schedule debt | Complete in 0.35.0 |
-| 5 | Prove backup, week turnover, edits, and a 14-day daily-driver run | Exit gate |
+| 5 | Prove backup, week turnover, edits, and a 14-day daily-driver run | In progress |
 
 New companion mechanics, more AI handoffs, social features, cloud sync, advanced programming,
 planner expansion, framework migration, and public beta work remain deferred until the Phase 2

@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 41312)
-Total output lines: 2642
+Warning: truncated output (original token count: 41497)
+Total output lines: 2654
 
 # Decisions log
 
@@ -1015,18 +1015,7 @@ body-metric guard — it is worth having only while it has no exceptions.
 because `data/titles.json` is newly fetched at boot.
 ## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
 **Phase:** 3.5 D (unblocking)
-**Decis…11312 tokens truncated… optimized WebP scenic backgrounds and
-habitats, true-alpha PNG companion stages, and the three UI support icons under
-`art/tempered/`. Baked-checkerboard files remain source references only.
-**Reasoning:** The shared-chat URLs expire and had already left one asset incomplete.
-Committing the sources prevents another loss, while selectively precaching only the
-production derivatives keeps the installed PWA from downloading every reference board.
-**Confidence:** specified for the art direction; inferred for storage/format treatment
-**Needs Cory:** no
-
-## 2026-09-08 — Progress widgets get an explicit post-render signal
-**Phase:** 0.14.2 Progress repair
-**Decision:** `createApp.show` emits `tempered:screen-shown` after a screen is mounted,
+**Decis…11497 tokens truncated…nted,
 and the Progress dashboard runtime listens for the `history` signal. Its old mutation
 observer remains as a compatibility fallback. Hidden legacy Progress panels now use an
 explicit `display:none` rule while the widget dashboard is visible.
@@ -1930,3 +1919,15 @@ The guidance reduces ambiguity without adding notifications, missed-goal languag
 streak pressure, and it remains derived from the same program state as the workout UI.
 
 **Needs Cory:** physical-iPhone review of hierarchy and copy during the first-week pass.
+## 2026-09-29 — Pre-beta proof harness
+**Phase:** Product Phase 2 / 0.36.0
+
+**Decision:** Add a real-browser acceptance harness for the Program Builder workflow and move
+the Phase 2 exit gate to In progress. The harness verifies opening the builder, adding a day and
+exercise, saving a draft, and reviewing/activating without changing the user's history contract.
+
+**Reasoning:** The new builder is the highest-risk user-facing path added since the last visual
+release. A deterministic browser journey makes failures visible to the autonomous QA loop before
+the 14-day proof and keeps beta readiness evidence separate from unit-test confidence.
+
+**Needs Cory:** physical iPhone acceptance and the eventual 14-day daily-driver observations.

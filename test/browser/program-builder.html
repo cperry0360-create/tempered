@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — program builder</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/program-builder.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector) => document.querySelector(selector)
+    const settle = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+    try {
+      const storage = createMemoryStorage()
+      const tempered = await bootstrap({ storage, mount: q('#app') })
+      await tempered.app.show('program-builder')
+      await settle()
+      check('builder opens from the app shell', Boolean(q('.program-builder')))
+      check('builder exposes program identity', Boolean(q('[aria-label="Program name"]') && q('[aria-label="Program weeks"]')))
+      check('builder exposes the existing program day', q('.program-builder__day')?.textContent?.includes('exercises'))
+
+      q('.program-builder__sectionhead .button')?.click()
+      await settle()
+      check('a new training day can be added', document.querySelectorAll('.program-builder__day').length >= 2)
+      q('.program-builder__select').value = 'incline_bench_bb'
+      q('.program-builder__add .button')?.click()
+      await settle()
+      check('an exercise can be added to the selected day', q('.program-builder__exercise')?.textContent?.includes('Incline Barbell Bench Press'))
+      q('.program-builder__actions .button')?.click()
+      await settle()
+      check('a draft can be saved', /Draft saved/i.test(q('[data-builder-notice]')?.textContent ?? ''))
+      q('.program-builder__actions .button--primary')?.click()
+      await settle()
+      const state = (await storage.getAll('programState')).find((row) => row.active)
+      const active = state ? await storage.get('programs', state.programId) : null
+      check('review and activate preserves an active program', Boolean(active?.status === 'active' && active?.days?.length >= 2))
+    } catch (error) {
+      check('program builder harness threw', false, String(error?.stack ?? error).slice(0, 900))
+    }
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'program-builder', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

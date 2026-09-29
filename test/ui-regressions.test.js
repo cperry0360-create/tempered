@@ -214,13 +214,12 @@ test('REGRESSION: R2 Today removes Daily Recap and uses bounded Health import in
   assert.match(pasteCss, /\.health-paste-overlay[\s\S]*z-index:\s*1500/)
 })
 
-test('REGRESSION: Health import redraws Today and prior days can be reviewed', () => {
+test('REGRESSION: Health import redraws Today without injecting a prior-day card', () => {
   const health = read('src/ui/health-paste-runtime.js')
   const nutrition = read('src/ui/calorie-ai-runtime.js')
   const app = read('src/ui/app.js')
   assert.match(health, /context\.app\?\.show/)
-  assert.match(nutrition, /dataPriorDayReview|dataset\.priorDayReview/)
-  assert.match(nutrition, /showTodayDate/)
+  assert.doesNotMatch(nutrition, /dataPriorDayReview|dataset\.priorDayReview/)
   assert.match(app, /showTodayDate/)
 })
 

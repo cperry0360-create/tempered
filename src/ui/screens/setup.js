@@ -6,11 +6,10 @@
  * selected program and Today aggregates repeated exercises across that week.
  */
 
-import { companionStyle } from '../../domain/companion-growth.js'
 import { createProgramRevision } from '../../domain/program-schema.js'
 import { el, replace } from '../dom.js'
 
-const STEP_COUNT = 8
+const STEP_COUNT = 7
 const SESSION_OPTIONS = [2, 3, 4, 5, 6]
 const SESSION_LENGTH_OPTIONS = [30, 45, 60, 75]
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
@@ -147,7 +146,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       onclick: () => { draft.units = value; render() },
     }, [label])
     return [
-      ...heading('STEP 1 OF 8', 'BUILD STRENGTH, KEEP YOUR LIFE', 'Tempered brings training, nutrition, sleep, and recovery into one clear plan.'),
+      ...heading('STEP 1 OF 7', 'BUILD STRENGTH, KEEP YOUR LIFE', 'Tempered brings training, nutrition, sleep, and recovery into one clear plan.'),
       el('section.setup__card', {}, [
         el('p.setup__copy', { text: 'Follow a plan, record what actually happened, and see what compounds. A day off creates no downside, and recovery is part of the plan.' }),
         el('p.setup__copy', { text: 'Your data stays on this device. You can change these choices later without resetting history.' }),
@@ -160,7 +159,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepTwo() {
     return [
-      ...heading('STEP 2 OF 8', 'CHOOSE YOUR RHYTHM', 'Pick the goal and schedule you can actually repeat. A useful plan beats a heroic plan you abandon.'),
+      ...heading('STEP 2 OF 7', 'CHOOSE YOUR RHYTHM', 'Pick the goal and schedule you can actually repeat. A useful plan beats a heroic plan you abandon.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Primary goal' }),
         el('div.setup__choices', {}, GOALS.map(([value, label]) => el('button.setup__choice', {
@@ -183,7 +182,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepThree() {
     return [
-      ...heading('STEP 3 OF 8', 'USE WHAT YOU HAVE', 'This helps Tempered suggest a plan that fits your real setup. You can still substitute movements later.'),
+      ...heading('STEP 3 OF 7', 'USE WHAT YOU HAVE', 'This helps Tempered suggest a plan that fits your real setup. You can still substitute movements later.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Available equipment' }),
         el('div.setup__choices', {}, EQUIPMENT.map(([value, label]) => el('button.setup__choice', {
@@ -196,7 +195,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepFour() {
     return [
-      ...heading('STEP 4 OF 8', 'CHOOSE HOW TO BEGIN', 'Pick a starting template, or open a blank draft and shape it yourself. Nothing activates until you save.'),
+      ...heading('STEP 4 OF 7', 'CHOOSE HOW TO BEGIN', 'Pick a starting template, or open a blank draft and shape it yourself. Nothing activates until you save.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Starting path' }),
         el('div.setup__choices', {}, [
@@ -216,7 +215,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
   function stepFive() {
     const slots = primarySlots(activeProgram())
     return [
-      ...heading('STEP 5 OF 8', 'REVIEW YOUR START', 'This is a starting point, not a test. Add weights if you know them; blank means figure it out in the first session.'),
+      ...heading('STEP 5 OF 7', 'REVIEW YOUR START', 'This is a starting point, not a test. Add weights if you know them; blank means figure it out in the first session.'),
       el('section.setup__card.setup__weights', {}, slots.length
         ? slots.map((slot) => el('label.setup__weightrow', {}, [
             el('span.setup__weightname', { text: slot.name }),
@@ -249,7 +248,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepSix() {
     return [
-      ...heading('STEP 6 OF 8', 'WHAT DO YOU WANT TO TRACK?', 'Daily resets each morning. Weekly can be done on any day. Nothing here creates a penalty.'),
+      ...heading('STEP 6 OF 7', 'WHAT DO YOU WANT TO TRACK?', 'Daily resets each morning. Weekly can be done on any day. Nothing here creates a penalty.'),
       el('div.setup__cadencelist', {}, activities.map((activity) => {
         const current = draft.schedule[activity.id]
         return el('section.setup__cadencerow', { dataset: { attribute: activity.attribute } }, [
@@ -271,36 +270,13 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     ]
   }
 
-  function stepSeven() {
-    const styleButton = (value, label, copy) => el('button.setup__companionchoice', {
-      type: 'button', dataset: { selected: String(draft.companionStyle === value), style: value },
-      'aria-pressed': String(draft.companionStyle === value),
-      onclick: () => { draft.companionStyle = value; render() },
-    }, [
-      el('span.setup__companionpreview', { 'aria-hidden': 'true' }),
-      el('span', {}, [el('strong', { text: label }), el('small', { text: copy })]),
-      el('i', { text: draft.companionStyle === value ? '✓' : '' }),
-    ])
-    return [
-      ...heading('STEP 7 OF 8', 'CHOOSE YOUR COMPANION', 'Optional reflection, not a responsibility. It grows from work you already did and never loses progress.'),
-      el('section.setup__card', {}, [
-        el('span.setup__label', { text: 'Companion type' }),
-        el('div.setup__companionchoices', {}, [
-          styleButton('turtle', 'Trailback Turtle', 'Egg to hatchling to shredded'),
-          styleButton('sprout', 'Ember Sprout', 'Warm, playful, and leafy'),
-          styleButton('forge', 'Forge Guardian', 'Mature steel, bronze, and teal'),
-        ]),
-      ]),
-    ]
-  }
-
   function stepEight() {
     const chosen = activeProgram()
     const action = draft.startPath === 'blank'
       ? 'Open Train when you are ready to shape your blank program.'
       : chosen ? `Start with ${chosen.name} and run ${draft.sessionsPerWeek} realistic sessions this week.` : 'Explore Today and add your first workout when you are ready.'
     return [
-      ...heading('STEP 8 OF 8', 'YOU HAVE A NEXT STEP', 'Tempered works best when the next action is obvious and the plan is forgiving.'),
+      ...heading('STEP 7 OF 7', 'YOU HAVE A NEXT STEP', 'Tempered works best when the next action is obvious and the plan is forgiving.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Your starting point' }),
         el('p.setup__copy', { text: action }),
@@ -309,7 +285,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     ]
   }
 
-  const builders = [stepOne, stepTwo, stepThree, stepFour, stepFive, stepSix, stepSeven, stepEight]
+  const builders = [stepOne, stepTwo, stepThree, stepFour, stepFive, stepSix, stepEight]
 
   function next() {
     if (step < STEP_COUNT - 1) { step += 1; render() }
@@ -324,7 +300,6 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       ...profile,
       name: String(draft.name ?? '').trim(),
       units: draft.units,
-      companionStyle: companionStyle(draft.companionStyle),
       planTargetSessionsPerWeek: draft.sessionsPerWeek,
       goal: draft.goal,
       sessionLength: draft.sessionLength,
@@ -424,7 +399,6 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     draft = {
       name: profile?.name ?? '',
       units: profile?.units ?? 'imperial',
-      companionStyle: companionStyle(profile?.companionStyle),
       goal: profile?.goal ?? 'strength',
       sessionsPerWeek: profile?.planTargetSessionsPerWeek ?? 4,
       sessionLength: profile?.sessionLength ?? 45,

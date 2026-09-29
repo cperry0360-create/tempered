@@ -179,21 +179,10 @@ function nutrientLine(values) {
 export function installCalorieAiRuntime() {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
-  let scheduled = false
-  let enhancing = false
-  let rerenderRequested = false
   let nutritionScreen = null
   let lastNutritionTrigger = null
   let lastDeleted = null
 
-  const schedule = () => {
-    if (scheduled) return
-    scheduled = true
-    requestAnimationFrame(() => {
-      scheduled = false
-      enhance().catch((error) => console.warn('[tempered] Nutrition Today enhancement unavailable', error))
-    })
-  }
 
   function todayRoot() {
     return mount.querySelector('.screen--today')
@@ -367,6 +356,17 @@ export function installCalorieAiRuntime() {
     if (meta) meta.textContent = nutritionText(calories, protein)
   }
 
+  async function refreshUnderlyingSurfaces(date = nutritionScreen?.dataset.date) {
+    if (!date) return
+    window.dispatchEvent(new CustomEvent('tempered:fuel-updated', { detail: { date } }))
+    const context = globalThis.tempered
+    if (!context?.app) return
+    if (document.querySelector('.screen--today')) {
+      if (date === context.clock.today() && context.app.show) await context.app.show('today')
+      else if (context.app.showTodayDate) await context.app.showTodayDate(date)
+    }
+  }
+
   function setScreenStatus(message, state = '') {
     const status = nutritionScreen?.querySelector('[data-nutrition-status]')
     if (!status) return
@@ -463,7 +463,7 @@ export function installCalorieAiRuntime() {
         const result = await globalThis.tempered.daily.removeNutrition(date, entry.id)
         lastDeleted = result.removed ? { entry: result.removed, index: result.index, date } : null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
       } catch {
         setScreenStatus('Could not delete that entry. Your saved data was not changed.', 'error')
       }
@@ -507,7 +507,7 @@ export function installCalorieAiRuntime() {
         await globalThis.tempered.daily.restoreNutrition(pending.date, pending.entry, pending.index)
         lastDeleted = null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
         setScreenStatus('Meal restored.', 'ready')
       } catch {
         setScreenStatus('Could not restore that entry.', 'error')
@@ -541,7 +541,7 @@ export function installCalorieAiRuntime() {
           })
           lastDeleted = null
           await renderNutritionData()
-          await enhance()
+          await refreshUnderlyingSurfaces()
           setScreenStatus(`${suggestion.description} added.`, 'success')
         } catch {
           button.disabled = false
@@ -814,7 +814,7 @@ export function installCalorieAiRuntime() {
         form.dataset.source = 'manual'
         lastDeleted = null
         await renderNutritionData()
-        await enhance()
+        await refreshUnderlyingSurfaces()
         setScreenStatus('Meal added. It is saved in today’s history.', 'success')
       } catch {
         setScreenStatus('Could not add that meal. Your saved data was not changed.', 'error')
@@ -861,65 +861,17 @@ export function installCalorieAiRuntime() {
     lastDeleted = null
   }
 
-  async function enhance() {
-    if (enhancing) {
-      rerenderRequested = true
-      return
-    }
-    const screen = todayRoot()
-    const context = globalThis.tempered
-    const date = selectedDate()
-    if (!screen || !context?.daily || !date) return
-    enhancing = true
-    try {
-      const section = screen.querySelector('[data-section="daily"]')
-      const list = section?.querySelector('.today-list')
-      const recapHost = document.querySelector('[data-lifestyle-recap-host]')
-      if (!list && !recapHost) return
-      const [view, weight, review] = await Promise.all([
-        context.daily.forDate(date), latestWeight(date), priorDayReview(context, date),
-      ])
-      if (screen !== todayRoot() || date !== selectedDate()) return
-      syncPriorDayReview(screen, review)
-      if (date === context.clock.today() && section && list) {
-        hideLegacyNutritionRows()
-        const title = section.querySelector('.today-section__title')
-        const detail = section.querySelector('.today-section__detail')
-        if (title) title.textContent = 'Lifestyle'
-        if (detail) detail.textContent = 'Sleep · movement · nutrition · hydration · recovery'
-        syncNutritionRow(list, view)
-      }
-      if (recapHost) {
-        syncLifestyle(recapHost, view, weight)
-        window.dispatchEvent(new CustomEvent('tempered:lifestyle-ready', {
-          detail: { date },
-        }))
-      }
-    } finally {
-      enhancing = false
-      if (rerenderRequested) {
-        rerenderRequested = false
-        schedule()
-      }
-    }
-  }
-
   const screenShown = (event) => {
-    if (event?.detail?.tab === 'today') schedule()
-    else closeNutritionScreen()
+    if (event?.detail?.tab !== 'today' && event?.detail?.tab !== 'fuel') closeNutritionScreen()
   }
-  const todayRendered = () => schedule()
-  const healthImported = () => schedule()
-  const nutritionRequested = (event) => openNutritionScreen(event?.detail?.trigger ?? null, event?.detail?.date ?? null)
+  const nutritionRequested = (event) => openNutritionScreen(
+    event?.detail?.trigger ?? null,
+    event?.detail?.date ?? null,
+  )
   window.addEventListener('tempered:screen-shown', screenShown)
-  window.addEventListener('tempered:today-rendered', todayRendered)
-  window.addEventListener('tempered:health-imported', healthImported)
   window.addEventListener('tempered:open-nutrition', nutritionRequested)
-  schedule()
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
-    window.removeEventListener('tempered:today-rendered', todayRendered)
-    window.removeEventListener('tempered:health-imported', healthImported)
     window.removeEventListener('tempered:open-nutrition', nutritionRequested)
     closeNutritionScreen()
   }

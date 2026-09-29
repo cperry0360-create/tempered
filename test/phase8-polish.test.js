@@ -106,7 +106,7 @@ test('PHASE 8: Redesign V1 tokens load before the real styles and browser chrome
   const progress = index.indexOf('./src/progress.css')
   const mobileFixes = index.indexOf('./src/mobile-fixes.css')
   assert.ok(tokens < style && style < setup && setup < cadence && cadence < polish)
-  assert.ok(polish < calm && calm < uplift && uplift < progress && progress < mobileFixes)
+  assert.ok(polish < uplift && uplift < progress && progress < mobileFixes && mobileFixes < calm)
   assert.doesNotMatch(index, /battle\.css|expedition\.css|battle-fidelity\.css|character\.css/)
   assert.match(index, /name="theme-color" content="#1F252C"/)
 })

@@ -255,11 +255,17 @@ export function installHealthPasteRuntime(context) {
     if (!event?.detail?.date || event.detail.date === context.clock.today()) schedule()
   }
   const healthImported = () => schedule()
+  const openRequested = (event) => {
+    openImport(event?.detail?.trigger ?? null).catch((error) => {
+      console.error('[tempered] health import could not open', error)
+    })
+  }
 
   window.addEventListener('tempered:screen-shown', screenShown)
   window.addEventListener('tempered:today-rendered', todayRendered)
   window.addEventListener('tempered:lifestyle-ready', lifestyleReady)
   window.addEventListener('tempered:health-imported', healthImported)
+  window.addEventListener('tempered:open-health-import', openRequested)
   schedule()
 
   return () => {
@@ -267,6 +273,7 @@ export function installHealthPasteRuntime(context) {
     window.removeEventListener('tempered:today-rendered', todayRendered)
     window.removeEventListener('tempered:lifestyle-ready', lifestyleReady)
     window.removeEventListener('tempered:health-imported', healthImported)
+    window.removeEventListener('tempered:open-health-import', openRequested)
     overlay?.remove()
     delete document.body.dataset.healthPasteOpen
   }

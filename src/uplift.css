@@ -770,13 +770,6 @@ body[data-daily-recap-open='true'] { overflow: hidden; }
   background: var(--surface-1);
 }
 
-/* Brighter navigation without turning it into a glowing game HUD. */
-.tabbar {
-  border-color: var(--text-2);
-  background: var(--surface-1);
-  box-shadow: none;
-}
-.tabbar__tab[data-active='true'] { background: var(--surface-1); }
 
 .today-firstweek { display: grid; gap: 9px; padding: 16px; border: 1px solid var(--hairline); border-radius: 20px; background: var(--surface-1); box-shadow: none; }
 .today-firstweek__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }

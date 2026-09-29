@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Tempered — uplifted surface acceptance</title>
     <link rel="stylesheet" href="../../src/style.css" />
-    <link rel="stylesheet" href="../../src/calm.css" />
     <link rel="stylesheet" href="../../src/uplift.css" />
+    <link rel="stylesheet" href="../../src/calm.css" />
   </head>
   <body>
     <div id="app" class="app"></div>
@@ -50,32 +50,36 @@
           barStyle.backgroundColor)
 
         check('Today has no persistent global FAB competing with the tracker', q('.fab') === null)
-        check('Today has one summary card', qa('[data-summary="daily"]').length === 1)
-        check('Today has one daily list surface instead of one card per task',
-          qa('[data-section="daily"] .today-list').length === 1
-          && qa('[data-section="daily"] .today-item').length > 1)
-        check('Today uses one progress bar', qa('[data-summary="daily"] [role="progressbar"]').length === 1)
-        check('Today renders a dedicated foldable Training surface',
-          qa('[data-section="training"]').length === 1
-          && q('[data-fold="training"] .today-section__fold')?.getAttribute('aria-expanded') === 'false')
-        check('Today renders a seven-day date rail', qa('.today-calendar__day').length === 7)
-        check('Today renders a foldable Plan surface', qa('[data-section="planner"]').length === 1)
+        check('Today follows the approved dashboard order',
+          qa('.screen--today > .today-card').map((node) => node.dataset.section).join('|') === 'next-session|readiness|week|fuel|daily')
+        check('Today has no legacy summary, calendar, planner, or workout-control section',
+          !q('[data-summary="daily"]') && !q('.today-calendar') && !q('[data-section="planner"]') && !q('[data-section="training"]'))
+        check('Today exposes companion and Settings in its own header',
+          Boolean(q('.today-companion')) && Boolean(q('.today-settings')))
+        check('Today has one compact calendar-week signal',
+          qa('[data-section="week"] .today-week__day').length === 7)
+        check('Fuel has exactly two progress bars and one meal action',
+          qa('[data-section="fuel"] [role="progressbar"]').length === 2 && Boolean(q('.today-fuel-card__add')))
+        check('Daily log is one shared surface instead of one card per task',
+          qa('[data-section="daily"] .today-list').length === 1)
+        check('Log something else is inside Daily log',
+          Boolean(q('[data-section="daily"] [data-other="toggle"]')))
 
-        const todayTargets = qa('.screen--today-calm .today-item, .tabbar__tab')
+        const todayTargets = qa('.screen--today-calm .today-item, .screen--today-calm .today-item__quick, .tabbar__tab')
           .filter((node) => node.getBoundingClientRect().height > 0)
         const smallToday = todayTargets.filter((node) => node.getBoundingClientRect().height < 44)
-        check('primary Today rows and navigation remain thumb sized', smallToday.length === 0,
+        check('primary Today rows, quick actions, and navigation remain thumb sized', smallToday.length === 0,
           `${todayTargets.length - smallToday.length}/${todayTargets.length} are at least 44px`)
 
-        const dailyList = q('[data-section="daily"] .today-list')
-        const listStyle = getComputedStyle(dailyList)
-        check('the daily list is a rounded shared surface',
-          Number.parseFloat(listStyle.borderRadius) >= 18 && opaque(listStyle.backgroundColor),
-          `${listStyle.borderRadius} radius`)
+        const dailyCard = q('[data-section="daily"]')
+        const dailyStyle = getComputedStyle(dailyCard)
+        check('Daily log is one rounded opaque card',
+          Number.parseFloat(dailyStyle.borderRadius) === 16 && opaque(dailyStyle.backgroundColor),
+          `${dailyStyle.borderRadius} radius`)
 
         const rowBackgrounds = new Set(qa('[data-section="daily"] .today-item')
           .map((node) => getComputedStyle(node).backgroundColor))
-        check('task rows do not each become a loud colored card', rowBackgrounds.size === 1,
+        check('habit rows do not each become a loud colored card', rowBackgrounds.size === 1,
           `${rowBackgrounds.size} row background color`)
 
         check('the page does not scroll sideways', document.documentElement.scrollWidth <= innerWidth,

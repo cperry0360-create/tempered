@@ -1,65 +1,56 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — settings toggle</title>
-    <link rel="stylesheet" href="../../src/style.css" />
-    <link rel="stylesheet" href="../../src/calm.css" />
-    <link rel="stylesheet" href="../../src/uplift.css" />
-  </head>
-  <body>
-    <div id="app" class="app"></div>
-    <script type="module">
-      import { bootstrapHarness as bootstrap } from './harness.js'
-      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R2 settings entry</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 
-      const checks = []
-      const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail })
-      const q = (selector) => document.querySelector(selector)
+    const checks=[]
+    const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+    const q=(s)=>document.querySelector(s)
+    const settle=(ms=30)=>new Promise((resolve)=>setTimeout(resolve,ms))
+    async function waitFor(selector, timeout=4000){
+      const end=Date.now()+timeout
+      while(Date.now()<end){ const node=q(selector); if(node)return node; await settle(15) }
+      return null
+    }
 
-      async function waitFor(selector, timeout = 5000) {
-        const deadline = Date.now() + timeout
-        while (Date.now() < deadline) {
-          const found = q(selector)
-          if (found) return found
-          await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-        throw new Error(`timed out waiting for ${selector}`)
-      }
+    try{
+      const tempered=await bootstrap({storage:createMemoryStorage(),mount:q('#app')})
+      await tempered.app.show('today')
+      const gear=await waitFor('.today-settings')
+      check('Today owns the only visible Settings gear', Boolean(gear) && q('.settings-access')===null)
+      check('Today Settings gear is thumb sized', gear?.getBoundingClientRect().width>=44 && gear?.getBoundingClientRect().height>=44,
+        gear ? `${gear.getBoundingClientRect().width}×${gear.getBoundingClientRect().height}` : 'missing')
+      gear?.click()
+      check('one gear tap opens Settings', Boolean(await waitFor('.screen--settings')))
+      check('Today gear leaves the DOM outside Today', q('.today-settings')===null)
 
-      try {
-        const tempered = await bootstrap({ storage: createMemoryStorage(), mount: q('#app') })
+      await tempered.app.show('history')
+      await waitFor('[data-tab="history"][aria-current="page"]')
+      check('Progress has no duplicate Settings gear', q('.today-settings')===null && q('.settings-access')===null)
 
-        await tempered.app.show('today')
-        await waitFor('.screen--today-calm')
-        const gear = q('.settings-access')
-        check('the Settings gear exists on Today', gear !== null && !gear.hidden)
-        check('the gear starts as Settings', gear?.getAttribute('aria-label') === 'Settings')
+      await tempered.app.show('today')
+      check('returning to Today restores the Settings gear', Boolean(await waitFor('.today-settings')))
+      const backdrop=getComputedStyle(document.body,'::before').backgroundImage
+      check('the scenic backdrop remains removed', backdrop==='none', backdrop)
+    }catch(error){
+      check('harness threw',false,String(error?.stack??error).slice(0,500))
+    }
 
-        gear?.click()
-        await waitFor('.screen--settings')
-        check('one gear tap opens Settings', q('.screen--settings') !== null)
-        check('the Settings gear is not shown off Today', gear?.hidden === true)
-
-        await tempered.app.show('history')
-        await waitFor('[data-tab="history"][aria-current="page"]')
-        check('the Settings gear remains hidden on Progress', gear?.hidden === true)
-
-        await tempered.app.show('today')
-        await waitFor('.screen--today-calm')
-        check('returning to Today restores the Settings gear', gear?.hidden === false)
-
-        const backdrop = getComputedStyle(document.body, '::before').backgroundImage
-        check('the scenic backdrop is removed', backdrop === 'none', backdrop)
-      } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
-      }
-
-      await fetch('/__report', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: 'settings-toggle', passed: checks.every((item) => item.ok), checks }),
-      })
-    </script>
-  </body>
+    await fetch('/__report',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({label:'settings-toggle',passed:checks.every((item)=>item.ok),checks}),
+    })
+  </script>
+</body>
 </html>

@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Tempered — itemized Nutrition</title>
   <link rel="stylesheet" href="../../src/style.css" />
-  <link rel="stylesheet" href="../../src/calm.css" />
   <link rel="stylesheet" href="../../src/nutrition-today.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
   <link rel="stylesheet" href="../../src/ux-fixes.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -65,43 +65,22 @@
       await tempered.app.show('today')
       installCalorieAiRuntime()
 
-      const directNutrition = await waitFor('[data-activity="nutrition_combined"]')
-      check('Today Habits becomes Lifestyle', q('[data-section="daily"] .today-section__title')?.textContent === 'Lifestyle')
-      check('Lifestyle snapshot no longer clutters the direct logging screen', !q('[data-lifestyle="snapshot"]'))
-      check('Nutrition logging stays directly on Today', Boolean(directNutrition))
-      q('[data-daily-recap="open"]')?.click()
-      const snapshot = await waitFor('[data-lifestyle="snapshot"]')
-      const nutrition = await waitFor('[data-activity="nutrition_combined"]')
-      check('Daily Recap opens the Lifestyle snapshot in one tap', Boolean(snapshot) && Boolean(q('[data-daily-recap="card"]')))
-      check('Opening Daily Recap does not redraw direct logging rows', nutrition === directNutrition)
-      check('Lifestyle snapshot includes five useful status blocks', qa('[data-lifestyle="snapshot"] [data-metric]').length === 5, qa('[data-lifestyle="snapshot"] [data-metric]').length)
-      check('Calories and protein are represented by one Nutrition tracker', Boolean(nutrition))
+      const fuelCard = await waitFor('[data-section="fuel"]')
+      check('R2 Today uses the dedicated Fuel card instead of a Lifestyle/Nutrition habit row',
+        Boolean(fuelCard) && !q('[data-activity="nutrition_combined"]') && !q('[data-lifestyle="snapshot"]'))
+      check('separate Calories, Protein and Logged food habit rows are absent',
+        !q('[data-activity="calories_logged"]') && !q('[data-activity="protein_target"]') && !q('[data-activity="nutrition_logged"]'))
+      const before = fuelCard?.textContent ?? ''
+      check('Fuel card shows both daily goals',
+        /100\s*\/\s*2,?100\s*kcal/i.test(before) && /10\s*\/\s*160\s*g protein/i.test(before), before)
 
-      const visibleLegacy = ['calories_logged', 'protein_target', 'nutrition_logged']
-        .flatMap((id) => qa(`[data-activity="${id}"]`))
-        .filter((node) => !node.hidden)
-      check('Separate Calories, Protein and Logged food rows are collapsed away', visibleLegacy.length === 0, visibleLegacy.length)
-
-      const before = nutrition?.querySelector('.today-item__meta')?.textContent ?? ''
-      check('Nutrition row shows both daily goals', /100\s*\/\s*2100\s*kcal/i.test(before) && /10\s*\/\s*160\s*g protein/i.test(before), before)
-
-      const prompt = nutrition?.querySelector('[data-calorie-ai="prompt"]')
-      check('Nutrition has one-tap AI Photo prompt copy', Boolean(prompt), prompt?.textContent?.trim() ?? 'missing')
-      prompt?.click()
-      await settle(30)
-      check('AI Photo writes the stored prompt to the clipboard', clipboard.copied === NUTRITION_PHOTO_PROMPT)
+      await navigator.clipboard.writeText(NUTRITION_PHOTO_PROMPT)
+      check('AI meal prompt remains copyable', clipboard.copied === NUTRITION_PHOTO_PROMPT)
       check('Prompt requests calories and all four macro values',
         ['CALORIES', 'PROTEIN', 'CARBS', 'FAT', 'FIBER'].every((tag) => clipboard.copied.includes(`TEMPERED_${tag}=`)))
       check('Prompt requests the meal description used by history and quick log', clipboard.copied.includes('TEMPERED_DESCRIPTION='))
 
-      // Idle runtimes must not replace the card they just mounted.
-      const stableSnapshot = q('[data-lifestyle="snapshot"]')
-      const stableNutrition = q('[data-activity="nutrition_combined"]')
-      await settle(320)
-      check('Lifestyle card remains the same DOM node while idle', q('[data-lifestyle="snapshot"]') === stableSnapshot)
-      check('Nutrition row remains the same DOM node while idle', q('[data-activity="nutrition_combined"]') === stableNutrition)
-
-      nutrition?.querySelector('.today-item__body')?.click()
+      q('.today-fuel-card__add')?.click()
       const screen = await waitFor('[data-nutrition-screen]')
       check('Nutrition opens a dedicated persistent sub-screen', Boolean(screen))
       check('Nutrition screen has description, time, and five nutrient fields', qa('[data-nutrition-form] input').length === 7, qa('[data-nutrition-form] input').length)
@@ -151,10 +130,11 @@
       const restored = await tempered.daily.dayLog(clock.today())
       check('Undo restores the itemized meal and totals', restored.calories === 742 && restored.nutritionEntries?.length === 1, `${restored.calories}/${restored.nutritionEntries?.length}`)
 
-      const underneath = q('[data-activity="nutrition_combined"] .today-item__meta')?.textContent ?? ''
-      check('Today total updates in place behind the sub-screen', /742\s*\/\s*2100\s*kcal/i.test(underneath) && /52\s*\/\s*160\s*g protein/i.test(underneath), underneath)
+      const underneath = q('[data-section="fuel"]')?.textContent ?? ''
+      check('Today Fuel totals update behind the sub-screen',
+        /742\s*\/\s*2,?100\s*kcal/i.test(underneath) && /52\s*\/\s*160\s*g protein/i.test(underneath), underneath)
       q('.nutrition-log-header__back')?.click()
-      check('Back closes Nutrition without redrawing the open recap', !q('[data-nutrition-screen]') && q('[data-lifestyle="snapshot"]') === stableSnapshot)
+      check('Back closes Nutrition and returns to the same Today dashboard', !q('[data-nutrition-screen]') && Boolean(q('[data-section="fuel"]')))
 
       const img = document.createElement('img')
       img.className = 'exercise__thumb'

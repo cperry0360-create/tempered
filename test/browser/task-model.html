@@ -1,192 +1,123 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tempered — daily workout task model acceptance</title>
-    <link rel="stylesheet" href="../../src/style.css" />
-    <link rel="stylesheet" href="../../src/calm.css" />
-    <link rel="stylesheet" href="../../src/uplift.css" />
-  </head>
-  <body>
-    <div id="app" class="app"></div>
-    <script type="module">
-      import { bootstrapHarness as bootstrap } from './harness.js'
-      import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
-      import { fixedClock } from '../../src/adapters/clock/clock.js'
-      import { VERSION, BUILD_DATE } from '../../src/version.js'
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — task model acceptance</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/uplift.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness as bootstrap } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { VERSION, BUILD_DATE } from '../../src/version.js'
 
-      const checks = []
-      const check = (name, ok, detail = '') => { checks.push({ name, ok: Boolean(ok), detail }) }
-      const q = (s) => document.querySelector(s)
-      const qa = (s) => [...document.querySelectorAll(s)]
-      const settle = () => new Promise((r) => setTimeout(r, 70))
+    const checks=[]
+    const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+    const q=(s)=>document.querySelector(s)
+    const qa=(s)=>[...document.querySelectorAll(s)]
+    const settle=(ms=70)=>new Promise((resolve)=>setTimeout(resolve,ms))
+    async function waitFor(selector, timeout=5000){
+      const end=Date.now()+timeout
+      while(Date.now()<end){const node=q(selector);if(node)return node;await settle(20)}
+      return null
+    }
+    const payload=(entry,task)=>({dayId:entry.day.id,slotIndex:task.index,exerciseId:task.slot.exerciseId})
+    const sets=(count,weight=95)=>Array.from({length:count},()=>({weight,reps:8}))
 
-      async function waitFor(selector, timeout = 5000) {
-        const deadline = Date.now() + timeout
-        while (Date.now() < deadline) {
-          const found = q(selector)
-          if (found) return found
-          await new Promise((r) => setTimeout(r, 10))
-        }
-        throw new Error(`timed out waiting for ${selector}`)
+    try{
+      const storage=createMemoryStorage()
+      const clock=fixedClock(new Date(2026,8,10,9,0,0))
+      const tempered=await bootstrap({storage,clock,mount:q('#app')})
+
+      await tempered.app.show('today')
+      await waitFor('[data-section="next-session"]')
+      check('R2 Today shows one next-session card instead of a workout task queue',
+        /Upper Specialization/i.test(q('[data-section="next-session"]')?.textContent??'')
+        && q('[data-section="training"]')===null)
+      check('Today preserves a full-session route', q('[data-startday="thursday"]')!==null)
+
+      let status=await tempered.workout.weekStatus()
+      const monday=status.week.days.find((entry)=>entry.day.id==='monday')
+      const thursday=status.week.days.find((entry)=>entry.day.id==='thursday')
+      check('program task data remains available for Monday and Thursday', Boolean(monday?.tasks?.length&&thursday?.tasks?.length))
+
+      const mondayFirst=monday.tasks[0]
+      const mondayPartial=Math.min(2,Math.max(1,mondayFirst.prescribed-1))
+      await tempered.workout.completeSlot(payload(monday,mondayFirst),sets(mondayPartial,135))
+      status=await tempered.workout.weekStatus()
+      const carried=status.week.days.find((entry)=>entry.day.id==='monday').tasks[mondayFirst.index]
+      check('unfinished earlier-week work retains partial canonical progress',
+        carried.logged===mondayPartial && carried.done===false,
+        `${carried.logged}/${carried.prescribed}`)
+      const grit=[...(await storage.getAll('attributeState'))].find((row)=>row.attribute==='grit')
+      check('between-call training still earns Grit', (grit?.xp??0)>0, grit?.xp??0)
+
+      status=await tempered.workout.weekStatus()
+      const thursdayNow=status.week.days.find((entry)=>entry.day.id==='thursday')
+      const todayFirst=thursdayNow.tasks[0]
+      const todaySecond=thursdayNow.tasks[1]
+      await tempered.workout.completeSlot(payload(thursdayNow,todayFirst),sets(1,115))
+      if(todaySecond) await tempered.workout.completeSlot(payload(thursdayNow,todaySecond),sets(todaySecond.prescribed,35))
+
+      await tempered.app.show('today')
+      q('[data-startday="thursday"]')?.click()
+      await waitFor(`[data-exercise="${todayFirst.slot.exerciseId}"]`)
+      const remainingChecks=qa(`[data-exercise="${todayFirst.slot.exerciseId}"] .setrow__check`).length
+      check('Today Start session respects already-logged sets',
+        remainingChecks===todayFirst.prescribed-1,
+        `${remainingChecks} remaining of ${todayFirst.prescribed}`)
+      if(todaySecond){
+        check('Today Start session omits an already-completed movement',
+          q(`[data-exercise="${todaySecond.slot.exerciseId}"]`)===null)
       }
 
-      async function openWorkout() {
-        await waitFor('[data-section="training"][data-daily-workout-fingerprint]')
-        const fold = q('[data-fold="training"] .today-section__fold')
-        if (fold?.getAttribute('aria-expanded') !== 'true') fold?.click()
-        return waitFor('[data-daily-workout-task]')
+      q('[data-action="finish"]')?.click()
+      await waitFor('[data-action="confirm-finish"]')
+      q('[data-action="confirm-finish"]')?.click(); await settle()
+      if(q('[data-action="done"]')){q('[data-action="done"]')?.click();await settle()}
+
+      status=await tempered.workout.weekStatus()
+      const mondayLater=status.week.days.find((entry)=>entry.day.id==='monday')
+      const old=mondayLater.tasks[mondayFirst.index]
+      const remain=Math.max(0,old.prescribed-old.logged)
+      if(remain>0) await tempered.workout.completeSlot(payload(mondayLater,old),sets(remain,135))
+      status=await tempered.workout.weekStatus()
+      check('rolled work remains completable later in the same workout week',
+        status.week.days.find((entry)=>entry.day.id==='monday').tasks[mondayFirst.index].done===true)
+
+      await tempered.app.show('train')
+      await waitFor('[data-programday]')
+      check('the detailed program remains available in Train', qa('[data-programday]').length>=3, qa('[data-programday]').length)
+
+      const forbidden=/\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
+      const screens=[]
+      for(const tab of ['today','train','history']){
+        await tempered.app.show(tab);await settle()
+        screens.push(document.body.innerText)
       }
+      check('outstanding work is never described as debt or failure', screens.every((text)=>!forbidden.test(text)))
 
-      const payload = (entry, task) => ({
-        dayId: entry.day.id,
-        slotIndex: task.index,
-        exerciseId: task.slot.exerciseId,
-      })
-      const sets = (count, weight = 95) => Array.from({ length: count }, () => ({ weight, reps: 8 }))
+      await tempered.app.show('settings')
+      await waitFor('[data-version]')
+      check('Settings shows the current version', q('[data-version]')?.textContent===VERSION, q('[data-version]')?.textContent)
+      check('the service-worker identity remains versioned', VERSION.length>0&&BUILD_DATE.length>0, `${VERSION} / ${BUILD_DATE}`)
 
-      try {
-        const storage = createMemoryStorage()
-        const clock = fixedClock(new Date(2026, 8, 10, 9, 0, 0)) // Thursday
-        const tempered = await bootstrap({ storage, clock, mount: document.getElementById('app') })
+      clock.advanceDays(11)
+      status=await tempered.workout.weekStatus()
+      check('the next workout week starts clean', status.week.done===0&&status.week.total===31, `${status.week.done} of ${status.week.total}`)
+    }catch(error){
+      check('harness threw',false,String(error?.stack??error).slice(0,700))
+    }
 
-        await tempered.app.show('today')
-        await waitFor('[data-section="training"][data-daily-workout-fingerprint]')
-        const fold = q('[data-fold="training"] .today-section__fold')
-        check('Today has a dedicated collapsed Workout section',
-          q('[data-section="training"] .today-section__title')?.textContent === 'Workout'
-          && fold?.getAttribute('aria-expanded') === 'false')
-        check('Workout keeps a full-session route',
-          /start full session/i.test(q('[data-section="training"] .today-section__start')?.textContent ?? ''))
-
-        await openWorkout()
-        let rows = qa('[data-daily-workout-task]')
-        const earlierGroup = q('[data-workout-earlier]')
-        check('a large earlier-week queue stays available without filling the screen',
-          earlierGroup !== null && earlierGroup.open === false
-          && earlierGroup.querySelectorAll('[data-daily-workout-task]').length >= 6,
-          `${earlierGroup?.querySelectorAll('[data-daily-workout-task]').length ?? 0} earlier movements; open ${earlierGroup?.open}`)
-        check('Thursday shows both current work and earlier unfinished rollover work',
-          rows.some((row) => row.dataset.rollover === 'false') && rows.some((row) => row.dataset.rollover === 'true'),
-          `${rows.filter((row) => row.dataset.rollover === 'false').length} today + ${rows.filter((row) => row.dataset.rollover === 'true').length} rollover`)
-        check('Workout rows expose set-level progress instead of weekly frequency',
-          rows.every((row) => /\d+ \/ \d+ sets/.test(row.textContent) && !/this week/.test(row.textContent)))
-
-        let status = await tempered.workout.weekStatus()
-        const monday = status.week.days.find((entry) => entry.day.id === 'monday')
-        const thursday = status.week.days.find((entry) => entry.day.id === 'thursday')
-        check('program task data is available for Monday and Thursday', Boolean(monday?.tasks?.length && thursday?.tasks?.length))
-
-        // Chip away at an old movement between calls.
-        const mondayFirst = monday.tasks[0]
-        const mondayPartial = Math.min(2, Math.max(1, mondayFirst.prescribed - 1))
-        await tempered.workout.completeSlot(payload(monday, mondayFirst), sets(mondayPartial, 135))
-        await tempered.app.show('today')
-        await openWorkout()
-        let rolled = q(`[data-daily-workout-task="monday#${mondayFirst.index}"]`)
-        check('unfinished Monday work visibly rolls onto Thursday',
-          rolled?.dataset.rollover === 'true' && /Rolled from/i.test(rolled.textContent), rolled?.textContent?.trim())
-        check('rollover preserves partial progress',
-          Number(rolled?.dataset.logged) === mondayPartial
-          && Number(rolled?.dataset.prescribed) === mondayFirst.prescribed,
-          `${rolled?.dataset.logged ?? '?'} / ${rolled?.dataset.prescribed ?? '?'} sets`)
-
-        const grit = [...(await storage.getAll('attributeState'))].find((row) => row.attribute === 'grit')
-        check('between-call training still earns Grit', (grit?.xp ?? 0) > 0, `grit ${grit?.xp ?? 0} xp`)
-
-        // Chip away at today's first movement and finish today's second outside
-        // of a formal session.
-        status = await tempered.workout.weekStatus()
-        const thursdayNow = status.week.days.find((entry) => entry.day.id === 'thursday')
-        const todayFirst = thursdayNow.tasks[0]
-        const todaySecond = thursdayNow.tasks[1]
-        await tempered.workout.completeSlot(payload(thursdayNow, todayFirst), sets(1, 115))
-        if (todaySecond) await tempered.workout.completeSlot(payload(thursdayNow, todaySecond), sets(todaySecond.prescribed, 35))
-
-        await tempered.app.show('today')
-        await openWorkout()
-        const partialToday = q(`[data-daily-workout-task="thursday#${todayFirst.index}"]`)
-        check('Today immediately reflects a set completed outside the full session',
-          partialToday?.dataset.logged === '1' && Number(partialToday?.dataset.prescribed) === todayFirst.prescribed,
-          `${partialToday?.dataset.logged ?? '?'} / ${partialToday?.dataset.prescribed ?? '?'} sets`)
-        if (todaySecond) {
-          check('Today keeps a movement visibly complete after it is finished piecemeal',
-            q(`[data-daily-workout-task="thursday#${todaySecond.index}"]`)?.dataset.done === 'true')
-        }
-
-        // Now enter the formal workout. It must consume the same canonical slot
-        // progress rather than asking the user to repeat already-done work.
-        q('[data-section="training"] .today-section__start')?.click()
-        await waitFor(`[data-exercise="${todayFirst.slot.exerciseId}"]`)
-        const remainingChecks = qa(`[data-exercise="${todayFirst.slot.exerciseId}"] .setrow__check`).length
-        check('full session only contains the remaining sets for the partial movement',
-          remainingChecks === todayFirst.prescribed - 1,
-          `${remainingChecks} remaining of ${todayFirst.prescribed}`)
-        if (todaySecond) {
-          check('full session omits an already-completed movement',
-            q(`[data-exercise="${todaySecond.slot.exerciseId}"]`) === null)
-        }
-
-        // End the inspection session without logging anything new. The exact
-        // post-finish route is not part of this acceptance; explicitly return
-        // to Today so the rest of the task-model checks remain deterministic.
-        q('[data-action="finish"]')?.click()
-        await waitFor('[data-action="confirm-finish"]')
-        q('[data-action="confirm-finish"]')?.click()
-        await settle()
-        if (q('[data-action="done"]')) { q('[data-action="done"]')?.click(); await settle() }
-        await tempered.app.show('today')
-        await openWorkout()
-
-        // Finish the rolled Monday slot and prove it leaves the active queue.
-        status = await tempered.workout.weekStatus()
-        const mondayNow = status.week.days.find((entry) => entry.day.id === 'monday')
-        const carried = mondayNow.tasks[mondayFirst.index]
-        const remain = Math.max(0, carried.prescribed - carried.logged)
-        if (remain > 0) await tempered.workout.completeSlot(payload(mondayNow, carried), sets(remain, 135))
-        status = await tempered.workout.weekStatus()
-        check('rolled work remains completable later in the same workout week',
-          status.week.days.find((entry) => entry.day.id === 'monday').tasks[mondayFirst.index].done === true)
-        await tempered.app.show('today'); await openWorkout()
-        rolled = q(`[data-daily-workout-task="monday#${mondayFirst.index}"][data-rollover="true"]`)
-        check('completed rollover leaves the active daily Workout queue', rolled === null)
-
-        await tempered.app.show('train')
-        await waitFor('[data-programday]')
-        check('the detailed program remains available in Train', qa('[data-programday]').length >= 3,
-          `${qa('[data-programday]').length} program days`)
-
-        const forbidden = /\b(overdue|late|missed|missing|failed|failure|behind|skipped|expired|penalty|debt)\b/i
-        const screens = []
-        for (const tab of ['today', 'train', 'history']) {
-          await tempered.app.show(tab)
-          await settle()
-          screens.push([tab, document.body.innerText])
-        }
-        check('outstanding work is never described as debt or failure',
-          screens.every(([, text]) => !forbidden.test(text)))
-
-        await tempered.app.show('settings')
-        await waitFor('[data-version]')
-        check('Settings shows the current version', q('[data-version]')?.textContent === VERSION, q('[data-version]')?.textContent)
-        check('the service-worker identity remains versioned', VERSION.length > 0 && BUILD_DATE.length > 0,
-          `VERSION ${VERSION}, built ${BUILD_DATE}`)
-
-        // Existing product rule: rollover lives inside the current workout week,
-        // then the next week starts clean rather than creating permanent debt.
-        clock.advanceDays(11) // Thu setup retains its starter Sunday; Mon begins week two.
-        status = await tempered.workout.weekStatus()
-        check('the next workout week starts clean', status.week.done === 0 && status.week.total === 31,
-          `${status.week.done} of ${status.week.total} done`)
-      } catch (error) {
-        check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
-      }
-
-      await fetch('/__report', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ label: 'task-model', passed: checks.every((c) => c.ok), checks }),
-      })
-    </script>
-  </body>
+    await fetch('/__report',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({label:'task-model',passed:checks.every((item)=>item.ok),checks}),
+    })
+  </script>
+</body>
 </html>

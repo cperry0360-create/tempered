@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 40928)
-Total output lines: 2617
+Warning: truncated output (original token count: 41128)
+Total output lines: 2630
 
 # Decisions log
 
@@ -1015,21 +1015,7 @@ body-metric guard — it is worth having only while it has no exceptions.
 because `data/titles.json` is newly fetched at boot.
 ## 2026-09-04 — Exercise art comes from free-exercise-db, and the licence chain has a kink
 **Phase:** 3.5 D (unblocking)
-**Decis…10928 tokens truncated…ite.
-**Needs Cory:** no
-
-
-## 2026-09-05 — Cory decisions: modern iOS, today FAB, body-weight protein goal
-
-**Decision:** Tempered targets modern iOS PWA support (iOS 16.4+); iOS 16.3 and older are not a compatibility target. The Train primary FAB starts the program day prescribed for today. Protein is tracked as grams with a daily finish line of at least 0.8 g per pound of the latest recorded body weight; metric weights are converted to pounds before calculating the target.
-
-**Needs Cory:** no
-
-## 2026-09-08 — The tracker-first Companion pivot is the authoritative product
-**Phase:** 0.14 continuity recovery
-**Decision:** Updated `CLAUDE.md` and added `docs/CURRENT-STATE.md` so the normal product
-is explicitly Today, Train, Companion, and Progress. Character/Battle remains internal
-only for old data and regression coverage. The Companion is positive-only and cannot
+**Decis…11128 tokens truncated…or old data and regression coverage. The Companion is positive-only and cannot
 decay or punish missed days.
 **Reasoning:** The long build conversation and companion-art chat had superseded several
 RPG-era documents, while the repository's session contract still described a visible
@@ -1931,3 +1917,16 @@ contract or the data model.
 
 **Needs Cory:** choose the preferred final art direction after seeing the refreshed release on a
 physical iPhone; program editing remains the next implementation slice.
+## 2026-09-29 — Phase 2.3: Mobile Program Builder foundation
+**Phase:** Product Phase 2 / 0.34.0
+
+**Decision:** Add a small Settings-launched builder for program name, weeks, training days,
+exercise selection, sets, rep ranges, draft save, and explicit review/activation. Persist every
+save as a new immutable program revision and precache the builder for offline use.
+
+**Reasoning:** Users can now choose a blank program, so the next useful action is a complete
+small path to make that draft real. Keeping the builder behind Settings avoids competing with
+Today and Train, while the existing revision envelope protects completed history.
+
+**Needs Cory:** physical-iPhone review of the builder's tap density and editing flow; richer
+progression rules and exercise substitutions remain future slices.

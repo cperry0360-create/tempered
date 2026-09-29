@@ -4,7 +4,7 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.33.0 (47)
+**Current release:** 0.34.0 (48)
 
 **Product maturity:** Pre-beta product completion
 
@@ -36,6 +36,11 @@ Release 0.33.0 turns the starting path into a real template chooser. New users c
 Strength Foundation, November Physique, Mercy Mode, or start a safe blank draft. The visual
 system now uses warm amber action accents and lifted teal recovery accents instead of acid
 lime and moss green. Existing history and program records remain intact.
+
+Release 0.34.0 adds the first mobile Program Builder workflow. From Settings, a user can
+create or edit a day, add exercises, set sets and rep ranges, save a draft, and review before
+activating. Every save creates an immutable prescription revision; existing workout history is
+not rewritten.
 
 Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
 plus recovery, keeps the local-first promise visible, captures the user's goal, realistic

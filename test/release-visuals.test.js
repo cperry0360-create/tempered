@@ -10,7 +10,7 @@ const workflow = readFileSync(root + '.github/workflows/tests.yml', 'utf8')
 const contract = readFileSync(root + 'docs/PRODUCT-TEAM.md', 'utf8')
 
 test('release evidence covers onboarding and every core product surface', () => {
-  for (const view of ['setup-welcome', 'setup-rhythm', 'today', 'train', 'fuel', 'progress']) {
+  for (const view of ['setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'fuel', 'progress']) {
     assert.match(capture, new RegExp(`['"]${view}['"]`), `capture matrix is missing ${view}`)
   }
   assert.match(page, /Unknown release visual/)

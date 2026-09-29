@@ -2578,3 +2578,25 @@ occlusion, and integration defects before Cory has to discover them in normal us
 live visual inspection of onboarding plus Today, Train, Fuel, and Progress.
 **Needs Cory:** validate major product-direction prototypes and the eventual physical-iPhone
 pre-beta acceptance pass; routine fixes and release verification do not wait for approval.
+
+## 2026-09-29 — Phase 2.1: Guided First Use
+**Phase:** Product Phase 2 / 0.32.0
+
+**Decision:** Replace the preference-first setup with an eight-step, skippable first-use flow.
+The flow explains Tempered's effort-and-recovery thesis and local-first boundary, captures a
+realistic goal, weekly rhythm, session length, equipment, starting path, optional starting
+weights, tracking cadence, and companion preference, then names the user's next action before
+entering the app.
+
+**Reasoning:** A new user could previously reach a seeded plan without understanding what
+Tempered was for or how recovery fit into the system. The flow now teaches the product promise
+before asking for configuration and makes the first useful action explicit. It stores only
+preferences and existing-plan edits, so rerunning setup never rewrites history or silently
+creates a new program.
+
+**Confidence:** copy regression coverage, updated companion/setup browser acceptance, static
+release-visual coverage for welcome, rhythm, and starting-path screens, and the existing full
+domain suite.
+
+**Needs Cory:** validate the onboarding language and first-use flow on a physical iPhone;
+full template selection and blank-plan creation remain the next Phase 2 slice.

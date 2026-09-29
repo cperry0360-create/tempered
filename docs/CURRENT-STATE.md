@@ -4,13 +4,14 @@
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.31.1 (45)
+**Current release:** 0.32.0 (46)
 
 **Product maturity:** Pre-beta product completion
 
 Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
-program creation or editing system. First launch configures preferences but does not yet
-teach the current tracker-first thesis or guide a new user into a complete training plan.
+program creation or editing system. First launch now teaches the tracker-first thesis, asks
+for a realistic goal, schedule, session length, and equipment, previews the starting path,
+and lands the user on a concrete next action. Full program creation and editing remain ahead.
 Product Phase 2 is therefore Program Foundation and Guided First Use. Release 0.27 establishes
 versioned program envelopes, immutable prescription revisions, and a safe migration for the
 existing November program. The builder and revised onboarding are still ahead. Expanded native
@@ -30,6 +31,12 @@ the autonomous product-team release contract. CI now captures every core surface
 supported iPhone viewport classes as reviewable evidence. A release is not complete until
 those captures and the deployed product have been visually inspected. The operating contract
 is in [`docs/PRODUCT-TEAM.md`](PRODUCT-TEAM.md).
+
+Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
+plus recovery, keeps the local-first promise visible, captures the user's goal, realistic
+weekly rhythm, session length, equipment, and starting path, then reviews the current plan
+before saving. The companion remains optional and is presented as a reflection of completed
+work rather than a responsibility. Existing history and program records remain intact.
 
 Release 0.31 makes three distinct 30-minute days the weekly streak minimum. A fourth qualifying day makes it a strong week and advances keeper progress, so busy weeks count without removing the reward for doing more.
 

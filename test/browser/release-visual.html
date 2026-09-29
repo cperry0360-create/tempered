@@ -57,10 +57,13 @@
     try {
       await installShippedInlineCss()
       const storage = createMemoryStorage()
-      if (view === 'setup-welcome' || view === 'setup-rhythm') {
+      if (view === 'setup-welcome' || view === 'setup-rhythm' || view === 'setup-plan') {
         await bootstrap({ storage, clock, mount })
         if (view === 'setup-rhythm') {
           mount.querySelector('.setup__next')?.click()
+        }
+        if (view === 'setup-plan') {
+          for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
       } else if (route[view]) {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })

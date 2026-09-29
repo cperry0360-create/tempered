@@ -36,6 +36,27 @@
       })
       await setup.start()
 
+      check('Welcome teaches effort and recovery', /training, nutrition, sleep, and recovery/i.test(q('.setup')?.textContent ?? '')
+        && /no downside/i.test(q('.setup')?.textContent ?? ''))
+      q('.setup__next')?.click()
+      await settle()
+      check('Goal and session choices are available', Boolean(q('.setup__choice') && q('.setup__number')))
+      q('[data-selected="false"].setup__choice')?.click()
+      q('.setup__next')?.click()
+      await settle()
+      check('Equipment choices are available', /Available equipment/i.test(q('.setup')?.textContent ?? ''))
+      q('.setup__next')?.click()
+      await settle()
+      check('Starting path is explicit', /Choose how to begin/i.test(q('.setup')?.textContent ?? '') && /Explore first/i.test(q('.setup')?.textContent ?? ''))
+      q('.setup__next')?.click()
+      await settle()
+      q('.setup__next')?.click()
+      await settle()
+
+      for (let step = 0; step < 1; step += 1) {
+        q('.setup__next')?.click()
+        await settle()
+      }
       check('Setup offers all three companion styles', Boolean(q('[data-style="turtle"]') && q('[data-style="forge"]') && q('[data-style="sprout"]')))
       check('Trailback Turtle is selected by default', q('[data-style="turtle"]')?.dataset.selected === 'true')
       check('All setup options show first-party art previews',
@@ -47,7 +68,7 @@
       await settle()
       check('Setup visual preference can be changed', q('[data-style="sprout"]')?.dataset.selected === 'true')
 
-      for (let step = 0; step < 5; step += 1) {
+      for (let step = 0; step < 2; step += 1) {
         q('.setup__next')?.click()
         await settle()
       }

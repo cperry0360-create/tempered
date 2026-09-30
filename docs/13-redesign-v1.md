@@ -37,6 +37,22 @@ Rules for this redesign:
 
 ---
 
+## 0.1 Feature preservation (added after R3, overrides the mockup)
+
+The mockup shows layout and visual hierarchy only. **It is not a feature list.** Where the
+mockup leaves something out, the existing feature stays.
+
+1. A redesign phase must not remove any working feature, data field, or behaviour unless
+   this document names that specific feature for removal.
+2. Before changing a screen, inventory its features from the last pre-redesign version of
+   the file (`git show d9850f5:<path>`) and write the list into `DECISIONS.md`. After the
+   change, confirm each item still works, and say where it now lives.
+3. If a feature does not fit the new layout, move it into the ⋯ menu, a detail view, or a
+   one-line footnote. Do not delete it. If you truly cannot place it, keep it and add it to
+   "Needs Cory".
+4. Behaviour beats appearance. Speed of logging and correctness of what is logged matter
+   more than matching the mockup pixel for pixel.
+
 ## 1. Design tokens
 
 Create `src/tokens.css`, loaded first in `index.html`. Every colour in every stylesheet
@@ -168,20 +184,35 @@ The most important screen. Speed between sets is the metric.
     into a `·` suffix and dropping the equipment word when it duplicates the name.
   - Line 2: `4 × 6-10 · Rest 2:00` (footnote, `--text-2`). Tapping the rest value edits it.
   - Right: 44px ⋯ button. The menu holds every existing per-exercise action: History, Swap,
-    Notes, Rest timer, Cable/machine settings, Move up, Move down, Remove. Remove the
-    horizontal chip row and the up/down arrow buttons.
-  - Optional coaching line, one line, footnote: `Hit 10 reps at 115 before adding weight.`
-  - Remove the exercise photo thumbnail, the `LAST` pill, and the `PR` pill from the block.
+    Method, Plate settings, Cable/machine settings, Notes, Rest timer, Move up, Move down,
+    Remove. Remove the horizontal chip row and the up/down arrow buttons.
+  - **Exercise photo (amended R3.1):** a 56px square thumbnail, 10px radius, to the left of
+    lines 1 and 2, for every exercise that has art. Tapping it opens the full image panel,
+    as before R3. The photo is kept; the mockup omitted it by mistake.
+  - Line 3, footnote, `--text-2`: `Best 125 lb × 8 · 17 Sep` when a record exists.
+  - **Coaching line:** the progression proposal's reason when one exists
+    (`entry.proposal.reason`, for example `Every set hit 12. Proposing 130 lb and back to 8.`).
+    Only fall back to slot cue text when there is no proposal. Never replace the proposal
+    reason with generic text.
 - **Set table:** column header row (footnote, `--text-3`): `Set`, `Previous`, `lbs`,
   `Reps`, check icon.
   - Row height 52px. Columns: Set 36px, Previous flex, lbs 76px, Reps 60px, Check 44px.
-  - `Previous` shows `115 × 6` in `--text-3`; tapping it copies into the inputs.
-  - Inputs are `--surface-2`, 10px radius, 17px semibold tabular. Empty inputs show the
-    previous values as **placeholders in `--text-3`**, visibly dimmer than entered values.
-    `inputmode="decimal"` for weight, `inputmode="numeric"` for reps.
-  - Check is a 28px outline circle in a 44px target. Tapping it logs the set, using the
-    placeholder values if inputs are empty. Completed rows get `--success-tint` background
-    and a filled green check. No other markers on the row.
+  - `Previous` shows last session's set (`115 × 6`) in `--text-3`; tapping it copies those
+    values into the inputs.
+  - **Inputs are prefilled with the prescribed values (amended R3.1).** Each unlogged row's
+    inputs hold the real values from `prepared.proposal.sets` (the progression engine's
+    target, for example 130 × 8), as they did before R3. They are real input values, not
+    placeholders, at `--text-1`. Last session's numbers appear only in the Previous column.
+    Editing the first set's weight or reps still cascades to later unlogged sets.
+    `inputmode="decimal"` for weight, `inputmode="numeric"` for reps. Inputs are
+    `--surface-2`, 10px radius, 17px semibold tabular.
+  - Check is a 28px outline circle in a 44px target. **One tap logs exactly the values
+    shown in the inputs** (the prescription unless the user edited them). Completed rows
+    get `--success-tint` background and a filled green check.
+  - **Plate calculator (amended R3.1):** for barbell exercises, the next unlogged row shows
+    a compact line directly under it: `Per side: 45 · 10 · 2.5 · 45 lb bar`, footnote,
+    `--text-2`, updating as the weight changes. Same solver and plate settings as before R3.
+    Logged rows do not show it.
   - Tapping the set number opens set type: Working, Warm-up (W), Drop (D), Failure (F).
   - Swipe left on a row to delete it.
   - Beating the best e1RM shows a small ember `PR` pill in place of the Previous text.
@@ -266,7 +297,17 @@ do not weaken tests of logging, persistence, or domain logic.
   order and content, and the Daily log card holds all habit rows.
 - **R3 Active workout.** Section 5 Active workout. *Done when:* the session capture matches
   mockup screen 2; `tools/verify-logging-speed.js` passes and logs a set with one tap on the
-  check using placeholder values.
+  check using the prescribed values shown in the inputs.
+- **R3.1 Session feature restore.** Apply section 0.1 to the active workout and the amended
+  section 5 Active workout: prescribed values prefilled and logged by one tap, proposal
+  reason as the coaching line, photo thumbnail and full image panel, in-row plate calculator,
+  best-set line. Then audit the R2 and R4 diffs (`git diff d9850f5 HEAD -- src/ui/screens/`)
+  for any other removed feature and restore it under section 0.1 rule 3.
+  *Done when:* a browser test proves one tap on the check logs the prescription (for example
+  130 × 8 when last session was 125 × 12) and fails if it logs last session's values; a
+  barbell exercise shows the per-side plate line under its next unlogged row; every exercise
+  with art shows its thumbnail and opens the full image; the feature inventory for Today,
+  Active workout, Train, and Fuel is in `DECISIONS.md` with each item marked kept and where.
 - **R4 Train and Fuel.** Section 5 Train and Fuel. *Done when:* Fuel capture matches mockup
   screen 3 and the ring is empty with 0 kcal logged.
 - **R5 Progress and sweep.** Section 5 Progress. Then a sweep of every other screen

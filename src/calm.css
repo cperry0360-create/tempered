@@ -1413,3 +1413,76 @@ button.today-item:disabled {
     gap: 4px;
   }
 }
+
+
+/* R3 visual QA refinements against approved mockup screen 2. */
+.exercise--r3 .exercise-menu__trigger {
+  background: var(--surface-2);
+}
+
+.exercise--r3 .setrow--head {
+  height: 28px;
+  min-height: 28px;
+  align-items: center;
+}
+
+.exercise--r3 .setrow--head .setrow__index,
+.exercise--r3 .setrow--head .setrow__record,
+.exercise--r3 .setrow--head .setrow__col,
+.exercise--r3 .setrow--head .setrow__head-check {
+  min-height: 0;
+  height: auto;
+  display: flex;
+  align-items: center;
+}
+
+.exercise--r3 .setrow--head .setrow__index,
+.exercise--r3 .setrow--head .setrow__col,
+.exercise--r3 .setrow--head .setrow__head-check {
+  justify-content: center;
+}
+
+.exercise--r3 .setrow--head .setrow__record {
+  justify-content: flex-start;
+}
+
+.setrow__head-check {
+  width: 28px;
+  height: 28px;
+  justify-self: center;
+  border-radius: 50%;
+  background: var(--text-3);
+  color: var(--surface-1) !important;
+}
+
+.setrow__head-check .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.exercise--r3 .setrow[data-done='true'] .setrow__check {
+  background: transparent;
+  border-color: transparent;
+}
+
+.exercise--r3 .setrow:not(.setrow--head):not(:last-of-type) {
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 55%, transparent);
+  border-radius: 0;
+}
+
+.exercise--r3 .addset {
+  margin-top: 4px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.session-restbar {
+  right: auto;
+  left: 50%;
+  width: min(calc(100% - 20px), 410px);
+  transform: translateX(-50%);
+  border: 1px solid var(--hairline);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+}

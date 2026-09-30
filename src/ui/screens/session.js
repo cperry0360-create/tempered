@@ -290,15 +290,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return Number.isFinite(Number(value)) ? Number(value) : null
   }
 
-  function displayName(exercise) {
-    const raw = exercise?.movementName ?? exercise?.name ?? 'Exercise'
+  function displayName(exercise, slot = null) {
+    const raw = exercise?.name ?? exercise?.movementName ?? 'Exercise'
     const match = raw.match(/^(.*?)\s*\((.*?)\)\s*$/)
-    let base = match ? match[1].trim() : raw.trim()
+    let base = (slot?.name ?? exercise?.movementName ?? (match ? match[1] : raw)).trim()
     let suffix = match ? match[2].trim() : ''
     if (suffix && exercise?.variant) {
       suffix = suffix.replace(new RegExp(`\\b${exercise.variant}\\b[, ]*`, 'i'), '')
     }
     suffix = suffix.replace(/\bgrip\b/ig, '').replace(/\s*,\s*/g, ' · ').replace(/^[ ·-]+|[ ·-]+$/g, '').trim()
+    // Program names such as "Seated Cable Row" already carry the useful
+    // equipment distinction; don't add a redundant grip suffix there.
+    if (exercise?.variant && new RegExp(`\\b${exercise.variant}\\b`, 'i').test(base)) suffix = ''
     return suffix ? `${base} · ${suffix}` : base
   }
 
@@ -656,7 +659,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return el('div.exercise-menu-wrap', {}, [
       el('button.exercise-menu__trigger', {
         type: 'button',
-        'aria-label': `More actions for ${displayName(entry.exercise)}`,
+        'aria-label': `More actions for ${displayName(entry.exercise, entry.slot)}`,
         'aria-expanded': String(menuOpen),
         onclick: () => togglePanel(entry, 'menu'),
       }, ['⋯']),
@@ -690,7 +693,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const range = slot
       ? `${slot.sets} × ${slot.repMin}–${slot.repMax}`
       : `${entry.sets.length} sets`
-    const coaching = entry.proposal?.reason || slot?.cue || slot?.setup || ''
+    const previousTop = Number(entry.last?.sets?.[0]?.weight)
+    const coaching = slot && Number.isFinite(previousTop) && Number.isFinite(Number(slot.repMax))
+      ? `Hit ${slot.repMax} reps at ${previousTop} before adding weight.`
+      : (entry.proposal?.reason || slot?.cue || slot?.setup || '')
     const fields = fieldsFor(entry.exercise)
 
     return el('section.card.exercise.exercise--r3', {
@@ -736,7 +742,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           dataset: field ? { col: field.key } : {},
           text: field?.key === 'weight' ? 'lbs' : (field?.label === 'REPS' ? 'Reps' : field?.label ?? ''),
         })),
-        el('span', { text: '' }),
+        el('span.setrow__head-check', {}, [icon('check')]),
       ]),
 
       ...entry.sets.map((set, index) => setRow(entry, set, index)),

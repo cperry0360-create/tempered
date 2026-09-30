@@ -172,13 +172,14 @@ if (!chrome) {
 const output = resolve(argument('--output', join(root, 'artifacts/release-visuals')))
 await mkdir(output, { recursive: true })
 const profile = await mkdtemp(join(tmpdir(), 'tempered-release-visual-'))
+const debugPort = await availablePort()
 const { server, port, nextReport } = await serve()
 const manifest = []
 let browserError = ''
 const browser = spawn(chrome, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
   '--no-first-run', '--no-default-browser-check', '--remote-debugging-address=127.0.0.1',
-  '--remote-debugging-port=0',
+  `--remote-debugging-port=${debugPort}`,
   `--user-data-dir=${profile}`, 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] })
 browser.stderr.on('data', (chunk) => { browserError += chunk })
@@ -186,8 +187,7 @@ const browserExit = new Promise((resolveExit) => browser.once('close', resolveEx
 let cdp = null
 
 try {
-  const debugPort = await activeDebugPort(profile, () => browserError.slice(-1600))
-  cdp = await connectCdp(await devToolsPage(debugPort, () => browserError.slice(-1600)))
+  cdp = await connectCdp(await devToolsPage(debugPort, () => browserError.slice(-1600), 30000))
   await cdp.send('Page.enable')
   for (const viewport of VIEWPORTS) {
     await cdp.send('Emulation.setDeviceMetricsOverride', {

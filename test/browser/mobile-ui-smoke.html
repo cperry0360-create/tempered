@@ -143,7 +143,7 @@
 
       await tab('fuel', '.screen--fuel')
       check('Fuel screen renders', Boolean(q('.screen--fuel')))
-      thumbSized(q('.fuel-dashboard__nutrition'), 'Fuel meal action')
+      thumbSized(q('.fuel-r4__primary'), 'Fuel meal action')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__button')

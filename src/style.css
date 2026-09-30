@@ -2209,3 +2209,209 @@ body,
   border-color: var(--danger);
   color: var(--danger);
 }
+
+
+/* ---------------------------------------------------------------------------
+   Redesign V1 — Train (R4)
+   --------------------------------------------------------------------------- */
+
+.screen--train-r4 { gap: 16px; padding-bottom: 8px; }
+
+.screen--train-r4 > .screen__title,
+.train-r4__subheader .screen__title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+}
+
+.train-r4__card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--surface-1);
+}
+
+.train-r4__card h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.train-r4__card p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.train-r4__segments {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  padding-block: 2px;
+}
+
+.train-r4__segment {
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+}
+
+.train-r4__segment[data-filled='true'] { background: var(--accent); }
+
+.train-r4__row {
+  appearance: none;
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 17px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.train-r4__row + .train-r4__row { border-top: 1px solid var(--hairline); }
+
+.train-r4__row-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.train-r4__row-copy strong {
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.train-r4__row-copy small {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.train-r4__chevron {
+  flex: none;
+  color: var(--text-3);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.train-r4__rows { margin-bottom: -4px; }
+
+.train-r4__details {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.train-r4__secondary {
+  appearance: none;
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.train-r4__next { gap: 8px; }
+.train-r4__next .train-r4__secondary { margin-top: 4px; }
+
+.train-r4__list-card { gap: 4px; }
+.train-r4__list-card > h2 { margin-bottom: 4px; }
+
+.train-r4__utilities { gap: 0; padding-block: 4px; }
+
+.train-r4__subheader {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 4px;
+}
+
+.train-r4__subheader .screen__title {
+  grid-column: 2;
+  font-size: 22px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.train-r4__back {
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: 400 34px/1 var(--font-ui);
+}
+
+.train-r4__routine-detail { gap: 16px; }
+.train-r4__routine-exercises { display: grid; gap: 0; }
+.train-r4__routine-exercises p { min-height: 44px; display: flex; align-items: center; }
+.train-r4__routine-exercises p + p { border-top: 1px solid var(--hairline); }
+
+.train-r4__card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.train-r4__card-heading > span { color: var(--text-2); font-size: 13px; line-height: 18px; }
+
+.train-r4__rhythm-scroll {
+  display: flex;
+  min-width: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.train-r4__rhythm-scroll::-webkit-scrollbar { display: none; }
+.train-r4__rhythm-week { flex: 0 0 100%; min-width: 100%; display: grid; gap: 8px; scroll-snap-align: start; }
+.train-r4__rhythm-week > strong { color: var(--text-2); font-size: 13px; line-height: 18px; font-weight: 600; }
+.train-r4__calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+.train-r4__weekday { color: var(--text-3); font-size: 12px; line-height: 16px; font-weight: 500; }
+.train-r4__day {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  border: 2px solid var(--hairline);
+  border-radius: 50%;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.train-r4__day[data-trained='true'] { border-color: var(--accent); }
+.train-r4__day[data-qualified='true'] { background: var(--accent); color: var(--on-accent); }
+.train-r4__day[data-today='true'][data-qualified='false'] { border-color: var(--accent); }

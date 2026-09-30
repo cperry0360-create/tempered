@@ -1,3 +1,11 @@
+## 2026-09-30 — Redesign V1 R4 Train and Fuel
+
+- Train now follows the approved R4 hierarchy: one program header, next session, session rows, routines, and drill-in rows for Exercise library and Training rhythm. The duplicated program presentation, weekly slot bars, workout control center, stat tiles, and AI coaching handoff are removed from Train.
+- Program details expands the active-program description and links to Program Builder. Routines start from their detail view rather than directly from the list.
+- Fuel now follows approved mockup screen 3: energy ring, protein progress, three macro stats, one meal action, recent quick logs, and water controls. Recovery and companion content are absent from Fuel.
+- The Fuel ring represents calories eaten divided by the calorie goal and has a zero-length ember arc when calories eaten is 0.
+- Release version: 0.41.0 (55).
+
 ## 2026-09-29 — Redesign V1 R3 Active workout
 
 - Active workout now follows approved mockup screen 2: sticky Cancel / title+elapsed / Finish header, dense exercise cards, Previous/lbs/Reps table, 52px rows, completed success tint, inline Add set, and fixed rest controls.
@@ -15,7 +23,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.39.0 (53) — Redesign V1 R2 Today
+**Current release:** 0.41.0 (55) — Redesign V1 R4 Train and Fuel
 
 **Product maturity:** Pre-beta product completion
 

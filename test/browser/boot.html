@@ -39,29 +39,31 @@
 
         check('the tab bar rendered', document.querySelectorAll('.tabbar__tab').length === 4,
           `${document.querySelectorAll('.tabbar__tab').length} tabs`)
-        check('the Train screen rendered its routines',
-          document.querySelectorAll('[data-start]').length >= 2,
-          `${document.querySelectorAll('[data-start]').length} routines`)
-        const rhythm = document.querySelector('[data-training-rhythm="calendar"]')
-        check('Train opens on a compact, scrollable current-week calendar',
+        check('the Train screen renders routines as detail rows',
+          document.querySelectorAll('[data-routine]').length >= 2,
+          `${document.querySelectorAll('[data-routine]').length} routines`)
+        check('R4 Train renders one program header, next session, sessions and routines',
+          document.querySelectorAll('.train-r4__program').length === 1
+          && document.querySelector('[data-section="next-session"]') !== null
+          && document.querySelectorAll('[data-programday]').length >= 5
+          && document.querySelector('[data-training-rhythm="open"]') !== null)
+        check('R4 removes the workout control center and AI handoff',
+          document.querySelector('[data-training-control="true"]') === null
+          && document.querySelector('[data-training-coach="open"]') === null)
+        document.querySelector('[data-training-rhythm="open"]')?.click()
+        const rhythm = document.querySelector('.train-r4__rhythm-card')
+        check('Training rhythm opens its own scrollable calendar view',
           rhythm !== null
-          && rhythm.querySelector('.training-calendar-scroll') !== null
-          && rhythm.querySelectorAll('.training-calendar__day').length >= 7
-          && rhythm.querySelector('[data-current-week="true"]') !== null,
-          `${rhythm?.querySelectorAll('.training-calendar__day').length ?? 0} days`)
-        check('Train includes a workout control center and concise coaching handoff',
-          document.querySelector('[data-training-control="true"]') !== null
-          && document.querySelector('[data-training-coach="open"]')?.getAttribute('href') === 'https://chatgpt.com/')
-        check('a fresh calendar explains the three-day minimum and four-day strong week',
-          /0 of 3 streak days at 30\+ min/i.test(rhythm?.textContent ?? '')
-          && /4 days = strong week/i.test(rhythm?.textContent ?? '')
-          && /keeper/i.test(rhythm?.textContent ?? ''))
+          && rhythm.querySelector('.train-r4__rhythm-scroll') !== null
+          && rhythm.querySelectorAll('.train-r4__day').length >= 7,
+          `${rhythm?.querySelectorAll('.train-r4__day').length ?? 0} days`)
+        document.querySelector('.train-r4__back')?.click()
         check('the Train overview links to the Exercise Library without rendering every row',
           document.querySelector('[data-exercise-library="open"]') !== null
           && document.querySelectorAll('.libraryrow').length === 0)
         document.querySelector('[data-exercise-library="open"]')?.click()
         check('the Exercise Library renders on its dedicated screen',
-          document.querySelector('[data-exercise-library="screen"]') !== null
+          document.querySelector('.library') !== null
           && document.querySelectorAll('.libraryrow').length > 20,
           `${document.querySelectorAll('.libraryrow').length} rows`)
         check('the pre-boot placeholder was replaced',

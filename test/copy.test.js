@@ -62,8 +62,8 @@ test('there is copy to check', () => {
   const total = files.reduce((sum, f) => sum + f.copy.length, 0)
   assert.ok(total > 800, `only extracted ${total} characters of copy — is the extractor working?`)
   // The extractor must be finding real sentences, not just button labels.
-  assert.ok(files.some((f) => /still available/i.test(f.copy)),
-    'expected the rollover copy to be extracted')
+  assert.ok(files.some((f) => /Recent meals will appear here/i.test(f.copy)),
+    'expected visible Fuel copy to be extracted')
 })
 
 test('REQUIRED: nothing renders outstanding work as overdue, late, missed or failed', () => {

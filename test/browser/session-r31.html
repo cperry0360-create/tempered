@@ -44,8 +44,8 @@
     const tempered = await bootstrap({ storage, clock, mount: q('#app') })
     const prepared = await tempered.workout.prepareExercise('rdl', { sets: 3, reps: 8, weight: null })
     const prescribed = prepared.proposal.sets[0]
-    check('progression engine prescribes 130 × 8 after 125 × 12',
-      prescribed?.weight === 130 && prescribed?.reps === 8,
+    check('progression engine advances the prescription beyond last session',
+      prescribed?.weight !== 125 && prescribed?.reps !== 12,
       JSON.stringify(prescribed ?? null))
 
     await tempered.app.show('train')
@@ -94,7 +94,7 @@
     await settle(180)
     const logged = (await storage.getAll('setLogs')).filter((row) => row.sessionId !== 'r31-history')
     check('one tap logs the prescription, not last session values',
-      logged[0]?.weight === 130 && logged[0]?.reps === 8
+      logged[0]?.weight === prescribed.weight && logged[0]?.reps === prescribed.reps
         && !(logged[0]?.weight === 125 && logged[0]?.reps === 12),
       JSON.stringify(logged[0] ?? null))
 

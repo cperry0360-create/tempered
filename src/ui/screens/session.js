@@ -720,7 +720,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       ]),
 
       best && el('p.exercise__best', {
-        text: `Best ${lbs(best.weight)} lb × ${best.reps}${best.date ? ` · ${shortDate(best.date)}` : ''}`,
+        text: `Best ${lbs(best.weight)} lb × ${best.reps}${best.date ? ` · ${shortDate(best.date).replace(/ \\d{4}$/, '')}` : ''}`,
       }),
       coaching && el('p.exercise__proposal', { text: coaching }),
 

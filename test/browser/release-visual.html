@@ -165,6 +165,11 @@
 
     async function seedSessionReference(storage) {
       await seedTodayReference(storage)
+      await storage.put('records', {
+        exerciseId: 'rdl',
+        bestWeight: { weight: 125, reps: 12, date: '2026-09-17' },
+        bestE1RM: { value: 175, date: '2026-09-17' },
+      })
       await storage.put('sessions', {
         id: 'visual-rdl-history',
         date: '2026-09-17',

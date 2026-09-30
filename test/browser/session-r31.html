@@ -33,6 +33,11 @@
       id: 'r31-history', date: '2026-09-17',
       startedAt: '2026-09-17T09:00:00.000Z', endedAt: '2026-09-17T09:40:00.000Z',
     })
+    await storage.put('records', {
+      exerciseId: 'rdl',
+      bestWeight: { weight: 125, reps: 12, date: '2026-09-17' },
+      bestE1RM: { value: 175, date: '2026-09-17' },
+    })
     for (let index = 0; index < 3; index += 1) {
       await storage.put('setLogs', {
         id: `r31-history-${index}`, sessionId: 'r31-history', exerciseId: 'rdl',
@@ -87,8 +92,8 @@
 
     const firstRow = qa('.setrow:not(.setrow--head)', card)[0]
     check('next unlogged barbell row has the per-side plate line',
-      /Per side:/i.test(firstRow?.querySelector('.plates')?.textContent ?? ''),
-      firstRow?.querySelector('.plates')?.textContent ?? 'missing')
+      /Per side:/i.test(firstRow?.parentElement?.querySelector('.plates')?.textContent ?? ''),
+      firstRow?.parentElement?.querySelector('.plates')?.textContent ?? 'missing')
 
     q('.setrow__check', card)?.click()
     await settle(180)
@@ -101,8 +106,8 @@
     card = q('[data-exercise="rdl"]')
     const rows = qa('.setrow:not(.setrow--head)', card)
     check('plate line advances to the next unlogged barbell row',
-      !rows[0]?.querySelector('.plates') && /Per side:/i.test(rows[1]?.querySelector('.plates')?.textContent ?? ''),
-      rows.map((row) => row.querySelector('.plates')?.textContent ?? '').join(' | '))
+      !rows[0]?.parentElement?.querySelector('.plates') && /Per side:/i.test(rows[1]?.parentElement?.querySelector('.plates')?.textContent ?? ''),
+      rows.map((row) => row.parentElement?.querySelector('.plates')?.textContent ?? '').join(' | '))
   } catch (error) {
     check('R3.1 harness threw', false, String(error?.stack ?? error).slice(0, 1200))
   }

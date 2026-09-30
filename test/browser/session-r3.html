@@ -44,6 +44,11 @@
     const tempered = await bootstrap({ storage, clock, mount: q('#app') })
     await installCableMachineRuntime(tempered)
 
+    await storage.put('records', {
+      exerciseId: 'lat_pulldown',
+      bestWeight: { weight: 115, reps: 6, date: '2026-09-22' },
+      bestE1RM: { value: 138, date: '2026-09-22' },
+    })
     await storage.put('sessions', {
       id: 'r3-history', date: '2026-09-22',
       startedAt: '2026-09-22T09:00:00.000Z', endedAt: '2026-09-22T09:40:00.000Z',

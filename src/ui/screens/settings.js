@@ -71,16 +71,16 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         ]),
         onSetup && el('button.button', {
           type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
-        }, ['RE-RUN SETUP']),
+        }, ['Re-run setup']),
         onProgramBuilder && el('button.button', {
           type: 'button', dataset: { action: 'program-builder' }, onclick: () => onProgramBuilder(),
-        }, ['OPEN PROGRAM BUILDER']),
+        }, ['Open Program Builder']),
       ]),
 
       workout && el('section.card', { dataset: { section: 'away' } }, [
         el('h2.block__title', { text: 'Away mode' }),
         el('p.block__hint', {
-          text: 'Travel, illness, or life stuff. An away week protects an existing rhythm without adding workouts or keeper progress.',
+          text: 'Away weeks protect your rhythm without inventing workouts or keeper progress.',
         }),
         el('div.setting', {}, [
           el('label.setting__label', { text: 'From' }),
@@ -108,7 +108,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               await load()
             }
           },
-        }, ['MARK AWAY']),
+        }, ['Mark away']),
         awayNotice && el('p.notice', { text: awayNotice }),
         ...awayPeriods.map((period) => el('div.setting', { dataset: { awayPeriod: period.id } }, [
           el('span.setting__label', {
@@ -123,13 +123,13 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               awayNotice = 'Away period removed.'
               await load()
             },
-          }, ['REMOVE']),
+          }, ['Remove']),
         ])),
       ]),
 
       el('section.card', { dataset: { section: 'targets' } }, [
         el('h2.block__title', { text: 'Daily targets' }),
-        el('p.block__hint', { text: 'Protein is calculated from body weight. Calories and steps are configurable.' }),
+        el('p.block__hint', { text: 'Protein follows body weight; calories and steps are configurable.' }),
         el('div.setting', {}, [
           el('span.setting__label', { text: 'Calories' }),
           (() => {
@@ -141,7 +141,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               input,
               el('button.setup__cadence', {
                 type: 'button', onclick: async () => { await daily.setCalorieTarget(input.value); await load() },
-              }, ['SAVE']),
+              }, ['Save']),
             ])
           })(),
         ]),
@@ -156,7 +156,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               input,
               el('button.setup__cadence', {
                 type: 'button', onclick: async () => { await daily.setStepTarget(input.value); await load() },
-              }, ['SAVE']),
+              }, ['Save']),
             ])
           })(),
         ]),
@@ -165,7 +165,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
       el('section.card', { dataset: { section: 'cadence' } }, [
         el('h2.block__title', { text: 'Tracking cadence' }),
         el('p.block__hint', {
-          text: 'Daily resets each morning. Weekly can be completed on any day and shows progress on Today.',
+          text: 'Daily resets each morning; weekly can be completed on any day.',
         }),
         el('div.setup__cadencelist', {}, daily.activities.map((activity) => {
           const current = schedule[activity.id] ?? { cadence: 'off', target: 1 }
@@ -182,9 +182,9 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               }, WEEKLY_OPTIONS.map((value) => el('option', { value: String(value) }, [`${value}×/wk`]))),
             ]),
             el('div.setup__cadencechoices', {}, [
-              cadenceButton(activity, current, 'off', 'OFF'),
-              cadenceButton(activity, current, 'daily', 'DAILY'),
-              cadenceButton(activity, current, 'weekly', current.cadence === 'weekly' ? `${current.target}× / WK` : 'WEEKLY'),
+              cadenceButton(activity, current, 'off', 'Off'),
+              cadenceButton(activity, current, 'daily', 'Daily'),
+              cadenceButton(activity, current, 'weekly', current.cadence === 'weekly' ? `${current.target}× / WK` : 'Weekly'),
             ]),
           ])
         })),
@@ -192,7 +192,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
 
       exerciseGroups.size > 0 && el('section.card', { dataset: { section: 'exercise-frequency' } }, [
         el('h2.block__title', { text: 'Exercise frequency' }),
-        el('p.block__hint', { text: 'PROGRAM follows the current plan. Choose a number to override how often that exercise should be completed this week.' }),
+        el('p.block__hint', { text: 'Program uses the current plan unless you choose a weekly override.' }),
         el('div.setup__cadencelist', {}, [...exerciseGroups.values()].sort((a, b) => a.name.localeCompare(b.name)).map((exercise) =>
           el('div.setup__cadencerow', {}, [
             el('div.setup__cadencehead', {}, [
@@ -215,7 +215,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
       maintenance && el('section.card', { dataset: { section: 'data' } }, [
         el('h2.block__title', { text: 'Your data' }),
         el('p.block__hint', {
-          text: 'Save a complete Tempered backup or restore one you saved earlier. Restoring replaces the data currently on this device only after you confirm.',
+          text: 'Back up all local data or restore a saved copy after confirmation.',
         }),
         el('p.setting', {}, [
           el('span.setting__label', { text: 'Device storage' }),
@@ -227,7 +227,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
           }),
         ]),
         !protection?.persisted && el('p.block__hint', {
-          text: 'This browser did not guarantee permanent storage. Keep a recent backup.',
+          text: 'Permanent storage is not guaranteed, so keep a recent backup.',
         }),
         el('div.confirm-sheet__actions', {}, [
           el('button.button', {
@@ -237,7 +237,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               saved = downloadExport(file.document, clock)
               await load()
             },
-          }, [icon('down'), saved ? 'SAVE AGAIN' : 'SAVE BACKUP']),
+          }, [icon('down'), saved ? 'Save again' : 'Save backup']),
           (() => {
             const input = el('input', {
               type: 'file', accept: 'application/json,.json', hidden: true,
@@ -262,7 +262,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               },
             })
             return el('label.button', { dataset: { action: 'restore-picker' } }, [
-              icon('history'), restoreBusy ? 'READING…' : 'RESTORE BACKUP', input,
+              icon('history'), restoreBusy ? 'Reading…' : 'Restore backup', input,
             ])
           })(),
         ]),
@@ -293,17 +293,17 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
                 await load()
               }
             },
-          }, [restoreBusy ? 'RESTORING…' : 'CONFIRM AND REPLACE']),
+          }, [restoreBusy ? 'Restoring…' : 'Confirm and replace']),
         ]),
       ]),
 
       el('section.card', { dataset: { section: 'credits' } }, [
         el('h2.block__title', { text: 'Credits' }),
         el('p.block__hint', {
-          text: 'Exercise movement images come from free-exercise-db and upstream Everkinetic material. Tempered treats those images as CC BY-SA 4.0 and keeps their exact provenance in art/exercises/SOURCES.json.',
+          text: 'Exercise images come from free-exercise-db and upstream Everkinetic material under CC BY-SA 4.0.',
         }),
         el('p.block__hint', {
-          text: 'Third-party exercise art is licensed separately. Any licence that applies to Tempered source code or first-party art does not automatically cover those images.',
+          text: 'Third-party exercise art keeps its separate licence.',
         }),
         el('p.setting', {}, [
           el('a', {
@@ -342,13 +342,13 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             await load()
             await maintenance.checkForUpdates()
           },
-        }, [icon('history'), 'CHECK FOR UPDATES']),
+        }, [icon('history'), 'Check for updates']),
       ]),
 
       maintenance && el('section.card', { dataset: { section: 'reset' } }, [
         el('h2.block__title', { text: 'Reset all data' }),
         el('p.block__hint', {
-          text: 'Erases every session, set, day and battle on this device and returns the app to first run. It cannot be undone.',
+          text: 'Erase local data and return Tempered to first run; this cannot be undone.',
         }),
         el('p.block__hint', { text: 'Save a backup from Your data above before erasing this device.' }),
         el('label.reset__confirm', {}, [
@@ -369,7 +369,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             const result = await maintenance.resetEverything({ confirmation: typed })
             if (!result.ok) { typed = ''; await load() }
           },
-        }, ['ERASE EVERYTHING']),
+        }, ['Erase everything']),
       ]),
     ])
   }

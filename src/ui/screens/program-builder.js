@@ -35,10 +35,10 @@ export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
     const day = selected()
     replace(root, [
       el('div.program-builder__inner', {}, [
-        el('button.program-builder__back', { type: 'button', onclick: onClose }, ['← SETTINGS']),
-        el('p.program-builder__eyebrow', { text: 'PROGRAM BUILDER' }),
-        el('h1.program-builder__title', { text: 'Make the plan yours.' }),
-        el('p.program-builder__copy', { text: 'Build one useful day at a time. Save a draft whenever you want; activation is a separate, reversible step.' }),
+        el('button.program-builder__back', { type: 'button', onclick: onClose }, ['← Settings']),
+        el('p.program-builder__eyebrow', { text: 'Program Builder' }),
+        el('h1.program-builder__title', { text: 'Make the plan yours' }),
+        el('p.program-builder__copy', { text: 'Build one useful day at a time; activation stays separate and reversible.' }),
         notice && el('p.notice', { dataset: { builderNotice: '' }, text: notice }),
         error && el('p.notice', { dataset: { builderError: '' }, text: error }),
         el('section.program-builder__card', {}, [
@@ -54,12 +54,12 @@ export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
           }),
         ]),
         el('section.program-builder__card', {}, [
-          el('div.program-builder__sectionhead', {}, [el('strong', { text: 'Training days' }), el('button.button', { type: 'button', onclick: () => { draft.days.push({ id: `day-${draft.days.length + 1}`, name: `Day ${draft.days.length + 1}`, focus: '', exercises: [] }); selectedDay = draft.days.length - 1; render() } }, ['ADD DAY'])]),
+          el('div.program-builder__sectionhead', {}, [el('strong', { text: 'Training days' }), el('button.button', { type: 'button', onclick: () => { draft.days.push({ id: `day-${draft.days.length + 1}`, name: `Day ${draft.days.length + 1}`, focus: '', exercises: [] }); selectedDay = draft.days.length - 1; render() } }, ['Add day'])]),
           draft.days.length
             ? el('div.program-builder__days', {}, draft.days.map((entry, index) => el('button.program-builder__day', {
                 type: 'button', dataset: { selected: String(index === selectedDay) }, onclick: () => { selectedDay = index; render() },
               }, [entry.name || `Day ${index + 1}`, el('small', { text: `${entry.exercises?.length ?? 0} exercises` })])))
-            : el('p.program-builder__empty', { text: 'Start with one day. You can add exercises after it exists.' }),
+            : el('p.program-builder__empty', { text: 'Start with one day, then add exercises.' }),
         ]),
         day && el('section.program-builder__card', {}, [
           el('label.program-builder__label', { text: 'Day name' }),
@@ -75,7 +75,7 @@ export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
               el('span', { text: '–' }),
               el('input.program-builder__small', { type: 'number', min: '1', value: slot.repMax ?? 12, 'aria-label': `${slot.name ?? slot.exerciseId} maximum reps`, oninput: (event) => { slot.repMax = Math.max(slot.repMin ?? 1, Number(event.target.value) || (slot.repMin ?? 1)) } }),
               el('span', { text: 'reps' }),
-              el('button.program-builder__remove', { type: 'button', onclick: () => { day.exercises.splice(index, 1); render() } }, ['REMOVE']),
+              el('button.program-builder__remove', { type: 'button', onclick: () => { day.exercises.splice(index, 1); render() } }, ['Remove']),
             ]),
           ]))),
           el('div.program-builder__add', {}, [
@@ -86,12 +86,12 @@ export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
               if (!exercise) return
               day.exercises.push({ exerciseId: exercise.id, name: exercise.name, sets: 3, repMin: 8, repMax: 12, restSec: [90, 120] })
               render()
-            } }, ['ADD EXERCISE']),
+            } }, ['Add exercise']),
           ]),
         ]),
         el('div.program-builder__actions', {}, [
-          el('button.button', { type: 'button', onclick: () => save(false) }, ['SAVE DRAFT']),
-          el('button.button.button--primary', { type: 'button', onclick: () => save(true) }, ['REVIEW & ACTIVATE']),
+          el('button.button', { type: 'button', onclick: () => save(false) }, ['Save draft']),
+          el('button.button.button--primary', { type: 'button', onclick: () => save(true) }, ['Review & activate']),
         ]),
       ]),
     ])

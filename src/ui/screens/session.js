@@ -33,7 +33,7 @@ import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draf
 const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.url).href
 
 /** What a home gym holds, per side. Editable from the EQUIPMENT pill. */
-const DEFAULT_PLATES = [45, 35, 25, 10, 5, 2.5, 1.25]
+const DEFAULT_Plates = [45, 35, 25, 10, 5, 2.5, 1.25]
 
 const activeMethod = (entry) => methodForExercise(entry?.exercise, entry?.method)
 
@@ -207,10 +207,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   /** Which two numbers a set has. A carry has no reps; a hold has no load. */
   function fieldsFor(exercise) {
     if (exercise?.metric === 'distance') {
-      return [{ key: 'weight', label: 'LBS', mode: 'decimal' }, { key: 'distance', label: 'FEET', mode: 'numeric' }]
+      return [{ key: 'weight', label: 'lbs', mode: 'decimal' }, { key: 'distance', label: 'Feet', mode: 'numeric' }]
     }
-    if (exercise?.unit === 'time') return [{ key: 'timeSec', label: 'SECS', mode: 'numeric' }, null]
-    return [{ key: 'weight', label: 'LBS', mode: 'decimal' }, { key: 'reps', label: 'REPS', mode: 'numeric' }]
+    if (exercise?.unit === 'time') return [{ key: 'timeSec', label: 'Secs', mode: 'numeric' }, null]
+    return [{ key: 'weight', label: 'lbs', mode: 'decimal' }, { key: 'reps', label: 'Reps', mode: 'numeric' }]
   }
 
   function numberOrNull(value) {
@@ -241,13 +241,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
     if (!solution) {
       return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
-        el('span.plates__label', { text: 'PER SIDE' }),
+        el('span.plates__label', { text: 'Per side' }),
         el('p.plates__note', { text: `${entry.barWeight} lb bar` }),
       ])
     }
 
     return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
-      el('span.plates__label', { text: 'PER SIDE' }),
+      el('span.plates__label', { text: 'Per side' }),
       ...(solution.perSide.length === 0
         ? [el('span.plates__empty', { text: 'empty bar' })]
         : solution.perSide.map((plate) => el('span.plate', {
@@ -497,10 +497,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function equipmentPanel(entry) {
     return el('div.panel', {}, [
-      el('p.panel__note', { text: 'The bar, and the plates you have. The loading beside the weight follows this.' }),
+      el('p.panel__note', { text: 'Set the bar and available plates used for loading.' }),
       el('div.equipment', {}, [
         el('label.equipment__row', {}, [
-          el('span.equipment__label', { text: 'BAR' }),
+          el('span.equipment__label', { text: 'Bar' }),
           el('input.equipment__bar', {
             type: 'text', inputmode: 'decimal', value: String(entry.barWeight),
             'aria-label': 'Bar weight',
@@ -509,8 +509,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           }),
         ]),
         el('div.equipment__row', {}, [
-          el('span.equipment__label', { text: 'PLATES' }),
-          ...DEFAULT_PLATES.map((plate) => el('button.equipment__plate', {
+          el('span.equipment__label', { text: 'Plates' }),
+          ...DEFAULT_Plates.map((plate) => el('button.equipment__plate', {
             type: 'button',
             'aria-pressed': String(entry.plates.includes(plate)),
             dataset: { plateon: String(entry.plates.includes(plate)), plateoption: String(plate) },
@@ -588,7 +588,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function swapPanel(entry) {
     return el('div.panel', {}, [
-      el('p.panel__note', { text: 'Swap in another movement. Your set structure is kept.' }),
+      el('p.panel__note', { text: 'Swap the movement while keeping the set structure.' }),
       el('div.swaplist', {}, library
         .filter((exercise) => exercise.id !== entry.exercise.id)
         .slice(0, 40)
@@ -724,7 +724,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       coaching && el('p.exercise__proposal', { text: coaching }),
 
       isOpen(entry, 'rest') && el('div.panel', {}, [
-        el('p.panel__note', { text: 'Rest between sets. The timer never blocks the next set.' }),
+        el('p.panel__note', { text: 'Set rest time without blocking the next set.' }),
         el('div.restedit', {}, [30, 60, 90, 120, 150, 180, 240].map((seconds) => el('button.restedit__option', {
           type: 'button', dataset: { restset: String(seconds), active: String(entry.restSec === seconds) },
           onclick: () => {
@@ -747,7 +747,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('span.setrow__record', { text: 'Previous' }),
         ...fields.map((field) => el('span.setrow__col', {
           dataset: field ? { col: field.key } : {},
-          text: field?.key === 'weight' ? 'lbs' : (field?.label === 'REPS' ? 'Reps' : field?.label ?? ''),
+          text: field?.key === 'weight' ? 'lbs' : (field?.label === 'Reps' ? 'Reps' : field?.label ?? ''),
         })),
         el('span.setrow__head-check', {}, [icon('check')]),
       ]),
@@ -891,7 +891,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         }, ['Finish']),
       ]),
 
-      session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
+      session?.deload && el('p.deload', { text: 'Deload week: hold the weight because recovery is half the work.' }),
       ...plan.map(exerciseCard),
 
       addingMovement
@@ -924,7 +924,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       confirmingDiscard && el('div.session-sheet', {}, [
         el('div.session-sheet__card', {}, [
           el('p.session-sheet__title', { text: 'Discard unlogged edits?' }),
-          el('p.session-sheet__copy', { text: 'Checked sets stay in your log. Unchecked changes will be discarded.' }),
+          el('p.session-sheet__copy', { text: 'Checked sets stay logged; unchecked changes are discarded.' }),
           el('div.session-sheet__actions', {}, [
             el('button', {
               type: 'button',
@@ -969,7 +969,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   /** Everything a plan entry carries beyond what the workout service prepared. */
   const entryDefaults = () => ({
     barWeight: 45,
-    plates: [...DEFAULT_PLATES],
+    plates: [...DEFAULT_Plates],
     substitutedFor: null,
     history: null,
     editing: false,

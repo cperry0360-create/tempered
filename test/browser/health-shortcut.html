@@ -16,7 +16,6 @@
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
     import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
-    import { installProgressDashboardRuntime } from '../../src/ui/progress-dashboard-runtime.js'
     import {
       HEALTH_SNAPSHOT_PREFIX, healthImportUrl, installHealthShortcutRuntime,
     } from '../../src/ui/health-shortcut-runtime.js'
@@ -49,7 +48,6 @@
       const clock = fixedClock(new Date(2026, 8, 8, 10, 0, 0))
       const context = await bootstrap({ storage: createMemoryStorage(), clock, mount: q('#app') })
       installCalorieAiRuntime()
-      installProgressDashboardRuntime(context)
 
       // Recreate the preferred Shortcuts URL handoff on the local harness URL.
       const handoff = new URL(healthImportUrl(querySnapshot, window.location.href))
@@ -122,9 +120,10 @@
       check('Health Setup closes back to the app', !q('[data-health-setup-overlay]'))
 
       await context.app.show('history')
-      await waitFor('[data-progress-dashboard]')
-      check('Dormant Health values stay stored while Progress hides the experimental card',
-        !q('[data-widget="body"]') && manual.healthMetrics?.restingHr === 48 && manual.healthMetrics?.hrvMs === 42)
+      const progress = await waitFor('.screen--history')
+      check('Stored Health values remain available to the fixed Progress screen',
+        Boolean(progress) && progress.textContent.includes('Recovery')
+          && manual.healthMetrics?.restingHr === 48 && manual.healthMetrics?.hrvMs === 42)
       check('Progress does not expose a dead Health setup route', !q('[data-health-setup="progress"]'))
 
       await context.app.show('settings')

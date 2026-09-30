@@ -20,7 +20,13 @@ const TYPES = {
   '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
   '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json',
 }
-const VIEWS = ['setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'session', 'fuel', 'progress']
+const VIEWS = [
+  'setup-welcome', 'setup-rhythm', 'setup-plan',
+  'today', 'train', 'session', 'fuel',
+  'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
+  'companion', 'settings', 'program-builder', 'summary',
+  'health-import', 'health-setup', 'health-launch', 'nutrition-log', 'session-discard',
+]
 const VIEWPORTS = [
   { label: 'iphone-compact', width: 390, height: 844 },
   { label: 'iphone-large', width: 430, height: 932 },

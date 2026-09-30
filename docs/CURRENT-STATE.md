@@ -1,3 +1,10 @@
+## 2026-09-30 — Redesign V1 R5 Progress and sweep
+
+- Progress is now a fixed 7D / 30D / 90D recap with Overview, Lifts, Habits, and Log views. Overview shows eight weeks of working sets, recent PRs, sample-aware weight/steps/sleep trends, Recovery only when samples exist, and a copyable ChatGPT report; exercise and log details retain their existing actions.
+- The remaining Settings, Setup, Program Builder, Summary, and sheet surfaces have been swept to token colors, sentence case, and one-sentence helper copy; the Health setup and import screens follow the same rules while preserving the machine-readable import format.
+- Retired configurable Progress dashboard code and its test page were removed, and stale background-art precache entries were cleared.
+- Release candidate: 0.42.0 (57). Visual acceptance uses CI release artifacts: 22 screens at 390×844 and 430×932 (44 captures), with Progress compared to mockup screen 4; artifact review is pending.
+
 ## 2026-09-30 — Redesign V1 R3.1 session feature restore
 
 - Applied the new feature-preservation rule to the d9850f5 pre-redesign baseline.
@@ -30,11 +37,11 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 # Tempered current state
 
-**Last recovered and verified:** 2026-09-29
+**Last updated:** 2026-09-30
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.41.1 (56) — Redesign V1 R3.1 session feature restore
+**Current release candidate:** 0.42.0 (57) — Redesign V1 R5 Progress and sweep; visual acceptance pending
 
 **Product maturity:** Pre-beta product completion
 

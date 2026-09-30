@@ -128,7 +128,7 @@ function enhanceEditor(editor) {
   const label = editor.querySelector('.today-editor__preset-label')
   if (label) label.textContent = 'Third quick add'
   const hint = editor.querySelector('.today-editor__hint')
-  if (hint) hint.textContent = 'Water always includes +8 oz and +12 oz. Change this amount to set the third row button.'
+  if (hint) hint.textContent = 'Water includes +8 oz and +12 oz by default; change this amount to set the third row button.'
 }
 
 function enhance(app) {

@@ -106,7 +106,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     next.status = 'draft'
     if (draft.templateId === 'foundation') {
       next.name = 'Strength Foundation'
-      next.note = 'Three repeatable full-body days. Build consistency before complexity.'
+      next.note = 'Three repeatable full-body days build consistency before complexity.'
       next.days = (next.days ?? []).slice(0, 3).map((day, index) => ({
         ...day, id: `foundation-${index + 1}`,
         name: ['Full Body A', 'Full Body B', 'Full Body C'][index],
@@ -115,7 +115,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     }
     if (draft.templateId === 'mercy') {
       next.name = 'Mercy Mode'
-      next.note = 'Keep the habit. Keep the leg day humane.'
+      next.note = 'Keep the habit and make leg day humane.'
       next.days = (next.days ?? []).map((day) => /leg/i.test(day.name)
         ? { ...day, name: 'Mercy Legs + Core', exercises: (day.exercises ?? []).slice(0, 3) }
         : day)
@@ -146,20 +146,20 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       onclick: () => { draft.units = value; render() },
     }, [label])
     return [
-      ...heading('STEP 1 OF 7', 'BUILD STRENGTH, KEEP YOUR LIFE', 'Tempered brings training, nutrition, sleep, and recovery into one clear plan.'),
+      ...heading('Step 1 of 7', 'Build strength, keep your life', 'Tempered brings training, nutrition, sleep, and recovery into one clear plan.'),
       el('section.setup__card', {}, [
-        el('p.setup__copy', { text: 'Follow a plan, record what actually happened, and see what compounds. A day off creates no downside, and recovery is part of the plan.' }),
-        el('p.setup__copy', { text: 'Your data stays on this device. You can change these choices later without resetting history.' }),
+        el('p.setup__copy', { text: 'Follow a plan, record what happened, and build progress through repeatable work and recovery.' }),
+        el('p.setup__copy', { text: 'Your data stays on this device, and these choices can change later without resetting history.' }),
         el('label.setup__label', { text: 'Name (optional)' }), name,
         el('span.setup__label', { text: 'Units' }),
-        el('div.setup__choices', {}, [unitButton('imperial', 'LB / MI'), unitButton('metric', 'KG / KM')]),
+        el('div.setup__choices', {}, [unitButton('imperial', 'lb / mi'), unitButton('metric', 'kg / km')]),
       ]),
     ]
   }
 
   function stepTwo() {
     return [
-      ...heading('STEP 2 OF 7', 'CHOOSE YOUR RHYTHM', 'Pick the goal and schedule you can actually repeat. A useful plan beats a heroic plan you abandon.'),
+      ...heading('Step 2 of 7', 'Choose your rhythm', 'Pick a goal and schedule you can repeat over time.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Primary goal' }),
         el('div.setup__choices', {}, GOALS.map(([value, label]) => el('button.setup__choice', {
@@ -182,7 +182,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepThree() {
     return [
-      ...heading('STEP 3 OF 7', 'USE WHAT YOU HAVE', 'This helps Tempered suggest a plan that fits your real setup. You can still substitute movements later.'),
+      ...heading('Step 3 of 7', 'Use what you have', 'Tempered uses your equipment choices to suggest a plan that fits your setup.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Available equipment' }),
         el('div.setup__choices', {}, EQUIPMENT.map(([value, label]) => el('button.setup__choice', {
@@ -195,7 +195,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepFour() {
     return [
-      ...heading('STEP 4 OF 7', 'CHOOSE HOW TO BEGIN', 'Pick a starting template, or open a blank draft and shape it yourself. Nothing activates until you save.'),
+      ...heading('Step 4 of 7', 'Choose how to begin', 'Pick a starting template or open a blank draft to shape yourself.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Starting path' }),
         el('div.setup__choices', {}, [
@@ -204,7 +204,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
         ]),
       ]),
       draft.startPath === 'blank'
-        ? el('section.setup__card', {}, [el('p.setup__copy', { text: 'Your blank draft will be saved safely. Add exercises and progression from Train when the builder is ready.' })])
+        ? el('section.setup__card', {}, [el('p.setup__copy', { text: 'Your blank draft will be saved so you can add exercises and progression from Train.' })])
         : el('div.setup__stack', {}, TEMPLATE_OPTIONS.map(([value, label, copy]) => el('button.setup__program', {
             type: 'button', dataset: { selected: String(draft.templateId === value) },
             onclick: () => { draft.templateId = value; render() },
@@ -215,7 +215,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
   function stepFive() {
     const slots = primarySlots(activeProgram())
     return [
-      ...heading('STEP 5 OF 7', 'REVIEW YOUR START', 'This is a starting point, not a test. Add weights if you know them; blank means figure it out in the first session.'),
+      ...heading('Step 5 of 7', 'Review your start', 'Add known weights now, or leave them blank and choose during your first session.'),
       el('section.setup__card.setup__weights', {}, slots.length
         ? slots.map((slot) => el('label.setup__weightrow', {}, [
             el('span.setup__weightname', { text: slot.name }),
@@ -248,7 +248,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function stepSix() {
     return [
-      ...heading('STEP 6 OF 7', 'WHAT DO YOU WANT TO TRACK?', 'Daily resets each morning. Weekly can be done on any day. Nothing here creates a penalty.'),
+      ...heading('Step 6 of 7', 'What do you want to track?', 'Daily trackers reset each morning, and weekly trackers stay available any day without penalties.'),
       el('div.setup__cadencelist', {}, activities.map((activity) => {
         const current = draft.schedule[activity.id]
         return el('section.setup__cadencerow', { dataset: { attribute: activity.attribute } }, [
@@ -261,9 +261,9 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
             }, WEEKLY_OPTIONS.map((value) => el('option', { value: String(value) }, [`${value}×/wk`]))),
           ]),
           el('div.setup__cadencechoices', {}, [
-            cadenceButton(activity, 'off', 'OFF'),
-            cadenceButton(activity, 'daily', 'DAILY'),
-            cadenceButton(activity, 'weekly', current.cadence === 'weekly' ? `${current.target}× / WK` : 'WEEKLY'),
+            cadenceButton(activity, 'off', 'Off'),
+            cadenceButton(activity, 'daily', 'Daily'),
+            cadenceButton(activity, 'weekly', current.cadence === 'weekly' ? `${current.target}× / week` : 'Weekly'),
           ]),
         ])
       })),
@@ -276,11 +276,11 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       ? 'Open Train when you are ready to shape your blank program.'
       : chosen ? `Start with ${chosen.name} and run ${draft.sessionsPerWeek} realistic sessions this week.` : 'Explore Today and add your first workout when you are ready.'
     return [
-      ...heading('STEP 7 OF 7', 'YOU HAVE A NEXT STEP', 'Tempered works best when the next action is obvious and the plan is forgiving.'),
+      ...heading('Step 7 of 7', 'You have a next step', 'Tempered works best when the next action is clear and the plan is forgiving.'),
       el('section.setup__card', {}, [
         el('span.setup__label', { text: 'Your starting point' }),
         el('p.setup__copy', { text: action }),
-        el('p.setup__copy', { text: 'You can edit preferences later. Nothing here locks you into a perfect week.' }),
+        el('p.setup__copy', { text: 'You can change preferences later without aiming for a perfect week.' }),
       ]),
     ]
   }
@@ -366,15 +366,15 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
 
   function footer() {
     const left = step > 0
-      ? el('button.setup__quiet', { type: 'button', onclick: back }, ['BACK'])
+      ? el('button.setup__quiet', { type: 'button', onclick: back }, ['Back'])
       : rerun && onCancel
-        ? el('button.setup__quiet', { type: 'button', onclick: () => onCancel() }, ['CANCEL'])
+        ? el('button.setup__quiet', { type: 'button', onclick: () => onCancel() }, ['Cancel'])
         : el('span')
     return el('div.setup__footer', {}, [
       left,
-      step < STEP_COUNT - 1 && el('button.setup__quiet', { type: 'button', onclick: next }, ['SKIP']),
+      step < STEP_COUNT - 1 && el('button.setup__quiet', { type: 'button', onclick: next }, ['Skip']),
       el('button.setup__next', { type: 'button', dataset: { acid: 'primary' }, onclick: next }, [
-        step === STEP_COUNT - 1 ? (rerun ? 'SAVE' : 'START TEMPERING') : 'NEXT',
+        step === STEP_COUNT - 1 ? (rerun ? 'Save' : 'Start tempering') : 'Next',
       ]),
     ])
   }

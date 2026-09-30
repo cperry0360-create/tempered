@@ -4,8 +4,7 @@ import { access, readFile } from 'node:fs/promises'
 
 const root = new URL('../', import.meta.url)
 
-const backgrounds = [
-  'bg-wellness.webp', 'bg-today.webp', 'bg-train.webp', 'bg-progress.webp',
+const habitats = [
   'habitat-starter.webp', 'habitat-mid.webp', 'habitat-full.webp',
   'habitat-forge-starter.webp', 'habitat-forge-mid.webp', 'habitat-forge-full.webp',
   'habitat-turtle-starter.webp', 'habitat-turtle-mid.webp', 'habitat-turtle-full.webp',
@@ -22,7 +21,7 @@ async function file(path) {
 }
 
 test('the approved wellness art required by visible screens exists', async () => {
-  await Promise.all([...backgrounds, ...transparent].map((name) =>
+  await Promise.all([...habitats, ...transparent].map((name) =>
     access(new URL(`art/tempered/${name}`, root))))
 })
 
@@ -36,9 +35,10 @@ test('production companion and icon PNGs carry a real alpha channel', async () =
 
 test('every visible wellness asset is available to the installed PWA offline', async () => {
   const worker = await readFile(new URL('sw.js', root), 'utf8')
-  for (const name of [...backgrounds, ...transparent]) {
+  for (const name of [...habitats, ...transparent]) {
     assert.match(worker, new RegExp(`art/tempered/${name.replaceAll('.', '\\.')}`), `${name} is not precached`)
   }
+  assert.doesNotMatch(worker, /art\/tempered\/bg-(?:wellness|today|train|progress)\.webp/)
 })
 
 test('runtime styles never point at checkerboard source references', async () => {

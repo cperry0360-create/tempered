@@ -326,7 +326,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       el('div.companion-reveal__wash', { 'aria-hidden': 'true' }),
       el('section.companion-reveal__card', { 'aria-live': 'assertive' }, [
         el('span.companion-reveal__eyebrow', {
-          text: complete ? 'EVOLUTION COMPLETE' : transforming ? 'EVOLVING' : 'EVOLUTION READY',
+          text: complete ? 'Evolution complete' : transforming ? 'Evolving' : 'Evolution ready',
         }),
         artStage,
         el('h2', {
@@ -344,15 +344,15 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
           text: complete
             ? target.copy
             : transforming
-              ? 'Stay with it. Your new form is taking shape.'
-              : `Your real-world work carried ${m.name} beyond ${m.stage.name}. The new form waits for you here.`,
+              ? 'Stay with it as your new form takes shape.'
+              : `Your real-world work carried ${m.name} beyond ${m.stage.name}, and the new form waits for you here.`,
         }),
         transforming
           ? el('div.companion-reveal__progress', { role: 'progressbar', 'aria-label': 'Evolution in progress' }, [el('span')])
           : el('button.companion-reveal__action', {
               type: 'button',
               onclick: complete ? dismissEvolution : beginEvolution,
-              text: complete ? 'KEEP GOING' : 'START EVOLUTION',
+              text: complete ? 'Keep going' : 'Start evolution',
             }),
       ]),
     ])
@@ -412,14 +412,14 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       el('section.fuel-dashboard', {}, [
         el('div.fuel-dashboard__head', {}, [
         el('div', {}, [
-          el('span', { text: 'TODAY' }),
+          el('span', { text: 'Today' }),
           el('h2', { text: 'Fuel' }),
         ]),
-        el('button.fuel-dashboard__today', { type: 'button', onclick: onToday }, ['OPEN TODAY']),
+        el('button.fuel-dashboard__today', { type: 'button', onclick: onToday }, ['Open today']),
       ]),
       el('div.fuel-energy', {}, [
         el('div.fuel-energy__ring', { style: `--fuel-progress:${percent(calories, calorieGoal)}` }, [
-          el('strong', { text: `${Math.max(0, Math.round(calorieGoal - calories))}` }), el('span', { text: 'KCAL LEFT' }),
+          el('strong', { text: `${Math.max(0, Math.round(calorieGoal - calories))}` }), el('span', { text: 'kcal left' }),
         ]),
         el('div.fuel-energy__summary', {}, [
           el('strong', { text: `${Math.round(calories)} / ${Math.round(calorieGoal)} kcal` }),
@@ -428,23 +428,23 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
         ]),
       ]),
       el('div.fuel-macros', {}, [
-        ['PROTEIN', ledger.totals.protein], ['CARBS', ledger.totals.carbs], ['FAT', ledger.totals.fat], ['FIBER', ledger.totals.fiber],
+        ['Protein', ledger.totals.protein], ['Carbs', ledger.totals.carbs], ['Fat', ledger.totals.fat], ['Fiber', ledger.totals.fiber],
       ].map(([label, value]) => el('span', {}, [el('b', { text: `${Math.round(value)}g` }), el('small', { text: label })]))),
-      el('button.fuel-dashboard__nutrition', { type: 'button', onclick: openNutrition }, ['+ LOG A MEAL']),
+      el('button.fuel-dashboard__nutrition', { type: 'button', onclick: openNutrition }, ['+ Log a meal']),
       el('div.fuel-meals', {}, meals.length ? meals.map((entry) => el('button.fuel-meals__row', { type: 'button', onclick: openNutrition }, [
         el('span', {}, [el('strong', { text: mealName(entry) }), el('small', { text: entry.description || 'Logged meal' })]),
         el('b', { text: `${Math.round(entry.calories ?? 0)} kcal` }),
       ])) : [el('button.fuel-meals__empty', { type: 'button', onclick: openNutrition, text: 'No meals yet · tap to start today’s journal' })]),
       ]),
       el('section.fuel-water', {}, [
-        el('div.fuel-water__head', {}, [el('div', {}, [el('span', { text: 'HYDRATION' }), el('h2', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` })]), el('strong', { text: `${percent(water, waterGoal)}%` })]),
+        el('div.fuel-water__head', {}, [el('div', {}, [el('span', { text: 'Hydration' }), el('h2', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` })]), el('strong', { text: `${percent(water, waterGoal)}%` })]),
         el('div.fuel-water__bar', {}, [el('i', { style: `width:${percent(water, waterGoal)}%` })]),
-        el('div.fuel-water__actions', {}, [8, 12, 25].map((amount) => el('button', { type: 'button', onclick: () => addWater(amount), text: `+${amount} OZ` }))),
+        el('div.fuel-water__actions', {}, [8, 12, 25].map((amount) => el('button', { type: 'button', onclick: () => addWater(amount), text: `+${amount} oz` }))),
       ]),
       el('section.fuel-recovery', { dataset: { readiness: m.readiness.label.toLowerCase().replaceAll(' ', '-') } }, [
-        el('div.fuel-recovery__head', {}, [el('div', {}, [el('span', { text: 'RECOVERY' }), el('h2', { text: m.readiness.score === null ? 'Not enough data' : `${m.readiness.score} · ${m.readiness.label}` })]), el('small', { text: m.readiness.action })]),
+        el('div.fuel-recovery__head', {}, [el('div', {}, [el('span', { text: 'Recovery' }), el('h2', { text: m.readiness.score === null ? 'Not enough data' : `${m.readiness.score} · ${m.readiness.label}` })]), el('small', { text: m.readiness.action })]),
         el('div.fuel-recovery__grid', {}, [
-          healthMetric('RESTING HR', health.restingHr, ' bpm'), healthMetric('HRV', health.hrvMs, ' ms'), healthMetric('RESPIRATION', health.respiratoryRate, '/min'), healthMetric('SPO₂', health.spo2, '%'),
+          healthMetric('Resting heart rate', health.restingHr, ' bpm'), healthMetric('Heart rate variability', health.hrvMs, ' ms'), healthMetric('Respiration', health.respiratoryRate, '/min'), healthMetric('Blood oxygen', health.spo2, '%'),
         ]),
       ]),
     ])
@@ -456,9 +456,9 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
     replace(root, [
       el('header.companion-header', {}, [
         el('div', {}, [
-          el('span.companion-header__eyebrow', { text: 'FUEL · HYDRATION · RECOVERY' }),
+          el('span.companion-header__eyebrow', { text: 'Fuel · hydration · recovery' }),
           el('h1.screen__title', { text: 'Fuel' }),
-          el('p.companion-header__copy', { text: `${m.name} is a small reward for the work you already track. Nothing ever decays.` }),
+          el('p.companion-header__copy', { text: `${m.name} reflects the work you already track, and nothing ever decays.` }),
         ]),
         companionArt(m, 'companion-header__mark'),
       ]),
@@ -492,7 +492,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       el('section.companion-growth', {}, [
         el('div.companion-growth__head', {}, [
           el('div', {}, [
-            el('span.companion-growth__label', { text: 'GROWTH' }),
+            el('span.companion-growth__label', { text: 'Growth' }),
             el('strong.companion-growth__stage', { text: `Level ${m.stage.level} · ${m.stage.name}` }),
           ]),
           el('span.companion-growth__next', {
@@ -506,14 +506,16 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
         }, [el('span', { style: `width:${m.growth}%` })]),
         el('p.companion-growth__copy', {
           text: m.pendingEvolution
-            ? `${m.stage.copy} Reveal Level ${m.earnedStage.level} on this screen to transform.`
-            : m.next ? `${m.stage.copy} Next: Level ${m.next.level} · ${m.next.name}.` : m.stage.copy,
+            ? `Level ${m.earnedStage.level} is ready to reveal.`
+            : m.next
+              ? `${m.stage.copy.replace(/[.!?]+$/, '')}; next level: ${m.next.level} · ${m.next.name}.`
+              : m.stage.copy,
         }),
         !m.pendingEvolution && m.stage.level > 1
           ? el('button.companion-growth__replay', {
               type: 'button',
               onclick: replayEvolution,
-              text: 'REPLAY EVOLUTION',
+              text: 'Replay evolution',
             })
           : null,
       ]),
@@ -539,7 +541,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       el('section.companion-style', {}, [
         el('div.companion-style__head', {}, [
           el('h2', { text: 'Companion type' }),
-          el('p', { text: 'Choose anytime. Your name, care, and level stay put.' }),
+            el('p', { text: 'Choose anytime while keeping your name, care, and level.' }),
         ]),
         el('div.companion-style__options', {}, [styleOption('turtle'), styleOption('sprout'), styleOption('forge')]),
       ]),
@@ -556,7 +558,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
           })
           return el('div.companion-name', {}, [
             input,
-            el('button.companion-name__save', { type: 'button', onclick: () => rename(input) }, ['RENAME']),
+            el('button.companion-name__save', { type: 'button', onclick: () => rename(input) }, ['Rename']),
           ])
         })(),
       ]),

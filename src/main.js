@@ -5,7 +5,6 @@ import { errorState } from './ui/states.js'
 import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
-import { installProgressDashboardRuntime } from './ui/progress-dashboard-runtime.js'
 import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 
 registerServiceWorker()
@@ -19,7 +18,6 @@ bootstrap()
     // supplies a predictable nine-line snapshot, so expose only the explicit
     // review-and-paste bridge in Daily Recap.
     installHealthPasteRuntime(context)
-    installProgressDashboardRuntime(context)
     try {
       await installCableMachineRuntime(context)
     } catch (error) {

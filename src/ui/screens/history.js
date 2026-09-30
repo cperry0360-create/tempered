@@ -1,29 +1,36 @@
 /**
- * PROGRESS — trends, habit consistency, lifting progression and the raw log.
+ * Progress — weekly training volume, personal records, trends, habits, and log.
  */
 
 import { el, replace } from '../dom.js'
 import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
+import { effectiveLoad } from '../../domain/records.js'
+import { estimateOneRepMax } from '../../domain/e1rm.js'
 import {
   observedProgressDates,
   progressDataStart,
-  recordedSampleCount,
 } from '../../domain/progress-coverage.js'
 
-const progressIcon = new URL('../../../art/tempered/icon-progress.png', import.meta.url).href
+const RANGES = [7, 30, 90]
+const RECOVERY_SIGNALS = [
+  { key: 'restingHr', label: 'Resting heart rate', unit: ' bpm', digits: 0 },
+  { key: 'hrvMs', label: 'Heart rate variability', unit: ' ms', digits: 1 },
+  { key: 'respiratoryRate', label: 'Respiratory rate', unit: ' /min', digits: 1 },
+  { key: 'spo2', label: 'Blood oxygen', unit: '%', digits: 0 },
+]
 
 function parseDate(key) {
-  const [y, m, d] = String(key).split('-').map(Number)
-  return new Date(y, m - 1, d, 12)
+  const parts = String(key).split('-').map(Number)
+  return new Date(parts[0], parts[1] - 1, parts[2], 12)
 }
 
 function dateKey(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return year + '-' + month + '-' + day
 }
 
 function addDays(key, amount) {
@@ -40,31 +47,44 @@ function rangeDates(today, count) {
 }
 
 function average(values) {
-  const clean = values.filter((value) => typeof value === 'number' && Number.isFinite(value))
-  return clean.length ? clean.reduce((sum, value) => sum + value, 0) / clean.length : null
+  const usable = values.filter((value) => typeof value === 'number' && Number.isFinite(value))
+  return usable.length ? usable.reduce((sum, value) => sum + value, 0) / usable.length : null
 }
 
-function compactNumber(value) {
+function numberText(value, digits = 0) {
   if (!Number.isFinite(value)) return '—'
   return new Intl.NumberFormat(undefined, {
-    notation: Math.abs(value) >= 10000 ? 'compact' : 'standard', maximumFractionDigits: 1,
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
   }).format(value)
 }
 
-function sparkline(values, width = 160, height = 38) {
+function monthDay(key) {
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parseDate(key))
+}
+
+function deltaValue(current, previous, unit, digits = 0) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return null
+  const delta = current - previous
+  const magnitude = Math.abs(delta) < 0.05 ? 0 : delta
+  const sign = magnitude > 0 ? '+' : magnitude < 0 ? '−' : ''
+  return sign + numberText(Math.abs(magnitude), digits) + unit
+}
+
+function sparkline(values, width = 112, height = 34) {
   const clean = values.filter((value) => typeof value === 'number' && Number.isFinite(value))
   if (clean.length < 2) return null
   const min = Math.min(...clean)
   const max = Math.max(...clean)
   const span = max - min || 1
   const points = clean.map((value, index) => {
-    const x = (index / (clean.length - 1)) * width
+    const x = index / (clean.length - 1) * width
     const y = height - ((value - min) / span) * (height - 4) - 2
-    return `${x.toFixed(1)},${y.toFixed(1)}`
+    return x.toFixed(1) + ',' + y.toFixed(1)
   }).join(' ')
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height)
   svg.setAttribute('class', 'spark')
   svg.setAttribute('aria-hidden', 'true')
   svg.setAttribute('focusable', 'false')
@@ -103,18 +123,18 @@ function streaks(values) {
   return { current, longest }
 }
 
-function deltaText(current, previous, { suffix = '', points = false } = {}) {
-  if (!Number.isFinite(current) || !Number.isFinite(previous)) return 'no prior comparison yet'
-  const delta = current - previous
-  if (Math.abs(delta) < 0.05) return 'about the same as prior period'
-  const rounded = Math.abs(delta) >= 10 ? Math.round(Math.abs(delta)) : Math.round(Math.abs(delta) * 10) / 10
-  return `${delta > 0 ? '+' : '−'}${rounded}${points ? ' pts' : suffix} vs prior period`
+function weekStart(key) {
+  const date = parseDate(key)
+  const mondayOffset = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - mondayOffset)
+  return dateKey(date)
 }
 
 function bestSetLabel(best) {
   if (!best) return '—'
-  if (Number.isInteger(best.cablePeg)) return `P${best.cablePeg} · ${lbs(best.weight)} × ${best.reps}`
-  return `${lbs(best.weight)} × ${best.reps}`
+  const load = Number.isFinite(best.weight) ? lbs(best.weight) : null
+  const reps = Number.isFinite(best.reps) ? String(best.reps) + ' reps' : null
+  return [load, reps].filter(Boolean).join(' × ')
 }
 
 export function createHistoryScreen({ storage, workout, daily, clock }) {
@@ -125,11 +145,13 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let records = []
   let exercises = new Map()
   let sessionStats = new Map()
-  let weightHistory = new Map()
   let dayLogs = []
   let setLogs = []
   let schedule = {}
+  let selectedLiftId = null
+  let selectedSessionId = null
   let editingDurationId = null
+  let reportStatus = ''
 
   function selectedDates() {
     return rangeDates(clock.today(), range)
@@ -155,28 +177,20 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return (daily.activities ?? []).filter((activity) => schedule[activity.id]?.cadence === 'daily')
   }
 
-  function metric(value, label, detail = null) {
-    return el('article.progress-metric', {}, [
-      el('strong.progress-metric__value', { text: value }),
-      el('span.progress-metric__label', { text: label }),
-      detail && el('span.progress-metric__detail', { text: detail }),
-    ])
-  }
-
   function habitCompletionForDay(day) {
     const activities = dailyActivities()
     if (activities.length === 0) return { done: 0, total: 0, percent: 0 }
     const done = activities.filter((activity) => completedActivity(activity, day)).length
-    return { done, total: activities.length, percent: Math.round((done / activities.length) * 100) }
+    return { done, total: activities.length, percent: Math.round(done / activities.length * 100) }
   }
 
   function heatmap(days) {
     return el('div.progress-heatmap', { 'aria-label': 'Daily habit completion' }, days.map((day) => {
       const completion = habitCompletionForDay(day)
       return el('span.progress-heatmap__day', {
-        title: `${shortDate(day.date)} · ${completion.percent}%`,
+        title: monthDay(day.date) + ' · ' + completion.percent + '%',
         dataset: { level: String(Math.min(4, Math.ceil(completion.percent / 25))) },
-        'aria-label': `${shortDate(day.date)}, ${completion.percent}% habits complete`,
+        'aria-label': monthDay(day.date) + ', ' + completion.percent + '% habits complete',
       })
     }))
   }
@@ -188,205 +202,443 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const dateSet = new Set(trackedDates)
     const habits = dailyActivities()
     const opportunities = days.length * habits.length
-    const habitDone = days.reduce((sum, day) => sum + habits.filter((activity) => completedActivity(activity, day)).length, 0)
-    const habitRate = opportunities ? Math.round((habitDone / opportunities) * 100) : null
+    const habitDone = days.reduce((sum, day) => (
+      sum + habits.filter((activity) => completedActivity(activity, day)).length
+    ), 0)
+    const habitRate = opportunities ? Math.round(habitDone / opportunities * 100) : null
     const periodSessions = sessions.filter((session) => dateSet.has(session.date))
     const sessionIds = new Set(periodSessions.map((session) => session.id))
-    const workingSets = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId)).length
+    const periodLogs = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId))
+    const workingSets = periodLogs.length
     const trainingDays = new Set(periodSessions.map((session) => session.date)).size
-    const avgSteps = average(days.map((day) => day.steps))
-    const avgSleep = average(days.map((day) => day.sleepHours))
-    const stepSamples = recordedSampleCount(days.map((day) => day.steps))
-    const sleepSamples = recordedSampleCount(days.map((day) => day.sleepHours))
+    const steps = days.map((day) => day.steps)
+    const sleep = days.map((day) => day.sleepHours)
+    const avgSteps = average(steps)
+    const avgSleep = average(sleep)
     const microMinutes = days.reduce((sum, day) => sum + (day.microCardioMinutes ?? 0), 0)
 
     const volumeByDate = new Map(days.map((day) => [day.date, 0]))
-    for (const session of periodSessions) {
-      const stats = sessionStats.get(session.id)
-      volumeByDate.set(session.date, (volumeByDate.get(session.date) ?? 0) + (stats?.volume ?? 0))
+    for (const log of periodLogs) {
+      const date = periodSessions.find((session) => session.id === log.sessionId)?.date
+      if (!date) continue
+      const load = effectiveLoad(log, exercises)
+      if (!Number.isFinite(log.reps) || log.reps <= 0) continue
+      volumeByDate.set(date, (volumeByDate.get(date) ?? 0) + load * log.reps)
     }
-    const volumeValues = days.map((day) => volumeByDate.get(day.date) ?? 0)
-    const totalVolume = volumeValues.reduce((sum, value) => sum + value, 0)
 
     const weights = days
       .map((day) => ({ date: day.date, value: day.bodyMetrics?.weight }))
-      .filter((entry) => typeof entry.value === 'number')
+      .filter((entry) => typeof entry.value === 'number' && Number.isFinite(entry.value))
     const latestWeight = weights.at(-1)?.value ?? null
-    const firstWeight = weights[0]?.value ?? null
-    const weightChange = latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null
+    const recovery = RECOVERY_SIGNALS.map((signal) => ({
+      ...signal,
+      values: days
+        .map((day) => ({ date: day.date, value: day.healthMetrics?.[signal.key] }))
+        .filter((entry) => typeof entry.value === 'number' && Number.isFinite(entry.value)),
+    }))
 
     return {
-      days, periodSessions, trainingDays, workingSets, habitRate, avgSteps, avgSleep,
-      microMinutes, volumeValues, totalVolume, weights, latestWeight, weightChange,
+      days,
+      periodSessions,
+      periodLogs,
+      trainingDays,
+      workingSets,
+      habitRate,
+      avgSteps,
+      avgSleep,
+      microMinutes,
+      volumeByDate,
+      totalVolume: [...volumeByDate.values()].reduce((sum, value) => sum + value, 0),
+      weights,
+      latestWeight,
+      recovery,
       trackedDays: trackedDates.length,
       requestedDays: dates.length,
       fullCoverage: trackedDates.length === dates.length,
-      stepSamples,
-      sleepSamples,
     }
+  }
+
+  function weeklySetCounts() {
+    const today = clock.today()
+    const currentStart = weekStart(today)
+    const starts = Array.from({ length: 8 }, (_, index) => addDays(currentStart, (index - 7) * 7))
+    const counts = new Map(starts.map((start) => [start, 0]))
+    const dateBySession = new Map(sessions.map((session) => [session.id, session.date]))
+    for (const log of setLogs) {
+      if (log.isWarmup) continue
+      const date = dateBySession.get(log.sessionId)
+      if (!date) continue
+      const start = weekStart(date)
+      if (counts.has(start)) counts.set(start, counts.get(start) + 1)
+    }
+    return starts.map((start) => ({ start, sets: counts.get(start) ?? 0 }))
+  }
+
+  function weeklySetsCard() {
+    const weeks = weeklySetCounts()
+    const max = Math.max(1, ...weeks.map((week) => week.sets))
+    const currentStart = weekStart(clock.today())
+    return el('section.progress-panel.progress-weekly', {}, [
+      el('h2.progress-panel__title', { text: 'Weekly sets' }),
+      el('div.progress-weekly__bars', { role: 'img', 'aria-label': 'Working sets per week for the last eight weeks' },
+        weeks.map((week) => {
+          const active = week.start === currentStart
+          const height = Math.max(4, week.sets / max * 100)
+          return el('div.progress-weekly__column', {
+            title: monthDay(week.start) + ': ' + week.sets + ' working sets',
+            'aria-label': monthDay(week.start) + ': ' + week.sets + ' working sets',
+          }, [
+            active && el('strong.progress-weekly__value', { text: String(week.sets) }),
+            el('div.progress-weekly__track', {}, [
+              el('span.progress-weekly__bar', {
+                dataset: { current: String(active) },
+                style: 'height:' + height + '%',
+              }),
+            ]),
+          ])
+        })),
+      el('div.progress-weekly__axis', {}, [
+        el('span', { text: monthDay(weeks[0].start) }),
+        el('span', { text: monthDay(weeks[7].start) }),
+      ]),
+    ])
+  }
+
+  function recentPrs() {
+    const start = selectedDates()[0]
+    return records.map((record) => {
+      const exercise = exercises.get(record.exerciseId)
+      const name = exercise?.name ?? record.exerciseId
+      const weight = record.bestWeight
+      if (weight?.date >= start && weight.date <= clock.today()) {
+        return {
+          date: weight.date,
+          text: name + ' · ' + lbs(weight.weight) + ' × ' + weight.reps + ' · ' + shortDate(weight.date),
+        }
+      }
+      const e1rm = record.bestE1RM
+      if (e1rm?.date >= start && e1rm.date <= clock.today()) {
+        return {
+          date: e1rm.date,
+          text: name + ' · estimated one rep max ' + lbs(e1rm.value) + ' · ' + shortDate(e1rm.date),
+        }
+      }
+      const bestVolume = record.bestVolume
+      if (bestVolume?.date >= start && bestVolume.date <= clock.today()) {
+        return {
+          date: bestVolume.date,
+          text: name + ' · ' + volume(bestVolume.volume) + ' lb volume · ' + shortDate(bestVolume.date),
+        }
+      }
+      return null
+    }).filter(Boolean).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3)
+  }
+
+  function recentPrsCard() {
+    const rows = recentPrs()
+    return el('section.progress-panel', {}, [
+      el('h2.progress-panel__title', { text: 'Recent PRs' }),
+      rows.length
+        ? el('div.progress-prs', {}, rows.map((row) => el('div.progress-prs__row', { text: row.text })))
+        : el('p.progress-panel__empty', { text: 'No recent personal records in this range.' }),
+    ])
+  }
+
+  function trendRow(label, value, delta, values, sampleCount) {
+    const samples = Number.isFinite(sampleCount) ? sampleCount : values.filter(Number.isFinite).length
+    return el('div.progress-trend', {}, [
+      el('div.progress-trend__copy', {}, [
+        el('span.progress-trend__label', { text: label }),
+        el('div.progress-trend__values', {}, [
+          el('strong.progress-trend__value', { text: value }),
+          delta && el('span.progress-trend__delta', { text: delta }),
+        ]),
+        el('span.progress-trend__samples', { text: samples + ' sample' + (samples === 1 ? '' : 's') }),
+      ]),
+      sparkline(values, 112, 34),
+    ])
+  }
+
+  function trendsCard(current, previous, comparable) {
+    const latestWeight = current.latestWeight
+    const previousWeight = previous.latestWeight
+    const weightDelta = comparable
+      ? deltaValue(latestWeight, previousWeight, ' lb', 1)
+      : null
+    const weightTrend = trendRow(
+      'Weight',
+      latestWeight === null ? '—' : lbs(latestWeight),
+      weightDelta,
+      current.weights.map((item) => item.value),
+      current.weights.length,
+    )
+    const stepsDelta = comparable
+      ? deltaValue(current.avgSteps, previous.avgSteps, '', 0)
+      : null
+    const stepsTrend = trendRow(
+      'Steps',
+      current.avgSteps === null ? '—' : numberText(Math.round(current.avgSteps)) + ' avg',
+      stepsDelta,
+      current.days.map((day) => day.steps),
+      current.days.filter((day) => Number.isFinite(day.steps)).length,
+    )
+    const sleepDelta = comparable
+      ? deltaValue(current.avgSleep, previous.avgSleep, ' h', 1)
+      : null
+    const sleepTrend = trendRow(
+      'Sleep',
+      current.avgSleep === null ? '—' : numberText(current.avgSleep, 1) + 'h avg',
+      sleepDelta,
+      current.days.map((day) => day.sleepHours),
+      current.days.filter((day) => Number.isFinite(day.sleepHours)).length,
+    )
+    return el('section.progress-panel', {}, [
+      el('h2.progress-panel__title', { text: 'Trends' }),
+      el('div.progress-trends', {}, [weightTrend, stepsTrend, sleepTrend]),
+    ])
+  }
+
+  function recoveryCard(current, previous, comparable) {
+    const rows = current.recovery.filter((signal) => signal.values.length > 0)
+    if (rows.length === 0) return null
+    return el('section.progress-panel', {}, [
+      el('h2.progress-panel__title', { text: 'Recovery' }),
+      el('div.progress-trends', {}, rows.map((signal) => {
+        const currentValue = signal.values.at(-1)?.value
+        const previousValues = previous.recovery.find((item) => item.key === signal.key)?.values ?? []
+        const previousValue = previousValues.at(-1)?.value
+        const delta = comparable
+          ? deltaValue(currentValue, previousValue, signal.unit, signal.digits)
+          : null
+        return trendRow(
+          signal.label,
+          numberText(currentValue, signal.digits) + signal.unit,
+          delta,
+          signal.values.map((item) => item.value),
+          signal.values.length,
+        )
+      })),
+    ])
+  }
+
+  function coverageLine(current) {
+    if (current.fullCoverage || current.trackedDays === 0) return null
+    return el('p.progress-footnote', {
+      text: 'Showing ' + current.trackedDays + ' of ' + current.requestedDays + ' days since tracking began.',
+    })
+  }
+
+  function buildProgressReport(current, previous, comparable) {
+    const lines = [
+      'Tempered progress · last ' + range + ' days ending ' + shortDate(clock.today()),
+      'Training: ' + current.periodSessions.length + ' sessions, ' + current.workingSets + ' working sets.',
+      'Habits: ' + (current.habitRate === null ? 'no configured daily habits' : current.habitRate + '% complete.'),
+      'Steps: ' + (current.avgSteps === null ? 'no samples' : numberText(Math.round(current.avgSteps)) + ' per day.')
+        + ' Sleep: ' + (current.avgSleep === null ? 'no samples' : numberText(current.avgSleep, 1) + ' hours average.'),
+      'Micro cardio: ' + numberText(current.microMinutes) + ' minutes.',
+    ]
+    if (current.latestWeight !== null) lines.push('Latest weight: ' + lbs(current.latestWeight) + '.')
+    if (comparable && previous.periodSessions.length >= 0) {
+      const sessionsDelta = deltaValue(current.periodSessions.length, previous.periodSessions.length, '')
+      if (sessionsDelta) lines.push('Sessions versus the prior period: ' + sessionsDelta + '.')
+    }
+    const signals = current.recovery
+      .filter((signal) => signal.values.length)
+      .map((signal) => signal.label + ': ' + numberText(signal.values.at(-1).value, signal.digits) + signal.unit)
+    if (signals.length) lines.push('Recovery: ' + signals.join(', ') + '.')
+    return lines.join('\n')
+  }
+
+  async function copyProgressReport() {
+    const current = summaryForDates(selectedDates())
+    const previous = summaryForDates(previousDates())
+    const comparable = current.fullCoverage && previous.fullCoverage
+    try {
+      if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      await globalThis.navigator.clipboard.writeText(buildProgressReport(current, previous, comparable))
+      reportStatus = 'Copied; paste it into ChatGPT when ready.'
+    } catch {
+      reportStatus = 'Clipboard access is unavailable.'
+    }
+    render()
   }
 
   function overviewView() {
     const current = summaryForDates(selectedDates())
     const previous = summaryForDates(previousDates())
-    const sleepText = current.avgSleep === null ? '—' : `${current.avgSleep.toFixed(1)}h`
-    const stepsText = current.avgSteps === null ? '—' : compactNumber(Math.round(current.avgSteps))
-    const bodyText = current.latestWeight === null ? '—' : `${current.latestWeight.toFixed(1)} lb`
-    const hasData = current.trackedDays > 0
     const comparable = current.fullCoverage && previous.fullCoverage
-    const recapLabel = current.fullCoverage
-      ? `${range}-DAY RECAP`
-      : `${range}-DAY VIEW · ${current.trackedDays} ${current.trackedDays === 1 ? 'DAY' : 'DAYS'} OF DATA`
-    const comparisonTraining = comparable
-      ? deltaText(current.trainingDays, previous.trainingDays, { suffix: ' days' })
-      : 'no prior comparison yet'
-    const comparisonHabits = comparable
-      ? deltaText(current.habitRate, previous.habitRate, { points: true })
-      : 'no prior comparison yet'
-
+    const micro = current.microMinutes > 0
+      ? el('p.progress-footnote', { text: 'Micro cardio · ' + numberText(current.microMinutes) + ' min' })
+      : null
+    const recovery = recoveryCard(current, previous, comparable)
     return [
-      el('section.progress-recap', { dataset: { recap: String(range) } }, [
-        el('div.progress-recap__top', {}, [
-          el('div', {}, [
-            el('span.progress-recap__eyebrow', { text: recapLabel }),
-            el('h2.progress-recap__headline', {
-              text: hasData
-                ? current.trainingDays === 1 ? '1 training day' : `${current.trainingDays} training days`
-                : 'No recorded data yet',
-            }),
-            el('p.progress-recap__sub', {
-              text: hasData
-                ? `${current.workingSets} working sets · ${compactNumber(current.totalVolume)} lb nominal training volume`
-                : 'Tempered will calculate this range from the first day you log.',
-            }),
-          ]),
-          el('div.progress-recap__score', {}, [
-            el('strong', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
-            el('span', { text: 'habits' }),
-          ]),
-        ]),
-        el('div.progress-recap__compare', {}, [
-          el('span', { text: comparisonTraining }),
-          el('span', { text: comparisonHabits }),
-        ]),
-        el('div.progress-recap__stats', {}, [
-          metric(hasData ? String(current.periodSessions.length) : '—', 'sessions', hasData ? `${current.workingSets} working sets` : null),
-          metric(stepsText, 'avg steps', current.avgSteps === null ? null : `${current.stepSamples} logged ${current.stepSamples === 1 ? 'day' : 'days'}`),
-          metric(sleepText, 'avg sleep', current.avgSleep === null ? null : `${current.sleepSamples} logged ${current.sleepSamples === 1 ? 'night' : 'nights'}`),
-          metric(bodyText, 'latest weight', current.weightChange === null ? 'log more days for a trend' : `${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb in range`),
-        ]),
+      weeklySetsCard(),
+      micro,
+      coverageLine(current),
+      recentPrsCard(),
+      trendsCard(current, previous, comparable),
+      recovery,
+      el('section.progress-report', {}, [
+        el('button.progress-report__button', {
+          type: 'button',
+          onclick: () => { copyProgressReport() },
+        }, ['Copy progress report for ChatGPT']),
+        reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
       ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Consistency' }),
-            el('p.progress-panel__sub', { text: 'Each square is one day of configured daily habits.' }),
-          ]),
-          el('strong.progress-panel__hero', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
-        ]),
-        heatmap(current.days),
-      ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Training load' }),
-            el('p.progress-panel__sub', { text: `${compactNumber(current.totalVolume)} lb nominal volume across ${current.workingSets} working sets` }),
-          ]),
-          sparkline(current.volumeValues),
-        ]),
-        el('div.progress-panel__mini', {}, [
-          metric(String(current.trainingDays), 'training days'),
-          metric(String(current.workingSets), 'working sets'),
-          metric(`${Math.round(current.microMinutes)}m`, 'micro cardio'),
-        ]),
-      ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Body trend' }),
-            el('p.progress-panel__sub', {
-              text: current.latestWeight === null
-                ? 'Log weight to build a trend.'
-                : `${current.latestWeight.toFixed(1)} lb${current.weightChange === null ? '' : ` · ${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb across this range`}`,
-            }),
-          ]),
-          sparkline(current.weights.map((entry) => entry.value)),
-        ]),
-      ]),
-    ]
+    ].filter(Boolean)
   }
 
-  function habitsView() {
+  function habitView() {
     const days = selectedDays()
     const activities = dailyActivities()
     if (activities.length === 0) {
-      return [emptyState('No daily habits configured', 'Set activities to DAILY in Settings to build consistency stats.')]
+      return [emptyState('No daily habits configured', 'Set activities to daily in Settings to build consistency stats.')]
     }
     if (days.length === 0) {
-      return [emptyState('No habit history yet', 'Tempered will calculate consistency from the first day you log.')]
+      return [emptyState('No habit history yet', 'Daily habit completion will appear here after you log.')]
     }
-    return activities.map((activity) => {
+    const rows = activities.map((activity) => {
       const values = days.map((day) => completedActivity(activity, day))
       const done = values.filter(Boolean).length
-      const percent = Math.round((done / values.length) * 100)
+      const percent = Math.round(done / values.length * 100)
       const streak = streaks(values)
       return el('article.progress-habit', { dataset: { habit: activity.id } }, [
         el('div.progress-habit__head', {}, [
           el('div', {}, [
             el('h3.progress-habit__name', { text: activity.short ?? activity.name }),
-            el('p.progress-habit__meta', { text: `${done} of ${values.length} days` }),
+            el('p.progress-habit__meta', { text: done + ' of ' + values.length + ' days' }),
           ]),
-          el('strong.progress-habit__rate', { text: `${percent}%` }),
+          el('strong.progress-habit__rate', { text: percent + '%' }),
         ]),
-        el('div.progress-habit__bar', {}, [el('span', { style: `width:${percent}%` })]),
-        el('div.progress-habit__stats', {}, [
-          el('span', { text: `${streak.current} current streak` }),
-          el('span', { text: `${streak.longest} best streak` }),
+        el('div.progress-habit__bar', {}, [
+          el('span', { style: 'width:' + percent + '%' }),
         ]),
+        el('p.progress-habit__streak', {
+          text: streak.current + ' day streak · best ' + streak.longest + ' days',
+        }),
+      ])
+    })
+    const line = days.length < selectedDates().length
+      ? el('p.progress-footnote', { text: 'Showing ' + days.length + ' days since tracking began.' })
+      : null
+    return [line, ...rows, heatmap(days)].filter(Boolean)
+  }
+
+  function liftHistory() {
+    const byExercise = new Map()
+    const dateBySession = new Map(sessions.map((session) => [session.id, session.date]))
+    for (const log of setLogs) {
+      if (log.isWarmup) continue
+      const date = dateBySession.get(log.sessionId)
+      if (!date || !Number.isFinite(log.reps) || log.reps <= 0) continue
+      const load = effectiveLoad(log, exercises)
+      const estimate = estimateOneRepMax(load, log.reps)
+      if (estimate <= 0) continue
+      const days = byExercise.get(log.exerciseId) ?? new Map()
+      days.set(date, Math.max(days.get(date) ?? 0, estimate))
+      byExercise.set(log.exerciseId, days)
+    }
+    return new Map([...byExercise.entries()].map(([exerciseId, days]) => [
+      exerciseId,
+      [...days.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, value]) => ({ date, value })),
+    ]))
+  }
+
+  function liftDelta(history) {
+    const currentStart = rangeDates(clock.today(), 30)[0]
+    const previousStart = addDays(currentStart, -30)
+    const previousEnd = addDays(currentStart, -1)
+    const currentPeak = Math.max(0, ...history
+      .filter((point) => point.date >= currentStart && point.date <= clock.today())
+      .map((point) => point.value))
+    const previousPeak = Math.max(0, ...history
+      .filter((point) => point.date >= previousStart && point.date <= previousEnd)
+      .map((point) => point.value))
+    if (!currentPeak || !previousPeak) return null
+    return deltaValue(currentPeak, previousPeak, ' lb', 1)
+  }
+
+  function liftDetail(record, history) {
+    const exercise = exercises.get(record.exerciseId)
+    const name = exercise?.name ?? record.exerciseId
+    const top = record.bestE1RM?.value ?? Math.max(0, ...history.map((point) => point.value))
+    return [
+      el('button.progress-back', {
+        type: 'button',
+        onclick: () => { selectedLiftId = null; render() },
+      }, ['Lifts']),
+      el('section.progress-panel.progress-lift-detail', {}, [
+        el('h2.progress-panel__title', { text: name }),
+        el('div.progress-lift-detail__stats', {}, [
+          record.bestWeight && el('div.progress-lift-detail__stat', {}, [
+            el('span', { text: 'Best weight' }),
+            el('strong', { text: bestSetLabel(record.bestWeight) }),
+          ]),
+          record.bestVolume && el('div.progress-lift-detail__stat', {}, [
+            el('span', { text: 'Best volume' }),
+            el('strong', { text: volume(record.bestVolume.volume) + ' lb' }),
+          ]),
+          top > 0 && el('div.progress-lift-detail__stat', {}, [
+            el('span', { text: 'Estimated one rep max' }),
+            el('strong', { text: lbs(top) }),
+          ]),
+        ].filter(Boolean)),
+        el('p.progress-footnote', { text: 'Based on completed working sets.' }),
+        el('div.progress-lift-detail__history', {}, history.slice().reverse().map((point) =>
+          el('div.progress-lift-detail__row', {}, [
+            el('span', { text: shortDate(point.date) }),
+            el('span', { text: 'Estimated one rep max' }),
+            el('strong', { text: lbs(point.value) }),
+          ]))),
+      ]),
+    ]
+  }
+
+  function liftsView() {
+    const historyByExercise = liftHistory()
+    const liftRecords = records
+      .filter((record) => record.bestWeight || record.bestVolume || record.bestE1RM)
+      .sort((a, b) => (b.bestE1RM?.value ?? 0) - (a.bestE1RM?.value ?? 0))
+    if (selectedLiftId) {
+      const selected = liftRecords.find((record) => record.exerciseId === selectedLiftId)
+      if (selected) return liftDetail(selected, historyByExercise.get(selectedLiftId) ?? [])
+    }
+    if (liftRecords.length === 0) {
+      return [emptyState('No lifting progress yet', 'Records and trend lines build from working sets.')]
+    }
+    return liftRecords.map((record) => {
+      const exercise = exercises.get(record.exerciseId)
+      const name = exercise?.name ?? record.exerciseId
+      const history = historyByExercise.get(record.exerciseId) ?? []
+      const best = record.bestE1RM?.value ?? Math.max(0, ...history.map((point) => point.value))
+      const line = sparkline(history.map((point) => point.value), 98, 30)
+      const delta = liftDelta(history)
+      return el('button.progress-lift', {
+        type: 'button',
+        dataset: { record: record.exerciseId },
+        'aria-label': name + ', estimated one-rep max ' + lbs(best) + ', 30 day change ' + (delta ?? 'not available'),
+        onclick: () => { selectedLiftId = record.exerciseId; render() },
+      }, [
+        el('div.progress-lift__copy', {}, [
+          el('strong.progress-lift__name', { text: name }),
+          el('span.progress-lift__e1rm', { text: lbs(best) }),
+          el('span.progress-lift__delta', { text: delta ?? '—' }),
+        ]),
+        line,
       ])
     })
   }
 
-  function liftsView() {
-    const withRecords = records.filter((record) => record.bestWeight || record.bestVolume)
-    if (withRecords.length === 0) {
-      return [emptyState('No lifting progress yet', 'Records and trend lines build automatically from working sets.')]
-    }
-    return withRecords
-      .sort((a, b) => (b.bestWeight?.weight ?? 0) - (a.bestWeight?.weight ?? 0))
-      .map((record) => {
-        const exercise = exercises.get(record.exerciseId)
-        const line = sparkline(weightHistory.get(record.exerciseId) ?? [], 120, 30)
-        return el('article.progress-lift', { dataset: { record: record.exerciseId } }, [
-          el('div.progress-lift__head', {}, [
-            el('div', {}, [
-              el('h3.progress-lift__name', { text: exercise?.name ?? record.exerciseId }),
-              el('p.progress-lift__meta', { text: `${(weightHistory.get(record.exerciseId) ?? []).length} logged training day${(weightHistory.get(record.exerciseId) ?? []).length === 1 ? '' : 's'}` }),
-            ]),
-            line,
-          ]),
-          el('div.progress-lift__stats', {}, [
-            record.bestWeight && stat(bestSetLabel(record.bestWeight), 'best set'),
-            record.bestVolume && stat(volume(record.bestVolume.volume), 'best volume'),
-            record.bestE1RM && stat(lbs(record.bestE1RM.value), 'est. 1RM'),
-          ].filter(Boolean)),
-        ])
-      })
-  }
-
   function durationEditor(session) {
     if (editingDurationId !== session.id) {
-      return el('button.actionpill', {
+      return el('button.progress-action', {
         type: 'button',
-        dataset: { adjustDuration: session.id },
         onclick: () => { editingDurationId = session.id; render() },
-      }, ['ADJUST MINUTES'])
+      }, ['Adjust minutes'])
     }
 
-    const input = el('input.today-editor__input', {
+    const input = el('input.progress-duration__input', {
       type: 'number',
       min: '1',
       max: '240',
@@ -394,9 +646,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       value: String(Math.round(Number(session.durationMinutes) || 1)),
       'aria-label': 'Correct workout minutes',
     })
-    return el('div.historyrow__duration-editor', {}, [
+    return el('div.progress-duration', {}, [
       input,
-      el('button.today-editor__save', {
+      el('button.progress-action', {
         type: 'button',
         onclick: async () => {
           const updated = await workout.adjustSessionDuration(session.id, input.value)
@@ -404,70 +656,114 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           editingDurationId = null
           render()
         },
-      }, ['SAVE']),
-      el('button.actionpill', {
+      }, ['Save']),
+      el('button.progress-action', {
         type: 'button',
         onclick: () => { editingDurationId = null; render() },
-      }, ['CANCEL']),
+      }, ['Cancel']),
     ])
   }
 
-  function sessionsView() {
-    const dates = new Set(selectedDates())
-    const period = sessions.filter((session) => dates.has(session.date))
-    if (period.length === 0) {
-      return [emptyState('No training in this range', 'Completed workouts and micro-set training days will appear here.')]
-    }
-    return period.map((session) => {
-      const stats = sessionStats.get(session.id) ?? { volume: 0 }
-      return el('article.card.historyrow', { dataset: { session: session.id } }, [
-        el('div.historyrow__head', {}, [
-          el('h3.historyrow__name', { text: session.routineName ?? session.routineId ?? 'Training day' }),
-          el('span.historyrow__date', { text: shortDate(session.date) }),
+  function sessionSetRows(session) {
+    return setLogs
+      .filter((log) => log.sessionId === session.id)
+      .sort((a, b) => (a.setIndex ?? 0) - (b.setIndex ?? 0))
+      .map((log) => {
+        const exercise = exercises.get(log.exerciseId)
+        const load = effectiveLoad(log, exercises)
+        const performed = Number.isFinite(log.reps) && log.reps > 0
+          ? (load > 0 ? lbs(load) + ' × ' : '') + log.reps + ' reps'
+          : 'Logged'
+        return el('div.progress-session-detail__set', {}, [
+          el('span', { text: exercise?.name ?? log.exerciseId }),
+          el('strong', { text: performed }),
+        ])
+      })
+  }
+
+  function sessionDetail(session) {
+    const stats = sessionStats.get(session.id) ?? { volume: 0, sets: 0 }
+    return [
+      el('button.progress-back', {
+        type: 'button',
+        onclick: () => { selectedSessionId = null; editingDurationId = null; render() },
+      }, ['Log']),
+      el('section.progress-panel.progress-session-detail', {}, [
+        el('div.progress-session-detail__head', {}, [
+          el('div', {}, [
+            el('h2.progress-panel__title', { text: session.routineName ?? session.routineId ?? 'Training day' }),
+            el('p.progress-session-detail__date', { text: shortDate(session.date) }),
+          ]),
         ]),
-        el('p.historyrow__meta', {
+        el('p.progress-session-detail__summary', {
           text: [
             session.durationMinutes ? duration(session.durationMinutes) : null,
-            String(volume(stats.volume)) + ' lbs',
-            String(stats.sets ?? 0) + ' sets',
+            stats.sets + ' sets',
+            volume(stats.volume) + ' lb',
           ].filter(Boolean).join(' · '),
         }),
-        el('div.historyrow__actions', {}, [durationEditor(session)]),
+        el('div.progress-session-detail__sets', {}, sessionSetRows(session)),
+        durationEditor(session),
+      ]),
+    ]
+  }
+
+  function logView() {
+    if (selectedSessionId) {
+      const selected = sessions.find((session) => session.id === selectedSessionId)
+      if (selected) return sessionDetail(selected)
+    }
+    const dates = new Set(selectedDates())
+    const period = sessions.filter((session) => dates.has(session.date))
+    if (period.length === 0) return [emptyState('No training in this range', 'Completed workouts will appear here.')]
+    return period.map((session) => {
+      const stats = sessionStats.get(session.id) ?? { volume: 0, sets: 0 }
+      return el('button.progress-log-row', {
+        type: 'button',
+        dataset: { session: session.id },
+        onclick: () => { selectedSessionId = session.id; render() },
+      }, [
+        el('div.progress-log-row__head', {}, [
+          el('strong.progress-log-row__name', { text: session.routineName ?? session.routineId ?? 'Training day' }),
+          el('span.progress-log-row__date', { text: shortDate(session.date) }),
+        ]),
+        el('span.progress-log-row__meta', {
+          text: [
+            session.durationMinutes ? duration(session.durationMinutes) : null,
+            stats.sets + ' sets',
+            volume(stats.volume) + ' lb',
+          ].filter(Boolean).join(' · '),
+        }),
       ])
     })
   }
 
-  function stat(value, label) {
-    return el('div.stat.stat--small', {}, [
-      el('span.stat__value', { text: value }),
-      el('span.stat__label', { text: label }),
-    ])
-  }
-
   function render() {
     const viewContent = view === 'overview' ? overviewView()
-      : view === 'habits' ? habitsView()
+      : view === 'habits' ? habitView()
         : view === 'lifts' ? liftsView()
-          : sessionsView()
+          : logView()
 
     replace(root, [
       el('header.progress-header', {}, [
-        el('div.progress-header__copyblock', {}, [
-          el('h1.screen__title', { text: 'Progress' }),
-          el('p.progress-header__copy', { text: 'A useful recap first. Detail when you want it.' }),
+        el('h1.screen__title', { text: 'Progress' }),
+        el('label.progress-range', {}, [
+          el('span.progress-range__label', { text: 'Range' }),
+          el('select.progress-range__select', {
+            value: String(range),
+            'aria-label': 'Progress range',
+            onchange: (event) => { range = Number(event.target.value); selectedLiftId = null; selectedSessionId = null; render() },
+          }, RANGES.map((days) => el('option', { value: String(days) }, [days + 'D']))),
         ]),
-        el('img.progress-header__mark', { src: progressIcon, alt: '', 'aria-hidden': 'true' }),
       ]),
-      el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress view' }, [
-        ['overview', 'Recap'], ['habits', 'Habits'], ['lifts', 'Lifts'], ['log', 'Log'],
+      el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress sections' }, [
+        ['overview', 'Overview'], ['lifts', 'Lifts'], ['habits', 'Habits'], ['log', 'Log'],
       ].map(([name, label]) => el('button.segmented__option', {
-        type: 'button', dataset: { view: name, active: String(view === name) },
-        'aria-pressed': String(view === name), onclick: () => { view = name; render() },
-      }, [label.toUpperCase()]))),
-      el('div.progress-range', { role: 'group', 'aria-label': 'Time range' }, [7, 30, 90].map((days) => el('button.progress-range__button', {
-        type: 'button', dataset: { active: String(range === days) },
-        'aria-pressed': String(range === days), onclick: () => { range = days; render() },
-      }, [`${days}D`]))),
+        type: 'button',
+        dataset: { view: name, active: String(view === name) },
+        'aria-pressed': String(view === name),
+        onclick: () => { view = name; selectedLiftId = null; selectedSessionId = null; render() },
+      }, [label]))),
       el('div.progress-content', {}, viewContent),
     ])
   }
@@ -475,7 +771,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   return {
     root,
     async refresh() {
-      const routines = new Map((await storage.getAll('routines')).map((r) => [r.id, r]))
+      const routines = new Map((await storage.getAll('routines')).map((routine) => [routine.id, routine]))
       sessions = (await storage.getAll('sessions'))
         .filter((session) => session.endedAt)
         .map((session) => ({ ...session, routineName: routines.get(session.routineId)?.name }))
@@ -490,32 +786,14 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       ])
 
       sessionStats = new Map()
-      weightHistory = new Map()
-      const byDate = new Map((await storage.getAll('sessions')).map((session) => [session.id, session.date]))
-      const perExercisePerDay = new Map()
-
       for (const log of setLogs) {
         if (log.isWarmup) continue
         const stats = sessionStats.get(log.sessionId) ?? { volume: 0, sets: 0 }
-        const exercise = exercises.get(log.exerciseId)
-        const load = (typeof exercise?.notionalLoad === 'number' ? exercise.notionalLoad : 0) + (log.weight ?? 0)
+        const load = effectiveLoad(log, exercises)
         if (load > 0 && log.reps > 0) stats.volume += load * log.reps
         stats.sets += 1
         sessionStats.set(log.sessionId, stats)
-
-        const date = byDate.get(log.sessionId)
-        if (!date || !(load > 0)) continue
-        if (!perExercisePerDay.has(log.exerciseId)) perExercisePerDay.set(log.exerciseId, new Map())
-        const days = perExercisePerDay.get(log.exerciseId)
-        days.set(date, Math.max(days.get(date) ?? 0, load))
       }
-
-      for (const [exerciseId, days] of perExercisePerDay) {
-        weightHistory.set(exerciseId, [...days.entries()]
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([, weight]) => weight))
-      }
-
       render()
     },
   }

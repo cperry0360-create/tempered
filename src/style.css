@@ -1186,7 +1186,7 @@ input.setrow__num[readonly] { color: var(--text); }
 }
 
 .pr { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-.pr__detail { font-size: var(--text-md); text-transform: capitalize; }
+.pr__detail { font-size: var(--text-md); text-transform: none; }
 
 .grew { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s3); align-items: baseline; }
 .grew__attr { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
@@ -1284,7 +1284,7 @@ input.setrow__num[readonly] { color: var(--text); }
 
 .guide { display: grid; gap: var(--s2); }
 .guide__row { display: grid; grid-template-columns: 96px 1fr 60px; gap: var(--s3); align-items: center; }
-.guide__group { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
+.guide__group { font-size: var(--text-sm); color: var(--text-2); text-transform: none; }
 .guide__bar { height: 6px; border-radius: 3px; background: var(--raised); position: relative; overflow: hidden; }
 .guide__bar::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill); background: var(--text-3); }
 .guide__row[data-met='true'] .guide__bar::after { background: var(--text); }
@@ -1616,7 +1616,7 @@ button.row__act { cursor: pointer; }
 /* What the last entry earned, said once, then gone. */
 .earned { margin: 0; display: flex; align-items: baseline; gap: var(--s2); min-height: 21px; }
 .earned__xp { font-size: var(--text-md); font-weight: 800; font-variant-numeric: tabular-nums; }
-.earned__what { font-size: var(--text-sm); color: var(--text-2); text-transform: capitalize; }
+.earned__what { font-size: var(--text-sm); color: var(--text-2); text-transform: none; }
 
 /* Everything off the daily list. One control, never a menu. */
 .elsewhere__toggle {

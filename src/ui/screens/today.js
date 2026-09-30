@@ -33,8 +33,8 @@ export const MOBILITY_ROUTINES = Object.freeze([
     moves: ['Wall slides', 'Thoracic rotations', 'Neck glides'],
     steps: [
       { name: 'Wall slides', time: 120, cue: 'Keep ribs down. Slide only as high as the shoulders stay relaxed.' },
-      { name: 'Thoracic rotations', time: 120, cue: 'Move through the upper back. Keep hips quiet.' },
-      { name: 'Neck glides', time: 60, cue: 'Draw the chin straight back. Do not tip the head down.' },
+      { name: 'Thoracic rotations', time: 120, cue: 'Move through the upper back while keeping hips quiet.' },
+      { name: 'Neck glides', time: 60, cue: 'Draw the chin straight back without tipping the head down.' },
     ],
   }),
   Object.freeze({
@@ -63,7 +63,7 @@ export const MOBILITY_ROUTINES = Object.freeze([
     moves: ['Couch stretch', 'Hamstring floss', 'Child’s pose breathing'],
     steps: [
       { name: 'Couch stretch', time: 240, cue: 'Squeeze the back glute and stay tall. Switch halfway.' },
-      { name: 'Hamstring floss', time: 240, cue: 'Alternate a soft bend and extension. Never force the stretch.' },
+      { name: 'Hamstring floss', time: 240, cue: 'Alternate a soft bend and extension without forcing the stretch.' },
       { name: 'Child’s pose breathing', time: 240, cue: 'Take slow breaths into the sides and back of the rib cage.' },
     ],
   }),
@@ -332,7 +332,7 @@ export function createTodayScreen({
         el('div.mobility-screen__hero', {}, [
           el('span.mobility-screen__hero-art', { 'aria-hidden': 'true' }),
           el('div', {}, [
-            el('strong', { text: 'Controlled range. Easy reset.' }),
+            el('strong', { text: 'Controlled range, easy reset.' }),
             el('p', { text: 'Pick the stiffness you want to solve, follow the cues, and log the time when you finish.' }),
           ]),
         ]),
@@ -633,7 +633,7 @@ export function createTodayScreen({
       el('h2', { text: name }),
       el('p', { text: `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(todayProgram.day)} min` }),
       week === 1 && el('p.today-session-card__guidance', {
-        text: 'Start when you have a useful window. Record what happened; the plan can meet you where you are.',
+        text: 'Start when you have a useful window; record what happened so the plan can meet you where you are.',
       }),
       el('button.today-button.today-button--primary', {
         type: 'button', dataset: { startday: todayProgram.day.id },
@@ -660,12 +660,12 @@ export function createTodayScreen({
         good: (delta) => delta > 0,
       },
       {
-        key: 'restingHr', label: 'Resting HR', value: number(current.healthMetrics?.restingHr, NaN),
+        key: 'restingHr', label: 'Resting heart rate', value: number(current.healthMetrics?.restingHr, NaN),
         unit: 'bpm', digits: 0, baseline: sevenDayAverage((row) => row.healthMetrics?.restingHr),
         good: (delta) => delta < 0,
       },
       {
-        key: 'hrv', label: 'HRV', value: number(current.healthMetrics?.hrvMs, NaN),
+        key: 'hrv', label: 'Heart rate variability', value: number(current.healthMetrics?.hrvMs, NaN),
         unit: 'ms', digits: 1, baseline: sevenDayAverage((row) => row.healthMetrics?.hrvMs),
         good: (delta) => delta > 0,
       },
@@ -722,7 +722,7 @@ export function createTodayScreen({
       readinessInfoOpen && el('p.today-readiness__info', {
         text: readiness.score === null
           ? 'Values compare with your previous seven days when enough history is available.'
-          : `${readiness.label}. Values compare with your recent baseline; the score does not replace how you feel.`,
+          : `Values compare with your recent baseline; the score does not replace how you feel (${readiness.label.toLowerCase()}).`,
       }),
     ])
   }
@@ -1059,7 +1059,7 @@ export function createTodayScreen({
 
     return el('section.today-card.today-daily-log', { dataset: { section: 'daily' } }, [
       el('h2', { text: 'Daily log' }),
-      justEarned && el('p.today-earned', { text: `+${justEarned.xp} XP${justEarned.levelled ? ` · ${justEarned.levelled}` : ''}` }),
+      justEarned && el('p.today-earned', { text: `+${justEarned.xp} points${justEarned.levelled ? ` · ${justEarned.levelled}` : ''}` }),
       el('div.today-list', {}, rows.length
         ? rows.map(({ activity, weekly }) => activityItem(activity, weekly))
         : [el('div.today-daily-log__empty', { text: 'No daily items scheduled.' })]),

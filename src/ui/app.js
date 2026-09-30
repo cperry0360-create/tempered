@@ -186,7 +186,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       console.error('[tempered] battle failed to start', error)
       showFailure({
         title: 'Battle could not open',
-        detail: 'Nothing was lost. This legacy surface is no longer part of normal Tempered navigation.',
+        detail: 'Nothing was lost; this legacy surface is outside normal Tempered navigation.',
         retry: () => openBattle(),
         back: () => show('today'),
       })
@@ -238,7 +238,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       session = null
       showFailure({
         title: 'Workout could not open',
-        detail: 'Nothing was logged or removed. Try again, or return to where you were.',
+        detail: 'Nothing was logged or removed; try again or return to where you were.',
         retry: () => startSession(options),
         back: () => show(returnTab),
       })
@@ -269,7 +269,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       session = null
       showFailure({
         title: 'Workout could not resume',
-        detail: 'Your checked sets are still saved. Retry, or discard the screen checkpoint and return to Today.',
+        detail: 'Your checked sets are still saved; retry or discard the screen checkpoint and return to Today.',
         retry: () => resumeSession(draft),
         back: () => { clearActiveSessionDraft(); show('today') },
       })
@@ -314,10 +314,8 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       renderWorkoutDock()
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)
-      // Post-render integrations (notably the configurable Progress widgets)
-      // need a deterministic signal after the new screen is actually mounted.
-      // Observing shell mutations alone can race the asynchronous refresh and
-      // leave an enhancement dormant until the user taps another control.
+      // Post-render integrations need a deterministic signal after the new
+      // screen is mounted; shell mutations can race the asynchronous refresh.
       window.dispatchEvent(new CustomEvent('tempered:screen-shown', {
         detail: { tab: target },
       }))
@@ -325,7 +323,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       console.error(`[tempered] ${target} failed to load`, error)
       showFailure({
         title: `${tabLabel(target)} could not load`,
-        detail: 'Your saved data was not changed. Try this screen again.',
+        detail: 'Your saved data was not changed; try this screen again.',
         retry: () => show(target),
         back: target === 'today' ? null : () => show('today'),
       })

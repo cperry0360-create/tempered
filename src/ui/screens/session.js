@@ -32,7 +32,7 @@ import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draf
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
 const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.url).href
 
-/** What a home gym holds, per side. Editable from the EQUIPMENT pill. */
+/** What a home gym holds, per side. Editable from the Equipment pill. */
 const DEFAULT_PLATES = [45, 35, 25, 10, 5, 2.5, 1.25]
 
 const activeMethod = (entry) => methodForExercise(entry?.exercise, entry?.method)
@@ -207,10 +207,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   /** Which two numbers a set has. A carry has no reps; a hold has no load. */
   function fieldsFor(exercise) {
     if (exercise?.metric === 'distance') {
-      return [{ key: 'weight', label: 'LBS', mode: 'decimal' }, { key: 'distance', label: 'FEET', mode: 'numeric' }]
+      return [{ key: 'weight', label: 'lb', mode: 'decimal' }, { key: 'distance', label: 'ft', mode: 'numeric' }]
     }
-    if (exercise?.unit === 'time') return [{ key: 'timeSec', label: 'SECS', mode: 'numeric' }, null]
-    return [{ key: 'weight', label: 'LBS', mode: 'decimal' }, { key: 'reps', label: 'REPS', mode: 'numeric' }]
+    if (exercise?.unit === 'time') return [{ key: 'timeSec', label: 'sec', mode: 'numeric' }, null]
+    return [{ key: 'weight', label: 'lb', mode: 'decimal' }, { key: 'reps', label: 'Reps', mode: 'numeric' }]
   }
 
   function numberOrNull(value) {
@@ -489,10 +489,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function equipmentPanel(entry) {
     return el('div.panel', {}, [
-      el('p.panel__note', { text: 'The bar, and the plates you have. The loading beside the weight follows this.' }),
+      el('p.panel__note', { text: 'The loading beside the weight uses the bar and plates you have.' }),
       el('div.equipment', {}, [
         el('label.equipment__row', {}, [
-          el('span.equipment__label', { text: 'BAR' }),
+          el('span.equipment__label', { text: 'Bar' }),
           el('input.equipment__bar', {
             type: 'text', inputmode: 'decimal', value: String(entry.barWeight),
             'aria-label': 'Bar weight',
@@ -501,7 +501,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           }),
         ]),
         el('div.equipment__row', {}, [
-          el('span.equipment__label', { text: 'PLATES' }),
+          el('span.equipment__label', { text: 'Plates' }),
           ...DEFAULT_PLATES.map((plate) => el('button.equipment__plate', {
             type: 'button',
             'aria-pressed': String(entry.plates.includes(plate)),
@@ -540,8 +540,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return el('div.panel', {}, [
       el('p.panel__note', {
         text: locked
-          ? 'Undo the checked sets before changing method. Logged work keeps the equipment it used.'
-          : 'Same movement and program slot. Only the equipment and load history change.',
+          ? 'Undo the checked sets before changing method; logged work keeps the equipment it used.'
+          : 'Keep the same movement and program slot while changing the equipment and load history.',
       }),
       el('div.methodlist', { role: 'group', 'aria-label': 'Exercise method' },
         methodsForExercise(entry.exercise).map((method) => el('button.methodlist__option', {
@@ -563,7 +563,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
               ...(entry.proposal ?? {}),
               reason: entry.last
                 ? `Prefilled from your last ${method.toLowerCase()} session.`
-                : `No ${method.toLowerCase()} history yet. Your rep target stays the same.`,
+                : `No ${method.toLowerCase()} history yet; your rep target stays the same.`,
             }
             entry.sets = entry.sets.map((set, index) => ({
               ...set,
@@ -580,7 +580,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function swapPanel(entry) {
     return el('div.panel', {}, [
-      el('p.panel__note', { text: 'Swap in another movement. Your set structure is kept.' }),
+      el('p.panel__note', { text: 'Swap in another movement while keeping your set structure.' }),
       el('div.swaplist', {}, library
         .filter((exercise) => exercise.id !== entry.exercise.id)
         .slice(0, 40)

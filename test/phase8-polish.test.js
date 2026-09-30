@@ -95,7 +95,7 @@ test('PHASE 8: Progress has meaningful empty states and pressed-state semantics'
   assert.match(history, /'aria-pressed': String\(view === name\)/)
 })
 
-test('PHASE 8: Redesign V1 tokens load before the real styles and browser chrome uses the approved slate', () => {
+test('PHASE 8: Redesign V1 tokens load before the real styles and the HTML has no inline palette', () => {
   const tokens = index.indexOf('./src/tokens.css')
   const style = index.indexOf('./src/style.css')
   const setup = index.indexOf('./src/setup.css')
@@ -108,7 +108,8 @@ test('PHASE 8: Redesign V1 tokens load before the real styles and browser chrome
   assert.ok(tokens < style && style < setup && setup < cadence && cadence < polish)
   assert.ok(polish < uplift && uplift < progress && progress < mobileFixes && mobileFixes < calm)
   assert.doesNotMatch(index, /battle\.css|expedition\.css|battle-fidelity\.css|character\.css/)
-  assert.match(index, /name="theme-color" content="#1F252C"/)
+  assert.match(index, /name="color-scheme" content="dark"/)
+  assert.doesNotMatch(index, /#[0-9a-fA-F]{3,8}\b/)
 })
 
 test('PHASE 8: new runtime files are available offline', () => {

@@ -253,7 +253,7 @@ The most important screen. Speed between sets is the metric.
 5. Remove the Recovery card from Fuel (recovery lives on Today and Progress). Remove any
    companion content from Fuel.
 
-### Progress (`src/ui/screens/history.js`, `src/ui/progress-dashboard-runtime.js`)
+### Progress (`src/ui/screens/history.js`)
 
 1. Title `Progress`, range picker `30D` as a small pill menu (7D, 30D, 90D) top right.
 2. Segmented control: `Overview`, `Lifts`, `Habits`, `Log`.

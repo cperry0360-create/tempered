@@ -100,19 +100,19 @@ export function confirmDiscardExercise(count) {
 
     const eyebrow = document.createElement('p')
     eyebrow.className = 'confirm-sheet__eyebrow'
-    eyebrow.textContent = 'WORKOUT'
+    eyebrow.textContent = 'Workout'
 
     const title = document.createElement('h2')
     title.id = 'discard-exercise-title'
     title.className = 'confirm-sheet__title'
-    title.textContent = 'DISCARD EXERCISE?'
+    title.textContent = 'Discard exercise?'
 
     const copy = document.createElement('p')
     copy.id = 'discard-exercise-copy'
     copy.className = 'confirm-sheet__copy'
     copy.textContent = count > 0
-      ? `${count} logged set${count === 1 ? '' : 's'} from this exercise will be discarded. No XP will be awarded for them.`
-      : 'Nothing has been logged yet. Leaving will discard this exercise and award no XP.'
+      ? `Discard ${count} logged set${count === 1 ? '' : 's'} from this exercise without granting rewards.`
+      : 'Nothing is logged, so leaving will discard this exercise without reward.'
 
     const actions = document.createElement('div')
     actions.className = 'confirm-sheet__actions'
@@ -121,13 +121,13 @@ export function confirmDiscardExercise(count) {
     keep.type = 'button'
     keep.className = 'button confirm-sheet__keep'
     keep.dataset.confirmAction = 'keep'
-    keep.textContent = 'KEEP WORKING'
+    keep.textContent = 'Keep working'
 
     const discard = document.createElement('button')
     discard.type = 'button'
     discard.className = 'button confirm-sheet__discard'
     discard.dataset.confirmAction = 'discard'
-    discard.textContent = count > 0 ? 'DISCARD SETS' : 'DISCARD'
+    discard.textContent = count > 0 ? 'Discard sets' : 'Discard'
 
     actions.append(keep, discard)
     sheet.append(eyebrow, title, copy, actions)
@@ -253,8 +253,8 @@ export function installSessionGuard({ app, workout, storage }) {
     button.type = 'button'
     button.className = 'actionpill'
     button.dataset.action = 'cancel-session'
-    button.textContent = 'CANCEL'
-    button.setAttribute('aria-label', 'Cancel exercise without awarding XP')
+    button.textContent = 'Cancel'
+    button.setAttribute('aria-label', 'Cancel exercise without reward')
     button.addEventListener('click', () => discardAndExit({ confirm: true }))
     bar.append(button)
   }

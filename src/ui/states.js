@@ -17,12 +17,12 @@ export function emptyState(title, detail) {
 
 export function errorState({
   title = 'Something went wrong',
-  detail = 'Your data is still here. Try this screen again.',
+  detail = 'Your data is still here; try this screen again.',
   onRetry,
   onBack,
 }) {
   return el('section.card.error-state', { role: 'alert', 'aria-live': 'assertive' }, [
-    el('p.error-state__eyebrow', { text: 'TEMPERED' }),
+    el('p.error-state__eyebrow', { text: 'Tempered' }),
     el('h1.error-state__title', { text: title }),
     el('p.error-state__detail', { text: detail }),
     el('div.error-state__actions', {}, [
@@ -30,12 +30,12 @@ export function errorState({
         type: 'button',
         dataset: { action: 'retry' },
         onclick: onRetry,
-      }, ['TRY AGAIN']),
+      }, ['Try again']),
       onBack && el('button.button.button--quiet', {
         type: 'button',
         dataset: { action: 'back' },
         onclick: onBack,
-      }, ['GO BACK']),
+      }, ['Go back']),
     ]),
   ])
 }

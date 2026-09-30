@@ -20,10 +20,10 @@ export const HEALTH_SHORTCUT_RUN_URL = 'shortcuts://run-shortcut?name=Tempered%2
 export const HEALTH_SHORTCUT_EDIT_URL = 'shortcuts://open-shortcut?name=Tempered%20Health'
 export const MAX_SHORTCUT_SLEEP_HOURS = MAX_HEALTH_SLEEP_HOURS
 export const LAUNCH_MOTIVATIONS = [
-  ['SHOW UP STRONG.', 'The first rep is showing up.'],
-  ['BUILD WHAT LASTS.', 'Small effort. Real momentum.'],
-  ['MAKE TODAY COUNT.', 'Your next move is the one that matters.'],
-  ['KEEP FORGING.', 'Progress is built one day at a time.'],
+  ['Show up strong.', 'The first rep is showing up.'],
+  ['Build what lasts.', 'Small effort creates real momentum.'],
+  ['Make today count.', 'Your next move is the one that matters.'],
+  ['Keep forging.', 'Progress is built one day at a time.'],
 ]
 
 export const HEALTH_SHORTCUT_RECIPE = `TEMPERED HEALTH — iPhone Shortcut recipe
@@ -123,7 +123,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
 
   function importMessage(result) {
     return result.warnings?.length
-      ? `Health imported for ${result.date}. ${result.warnings.join(' ')}`
+      ? `Health imported for ${result.date}; ${result.warnings.join(' ')}`
       : `Health data imported for ${result.date}.`
   }
 
@@ -142,21 +142,21 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     overlay.dataset.healthLaunch = 'true'
     overlay.innerHTML = `
       <section class="health-launch__scene" role="dialog" aria-modal="true" aria-labelledby="health-launch-title">
-        <div class="health-launch__brand">TEMPERED <span>· TODAY STARTS HERE</span></div>
+        <div class="health-launch__brand">Tempered <span>· Today starts here</span></div>
         <div class="health-launch__center">
           <div class="health-launch__symbol" aria-hidden="true">✦</div>
-          <p class="health-launch__eyebrow">A NEW DAY TO GET BETTER</p>
+          <p class="health-launch__eyebrow">A new day to get better</p>
           <h2 id="health-launch-title">${headline}</h2>
           <p class="health-launch__line">${line}</p>
         </div>
         <div class="health-launch__bottom">
           <p class="health-launch__hint">If your Health Shortcut has copied today's data, your next tap brings it in.</p>
           <p class="health-launch__status" role="status" data-health-launch-status></p>
-          <button type="button" class="health-launch__ready" data-health-launch-ready>YES, I'M READY <span aria-hidden="true">↗</span></button>
+          <button type="button" class="health-launch__ready" data-health-launch-ready>Yes, I’m ready <span aria-hidden="true">↗</span></button>
           <div class="health-launch__options">
-            <a href="${HEALTH_SHORTCUT_RUN_URL}" data-health-launch-run>RUN HEALTH SHORTCUT</a>
-            <a href="${HEALTH_SHORTCUT_EDIT_URL}" data-health-launch-edit>FIX SHORTCUT</a>
-            <button type="button" data-health-launch-skip>CONTINUE WITHOUT SYNC</button>
+            <a href="${HEALTH_SHORTCUT_RUN_URL}" data-health-launch-run>Run Health Shortcut</a>
+            <a href="${HEALTH_SHORTCUT_EDIT_URL}" data-health-launch-edit>Fix Shortcut</a>
+            <button type="button" data-health-launch-skip>Continue without sync</button>
           </div>
         </div>
       </section>`
@@ -172,7 +172,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     const status = overlay.querySelector('[data-health-launch-status]')
     ready.onclick = async () => {
       ready.disabled = true
-      ready.textContent = 'GETTING READY…'
+      ready.textContent = 'Getting ready…'
       // Begin the clipboard request inside this click handler. Do not await a
       // storage read or an animation first; WebKit requires a user gesture.
       try {
@@ -180,18 +180,18 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
         if (!clipboardRead) throw new Error('Clipboard unavailable')
         const snapshot = launchHealthSnapshot(await clipboardRead, context.clock.today())
         if (!snapshot) {
-          status.textContent = 'No Health copy for today. Run the Shortcut, then tap again, or continue.'
-          ready.textContent = 'TRY HEALTH COPY AGAIN'
+          status.textContent = 'No Health copy for today; run the Shortcut, then tap again or continue.'
+          ready.textContent = 'Try Health copy again'
           return
         }
         const result = await importHealthSnapshot(context, snapshot)
         announceImport(result)
-        status.textContent = result.warnings?.length ? 'Health imported. Check the sleep note in Today.' : 'Health imported. Let’s go.'
+        status.textContent = result.warnings?.length ? 'Health imported; check the sleep note in Today.' : 'Health imported; let’s go.'
         await context.app?.show('today')
         close()
       } catch {
-        status.textContent = 'Could not read the copy. If iOS asks to Paste, allow it, then try again.'
-        ready.textContent = 'TRY HEALTH COPY AGAIN'
+        status.textContent = 'Could not read the copy; allow Paste if iOS asks, then try again.'
+        ready.textContent = 'Try Health copy again'
       } finally {
         ready.disabled = false
       }
@@ -213,53 +213,53 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     overlay.innerHTML = `
       <section class="health-setup-screen" role="dialog" aria-modal="true" aria-labelledby="health-setup-title">
         <header class="health-setup-header">
-          <button type="button" class="health-setup-header__back" data-health-setup-close aria-label="Close Health Setup">‹</button>
-          <div><span>APPLE HEALTH</span><h2 id="health-setup-title">Health Setup</h2></div>
+          <button type="button" class="health-setup-header__back" data-health-setup-close aria-label="Close Health setup">‹</button>
+          <div><span>Apple Health</span><h2 id="health-setup-title">Health setup</h2></div>
         </header>
 
         <section class="health-setup-hero">
-          <span class="health-setup-hero__eyebrow">HOME SCREEN WEB APP · TWO STEPS</span>
+          <span class="health-setup-hero__eyebrow">Home screen web app · Two steps</span>
           <h3>Run the Shortcut, then import its copy.</h3>
-          <p>Return to this installed Tempered icon after the Shortcut copies its snapshot. Import Copy reads and saves it immediately—no text box or confirmation.</p>
-          <p>A Shortcut automation can prepare the copy. The installed web app opens with a Ready card; its button imports today's copy in one tap. iOS may still ask you to allow Paste. The app cannot run the Shortcut or paste by itself on launch.</p>
+          <p>Return to this installed Tempered app after the Shortcut copies its snapshot; Import copy saves it immediately.</p>
+          <p>A Shortcut automation can prepare the copy, and the Ready card imports today's copy in one tap; iOS may still ask you to allow Paste.</p>
           <div class="health-setup__actions">
-            <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">1 · RUN SHORTCUT</a>
-            <button type="button" class="button health-setup__primary" data-health-clipboard-import>2 · IMPORT COPY</button>
+            <a class="button health-setup__primary" data-health-bridge="run" href="${HEALTH_SHORTCUT_RUN_URL}">1 · Run Shortcut</a>
+            <button type="button" class="button health-setup__primary" data-health-clipboard-import>2 · Import copy</button>
           </div>
         </section>
 
         <section class="health-setup-section" data-health-setup="instructions">
-          <h3>SET UP OR REPAIR THE SHORTCUT</h3>
-          <p class="health-setup__warning"><strong>Seeing “Conversion Error”?</strong> Add <em>Get Details of Health Samples → Value</em> before <em>Calculate Statistics → Sum</em>. The Sum input must be the numeric Value result, never Find Health Samples or Text.</p>
-          <p class="health-setup__warning"><strong>Sleep looks doubled?</strong> The Shortcut must filter to one source and last night's Core, Deep, and REM stages. In Bed and other summaries can overlap those stages. Inspect the samples before summing. Leave SLEEP blank until its result matches Health; Tempered rejects values above 16 hours.</p>
+          <h3>Set up or repair the Shortcut</h3>
+          <p class="health-setup__warning"><strong>Seeing “Conversion Error”?</strong> Add <em>Get Details of Health Samples → Value</em> before <em>Calculate Statistics → Sum</em> so Sum receives the numeric Value result.</p>
+          <p class="health-setup__warning"><strong>Sleep looks doubled?</strong> Filter the Shortcut to one source, inspect last night's core, deep, and rapid eye movement samples before summing, and leave the sleep field blank until the result matches Health; Tempered skips values above 16 hours.</p>
           <ol class="health-setup-steps">
             <li><strong>Steps:</strong> Find today’s Steps → Get Details: Value → Calculate Statistics: Sum.</li>
-            <li><strong>Sleep:</strong> Use one source and Core/Deep/REM samples from 6 PM yesterday to noon today → Get Details: Duration → Sum → decimal hours.</li>
-            <li><strong>Latest body data:</strong> Find newest sample, Limit 1, then Get Details: Value for Weight, Resting HR, HRV, Respiratory Rate, and Oxygen Saturation. Do not sum these. Skip temperature.</li>
-            <li><strong>Build the Text:</strong> include the exact TEMPERED tags from the copied instructions.</li>
-            <li><strong>Finish:</strong> Copy that Text to Clipboard. Do not Open URLs; iOS sends those to Safari, not this installed copy.</li>
+            <li><strong>Sleep:</strong> Use one source and core/deep/rapid eye movement samples from 6 PM yesterday to noon today → Get Details: Duration → Sum → decimal hours.</li>
+            <li><strong>Latest body data:</strong> Find the newest sample, limit it to one, and get Value for Weight, Resting heart rate, Heart rate variability, Respiratory rate, and Oxygen saturation; do not sum these or include temperature.</li>
+            <li><strong>Build the text:</strong> Include the exact Tempered tags from the copied instructions.</li>
+            <li><strong>Finish:</strong> Copy the text to Clipboard; do not open URLs because iOS sends them to Safari, not this installed app.</li>
           </ol>
           <div class="health-setup__actions">
-            <button type="button" class="button" data-health-bridge="recipe">COPY EXACT INSTRUCTIONS</button>
-            <a class="button" data-health-bridge="edit" href="${HEALTH_SHORTCUT_EDIT_URL}">EDIT TEMPERED HEALTH</a>
+            <button type="button" class="button" data-health-bridge="recipe">Copy exact instructions</button>
+            <a class="button" data-health-bridge="edit" href="${HEALTH_SHORTCUT_EDIT_URL}">Edit Tempered Health</a>
           </div>
-          <p class="health-setup__note">This opens your existing Shortcut to repair its actions. Updating Tempered does not modify a Shortcut already saved on your iPhone.</p>
-          <p class="health-setup__note">A Home Screen web app cannot read HealthKit, silently install Health actions, or register its own return URL. The native iOS build syncs directly without a Shortcut.</p>
+          <p class="health-setup__note">This opens your existing Shortcut for repair; updating Tempered does not change a Shortcut already saved on your iPhone.</p>
+          <p class="health-setup__note">A Home Screen web app cannot read HealthKit or install Health actions; the native iOS build syncs directly.</p>
         </section>
 
         <section class="health-setup-section" data-health-setup="metrics">
-          <h3>WHAT FILLS BODY METRICS</h3>
-          <p>The standard Shortcut should pull the four signals shown on Progress. A dash means the last sync did not include that Health type or Apple Health has no sample for it.</p>
+          <h3>What fills body metrics</h3>
+          <p>The standard Shortcut pulls the four signals shown on Progress, and a dash means Health has no sample or the last sync omitted that type.</p>
           <div class="health-setup-metrics">
-            <span>Resting heart rate</span><span>HRV</span><span>Respiration</span><span>SpO₂</span>
+            <span>Resting heart rate</span><span>Heart rate variability</span><span>Respiratory rate</span><span>Oxygen saturation</span>
           </div>
         </section>
 
         <section class="health-setup-section">
           <details class="health-setup-details" data-health-inspect-details>
-            <summary>CHECK WHAT YOUR SHORTCUT COPIED</summary>
-            <p>Run Tempered Health first, then tap Inspect Copy. This only displays its output; it never imports or changes your logs. If the numbers are wrong here, edit the Shortcut before syncing.</p>
-            <button type="button" class="button health-setup__primary" data-health-inspect>INSPECT COPY</button>
+            <summary>Check what your Shortcut copied</summary>
+            <p>Run Tempered Health, then tap Inspect copy to view its output without changing logs; edit the Shortcut before syncing if any numbers are wrong.</p>
+            <button type="button" class="button health-setup__primary" data-health-inspect>Inspect copy</button>
             <p class="health-setup__warning" data-health-inspect-warning role="status" hidden></p>
             <textarea class="health-import-sheet__input" data-health-inspect-output rows="11" readonly aria-label="Copied Health data preview" placeholder="The Shortcut's copied output will appear here."></textarea>
           </details>
@@ -267,23 +267,23 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
 
         <section class="health-setup-section">
           <details class="health-setup-details" data-health-manual-details>
-            <summary>ENTER BODY METRICS MANUALLY</summary>
+            <summary>Enter body metrics manually</summary>
             <form class="health-manual-form" data-health-manual-form>
-              <label>Resting HR<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="restingHr" placeholder="bpm"></label>
-              <label>HRV<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="hrvMs" placeholder="ms"></label>
-              <label>Respiration<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="respiratoryRate" placeholder="per min"></label>
-              <label>SpO₂<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-health-manual="spo2" placeholder="%"></label>
-              <button type="submit" class="button health-setup__primary">SAVE METRICS</button>
+              <label>Resting heart rate<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="restingHr" placeholder="bpm"></label>
+              <label>Heart rate variability<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="hrvMs" placeholder="ms"></label>
+              <label>Respiratory rate<input type="number" inputmode="decimal" min="0" step="0.1" data-health-manual="respiratoryRate" placeholder="per min"></label>
+              <label>Oxygen saturation<input type="number" inputmode="decimal" min="0" max="100" step="0.1" data-health-manual="spo2" placeholder="%"></label>
+              <button type="submit" class="button health-setup__primary">Save metrics</button>
             </form>
           </details>
         </section>
 
         <section class="health-setup-section">
           <details class="health-setup-details" data-health-paste-details>
-            <summary>PASTE SNAPSHOT FALLBACK</summary>
+            <summary>Paste snapshot fallback</summary>
             <p>Use this only if iOS opens Safari instead of the installed Tempered app.</p>
-            <textarea class="health-import-sheet__input" data-health-import-input rows="8" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Tempered Health snapshot" placeholder="${HEALTH_SNAPSHOT_PREFIX}\nDATE=2026-09-09\nSTEPS=10527\nSLEEP=7.75"></textarea>
-            <button type="button" class="button health-setup__primary" data-health-import-submit>IMPORT SNAPSHOT</button>
+            <textarea class="health-import-sheet__input" data-health-import-input rows="8" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Tempered Health snapshot" placeholder="Paste the Tempered Health snapshot here"></textarea>
+            <button type="button" class="button health-setup__primary" data-health-import-submit>Import snapshot</button>
           </details>
         </section>
 
@@ -313,23 +313,23 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
         const invalidSleep = Number.isFinite(parsed?.sleepHours) && (parsed.sleepHours <= 0 || parsed.sleepHours > MAX_SHORTCUT_SLEEP_HOURS)
         warning.hidden = !invalidSleep
         warning.textContent = invalidSleep
-          ? `The Shortcut copied ${parsed.sleepHours.toFixed(2)} hours of sleep. That is not a credible overnight result, so Tempered will skip sleep on import. Check its date, sleep-stage, and source filters; leave SLEEP blank until fixed.`
+          ? `The Shortcut copied ${parsed.sleepHours.toFixed(2)} hours of sleep, which is outside a credible overnight range; check its date, sleep-stage, and source filters before importing again.`
           : ''
         status.textContent = parsed
-          ? `Preview only · ${parsed.date ?? 'no date'} · ${Object.keys(parsed).filter((key) => key !== 'date').length} metric(s). Nothing imported.`
-          : 'This is not a valid Tempered Health copy. Nothing imported.'
+          ? `Preview only · ${parsed.date ?? 'no date'} · ${Object.keys(parsed).filter((key) => key !== 'date').length} metric(s); nothing imported.`
+          : 'This is not a valid Tempered Health copy; nothing was imported.'
       } catch {
         output.value = ''
         warning.hidden = true
         warning.textContent = ''
-        status.textContent = 'Could not read the copy. Allow Paste if iOS asks, then try again.'
+        status.textContent = 'Could not read the copy; allow Paste if iOS asks, then try again.'
       }
     }
     const recipe = overlay.querySelector('[data-health-bridge="recipe"]')
     recipe.onclick = async () => {
       const ok = await copyText(HEALTH_SHORTCUT_RECIPE)
-      recipe.textContent = ok ? 'INSTRUCTIONS COPIED' : 'COPY FAILED'
-      status.textContent = ok ? 'Exact build instructions copied.' : 'Could not copy. The instructions remain visible above.'
+      recipe.textContent = ok ? 'Instructions copied' : 'Copy failed'
+      status.textContent = ok ? 'Exact build instructions copied.' : 'Could not copy; the instructions remain visible above.'
     }
 
     const manual = overlay.querySelector('[data-health-manual-form]')
@@ -357,9 +357,9 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
       try {
         const result = await importClipboard()
         status.textContent = importMessage(result)
-        clipboardImport.textContent = 'IMPORTED'
+        clipboardImport.textContent = 'Imported'
       } catch {
-        status.textContent = `Could not read a ${HEALTH_SNAPSHOT_PREFIX} copy. Run the Shortcut first, then return and tap Import Copy.`
+        status.textContent = 'Could not read a Tempered Health snapshot; run the Shortcut first, then return and tap Import copy.'
       } finally {
         clipboardImport.disabled = false
       }
@@ -375,7 +375,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
         status.textContent = importMessage(result)
         announceImport(result)
       } catch {
-        status.textContent = `Paste text beginning with ${HEALTH_SNAPSHOT_PREFIX}, then try again.`
+        status.textContent = 'Paste a valid Tempered Health snapshot, then try again.'
         input.focus()
       } finally {
         submit.disabled = false
@@ -393,7 +393,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     button.type = 'button'
     button.className = className
     button.dataset.healthBridge = 'setup'
-    button.textContent = 'SETUP'
+    button.textContent = 'Setup'
     button.onclick = () => openHealthSetup(button)
     return button
   }
@@ -404,13 +404,13 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
       button.type = 'button'
       button.className = 'health-bridge__run'
       button.dataset.healthBridge = 'run'
-      button.textContent = 'SYNC HEALTH'
+      button.textContent = 'Sync Health'
       button.onclick = async () => {
         button.disabled = true
-        button.textContent = 'SYNCING…'
+        button.textContent = 'Syncing…'
         const result = await context.syncHealth({ refreshToday: true })
         button.disabled = false
-        button.textContent = result ? 'SYNCED' : 'TRY AGAIN'
+        button.textContent = result ? 'Synced' : 'Try again'
       }
       return button
     }
@@ -418,7 +418,7 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     link.className = 'health-bridge__run'
     link.dataset.healthBridge = 'run'
     link.href = HEALTH_SHORTCUT_RUN_URL
-    link.textContent = 'RUN HEALTH SYNC'
+    link.textContent = 'Run Health sync'
     link.setAttribute('aria-label', 'Run the Tempered Health Shortcut')
     return link
   }
@@ -428,15 +428,15 @@ export function installHealthShortcutRuntime(context, { showLaunchGate = null } 
     button.type = 'button'
     button.className = 'health-bridge__import'
     button.dataset.healthBridge = 'import'
-    button.textContent = 'IMPORT COPY'
+    button.textContent = 'Import copy'
     button.onclick = async () => {
       button.disabled = true
-      button.textContent = 'IMPORTING…'
+      button.textContent = 'Importing…'
       try {
         const result = await importClipboard()
-        button.textContent = result.warnings?.length ? 'IMPORTED · CHECK SLEEP' : 'IMPORTED'
+        button.textContent = result.warnings?.length ? 'Imported · Check sleep' : 'Imported'
       } catch {
-        button.textContent = 'RUN SHORTCUT FIRST'
+        button.textContent = 'Run Shortcut first'
       } finally {
         button.disabled = false
       }

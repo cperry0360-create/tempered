@@ -294,7 +294,7 @@ export function installDailyWorkoutEnhancer({ mount, workout, app, clock }) {
 
     const hint = document.createElement('p')
     hint.className = 'today-training__hint'
-    hint.textContent = 'Finish it in one session or knock out sets throughout the day. Unfinished movements roll forward through this workout week.'
+    hint.textContent = 'Finish it in one session or knock out sets throughout the day; unfinished movements roll forward through this workout week.'
     body.append(hint)
   }
 

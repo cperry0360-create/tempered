@@ -138,7 +138,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       }, [el('span', { text: 'Program details' }), chevron()]),
       programDetailsOpen && el('div.train-r4__details', {}, [
         el('p', { text: program.note || 'Your active training plan.' }),
-        active.deload && el('p', { text: 'Deload week. Hold the weight — recovery is half the process.' }),
+        active.deload && el('p', { text: 'Hold the weight during deload week; recovery is half the process.' }),
         weekView?.hardSets?.length && el('div.train-r4__hard-sets', {}, [
           el('strong', { text: 'Hard sets this week' }),
           ...weekView.hardSets.map((row) => el('div.train-r4__hard-set-row', {}, [
@@ -158,7 +158,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     return el('section.train-r4__card.train-r4__next', { dataset: { section: 'next-session' } }, [
       el('h2', { text: todayDay.name }),
       el('p', { text: `${todayDay.exercises?.length ?? 0} exercises · ~${estimateSessionMinutes(todayDay)} min` }),
-      active.week === 1 && el('p', { text: 'Start when you have a useful window. Record what happened; repeatable work is enough.' }),
+      active.week === 1 && el('p', { text: 'Start when you have a useful window; record what happened because repeatable work is enough.' }),
       el('button.train-r4__secondary', {
         type: 'button', dataset: { startday: todayDay.id },
         onclick: () => onStart({ programDay: todayDay }),

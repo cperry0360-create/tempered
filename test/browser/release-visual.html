@@ -25,12 +25,23 @@
     import { bootstrapHarness } from './harness.js'
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
+    import { createSummaryScreen } from '../../src/ui/screens/summary.js'
+    import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+    import { installCableMachineRuntime } from '../../src/ui/cable-machine-runtime.js'
+    import { installHealthPasteRuntime } from '../../src/ui/health-paste-runtime.js'
+    import { installHealthShortcutRuntime } from '../../src/ui/health-shortcut-runtime.js'
+    import { confirmDiscardExercise } from '../../src/ui/session-guard.js'
 
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     const mount = document.querySelector('#app')
     localStorage.clear()
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
-    const route = { today: 'today', train: 'train', fuel: 'fuel', progress: 'history' }
+    const route = {
+      today: 'today', train: 'train', fuel: 'fuel',
+      progress: 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
+      'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
+      companion: 'companion', settings: 'settings', 'program-builder': 'program-builder',
+    }
 
     async function installShippedInlineCss() {
       const html = await fetch('../../index.html').then((response) => response.text())
@@ -191,6 +202,101 @@
       }
     }
 
+    async function seedProgressReference(storage) {
+      const profile = await storage.get('profile', 'profile')
+      await storage.put('profile', {
+        ...(profile ?? { id: 'profile' }),
+        setupComplete: true,
+        companionName: 'Tank',
+        companionStyle: 'turtle',
+        companionRevealedLevel: 6,
+        activitySchedule: {
+          ...(profile?.activitySchedule ?? {}),
+          water: { cadence: 'daily', target: 1 },
+        },
+      })
+
+      const today = new Date(2026, 8, 7, 12)
+      const start = new Date(2026, 5, 10, 12)
+      for (let offset = 0; offset < 90; offset += 1) {
+        const date = new Date(start)
+        date.setDate(date.getDate() + offset)
+        const key = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+        const recent = key >= '2026-08-01'
+        await storage.put('dayLogs', {
+          date: key,
+          steps: 5800 + ((offset * 317) % 6900),
+          sleepHours: 6.7 + (offset % 5) * 0.25,
+          waterOz: offset > 86 || offset % 7 !== 0 ? 120 : 80,
+          bodyMetrics: { weight: 166.2 - offset * 0.035 },
+          healthMetrics: {
+            restingHr: 64 - Math.floor(offset / 30),
+            hrvMs: 31 + (offset % 9),
+            respiratoryRate: 13.5 - (offset % 4) * 0.2,
+            spo2: 97 + (offset % 2),
+          },
+          ...(recent ? { nutritionStatus: 'complete' } : {}),
+        })
+      }
+
+      const exerciseMap = new Map((await storage.getAll('exercises')).map((exercise) => [exercise.id, exercise]))
+      const exerciseIds = ['rdl', 'split_squat', 'seated_row_close'].filter((id) => exerciseMap.has(id))
+      if (exerciseIds.length === 0) throw new Error('Progress reference exercises are missing')
+      const weeklySetCounts = [24, 36, 43, 58, 47, 72, 85, 110]
+      for (let weekIndex = 0; weekIndex < weeklySetCounts.length; weekIndex += 1) {
+        const sessionDate = new Date(today)
+        sessionDate.setDate(sessionDate.getDate() - (weeklySetCounts.length - 1 - weekIndex) * 7)
+        const key = [sessionDate.getFullYear(), String(sessionDate.getMonth() + 1).padStart(2, '0'), String(sessionDate.getDate()).padStart(2, '0')].join('-')
+        const sessionId = `visual-progress-session-${weekIndex + 1}`
+        await storage.put('sessions', {
+          id: sessionId,
+          date: key,
+          startedAt: `${key}T09:00:00.000Z`,
+          endedAt: `${key}T09:52:00.000Z`,
+          durationMinutes: 52,
+          durationMinutesSource: 'manual',
+          routineName: 'Strength session',
+        })
+        for (let setIndex = 0; setIndex < weeklySetCounts[weekIndex]; setIndex += 1) {
+          const exerciseId = exerciseIds[setIndex % exerciseIds.length]
+          await storage.put('setLogs', {
+            id: `${sessionId}-set-${setIndex + 1}`,
+            sessionId,
+            exerciseId,
+            reps: 8,
+            weight: 80 + weekIndex * 4 + setIndex % 3 * 5,
+            setIndex,
+            isWarmup: false,
+            completedAt: `${key}T09:${String(Math.min(58, 5 + setIndex % 54)).padStart(2, '0')}:00.000Z`,
+          })
+        }
+      }
+
+      const records = await storage.getAll('records')
+      for (const [index, exerciseId] of exerciseIds.entries()) {
+        const weight = 130 + index * 20
+        const record = records.find((item) => item.exerciseId === exerciseId) ?? { id: `visual-progress-record-${exerciseId}`, exerciseId }
+        await storage.put('records', {
+          ...record,
+          bestWeight: { weight, reps: 8, date: '2026-09-05' },
+          bestE1RM: { value: weight * 1.25, date: '2026-09-05' },
+          bestVolume: { volume: weight * 8 * 3, date: '2026-09-04' },
+        })
+      }
+    }
+
+    async function selectProgressView(tempered, target) {
+      await tempered.app.show('history')
+      if (target === 'progress') return
+      const view = target.startsWith('progress-lift') ? 'lifts'
+        : target.startsWith('progress-habit') ? 'habits' : 'log'
+      mount.querySelector(`.progress-views [data-view="${view}"]`)?.click()
+      await settle()
+      if (target === 'progress-lift-detail') mount.querySelector('.progress-lift')?.click()
+      if (target === 'progress-log-detail') mount.querySelector('.progress-log-row')?.click()
+      await settle()
+    }
+
     async function prepareSessionReference(tempered) {
       await tempered.app.show('train')
       await settle()
@@ -229,11 +335,57 @@
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+      } else if (view === 'summary') {
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
+        const summary = createSummaryScreen({ onDone: () => tempered.app.show('today') })
+        await summary.show({
+          session: { date: '2026-09-07' }, durationMinutes: 52, setsCompleted: 18,
+          totalReps: 144, totalVolume: 18800,
+          records: {
+            weightPrs: [{ exerciseId: 'rdl', weight: 180, reps: 6 }],
+            volumePrs: [{ exerciseId: 'seated_row_close', volume: 6400 }],
+          },
+        })
+        mount.querySelector('.app__body')?.replaceChildren(summary.root)
+        const tabs = mount.querySelector('.tabbar')
+        if (tabs) tabs.hidden = true
+      } else if (view === 'health-import' || view === 'nutrition-log' || view === 'session-discard') {
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: view === 'session-discard' ? 'train' : 'today' })
+        installCalorieAiRuntime()
+        installHealthPasteRuntime(tempered)
+        await installCableMachineRuntime(tempered)
+        if (view === 'nutrition-log') {
+          await seedFuelReference(storage)
+          window.dispatchEvent(new CustomEvent('tempered:open-nutrition', { detail: { date: '2026-09-07' } }))
+        } else if (view === 'health-import') {
+          window.dispatchEvent(new CustomEvent('tempered:open-health-import'))
+        } else {
+          void confirmDiscardExercise(2)
+        }
+      } else if (view === 'health-setup' || view === 'health-launch') {
+        const initialTab = view === 'health-launch' ? 'today' : 'settings'
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab })
+        installHealthShortcutRuntime(tempered, { showLaunchGate: view === 'health-launch' })
+        if (view === 'health-setup') {
+          await settle()
+          const setup = mount.querySelector('.health-bridge__settings-open')
+          if (!setup) throw new Error('Health setup entry missing from Settings')
+          setup.click()
+        }
       } else if (route[view]) {
-        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })
+        const target = route[view]
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: target })
+        await installCableMachineRuntime(tempered)
         if (view === 'today') await seedTodayReference(storage)
         if (view === 'fuel') await seedFuelReference(storage)
-        await tempered.app.show(route[view])
+        if (view === 'companion') await seedTodayReference(storage)
+        if (view === 'settings') installHealthShortcutRuntime(tempered)
+        if (view.startsWith('progress')) {
+          await seedProgressReference(storage)
+          await selectProgressView(tempered, view)
+        } else {
+          await tempered.app.show(target)
+        }
       } else {
         throw new Error(`Unknown release visual: ${view}`)
       }

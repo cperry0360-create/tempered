@@ -20,7 +20,7 @@ export function createSummaryScreen({ onDone }) {
       replace(root,[
         el('div.summary-confetti',{'aria-hidden':'true'},Array.from({length:12},(_,index)=>el('i',{dataset:{piece:String(index+1)}}))),
         el('header.summary-hero',{},[
-          el('span.summary-hero__eyebrow',{text:'SESSION COMPLETE'}),
+          el('span.summary-hero__eyebrow',{text:'Session complete'}),
           el('h1.screen__title',{text:'Workout complete'}),
           el('p.summary-hero__date',{text:dateLabel(summary.session?.date)}),
         ]),
@@ -34,7 +34,7 @@ export function createSummaryScreen({ onDone }) {
           ]),
         ]),
         prs.length>0&&el('section.card.summary-records',{dataset:{section:'prs'}},[
-          el('span.summary-records__eyebrow',{text:'NEW PERSONAL RECORD'}),
+          el('span.summary-records__eyebrow',{text:'New personal record'}),
           ...prs.map((pr)=>el('div.pr',{},[
             el('span.badge',{text:pr.kind}),
             el('span.pr__detail',{text:`${pr.id.replace(/_/g,' ')} — ${pr.detail}`}),
@@ -47,7 +47,7 @@ export function createSummaryScreen({ onDone }) {
           el('span',{dataset:{section:'directive'}}),
         ]),
         el('div.summary-actions',{},[
-          el('button.button.button--pill',{type:'button',dataset:{action:'done',acid:'primary'},onclick:onDone},['DONE']),
+          el('button.button.button--pill',{type:'button',dataset:{action:'done',acid:'primary'},onclick:onDone},['Done']),
         ]),
       ])
     },

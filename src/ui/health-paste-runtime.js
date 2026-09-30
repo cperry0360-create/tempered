@@ -42,10 +42,10 @@ const METRICS = [
   ['steps', 'Steps', (value) => Math.round(value).toLocaleString()],
   ['sleepHours', 'Sleep', (value) => `${value} h`],
   ['weightLb', 'Weight', (value) => `${value} lb`],
-  ['restingHr', 'Resting HR', (value) => `${value} bpm`],
-  ['hrvMs', 'HRV', (value) => `${value} ms`],
+  ['restingHr', 'Resting heart rate', (value) => `${value} bpm`],
+  ['hrvMs', 'Heart rate variability', (value) => `${value} ms`],
   ['respiratoryRate', 'Respiration', (value) => `${value}/min`],
-  ['spo2', 'SpO₂', (value) => `${value <= 1 ? value * 100 : value}%`],
+  ['spo2', 'Oxygen saturation', (value) => `${value <= 1 ? value * 100 : value}%`],
 ]
 
 async function copyText(text) {
@@ -85,18 +85,18 @@ export function installHealthPasteRuntime(context) {
       <section class="health-paste-sheet" role="dialog" aria-modal="true" aria-labelledby="health-paste-title">
         <header class="health-paste-sheet__head">
           <div>
-            <span>CHATGPT HEALTH</span>
+            <span>ChatGPT Health</span>
             <h2 id="health-paste-title">Import health snapshot</h2>
           </div>
           <button type="button" data-health-paste-close aria-label="Close health import">×</button>
         </header>
-        <p class="health-paste-sheet__intro">Run your pinned Tempered prompt in ChatGPT Health, copy its nine-line result, then paste it below. Blank fields are safely skipped.</p>
+        <p class="health-paste-sheet__intro">Run your pinned Tempered prompt in ChatGPT Health, then paste its nine-line result below; blank fields are skipped.</p>
         <div class="health-paste-sheet__actions">
-          <button type="button" class="button" data-health-paste-read>PASTE COPY</button>
-          <a class="button" data-health-prompt-copy href="https://chatgpt.com/" target="_blank" rel="noopener">COPY + OPEN CHATGPT</a>
+          <button type="button" class="button" data-health-paste-read>Paste copy</button>
+          <a class="button" data-health-prompt-copy href="https://chatgpt.com/" target="_blank" rel="noopener">Copy prompt and open ChatGPT</a>
         </div>
-        <label class="health-paste-sheet__label" for="health-paste-input">HEALTH SNAPSHOT</label>
-        <textarea id="health-paste-input" class="health-paste-sheet__input" data-health-paste-input rows="10" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="${HEALTH_SNAPSHOT_PREFIX}\nDATE=${today}\nSTEPS=\nSLEEP=\nWEIGHT_LB=\nRESTING_HR=\nHRV_MS=\nRESP_RATE=\nSPO2="></textarea>
+        <label class="health-paste-sheet__label" for="health-paste-input">Health snapshot</label>
+        <textarea id="health-paste-input" class="health-paste-sheet__input" data-health-paste-input rows="10" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Paste the nine-line health snapshot here"></textarea>
         <section class="health-paste-preview" data-health-paste-preview hidden>
           <div class="health-paste-preview__head">
             <strong data-health-paste-date></strong>
@@ -106,7 +106,7 @@ export function installHealthPasteRuntime(context) {
           <p data-health-paste-warning hidden></p>
         </section>
         <p class="health-paste-sheet__status" data-health-paste-status role="status">Nothing imports until you review and confirm.</p>
-        <button type="button" class="button health-paste-sheet__import" data-health-paste-submit disabled>IMPORT HEALTH DATA</button>
+        <button type="button" class="button health-paste-sheet__import" data-health-paste-submit disabled>Import health data</button>
       </section>`
 
     overlay = node
@@ -132,7 +132,7 @@ export function installHealthPasteRuntime(context) {
       submit.disabled = !current
       if (!current) {
         status.textContent = input.value.trim()
-          ? `Paste the complete block beginning with ${HEALTH_SNAPSHOT_PREFIX}.`
+          ? 'Paste a complete health snapshot to continue.'
           : 'Nothing imports until you review and confirm.'
         return
       }
@@ -150,8 +150,8 @@ export function installHealthPasteRuntime(context) {
       warning.textContent = current.dateMatchesToday
         ? ''
         : current.dateIsFuture
-          ? `This snapshot is dated ${current.date}, which is in the future. Tempered will safely apply it to today instead.`
-          : `This snapshot is dated ${current.date}, not today. It will update that earlier date.`
+          ? `This snapshot is dated ${current.date} in the future, so Tempered will apply it to today instead.`
+          : `This snapshot is dated ${current.date}, so it will update that earlier date.`
       status.textContent = 'Review these values, then import.'
     }
 
@@ -165,7 +165,7 @@ export function installHealthPasteRuntime(context) {
         input.value = await navigator.clipboard.readText()
         refreshPreview()
       } catch {
-        status.textContent = 'Automatic paste was blocked. Press and hold in the box and choose Paste.'
+        status.textContent = 'Automatic paste was blocked; press and hold in the box, then choose Paste.'
         input.focus()
       } finally {
         button.disabled = false
@@ -174,7 +174,7 @@ export function installHealthPasteRuntime(context) {
     node.querySelector('[data-health-prompt-copy]').onclick = async (event) => {
       try {
         await copyText(CHATGPT_HEALTH_PROMPT)
-        event.currentTarget.textContent = 'PROMPT COPIED · OPENING CHATGPT'
+        event.currentTarget.textContent = 'Prompt copied · opening ChatGPT'
         status.textContent = 'Paste the copied prompt into ChatGPT Health.'
       } catch {
         status.textContent = 'Could not copy the prompt on this device.'
@@ -184,22 +184,22 @@ export function installHealthPasteRuntime(context) {
       if (imported) { close(); return }
       if (!current) return
       submit.disabled = true
-      submit.textContent = 'IMPORTING…'
+      submit.textContent = 'Importing…'
       try {
         const result = await importHealthSnapshot(context, current.parsed, { source: 'chatgpt-health' })
         if (result.date === context.clock.today() && context.app?.show) await context.app.show('today')
         else if (context.app?.showTodayDate) await context.app.showTodayDate(result.date)
         window.dispatchEvent(new CustomEvent('tempered:health-imported', { detail: result }))
         status.textContent = result.warnings?.length
-          ? `Imported for ${result.date}. ${result.warnings.join(' ')}`
-          : `Imported ${current.metrics.length} health fields. Today is updated.`
+          ? `Imported for ${result.date}; ${result.warnings.join(' ')}`
+          : `Imported ${current.metrics.length} health fields for today.`
         imported = true
-        submit.textContent = 'DONE'
+        submit.textContent = 'Done'
         submit.disabled = false
         await enhance()
       } catch {
-        status.textContent = 'The health data could not be imported. Your existing logs were not changed.'
-        submit.textContent = 'TRY IMPORT AGAIN'
+        status.textContent = 'The health data could not be imported; your existing logs were not changed.'
+        submit.textContent = 'Try import again'
         submit.disabled = false
       }
     }

@@ -2099,3 +2099,56 @@ the 14-day proof and keeps beta readiness evidence separate from unit-test confi
 - **Behavior preserved:** Habit logging, additive quick-add semantics, configurable quick-add amounts, mobility flows, Health import, nutrition logging, and persisted workout task progress.
 - **Shell change:** Settings access now belongs to the Today header rather than a global floating control.
 - **Needs Cory:** None. The approved redesign spec and mockup are the source of truth.
+## 2026-09-30 — R5 pre-change feature inventory
+
+Inventory source: `d9850f5`, as required by Redesign V1 section 0.1. This inventory was
+written before changing the Progress screen or the R5 sweep surfaces.
+
+### Progress — `src/ui/screens/history.js` and `src/ui/progress-dashboard-runtime.js`
+
+- 7, 30, and 90 day ranges, including actual recorded-date coverage and sample counts.
+- Period totals for sessions, training days, working sets, tonnage, nominal training volume,
+  steps, sleep, weight, and micro cardio.
+- Prior-period comparisons gated on complete coverage.
+- Daily habit completion rates, a day-by-day heatmap, and current/longest streaks.
+- Exercise records for best weight, best volume, and estimated one-rep max.
+- Per-exercise load history sparklines and training-session history.
+- Session detail data including duration, total volume, working-set count, and manual duration
+  correction persisted through `workout.adjustSessionDuration`.
+- Recovery signals imported from Health, including resting heart rate, heart-rate variability,
+  respiratory rate, and oxygen saturation.
+- Configurable progress dashboard: default widgets, add/edit/remove/reorder, and local saved
+  order. **Specified removal in R5:** the customizable dashboard tiles and their runtime.
+- **Specified removals in R5:** the headline tonnage number, “no prior comparison yet” chips,
+  and the stat tile grid.
+- Kept in the replacement: ranges, truthful coverage, working-set history, PRs, trend signals,
+  recovery signals, habit rates/streaks/heatmap, lift records, log totals, duration correction,
+  and micro-cardio totals; duration correction moves into a training-day detail view.
+
+### R5 sweep surfaces — unchanged source inventory at `d9850f5`
+
+- **Settings:** current plan and units; setup rerun and program-builder entry; planned/retroactive
+  Away periods with remove action; calorie and step targets; activity tracking cadence and
+  weekly targets; exercise-frequency overrides; storage-protection state; full backup download;
+  restore-file validation, preview, explicit confirmation, and data replacement; licensing
+  credits; version/build date and update check; reset phrase and destructive reset confirmation.
+- **Setup:** seven-step first-use and rerun flow; name and units; training goal, sessions/week,
+  typical session duration, equipment, template or blank path, template selection, optional
+  primary-lift weights, daily/weekly activity cadence, and final next step; saves profile and
+  versioned program state.
+- **Program Builder:** program name and duration; training-day selection and editing; focus text;
+  exercise add/remove; sets and rep ranges; draft save; validation; review and activation with
+  immutable revisions and existing training history left intact.
+- **Summary:** workout completion date, duration, sets, reps, nominal volume moved, new weight
+  and volume PRs, and Done action.
+- **Active sheets and overlays:** Health snapshot copy/paste, nutrition entry and photo-prompt
+  handoff, cable-machine settings, Today mobility and task details, session finish/discard
+  confirmation, restore preview/confirmation, and reset confirmation.
+
+No R5 feature removal beyond the three items explicitly specified above is intended. The
+sweep changes presentation copy and token/case consistency while preserving existing controls,
+stored data, validation, navigation, and behavior.
+
+**Needs Cory:** none; placements and wording follow the R5 screen list and existing actions.
+
+---

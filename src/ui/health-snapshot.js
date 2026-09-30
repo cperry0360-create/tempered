@@ -60,7 +60,7 @@ export async function importHealthSnapshot(context, snapshot, { source = 'shortc
   const validSleep = Number.isFinite(normalized.sleepHours)
     && normalized.sleepHours > 0 && normalized.sleepHours <= MAX_HEALTH_SLEEP_HOURS
   if (Number.isFinite(normalized.sleepHours) && !validSleep) {
-    warnings.push(`Sleep was skipped because the import returned ${normalized.sleepHours} hours. Check its sleep-stage, date, and source data.`)
+    warnings.push(`Sleep was skipped because the imported value of ${normalized.sleepHours} hours is outside the supported range.`)
   }
 
   // These are replace-mode trackers. Re-importing updates the canonical value

@@ -30,7 +30,7 @@ function ensureStyle() {
       color: var(--blue);
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: .04em;
+      letter-spacing: .02em;
     }
     .cable-readout {
       grid-column: 3 / -1;
@@ -97,7 +97,7 @@ function ensureStyle() {
       font: inherit;
       font-size: 10px;
       font-weight: 800;
-      letter-spacing: .04em;
+      letter-spacing: .02em;
     }
     .cable-exercise__button[data-selected='true'] {
       background: color-mix(in srgb, var(--acid) 12%, var(--well));
@@ -394,7 +394,7 @@ export async function installCableMachineRuntime(context) {
     const pill = card.querySelector('[data-kind="pr"]')
     const value = pill?.querySelector('.pill__value')
     const unit = pill?.querySelector('.pill__unit')
-    if (value) value.textContent = `P${best.cablePeg} · ${fmt(Number(best.weight))}`
+    if (value) value.textContent = `Peg ${best.cablePeg} · ${fmt(Number(best.weight))}`
     if (unit) unit.textContent = 'lb nominal'
     card.dataset.cableRecord = token
   }
@@ -450,12 +450,12 @@ export async function installCableMachineRuntime(context) {
     card.querySelector('.cable-mode-note')?.remove()
     card.querySelector('.cable-readout')?.remove()
     const weightHead = card.querySelector('.setrow--head [data-col="weight"]')
-    if (weightHead) weightHead.textContent = 'LBS'
+    if (weightHead) weightHead.textContent = 'lb'
     for (const input of card.querySelectorAll('.setrow__num[data-field="weight"]')) {
       delete input.dataset.cablePeg
       delete input.dataset.cableInvalid
       input.inputMode = 'decimal'
-      input.setAttribute('aria-label', `LBS, set ${Number(input.dataset.set ?? 0) + 1}`)
+      input.setAttribute('aria-label', `Pounds, set ${Number(input.dataset.set ?? 0) + 1}`)
     }
     initialisedExercises.delete(exerciseId)
     for (const key of [...pegState.keys()]) {
@@ -486,7 +486,7 @@ export async function installCableMachineRuntime(context) {
       const syncPeg = () => {
         const enabled = cablePegEnabledForExercise(exerciseId, machine)
         peg.dataset.selected = String(enabled)
-        peg.textContent = enabled ? 'PEG ENTRY' : 'LBS ENTRY'
+        peg.textContent = enabled ? 'Peg entry' : 'lb entry'
       }
       syncPeg()
       peg.addEventListener('click', async () => {
@@ -497,7 +497,7 @@ export async function installCableMachineRuntime(context) {
       const stacks = document.createElement('button')
       stacks.type = 'button'
       stacks.className = 'cable-exercise__button'
-      const syncStacks = () => { stacks.textContent = `${cableStacksForExercise(exerciseId, machine)} STACK${cableStacksForExercise(exerciseId, machine) === 1 ? '' : 'S'}` }
+      const syncStacks = () => { stacks.textContent = `${cableStacksForExercise(exerciseId, machine)} stack${cableStacksForExercise(exerciseId, machine) === 1 ? '' : 's'}` }
       syncStacks()
       stacks.addEventListener('click', async () => {
         const current = cableStacksForExercise(exerciseId, machine)
@@ -522,7 +522,7 @@ export async function installCableMachineRuntime(context) {
 
     card.dataset.cableMachine = machine.id
     const weightHead = card.querySelector('.setrow--head [data-col="weight"]')
-    if (weightHead) weightHead.textContent = 'PEG'
+    if (weightHead) weightHead.textContent = 'Peg'
 
     initialisePegInputs(card)
 
@@ -531,7 +531,7 @@ export async function installCableMachineRuntime(context) {
       note.className = 'cable-mode-note'
       note.dataset.cableMode = 'peg'
       const stacks = cableStacksForExercise(exerciseId, machine)
-      note.textContent = `${machine.name.toUpperCase()} PEG MODE · ${stacks === 2 ? 'BOTH STACKS' : 'ONE STACK'} · NOMINAL`
+      note.textContent = `${machine.name} peg mode · ${stacks === 2 ? 'both stacks' : 'one stack'} · nominal`
       const anchor = card.querySelector('.exercise__proposal') ?? card.querySelector('.exercise__head')
       anchor?.insertAdjacentElement('afterend', note)
     }
@@ -569,8 +569,8 @@ export async function installCableMachineRuntime(context) {
       stacks: cableStacksForExercise('cable_fly', machine),
     })
     const next = load
-      ? `Nominal example: Peg 6 → ${fmt(load.perHandle)} lb / handle · ${fmt(load.total)} lb Cable Fly total. Manufacturer spec: 165 lb per stack, 2:1 per pulley.`
-      : 'Adjust the machine values to preview Peg 6.'
+      ? `Peg 6 gives ${fmt(load.perHandle)} lb per handle and ${fmt(load.total)} lb total for cable fly; each stack is 165 lb with a 2:1 pulley ratio.`
+      : 'Adjust the machine values to preview peg 6.'
     if (example.textContent !== next) example.textContent = next
   }
 
@@ -602,13 +602,13 @@ export async function installCableMachineRuntime(context) {
       pegButton.dataset.selected = String(enabled)
       pegButton.setAttribute('aria-pressed', String(enabled))
       pegButton.setAttribute('aria-label', `${exercise.name} peg entry`)
-      pegButton.textContent = enabled ? 'PEG' : 'LBS'
+      pegButton.textContent = enabled ? 'Peg' : 'lb'
       pegButton.addEventListener('click', async () => {
         await saveExercise(exercise.id, { enabled: !cablePegEnabledForExercise(exercise.id, machine) })
         const nextEnabled = cablePegEnabledForExercise(exercise.id, machine)
         pegButton.dataset.selected = String(nextEnabled)
         pegButton.setAttribute('aria-pressed', String(nextEnabled))
-        pegButton.textContent = nextEnabled ? 'PEG' : 'LBS'
+        pegButton.textContent = nextEnabled ? 'Peg' : 'lb'
         meta.textContent = nextEnabled
           ? `${cableStacksForExercise(exercise.id, machine)} stack${cableStacksForExercise(exercise.id, machine) === 1 ? '' : 's'} · peg entry`
           : 'normal lb entry'
@@ -652,7 +652,7 @@ export async function installCableMachineRuntime(context) {
 
     const hint = document.createElement('p')
     hint.className = 'block__hint'
-    hint.textContent = 'Inspire FTX / Centr 2 preset. Peg mode stores nominal effective resistance for progression while keeping the physical selector number in history.'
+    hint.textContent = 'This preset stores nominal resistance for progression and the physical selector number in history.'
 
     const toggleRow = document.createElement('div')
     toggleRow.className = 'cable-settings__toggle'
@@ -664,12 +664,12 @@ export async function installCableMachineRuntime(context) {
     toggle.className = 'setup__cadence'
     toggle.dataset.selected = String(machine.enabled)
     toggle.setAttribute('aria-pressed', String(machine.enabled))
-    toggle.textContent = machine.enabled ? 'ON' : 'OFF'
+    toggle.textContent = machine.enabled ? 'On' : 'Off'
     toggle.addEventListener('click', async () => {
       await saveMachine({ enabled: !machine.enabled })
       toggle.dataset.selected = String(machine.enabled)
       toggle.setAttribute('aria-pressed', String(machine.enabled))
-      toggle.textContent = machine.enabled ? 'ON' : 'OFF'
+      toggle.textContent = machine.enabled ? 'On' : 'Off'
     })
     toggleRow.append(toggleLabel, toggle)
 
@@ -683,12 +683,12 @@ export async function installCableMachineRuntime(context) {
     addon.className = 'setup__cadence'
     addon.dataset.selected = String(machine.addOnEnabled)
     addon.setAttribute('aria-pressed', String(machine.addOnEnabled))
-    addon.textContent = machine.addOnEnabled ? 'YES' : 'NO'
+    addon.textContent = machine.addOnEnabled ? 'Yes' : 'No'
     addon.addEventListener('click', async () => {
       await saveMachine({ addOnEnabled: !machine.addOnEnabled })
       addon.dataset.selected = String(machine.addOnEnabled)
       addon.setAttribute('aria-pressed', String(machine.addOnEnabled))
-      addon.textContent = machine.addOnEnabled ? 'YES' : 'NO'
+      addon.textContent = machine.addOnEnabled ? 'Yes' : 'No'
       renderSettingsExample(section)
     })
     addonRow.append(addonLabel, addon)

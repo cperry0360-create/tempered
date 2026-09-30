@@ -180,7 +180,7 @@ export function installCalorieAiRuntime() {
     button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
     button.replaceChildren(
       Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
-      Object.assign(document.createElement('span'), { textContent: 'AI photo' }),
+      Object.assign(document.createElement('span'), { textContent: 'Meal photo' }),
     )
     button.dataset.calorieAi = 'prompt'
     button.onclick = async (event) => {
@@ -190,7 +190,7 @@ export function installCalorieAiRuntime() {
       button.dataset.copied = String(copied)
       window.setTimeout(() => {
         if (!button.isConnected) return
-        button.querySelector('span').textContent = 'AI photo'
+        button.querySelector('span').textContent = 'Meal photo'
         delete button.dataset.copied
       }, 1600)
     }
@@ -245,12 +245,12 @@ export function installCalorieAiRuntime() {
     time.textContent = formattedTime(entry.loggedAt)
     const source = document.createElement('span')
     source.className = 'nutrition-entry__source'
-    source.textContent = entry.source === 'ai' ? 'AI estimate' : 'Manual entry'
+    source.textContent = entry.source === 'ai' ? 'Estimate' : 'Manual entry'
     const nutrients = document.createElement('p')
     nutrients.className = 'nutrition-entry__nutrients'
     nutrients.textContent = nutrientLine(entry)
     body.append(time, source, nutrients)
-    const remove = makeButton('nutrition-entry__delete', 'DELETE', `Delete nutrition entry at ${formattedTime(entry.loggedAt)}`)
+    const remove = makeButton('nutrition-entry__delete', 'Delete', `Delete nutrition entry at ${formattedTime(entry.loggedAt)}`)
     remove.onclick = async () => {
       remove.disabled = true
       try {
@@ -259,7 +259,7 @@ export function installCalorieAiRuntime() {
         await renderNutritionData()
         await refreshUnderlyingSurfaces()
       } catch {
-        setScreenStatus('Could not delete that entry. Your saved data was not changed.', 'error')
+        setScreenStatus('Could not delete that entry; your saved data was not changed.', 'error')
       }
     }
     item.append(body, remove)
@@ -293,7 +293,7 @@ export function installCalorieAiRuntime() {
     if (!lastDeleted) return
     const message = document.createElement('span')
     message.textContent = 'Meal deleted.'
-    const undo = makeButton('nutrition-undo__button', 'UNDO', 'Undo deleted nutrition entry')
+    const undo = makeButton('nutrition-undo__button', 'Undo', 'Undo deleted nutrition entry')
     undo.onclick = async () => {
       undo.disabled = true
       const pending = lastDeleted
@@ -324,7 +324,7 @@ export function installCalorieAiRuntime() {
       const detail = document.createElement('span')
       detail.textContent = nutrientLine(suggestion)
       const use = document.createElement('small')
-      use.textContent = suggestion.count > 1 ? `${suggestion.count}× logged · ADD` : 'RECENT · ADD'
+      use.textContent = suggestion.count > 1 ? `${suggestion.count}× logged · Add` : 'Recent · Add'
       button.append(name, detail, use)
       button.onclick = async () => {
         button.disabled = true
@@ -339,7 +339,7 @@ export function installCalorieAiRuntime() {
           setScreenStatus(`${suggestion.description} added.`, 'success')
         } catch {
           button.disabled = false
-          setScreenStatus('Could not repeat that meal. Your saved data was not changed.', 'error')
+          setScreenStatus('Could not repeat that meal; your saved data was not changed.', 'error')
         }
       }
       return button
@@ -362,7 +362,7 @@ export function installCalorieAiRuntime() {
       const copy = dayStatus.querySelector('[data-nutrition-day-status-copy]')
       if (copy) copy.textContent = state === 'complete'
         ? 'Complete day · included in calorie averages'
-        : state === 'partial' ? 'In progress / partial · excluded from calorie averages' : 'Not reviewed · credible totals may be included'
+        : state === 'partial' ? 'Still logging · excluded from calorie averages' : 'Not reviewed · eligible totals may be included'
       dayStatus.querySelectorAll('[data-nutrition-day-state]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.dataset.nutritionDayState === state))
       })
@@ -373,11 +373,11 @@ export function installCalorieAiRuntime() {
     const proteinGoal = Number(protein?.dailyCap)
     const totals = nutritionScreen.querySelector('[data-nutrition-totals]')
     totals.replaceChildren(
-      totalCard('CALORIES', `${shownNumber(ledger.totals.calories)} kcal`, Number.isFinite(caloriesGoal) && caloriesGoal > 0 ? `${shownNumber(caloriesGoal)} target` : '', 'calories'),
-      totalCard('PROTEIN', `${shownNumber(ledger.totals.protein)} g`, Number.isFinite(proteinGoal) && proteinGoal > 0 ? `${shownNumber(proteinGoal)} target` : '', 'protein'),
-      totalCard('CARBS', `${shownNumber(ledger.totals.carbs)} g`, '', 'carbs'),
-      totalCard('FAT', `${shownNumber(ledger.totals.fat)} g`, '', 'fat'),
-      totalCard('FIBER', `${shownNumber(ledger.totals.fiber)} g`, '', 'fiber'),
+      totalCard('Calories', `${shownNumber(ledger.totals.calories)} kcal`, Number.isFinite(caloriesGoal) && caloriesGoal > 0 ? `${shownNumber(caloriesGoal)} target` : '', 'calories'),
+      totalCard('Protein', `${shownNumber(ledger.totals.protein)} g`, Number.isFinite(proteinGoal) && proteinGoal > 0 ? `${shownNumber(proteinGoal)} target` : '', 'protein'),
+      totalCard('Carbs', `${shownNumber(ledger.totals.carbs)} g`, '', 'carbs'),
+      totalCard('Fat', `${shownNumber(ledger.totals.fat)} g`, '', 'fat'),
+      totalCard('Fiber', `${shownNumber(ledger.totals.fiber)} g`, '', 'fiber'),
     )
 
     const list = nutritionScreen.querySelector('[data-nutrition-history]')
@@ -387,7 +387,7 @@ export function installCalorieAiRuntime() {
     if (rows.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'nutrition-history__empty'
-      empty.textContent = 'No meals logged yet. Add a meal above and it will stay visible here.'
+      empty.textContent = 'No meals logged yet; add one above to start your history.'
       rows.push(empty)
     }
     list.replaceChildren(...rows)
@@ -400,7 +400,7 @@ export function installCalorieAiRuntime() {
     const first = inputs.get('calories')
     if (!navigator.clipboard?.readText) {
       first.focus()
-      setScreenStatus('Clipboard access is blocked. Paste or enter the five values manually.', 'manual')
+      setScreenStatus('Clipboard access is blocked; paste or enter the five values manually.', 'manual')
       return
     }
     try {
@@ -417,10 +417,10 @@ export function installCalorieAiRuntime() {
       const description = form.querySelector('[data-entry="nutrition_description"]')
       if (description && parsed.description) description.value = parsed.description
       form.dataset.source = 'ai'
-      setScreenStatus('AI values pasted. Review them, then tap Add Meal.', 'ready')
+      setScreenStatus('Nutrition values pasted; review them before adding the meal.', 'ready')
     } catch {
       first.focus()
-      setScreenStatus('Clipboard access was blocked. Paste or enter the values manually.', 'manual')
+      setScreenStatus('Clipboard access was blocked; paste or enter the values manually.', 'manual')
     }
   }
 
@@ -453,10 +453,10 @@ export function installCalorieAiRuntime() {
     const back = makeButton('nutrition-log-header__back', '‹', 'Back to Today')
     const heading = document.createElement('div')
     const eyebrow = document.createElement('span')
-    eyebrow.textContent = date === globalThis.tempered.clock.today() ? 'TODAY' : dateLabel(date).toUpperCase()
+    eyebrow.textContent = date === globalThis.tempered.clock.today() ? 'Today' : dateLabel(date)
     const title = document.createElement('h2')
     title.id = 'nutrition-log-title'
-    title.textContent = 'NUTRITION'
+    title.textContent = 'Nutrition'
     heading.append(eyebrow, title)
     back.onclick = closeNutritionScreen
     header.append(back, heading, promptButton('nutrition-log-header__ai'))
@@ -464,7 +464,7 @@ export function installCalorieAiRuntime() {
     const datePicker = document.createElement('label')
     datePicker.className = 'nutrition-date-picker'
     const dateCaption = document.createElement('span')
-    dateCaption.textContent = 'LOGGING DATE'
+    dateCaption.textContent = 'Logging date'
     const dateInput = document.createElement('input')
     dateInput.type = 'date'
     dateInput.value = date
@@ -482,9 +482,9 @@ export function installCalorieAiRuntime() {
     dayStatus.className = 'nutrition-day-status'
     dayStatus.dataset.nutritionDayStatus = 'true'
     const dayStatusHead = document.createElement('div')
-    dayStatusHead.innerHTML = '<strong>DAY STATUS</strong><span data-nutrition-day-status-copy></span>'
+    dayStatusHead.innerHTML = '<strong>Day status</strong><span data-nutrition-day-status-copy></span>'
     const dayStatusActions = document.createElement('div')
-    for (const [state, label] of [['complete', 'COMPLETE'], ['partial', 'STILL LOGGING']]) {
+    for (const [state, label] of [['complete', 'Complete'], ['partial', 'Still logging']]) {
       const button = makeButton('nutrition-day-status__button', label, `Mark nutrition day ${state}`)
       button.dataset.nutritionDayState = state
       button.onclick = async () => {
@@ -502,7 +502,7 @@ export function installCalorieAiRuntime() {
     suggestionSection.dataset.nutritionSuggestionsSection = 'true'
     suggestionSection.hidden = true
     const suggestionTitle = document.createElement('h3')
-    suggestionTitle.textContent = 'QUICK LOG · RECENT + FREQUENT'
+    suggestionTitle.textContent = 'Quick log · recent and frequent'
     const suggestions = document.createElement('div')
     suggestions.className = 'nutrition-suggestions__list'
     suggestions.dataset.nutritionSuggestions = 'true'
@@ -511,7 +511,7 @@ export function installCalorieAiRuntime() {
     const historySection = document.createElement('section')
     historySection.className = 'nutrition-history'
     const historyTitle = document.createElement('h3')
-    historyTitle.textContent = 'MEALS'
+    historyTitle.textContent = 'Meals'
     const history = document.createElement('div')
     history.className = 'nutrition-history__list'
     history.dataset.nutritionHistory = 'true'
@@ -522,7 +522,7 @@ export function installCalorieAiRuntime() {
     form.dataset.nutritionForm = 'true'
     form.dataset.source = 'manual'
     const formTitle = document.createElement('h3')
-    formTitle.textContent = 'ADD MEAL'
+    formTitle.textContent = 'Add meal'
     const fields = document.createElement('div')
     fields.className = 'nutrition-meal-form__fields'
     const inputs = new Map()
@@ -572,13 +572,13 @@ export function installCalorieAiRuntime() {
     status.className = 'nutrition-meal-form__status'
     status.dataset.nutritionStatus = 'true'
     status.setAttribute('role', 'status')
-    status.textContent = 'Enter what you know. Every macro is optional.'
+    status.textContent = 'Enter any details you know; all nutrition fields are optional.'
     const actions = document.createElement('div')
     actions.className = 'nutrition-meal-form__actions'
-    const paste = makeButton('nutrition-meal-form__paste', 'IMPORT AI COPY', 'Read copied AI nutrition result for review')
+    const paste = makeButton('nutrition-meal-form__paste', 'Import copied nutrition', 'Read copied nutrition result for review')
     paste.dataset.calorieAi = 'paste'
     paste.onclick = () => pasteNutrition(form, inputs)
-    const add = makeButton('nutrition-meal-form__add', 'ADD MEAL', 'Add meal to Nutrition history')
+    const add = makeButton('nutrition-meal-form__add', 'Add meal', 'Add meal to Nutrition history')
     add.type = 'submit'
     add.dataset.action = 'nutrition-log'
     actions.append(paste, add)
@@ -609,9 +609,9 @@ export function installCalorieAiRuntime() {
         lastDeleted = null
         await renderNutritionData()
         await refreshUnderlyingSurfaces()
-        setScreenStatus('Meal added. It is saved in today’s history.', 'success')
+        setScreenStatus('Meal added to today’s history.', 'success')
       } catch {
-        setScreenStatus('Could not add that meal. Your saved data was not changed.', 'error')
+        setScreenStatus('Could not add that meal; your saved data was not changed.', 'error')
       } finally {
         add.disabled = false
         paste.disabled = false
@@ -636,7 +636,7 @@ export function installCalorieAiRuntime() {
     document.body.append(nutritionScreen)
     document.body.dataset.nutritionOpen = 'true'
     document.addEventListener('keydown', nutritionKeydown)
-    renderNutritionData().catch(() => setScreenStatus('Nutrition history could not load. Try again.', 'error'))
+    renderNutritionData().catch(() => setScreenStatus('Nutrition history could not load; try again.', 'error'))
     requestAnimationFrame(() => nutritionScreen?.querySelector('.nutrition-log-header__back')?.focus())
   }
 

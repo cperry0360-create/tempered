@@ -62,13 +62,10 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   let builder = null
   const openBuilder = async () => show('program-builder')
 
-  const train = createTrainScreen({ workout, storage, clock, onStart: (options) => startSession(options) })
+  const train = createTrainScreen({\n    workout, storage, clock,\n    onStart: (options) => startSession(options),\n    onProgramBuilder: openBuilder,\n  })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup, onProgramBuilder: openBuilder })
-  const fuel = createFuelScreen({
-    storage, daily, clock,
-    onToday: async () => { await show('today') },
-  })
+  const fuel = createFuelScreen({ storage, daily, clock })
   const companion = createCompanionScreen({
     storage, daily, clock, overlayHost: overlays,
     onToday: async () => { await show('today') },

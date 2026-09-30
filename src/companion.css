@@ -742,3 +742,222 @@
   .companion-reveal__old { display: none; }
   .companion-reveal__new { opacity: 1; transform: none; filter: drop-shadow(0 18px 24px var(--surface-2)); }
 }
+
+
+/* ---------------------------------------------------------------------------
+   Redesign V1 — Fuel (R4)
+   --------------------------------------------------------------------------- */
+
+.screen--fuel-r4 { gap: 16px; padding-bottom: 8px; }
+
+.screen--fuel-r4 > .screen__title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+}
+
+.fuel-r4__card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--surface-1);
+}
+
+.fuel-r4__card h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.fuel-r4__energy { gap: 16px; }
+
+.fuel-r4__ring {
+  position: relative;
+  width: 156px;
+  height: 156px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+}
+
+.fuel-r4__ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.fuel-r4__ring-track,
+.fuel-r4__ring-arc {
+  fill: none;
+  stroke-width: 12;
+}
+
+.fuel-r4__ring-track { stroke: var(--surface-2); }
+
+.fuel-r4__ring-arc {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.fuel-r4__ring-copy {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.fuel-r4__ring-copy strong {
+  color: var(--text-1);
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fuel-r4__ring-copy span {
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.fuel-r4__protein { display: grid; gap: 6px; }
+.fuel-r4__protein > span,
+.fuel-r4__water-total {
+  color: var(--text-1);
+  font-size: 15px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fuel-r4__bar {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+}
+
+.fuel-r4__bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  min-width: 0;
+  border-radius: inherit;
+  background: var(--chart);
+}
+
+.fuel-r4__macros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+
+.fuel-r4__macros > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding-inline: 12px;
+}
+
+.fuel-r4__macros > div:first-child { padding-left: 0; }
+.fuel-r4__macros > div:last-child { padding-right: 0; }
+.fuel-r4__macros > div + div { border-left: 1px solid var(--hairline); }
+
+.fuel-r4__macros span {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.fuel-r4__macros strong {
+  color: var(--text-1);
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.fuel-r4__primary {
+  appearance: none;
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.fuel-r4__recent { gap: 8px; }
+.fuel-r4__rows { overflow: hidden; border-radius: 10px; background: var(--surface-2); }
+
+.fuel-r4__recent-row {
+  appearance: none;
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  padding: 0 0 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  line-height: 20px;
+  text-align: left;
+}
+
+.fuel-r4__recent-row + .fuel-r4__recent-row { border-top: 1px solid var(--hairline); }
+.fuel-r4__recent-row > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.fuel-r4__plus {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--text-1);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.fuel-r4__empty {
+  margin: 0;
+  padding: 12px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.fuel-r4__water { gap: 8px; }
+
+.fuel-r4__water-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.fuel-r4__secondary {
+  appearance: none;
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}

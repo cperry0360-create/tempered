@@ -29,7 +29,7 @@
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     const mount = document.querySelector('#app')
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
-    const route = { today: 'today', train: 'train', fuel: 'companion', progress: 'history' }
+    const route = { today: 'today', train: 'train', fuel: 'fuel', progress: 'history' }
 
     async function installShippedInlineCss() {
       const html = await fetch('../../index.html').then((response) => response.text())
@@ -114,6 +114,53 @@
       }
     }
 
+
+    async function seedFuelReference(storage) {
+      await storage.put('profile', {
+        id: 'profile',
+        setupComplete: true,
+        calorieTarget: 2100,
+      })
+      await storage.put('dayLogs', {
+        date: '2026-09-07',
+        calories: 0,
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        fiberGrams: 0,
+        waterOz: 0,
+      })
+      const recent = [
+        ['2026-09-06', 'Greek yogurt + berries', 220, 20, 28, 3, 5],
+        ['2026-09-05', 'Chicken rice bowl', 640, 45, 72, 18, 6],
+        ['2026-09-04', 'Protein shake', 160, 30, 6, 2, 1],
+      ]
+      for (const [date, description, calories, proteinGrams, carbsGrams, fatGrams, fiberGrams] of recent) {
+        await storage.put('dayLogs', {
+          date,
+          nutritionLedgerVersion: 1,
+          nutritionCarryover: {},
+          nutritionEntries: [{
+            id: `visual-${date}`,
+            loggedAt: `${date}T12:00:00.000Z`,
+            source: 'manual',
+            description,
+            calories,
+            proteinGrams,
+            carbsGrams,
+            fatGrams,
+            fiberGrams,
+          }],
+          calories,
+          proteinGrams,
+          carbsGrams,
+          fatGrams,
+          fiberGrams,
+          nutritionLogged: true,
+          caloriesLogged: true,
+        })
+      }
+    }
 
     async function seedSessionReference(storage) {
       await seedTodayReference(storage)
@@ -219,6 +266,7 @@
       } else if (route[view]) {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })
         if (view === 'today') await seedTodayReference(storage)
+        if (view === 'fuel') await seedFuelReference(storage)
         await tempered.app.show(route[view])
       } else {
         throw new Error(`Unknown release visual: ${view}`)

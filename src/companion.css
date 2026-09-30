@@ -961,3 +961,23 @@
   line-height: 20px;
   font-weight: 600;
 }
+
+
+/* R4 visual QA — match approved Fuel mockup density. */
+.fuel-r4__energy {
+  gap: 10px;
+  padding: 12px;
+}
+
+.fuel-r4__recent {
+  gap: 6px;
+  padding: 12px;
+}
+
+.fuel-r4__recent-row {
+  min-height: 44px;
+}
+
+.fuel-r4__water {
+  padding: 12px;
+}

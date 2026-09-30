@@ -16,6 +16,7 @@
   import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
   import { fixedClock } from '../../src/adapters/clock/clock.js'
   import { loadActiveSessionDraft } from '../../src/ui/session-draft.js'
+  import { installCableMachineRuntime } from '../../src/ui/cable-machine-runtime.js'
 
   const checks = []
   const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
@@ -41,6 +42,7 @@
     })
 
     const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+    await installCableMachineRuntime(tempered)
 
     await storage.put('sessions', {
       id: 'r3-history', date: '2026-09-22',

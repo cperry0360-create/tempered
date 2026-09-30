@@ -1211,8 +1211,8 @@ button.today-item:disabled {
   position: relative;
   width: 45px;
   min-width: 45px;
-  height: 44px;
-  min-height: 44px;
+  height: 45px;
+  min-height: 45px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -1486,4 +1486,43 @@ button.today-item:disabled {
   border: 1px solid var(--hairline);
   border-bottom: 0;
   border-radius: 16px 16px 0 0;
+}
+
+
+/* R3 final alignment: header completion marker and mockup rest-bar geometry. */
+.exercise--r3 .setrow--head .setrow__head-check {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.session-restbar__progress {
+  position: static;
+  grid-column: 1;
+  grid-row: 2;
+  width: 110px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--hairline);
+}
+
+.session-restbar__progress i {
+  border-radius: inherit;
+}
+
+.session-restbar__time {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.session-restbar__actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.session-restbar__actions button {
+  min-height: 44px;
 }

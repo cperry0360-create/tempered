@@ -190,10 +190,11 @@
         check('D exercise art is removed from the active-workout block', q('.exercise__art') === null)
 
         await tempered.app.show('train')
-        await waitFor('[data-guide]')
-        q('[data-guide]').click(); await settle()
-        check('E the guide shows weekly hard sets per muscle group',
-          qa('.guide__row').length > 4, `${qa('.guide__row').length} groups`)
+        const details = await waitFor('[data-program-details="toggle"]')
+        details.click(); await settle()
+        check('E R4 keeps program detail and Program Builder entry behind one row',
+          q('.train-r4__details') !== null
+          && /Open Program Builder/i.test(q('.train-r4__details')?.textContent ?? ''))
 
         await fetch('/__report', {
           method: 'POST', headers: { 'content-type': 'application/json' },

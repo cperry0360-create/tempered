@@ -57,8 +57,9 @@
         // TARGET 1 — a full lower-body session, under 90 seconds of tapping
         // ---------------------------------------------------------------
         taps = 0
-        await waitFor('[data-start="lower"]')
-        tap(q('[data-start="lower"]'), 'START lower')
+        await waitFor('[data-routine="lower"]')
+        tap(q('[data-routine="lower"]'), 'open lower routine')
+        tap(await waitFor('.train-r4__routine-detail .train-r4__secondary'), 'START lower')
         await waitFor('.setrow__check')
         check('active workouts show an elapsed timer', /^\d+:\d{2}$/.test(q('[data-session-elapsed]')?.textContent ?? ''), q('[data-session-elapsed]')?.textContent ?? 'missing')
 
@@ -122,14 +123,15 @@
           q('[data-section="xp"]') !== null && q('.stats') !== null)
         check('one dismiss, not four', qa('[data-action="done"]').length === 1)
         tap(q('[data-action="done"]'), 'DONE')
-        await waitFor('[data-start="lower"]')
+        await waitFor('[data-routine="lower"]')
 
         // ---------------------------------------------------------------
         // TARGET 1b — the COMMON case: repeating last session.
         // docs/05 says this must be one tap per set. Now there is history.
         // ---------------------------------------------------------------
         taps = 0
-        tap(await waitFor('[data-start="lower"]'), 'START lower again')
+        tap(await waitFor('[data-routine="lower"]'), 'open lower routine again')
+        tap(await waitFor('.train-r4__routine-detail .train-r4__secondary'), 'START lower again')
         await waitFor('.setrow__check')
 
         const placeholderFields = qa('input.setrow__num')
@@ -159,8 +161,8 @@
 
         const warmTaps = taps
         check('repeating a session is one tap per set, plus start and finish',
-          warmTaps === warmRows + 3,
-          `${warmTaps} taps for ${warmRows} sets (start + ${warmRows} sets + finish + confirm)`)
+          warmTaps === warmRows + 4,
+          `${warmTaps} taps for ${warmRows} sets (routine + start + ${warmRows} sets + finish + confirm)`)
         check('the common case is far inside 90s', warmTaps * SECONDS_PER_TAP < 90,
           `${warmTaps * SECONDS_PER_TAP}s at ${SECONDS_PER_TAP}s/tap`)
         tap(q('[data-action="done"]'), 'DONE')

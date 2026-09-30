@@ -62,8 +62,10 @@
       check('Reopening Sleep prefills the saved decimal', reopened?.value === '7.5', reopened?.value ?? 'missing')
 
       await tempered.app.show('train')
-      const lower = await waitFor('[data-start="lower"]')
+      const lower = await waitFor('[data-routine="lower"]')
       lower?.click()
+      const startLower = await waitFor('.train-r4__routine-detail .train-r4__secondary')
+      startLower?.click()
       const firstCheck = await waitFor('.setrow__check')
       const row = firstCheck?.closest('.setrow')
       for (const field of qa('input.setrow__num', row)) {

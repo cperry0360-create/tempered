@@ -1,3 +1,12 @@
+## 2026-09-30 — Redesign V1 R5 Progress and sweep
+
+- Redesign V1 is now applied across the tracker surfaces. Progress uses the approved four-view structure: Overview, Lifts, Habits, and Log, with a 7D/30D/90D range control.
+- Overview leads with eight weeks of working sets, then recent PRs, Weight/Steps/Sleep trends, recovery signals when present, and the ChatGPT progress-report handoff.
+- Lifts shows e1RM rows and trends; Habits shows completion rows and streak context; Log keeps duration correction inside each training-day detail.
+- Settings, Setup, Program Builder, Summary, Companion, and active-session sheets were swept for sentence case and one-sentence explanation copy. Companion remains the only illustrated destination outside the workout summary.
+- Runtime UI colours continue to come from Redesign V1 tokens; normal tracker screens have no scenic background art.
+- Release version: 0.42.0 (56).
+
 ## 2026-09-30 — Redesign V1 R4 Train and Fuel
 
 - Train now follows the approved R4 hierarchy: one program header, next session, session rows, routines, and drill-in rows for Exercise library and Training rhythm. The duplicated program presentation, weekly slot bars, workout control center, stat tiles, and AI coaching handoff are removed from Train.
@@ -23,7 +32,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.41.0 (55) — Redesign V1 R4 Train and Fuel
+**Current release:** 0.42.0 (56) — Redesign V1 R5 Progress and sweep
 
 **Product maturity:** Pre-beta product completion
 

@@ -20,7 +20,7 @@ const TYPES = {
   '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
   '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json',
 }
-const VIEWS = ['setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'session', 'fuel', 'progress']
+const VIEWS = ['setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'session', 'fuel', 'progress', 'settings', 'program-builder', 'companion']
 const VIEWPORTS = [
   { label: 'iphone-compact', width: 390, height: 844 },
   { label: 'iphone-large', width: 430, height: 932 },

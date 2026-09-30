@@ -186,9 +186,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     // The absolute end timestamp is canonical. Do not decrement a counter:
     // sleeping/backgrounding the screen must not pause or drift the timer.
     const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
-    const node = root.querySelector('[data-rest-remaining]')
+    const node = document.querySelector('[data-session-rest-overlay] [data-rest-remaining]')
     if (node) node.textContent = `Rest ${clock(remaining)}`
-    const progress = root.querySelector('[data-rest-progress]')
+    const progress = document.querySelector('[data-session-rest-overlay] [data-rest-progress]')
     if (progress) {
       const duration = Math.max(1, Number(rest.durationSec) || remaining || 1)
       progress.style.width = `${Math.max(0, Math.min(100, (remaining / duration) * 100))}%`
@@ -677,7 +677,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('button.exercise-menu__item', {
           type: 'button',
           dataset: { action: 'minimize-workout' },
-          onclick: () => { persistDraft(); onMinimize?.() },
+          onclick: () => {
+            persistDraft()
+            document.querySelector('[data-session-rest-overlay]')?.remove()
+            onMinimize?.()
+          },
         }, ['Minimize workout']),
         item('Move up', () => move(position, -1), { disabled: position === 0 }),
         item('Move down', () => move(position, 1), { disabled: position === plan.length - 1 }),
@@ -704,7 +708,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     }, [
       el('header.exercise__head', {}, [
         el('div.exercise__title', {}, [
-          el('h2.exercise__name', { text: displayName(entry.exercise) }),
+          el('h2.exercise__name', { text: displayName(entry.exercise, entry.slot) }),
           el('button.exercise__range', {
             type: 'button',
             onclick: () => { openPanel = panelKey(entry, 'rest'); render() },
@@ -834,7 +838,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   function restBar() {
     if (!rest) return null
     const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
-    return el('div.session-restbar', { dataset: { restBar: 'true' } }, [
+    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true' } }, [
       el('div.session-restbar__progress', {}, [
         el('i', {
           dataset: { restProgress: 'true' },
@@ -935,12 +939,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         ]),
       ]),
 
-      restBar(),
     ])
+    document.querySelector('[data-session-rest-overlay]')?.remove()
+    if (rest) document.body.append(restBar())
     tick()
   }
 
   async function finish() {
+    document.querySelector('[data-session-rest-overlay]')?.remove()
     const summary = await workout.finishSession(session, {
       isFirstOfDay,
       // A block settles everything it logged; a single slot settles only itself,
@@ -1128,6 +1134,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       releaseWorkoutWakeLock()
       document.removeEventListener('visibilitychange', checkpointWhenHidden)
       window.removeEventListener('pagehide', checkpointOnPageHide)
+      document.querySelector('[data-session-rest-overlay]')?.remove()
     },
   }
 }

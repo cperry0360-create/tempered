@@ -39,28 +39,19 @@
       await tempered.app.show('history')
       await settle(140)
       const screen = q('.screen--progress')
-      const recap = q('.progress-recap', screen)
+      check('Progress opens on the R5 overview', Boolean(q('.progress-r5__weekly', screen)))
+      check('Progress leads with Weekly sets', q('.progress-r5__weekly .progress-r5__card-title', screen)?.textContent === 'Weekly sets')
+      check('Overview includes Recent PRs', qa('.progress-r5__card-title', screen).some((node) => node.textContent === 'Recent PRs'))
+      check('Overview includes Trends', qa('.progress-r5__card-title', screen).some((node) => node.textContent === 'Trends'))
+      check('AI handoff moved to Progress', q('.progress-r5__report', screen)?.textContent === 'Copy progress report for ChatGPT')
+      check('Progress navigation uses approved labels',
+        qa('.progress-r5__segments [data-view]', screen).map((node) => node.textContent).join('|') === 'Overview|Lifts|Habits|Log')
+      const rangeSelect = q('.progress-r5__range select', screen)
+      check('Range control offers 7D, 30D and 90D',
+        qa('option', rangeSelect).map((node) => node.textContent).join('|') === '7D|30D|90D')
+      check('Range control is a real thumb target', rangeSelect?.getBoundingClientRect().height >= 44,
+        String(Math.round(rangeSelect?.getBoundingClientRect().height ?? 0)))
 
-      check('Progress opens on a dedicated recap surface', Boolean(recap))
-      check('Recap leads with the selected range and honest coverage',
-        /30-DAY VIEW/.test(recap?.textContent ?? '') && /1 DAY OF DATA/.test(recap?.textContent ?? ''),
-        recap?.textContent)
-      check('Recap makes training days the primary headline', /1 training day/.test(q('.progress-recap__headline', recap)?.textContent ?? ''))
-      check('Recap surfaces working sets and training volume together',
-        /1 working sets/.test(recap?.textContent ?? '') && /200 lb nominal training volume/.test(recap?.textContent ?? ''),
-        recap?.textContent)
-
-      const labels = qa('.progress-recap__stats .progress-metric__label', recap).map((node) => node.textContent.toLowerCase())
-      check('Recap has four useful at-a-glance stats', labels.length === 4, labels.join(' | '))
-      check('Recap includes sessions, steps, sleep and weight',
-        ['sessions', 'avg steps', 'avg sleep', 'latest weight'].every((label) => labels.includes(label)), labels.join(' | '))
-      check('Recap compares the current period with the prior period', qa('.progress-recap__compare span', recap).length === 2)
-      check('Progress navigation calls the first view RECAP', q('[data-view="overview"]')?.textContent === 'RECAP')
-
-      const rangeButtons = qa('.progress-range__button')
-      check('all range controls are real thumb targets',
-        rangeButtons.every((button) => button.getBoundingClientRect().height >= 44),
-        rangeButtons.map((button) => `${button.textContent}:${Math.round(button.getBoundingClientRect().height)}`).join(', '))
       check('the redesigned recap does not create horizontal scrolling',
         document.documentElement.scrollWidth <= document.documentElement.clientWidth,
         `${document.documentElement.scrollWidth}/${document.documentElement.clientWidth}`)

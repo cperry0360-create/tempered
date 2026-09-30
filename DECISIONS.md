@@ -1,3 +1,64 @@
+## 2026-09-30 — R3.1 preservation audit result
+
+Audit command scope: `git diff d9850f5 HEAD -- src/ui/screens/`, interpreted under
+Redesign V1 section 0.1. The following pre-redesign features were removed or materially
+reduced by R2/R3/R4 and were not specifically authorized for removal:
+
+- **Restored — Active workout prescriptions:** progression values now remain real input values
+  from `prepared.proposal.sets`; Previous remains a separate copy action. One check tap logs the
+  displayed prescription.
+- **Restored — Active workout coaching:** `entry.proposal.reason` is the first-choice coaching
+  line; slot cue/setup is fallback only.
+- **Restored — Active workout art:** every exercise with `exercise.art` gets the 56px thumbnail;
+  tapping it opens the full reference image panel.
+- **Restored — Active workout Best:** one-line Best load × reps · date sits under the exercise
+  header when a record exists.
+- **Restored — Active workout plates:** the next unlogged barbell set gets a compact per-side line
+  directly beneath its 52px row, driven by the same solver, bar weight, and available-plate state.
+- **Kept — Active workout menu/actions:** History, Swap, Method, Plate settings, cable/machine
+  settings, Notes, Rest timer, Minimize, Move up/down, and Remove remain in the ⋯ path. Add
+  movement, set types, swipe removal, add-set, undo, finish confirmation, draft/resume,
+  wake-lock, deload, and canonical settlement remain in their R3 locations.
+- **Restored — Today date navigation:** moved to Today → Day details. Past and future days remain
+  viewable; future dates remain non-loggable.
+- **Restored — Today planner:** create, complete/reopen, edit title/notes/due date/type, rollover
+  metadata, and delete live in Today → Day details.
+- **Restored — Today individual program exercise logging:** weekly exercise/frequency aggregation
+  and one-exercise slot logging live in Today → Day details → Program exercises; the full-session
+  start remains the main Today card.
+- **Restored — Today daily recap:** training minutes, working sets, exercise/session counts, and
+  the lifestyle recap host live in Today → Day details.
+- **Restored — Today earned-XP feedback:** a compact line appears inside Daily log after a
+  canonical log awards XP.
+- **Kept — Today habit behavior:** mark/numeric/additive logging, configurable quick-add, sleep
+  decimal shortcuts, guided Mobility flows/timer, completed-row ordering, extra logging, Fuel
+  handoff, Readiness import/info, companion, settings, and session start remain in the R2 layout.
+- **Kept — Today first-week guidance:** the next-session card keeps a one-line guidance footnote
+  during week 1 rather than restoring the old extra card.
+- **Restored — Train hard-set guide:** moved into Program details so weekly muscle-group set
+  targets remain inspectable without restoring the removed weekly slot bars.
+- **Restored — Train exercise-library PR:** PR load × reps is again shown beside last-worked
+  context in Exercise library.
+- **Kept — Train program/routines/library/rhythm:** program note and deload guidance live in
+  Program details; next-session guidance, program-day starts, routine detail/start, searchable
+  ad-hoc Exercise library, and the full historical Training rhythm detail remain available.
+- **Specified removals left removed:** Train weekly slot bars, Workout control center, stat tiles,
+  Train AI button, duplicated Active Program block; Fuel Recovery/health card, companion content,
+  Open Today, No meals yet, eyebrow/subtitle; Today duplicated Active Program, old tile/grid
+  presentations, control center, standalone Weekly goals, circular recovery import, and Today AI.
+- **Kept — Fuel working features:** calorie target/ring, protein and macro totals, meal-journal
+  launch, Recent one-tap nutrition suggestions, water target and +8/+12/+25 logging, and
+  fuel-updated refresh remain in the R4 layout.
+
+**Fail-first evidence:** commit `7fc7584` added `test/browser/session-r31.html` before the
+implementation. Hosted Chromium reported 8 failures: prescribed inputs were placeholders,
+one tap logged last-session values, and art/Best/plate evidence was absent. The progression
+engine's actual RDL proposal for the seeded 125 × 12 history was 135 × 8, so the passing test
+asserts the engine-produced prescription and separately rejects 125 × 12 rather than hard-coding
+the specification's illustrative 130 × 8.
+
+**Needs Cory:** none. All restored placements follow section 0.1 rule 3.
+
 ## 2026-09-30 — R3.1 pre-redesign feature inventory (baseline d9850f5)
 
 Section 0.1 makes `d9850f5` the preservation baseline. This inventory covers the working

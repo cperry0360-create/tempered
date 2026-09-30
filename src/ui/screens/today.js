@@ -632,6 +632,9 @@ export function createTodayScreen({
     return el('section.today-card.today-session-card', { dataset: { section: 'next-session' } }, [
       el('h2', { text: name }),
       el('p', { text: `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(todayProgram.day)} min` }),
+      week === 1 && el('p.today-session-card__guidance', {
+        text: 'Start when you have a useful window. Record what happened; the plan can meet you where you are.',
+      }),
       el('button.today-button.today-button--primary', {
         type: 'button', dataset: { startday: todayProgram.day.id },
         onclick: () => onStart({ programDay: remainingProgramDay(weekProgram, todayProgram.day) }),
@@ -930,7 +933,7 @@ export function createTodayScreen({
       el('div.today-calendar__days', {}, dates.map((dateKey) => {
         const date = parseDate(dateKey)
         return el('button.today-calendar__day', {
-          type: 'button', disabled: dateKey > realToday,
+          type: 'button',
           dataset: { selected: String(dateKey === selectedDate), today: String(dateKey === realToday) },
           onclick: () => selectDate(dateKey),
         }, [
@@ -1031,6 +1034,7 @@ export function createTodayScreen({
       el('section.today-card', {}, [
         el('h2', { text: 'Daily recap' }),
         el('p', { text: `${trainingStats.minutes} training min · ${trainingStats.workingSets} working sets · ${trainingStats.exercises} exercises · ${trainingStats.sessions} sessions` }),
+        el('div.today-recap__lifestyle', { dataset: { lifestyleRecapHost: 'true' } }),
       ]),
       plannerDetail(),
     ])

@@ -158,6 +158,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     return el('section.train-r4__card.train-r4__next', { dataset: { section: 'next-session' } }, [
       el('h2', { text: todayDay.name }),
       el('p', { text: `${todayDay.exercises?.length ?? 0} exercises · ~${estimateSessionMinutes(todayDay)} min` }),
+      active.week === 1 && el('p', { text: 'Start when you have a useful window. Record what happened; repeatable work is enough.' }),
       el('button.train-r4__secondary', {
         type: 'button', dataset: { startday: todayDay.id },
         onclick: () => onStart({ programDay: todayDay }),

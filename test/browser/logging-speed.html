@@ -166,7 +166,7 @@
         check('the common case is far inside 90s', warmTaps * SECONDS_PER_TAP < 90,
           `${warmTaps * SECONDS_PER_TAP}s at ${SECONDS_PER_TAP}s/tap`)
         tap(q('[data-action="done"]'), 'DONE')
-        await waitFor('[data-start="lower"]')
+        await waitFor('[data-routine="lower"]')
 
         // ---------------------------------------------------------------
         // TARGET 2 — an ad-hoc set of curls, under 20 seconds from app open

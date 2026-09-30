@@ -149,7 +149,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
       ...heading('Step 1 of 7', 'Build strength, keep your life', 'Tempered brings training, nutrition, sleep, and recovery into one clear plan.'),
       el('section.setup__card', {}, [
         el('p.setup__copy', { text: 'Follow a plan, record what happened, and build progress through repeatable work and recovery.' }),
-        el('p.setup__copy', { text: 'Your data stays on this device, and these choices can change later without resetting history.' }),
+        el('p.setup__copy', { text: 'Your data stays on this device, choices can change later, and there is no downside to rest or recovery.' }),
         el('label.setup__label', { text: 'Name (optional)' }), name,
         el('span.setup__label', { text: 'Units' }),
         el('div.setup__choices', {}, [unitButton('imperial', 'lb / mi'), unitButton('metric', 'kg / km')]),

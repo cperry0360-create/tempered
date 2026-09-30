@@ -146,10 +146,13 @@
       thumbSized(q('.fuel-r4__primary'), 'Fuel meal action')
 
       await tab('history', '.screen--history')
-      const range = q('.progress-range__button')
+      const range = q('.progress-range__select')
       thumbSized(range, 'Progress range')
-      await tapCenter(range, 'Progress range')
-      check('Progress keeps a selected range', qa('.progress-range__button[data-active="true"]').length === 1)
+      check('Progress starts with the mockup range selected', range?.value === '30', range?.value)
+      range.value = '7'
+      range.dispatchEvent(new Event('change', { bubbles: true }))
+      await settle()
+      check('Progress keeps a selected range', q('.progress-range__select')?.value === '7')
 
       await tab('today', '.screen--today')
       const gear = q('.today-settings')

@@ -348,7 +348,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
       maintenance && el('section.card', { dataset: { section: 'reset' } }, [
         el('h2.block__title', { text: 'Reset all data' }),
         el('p.block__hint', {
-          text: 'This permanently erases sessions, sets, daily logs, and setup data on this device.',
+          text: 'This cannot be undone; it erases sessions, sets, daily logs, and setup data on this device.',
         }),
         el('p.block__hint', { text: 'Save a backup from Your data before erasing this device.' }),
         el('label.reset__confirm', {}, [

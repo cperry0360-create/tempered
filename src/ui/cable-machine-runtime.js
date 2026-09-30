@@ -531,7 +531,7 @@ export async function installCableMachineRuntime(context) {
       note.className = 'cable-mode-note'
       note.dataset.cableMode = 'peg'
       const stacks = cableStacksForExercise(exerciseId, machine)
-      note.textContent = `${machine.name} peg mode · ${stacks === 2 ? 'both stacks' : 'one stack'} · nominal`
+      note.textContent = `Inspire cable peg mode · ${stacks === 2 ? 'both stacks' : 'one stack'} · nominal`
       const anchor = card.querySelector('.exercise__proposal') ?? card.querySelector('.exercise__head')
       anchor?.insertAdjacentElement('afterend', note)
     }
@@ -569,7 +569,7 @@ export async function installCableMachineRuntime(context) {
       stacks: cableStacksForExercise('cable_fly', machine),
     })
     const next = load
-      ? `Peg 6 gives ${fmt(load.perHandle)} lb per handle and ${fmt(load.total)} lb total for cable fly; each stack is 165 lb with a 2:1 pulley ratio.`
+      ? `Peg 6 gives ${fmt(load.perHandle)} lb per handle and ${fmt(load.total)} lb total nominal resistance for Cable Fly; each stack is 165 lb with a 2:1 pulley ratio.`
       : 'Adjust the machine values to preview peg 6.'
     if (example.textContent !== next) example.textContent = next
   }
@@ -652,7 +652,7 @@ export async function installCableMachineRuntime(context) {
 
     const hint = document.createElement('p')
     hint.className = 'block__hint'
-    hint.textContent = 'This preset stores nominal resistance for progression and the physical selector number in history.'
+    hint.textContent = 'The Inspire cable preset stores nominal resistance for progression and the physical selector number in history.'
 
     const toggleRow = document.createElement('div')
     toggleRow.className = 'cable-settings__toggle'

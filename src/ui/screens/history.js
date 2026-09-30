@@ -304,6 +304,10 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ])
   }
 
+  function prDate(key) {
+    return new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }).format(parseDate(key))
+  }
+
   function recentPrs() {
     const start = selectedDates()[0]
     return records.map((record) => {
@@ -313,21 +317,21 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       if (weight?.date >= start && weight.date <= clock.today()) {
         return {
           date: weight.date,
-          text: name + ' · ' + lbs(weight.weight) + ' × ' + weight.reps + ' · ' + shortDate(weight.date),
+          text: name + ' · ' + lbs(weight.weight) + ' × ' + weight.reps + ' · ' + prDate(weight.date),
         }
       }
       const e1rm = record.bestE1RM
       if (e1rm?.date >= start && e1rm.date <= clock.today()) {
         return {
           date: e1rm.date,
-          text: name + ' · estimated one rep max ' + lbs(e1rm.value) + ' · ' + shortDate(e1rm.date),
+          text: name + ' · estimated one rep max ' + lbs(e1rm.value) + ' · ' + prDate(e1rm.date),
         }
       }
       const bestVolume = record.bestVolume
       if (bestVolume?.date >= start && bestVolume.date <= clock.today()) {
         return {
           date: bestVolume.date,
-          text: name + ' · ' + volume(bestVolume.volume) + ' lb volume · ' + shortDate(bestVolume.date),
+          text: name + ' · ' + volume(bestVolume.volume) + ' lb volume · ' + prDate(bestVolume.date),
         }
       }
       return null
@@ -348,12 +352,14 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const samples = Number.isFinite(sampleCount) ? sampleCount : values.filter(Number.isFinite).length
     return el('div.progress-trend', {}, [
       el('div.progress-trend__copy', {}, [
-        el('span.progress-trend__label', { text: label }),
+        el('div.progress-trend__meta', {}, [
+          el('span.progress-trend__label', { text: label }),
+          el('span.progress-trend__samples', { text: samples + ' sample' + (samples === 1 ? '' : 's') }),
+        ]),
         el('div.progress-trend__values', {}, [
           el('strong.progress-trend__value', { text: value }),
           delta && el('span.progress-trend__delta', { text: delta }),
         ]),
-        el('span.progress-trend__samples', { text: samples + ' sample' + (samples === 1 ? '' : 's') }),
       ]),
       sparkline(values, 112, 34),
     ])
@@ -750,10 +756,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         el('label.progress-range', {}, [
           el('span.progress-range__label', { text: 'Range' }),
           el('select.progress-range__select', {
-            value: String(range),
             'aria-label': 'Progress range',
             onchange: (event) => { range = Number(event.target.value); selectedLiftId = null; selectedSessionId = null; render() },
-          }, RANGES.map((days) => el('option', { value: String(days) }, [days + 'D']))),
+          }, RANGES.map((days) => el('option', { value: String(days), selected: days === range }, [days + 'D']))),
         ]),
       ]),
       el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress sections' }, [

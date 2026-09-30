@@ -3,7 +3,7 @@
 - Progress is now a fixed 7D / 30D / 90D recap with Overview, Lifts, Habits, and Log views. Overview shows eight weeks of working sets, recent PRs, sample-aware weight/steps/sleep trends, Recovery only when samples exist, and a copyable ChatGPT report; exercise and log details retain their existing actions.
 - The remaining Settings, Setup, Program Builder, Summary, and sheet surfaces have been swept to token colors, sentence case, and one-sentence helper copy; the Health setup and import screens follow the same rules while preserving the machine-readable import format.
 - Retired configurable Progress dashboard code and its test page were removed, and stale background-art precache entries were cleared.
-- Release candidate: 0.42.0 (57). Visual acceptance uses CI release artifacts: 22 screens at 390×844 and 430×932 (44 captures), with Progress compared to mockup screen 4; artifact review is pending.
+- Release candidate: 0.42.1 (58). CI review found that the native range initially selected 7D, several browser contracts still targeted the retired dashboard, and the 430px workout summary clipped two measurements. R5.1 selects 30D, updates the contracts, and fixes the summary grid. Release evidence covers 22 screens at 390×844 and 430×932 (44 captures); final artifact review is pending.
 
 ## 2026-09-30 — Redesign V1 R3.1 session feature restore
 

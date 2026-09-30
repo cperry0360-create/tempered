@@ -98,7 +98,7 @@
         && q('[data-entry="nutrition_fat"]')?.value === '24'
         && q('[data-entry="nutrition_fiber"]')?.value === '9')
       check('Paste waits for review instead of instantly logging', dayBeforeConfirm.calories === 100 && qa('[data-nutrition-entry]').length === 0, dayBeforeConfirm.calories)
-      check('Paste explicitly asks for review before Add Meal', /review.*add meal/i.test(q('[data-nutrition-status]')?.textContent ?? ''))
+      check('Paste explicitly asks for review before Add Meal', /review.*add(?:ing)? the meal/i.test(q('[data-nutrition-status]')?.textContent ?? ''))
 
       q('[data-action="nutrition-log"]')?.click()
       await settle(260)

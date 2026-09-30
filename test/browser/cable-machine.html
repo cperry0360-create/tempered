@@ -68,10 +68,10 @@
       const card = await waitFor('.screen--session [data-exercise="cable_fly"]')
       await settle(160)
 
-      check('Cable Fly weight column becomes PEG', q('.setrow--head [data-col="weight"]', card)?.textContent === 'PEG',
+      check('Cable Fly weight column becomes PEG', q('.setrow--head [data-col="weight"]', card)?.textContent === 'Peg',
         q('.setrow--head [data-col="weight"]', card)?.textContent)
-      check('session identifies Inspire FTX / Centr 2 peg mode', /FTX \/ CENTR 2 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
-      check('session labels the calculation nominal', /NOMINAL/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+      check('session identifies Inspire FTX / Centr 2 peg mode', /Inspire cable peg mode/.test(q('.cable-mode-note', card)?.textContent ?? ''))
+      check('session labels the calculation nominal', /nominal/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('migrated Previous history shows peg rather than pretending it was pounds',
         /P7/.test(q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent ?? ''), q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent)
       check('R3 removes the legacy header PR pill', q('[data-kind="pr"]', card) === null)
@@ -111,12 +111,12 @@
       await tempered.app.show('settings')
       const equipment = await waitFor('[data-section="cable-machine"]')
       await settle(100)
-      check('Settings exposes the Inspire FTX / Centr 2 profile', /Inspire FTX \/ Centr 2 preset/.test(equipment.textContent ?? ''))
+      check('Settings exposes the Inspire FTX / Centr 2 profile', /Inspire cable preset/.test(equipment.textContent ?? ''))
       check('Settings defaults to 15 selector positions',
         qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Selector positions' && input.value === '15'))
       check('Settings describes the selector/head assembly instead of claiming a 15 lb top plate',
         qa('.cable-settings__number', equipment).some((input) => input.getAttribute('aria-label') === 'Selector/head assembly (lb)' && input.value === '15'))
-      check('Settings preview explicitly calls the result nominal', /Nominal example/.test(q('.cable-settings__example', equipment)?.textContent ?? ''))
+      check('Settings preview explicitly calls the result nominal', /nominal resistance/.test(q('.cable-settings__example', equipment)?.textContent ?? ''))
 
       const pushdown = q('[data-cable-exercise="tricep_push"]', equipment)
       check('other cable exercises are configurable from the same equipment profile', Boolean(pushdown))
@@ -144,7 +144,7 @@
       await settle(180)
       inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
       check('switching the press to Cable activates configured peg entry',
-        inclineCard?.dataset.method === 'Cable' && q('.setrow--head [data-col="weight"]', inclineCard)?.textContent === 'PEG')
+        inclineCard?.dataset.method === 'Cable' && q('.setrow--head [data-col="weight"]', inclineCard)?.textContent === 'Peg')
 
       const inclineWeight = q('.setrow__num[data-field="weight"]', inclineCard)
       const inclineReps = q('.setrow__num[data-field="reps"]', inclineCard)
@@ -165,7 +165,7 @@
       await tempered.app.show('settings')
       const refreshedEquipment = await waitFor('[data-section="cable-machine"]')
 
-      const addon = [...refreshedEquipment.querySelectorAll('button')].find((button) => button.textContent === 'NO')
+      const addon = [...refreshedEquipment.querySelectorAll('button')].find((button) => button.textContent === 'No')
       addon?.click()
       await settle(120)
       check('5 lb add-on toggle updates the Peg 6 preview to 80 lb total',

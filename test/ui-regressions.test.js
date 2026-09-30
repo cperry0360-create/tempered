@@ -205,11 +205,14 @@ test('REGRESSION: R4 keeps Fuel first-class and moves training rhythm behind its
   assert.match(style, /\.train-r4__rhythm-scroll\s*\{[\s\S]*overflow-x:\s*auto/)
 })
 
-test('REGRESSION: R2 Today removes Daily Recap and uses bounded Health import instead', () => {
+test('REGRESSION: R3.1 preserves Today day details while Health import stays bounded', () => {
   const today = read('src/ui/screens/today.js')
   const paste = read('src/ui/health-paste-runtime.js')
   const pasteCss = read('src/pivot.css')
-  assert.doesNotMatch(today, /Daily recap|today-recap|data-daily-recap/)
+  assert.match(today, /Day details/)
+  assert.match(today, /Daily recap/)
+  assert.match(today, /planner\.list/)
+  assert.match(today, /weeklyExerciseGroups/)
   assert.match(today, /tempered:open-health-import/)
   assert.match(paste, /health-paste-overlay/)
   assert.match(pasteCss, /\.health-paste-overlay[\s\S]*z-index:\s*1500/)

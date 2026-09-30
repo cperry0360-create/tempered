@@ -281,7 +281,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const values = [
       ['Sleep', Number.isFinite(today?.sleepHours) ? `${today.sleepHours.toFixed(1)} h` : null],
       ['Resting HR', Number.isFinite(today?.healthMetrics?.restingHr) ? `${Math.round(today.healthMetrics.restingHr)} bpm` : null],
-      ['HRV', Number.isFinite(today?.healthMetrics?.hrvMs) ? `${Math.round(today.healthMetrics.hrvMs)} ms` : null],
+      ['Hrv', Number.isFinite(today?.healthMetrics?.hrvMs) ? `${Math.round(today.healthMetrics.hrvMs)} ms` : null],
       ['Respiration', Number.isFinite(today?.healthMetrics?.respRate) ? `${today.healthMetrics.respRate.toFixed(1)} / min` : null],
     ].filter(([, value]) => value !== null)
     if (!values.length) return null

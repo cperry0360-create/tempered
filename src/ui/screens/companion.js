@@ -444,7 +444,7 @@ export function createCompanionScreen({ storage, daily, clock, overlayHost, onTo
       el('section.fuel-recovery', { dataset: { readiness: m.readiness.label.toLowerCase().replaceAll(' ', '-') } }, [
         el('div.fuel-recovery__head', {}, [el('div', {}, [el('span', { text: 'Recovery' }), el('h2', { text: m.readiness.score === null ? 'Not enough data' : `${m.readiness.score} · ${m.readiness.label}` })]), el('small', { text: m.readiness.action })]),
         el('div.fuel-recovery__grid', {}, [
-          healthMetric('Resting HR', health.restingHr, ' bpm'), healthMetric('HRV', health.hrvMs, ' ms'), healthMetric('Respiration', health.respiratoryRate, '/min'), healthMetric('SPO₂', health.spo2, '%'),
+          healthMetric('Resting HR', health.restingHr, ' bpm'), healthMetric('Hrv', health.hrvMs, ' ms'), healthMetric('Respiration', health.respiratoryRate, '/min'), healthMetric('SPO₂', health.spo2, '%'),
         ]),
       ]),
     ])

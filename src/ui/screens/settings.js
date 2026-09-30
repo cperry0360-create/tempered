@@ -300,7 +300,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
       el('section.card', { dataset: { section: 'credits' } }, [
         el('h2.block__title', { text: 'Credits' }),
         el('p.block__hint', {
-          text: 'Exercise images come from free-exercise-db and upstream Everkinetic material under CC BY-SA 4.0.',
+          text: 'Exercise images come from free-exercise-db and upstream Everkinetic material under CC By-Sa 4.0.',
         }),
         el('p.block__hint', {
           text: 'Third-party exercise art keeps its separate licence.',
@@ -312,7 +312,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
           }),
           el('a', {
             href: 'https://creativecommons.org/licenses/by-sa/4.0/',
-            target: '_blank', rel: 'noopener noreferrer', text: 'CC BY-SA 4.0',
+            target: '_blank', rel: 'noopener noreferrer', text: 'CC By-Sa 4.0',
           }),
         ]),
       ]),

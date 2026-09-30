@@ -649,3 +649,12 @@
     grid-template-columns: repeat(10, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 400px) {
+  .progress-weekly__bars {
+    height: 104px;
+  }
+  .progress-prs__row {
+    padding: 8px;
+  }
+}

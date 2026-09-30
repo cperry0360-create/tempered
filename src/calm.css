@@ -1526,3 +1526,12 @@ button.today-item:disabled {
 .session-restbar__actions button {
   min-height: 44px;
 }
+
+
+/* R3 touch target: leave subpixel headroom above the 44px minimum. */
+.exercise--r3 .exercise-menu__trigger {
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
+  min-height: 46px;
+}

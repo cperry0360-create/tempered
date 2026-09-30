@@ -165,54 +165,23 @@
 
     async function seedSessionReference(storage) {
       await seedTodayReference(storage)
-      const profile = await storage.get('profile', 'profile')
-      await storage.put('profile', {
-        ...profile,
-        cableMachine: {
-          ...(profile?.cableMachine ?? {}),
-          exerciseSettings: {
-            ...(profile?.cableMachine?.exerciseSettings ?? {}),
-            lat_pulldown: { enabled: false, stacks: 1 },
-            seated_row_close: { enabled: false, stacks: 1 },
-          },
-        },
-      })
       await storage.put('sessions', {
-        id: 'visual-pull-history',
-        date: '2026-09-22',
-        startedAt: '2026-09-22T09:00:00.000Z',
-        endedAt: '2026-09-22T09:45:00.000Z',
+        id: 'visual-rdl-history',
+        date: '2026-09-17',
+        startedAt: '2026-09-17T09:00:00.000Z',
+        endedAt: '2026-09-17T09:40:00.000Z',
       })
-      for (const [index, reps] of [6, 6, 6, 5].entries()) {
+      for (let index = 0; index < 3; index += 1) {
         await storage.put('setLogs', {
-          id: `visual-pull-history-${index}`,
-          sessionId: 'visual-pull-history',
-          exerciseId: 'lat_pulldown',
-          method: 'Cable',
+          id: `visual-rdl-history-${index}`,
+          sessionId: 'visual-rdl-history',
+          exerciseId: 'rdl',
+          method: 'Barbell',
           setIndex: index,
-          weight: 115,
-          reps,
+          weight: 125,
+          reps: 12,
           isWarmup: false,
-          completedAt: `2026-09-22T09:${String(5 + index * 3).padStart(2, '0')}:00.000Z`,
-        })
-      }
-      await storage.put('sessions', {
-        id: 'visual-row-history',
-        date: '2026-09-22',
-        startedAt: '2026-09-22T09:50:00.000Z',
-        endedAt: '2026-09-22T10:20:00.000Z',
-      })
-      for (const [index, reps] of [10, 10, 9, 8].entries()) {
-        await storage.put('setLogs', {
-          id: `visual-row-history-${index}`,
-          sessionId: 'visual-row-history',
-          exerciseId: 'seated_row_close',
-          method: 'Cable',
-          setIndex: index,
-          weight: 130,
-          reps,
-          isWarmup: false,
-          completedAt: `2026-09-22T09:${String(52 + index).padStart(2, '0')}:00.000Z`,
+          completedAt: `2026-09-17T09:${String(5 + index).padStart(2, '0')}:00.000Z`,
         })
       }
     }
@@ -220,30 +189,21 @@
     async function prepareSessionReference(tempered) {
       await tempered.app.show('train')
       await settle()
-      const pull = mount.querySelector('[data-programday="tuesday"]')
-      if (!pull) throw new Error('Pull A program day missing')
-      pull.click()
+      const library = mount.querySelector('[data-exercise-library="open"]')
+      if (!library) throw new Error('Exercise library entry missing')
+      library.click()
       await settle()
-
-      let rows = [...mount.querySelectorAll('[data-exercise="lat_pulldown"] .setrow:not(.setrow--head)')]
-      if (rows.length < 4) throw new Error('Pull A set rows missing')
-      clock.set(new Date(2026, 8, 29, 9, 22, 50))
-      rows[0].querySelector('[data-field="weight"]').value = '115'
-      rows[0].querySelector('[data-field="reps"]').value = '7'
-      rows[0].querySelector('[data-field="weight"]').dispatchEvent(new Event('input', { bubbles: true }))
-      rows[0].querySelector('[data-field="reps"]').dispatchEvent(new Event('input', { bubbles: true }))
-      rows[0].querySelector('.setrow__check').click()
+      const rdl = mount.querySelector('[data-exercise="rdl"]')
+      if (!rdl) throw new Error('RDL library row missing')
+      rdl.click()
       await settle()
-
-      clock.set(new Date(2026, 8, 29, 9, 23, 1))
-      rows = [...mount.querySelectorAll('[data-exercise="lat_pulldown"] .setrow:not(.setrow--head)')]
-      rows[1].querySelector('[data-field="weight"]').value = '115'
-      rows[1].querySelector('[data-field="reps"]').value = '6'
-      rows[1].querySelector('[data-field="weight"]').dispatchEvent(new Event('input', { bubbles: true }))
-      rows[1].querySelector('[data-field="reps"]').dispatchEvent(new Event('input', { bubbles: true }))
-      rows[1].querySelector('.setrow__check').click()
-      await settle()
-
+      const card = mount.querySelector('[data-exercise="rdl"]')
+      if (!card) throw new Error('RDL session card missing')
+      if (!card.querySelector('.exercise__art .exercise__thumb')) throw new Error('RDL photo missing')
+      if (!card.querySelector('.plates')) throw new Error('RDL plate line missing')
+      const weight = card.querySelector('[data-field="weight"]')
+      const reps = card.querySelector('[data-field="reps"]')
+      if (!weight?.value || !reps?.value) throw new Error('RDL prescription is not prefilled')
       clock.set(new Date(2026, 8, 29, 9, 23, 14))
       await settle()
     }

@@ -83,9 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tempered-mobile-visuals
-          path: |
-            artifacts/release-visuals
-            docs/mockups/redesign-v1.png
+          path: artifacts/release-visuals
           retention-days: 14
 
   ios-native:

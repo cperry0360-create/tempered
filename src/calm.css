@@ -1452,7 +1452,7 @@ button.today-item:disabled {
   justify-self: center;
   border-radius: 50%;
   background: var(--text-3);
-  color: var(--surface-1) !important;
+  color: var(--surface-1);
 }
 
 .setrow__head-check .icon {

@@ -146,7 +146,7 @@ export async function installCableMachineRuntime(context) {
 
   const exerciseMap = await workout.exerciseMap()
   const cableExercises = [...exerciseMap.values()]
-    .filter((exercise) => methodsForExercise(exercise).includes('Cable') && exercise.unit !== 'time')
+    .filter((exercise) => (methodsForExercise(exercise).includes('Cable') || exercise.variant === 'Cable') && exercise.unit !== 'time')
     .sort((a, b) => a.name.localeCompare(b.name))
   const cableExerciseIds = new Set(cableExercises.map((exercise) => exercise.id))
 

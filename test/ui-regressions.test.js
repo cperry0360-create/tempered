@@ -190,18 +190,19 @@ test('REGRESSION: Health import is reached from the R2 Readiness card and redraw
   assert.match(paste, /tempered:health-imported/)
 })
 
-test('REGRESSION: practical surfaces lead and Fuel is a first-class tab', () => {
+test('REGRESSION: R4 keeps Fuel first-class and moves training rhythm behind its row', () => {
   const app = read('src/ui/app.js')
   const fuel = read('src/ui/screens/fuel.js')
   const train = read('src/ui/screens/train.js')
+  const style = read('src/style.css')
   assert.match(app, /id:\s*'fuel',\s*label:\s*'Fuel'/)
   assert.doesNotMatch(app, /id:\s*'companion'/)
   assert.match(app, /createFuelScreen/)
-  assert.match(fuel, /HYDRATION/)
-  assert.match(fuel, /fuel-meals__row/)
-  const style = read('src/style.css')
-  assert.match(train, /training-calendar-scroll/)
-  assert.match(style, /\.training-calendar-scroll\s*\{[\s\S]*overflow-x:\s*auto/)
+  assert.match(fuel, /fuel-r4__energy/)
+  assert.match(fuel, /fuel-r4__water/)
+  assert.match(train, /Training rhythm/)
+  assert.match(train, /train-r4__rhythm-scroll/)
+  assert.match(style, /\.train-r4__rhythm-scroll\s*\{[\s\S]*overflow-x:\s*auto/)
 })
 
 test('REGRESSION: R2 Today removes Daily Recap and uses bounded Health import instead', () => {
@@ -231,20 +232,23 @@ test('REGRESSION: Nutrition supports correcting an earlier date', () => {
   assert.match(css, /\.nutrition-date-picker/)
 })
 
-test('REGRESSION: AI coaching includes the latest workout and confirmed records', () => {
+test('REGRESSION: R4 removes the AI coaching dashboard from Train', () => {
   const train = read('src/ui/screens/train.js')
-  assert.match(train, /LATEST_WORKOUT_BEST_SETS/)
-  assert.match(train, /LATEST_WORKOUT_CONFIRMED_PRS/)
-  assert.match(train, /latestSession/)
-  assert.match(train, /specific next-session progression/)
+  assert.doesNotMatch(train, /AI progress check|LATEST_WORKOUT_BEST_SETS|LATEST_WORKOUT_CONFIRMED_PRS/)
+  assert.doesNotMatch(train, /training-control|WORKOUT CONTROL CENTER|This week at a glance/)
+  assert.match(train, /Program details/)
+  assert.match(train, /Sessions/)
+  assert.match(train, /Routines/)
 })
 
-test('REGRESSION: Fuel exposes practical hydration, meal, and recovery surfaces', () => {
-  const companion = read('src/ui/screens/companion.js')
+test('REGRESSION: R4 Fuel keeps nutrition and hydration but removes recovery', () => {
+  const fuel = read('src/ui/screens/fuel.js')
   const progress = read('src/ui/progress-dashboard-runtime.js')
-  assert.match(companion, /HYDRATION/)
-  assert.match(companion, /fuel-meals__row/)
-  assert.match(companion, /RESTING HR/)
+  assert.match(fuel, /Log a meal/)
+  assert.match(fuel, /Recent/)
+  assert.match(fuel, /Water/)
+  assert.match(fuel, /nutritionSuggestions/)
+  assert.doesNotMatch(fuel, /Recovery|RESTING HR|fuel-recovery|trainingReadiness/)
   assert.match(progress, /calorieQualitySummary/)
   assert.match(progress, /recovery:\s*\{ title:\s*'Recovery signals'/)
 })

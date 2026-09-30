@@ -106,8 +106,8 @@
         check('the tab bar sits flush to the bottom edge', Math.abs(gapBelow) <= 1, `${Math.round(gapBelow)}px below`)
         check('the tab bar spans the viewport width', Math.abs(barBox.left) <= 1 && Math.abs(document.documentElement.clientWidth - barBox.right) <= 1,
           `${Math.round(barBox.left)}px / ${Math.round(document.documentElement.clientWidth - barBox.right)}px`)
-        check('the tab bar reserves safe-area padding',
-          Number.parseFloat(barStyle.paddingBottom) >= 8,
+        check('the tab bar adds no extra padding when the emulated safe-area inset is zero',
+          Number.parseFloat(barStyle.paddingBottom) === 0,
           `padding-bottom: ${barStyle.paddingBottom}`)
         check('the tab bar is solid and unblurred',
           !(barStyle.backdropFilter || barStyle.webkitBackdropFilter || '').includes('blur'),

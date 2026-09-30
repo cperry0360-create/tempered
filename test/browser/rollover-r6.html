@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../../src/polish.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
   <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
 </head>
 <body>
 <div id="app" class="app"></div>
@@ -90,7 +91,7 @@
     const first = rows[0]
     first?.click()
     await settle(220)
-    const exercises = qa('.screen--session [data-exercise]')
+    const exercises = qa('.screen--session .exercise[data-exercise]')
     check('opening a rollover movement creates a one-movement slot session',
       Boolean(q('.screen--session')) && exercises.length === 1,
       `session=${Boolean(q('.screen--session'))} exercises=${exercises.length}`)

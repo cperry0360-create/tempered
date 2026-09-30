@@ -981,3 +981,18 @@
 .fuel-r4__water {
   padding: 12px;
 }
+
+
+/* Final R4 compact-height pass from captured mockup comparison. */
+.fuel-r4__recent {
+  padding: 10px;
+}
+
+.fuel-r4__recent-row {
+  min-height: 40px;
+}
+
+.fuel-r4__water {
+  gap: 6px;
+  padding: 10px;
+}

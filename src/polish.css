@@ -100,6 +100,7 @@ body { overflow: hidden; }
 .dayrail__nav,
 .planner__add,
 .today-planner__add {
+  min-width: 44px;
   min-height: 44px;
 }
 
@@ -113,8 +114,6 @@ body { overflow: hidden; }
 
 /* The small cadence pills are used dozens of times in Settings, so an extra
    four pixels of height removes a lot of missed taps without changing layout. */
-.setup__cadence { min-height: 44px !important; }
-.setup__weeklyselect { min-height: 44px !important; }
 .progress-range__button { min-width: 44px; }
 
 /* Screen changes get one short spatial cue. Existing completion motion remains

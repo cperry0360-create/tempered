@@ -294,11 +294,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const match = raw.match(/^(.*?)\s*\((.*?)\)\s*$/)
     let base = match ? match[1].trim() : raw.trim()
     let suffix = match ? match[2].trim() : ''
-    const equipment = ['barbell', 'dumbbell', 'cable', 'machine']
-    for (const word of equipment) {
-      const pattern = new RegExp(`\\b${word}\\b`, 'ig')
-      if (suffix && pattern.test(base) && pattern.test(suffix)) suffix = suffix.replace(pattern, '').replace(/^[ ·-]+|[ ·-]+$/g, '')
+    if (suffix && exercise?.variant) {
+      suffix = suffix.replace(new RegExp(`\\b${exercise.variant}\\b[, ]*`, 'i'), '')
     }
+    suffix = suffix.replace(/\bgrip\b/ig, '').replace(/\s*,\s*/g, ' · ').replace(/^[ ·-]+|[ ·-]+$/g, '').trim()
     return suffix ? `${base} · ${suffix}` : base
   }
 
@@ -458,7 +457,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           openPanel = openPanel === setTypeKey(entry, index) ? null : setTypeKey(entry, index)
           render()
         },
-        text: set.setType === 'warmup' ? 'W' : set.setType === 'drop' ? 'D' : set.setType === 'failure' ? 'F' : String(index + 1),
+        text: set.setType === 'warmup' ? 'W' : set.setType === 'drop' ? 'D' : set.setType === 'failset' ? 'F' : String(index + 1),
       }),
       previousButton,
       ...inputs,
@@ -467,7 +466,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
     if (openPanel === setTypeKey(entry, index)) {
       row.append(el('div.settype', {}, [
-        ['working', 'Working'], ['warmup', 'Warm-up (W)'], ['drop', 'Drop (D)'], ['failure', 'Failure (F)'],
+        ['working', 'Working'], ['warmup', 'Warm-up (W)'], ['drop', 'Drop (D)'], ['failset', 'Failure (F)'],
       ].map(([value, label]) => el('button.settype__option', {
         type: 'button',
         dataset: { selected: String((set.setType ?? 'working') === value) },
@@ -667,7 +666,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         methodsForExercise(entry.exercise).length > 1
           && item(`Method · ${activeMethod(entry)}`, () => { openPanel = panelKey(entry, 'method'); render() }),
         isBarbell(entry) && item('Plate settings', () => { openPanel = panelKey(entry, 'equipment'); render() }),
-        item('Minimize workout', () => { persistDraft(); onMinimize?.() }),
+        el('button.exercise-menu__item', {
+          type: 'button',
+          dataset: { action: 'minimize-workout' },
+          onclick: () => { persistDraft(); onMinimize?.() },
+        }, ['Minimize workout']),
         item('Move up', () => move(position, -1), { disabled: position === 0 }),
         item('Move down', () => move(position, 1), { disabled: position === plan.length - 1 }),
         item('Remove exercise', () => removeExercise(entry), { disabled: entry.sets.some((set) => set.logged) }),
@@ -862,6 +865,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         ]),
         el('button.sessionbar__finish', {
           type: 'button',
+          dataset: { action: 'finish' },
           onclick: () => { confirmingFinish = true; render() },
         }, ['Finish']),
       ]),

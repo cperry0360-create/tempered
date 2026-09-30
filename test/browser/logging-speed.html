@@ -62,11 +62,11 @@
         await waitFor('.setrow__check')
         check('active workouts show an elapsed timer', /^\d+:\d{2}$/.test(q('[data-session-elapsed]')?.textContent ?? ''), q('[data-session-elapsed]')?.textContent ?? 'missing')
 
-        // docs/05: last performance and PR visible BEFORE the first set.
-        check('last performance is shown before the first set',
-          qa('.pill[data-kind="last"]').length > 0)
-        check('PR is shown before the first set',
-          qa('.pill[data-kind="pr"]').length > 0)
+        // R3 moves history into the Previous column and removes the legacy pills.
+        check('Previous is visible before the first set',
+          [...qa('.setrow--head .setrow__record')].some((node) => /Previous/i.test(node.textContent ?? '')))
+        check('legacy LAST and PR header pills are removed',
+          qa('.pill[data-kind="last"], .pill[data-kind="pr"]').length === 0)
         // A first-ever session can only prefill what the routine prescribes;
         // the app cannot know a working weight it has never been told.
         const prescribed = qa('input.setrow__num[data-field="weight"]').filter((i) => i.value !== '')
@@ -94,7 +94,7 @@
           // set still tappable while it does?
           // A live counter is one of the three things acid marks, so a running
           // rest timer is exactly the element carrying data-acid="value".
-          const countdown = document.querySelector('.actionpill__value[data-acid="value"]')
+          const countdown = document.querySelector('[data-rest-remaining]')
           if (countdown) {
             restWasRunning = true
             const remaining = qa('.setrow__check').filter((b) => !b.disabled)
@@ -132,14 +132,27 @@
         tap(await waitFor('[data-start="lower"]'), 'START lower again')
         await waitFor('.setrow__check')
 
-        const empties = qa('input.setrow__num').filter((input) => input.value === '')
-        check('repeating a session arrives fully prefilled', empties.length === 0,
-          `${empties.length} fields still empty`)
+        const placeholderFields = qa('input.setrow__num')
+          .filter((input) => input.value === '' && input.placeholder !== '')
+        check('repeating a session exposes prior values as placeholders',
+          placeholderFields.length > 0,
+          `${placeholderFields.length} placeholder-backed fields`)
 
         const warmRows = qa('.setrow__check').length
-        for (const button of qa('.setrow__check')) {
-          if (!button.disabled) { tap(button, 'log set'); await settle() }
+        let placeholderQuickLogWorked = false
+        for (const [index, button] of qa('.setrow__check').entries()) {
+          if (button.disabled) continue
+          const row = button.closest('.setrow')
+          const weight = row.querySelector('[data-field="weight"]')
+          const expected = weight?.value || weight?.placeholder || ''
+          tap(button, 'log set')
+          await settle()
+          if (index === 0 && expected) {
+            const loggedWeight = qa('.setrow:not(.setrow--head)')[0]?.querySelector('[data-field="weight"]')?.value
+            placeholderQuickLogWorked = loggedWeight === expected
+          }
         }
+        check('one tap on check logs a set using its placeholder values', placeholderQuickLogWorked)
         tap(await waitFor('[data-action="finish"]'), 'FINISH')
         tap(await waitFor('[data-action="confirm-finish"]'), 'confirm FINISH')
         await waitFor('[data-action="done"]')
@@ -164,8 +177,8 @@
         tap(q('[data-exercise="curl_db"]'), 'open curls ad-hoc')
         const firstCheck = await waitFor('.setrow__check')
 
-        check('an ad-hoc exercise shows its history immediately',
-          q('.pill[data-kind="last"]') !== null && q('.pill[data-kind="pr"]') !== null)
+        check('an ad-hoc exercise exposes Previous immediately',
+          q('.setrow--head .setrow__record') !== null)
 
         // Curls have never been done, so the weight needs entering once.
         const weightField = q('input.setrow__num[data-field="weight"]')

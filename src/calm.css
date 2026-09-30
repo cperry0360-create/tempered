@@ -1208,6 +1208,7 @@ button.today-item:disabled {
 
 .exercise--r3 .setrow__check {
   appearance: none;
+  position: relative;
   width: 44px;
   height: 44px;
   min-height: 44px;

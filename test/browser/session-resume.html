@@ -91,7 +91,9 @@
         check('another movement can be added while the workout is open', Boolean(addedId && mount.querySelector(`[data-exercise="${addedId}"]`)))
         check('the added movement is checkpointed', loadActiveSessionDraft()?.plan?.some((entry) => entry.exercise?.id === addedId))
 
-        mount.querySelector('[data-action="minimize-workout"]').click()
+        mount.querySelector('.exercise-menu__trigger')?.click()
+        await settle()
+        mount.querySelector('[data-action="minimize-workout"]')?.click()
         await settle()
         check('minimize returns to the app without finishing', Boolean(mount.querySelector('.screen--today-calm')))
         check('minimized workout remains resumable', Boolean(mount.querySelector('[data-active-workout]')))
@@ -111,8 +113,8 @@
         await settle()
         check('confirmed discard clears the resumable checkpoint', loadActiveSessionDraft() === null)
         check('confirmed discard removes the active-workout card', !mount.querySelector('[data-active-workout]'))
-        check('confirmed discard removes this attempt set logs', sessionId
-          ? (await second.workout.setsFor(sessionId)).length === 0
+        check('leaving with discarded unlogged edits preserves checked canonical sets', sessionId
+          ? (await second.workout.setsFor(sessionId)).length === 1
           : false)
 
         const passed = checks.every((entry) => entry.ok)

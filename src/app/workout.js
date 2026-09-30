@@ -304,6 +304,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       timeSec: set.timeSec ?? null,
       distance: set.distance ?? null,
       isWarmup: set.isWarmup === true,
+      setType: set.setType ?? (set.isWarmup === true ? 'warmup' : 'working'),
       // Set when this exercise stood in for another: the rack was taken, the
       // cable station was busy. Keeping it means history says what was actually
       // done, not what was planned.

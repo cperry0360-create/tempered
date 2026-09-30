@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R3 active workout</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness as bootstrap } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+  import { loadActiveSessionDraft } from '../../src/ui/session-draft.js'
+  import { installCableMachineRuntime } from '../../src/ui/cable-machine-runtime.js'
+
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (s, root = document) => root?.querySelector?.(s) ?? null
+  const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+  const settle = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  try {
+    localStorage.clear()
+    const storage = createMemoryStorage()
+    const clock = fixedClock(new Date(2026, 8, 29, 9, 0, 0))
+    await storage.open()
+    const profile = await storage.get('profile', 'profile')
+    await storage.put('profile', {
+      ...(profile ?? { id: 'profile' }),
+      cableMachine: {
+        ...(profile?.cableMachine ?? {}),
+        exerciseSettings: {
+          ...(profile?.cableMachine?.exerciseSettings ?? {}),
+          lat_pulldown: { enabled: false, stacks: 1 },
+        },
+      },
+    })
+
+    const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+    await installCableMachineRuntime(tempered)
+
+    await storage.put('sessions', {
+      id: 'r3-history', date: '2026-09-22',
+      startedAt: '2026-09-22T09:00:00.000Z', endedAt: '2026-09-22T09:40:00.000Z',
+    })
+    for (const [index, reps] of [6, 6, 6, 5].entries()) {
+      await storage.put('setLogs', {
+        id: `r3-history-${index}`, sessionId: 'r3-history', exerciseId: 'lat_pulldown',
+        method: 'Cable', setIndex: index, weight: 115, reps, isWarmup: false,
+        completedAt: `2026-09-22T09:${String(5 + index).padStart(2, '0')}:00.000Z`,
+      })
+    }
+
+    await tempered.app.show('train')
+    await settle()
+    q('[data-programday="tuesday"]')?.click()
+    await settle(160)
+
+    const card = q('[data-exercise="lat_pulldown"]')
+    const firstWeight = q('[data-field="weight"]', card)
+    const firstReps = q('[data-field="reps"]', card)
+    check('repeat-session weight is a placeholder, not an entered value',
+      firstWeight?.value === '' && firstWeight?.placeholder === '115',
+      `value=${firstWeight?.value} placeholder=${firstWeight?.placeholder}`)
+    check('repeat-session reps are a placeholder, not an entered value',
+      firstReps?.value === '' && firstReps?.placeholder === '6',
+      `value=${firstReps?.value} placeholder=${firstReps?.placeholder}`)
+
+    const enteredStyle = getComputedStyle(firstWeight)
+    const placeholderStyle = getComputedStyle(firstWeight, '::placeholder')
+    check('placeholder is visibly dimmer than entered values',
+      Number(placeholderStyle.opacity) < 1 || placeholderStyle.color !== enteredStyle.color,
+      `entered=${enteredStyle.color} placeholder=${placeholderStyle.color} opacity=${placeholderStyle.opacity}`)
+
+    clock.set(new Date(2026, 8, 29, 9, 23, 1))
+    q('.setrow__check', card)?.click()
+    await settle(160)
+    const logged = (await storage.getAll('setLogs')).filter((row) => row.sessionId !== 'r3-history')
+    check('one tap on check logs placeholder weight and reps',
+      logged[0]?.weight === 115 && logged[0]?.reps === 6,
+      JSON.stringify(logged[0] ?? null))
+
+    const draft = loadActiveSessionDraft()
+    const storedEnd = Number(draft?.rest?.endsAt)
+    check('rest timer persists an absolute end timestamp',
+      Number.isFinite(storedEnd) && storedEnd > clock.now(),
+      `endsAt=${storedEnd} now=${clock.now()}`)
+    const before = q('[data-rest-remaining]')?.textContent ?? ''
+    clock.set(new Date(clock.now() + 30000))
+    await settle(620)
+    const after = q('[data-rest-remaining]')?.textContent ?? ''
+    check('rest display recomputes from the stored end timestamp after time jumps',
+      before !== after && /1:30/.test(after),
+      `${before} -> ${after}`)
+    check('stored rest end timestamp does not drift while rendering',
+      Number(loadActiveSessionDraft()?.rest?.endsAt) === storedEnd)
+
+    const liveCard = q('[data-exercise="lat_pulldown"]')
+    q('.exercise-menu__trigger', liveCard)?.click()
+    await settle(160)
+    const menuCard = q('[data-exercise="lat_pulldown"]')
+    const labels = qa('.exercise-menu__item', menuCard).map((node) => node.textContent.trim())
+    for (const label of ['History', 'Swap', 'Notes', 'Rest timer', 'Cable settings', 'Move up', 'Move down', 'Remove exercise']) {
+      check(`exercise menu retains ${label}`, labels.some((value) => value.startsWith(label)), labels.join(' | '))
+    }
+    check('legacy horizontal action chips are gone', q('.actions', menuCard) === null)
+    check('legacy exercise art and LAST/PR header pills are gone',
+      q('.exercise__art, .exercise__history', menuCard) === null)
+
+    const rows = qa('.setrow:not(.setrow--head)', menuCard)
+    check('set rows are 52px tall', Math.round(rows[0]?.getBoundingClientRect().height ?? 0) === 52,
+      rows[0]?.getBoundingClientRect().height ?? 0)
+  } catch (error) {
+    check('R3 harness threw', false, String(error?.stack ?? error).slice(0, 1000))
+  }
+
+  await fetch('/__report', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'session-r3', passed: checks.every((item) => item.ok), checks }),
+  })
+</script>
+</body>
+</html>

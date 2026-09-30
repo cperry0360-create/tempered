@@ -146,7 +146,7 @@ export async function installCableMachineRuntime(context) {
 
   const exerciseMap = await workout.exerciseMap()
   const cableExercises = [...exerciseMap.values()]
-    .filter((exercise) => methodsForExercise(exercise).includes('Cable') && exercise.unit !== 'time')
+    .filter((exercise) => (methodsForExercise(exercise).includes('Cable') || exercise.variant === 'Cable') && exercise.unit !== 'time')
     .sort((a, b) => a.name.localeCompare(b.name))
   const cableExerciseIds = new Set(cableExercises.map((exercise) => exercise.id))
 
@@ -423,7 +423,7 @@ export async function installCableMachineRuntime(context) {
           input.dispatchEvent(new Event('input', { bubbles: true }))
         }
       } else {
-        const previousWeight = Number(input.value)
+        const previousWeight = Number(input.value || input.placeholder)
         const peg = pegForCableLoad(previousWeight, { profile: machine, stacks })
         pegState.set(key, peg)
         const next = peg == null ? '' : String(peg)
@@ -463,8 +463,57 @@ export async function installCableMachineRuntime(context) {
     }
   }
 
+  function ensureCableMenu(card) {
+    const exerciseId = card.dataset.exercise
+    if (!cableExerciseIds.has(exerciseId)) return
+    const menu = card.querySelector('.exercise-menu')
+    if (!menu || menu.querySelector('[data-cable-settings-trigger]')) return
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'exercise-menu__item'
+    button.dataset.cableSettingsTrigger = exerciseId
+    button.textContent = 'Cable settings'
+    button.addEventListener('click', () => {
+      const existing = card.querySelector('[data-cable-settings-panel]')
+      if (existing) { existing.remove(); return }
+      const panel = document.createElement('div')
+      panel.className = 'panel cable-session-settings'
+      panel.dataset.cableSettingsPanel = exerciseId
+
+      const peg = document.createElement('button')
+      peg.type = 'button'
+      peg.className = 'cable-exercise__button'
+      const syncPeg = () => {
+        const enabled = cablePegEnabledForExercise(exerciseId, machine)
+        peg.dataset.selected = String(enabled)
+        peg.textContent = enabled ? 'PEG ENTRY' : 'LBS ENTRY'
+      }
+      syncPeg()
+      peg.addEventListener('click', async () => {
+        await saveExercise(exerciseId, { enabled: !cablePegEnabledForExercise(exerciseId, machine) })
+        syncPeg()
+      })
+
+      const stacks = document.createElement('button')
+      stacks.type = 'button'
+      stacks.className = 'cable-exercise__button'
+      const syncStacks = () => { stacks.textContent = `${cableStacksForExercise(exerciseId, machine)} STACK${cableStacksForExercise(exerciseId, machine) === 1 ? '' : 'S'}` }
+      syncStacks()
+      stacks.addEventListener('click', async () => {
+        const current = cableStacksForExercise(exerciseId, machine)
+        const next = current >= Math.min(2, machine.stackCount) ? 1 : Math.min(2, machine.stackCount)
+        await saveExercise(exerciseId, { stacks: next })
+        syncStacks()
+      })
+      panel.append(peg, stacks)
+      card.querySelector('.exercise__head')?.insertAdjacentElement('afterend', panel)
+    })
+    menu.insertBefore(button, menu.lastElementChild)
+  }
+
   function enhanceCableCard(card) {
     const exerciseId = card.dataset.exercise
+    ensureCableMenu(card)
     if (!machine.enabled || card.dataset.method !== 'Cable' || !cableExerciseIds.has(exerciseId)
       || !cablePegEnabledForExercise(exerciseId, machine)) {
       clearCableCard(card)
@@ -483,8 +532,8 @@ export async function installCableMachineRuntime(context) {
       note.dataset.cableMode = 'peg'
       const stacks = cableStacksForExercise(exerciseId, machine)
       note.textContent = `${machine.name.toUpperCase()} PEG MODE · ${stacks === 2 ? 'BOTH STACKS' : 'ONE STACK'} · NOMINAL`
-      const actions = card.querySelector('.actions')
-      actions?.insertAdjacentElement('afterend', note)
+      const anchor = card.querySelector('.exercise__proposal') ?? card.querySelector('.exercise__head')
+      anchor?.insertAdjacentElement('afterend', note)
     }
 
     updateReadout(card)

@@ -1,3 +1,12 @@
+## 2026-09-29 — Redesign V1 R3 Active workout
+
+- Active workout now follows approved mockup screen 2: sticky Cancel / title+elapsed / Finish header, dense exercise cards, Previous/lbs/Reps table, 52px rows, completed success tint, inline Add set, and fixed rest controls.
+- Legacy exercise art, LAST/PR header pills, visible action chips, and always-visible plate calculator are removed from the workout surface. Existing exercise actions live under the ⋯ menu, including cable-machine settings.
+- Repeat-session values render as dim placeholders; one check tap logs those placeholder values. Set number opens Working/Warm-up/Drop/Failure type selection. Swipe-left deletes a set.
+- Rest timing is derived from a persisted absolute `endsAt` timestamp so backgrounding or sleeping the screen cannot pause the countdown.
+- R3 browser acceptance covers placeholder contrast, one-tap logging, stored-end-timestamp timing, menu actions, resume behavior, and 52px rows. `tools/verify-logging-speed.js` is now an explicit CI gate.
+- Release version: 0.40.0 (54).
+
 Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard now leads with companion/settings, next session, readiness, same-week training, Fuel, and the canonical Daily log. Legacy Today summary, calendar rail, planner, workout-control, Daily Recap, weekly-goal, and AI-check surfaces are removed from Today; logging and persistence remain canonical.
 
 # Tempered current state

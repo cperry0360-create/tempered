@@ -49,25 +49,11 @@
         await waitFor('.setrow__check')
 
         const cards = qa('section.exercise[data-exercise]')
-        const thumbs = qa('img.exercise__art, .exercise__art img')
-        check('every movement of the day carries art', thumbs.length === cards.length,
-          `${thumbs.length} images across ${cards.length} movements`)
-
-        await settleImages(thumbs)
-        const broken = thumbs.filter((image) => !image.naturalWidth)
-          .map((image) => image.src.split('/').pop())
-        check('every thumbnail decodes to a real picture', broken.length === 0,
-          broken.join(', ') || 'none broken')
-
-        // Reference, not decoration: it has to be legible enlarged, per docs/09 D.
-        q('.exercise__art').click()
-        const full = await waitFor('.exercise__full')
-        await settleImages([full])
-        check('the art enlarges to something legible', full.naturalWidth >= 600,
-          `${full.naturalWidth}x${full.naturalHeight}`)
-        check('the enlarged art shows two frames, not one',
-          full.naturalWidth > full.naturalHeight * 2,
-          `aspect ${(full.naturalWidth / full.naturalHeight).toFixed(2)}:1`)
+        check('R3 keeps every movement card while removing exercise thumbnails',
+          cards.length > 0 && qa('.exercise__art, .exercise__thumb').length === 0,
+          `${cards.length} movement cards / ${qa('.exercise__art, .exercise__thumb').length} thumbnails`)
+        check('R3 removes the legacy enlarged-art panel from the active workout',
+          qa('.exercise__full, .panel--art').length === 0)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 300))
       }

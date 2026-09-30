@@ -66,6 +66,8 @@ jobs:
           node-version: 24
       - name: Run every browser harness
         run: node tools/verify-browser-harnesses.js
+      - name: Verify active-workout logging speed
+        run: node tools/verify-logging-speed.js
 
   visual-evidence:
     runs-on: ubuntu-latest

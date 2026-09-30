@@ -30,9 +30,13 @@
 
       let card = q('.screen--session [data-exercise="incline_bench_db"]')
       check('the movement title is independent of equipment', q('.exercise__name', card)?.textContent === 'Incline Bench Press', q('.exercise__name', card)?.textContent)
-      check('the shipped method is visible', card?.dataset.method === 'Dumbbell' && /DUMBBELL/.test(q('.exercise__method', card)?.textContent ?? ''))
-
-      q('button.actionpill[data-method]', card)?.click()
+      q('.exercise-menu__trigger', card)?.click()
+      await settle()
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      check('the shipped method is available from the exercise menu',
+        card?.dataset.method === 'Dumbbell'
+        && qa('.exercise-menu__item', card).some((button) => /Method · Dumbbell/i.test(button.textContent ?? '')))
+      qa('.exercise-menu__item', card).find((button) => /^Method ·/i.test(button.textContent ?? ''))?.click()
       await settle()
       card = q('.screen--session [data-exercise="incline_bench_db"]')
       const choices = qa('[data-methodchoice]', card).map((button) => button.dataset.methodchoice)
@@ -42,8 +46,12 @@
       await settle(120)
       card = q('.screen--session [data-exercise="incline_bench_db"]')
       check('selecting cable does not replace the movement', card?.dataset.exercise === 'incline_bench_db' && q('.exercise__name', card)?.textContent === 'Incline Bench Press')
-      check('the selected method is immediately visible', card?.dataset.method === 'Cable' && /CABLE/.test(q('.exercise__method', card)?.textContent ?? ''))
-      check('barbell plate controls are absent for cable', q('button.actionpill[data-equipment]', card) === null)
+      check('the selected method is immediately stored on the exercise card', card?.dataset.method === 'Cable')
+      q('.exercise-menu__trigger', card)?.click()
+      await settle()
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      check('barbell plate controls are absent for cable',
+        !qa('.exercise-menu__item', card).some((button) => /Plate settings/i.test(button.textContent ?? '')))
 
       const weight = q('.setrow__num[data-field="weight"]', card)
       const reps = q('.setrow__num[data-field="reps"]', card)
@@ -58,14 +66,21 @@
       check('the log records cable as the method', logged?.method === 'Cable', logged?.method)
 
       card = q('.screen--session [data-exercise="incline_bench_db"]')
-      q('button.actionpill[data-method]', card)?.click()
+      q('.exercise-menu__trigger', card)?.click()
+      await settle()
+      card = q('.screen--session [data-exercise="incline_bench_db"]')
+      qa('.exercise-menu__item', card).find((button) => /^Method ·/i.test(button.textContent ?? ''))?.click()
       await settle()
       check('method changes lock after a set is logged', qa('[data-methodchoice]', q('.screen--session [data-exercise="incline_bench_db"]')).every((button) => button.disabled))
 
       await tempered.app.startSession({ exerciseId: 'ab_wheel_rollout' })
       await settle(80)
       const fixedMethod = q('.screen--session [data-exercise="ab_wheel_rollout"]')
-      check('fixed-equipment movements do not get a needless selector', q('button.actionpill[data-method]', fixedMethod) === null)
+      q('.exercise-menu__trigger', fixedMethod)?.click()
+      await settle()
+      check('fixed-equipment movements do not get a needless selector',
+        !qa('.exercise-menu__item', q('.screen--session [data-exercise="ab_wheel_rollout"]'))
+          .some((button) => /^Method ·/i.test(button.textContent ?? '')))
     } catch (error) {
       check('exercise method harness threw', false, String(error?.stack ?? error).slice(0, 900))
     }

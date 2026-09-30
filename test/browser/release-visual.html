@@ -28,7 +28,7 @@
 
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     const mount = document.querySelector('#app')
-    const clock = fixedClock(view === 'today' ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
+    const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = { today: 'today', train: 'train', fuel: 'companion', progress: 'history' }
 
     async function installShippedInlineCss() {
@@ -114,6 +114,92 @@
       }
     }
 
+
+    async function seedSessionReference(storage) {
+      await seedTodayReference(storage)
+      const profile = await storage.get('profile', 'profile')
+      await storage.put('profile', {
+        ...profile,
+        cableMachine: {
+          ...(profile?.cableMachine ?? {}),
+          exerciseSettings: {
+            ...(profile?.cableMachine?.exerciseSettings ?? {}),
+            lat_pulldown: { enabled: false, stacks: 1 },
+            seated_row_close: { enabled: false, stacks: 1 },
+          },
+        },
+      })
+      await storage.put('sessions', {
+        id: 'visual-pull-history',
+        date: '2026-09-22',
+        startedAt: '2026-09-22T09:00:00.000Z',
+        endedAt: '2026-09-22T09:45:00.000Z',
+      })
+      for (const [index, reps] of [6, 6, 6, 5].entries()) {
+        await storage.put('setLogs', {
+          id: `visual-pull-history-${index}`,
+          sessionId: 'visual-pull-history',
+          exerciseId: 'lat_pulldown',
+          method: 'Cable',
+          setIndex: index,
+          weight: 115,
+          reps,
+          isWarmup: false,
+          completedAt: `2026-09-22T09:${String(5 + index * 3).padStart(2, '0')}:00.000Z`,
+        })
+      }
+      await storage.put('sessions', {
+        id: 'visual-row-history',
+        date: '2026-09-22',
+        startedAt: '2026-09-22T09:50:00.000Z',
+        endedAt: '2026-09-22T10:20:00.000Z',
+      })
+      for (const [index, reps] of [10, 10, 9, 8].entries()) {
+        await storage.put('setLogs', {
+          id: `visual-row-history-${index}`,
+          sessionId: 'visual-row-history',
+          exerciseId: 'seated_row_close',
+          method: 'Cable',
+          setIndex: index,
+          weight: 130,
+          reps,
+          isWarmup: false,
+          completedAt: `2026-09-22T09:${String(52 + index).padStart(2, '0')}:00.000Z`,
+        })
+      }
+    }
+
+    async function prepareSessionReference(tempered) {
+      await tempered.app.show('train')
+      await settle()
+      const pull = mount.querySelector('[data-programday="tuesday"]')
+      if (!pull) throw new Error('Pull A program day missing')
+      pull.click()
+      await settle()
+
+      let rows = [...mount.querySelectorAll('[data-exercise="lat_pulldown"] .setrow:not(.setrow--head)')]
+      if (rows.length < 4) throw new Error('Pull A set rows missing')
+      clock.set(new Date(2026, 8, 29, 9, 22, 50))
+      rows[0].querySelector('[data-field="weight"]').value = '115'
+      rows[0].querySelector('[data-field="reps"]').value = '7'
+      rows[0].querySelector('[data-field="weight"]').dispatchEvent(new Event('input', { bubbles: true }))
+      rows[0].querySelector('[data-field="reps"]').dispatchEvent(new Event('input', { bubbles: true }))
+      rows[0].querySelector('.setrow__check').click()
+      await settle()
+
+      clock.set(new Date(2026, 8, 29, 9, 23, 1))
+      rows = [...mount.querySelectorAll('[data-exercise="lat_pulldown"] .setrow:not(.setrow--head)')]
+      rows[1].querySelector('[data-field="weight"]').value = '115'
+      rows[1].querySelector('[data-field="reps"]').value = '6'
+      rows[1].querySelector('[data-field="weight"]').dispatchEvent(new Event('input', { bubbles: true }))
+      rows[1].querySelector('[data-field="reps"]').dispatchEvent(new Event('input', { bubbles: true }))
+      rows[1].querySelector('.setrow__check').click()
+      await settle()
+
+      clock.set(new Date(2026, 8, 29, 9, 23, 14))
+      await settle()
+    }
+
     try {
       await installShippedInlineCss()
       const storage = createMemoryStorage()
@@ -125,6 +211,11 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
+      } else if (view === 'session') {
+        await storage.open()
+        await seedSessionReference(storage)
+        const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
+        await prepareSessionReference(tempered)
       } else if (route[view]) {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })
         if (view === 'today') await seedTodayReference(storage)

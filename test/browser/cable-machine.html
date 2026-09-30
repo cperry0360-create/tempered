@@ -72,10 +72,9 @@
         q('.setrow--head [data-col="weight"]', card)?.textContent)
       check('session identifies Inspire FTX / Centr 2 peg mode', /FTX \/ CENTR 2 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('session labels the calculation nominal', /NOMINAL/.test(q('.cable-mode-note', card)?.textContent ?? ''))
-      check('migrated LAST history shows peg rather than pretending it was pounds', /P7/.test(q('[data-kind="last"]')?.textContent ?? ''), q('[data-kind="last"]')?.textContent)
-      check('migrated PR pill shows Peg 7 and 85 nominal pounds',
-        /P7\s*·\s*85/.test(q('[data-kind="pr"]')?.textContent ?? '') && /nominal/i.test(q('[data-kind="pr"]')?.textContent ?? ''),
-        q('[data-kind="pr"]')?.textContent)
+      check('migrated Previous history shows peg rather than pretending it was pounds',
+        /P7/.test(q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent ?? ''), q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent)
+      check('R3 removes the legacy header PR pill', q('[data-kind="pr"]', card) === null)
 
       let weights = qa('.setrow__num[data-field="weight"]', card)
       let reps = qa('.setrow__num[data-field="reps"]', card)
@@ -135,7 +134,10 @@
       await tempered.app.startSession({ exerciseId: 'incline_bench_db' })
       await settle(120)
       let inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
-      q('button.actionpill[data-method]', inclineCard)?.click()
+      q('.exercise-menu__trigger', inclineCard)?.click()
+      await settle(80)
+      inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
+      qa('.exercise-menu__item', inclineCard).find((button) => /^Method ·/i.test(button.textContent ?? ''))?.click()
       await settle(80)
       inclineCard = q('.screen--session [data-exercise="incline_bench_db"]')
       q('[data-methodchoice="Cable"]', inclineCard)?.click()

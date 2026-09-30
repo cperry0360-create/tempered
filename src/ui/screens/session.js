@@ -66,6 +66,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let elapsedSec = 0
   let activeSince = null
   let wakeLock = null
+  let hasUnloggedEdits = false
+  let confirmingDiscard = false
 
   function elapsedSeconds() {
     const active = activeSince === null ? 0 : Math.max(0, (timeSource.now() - activeSince) / 1000)
@@ -119,6 +121,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       isFirstOfDay,
       rest,
       openPanel,
+      hasUnloggedEdits,
       elapsedSec: elapsedSeconds(),
     })
   }
@@ -151,25 +154,51 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   // --- rest timer ----------------------------------------------------------
 
   function startRest(entry) {
-    rest = { exerciseId: entry.exercise.id, endsAt: timeSource.now() + entry.restSec * 1000 }
+    const durationSec = Math.max(0, Number(entry.restSec) || 0)
+    rest = {
+      exerciseId: entry.exercise.id,
+      durationSec,
+      endsAt: timeSource.now() + durationSec * 1000,
+    }
+    persistDraft()
+    render()
+    tick()
+  }
+
+  function adjustRest(seconds) {
+    if (!rest) return
+    rest.endsAt = Math.max(timeSource.now(), rest.endsAt + seconds * 1000)
+    rest.durationSec = Math.max(1, (rest.durationSec ?? 1) + seconds)
     persistDraft()
     tick()
+  }
+
+  function skipRest() {
+    if (!rest) return
+    rest = null
+    persistDraft()
+    render()
   }
 
   function tick() {
     const elapsed = root.querySelector('[data-session-elapsed]')
     if (elapsed) elapsed.textContent = clock(elapsedSeconds())
     if (!rest) return
-    const remaining = Math.max(0, (rest.endsAt - timeSource.now()) / 1000)
-    const node = root.querySelector(`[data-rest="${rest.exerciseId}"]`)
-    if (node) {
-      node.textContent = remaining > 0 ? clock(remaining) : 'rested'
-      // A live counter is a value worth noticing, and stops being one the
-      // moment it stops counting.
-      if (remaining > 0) node.dataset.acid = 'value'
-      else delete node.dataset.acid
+    // The absolute end timestamp is canonical. Do not decrement a counter:
+    // sleeping/backgrounding the screen must not pause or drift the timer.
+    const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
+    const node = document.querySelector('[data-session-rest-overlay] [data-rest-remaining]')
+    if (node) node.textContent = `Rest ${clock(remaining)}`
+    const progress = document.querySelector('[data-session-rest-overlay] [data-rest-progress]')
+    if (progress) {
+      const duration = Math.max(1, Number(rest.durationSec) || remaining || 1)
+      progress.style.width = `${Math.max(0, Math.min(100, (remaining / duration) * 100))}%`
     }
-    if (remaining <= 0) { rest = null; persistDraft() }
+    if (remaining <= 0) {
+      rest = null
+      persistDraft()
+      render()
+    }
   }
   ticker = setInterval(tick, 500)
 
@@ -249,41 +278,130 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     for (const [index, other] of entry.sets.entries()) {
       if (index === 0 || other.logged === true) continue
       other[key] = value
+      other.editedFields = { ...(other.editedFields ?? {}), [key]: true }
     }
+  }
+
+  function previousSet(entry, index) {
+    return entry.last?.sets?.[index] ?? entry.last?.sets?.[0] ?? null
+  }
+
+  function previousValue(entry, index, key) {
+    const previous = previousSet(entry, index)
+    const value = previous?.[key]
+    return Number.isFinite(Number(value)) ? Number(value) : null
+  }
+
+  function displayName(exercise, slot = null) {
+    const raw = exercise?.name ?? exercise?.movementName ?? 'Exercise'
+    const match = raw.match(/^(.*?)\s*\((.*?)\)\s*$/)
+    let base = (slot?.name ?? exercise?.movementName ?? (match ? match[1] : raw)).trim()
+    let suffix = match ? match[2].trim() : ''
+    if (suffix && exercise?.variant) {
+      suffix = suffix.replace(new RegExp(`\\b${exercise.variant}\\b[, ]*`, 'i'), '')
+    }
+    suffix = suffix.replace(/\bgrip\b/ig, '').replace(/\s*,\s*/g, ' · ').replace(/^[ ·-]+|[ ·-]+$/g, '').trim()
+    // Program names such as "Seated Cable Row" already carry the useful
+    // equipment distinction; don't add a redundant grip suffix there.
+    if (exercise?.variant && new RegExp(`\\b${exercise.variant}\\b`, 'i').test(base)) suffix = ''
+    return suffix ? `${base} · ${suffix}` : base
+  }
+
+  function e1rm(weight, reps) {
+    const w = Number(weight)
+    const r = Number(reps)
+    return Number.isFinite(w) && w > 0 && Number.isFinite(r) && r > 0 ? w * (1 + r / 30) : null
+  }
+
+  function isSetPr(entry, set) {
+    if (!set.logged) return false
+    const current = e1rm(set.weight, set.reps)
+    const best = Number(entry.record?.bestE1RM?.value)
+    return current !== null && Number.isFinite(best) && current > best
+  }
+
+  function setTypeKey(entry, index) {
+    return `${entry.exercise.id}:settype:${index}`
+  }
+
+  async function removeSetAt(entry, index) {
+    const set = entry.sets[index]
+    if (!set) return
+    if (set.logId) {
+      await workout.removeSet(set.logId)
+      loggedHere = loggedHere.filter((log) => log.id !== set.logId)
+    }
+    entry.sets.splice(index, 1)
+    hasUnloggedEdits = true
+    persistDraft()
+    render()
   }
 
   // --- set row -------------------------------------------------------------
 
   function setRow(entry, set, index) {
     const done = set.logged === true
-    const active = !done && entry.sets.findIndex((s) => !s.logged) === index
-
-    const inputs = fieldsFor(entry.exercise).map((field) => {
+    const previous = previousSet(entry, index)
+    const fields = fieldsFor(entry.exercise)
+    const inputs = fields.map((field) => {
       if (!field) return el('span.setrow__num')
+      const previousNumber = previousValue(entry, index, field.key)
+      const current = set[field.key]
+      const usePreviousAsPlaceholder = !done && previousNumber !== null && set.editedFields?.[field.key] !== true
       return el('input.setrow__num', {
-        type: 'text', inputmode: field.mode, value: set[field.key] ?? '',
-        readOnly: done, 'aria-label': `${field.label}, set ${index + 1}`,
+        type: 'text',
+        inputmode: field.mode,
+        value: usePreviousAsPlaceholder ? '' : (current ?? ''),
+        placeholder: previousNumber === null ? '' : String(previousNumber),
+        readOnly: done,
+        'aria-label': `${field.label}, set ${index + 1}`,
         dataset: { field: field.key, exercise: entry.exercise.id, set: String(index) },
-        oninput: (event) => { set[field.key] = numberOrNull(event.target.value); persistDraft() },
+        oninput: (event) => {
+          set[field.key] = numberOrNull(event.target.value)
+          set.editedFields = { ...(set.editedFields ?? {}), [field.key]: true }
+          hasUnloggedEdits = true
+          persistDraft()
+        },
         onfocus: (event) => markColumn(event.target, true),
         onblur: (event) => markColumn(event.target, false),
         onchange: (event) => {
           set[field.key] = numberOrNull(event.target.value)
           if (index === 0) cascade(entry, field.key, set[field.key])
+          hasUnloggedEdits = true
           persistDraft()
           render()
         },
       })
     })
 
+    const previousButton = isSetPr(entry, set)
+      ? el('span.setrow__pr', { text: 'PR' })
+      : el('button.setrow__record', {
+          type: 'button',
+          disabled: !previous,
+          'aria-label': previous ? `Copy previous set ${index + 1}` : 'No previous set',
+          onclick: () => {
+            if (!previous || done) return
+            for (const field of fields) {
+              if (!field) continue
+              const value = previousValue(entry, index, field.key)
+              if (value !== null) set[field.key] = value
+            }
+            hasUnloggedEdits = true
+            persistDraft()
+            render()
+          },
+          text: previous
+            ? (Number.isInteger(previous.cablePeg)
+                ? `P${previous.cablePeg} · ${performance(previous)}`
+                : performance(previous))
+            : '—',
+        })
+
     const check = el('button.setrow__check', {
       type: 'button',
       'aria-label': done ? `Undo set ${index + 1}` : `Log set ${index + 1}`,
-      dataset: {
-        log: `${entry.exercise.id}:${index}`,
-        done: String(done),
-        ...(active ? { acid: 'active' } : {}),
-      },
+      dataset: { log: `${entry.exercise.id}:${index}`, done: String(done) },
       onclick: async () => {
         if (done) {
           const wasLatestLogged = entry.sets.findLastIndex((other) => other.logged === true) === index
@@ -299,14 +417,24 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           return
         }
 
+        // Empty fields intentionally log their visible placeholders. This is
+        // the one-tap repeat-session path required by Redesign V1.
         for (const input of inputs) {
-          if (input.dataset?.field) set[input.dataset.field] = numberOrNull(input.value)
+          if (!input.dataset?.field) continue
+          const typed = numberOrNull(input.value)
+          const fallback = numberOrNull(input.placeholder)
+          set[input.dataset.field] = typed ?? fallback
         }
+        const setType = set.setType ?? 'working'
         const logged = {
           exerciseId: entry.exercise.id,
           method: activeMethod(entry),
-          weight: set.weight ?? null, reps: set.reps ?? null,
-          timeSec: set.timeSec ?? null, distance: set.distance ?? null,
+          weight: set.weight ?? null,
+          reps: set.reps ?? null,
+          timeSec: set.timeSec ?? null,
+          distance: set.distance ?? null,
+          isWarmup: setType === 'warmup',
+          setType,
           perSide: set.perSide === true,
           substitutedFor: entry.substitutedFor ?? null,
           programDayId: entry.programDayId ?? null,
@@ -314,43 +442,55 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           setIndex: index,
         }
         const log = await workout.logSet(session, logged)
-        // The stored record, not the object we sent: it carries `completedAt`,
-        // which is what docs/11 F1 measures the session's duration from.
         loggedHere.push(log)
         set.logged = true
         set.logId = log.id
+        hasUnloggedEdits = false
         render()
         startRest(entry)
       },
     }, [icon('check')])
 
-    return el('div.setrow', {
-      dataset: { done: String(done), active: String(active), editing: String(entry.editing === true) },
+    let touchStartX = null
+    const row = el('div.setrow', {
+      dataset: { done: String(done) },
+      ontouchstart: (event) => { touchStartX = event.touches?.[0]?.clientX ?? null },
+      ontouchend: (event) => {
+        const endX = event.changedTouches?.[0]?.clientX
+        if (touchStartX !== null && Number.isFinite(endX) && touchStartX - endX > 64) removeSetAt(entry, index)
+        touchStartX = null
+      },
     }, [
-      // The 4px acid bar down the left edge of the set being worked.
-      active && el('span.setrow__edge', { dataset: { acid: 'active' } }),
-      el('span.setrow__index', { text: String(index + 1) }),
-      el('span.setrow__record', { text: performance(entry.last?.sets?.[index] ?? entry.last?.sets?.[0] ?? null) }),
+      el('button.setrow__index', {
+        type: 'button',
+        'aria-label': `Set ${index + 1} type`,
+        onclick: () => {
+          openPanel = openPanel === setTypeKey(entry, index) ? null : setTypeKey(entry, index)
+          render()
+        },
+        text: set.setType === 'warmup' ? 'W' : set.setType === 'drop' ? 'D' : set.setType === 'failset' ? 'F' : String(index + 1),
+      }),
+      previousButton,
       ...inputs,
       check,
-      // Removing a set, which docs/09 B5 lists as missing. Behind EDIT SETS so
-      // every control in the row keeps a 44px target.
-      entry.editing === true && el('button.setrow__remove', {
-        type: 'button', 'aria-label': `Remove set ${index + 1}`,
-        dataset: { removeset: `${entry.exercise.id}:${index}` },
-        onclick: async () => {
-          if (set.logId) {
-            await workout.removeSet(set.logId)
-            loggedHere = loggedHere.filter((log) => log.id !== set.logId)
-          }
-          entry.sets.splice(index, 1)
+    ])
+
+    if (openPanel === setTypeKey(entry, index)) {
+      row.append(el('div.settype', {}, [
+        ['working', 'Working'], ['warmup', 'Warm-up (W)'], ['drop', 'Drop (D)'], ['failset', 'Failure (F)'],
+      ].map(([value, label]) => el('button.settype__option', {
+        type: 'button',
+        dataset: { selected: String((set.setType ?? 'working') === value) },
+        onclick: () => {
+          set.setType = value
+          openPanel = null
+          hasUnloggedEdits = true
           persistDraft()
           render()
         },
-      }, [icon('minus')]),
-      // Beside the weight field of the set actually being worked.
-      active && isBarbell(entry) && plateStrip(entry, set),
-    ])
+      }, [label]))))
+    }
+    return row
   }
 
   // --- panels --------------------------------------------------------------
@@ -482,157 +622,134 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
   }
 
-  // --- the action pills ----------------------------------------------------
+  // --- exercise menu -------------------------------------------------------
 
-  function actionPill(entry, { name, label, glyph, onclick, value = null }) {
-    return el('button.actionpill', {
-      type: 'button',
-      dataset: { [name]: entry.exercise.id, open: String(isOpen(entry, name)) },
-      onclick,
-    }, [
-      icon(glyph),
-      label,
-      value,
+  function notesPanel(entry) {
+    return el('div.panel', {}, [
+      el('label.panel__note', { text: 'Notes for this workout' }),
+      el('textarea.exercise-notes', {
+        rows: 3,
+        placeholder: 'Setup, cue, or anything worth remembering',
+        value: entry.notes ?? '',
+        oninput: (event) => {
+          entry.notes = event.target.value
+          hasUnloggedEdits = true
+          persistDraft()
+        },
+      }),
     ])
   }
 
-  function actionBar(entry) {
-    return el('div.actions', { 'aria-label': 'Exercise actions' }, [
-      // `data-rest="edit"` is kept: it is what the rest of the harnesses reach for.
-      el('button.actionpill', {
+  function removeExercise(entry) {
+    const index = plan.indexOf(entry)
+    if (index < 0) return
+    const logged = entry.sets.filter((set) => set.logged)
+    if (logged.length > 0) return
+    plan.splice(index, 1)
+    openPanel = null
+    hasUnloggedEdits = true
+    persistDraft()
+    render()
+  }
+
+  function exerciseMenu(entry, position) {
+    const menuOpen = isOpen(entry, 'menu')
+    const item = (label, action, options = {}) => el('button.exercise-menu__item', {
+      type: 'button',
+      disabled: options.disabled === true,
+      onclick: action,
+    }, [label])
+    return el('div.exercise-menu-wrap', {}, [
+      el('button.exercise-menu__trigger', {
         type: 'button',
-        dataset: { rest: 'edit', restfor: entry.exercise.id, open: String(isOpen(entry, 'rest')) },
-        onclick: () => togglePanel(entry, 'rest'),
-      }, [
-        icon('rest'),
-        'REST',
-        el('span.actionpill__value', { dataset: { rest: entry.exercise.id }, text: clock(entry.restSec) }),
-      ]),
-      actionPill(entry, {
-        name: 'history', label: 'HISTORY', glyph: 'history',
-        onclick: async () => {
+        'aria-label': `More actions for ${displayName(entry.exercise, entry.slot)}`,
+        'aria-expanded': String(menuOpen),
+        onclick: () => togglePanel(entry, 'menu'),
+      }, ['⋯']),
+      menuOpen && el('div.exercise-menu', {}, [
+        item('History', async () => {
           if (!entry.history) entry.history = await workout.exerciseHistory(entry.exercise.id, 6, activeMethod(entry))
-          togglePanel(entry, 'history')
-        },
-      }),
-      methodsForExercise(entry.exercise).length > 1 && actionPill(entry, {
-        name: 'method', label: 'METHOD', glyph: 'equipment',
-        value: el('span.actionpill__value', { text: activeMethod(entry).toUpperCase() }),
-        onclick: () => togglePanel(entry, 'method'),
-      }),
-      actionPill(entry, {
-        name: 'swap', label: 'SWAP', glyph: 'swap',
-        onclick: () => togglePanel(entry, 'swap'),
-      }),
-      el('button.actionpill', {
-        type: 'button',
-        dataset: { editsets: entry.exercise.id, open: String(entry.editing === true) },
-        onclick: () => { entry.editing = entry.editing !== true; persistDraft(); render() },
-      }, [icon('sets'), entry.editing === true ? 'DONE EDITING' : 'EDIT SETS']),
-      isBarbell(entry) && actionPill(entry, {
-        name: 'equipment', label: 'PLATES', glyph: 'equipment',
-        onclick: () => togglePanel(entry, 'equipment'),
-      }),
+          openPanel = panelKey(entry, 'history'); persistDraft(); render()
+        }),
+        item('Swap', () => { openPanel = panelKey(entry, 'swap'); render() }),
+        item('Notes', () => { openPanel = panelKey(entry, 'notes'); render() }),
+        item(`Rest timer · ${clock(entry.restSec)}`, () => { openPanel = panelKey(entry, 'rest'); render() }),
+        methodsForExercise(entry.exercise).length > 1
+          && item(`Method · ${activeMethod(entry)}`, () => { openPanel = panelKey(entry, 'method'); render() }),
+        isBarbell(entry) && item('Plate settings', () => { openPanel = panelKey(entry, 'equipment'); render() }),
+        el('button.exercise-menu__item', {
+          type: 'button',
+          dataset: { action: 'minimize-workout' },
+          onclick: () => {
+            persistDraft()
+            document.querySelector('[data-session-rest-overlay]')?.remove()
+            onMinimize?.()
+          },
+        }, ['Minimize workout']),
+        item('Move up', () => move(position, -1), { disabled: position === 0 }),
+        item('Move down', () => move(position, 1), { disabled: position === plan.length - 1 }),
+        item('Remove exercise', () => removeExercise(entry), { disabled: entry.sets.some((set) => set.logged) }),
+      ].filter(Boolean)),
     ])
   }
 
   // --- exercise card -------------------------------------------------------
 
   function exerciseCard(entry, position) {
-    const best = entry.record?.bestWeight
     const slot = entry.slot
-    const range = slot ? `${slot.sets} × ${slot.repMin}–${slot.repMax}${slot.perSide ? ' / side' : ''}` : null
+    const range = slot
+      ? `${slot.sets} × ${slot.repMin}–${slot.repMax}`
+      : `${entry.sets.length} sets`
+    const previousTop = Number(entry.last?.sets?.[0]?.weight)
+    const coaching = slot && Number.isFinite(previousTop) && Number.isFinite(Number(slot.repMax))
+      ? `Hit ${slot.repMax} reps at ${previousTop} before adding weight.`
+      : (entry.proposal?.reason || slot?.cue || slot?.setup || '')
     const fields = fieldsFor(entry.exercise)
 
-    return el('section.card.exercise', {
+    return el('section.card.exercise.exercise--r3', {
       dataset: { exercise: entry.exercise.id, method: activeMethod(entry) ?? '' },
     }, [
       el('header.exercise__head', {}, [
-        entry.exercise.art && el('button.exercise__art', {
-          type: 'button', 'aria-label': `Show ${entry.exercise.name} reference`,
-          dataset: { art: entry.exercise.id },
-          onclick: () => togglePanel(entry, 'art'),
-        }, [el('img.exercise__thumb', {
-          src: artUrl(entry.exercise.art), alt: '', loading: 'lazy',
-        })]),
         el('div.exercise__title', {}, [
-          el('h2.exercise__name', { text: entry.exercise.movementName ?? entry.exercise.name }),
-          range && el('p.exercise__range', { text: range }),
-          methodsForExercise(entry.exercise).length > 1 && el('p.exercise__method', {
-            text: `METHOD · ${activeMethod(entry).toUpperCase()}`,
-          }),
-          entry.substitutedFor && el('p.exercise__sub', {
-            text: `swapped in for ${entry.substitutedFor.replace(/_/g, ' ')}`,
+          el('h2.exercise__name', { text: displayName(entry.exercise, entry.slot) }),
+          el('button.exercise__range', {
+            type: 'button',
+            onclick: () => { openPanel = panelKey(entry, 'rest'); render() },
+            text: `${range} · Rest ${clock(entry.restSec)}`,
           }),
         ]),
-        el('div.exercise__order', {}, [
-          el('button.iconbutton', {
-            type: 'button', 'aria-label': 'Move up', disabled: position === 0,
-            dataset: { moveup: entry.exercise.id },
-            onclick: () => { move(position, -1) },
-          }, [icon('up')]),
-          el('button.iconbutton', {
-            type: 'button', 'aria-label': 'Move down', disabled: position === plan.length - 1,
-            dataset: { movedown: entry.exercise.id },
-            onclick: () => { move(position, 1) },
-          }, [icon('down')]),
-        ]),
+        exerciseMenu(entry, position),
       ]),
 
-      (slot?.setup || slot?.cue) && el('p.exercise__cue', {
-        text: [slot.setup, slot.cue].filter(Boolean).join(' · '),
-      }),
-
-      actionBar(entry),
-
-      // Last performance and PR — with the PR's date, per docs/09 B6. A PR is a
-      // value worth noticing, so it is one of the three things acid marks.
-      el('div.exercise__history', {}, [
-        el('span.pill', { dataset: { kind: 'last' } }, [
-          el('span.pill__label', { text: 'LAST' }),
-          el('span.pill__value', { text: entry.last ? performance(entry.last.sets[0]) : 'first time' }),
-          entry.last && el('span.pill__aside', { text: since(entry.last.date, timeSource.today()) }),
-        ]),
-        el('span.pill', { dataset: { kind: 'pr' } }, [
-          el('span.pill__label', { text: 'PR' }),
-          el('span.pill__value', {
-            dataset: best ? { acid: 'value' } : {},
-            text: best ? lbs(best.weight) : '—',
-          }),
-          best && el('span.pill__unit', { text: 'lb' }),
-          best && el('span.pill__aside', {
-            dataset: best.date ? { prdate: '' } : {},
-            text: `× ${best.reps}${best.date ? ` · ${shortDate(best.date)}` : ''}`,
-          }),
-        ]),
-      ]),
+      coaching && el('p.exercise__proposal', { text: coaching }),
 
       isOpen(entry, 'rest') && el('div.panel', {}, [
         el('p.panel__note', { text: 'Rest between sets. The timer never blocks the next set.' }),
         el('div.restedit', {}, [30, 60, 90, 120, 150, 180, 240].map((seconds) => el('button.restedit__option', {
           type: 'button', dataset: { restset: String(seconds), active: String(entry.restSec === seconds) },
-          onclick: () => { entry.restSec = seconds; openPanel = null; persistDraft(); render() },
+          onclick: () => {
+            entry.restSec = seconds
+            openPanel = null
+            hasUnloggedEdits = true
+            persistDraft()
+            render()
+          },
         }, [clock(seconds)]))),
       ]),
-
       isOpen(entry, 'history') && historyPanel(entry),
       isOpen(entry, 'method') && methodPanel(entry),
       isOpen(entry, 'swap') && swapPanel(entry),
       isOpen(entry, 'equipment') && equipmentPanel(entry),
-      isOpen(entry, 'art') && el('div.panel.panel--art', {}, [
-        el('img.exercise__full', { src: artUrl(entry.exercise.art), alt: entry.exercise.name }),
-      ]),
+      isOpen(entry, 'notes') && notesPanel(entry),
 
-      entry.proposal?.reason && el('p.exercise__proposal', { text: entry.proposal.reason }),
-
-      el('div.setrow.setrow--head', { dataset: { editing: String(entry.editing === true) } }, [
-        el('span.setrow__index', { text: 'SET' }),
-        el('span.setrow__record', { text: 'LAST' }),
+      el('div.setrow.setrow--head', {}, [
+        el('span.setrow__index', { text: 'Set' }),
+        el('span.setrow__record', { text: 'Previous' }),
         ...fields.map((field) => el('span.setrow__col', {
-          dataset: field ? { col: field.key } : {}, text: field?.label ?? '',
+          dataset: field ? { col: field.key } : {},
+          text: field?.key === 'weight' ? 'lbs' : (field?.label === 'REPS' ? 'Reps' : field?.label ?? ''),
         })),
-        el('span', { text: '' }),
-        entry.editing === true && el('span', { text: '' }),
+        el('span.setrow__head-check', {}, [icon('check')]),
       ]),
 
       ...entry.sets.map((set, index) => setRow(entry, set, index)),
@@ -641,11 +758,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         type: 'button', dataset: { addset: entry.exercise.id },
         onclick: () => {
           const previous = entry.sets.at(-1)
-          entry.sets.push({ weight: previous?.weight ?? null, reps: previous?.reps ?? null, logged: false })
+          entry.sets.push({
+            weight: previous?.weight ?? null,
+            reps: previous?.reps ?? null,
+            logged: false,
+            setType: 'working',
+            logId: null,
+          })
+          hasUnloggedEdits = true
           persistDraft()
           render()
         },
-      }, [icon('plus'), 'ADD SET']),
+      }, ['+ Add set']),
     ])
   }
 
@@ -677,6 +801,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     })
     addingMovement = false
     addQuery = ''
+    hasUnloggedEdits = true
     persistDraft()
     render()
     requestAnimationFrame(() => root.querySelector(`[data-exercise="${exercise.id}"]`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
@@ -714,69 +839,118 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
   }
 
+  function restBar() {
+    if (!rest) return null
+    const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
+    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true' } }, [
+      el('div.session-restbar__progress', {}, [
+        el('i', {
+          dataset: { restProgress: 'true' },
+          style: `width:${Math.max(0, Math.min(100, (remaining / Math.max(1, rest.durationSec ?? remaining ?? 1)) * 100))}%`,
+        }),
+      ]),
+      el('strong.session-restbar__time', { dataset: { restRemaining: 'true' }, text: `Rest ${clock(remaining)}` }),
+      el('div.session-restbar__actions', {}, [
+        el('button', { type: 'button', onclick: () => adjustRest(-15) }, ['-15']),
+        el('button', { type: 'button', onclick: () => adjustRest(15) }, ['+15']),
+        el('button', { type: 'button', onclick: skipRest }, ['Skip']),
+      ]),
+    ])
+  }
+
+  function cancelWorkout() {
+    if (hasUnloggedEdits) {
+      confirmingDiscard = true
+      render()
+      return
+    }
+    clearActiveSessionDraft()
+    releaseWorkoutWakeLock()
+    onFinish(null)
+  }
+
   function render() {
     replace(root, [
-      el('header.sessionbar', {}, [
-        el('div', {}, [
+      el('header.sessionbar.sessionbar--r3', {}, [
+        el('button.sessionbar__cancel', {
+          type: 'button',
+          dataset: { action: 'cancel-session' },
+          onclick: cancelWorkout,
+        }, ['Cancel']),
+        el('div.sessionbar__center', {}, [
           el('h1.sessionbar__title', { text: session?.title ?? 'Session' }),
-          el('p.sessionbar__meta', {
-            text: [session?.weekLabel, `${loggedCount()} sets logged`].filter(Boolean).join(' · '),
-          }),
-        ]),
-        el('div.sessionbar__elapsed', { 'aria-label': 'Workout elapsed time' }, [
-          el('span.sessionbar__elapsed-label', { text: 'ELAPSED' }),
-          el('strong.sessionbar__elapsed-value', {
+          el('span.sessionbar__elapsed-value', {
             dataset: { sessionElapsed: 'true' },
             text: clock(elapsedSeconds()),
           }),
         ]),
+        el('button.sessionbar__finish', {
+          type: 'button',
+          dataset: { action: 'finish' },
+          onclick: () => { confirmingFinish = true; render() },
+        }, ['Finish']),
       ]),
 
-      el('button.session-minimize', {
-        type: 'button', dataset: { action: 'minimize-workout' },
-        onclick: () => { persistDraft(); onMinimize?.() },
-      }, [icon('minus'), 'MINIMIZE · KEEP WORKOUT OPEN']),
-
-      session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — this week is recovery, and it is half the work.' }),
-
+      session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
       ...plan.map(exerciseCard),
 
       addingMovement
         ? addMovementPanel()
         : el('button.button.button--wide.session-add__open', {
             type: 'button', dataset: { action: 'add-movement' },
-            onclick: () => { addingMovement = true; render(); requestAnimationFrame(() => root.querySelector('.session-add__search')?.focus()) },
-          }, [icon('plus'), 'ADD MOVEMENT']),
+            onclick: () => {
+              addingMovement = true
+              render()
+              requestAnimationFrame(() => root.querySelector('.session-add__search')?.focus())
+            },
+          }, [icon('plus'), 'Add movement']),
 
-      // FINISH lives below every set control, behind a confirm, because ending
-      // a session by mis-tapping next to a checkmark is unacceptable. The tab
-      // bar is hidden during a session, so the one primary action on this
-      // screen is a full-width acid button rather than a FAB — and it is the
-      // confirm that carries the acid, not the control that opens it.
-      el('div.finishzone', {}, [
-        confirmingFinish
-          ? el('div.finishzone__confirm', {}, [
-              el('p.finishzone__ask', { text: `Finish with ${loggedCount()} sets logged?` }),
-              el('div.finishzone__pair', {}, [
-                el('button.button', {
-                  type: 'button', dataset: { action: 'cancel-finish' },
-                  onclick: () => { confirmingFinish = false; render() },
-                }, ['KEEP GOING']),
-                el('button.button', {
-                  type: 'button', dataset: { action: 'confirm-finish', acid: 'primary' }, onclick: finish,
-                }, ['FINISH']),
-              ]),
-            ])
-          : el('button.button.button--wide', {
-              type: 'button', dataset: { action: 'finish' },
-              onclick: () => { confirmingFinish = true; render() },
-            }, ['FINISH SESSION']),
+      confirmingFinish && el('div.session-sheet', {}, [
+        el('div.session-sheet__card', {}, [
+          el('p.session-sheet__title', { text: `Finish with ${loggedCount()} sets logged?` }),
+          el('div.session-sheet__actions', {}, [
+            el('button', {
+              type: 'button', dataset: { action: 'cancel-finish' },
+              onclick: () => { confirmingFinish = false; render() },
+            }, ['Keep going']),
+            el('button', {
+              type: 'button', dataset: { action: 'confirm-finish' },
+              onclick: finish,
+            }, ['Finish']),
+          ]),
+        ]),
       ]),
+
+      confirmingDiscard && el('div.session-sheet', {}, [
+        el('div.session-sheet__card', {}, [
+          el('p.session-sheet__title', { text: 'Discard unlogged edits?' }),
+          el('p.session-sheet__copy', { text: 'Checked sets stay in your log. Unchecked changes will be discarded.' }),
+          el('div.session-sheet__actions', {}, [
+            el('button', {
+              type: 'button',
+              onclick: () => { confirmingDiscard = false; render() },
+            }, ['Keep editing']),
+            el('button', {
+              type: 'button',
+              dataset: { confirmAction: 'discard' },
+              onclick: () => {
+                clearActiveSessionDraft()
+                releaseWorkoutWakeLock()
+                onFinish(null)
+              },
+            }, ['Discard']),
+          ]),
+        ]),
+      ]),
+
     ])
+    document.querySelector('[data-session-rest-overlay]')?.remove()
+    if (rest) document.body.append(restBar())
     tick()
   }
 
   async function finish() {
+    document.querySelector('[data-session-rest-overlay]')?.remove()
     const summary = await workout.finishSession(session, {
       isFirstOfDay,
       // A block settles everything it logged; a single slot settles only itself,
@@ -818,6 +992,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       plan = []
       loggedHere = []
       isFirstOfDay = true
+      hasUnloggedEdits = false
+      confirmingDiscard = false
 
       // One slot, opened from Today. It joins the day's session rather than
       // starting a ceremony of its own.
@@ -907,9 +1083,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       isFirstOfDay = draft.isFirstOfDay !== false
       openPanel = draft.openPanel ?? null
       confirmingFinish = false
+      confirmingDiscard = false
+      hasUnloggedEdits = draft.hasUnloggedEdits === true
       addingMovement = false
       addQuery = ''
-      rest = draft.rest && Number(draft.rest.endsAt) > timeSource.now() ? { ...draft.rest } : null
+      rest = draft.rest && Number(draft.rest.endsAt) > timeSource.now()
+        ? {
+            ...draft.rest,
+            durationSec: Number(draft.rest.durationSec)
+              || plan.find((entry) => entry.exercise.id === draft.rest.exerciseId)?.restSec
+              || Math.max(1, (Number(draft.rest.endsAt) - timeSource.now()) / 1000),
+          }
+        : null
 
       const logs = await workout.setsFor(session.id)
       const liveLogIds = new Set(logs.map((log) => log.id))
@@ -953,6 +1138,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       releaseWorkoutWakeLock()
       document.removeEventListener('visibilitychange', checkpointWhenHidden)
       window.removeEventListener('pagehide', checkpointOnPageHide)
+      document.querySelector('[data-session-rest-overlay]')?.remove()
     },
   }
 }

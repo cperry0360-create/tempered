@@ -116,6 +116,41 @@
     }
 
 
+    async function seedProgressReference(storage) {
+      await storage.put('profile', { id: 'profile', setupComplete: true, calorieTarget: 2100 })
+      const today = '2026-09-07'
+      for (let offset = 0; offset < 60; offset += 1) {
+        const date = new Date(2026, 8, 7 - offset, 12)
+        const key = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+        await storage.put('dayLogs', {
+          date: key,
+          steps: 6200 + ((offset * 347) % 3100),
+          sleepHours: 7.1 + ((offset % 5) * 0.2),
+          bodyMetrics: { weight: 166 - (offset * 0.025) },
+          healthMetrics: { restingHr: 59 + (offset % 3), hrvMs: 44 + (offset % 7), respRate: 14.2 + ((offset % 4) * 0.2) },
+          readingMinutes: offset % 3 === 0 ? 20 : 0,
+        })
+      }
+      const exerciseIds = ['lat_pulldown', 'bench_press', 'seated_row_close']
+      for (let week = 0; week < 8; week += 1) {
+        const date = new Date(2026, 8, 7 - (week * 7), 12)
+        const key = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+        const sessionId = `progress-week-${week}`
+        await storage.put('sessions', { id: sessionId, date: key, startedAt: `${key}T09:00:00.000Z`, endedAt: `${key}T09:50:00.000Z`, durationMinutes: 50, routineId: 'pull_a' })
+        for (let setIndex = 0; setIndex < 12 + week; setIndex += 1) {
+          const exerciseId = exerciseIds[setIndex % exerciseIds.length]
+          await storage.put('setLogs', {
+            id: `${sessionId}-set-${setIndex}`, sessionId, exerciseId, setIndex,
+            weight: 95 + (week * 5) + ((setIndex % 3) * 10), reps: 8, isWarmup: false,
+            completedAt: `${key}T09:${String(Math.min(49, setIndex * 2)).padStart(2, '0')}:00.000Z`,
+          })
+        }
+      }
+      await storage.put('records', { exerciseId: 'lat_pulldown', bestWeight: { weight: 125, reps: 8, date: today }, bestE1RM: { value: 158, date: today }, bestVolume: { volume: 3800, date: today } })
+      await storage.put('records', { exerciseId: 'bench_press', bestWeight: { weight: 155, reps: 8, date: '2026-09-05' }, bestE1RM: { value: 196, date: '2026-09-05' }, bestVolume: { volume: 4300, date: '2026-09-05' } })
+      await storage.put('records', { exerciseId: 'seated_row_close', bestWeight: { weight: 140, reps: 10, date: '2026-09-03' }, bestE1RM: { value: 187, date: '2026-09-03' }, bestVolume: { volume: 4100, date: '2026-09-03' } })
+    }
+
     async function seedFuelReference(storage) {
       await storage.put('profile', {
         id: 'profile',
@@ -268,6 +303,7 @@
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: route[view] })
         if (view === 'today') await seedTodayReference(storage)
         if (view === 'fuel') await seedFuelReference(storage)
+        if (view === 'progress') await seedProgressReference(storage)
         await tempered.app.show(route[view])
       } else {
         throw new Error(`Unknown release visual: ${view}`)

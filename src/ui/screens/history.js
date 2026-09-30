@@ -155,6 +155,25 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return (daily.activities ?? []).filter((activity) => schedule[activity.id]?.cadence === 'daily')
   }
 
+  function summaryForDates(dates) {
+    const dataStart = progressDataStart({ dayLogs, sessions, today: clock.today() })
+    const trackedDates = observedProgressDates(dates, dataStart)
+    const days = daysForDates(trackedDates)
+    const dateSet = new Set(trackedDates)
+    const periodSessions = sessions.filter((session) => dateSet.has(session.date))
+    const sessionIds = new Set(periodSessions.map((session) => session.id))
+    const workingSets = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId)).length
+    const avgSteps = average(days.map((day) => day.steps))
+    const avgSleep = average(days.map((day) => day.sleepHours))
+    const weights = days
+      .map((day) => ({ date: day.date, value: day.bodyMetrics?.weight }))
+      .filter((entry) => typeof entry.value === 'number')
+    const latestWeight = weights.at(-1)?.value ?? null
+    const firstWeight = weights[0]?.value ?? null
+    const weightChange = latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null
+    return { days, periodSessions, workingSets, avgSteps, avgSleep, weights, latestWeight, weightChange }
+  }
+
   function percentDelta(current, previous) {
     if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null
     return ((current - previous) / Math.abs(previous)) * 100

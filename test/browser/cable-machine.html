@@ -165,7 +165,9 @@
       await tempered.app.show('settings')
       const refreshedEquipment = await waitFor('[data-section="cable-machine"]')
 
-      const addon = [...refreshedEquipment.querySelectorAll('button')].find((button) => button.textContent === 'Off')
+      const addonRow = [...refreshedEquipment.querySelectorAll('.cable-settings__toggle')]
+        .find((row) => /add-on weights installed/.test(row.textContent ?? ''))
+      const addon = addonRow?.querySelector('button')
       addon?.click()
       await settle(120)
       check('5 lb add-on toggle updates the Peg 6 preview to 80 lb total',

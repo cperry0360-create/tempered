@@ -48,7 +48,9 @@
 }
 
 .progress-range__select {
+  flex: 1;
   width: 100%;
+  min-width: 44px;
   min-height: 44px;
   appearance: none;
   border: 0;

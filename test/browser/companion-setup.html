@@ -37,7 +37,7 @@
       await setup.start()
 
       check('Welcome teaches effort and recovery', /training, nutrition, sleep, and recovery/i.test(q('.setup')?.textContent ?? '')
-        && /no downside/i.test(q('.setup')?.textContent ?? ''))
+        && /recovery count/i.test(q('.setup')?.textContent ?? ''))
       q('.setup__next')?.click()
       await settle()
       check('Goal and session choices are available', Boolean(q('.setup__choice') && q('.setup__number')))

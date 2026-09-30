@@ -465,7 +465,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
             value: String(range),
             'aria-label': 'Time range',
             onchange: (event) => { range = Number(event.target.value); render() },
-          }, [7, 30, 90].map((days) => el('option', { value: String(days) }, [`${days}D`]))),
+          }, [7, 30, 90].map((days) => el('option', { value: String(days), selected: days === range }, [`${days}D`]))),
         ]),
       ]),
       el('div.segmented.progress-r5__segments', { role: 'group', 'aria-label': 'Progress view' }, [

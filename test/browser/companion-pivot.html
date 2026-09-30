@@ -41,7 +41,7 @@
       check('Fuel dashboard leads the former Companion screen', Boolean(q('[data-fuel-dashboard="true"]')))
       check('Fresh companion starts as a Level 1 Egg', q('.companion-growth__stage')?.textContent === 'Level 1 · Egg', q('.companion-growth__stage')?.textContent)
       check('Trailback Turtle is the default visual style', q('.companion-habitat')?.dataset.style === 'turtle', q('.companion-habitat')?.dataset.style)
-      check('Companion explicitly never decays', /nothing ever decays/i.test(q('.companion-header__copy')?.textContent ?? ''))
+      check('Companion explicitly never decays', /without decay/i.test(q('.companion-header__copy')?.textContent ?? ''))
       check('Starter room has at least one unlocked object', qa('.companion-room__item[data-unlocked="true"]').length >= 1)
       check('Turtle habitat begins in its starter state', q('.companion-habitat')?.dataset.roomState === 'starter', q('.companion-habitat')?.dataset.roomState)
       check('Fresh visible form is checkpointed separately from earned care', (await storage.get('profile', 'profile'))?.companionRevealedLevel === 1)

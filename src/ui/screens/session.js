@@ -238,22 +238,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const solution = typeof set.weight === 'number'
       ? solvePlates(set.weight, { bar: entry.barWeight, plates: entry.plates })
       : null
-
-    if (!solution) {
-      return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
-        el('span.plates__label', { text: 'PER SIDE' }),
-        el('p.plates__note', { text: `${entry.barWeight} lb bar` }),
-      ])
-    }
-
+    const plates = solution?.perSide?.length ? solution.perSide.join(' · ') : 'empty bar'
     return el('div.plates', { dataset: { plates: entry.exercise.id } }, [
-      el('span.plates__label', { text: 'PER SIDE' }),
-      ...(solution.perSide.length === 0
-        ? [el('span.plates__empty', { text: 'empty bar' })]
-        : solution.perSide.map((plate) => el('span.plate', {
-            dataset: { plate: String(plate) }, text: String(plate),
-          }))),
-      el('p.plates__note', { dataset: { exact: String(solution.exact) }, text: solution.note }),
+      el('span.plates__label', {
+        text: `Per side: ${plates} · ${entry.barWeight} lb bar`,
+      }),
     ])
   }
 
@@ -341,18 +330,17 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   function setRow(entry, set, index) {
     const done = set.logged === true
+    const active = !done && entry.sets.findIndex((candidate) => !candidate.logged) === index
     const previous = previousSet(entry, index)
     const fields = fieldsFor(entry.exercise)
     const inputs = fields.map((field) => {
       if (!field) return el('span.setrow__num')
-      const previousNumber = previousValue(entry, index, field.key)
       const current = set[field.key]
-      const usePreviousAsPlaceholder = !done && previousNumber !== null && set.editedFields?.[field.key] !== true
       return el('input.setrow__num', {
         type: 'text',
         inputmode: field.mode,
-        value: usePreviousAsPlaceholder ? '' : (current ?? ''),
-        placeholder: previousNumber === null ? '' : String(previousNumber),
+        value: current ?? '',
+        placeholder: '',
         readOnly: done,
         'aria-label': `${field.label}, set ${index + 1}`,
         dataset: { field: field.key, exercise: entry.exercise.id, set: String(index) },
@@ -385,7 +373,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             for (const field of fields) {
               if (!field) continue
               const value = previousValue(entry, index, field.key)
-              if (value !== null) set[field.key] = value
+              if (value !== null) {
+                set[field.key] = value
+                set.editedFields = { ...(set.editedFields ?? {}), [field.key]: true }
+              }
             }
             hasUnloggedEdits = true
             persistDraft()
@@ -417,13 +408,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           return
         }
 
-        // Empty fields intentionally log their visible placeholders. This is
-        // the one-tap repeat-session path required by Redesign V1.
+        // The progression prescription is already a real input value. One tap
+        // logs exactly what is visible, unless the user edited it first.
         for (const input of inputs) {
           if (!input.dataset?.field) continue
-          const typed = numberOrNull(input.value)
-          const fallback = numberOrNull(input.placeholder)
-          set[input.dataset.field] = typed ?? fallback
+          set[input.dataset.field] = numberOrNull(input.value)
         }
         const setType = set.setType ?? 'working'
         const logged = {
@@ -490,7 +479,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         },
       }, [label]))))
     }
-    return row
+    return el('div.setrow-wrap', {}, [
+      row,
+      active && isBarbell(entry) ? plateStrip(entry, set) : null,
+    ])
   }
 
   // --- panels --------------------------------------------------------------
@@ -700,16 +692,22 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const range = slot
       ? `${slot.sets} × ${slot.repMin}–${slot.repMax}`
       : `${entry.sets.length} sets`
-    const previousTop = Number(entry.last?.sets?.[0]?.weight)
-    const coaching = slot && Number.isFinite(previousTop) && Number.isFinite(Number(slot.repMax))
-      ? `Hit ${slot.repMax} reps at ${previousTop} before adding weight.`
-      : (entry.proposal?.reason || slot?.cue || slot?.setup || '')
+    const coaching = entry.proposal?.reason || slot?.cue || slot?.setup || ''
+    const best = entry.record?.bestWeight
     const fields = fieldsFor(entry.exercise)
 
     return el('section.card.exercise.exercise--r3', {
       dataset: { exercise: entry.exercise.id, method: activeMethod(entry) ?? '' },
     }, [
-      el('header.exercise__head', {}, [
+      el('header.exercise__head', { dataset: { hasArt: String(Boolean(entry.exercise.art)) } }, [
+        entry.exercise.art && el('button.exercise__art', {
+          type: 'button',
+          'aria-label': `Show ${entry.exercise.name} reference`,
+          dataset: { art: entry.exercise.id },
+          onclick: () => togglePanel(entry, 'art'),
+        }, [el('img.exercise__thumb', {
+          src: artUrl(entry.exercise.art), alt: '', loading: 'lazy',
+        })]),
         el('div.exercise__title', {}, [
           el('h2.exercise__name', { text: displayName(entry.exercise, entry.slot) }),
           el('button.exercise__range', {
@@ -721,6 +719,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         exerciseMenu(entry, position),
       ]),
 
+      best && el('p.exercise__best', {
+        text: `Best ${lbs(best.weight)} lb × ${best.reps}${best.date ? ` · ${shortDate(best.date)}` : ''}`,
+      }),
       coaching && el('p.exercise__proposal', { text: coaching }),
 
       isOpen(entry, 'rest') && el('div.panel', {}, [
@@ -741,6 +742,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       isOpen(entry, 'swap') && swapPanel(entry),
       isOpen(entry, 'equipment') && equipmentPanel(entry),
       isOpen(entry, 'notes') && notesPanel(entry),
+      isOpen(entry, 'art') && el('div.panel.panel--art', {}, [
+        el('img.exercise__full', { src: artUrl(entry.exercise.art), alt: entry.exercise.name }),
+      ]),
 
       el('div.setrow.setrow--head', {}, [
         el('span.setrow__index', { text: 'Set' }),

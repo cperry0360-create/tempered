@@ -477,6 +477,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         storage.getAll('setLogs'),
         daily.activitySchedule(),
       ])
+      records = records.map((record) => ({ ...record, bestE1RM: record.bestE1RM ?? record.bestE1rm ?? null }))
 
       sessionStats = new Map()
       weightHistory = new Map()

@@ -1,3 +1,95 @@
+## 2026-09-30 — R3.1 pre-redesign feature inventory (baseline d9850f5)
+
+Section 0.1 makes `d9850f5` the preservation baseline. This inventory covers the working
+behaviour in the four redesign-touched screen modules before R2/R3/R4. Items named for removal
+by Redesign V1 are retained here for audit clarity but are marked **specified removal** rather
+than candidates for restoration. Final R3.1 status and location are recorded below this inventory.
+
+### Today — `src/ui/screens/today.js`
+
+- Daily activity logging through the canonical daily service: mark activities, numeric values,
+  additive values, daily goals, weekly goals, and completed-state handling.
+- One-tap configurable quick-add amounts for additive activities, with manual entry still
+  available after completion where appropriate.
+- Sleep logging with decimal-hour entry and common-hour quick choices.
+- Mobility logging with four guided routines, movement cues, countdown timer, and
+  complete-and-log action.
+- Date navigation across calendar weeks, including past/future day selection, return-to-today,
+  and prevention of logging into future dates.
+- Personal/work planner tasks for the selected date: create, complete/reopen, open details,
+  edit task metadata, delete, and separate personal/work kinds.
+- Program training for the day: start the full prescribed session or open individual program
+  exercise slots; weekly exercise-frequency aggregation and extra-slot logging when a frequency
+  target still needs work.
+- Completed training/worked-item disclosure so already logged activity remains inspectable.
+- First-week guidance derived from the active program.
+- Daily recap overlay with lifestyle host plus training minutes/sets/exercise/session totals.
+- Earned-XP feedback after logging.
+- Daily and weekly activity grouping plus an extra-logging path for off-schedule activities.
+- **Specified removals/moves:** duplicated Active Program presentation, old weekly tile/grid
+  presentation, Workout control center, inline readiness explanation, circular recovery import,
+  AI progress button, Weekly goals presentation, and the standalone Log something else surface.
+  The spec moves readiness explanation behind info, AI to Progress, and Log something else into
+  Daily log.
+
+### Active workout — `src/ui/screens/session.js`
+
+- Session elapsed timer with visibility/pagehide checkpointing, resumable elapsed time, browser
+  and native wake-lock handling, and a persisted active-session draft.
+- Rest timer stored as an absolute `endsAt` timestamp so sleeping/backgrounding does not drift it.
+- Progression-engine prescriptions from `prepared.proposal.sets` prefilled as real input values.
+- One-tap set logging of the values visibly present in those inputs; undo removes the canonical
+  stored set.
+- First-set edits cascade weight/reps/time to later unlogged sets without rewriting logged history.
+- Previous-session performance, method-specific history, and method switching with logged-set lock.
+- Progression proposal reason displayed as coaching guidance.
+- Exercise reference art: thumbnail plus tap-to-open full image panel.
+- Best/PR performance with load, reps, and date.
+- Barbell plate calculator beside the next set, using editable bar weight and available plates.
+- Exercise swap while preserving set structure and substitution identity.
+- Rest-duration editing.
+- Set editing/removal and add-set.
+- Exercise reordering.
+- Add-movement search during a live session without changing the saved program.
+- Program-day, single-slot, routine, and ad-hoc single-exercise session starts.
+- Slot/session metadata including program day, slot index, substitutions, method, per-side flag,
+  time/distance variants, and canonical set index.
+- Deload message.
+- Finish confirmation and correct settlement semantics for full blocks versus a single slot.
+- Resume reconciliation against IndexedDB so stored set logs remain canonical after process death.
+- **Specified layout moves:** horizontal exercise action chips and up/down controls move into the
+  ⋯ menu; minimize bar moves into the ⋯ menu/tab switching; set removal becomes swipe-left; set
+  type selector adds Working/Warm-up/Drop/Failure; rest controls move to the sticky rest bar.
+
+### Train — `src/ui/screens/train.js`
+
+- Active-program name, week, note, deload state, program days, and start-session actions.
+- First-week/next-useful-session guidance.
+- Program weekly slot progress.
+- Hard-sets-per-muscle guide derived from logged work and program targets.
+- Training-rhythm history across recorded weeks, including trained versus qualifying days,
+  current week, Away protection, streak/keeper state, and weekly duration threshold.
+- Routines with exercise/set counts and direct workout start.
+- Exercise library search and ad-hoc single-exercise start.
+- Exercise-library last-worked date and PR/best-weight display.
+- Readiness estimate and recent 7-day training stats.
+- ChatGPT coaching handoff with 14-day/latest-workout data and confirmed-PR derivation.
+- **Specified removals/moves:** weekly slot bars, Workout control center, stat tile grid, Train AI
+  button, and duplicated Active Program block are removed; AI moves to Progress. Training history
+  and rhythm move behind the Training rhythm row. Routine start moves to routine detail.
+
+### Fuel — `src/ui/screens/fuel.js`
+
+- Current-day calories against target and calories-left energy visualization.
+- Protein against target plus nutrition-ledger macro totals.
+- Meal-journal launch and display of recent logged meals.
+- Water total against target with one-tap +8/+12/+25 oz logging.
+- Fuel-updated event refresh so nutrition changes appear without leaving the screen.
+- **Specified removals:** Recovery/readiness/health-metric card, Fuel companion content,
+  Open Today button, No meals yet box, eyebrow, and subtitle. These are intentionally not restored.
+- **R4-prescribed replacement retained:** Recent quick-log suggestions derived from prior nutrition
+  entries, with one-tap re-logging through the canonical daily nutrition service.
+
 Warning: truncated output (original token count: 41497)
 Total output lines: 2654
 

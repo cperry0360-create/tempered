@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R6 workout rollover</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+  const qa = (selector, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(selector)] : []
+  const settle = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  try {
+    localStorage.clear()
+    const storage = createMemoryStorage()
+    const clock = fixedClock(new Date(2026, 8, 9, 9, 0, 0))
+    const tempered = await bootstrapHarness({ storage, clock, mount: q('#app') })
+
+    const state = (await storage.getAll('programState')).find((row) => row.active)
+    await storage.put('programState', { ...state, startedOn: '2026-09-07' })
+    const program = await storage.get('programs', state.programId)
+    const mondayExercises = program.days.find((day) => day.id === 'monday').exercises.slice(0, 2)
+    const testProgram = {
+      ...program,
+      days: program.days.map((day) => ({
+        ...day,
+        exercises: day.id === 'monday' ? mondayExercises : [],
+      })),
+    }
+    await storage.put('programs', testProgram)
+
+    await tempered.app.show('today')
+    await settle()
+
+    const rollover = q('[data-rollover-group]')
+    const rows = qa('[data-rollover-slot]', rollover)
+    check('Wednesday Today groups two unfinished Monday movements under earlier this week',
+      Boolean(rollover) && /earlier this week/i.test(rollover.textContent) && rows.length === 2,
+      `group=${Boolean(rollover)} rows=${rows.length} text=${rollover?.textContent ?? ''}`)
+
+    const first = rows[0]
+    first?.click()
+    await settle(220)
+    const exercises = qa('.screen--session [data-exercise]')
+    check('opening a rollover movement creates a one-movement slot session',
+      Boolean(q('.screen--session')) && exercises.length === 1,
+      `session=${Boolean(q('.screen--session'))} exercises=${exercises.length}`)
+
+    const loggedName = first?.dataset.exerciseName ?? first?.querySelector('[data-slot-name]')?.textContent?.trim()
+    const checksBefore = qa('.screen--session .setrow__check[data-done="false"]')
+    check('slot session offers the prescribed unlogged sets', checksBefore.length === (mondayExercises[0]?.sets ?? 0),
+      `checks=${checksBefore.length} expected=${mondayExercises[0]?.sets ?? 0}`)
+    for (let index = 0; index < checksBefore.length; index += 1) {
+      q('.screen--session .setrow__check[data-done="false"]')?.click()
+      await settle(90)
+    }
+
+    await tempered.app.show('today')
+    await settle(180)
+    const remainingRows = qa('[data-rollover-slot]', q('[data-rollover-group]'))
+    check('logging all sets removes that movement from the rollover list',
+      remainingRows.length === 1 && !remainingRows.some((row) =>
+        row.dataset.exerciseId === exercises[0]?.dataset.exerciseId || row.textContent.includes(loggedName ?? '\u0000')),
+      `remaining=${remainingRows.length} names=${remainingRows.map((row) => row.textContent.trim()).join(' | ')}`)
+  } catch (error) {
+    check('R6 rollover harness completed without throwing', false, String(error?.stack ?? error).slice(0, 1200))
+  }
+
+  await fetch('/__report', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'rollover-r6', passed: checks.every((item) => item.ok), checks }),
+  })
+</script>
+</body>
+</html>

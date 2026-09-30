@@ -166,7 +166,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         }, [
           el('span.train-r4__row-copy', {}, [
             el('strong', { text: day.name }),
-            el('small', { text: `${day.exercises?.length ?? 0} exercises · Last ${shortDate(lastByProgramDay.get(day.id))}` }),
+            el('small', { text: `${day.exercises?.length ?? 0} exercises · ${lastByProgramDay.has(day.id) ? `Last ${shortDate(lastByProgramDay.get(day.id))}` : 'Not yet worked'}` }),
           ]),
           chevron(),
         ]))),

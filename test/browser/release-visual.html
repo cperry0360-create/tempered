@@ -28,6 +28,7 @@
 
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     const mount = document.querySelector('#app')
+    localStorage.clear()
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = { today: 'today', train: 'train', fuel: 'fuel', progress: 'history' }
 

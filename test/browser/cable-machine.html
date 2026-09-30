@@ -171,7 +171,7 @@
       addon?.click()
       await settle(120)
       check('5 lb add-on toggle updates the Peg 6 preview to 80 lb total',
-        /80 lb Cable Fly total/.test(q('.cable-settings__example', refreshedEquipment)?.textContent ?? ''),
+        /80 lb total nominal resistance for Cable Fly/.test(q('.cable-settings__example', refreshedEquipment)?.textContent ?? ''),
         q('.cable-settings__example', refreshedEquipment)?.textContent)
       const profile = await storage.get('profile', 'profile')
       check('correct FTX identity is persisted through the storage adapter', profile?.cableMachine?.id === 'inspire_ftx_centr2')

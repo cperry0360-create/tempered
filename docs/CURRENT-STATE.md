@@ -1,3 +1,14 @@
+## 2026-09-30 — Redesign V1 R3.1 session feature restore
+
+- Applied the new feature-preservation rule to the d9850f5 pre-redesign baseline.
+- Active workout again shows real progression prescriptions in inputs, proposal coaching,
+  56px exercise art with full-image panel, Best performance, and per-side barbell plates.
+- Restored unapproved R2/R4 removals behind detail views: Today planner/date/day recap/program
+  exercise logging and Train hard-set/library-PR context.
+- Added fail-first browser coverage proving one-tap logging uses the prescription rather than
+  last-session values.
+- Release version: 0.41.1 (56).
+
 ## 2026-09-30 — Redesign V1 R4 Train and Fuel
 
 - Train now follows the approved R4 hierarchy: one program header, next session, session rows, routines, and drill-in rows for Exercise library and Training rhythm. The duplicated program presentation, weekly slot bars, workout control center, stat tiles, and AI coaching handoff are removed from Train.
@@ -23,7 +34,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`  
 **Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release:** 0.41.0 (55) — Redesign V1 R4 Train and Fuel
+**Current release:** 0.41.1 (56) — Redesign V1 R3.1 session feature restore
 
 **Product maturity:** Pre-beta product completion
 

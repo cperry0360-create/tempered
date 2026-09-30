@@ -101,8 +101,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   const today = createTodayScreen({
-    workout, daily, storage, clock,
+    workout, daily, planner, storage, clock,
     onStart: (options) => startSession(options),
+    onOpenSlot: (slot) => slot?.extra
+      ? startSession({ exerciseId: slot.exerciseId })
+      : startSession({ slotTask: slot }),
     onCompanion: () => show('companion'),
     onSettings: () => openSettings(),
     onViewSummary: () => show('history'),

@@ -1027,6 +1027,23 @@ button.today-item:disabled {
   gap: 8px;
 }
 
+.exercise--r3 .exercise__head[data-has-art='true'] {
+  grid-template-columns: 56px minmax(0, 1fr) 44px;
+}
+
+.exercise--r3 .exercise__art {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+}
+
+.exercise--r3 .exercise__best {
+  margin: 0;
+  color: var(--text-2);
+  font: 400 13px/18px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
 .exercise--r3 .exercise__title {
   min-width: 0;
   display: grid;
@@ -1126,6 +1143,11 @@ button.today-item:disabled {
   font: 400 15px/20px var(--font-ui);
 }
 
+.exercise--r3 .setrow-wrap {
+  display: grid;
+  gap: 2px;
+}
+
 .exercise--r3 .setrow {
   position: relative;
   min-height: 52px;
@@ -1198,6 +1220,17 @@ button.today-item:disabled {
 .exercise--r3 input.setrow__num::placeholder {
   color: var(--text-3);
   opacity: .58;
+}
+
+.exercise--r3 .plates {
+  display: block;
+  padding: 0 45px 4px 42px;
+}
+
+.exercise--r3 .plates__label {
+  color: var(--text-2);
+  font: 400 13px/18px var(--font-ui);
+  letter-spacing: 0;
 }
 
 .exercise--r3 input.setrow__num[readonly] {

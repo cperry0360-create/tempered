@@ -49,11 +49,18 @@
         await waitFor('.setrow__check')
 
         const cards = qa('section.exercise[data-exercise]')
-        check('R3 keeps every movement card while removing exercise thumbnails',
-          cards.length > 0 && qa('.exercise__art, .exercise__thumb').length === 0,
-          `${cards.length} movement cards / ${qa('.exercise__art, .exercise__thumb').length} thumbnails`)
-        check('R3 removes the legacy enlarged-art panel from the active workout',
-          qa('.exercise__full, .panel--art').length === 0)
+        const thumbs = qa('.exercise__art .exercise__thumb')
+        await settleImages(thumbs)
+        check('R3.1 preserves one exercise thumbnail for every art-backed movement card',
+          cards.length > 0 && thumbs.length === cards.length,
+          `${cards.length} movement cards / ${thumbs.length} thumbnails`)
+        check('exercise thumbnails decode in the browser',
+          thumbs.every((image) => image.naturalWidth > 0),
+          thumbs.map((image) => image.naturalWidth).join(','))
+        q('.exercise__art')?.click()
+        await new Promise((resolve) => setTimeout(resolve, 40))
+        check('tapping a thumbnail opens the full exercise image panel',
+          q('.panel--art .exercise__full') !== null)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 300))
       }

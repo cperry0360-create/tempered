@@ -4,7 +4,7 @@
 
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
-import { since } from '../format.js'
+import { lbs, since } from '../format.js'
 
 /**
  * @param {object} deps
@@ -28,6 +28,8 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   /** @type {Map<string, string>} */ const lastByExercise = new Map()
   /** @type {Map<string, string>} */ const lastByProgramDay = new Map()
   /** @type {any} */ let rhythm = null
+  /** @type {any} */ let weekView = null
+  /** @type {Map<string, any>} */ let records = new Map()
   /** @type {any[]} */ let sessions = []
   /** @type {any[]} */ let setLogs = []
 
@@ -136,6 +138,14 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       }, [el('span', { text: 'Program details' }), chevron()]),
       programDetailsOpen && el('div.train-r4__details', {}, [
         el('p', { text: program.note || 'Your active training plan.' }),
+        active.deload && el('p', { text: 'Deload week. Hold the weight — recovery is half the process.' }),
+        weekView?.hardSets?.length && el('div.train-r4__hard-sets', {}, [
+          el('strong', { text: 'Hard sets this week' }),
+          ...weekView.hardSets.map((row) => el('div.train-r4__hard-set-row', {}, [
+            el('span', { text: row.group.replace(/_/g, ' ') }),
+            el('span', { text: row.target ? `${row.sets} / ${row.target[0]}–${row.target[1]}` : String(row.sets) }),
+          ])),
+        ]),
         onProgramBuilder && el('button.train-r4__secondary', {
           type: 'button', onclick: onProgramBuilder,
         }, ['Open Program Builder']),
@@ -148,6 +158,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     return el('section.train-r4__card.train-r4__next', { dataset: { section: 'next-session' } }, [
       el('h2', { text: todayDay.name }),
       el('p', { text: `${todayDay.exercises?.length ?? 0} exercises · ~${estimateSessionMinutes(todayDay)} min` }),
+      active.week === 1 && el('p', { text: 'Start when you have a useful window. Record what happened; repeatable work is enough.' }),
       el('button.train-r4__secondary', {
         type: 'button', dataset: { startday: todayDay.id },
         onclick: () => onStart({ programDay: todayDay }),
@@ -207,6 +218,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function exerciseRow(exercise) {
     const last = lastByExercise.get(exercise.id)
+    const best = records.get(exercise.id)?.bestWeight
     return el('button.libraryrow', {
       type: 'button', dataset: { exercise: exercise.id },
       onclick: () => onStart({ routine: null, exerciseId: exercise.id }),
@@ -215,7 +227,10 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         el('span.libraryrow__name', { text: exercise.name }),
         el('span.libraryrow__meta', { text: [exercise.group, exercise.class].filter(Boolean).join(' · ') }),
       ]),
-      el('span.libraryrow__last', { text: last ? since(last, clock.today()) : 'Not yet worked' }),
+      el('span.libraryrow__stats', {}, [
+        best && el('span.libraryrow__pr', { text: `PR ${lbs(best.weight)} × ${best.reps}` }),
+        el('span.libraryrow__last', { text: last ? since(last, clock.today()) : 'Not yet worked' }),
+      ]),
     ])
   }
 
@@ -282,8 +297,9 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       query = ''
       active = await workout.activeProgram()
       todayDay = (await workout.todayTasks())?.day ?? null
-      ;[rhythm, routines, exercises, sessions, setLogs] = await Promise.all([
-        workout.trainingRhythm(), storage.getAll('routines'), storage.getAll('exercises'),
+      ;[rhythm, weekView, records, routines, exercises, sessions, setLogs] = await Promise.all([
+        workout.trainingRhythm(), workout.weekStatus(), workout.recordMap(),
+        storage.getAll('routines'), storage.getAll('exercises'),
         storage.getAll('sessions'), storage.getAll('setLogs'),
       ])
       exercises.sort((a, b) => a.name.localeCompare(b.name))

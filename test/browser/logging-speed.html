@@ -134,27 +134,26 @@
         tap(await waitFor('.train-r4__routine-detail .train-r4__secondary'), 'START lower again')
         await waitFor('.setrow__check')
 
-        const placeholderFields = qa('input.setrow__num')
-          .filter((input) => input.value === '' && input.placeholder !== '')
-        check('repeating a session exposes prior values as placeholders',
-          placeholderFields.length > 0,
-          `${placeholderFields.length} placeholder-backed fields`)
+        const prescribedFields = qa('input.setrow__num').filter((input) => input.value !== '')
+        check('repeating a session exposes progression prescriptions as real values',
+          prescribedFields.length > 0,
+          `${prescribedFields.length} prefilled fields`)
 
         const warmRows = qa('.setrow__check').length
-        let placeholderQuickLogWorked = false
+        let prescriptionQuickLogWorked = false
         for (const [index, button] of qa('.setrow__check').entries()) {
           if (button.disabled) continue
           const row = button.closest('.setrow')
           const weight = row.querySelector('[data-field="weight"]')
-          const expected = weight?.value || weight?.placeholder || ''
+          const expected = weight?.value || ''
           tap(button, 'log set')
           await settle()
           if (index === 0 && expected) {
             const loggedWeight = qa('.setrow:not(.setrow--head)')[0]?.querySelector('[data-field="weight"]')?.value
-            placeholderQuickLogWorked = loggedWeight === expected
+            prescriptionQuickLogWorked = loggedWeight === expected
           }
         }
-        check('one tap on check logs a set using its placeholder values', placeholderQuickLogWorked)
+        check('one tap on check logs a set using its prescribed input values', prescriptionQuickLogWorked)
         tap(await waitFor('[data-action="finish"]'), 'FINISH')
         tap(await waitFor('[data-action="confirm-finish"]'), 'confirm FINISH')
         await waitFor('[data-action="done"]')

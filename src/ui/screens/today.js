@@ -186,7 +186,7 @@ function compactMetric(value, unit, digits = 0) {
 }
 
 export function createTodayScreen({
-  workout, daily, storage, clock, onStart, onCompanion, onSettings, onViewSummary,
+  workout, daily, planner, storage, clock, onStart, onOpenSlot, onCompanion, onSettings, onViewSummary,
 }) {
   const root = el('div.screen.screen--today.screen--today-calm')
   const realToday = clock.today()
@@ -203,6 +203,12 @@ export function createTodayScreen({
   let openActivityId = null
   let otherOpen = false
   let readinessInfoOpen = false
+  let dayDetailsOpen = false
+  let plannerRows = []
+  let plannerComposerOpen = false
+  let plannerKind = 'personal'
+  let plannerDetailId = null
+  let justEarned = null
   let selectedMobilityRoutineId = null
   let mobilityOverlay = null
   let mobilityTimer = null
@@ -540,7 +546,15 @@ export function createTodayScreen({
 
   async function record(activity, value, options = {}) {
     if (!canLogSelected()) return
-    await daily.logAt(selectedDate, activity.id, value, options)
+    const result = await daily.logAt(selectedDate, activity.id, value, options)
+    const earned = Object.values(result?.xpByAttribute ?? {}).reduce((sum, value) => sum + (Number(value) || 0), 0)
+    justEarned = earned > 0 ? {
+      id: activity.id,
+      xp: earned,
+      levelled: result?.levelledUp?.[0]
+        ? `${result.levelledUp[0].attribute} reached ${result.levelledUp[0].tier}`
+        : null,
+    } : null
     openActivityId = null
     if (activity.id === 'mobility') selectedMobilityRoutineId = null
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
@@ -618,6 +632,9 @@ export function createTodayScreen({
     return el('section.today-card.today-session-card', { dataset: { section: 'next-session' } }, [
       el('h2', { text: name }),
       el('p', { text: `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(todayProgram.day)} min` }),
+      week === 1 && el('p.today-session-card__guidance', {
+        text: 'Start when you have a useful window. Record what happened; the plan can meet you where you are.',
+      }),
       el('button.today-button.today-button--primary', {
         type: 'button', dataset: { startday: todayProgram.day.id },
         onclick: () => onStart({ programDay: remainingProgramDay(weekProgram, todayProgram.day) }),
@@ -777,6 +794,252 @@ export function createTodayScreen({
     ])
   }
 
+  function monthLabel(dateKey) {
+    return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(parseDate(dateKey))
+  }
+
+  async function addPlannerTask(input) {
+    if (!planner) return
+    const row = await planner.add({ date: selectedDate, title: input.value, kind: plannerKind })
+    if (!row) return
+    input.value = ''
+    plannerComposerOpen = false
+    plannerRows = await planner.list(selectedDate)
+    render()
+  }
+
+  async function togglePlannerTask(id) {
+    if (!planner) return
+    await planner.toggle(id)
+    plannerRows = await planner.list(selectedDate)
+    render()
+  }
+
+  async function removePlannerTask(id) {
+    if (!planner) return
+    await planner.remove(id)
+    if (plannerDetailId === id) plannerDetailId = null
+    plannerRows = await planner.list(selectedDate)
+    render()
+  }
+
+  async function updatePlannerTask(id, values) {
+    if (!planner) return false
+    const updated = await planner.update(id, values)
+    if (!updated) return false
+    plannerDetailId = null
+    plannerRows = await planner.list(selectedDate)
+    render()
+    return true
+  }
+
+  function plannerComposer() {
+    const input = el('input.today-plan-compose__input', {
+      type: 'text', placeholder: plannerKind === 'work' ? 'Draft memo…' : 'Add a task…',
+      'aria-label': `New ${plannerKind} task`,
+      onkeydown: (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); addPlannerTask(input) }
+      },
+    })
+    return el('div.today-plan-compose', {}, [
+      input,
+      el('div.today-plan-compose__foot', {}, [
+        el('div.today-plan-kind', { role: 'group', 'aria-label': 'Task type' },
+          ['personal', 'work'].map((kind) => el('button.today-plan-kind__button', {
+            type: 'button', dataset: { active: String(plannerKind === kind) },
+            onclick: () => { plannerKind = kind; render() },
+          }, [kind === 'work' ? 'Work' : 'Personal']))),
+        el('button.today-plan-compose__add', { type: 'button', onclick: () => addPlannerTask(input) }, ['Add task']),
+      ]),
+    ])
+  }
+
+  function plannerItem(row) {
+    return el('div.today-plan-item', { dataset: { done: String(row.done), kind: row.kind } }, [
+      el('button.today-plan-item__check', {
+        type: 'button', 'aria-label': `${row.done ? 'Reopen' : 'Complete'} ${row.title}`,
+        onclick: () => togglePlannerTask(row.id),
+      }, [row.done ? icon('check') : '']),
+      el('button.today-plan-item__main', {
+        type: 'button', onclick: () => { plannerDetailId = row.id; render() },
+      }, [
+        el('span.today-plan-item__title', { text: row.title }),
+        el('span.today-plan-item__meta', { text: [
+          row.kind === 'work' ? 'Work' : 'Personal',
+          row.rolloverFrom ? `Rolled from ${dateLabel(row.rolloverFrom)}` : null,
+          row.dueDate ? `Due ${dateLabel(row.dueDate)}` : null,
+        ].filter(Boolean).join(' · ') }),
+      ]),
+      el('button.today-plan-item__remove', {
+        type: 'button', 'aria-label': `Delete ${row.title}`, onclick: () => removePlannerTask(row.id),
+      }, ['×']),
+    ])
+  }
+
+  function plannerDetail() {
+    const row = plannerRows.find((item) => item.id === plannerDetailId)
+    if (!row) return null
+    const title = el('textarea.task-detail__title', { rows: 3, 'aria-label': 'Task title', value: row.title })
+    const notes = el('textarea.task-detail__notes', {
+      rows: 6, 'aria-label': 'Task notes', placeholder: 'Add notes or details…', value: row.notes ?? '',
+    })
+    const due = el('input.task-detail__due', { type: 'date', value: row.dueDate ?? '', 'aria-label': 'Optional due date' })
+    let kind = row.kind === 'work' ? 'work' : 'personal'
+    const kindButtons = ['personal', 'work'].map((value) => el('button.task-detail__kind', {
+      type: 'button', dataset: { active: String(kind === value), kind: value },
+      onclick: () => {
+        kind = value
+        for (const button of kindButtons) button.dataset.active = String(button.dataset.kind === kind)
+      },
+    }, [value === 'work' ? 'Work' : 'Personal']))
+    const close = () => { plannerDetailId = null; render() }
+    return el('div.task-detail-overlay', {
+      dataset: { taskDetail: row.id }, onclick: (event) => { if (event.target === event.currentTarget) close() },
+    }, [
+      el('section.task-detail-card', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'task-detail-heading' }, [
+        el('div.task-detail-card__head', {}, [
+          el('h2.task-detail-card__heading', { id: 'task-detail-heading', text: 'Edit task' }),
+          el('button.task-detail-card__close', { type: 'button', 'aria-label': 'Close task details', onclick: close }, ['×']),
+        ]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Task' }), title]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Notes' }), notes]),
+        el('label.task-detail__field', {}, [el('span', { text: 'Optional due date' }), due]),
+        el('div.task-detail__field', {}, [el('span', { text: 'Type' }), el('div.task-detail__kinds', {}, kindButtons)]),
+        el('div.task-detail__actions', {}, [
+          el('button.button.task-detail__delete', { type: 'button', onclick: () => removePlannerTask(row.id) }, ['Delete']),
+          el('button.button', { type: 'button', onclick: close }, ['Cancel']),
+          el('button.button.task-detail__save', {
+            type: 'button', onclick: () => updatePlannerTask(row.id, {
+              title: title.value, notes: notes.value, dueDate: due.value, kind,
+            }),
+          }, ['Save']),
+        ]),
+      ]),
+    ])
+  }
+
+  function calendarRail() {
+    const dates = weekDates(selectedDate)
+    return el('section.today-calendar', { 'aria-label': 'Choose day' }, [
+      el('div.today-calendar__head', {}, [
+        el('button.today-calendar__nav', {
+          type: 'button', 'aria-label': 'Previous week', onclick: () => selectDate(addDays(selectedDate, -7)),
+        }, ['‹']),
+        el('span.today-calendar__month', { text: monthLabel(selectedDate) }),
+        el('button.today-calendar__nav', {
+          type: 'button', 'aria-label': 'Next week', onclick: () => selectDate(addDays(selectedDate, 7)),
+        }, ['›']),
+      ]),
+      el('div.today-calendar__days', {}, dates.map((dateKey) => {
+        const date = parseDate(dateKey)
+        return el('button.today-calendar__day', {
+          type: 'button',
+          dataset: { selected: String(dateKey === selectedDate), today: String(dateKey === realToday) },
+          onclick: () => selectDate(dateKey),
+        }, [
+          el('span.today-calendar__dow', { text: new Intl.DateTimeFormat(undefined, { weekday: 'narrow' }).format(date) }),
+          el('span.today-calendar__num', { text: String(date.getDate()) }),
+        ])
+      })),
+      !isRealToday() && el('button.today-calendar__back', { type: 'button', onclick: () => selectDate(realToday) }, ['Back to today']),
+    ])
+  }
+
+  function weeklyExerciseGroups() {
+    if (!weekProgram?.week?.days) return []
+    const byExercise = new Map()
+    for (const dayEntry of weekProgram.week.days) {
+      for (const task of dayEntry.tasks) {
+        const id = task.slot.exerciseId
+        const existing = byExercise.get(id) ?? {
+          id, name: task.slot.name,
+          prescription: `${task.slot.sets} × ${task.slot.repMin}–${task.slot.repMax}`,
+          target: 0, done: 0, started: false, firstOpen: null, firstAny: null,
+        }
+        existing.target += 1
+        if (task.done) existing.done += 1
+        if (task.started) existing.started = true
+        const ref = { task, programDay: dayEntry.day }
+        if (!existing.firstAny) existing.firstAny = ref
+        if (!task.done && !existing.firstOpen) existing.firstOpen = ref
+        byExercise.set(id, existing)
+      }
+    }
+    const overrides = weekProgram?.exerciseFrequencyTargets ?? {}
+    const frequencyDone = weekProgram?.exerciseFrequencyDone ?? {}
+    for (const group of byExercise.values()) {
+      const override = Number(overrides[group.id])
+      if (Number.isFinite(override) && override > 0) {
+        group.target = override
+        group.done = frequencyDone[group.id] ?? 0
+        group.frequencyOverride = true
+      }
+    }
+    return [...byExercise.values()].sort((a, b) =>
+      Number(a.done >= a.target) - Number(b.done >= b.target) || a.name.localeCompare(b.name))
+  }
+
+  function openExerciseGroup(group) {
+    if (!isRealToday() || !onOpenSlot) return
+    const ref = group.firstOpen ?? group.firstAny
+    if (group.frequencyOverride && !group.firstOpen && group.done < group.target) {
+      onOpenSlot({ exerciseId: group.id, extra: true })
+      return
+    }
+    if (!ref) return
+    onOpenSlot({
+      dayId: ref.programDay.id,
+      slotIndex: ref.task.index,
+      exerciseId: ref.task.slot.exerciseId,
+      slot: ref.task.slot,
+      alreadyLogged: ref.task.logged,
+    })
+  }
+
+  function renderDayDetails() {
+    const groups = weeklyExerciseGroups()
+    replace(root, [
+      el('header.train-r4__subheader', {}, [
+        el('button.train-r4__back', {
+          type: 'button', 'aria-label': 'Back to Today',
+          onclick: () => { dayDetailsOpen = false; plannerDetailId = null; render() },
+        }, ['‹']),
+        el('h1.screen__title', { text: 'Day details' }),
+      ]),
+      calendarRail(),
+      el('section.today-card', {}, [
+        el('div.today-card__heading-row', {}, [
+          el('h2', { text: 'Planner' }),
+          el('button.today-text-button', {
+            type: 'button', onclick: () => { plannerComposerOpen = !plannerComposerOpen; render() },
+          }, [plannerComposerOpen ? 'Close' : '+ Add task']),
+        ]),
+        plannerComposerOpen && plannerComposer(),
+        el('div.today-plan', {}, plannerRows.length
+          ? plannerRows.map(plannerItem)
+          : [el('p', { text: 'No tasks for this day.' })]),
+      ]),
+      isRealToday() && groups.length > 0 && el('section.today-card', {}, [
+        el('h2', { text: 'Program exercises' }),
+        el('div.today-list', {}, groups.map((group) => el('button.today-item.today-item--exercise', {
+          type: 'button', onclick: () => openExerciseGroup(group),
+        }, [
+          el('span.today-item__main', {}, [
+            el('span.today-item__name', { text: group.name }),
+            el('span.today-item__meta', { text: `${group.prescription} · ${group.done} / ${group.target} this week` }),
+          ]),
+          el('span.today-item__cta', { text: group.done >= group.target ? 'Done' : 'Log sets' }),
+        ]))),
+      ]),
+      el('section.today-card', {}, [
+        el('h2', { text: 'Daily recap' }),
+        el('p', { text: `${trainingStats.minutes} training min · ${trainingStats.workingSets} working sets · ${trainingStats.exercises} exercises · ${trainingStats.sessions} sessions` }),
+        el('div.today-recap__lifestyle', { dataset: { lifestyleRecapHost: 'true' } }),
+      ]),
+      plannerDetail(),
+    ])
+  }
+
   function dailyLogCard(allActivities) {
     const dailyRows = allActivities
       .filter((activity) => activity.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(activity.id))
@@ -796,6 +1059,7 @@ export function createTodayScreen({
 
     return el('section.today-card.today-daily-log', { dataset: { section: 'daily' } }, [
       el('h2', { text: 'Daily log' }),
+      justEarned && el('p.today-earned', { text: `+${justEarned.xp} XP${justEarned.levelled ? ` · ${justEarned.levelled}` : ''}` }),
       el('div.today-list', {}, rows.length
         ? rows.map(({ activity, weekly }) => activityItem(activity, weekly))
         : [el('div.today-daily-log__empty', { text: 'No daily items scheduled.' })]),
@@ -805,11 +1069,16 @@ export function createTodayScreen({
         onclick: () => { otherOpen = !otherOpen; render() },
       }, [otherOpen ? '− Close extra logging' : '+ Log something else']),
       otherOpen && extras.length > 0 && el('div.today-list.today-list--extras', {}, extras.map((activity) => activityItem(activity))),
+      el('button.today-daily-log__more', {
+        type: 'button', dataset: { dayDetails: 'open' },
+        onclick: () => { dayDetailsOpen = true; render() },
+      }, ['Day details · planner, dates, program exercises']),
     ])
   }
 
   function render() {
     root.dataset.date = selectedDate
+    if (dayDetailsOpen) { renderDayDetails(); return }
     const allActivities = sortActivities([
       ...(day?.outstanding ?? []),
       ...(day?.logged ?? []),
@@ -837,7 +1106,7 @@ export function createTodayScreen({
 
   async function reload() {
     const dates = weekDates(selectedDate)
-    ;[todayProgram, weekProgram, day, weekActivities, quickPresets, trainingStats, profile, dayLogs, weekTraining] = await Promise.all([
+    ;[todayProgram, weekProgram, day, weekActivities, quickPresets, trainingStats, profile, dayLogs, weekTraining, plannerRows] = await Promise.all([
       isRealToday() ? workout.todayTasks() : Promise.resolve(null),
       isRealToday() ? workout.weekStatus() : Promise.resolve(null),
       daily.forDate(selectedDate),
@@ -847,6 +1116,7 @@ export function createTodayScreen({
       storage.get('profile', 'profile').then((value) => value ?? { id: 'profile' }),
       storage.getAll('dayLogs'),
       Promise.all(dates.map(async (date) => ({ date, stats: await workout.dayTrainingStats(date) }))),
+      planner ? planner.list(selectedDate) : Promise.resolve([]),
     ])
     render()
   }
@@ -858,6 +1128,8 @@ export function createTodayScreen({
     selectedMobilityRoutineId = null
     readinessInfoOpen = false
     otherOpen = false
+    plannerComposerOpen = false
+    plannerDetailId = null
     await reload()
   }
 
@@ -868,6 +1140,10 @@ export function createTodayScreen({
     selectedMobilityRoutineId = null
     readinessInfoOpen = false
     otherOpen = false
+    dayDetailsOpen = false
+    plannerComposerOpen = false
+    plannerDetailId = null
+    justEarned = null
     await reload()
   }
 

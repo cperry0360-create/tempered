@@ -44,6 +44,11 @@
     const tempered = await bootstrap({ storage, clock, mount: q('#app') })
     await installCableMachineRuntime(tempered)
 
+    await storage.put('records', {
+      exerciseId: 'lat_pulldown',
+      bestWeight: { weight: 115, reps: 6, date: '2026-09-22' },
+      bestE1RM: { value: 138, date: '2026-09-22' },
+    })
     await storage.put('sessions', {
       id: 'r3-history', date: '2026-09-22',
       startedAt: '2026-09-22T09:00:00.000Z', endedAt: '2026-09-22T09:40:00.000Z',
@@ -64,25 +69,16 @@
     const card = q('[data-exercise="lat_pulldown"]')
     const firstWeight = q('[data-field="weight"]', card)
     const firstReps = q('[data-field="reps"]', card)
-    check('repeat-session weight is a placeholder, not an entered value',
-      firstWeight?.value === '' && firstWeight?.placeholder === '115',
-      `value=${firstWeight?.value} placeholder=${firstWeight?.placeholder}`)
-    check('repeat-session reps are a placeholder, not an entered value',
-      firstReps?.value === '' && firstReps?.placeholder === '6',
-      `value=${firstReps?.value} placeholder=${firstReps?.placeholder}`)
-
-    const enteredStyle = getComputedStyle(firstWeight)
-    const placeholderStyle = getComputedStyle(firstWeight, '::placeholder')
-    check('placeholder is visibly dimmer than entered values',
-      Number(placeholderStyle.opacity) < 1 || placeholderStyle.color !== enteredStyle.color,
-      `entered=${enteredStyle.color} placeholder=${placeholderStyle.color} opacity=${placeholderStyle.opacity}`)
+    check('prescription is prefilled as real input values',
+      firstWeight?.value !== '' && firstReps?.value !== '' && firstWeight?.placeholder === '' && firstReps?.placeholder === '',
+      `weight=${firstWeight?.value} reps=${firstReps?.value}`)
 
     clock.set(new Date(2026, 8, 29, 9, 23, 1))
     q('.setrow__check', card)?.click()
     await settle(160)
     const logged = (await storage.getAll('setLogs')).filter((row) => row.sessionId !== 'r3-history')
-    check('one tap on check logs placeholder weight and reps',
-      logged[0]?.weight === 115 && logged[0]?.reps === 6,
+    check('one tap on check logs the prescribed values shown in inputs',
+      logged[0]?.weight === Number(firstWeight?.value) && logged[0]?.reps === Number(firstReps?.value),
       JSON.stringify(logged[0] ?? null))
 
     const draft = loadActiveSessionDraft()
@@ -109,8 +105,9 @@
       check(`exercise menu retains ${label}`, labels.some((value) => value.startsWith(label)), labels.join(' | '))
     }
     check('legacy horizontal action chips are gone', q('.actions', menuCard) === null)
-    check('legacy exercise art and LAST/PR header pills are gone',
-      q('.exercise__art, .exercise__history', menuCard) === null)
+    check('exercise art is preserved without legacy LAST/PR header pills',
+      q('.exercise__art .exercise__thumb', menuCard) !== null && q('.exercise__history', menuCard) === null)
+    check('Best line is preserved', /Best/i.test(q('.exercise__best', menuCard)?.textContent ?? ''))
 
     const rows = qa('.setrow:not(.setrow--head)', menuCard)
     check('set rows are 52px tall', Math.round(rows[0]?.getBoundingClientRect().height ?? 0) === 52,

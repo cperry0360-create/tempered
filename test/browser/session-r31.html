@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R3.1 session preservation</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness as bootstrap } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (s, root = document) => root?.querySelector?.(s) ?? null
+  const qa = (s, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(s)] : []
+  const settle = (ms = 100) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  try {
+    localStorage.clear()
+    const storage = createMemoryStorage()
+    const clock = fixedClock(new Date(2026, 8, 29, 9, 0, 0))
+    await storage.open()
+
+    await storage.put('sessions', {
+      id: 'r31-history', date: '2026-09-17',
+      startedAt: '2026-09-17T09:00:00.000Z', endedAt: '2026-09-17T09:40:00.000Z',
+    })
+    for (let index = 0; index < 3; index += 1) {
+      await storage.put('setLogs', {
+        id: `r31-history-${index}`, sessionId: 'r31-history', exerciseId: 'rdl',
+        method: 'Barbell', setIndex: index, weight: 125, reps: 12, isWarmup: false,
+        completedAt: `2026-09-17T09:${String(5 + index).padStart(2, '0')}:00.000Z`,
+      })
+    }
+
+    const tempered = await bootstrap({ storage, clock, mount: q('#app') })
+    const prepared = await tempered.workout.prepareExercise('rdl', { sets: 3, reps: 8, weight: null })
+    const prescribed = prepared.proposal.sets[0]
+    check('progression engine prescribes 130 × 8 after 125 × 12',
+      prescribed?.weight === 130 && prescribed?.reps === 8,
+      JSON.stringify(prescribed ?? null))
+
+    await tempered.app.show('train')
+    await settle()
+    q('[data-routine="lower"]')?.click()
+    await settle()
+    q('.train-r4__routine-detail .train-r4__secondary')?.click()
+    await settle(180)
+
+    let card = q('[data-exercise="rdl"]')
+    const weight = q('[data-field="weight"]', card)
+    const reps = q('[data-field="reps"]', card)
+    check('prescribed weight is a real prefilled input value',
+      weight?.value === String(prescribed.weight) && weight?.placeholder !== '125',
+      `value=${weight?.value} placeholder=${weight?.placeholder}`)
+    check('prescribed reps are a real prefilled input value',
+      reps?.value === String(prescribed.reps) && reps?.placeholder !== '12',
+      `value=${reps?.value} placeholder=${reps?.placeholder}`)
+
+    check('proposal reason is the coaching line',
+      q('.exercise__proposal', card)?.textContent === prepared.proposal.reason,
+      `shown=${q('.exercise__proposal', card)?.textContent} expected=${prepared.proposal.reason}`)
+
+    const thumb = q('.exercise__art .exercise__thumb', card)
+    check('exercise with art shows a thumbnail', Boolean(thumb))
+    if (thumb) {
+      const rect = thumb.getBoundingClientRect()
+      check('exercise thumbnail is 56px square', Math.round(rect.width) === 56 && Math.round(rect.height) === 56,
+        `${rect.width}×${rect.height}`)
+      q('.exercise__art', card)?.click()
+      await settle()
+      card = q('[data-exercise="rdl"]')
+      check('thumbnail opens the full image panel', Boolean(q('.panel--art .exercise__full', card)))
+    }
+
+    check('Best line preserves load reps and date',
+      /Best\s+125\s*lb\s*×\s*12.*17 Sep/i.test(q('.exercise__best', card)?.textContent ?? ''),
+      q('.exercise__best', card)?.textContent ?? 'missing')
+
+    const firstRow = qa('.setrow:not(.setrow--head)', card)[0]
+    check('next unlogged barbell row has the per-side plate line',
+      /Per side:/i.test(firstRow?.querySelector('.plates')?.textContent ?? ''),
+      firstRow?.querySelector('.plates')?.textContent ?? 'missing')
+
+    q('.setrow__check', card)?.click()
+    await settle(180)
+    const logged = (await storage.getAll('setLogs')).filter((row) => row.sessionId !== 'r31-history')
+    check('one tap logs the prescription, not last session values',
+      logged[0]?.weight === 130 && logged[0]?.reps === 8
+        && !(logged[0]?.weight === 125 && logged[0]?.reps === 12),
+      JSON.stringify(logged[0] ?? null))
+
+    card = q('[data-exercise="rdl"]')
+    const rows = qa('.setrow:not(.setrow--head)', card)
+    check('plate line advances to the next unlogged barbell row',
+      !rows[0]?.querySelector('.plates') && /Per side:/i.test(rows[1]?.querySelector('.plates')?.textContent ?? ''),
+      rows.map((row) => row.querySelector('.plates')?.textContent ?? '').join(' | '))
+  } catch (error) {
+    check('R3.1 harness threw', false, String(error?.stack ?? error).slice(0, 1200))
+  }
+
+  await fetch('/__report', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'session-r31', passed: checks.every((item) => item.ok), checks }),
+  })
+</script>
+</body>
+</html>

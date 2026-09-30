@@ -5,6 +5,7 @@
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { lbs, since } from '../format.js'
+import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
 
 /**
  * @param {object} deps
@@ -155,13 +156,19 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function nextSessionCard() {
     if (!todayDay || !active) return null
+    const queue = buildDailyWorkoutQueue(weekView, clock.today())
+    const todayOpen = queue.today.filter((row) => !row.done).length
+    const detail = queue.rollover.length > 0
+      ? `${todayOpen} today · ${queue.rollover.length} from earlier this week`
+      : `${todayDay.exercises?.length ?? 0} exercises · ~${estimateSessionMinutes(todayDay)} min`
+    const programDay = queue.primaryDay ?? todayDay
     return el('section.train-r4__card.train-r4__next', { dataset: { section: 'next-session' } }, [
       el('h2', { text: todayDay.name }),
-      el('p', { text: `${todayDay.exercises?.length ?? 0} exercises · ~${estimateSessionMinutes(todayDay)} min` }),
+      el('p', { text: detail }),
       active.week === 1 && el('p', { text: 'Start when you have a useful window; record what happened because repeatable work is enough.' }),
       el('button.train-r4__secondary', {
         type: 'button', dataset: { startday: todayDay.id },
-        onclick: () => onStart({ programDay: todayDay }),
+        onclick: () => onStart({ programDay: remainingProgramDay(weekView, programDay) }),
       }, ['Start session']),
     ])
   }

@@ -59,7 +59,6 @@ body { overflow: hidden; }
   scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
-.tabbar { z-index: 40; }
 .settings-access { z-index: 50; }
 
 /* Keyboard and switch-control focus must be impossible to lose against the

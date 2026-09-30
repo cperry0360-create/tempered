@@ -1,3 +1,45 @@
+## 2026-09-30 — R6 Today rollover and device fixes
+
+### Pre-R2 Today rollover behavior (baseline d9850f5)
+
+`src/ui/today-workout.js` already provided the canonical behavior before R2:
+
+- `buildDailyWorkoutQueue(weekStatus, today)` lists unfinished slots from earlier
+  weekdays alongside today's unfinished movements, leaves future work hidden, and keeps
+  today's completed movements available for disclosure.
+- A movement row launches only its original `{ dayId, slotIndex, exerciseId, slot,
+  alreadyLogged }` through `startSession({ slotTask })`, preserving between-call logging
+  against the same program slot.
+- The full-session route uses `remainingProgramDay()` so completed slots are skipped and
+  partially completed slots request only their remaining sets without shifting indexes.
+- Train shows the same current-week status; rollover work is not deleted or reclassified as
+  missed work.
+
+R6 keeps this behavior directly in the Today screen. It replaces the disconnected
+MutationObserver enhancer with native DOM rendering and keeps individual slot sessions,
+rollover disclosure, completed movement disclosure, full-session start, and canonical
+program-day records in their specified places.
+
+### Device-layout cause found before CSS edits
+
+- The final rendered tab bar sits at `bottom: 0` and already spans the viewport width. The
+  excess gap under its labels comes from `calc(8px + env(safe-area-inset-bottom))` on the
+  bar plus 4px bottom padding on each tab button. With a 34px bottom inset that is 46px
+  below the labels; the spec calls for only the inset. The stylesheet also has two separate
+  `.tabbar` blocks, with the later block silently overriding the older floating geometry.
+- The active-session header receives the top inset twice: the shell's final
+  `.app__body` rule adds `calc(env(safe-area-inset-top) + 16px)`, then `.sessionbar--r3`
+  adds `env(safe-area-inset-top)` again. R6 will leave the session header as the single
+  owner of that inset.
+- The app uses percentage-height roots (`html`, `body`, `.app`) and does not use `100vh` or
+  `100dvh`; the source therefore does not support a viewport-height mismatch as the cause.
+
+**R6 preservation check:** Today still keeps its existing habit/nutrition/recovery,
+calendar/date review, planner, Daily Recap, companion/settings, and activity logging
+behaviors. Program movements again roll forward by slot and can be logged one at a time;
+Train mirrors the rollover count. The completion, full-session, and one-slot paths all use
+the canonical workout service records.
+
 ## 2026-09-30 — R3.1 preservation audit result
 
 Audit command scope: `git diff d9850f5 HEAD -- src/ui/screens/`, interpreted under

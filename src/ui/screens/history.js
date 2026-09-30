@@ -71,6 +71,10 @@ function deltaValue(current, previous, unit, digits = 0) {
   return sign + numberText(Math.abs(magnitude), digits) + unit
 }
 
+function enoughComparisonSamples(currentCount, previousCount, comparable) {
+  return comparable && currentCount >= 3 && previousCount >= 3
+}
+
 function sparkline(values, width = 112, height = 34) {
   const clean = values.filter((value) => typeof value === 'number' && Number.isFinite(value))
   if (clean.length < 2) return null
@@ -283,16 +287,19 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       el('div.progress-weekly__bars', { role: 'img', 'aria-label': 'Working sets per week for the last eight weeks' },
         weeks.map((week) => {
           const active = week.start === currentStart
-          const height = Math.max(4, week.sets / max * 100)
+          const height = Math.round(82 * week.sets / max)
           return el('div.progress-weekly__column', {
+            dataset: { sets: String(week.sets), current: String(active) },
             title: monthDay(week.start) + ': ' + week.sets + ' working sets',
             'aria-label': monthDay(week.start) + ': ' + week.sets + ' working sets',
           }, [
-            active && el('strong.progress-weekly__value', { text: String(week.sets) }),
+            active && el('strong.progress-weekly__value', {
+              style: `--bar-height:${height}px`, text: String(week.sets),
+            }),
             el('div.progress-weekly__track', {}, [
               el('span.progress-weekly__bar', {
-                dataset: { current: String(active) },
-                style: 'height:' + height + '%',
+                dataset: { current: String(active), sets: String(week.sets) },
+                style: `--bar-height:${height}px`,
               }),
             ]),
           ])
@@ -368,7 +375,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   function trendsCard(current, previous, comparable) {
     const latestWeight = current.latestWeight
     const previousWeight = previous.latestWeight
-    const weightDelta = comparable
+    const weightDelta = enoughComparisonSamples(current.weights.length, previous.weights.length, comparable)
       ? deltaValue(latestWeight, previousWeight, ' lb', 1)
       : null
     const weightTrend = trendRow(
@@ -378,7 +385,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       current.weights.map((item) => item.value),
       current.weights.length,
     )
-    const stepsDelta = comparable
+    const currentStepSamples = current.days.filter((day) => Number.isFinite(day.steps)).length
+    const previousStepSamples = previous.days.filter((day) => Number.isFinite(day.steps)).length
+    const stepsDelta = enoughComparisonSamples(currentStepSamples, previousStepSamples, comparable)
       ? deltaValue(current.avgSteps, previous.avgSteps, '', 0)
       : null
     const stepsTrend = trendRow(
@@ -386,9 +395,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       current.avgSteps === null ? '—' : numberText(Math.round(current.avgSteps)) + ' avg',
       stepsDelta,
       current.days.map((day) => day.steps),
-      current.days.filter((day) => Number.isFinite(day.steps)).length,
+      currentStepSamples,
     )
-    const sleepDelta = comparable
+    const currentSleepSamples = current.days.filter((day) => Number.isFinite(day.sleepHours)).length
+    const previousSleepSamples = previous.days.filter((day) => Number.isFinite(day.sleepHours)).length
+    const sleepDelta = enoughComparisonSamples(currentSleepSamples, previousSleepSamples, comparable)
       ? deltaValue(current.avgSleep, previous.avgSleep, ' h', 1)
       : null
     const sleepTrend = trendRow(
@@ -396,7 +407,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       current.avgSleep === null ? '—' : numberText(current.avgSleep, 1) + 'h avg',
       sleepDelta,
       current.days.map((day) => day.sleepHours),
-      current.days.filter((day) => Number.isFinite(day.sleepHours)).length,
+      currentSleepSamples,
     )
     return el('section.progress-panel', {}, [
       el('h2.progress-panel__title', { text: 'Trends' }),
@@ -413,7 +424,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         const currentValue = signal.values.at(-1)?.value
         const previousValues = previous.recovery.find((item) => item.key === signal.key)?.values ?? []
         const previousValue = previousValues.at(-1)?.value
-        const delta = comparable
+        const delta = enoughComparisonSamples(signal.values.length, previousValues.length, comparable)
           ? deltaValue(currentValue, previousValue, signal.unit, signal.digits)
           : null
         return trendRow(
@@ -473,13 +484,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const current = summaryForDates(selectedDates())
     const previous = summaryForDates(previousDates())
     const comparable = current.fullCoverage && previous.fullCoverage
-    const micro = current.microMinutes > 0
-      ? el('p.progress-footnote', { text: 'Micro cardio · ' + numberText(current.microMinutes) + ' min' })
-      : null
     const recovery = recoveryCard(current, previous, comparable)
     return [
       weeklySetsCard(),
-      micro,
       coverageLine(current),
       recentPrsCard(),
       trendsCard(current, previous, comparable),

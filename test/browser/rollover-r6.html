@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R6 workout rollover</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/mobile-fixes.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+  const qa = (selector, root = document) => root?.querySelectorAll ? [...root.querySelectorAll(selector)] : []
+  const settle = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  try {
+    localStorage.clear()
+    const storage = createMemoryStorage()
+    const clock = fixedClock(new Date(2026, 8, 9, 9, 0, 0))
+    const tempered = await bootstrapHarness({ storage, clock, mount: q('#app') })
+
+    const state = (await storage.getAll('programState')).find((row) => row.active)
+    await storage.put('programState', { ...state, startedOn: '2026-09-07' })
+    const program = await storage.get('programs', state.programId)
+    const mondayExercises = program.days.find((day) => day.id === 'monday').exercises.slice(0, 2)
+    const testProgram = {
+      ...program,
+      days: program.days.map((day) => ({
+        ...day,
+        exercises: day.id === 'monday' ? mondayExercises : [],
+      })),
+    }
+    await storage.put('programs', testProgram)
+
+    for (let offset = 59; offset >= 0; offset -= 1) {
+      const date = new Date(2026, 8, 9 - offset, 12)
+      const key = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+      await storage.put('dayLogs', { date: key })
+    }
+    for (const [date, steps] of [
+      ['2026-09-07', 10000], ['2026-09-08', 9000],
+      ['2026-07-20', 5000], ['2026-07-21', 5000],
+    ]) {
+      await storage.put('dayLogs', { date, steps })
+    }
+    for (let index = 0; index < 8; index += 1) {
+      const date = new Date(Date.UTC(2026, 8, 7 - ((7 - index) * 7)))
+      const key = date.toISOString().slice(0, 10)
+      const sessionId = `r6-chart-${index}`
+      await storage.put('sessions', {
+        id: sessionId, date: key, startedAt: `${key}T09:00:00.000Z`, endedAt: `${key}T09:30:00.000Z`,
+      })
+      for (let set = 0; set < index + 1; set += 1) {
+        await storage.put('setLogs', {
+          id: `${sessionId}-${set}`, sessionId, exerciseId: 'incline_bench_bb',
+          reps: 8, weight: 100, isWarmup: false, completedAt: `${key}T09:10:00.000Z`,
+        })
+      }
+    }
+
+    await tempered.app.show('today')
+    await settle()
+
+    const tabbar = q('.tabbar')
+    const tabbarRect = tabbar?.getBoundingClientRect()
+    const pageBottomPadding = Number.parseFloat(getComputedStyle(q('.app__body')).paddingBottom)
+    check('tab bar background reaches the viewport bottom',
+      Boolean(tabbarRect) && Math.abs(tabbarRect.bottom - innerHeight) <= 1,
+      tabbarRect ? `${tabbarRect.top}..${tabbarRect.bottom} of ${innerHeight}` : 'missing')
+    check('page bottom padding is tab bar height plus 16px',
+      Boolean(tabbarRect) && Math.abs(pageBottomPadding - tabbarRect.height - 16) <= 1,
+      `padding=${pageBottomPadding} tabbar=${tabbarRect?.height}`)
+
+    const rollover = q('[data-rollover-group]')
+    const rows = qa('[data-rollover-slot]', rollover)
+    check('Wednesday Today groups two unfinished Monday movements under earlier this week',
+      Boolean(rollover) && /earlier this week/i.test(rollover.textContent) && rows.length === 2,
+      `group=${Boolean(rollover)} rows=${rows.length} text=${rollover?.textContent ?? ''}`)
+
+    const first = rows[0]
+    first?.click()
+    await settle(220)
+    const exercises = qa('.screen--session [data-exercise]')
+    check('opening a rollover movement creates a one-movement slot session',
+      Boolean(q('.screen--session')) && exercises.length === 1,
+      `session=${Boolean(q('.screen--session'))} exercises=${exercises.length}`)
+    const sessionHeaderTop = q('.sessionbar--r3')?.getBoundingClientRect().top
+    check('active workout header starts at the safe-area edge once',
+      Number.isFinite(sessionHeaderTop) && sessionHeaderTop <= 1,
+      String(sessionHeaderTop))
+
+    const loggedExerciseId = first?.dataset.exerciseId
+    const checksBefore = qa('.screen--session .setrow__check[data-done="false"]')
+    check('slot session offers the prescribed unlogged sets', checksBefore.length === (mondayExercises[0]?.sets ?? 0),
+      `checks=${checksBefore.length} expected=${mondayExercises[0]?.sets ?? 0}`)
+    for (let index = 0; index < checksBefore.length; index += 1) {
+      q('.screen--session .setrow__check[data-done="false"]')?.click()
+      await settle(140)
+    }
+
+    await tempered.app.show('today')
+    await settle(180)
+    const remainingRows = qa('[data-rollover-slot]', q('[data-rollover-group]'))
+    check('logging all sets removes that movement from the rollover list',
+      remainingRows.length === 1 && !remainingRows.some((row) => row.dataset.exerciseId === loggedExerciseId),
+      `remaining=${remainingRows.length} names=${remainingRows.map((row) => row.textContent.trim()).join(' | ')}`)
+
+    await tempered.app.show('history')
+    await settle()
+    const columns = qa('.progress-weekly__column')
+    const bars = columns.map((column) => q('.progress-weekly__bar', column))
+    const bottoms = bars.map((bar) => bar?.getBoundingClientRect().bottom ?? NaN)
+    const nonzeroBars = bars.filter((bar) => Number.parseFloat(getComputedStyle(bar).height) > 0)
+    check('Weekly sets has eight seeded bars on one shared baseline',
+      columns.length === 8 && nonzeroBars.length === 8
+        && Math.max(...bottoms) - Math.min(...bottoms) <= 1,
+      `columns=${columns.length} visible=${nonzeroBars.length} baselines=${bottoms.map((value) => value.toFixed(1)).join(',')}`)
+    const stepsRow = qa('.progress-trend').find((row) => q('.progress-trend__label', row)?.textContent === 'Steps')
+    check('Steps delta is hidden when either period has fewer than three samples',
+      Boolean(stepsRow) && !q('.progress-trend__delta', stepsRow),
+      `delta=${q('.progress-trend__delta', stepsRow)?.textContent ?? 'none'}`)
+    await storage.put('dayLogs', { date: '2026-09-06', steps: 9900 })
+    await storage.put('dayLogs', { date: '2026-07-22', steps: 7000 })
+    await tempered.app.show('history')
+    await settle()
+    const stepsAfterThree = qa('.progress-trend').find((row) => q('.progress-trend__label', row)?.textContent === 'Steps')
+    check('Steps delta appears after both periods reach three samples',
+      Boolean(q('.progress-trend__delta', stepsAfterThree)),
+      q('.progress-trend__delta', stepsAfterThree)?.textContent ?? 'missing')
+  } catch (error) {
+    check('R6 rollover harness completed without throwing', false, String(error?.stack ?? error).slice(0, 1200))
+  }
+
+  await fetch('/__report', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'rollover-r6', passed: checks.every((item) => item.ok), checks }),
+  })
+</script>
+</body>
+</html>

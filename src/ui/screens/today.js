@@ -11,7 +11,7 @@ import { icon, iconForActivity } from '../icons.js'
 import { sortActivities } from '../../domain/activities.js'
 import { trainingReadiness } from '../../domain/readiness.js'
 import { companionStage, companionStyle, COMPANION_LEVELS } from '../../domain/companion-growth.js'
-import { remainingProgramDay } from '../today-workout.js'
+import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
 
 const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 const FUEL_ACTIVITY_IDS = new Set(['calories_logged', 'protein_target', 'nutrition_logged'])
@@ -214,6 +214,8 @@ export function createTodayScreen({
   let mobilityTimer = null
   let mobilityRemaining = 0
   let mobilityRunning = false
+  let rolloverOpen = null
+  let completedWorkoutOpen = false
 
   const canLogSelected = () => selectedDate <= realToday
   const isRealToday = () => selectedDate === realToday
@@ -608,37 +610,100 @@ export function createTodayScreen({
     ])
   }
 
+  function workoutSlotPayload(row) {
+    return {
+      dayId: row.programDay.id,
+      slotIndex: row.task.index,
+      exerciseId: row.task.slot.exerciseId,
+      slot: row.task.slot,
+      alreadyLogged: row.task.logged,
+    }
+  }
+
+  function workoutMovement(row, rollover = false, completed = false) {
+    const fromDay = String(row.programDay?.weekday ?? row.programDay?.id ?? 'earlier').slice(0, 3)
+    const progress = `${row.logged} / ${row.prescribed} sets`
+    return el('button.today-workout__movement', {
+      type: 'button',
+      disabled: completed,
+      dataset: {
+        ...(rollover ? { rolloverSlot: 'true' } : { workoutSlot: 'true' }),
+        exerciseId: row.task.slot.exerciseId,
+      },
+      onclick: () => onStart({ slotTask: workoutSlotPayload(row) }),
+    }, [
+      el('span.today-workout__movement-copy', {}, [
+        el('span.today-workout__name', { dataset: { slotName: 'true' }, text: row.name }),
+        el('span.today-workout__meta', { text: `${rollover ? `From ${fromDay} · ` : ''}${progress}` }),
+      ]),
+      el('span.today-workout__action', { text: completed ? 'Done' : row.started ? 'Continue' : 'Log sets' }),
+    ])
+  }
+
   function sessionCard() {
-    if (!todayProgram?.day || !isRealToday()) {
+    if (!isRealToday()) {
       return el('section.today-card.today-session-card', { dataset: { section: 'next-session' } }, [
-        el('h2', { text: 'No session scheduled' }),
-        el('p', { text: 'Recovery is part of the plan.' }),
+        el('h2', { text: todayProgram?.day?.name ?? 'Workout' }),
+        el('p', { text: 'Workout details are available for today.' }),
       ])
     }
-    const trainingDone = todayProgram.tasks?.length > 0 && todayProgram.tasks.every((task) => task.done)
-    const name = todayProgram.day.name ?? 'Training'
-    if (trainingDone) {
+
+    const queue = buildDailyWorkoutQueue(weekProgram, clock.today())
+    const todayRows = queue.today.filter((row) => !row.done)
+    const rolloverRows = queue.rollover
+    const completedRows = queue.completed
+    const programDay = queue.primaryDay ?? todayProgram?.day ?? queue.scheduledDay
+    const name = todayProgram?.day?.name ?? queue.primaryDay?.name ?? queue.scheduledDay?.name ?? 'Workout'
+    const expandRollover = rolloverOpen ?? rolloverRows.length < 6
+    const week = weekProgram?.week ?? todayProgram?.week ?? 1
+    const weeks = weekProgram?.program?.weeks ?? todayProgram?.program?.weeks ?? 1
+
+    if (queue.active.length === 0 && completedRows.length > 0) {
       return el('section.today-card.today-session-card', { dataset: { section: 'next-session', complete: 'true' } }, [
-        el('h2', { text: `${name} done` }),
-        el('p', { text: `${trainingStats.minutes} min · ${trainingStats.workingSets} sets` }),
+        el('h2', { text: `${name} done · ${trainingStats.minutes} min · ${trainingStats.workingSets} sets` }),
         el('button.today-button.today-button--secondary', {
           type: 'button', onclick: onViewSummary,
         }, ['View summary']),
       ])
     }
-    const exerciseCount = todayProgram.day.exercises?.length ?? 0
-    const week = todayProgram.week ?? 1
-    const weeks = todayProgram.program?.weeks ?? 1
-    return el('section.today-card.today-session-card', { dataset: { section: 'next-session' } }, [
+    if (!programDay && rolloverRows.length === 0) {
+      return el('section.today-card.today-session-card', { dataset: { section: 'next-session' } }, [
+        el('h2', { text: 'No session scheduled' }),
+        el('p', { text: 'Recovery is part of the plan.' }),
+      ])
+    }
+
+    const exerciseCount = todayProgram?.day?.exercises?.length ?? queue.today.length
+    const meta = rolloverRows.length > 0
+      ? `${todayRows.length} today · ${rolloverRows.length} from earlier this week`
+      : `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(programDay)} min`
+    return el('section.today-card.today-session-card.today-workout', {
+      dataset: { section: 'next-session' },
+    }, [
       el('h2', { text: name }),
-      el('p', { text: `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(todayProgram.day)} min` }),
-      week === 1 && el('p.today-session-card__guidance', {
+      el('p.today-workout__summary', { text: meta }),
+      todayRows.length > 0 && el('div.today-workout__rows', {}, todayRows.map((row) => workoutMovement(row))),
+      rolloverRows.length > 0 && el('section.today-workout__rollover', { dataset: { rolloverGroup: 'true' } }, [
+        el('button.today-workout__group-toggle', {
+          type: 'button', 'aria-expanded': String(expandRollover),
+          onclick: () => { rolloverOpen = !expandRollover; render() },
+        }, [`${rolloverRows.length} movements from earlier this week`, icon(expandRollover ? 'up' : 'down')]),
+        expandRollover && el('div.today-workout__rows', {}, rolloverRows.map((row) => workoutMovement(row, true))),
+      ]),
+      completedRows.length > 0 && el('section.today-workout__completed', {}, [
+        el('button.today-workout__group-toggle', {
+          type: 'button', 'aria-expanded': String(completedWorkoutOpen),
+          onclick: () => { completedWorkoutOpen = !completedWorkoutOpen; render() },
+        }, [`${completedRows.length} done`, icon(completedWorkoutOpen ? 'up' : 'check')]),
+        completedWorkoutOpen && el('div.today-workout__rows', {}, completedRows.map((row) => workoutMovement(row, false, true))),
+      ]),
+      programDay && queue.active.length > 0 && el('button.today-button.today-button--primary.today-workout__start', {
+        type: 'button', dataset: { startday: programDay.id },
+        onclick: () => onStart({ programDay: remainingProgramDay(weekProgram, programDay) }),
+      }, ['Start full session']),
+      week === 1 && rolloverRows.length === 0 && el('p.today-session-card__guidance', {
         text: 'Start when you have a useful window; record what happened so the plan can meet you where you are.',
       }),
-      el('button.today-button.today-button--primary', {
-        type: 'button', dataset: { startday: todayProgram.day.id },
-        onclick: () => onStart({ programDay: remainingProgramDay(weekProgram, todayProgram.day) }),
-      }, ['Start session']),
     ])
   }
 
@@ -660,12 +725,12 @@ export function createTodayScreen({
         good: (delta) => delta > 0,
       },
       {
-        key: 'restingHr', label: 'Resting heart rate', value: number(current.healthMetrics?.restingHr, NaN),
+        key: 'restingHr', label: 'Resting HR', value: number(current.healthMetrics?.restingHr, NaN),
         unit: 'bpm', digits: 0, baseline: sevenDayAverage((row) => row.healthMetrics?.restingHr),
         good: (delta) => delta < 0,
       },
       {
-        key: 'hrv', label: 'Heart rate variability', value: number(current.healthMetrics?.hrvMs, NaN),
+        key: 'hrv', label: 'HRV', value: number(current.healthMetrics?.hrvMs, NaN),
         unit: 'ms', digits: 1, baseline: sevenDayAverage((row) => row.healthMetrics?.hrvMs),
         good: (delta) => delta > 0,
       },

@@ -122,10 +122,7 @@ body::before {
 
 .app__body {
   overflow-y: auto;
-  padding: max(var(--s4), env(safe-area-inset-top)) var(--s3) var(--s3);
-  /* Room for the floating bar, so content never hides beneath it: its own
-     height, plus the margin it floats on, plus a thumb's clearance. */
-  padding-bottom: calc(var(--s6) + var(--s4) + var(--s3) + env(safe-area-inset-bottom));
+  padding: calc(env(safe-area-inset-top) + 16px) var(--s3) calc(77px + env(safe-area-inset-bottom));
 }
 
 /* `display: flex` outranks the user-agent `[hidden] { display: none }`, so the
@@ -158,8 +155,8 @@ body::before {
   text-align: left;
 }
 #app:has(.active-workout-dock:not([hidden])) .app__body {
-  padding-bottom: calc(152px + env(safe-area-inset-bottom));
-  scroll-padding-bottom: calc(176px + env(safe-area-inset-bottom));
+  padding-bottom: calc(133px + env(safe-area-inset-bottom));
+  scroll-padding-bottom: calc(149px + env(safe-area-inset-bottom));
 }
 .active-workout-dock__copy { display: grid; gap: 2px; min-width: 0; }
 .active-workout-dock__copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -173,15 +170,17 @@ body::before {
 
 .tabbar {
   position: fixed;
-  left: var(--s3);
-  right: var(--s3);
-  bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   gap: var(--s1);
-  padding: var(--s1);
-  border-radius: var(--r-full);
-  background: var(--surface-1);
+  padding: 8px 12px env(safe-area-inset-bottom);
+  border-top: 1px solid var(--hairline);
+  border-radius: 0;
+  background: var(--tabbar);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
@@ -2012,7 +2011,10 @@ body::before { content: none; background-image: none; }
   background: var(--bg);
 }
 .app__body {
-  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(76px + env(safe-area-inset-bottom));
+  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(77px + env(safe-area-inset-bottom));
+}
+#app:has(.screen--session) .app__body {
+  padding-top: 0;
 }
 .screen { gap: 16px; }
 .card,
@@ -2053,18 +2055,6 @@ body::before { content: none; background-image: none; }
   color: var(--on-accent);
   border-color: var(--accent);
 }
-.tabbar {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--hairline);
-  border-radius: 0;
-  background: var(--tabbar);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
 .tabbar__tabs { gap: 0; }
 .tabbar__tab {
   min-height: 52px;
@@ -2079,14 +2069,14 @@ body::before { content: none; background-image: none; }
   line-height: 13px;
   font-weight: 500;
   letter-spacing: 0;
-  padding: 4px 2px;
+  padding: 4px 2px 0;
 }
 .tabbar__tab .icon { width: 22px; height: 22px; stroke-width: 1.5; }
 .tabbar__tab[data-active='true'] { color: var(--accent); background: transparent; }
 .active-workout-dock {
   left: 0;
   right: 0;
-  bottom: calc(69px + env(safe-area-inset-bottom));
+  bottom: calc(61px + env(safe-area-inset-bottom));
   height: 56px;
   background: var(--surface-3);
   border-top: 1px solid var(--hairline);

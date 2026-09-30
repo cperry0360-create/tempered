@@ -290,9 +290,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       suffix = suffix.replace(new RegExp(`\\b${exercise.variant}\\b[, ]*`, 'i'), '')
     }
     suffix = suffix.replace(/\bgrip\b/ig, '').replace(/\s*,\s*/g, ' · ').replace(/^[ ·-]+|[ ·-]+$/g, '').trim()
-    // Program names such as "Seated Cable Row" already carry the useful
-    // equipment distinction; don't add a redundant grip suffix there.
-    if (exercise?.variant && new RegExp(`\\b${exercise.variant}\\b`, 'i').test(base)) suffix = ''
+    const normalize = (value) => value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+    const baseKey = normalize(base)
+    const suffixKey = normalize(suffix)
+    // Program names sometimes already include the repeated equipment/variant
+    // words in parentheses. Keep a genuinely distinguishing suffix such as
+    // "Wide", but never append the base name (or one of its own words) twice.
+    if (suffixKey && (` ${baseKey} `.includes(` ${suffixKey} `)
+      || ` ${suffixKey} `.includes(` ${baseKey} `))) suffix = ''
     return suffix ? `${base} · ${suffix}` : base
   }
 

@@ -135,6 +135,10 @@
         check('the session survives declining the confirm', q('.setrow__check') !== null)
 
         const firstCard = q('[data-exercise]')
+        check('C R3.1 keeps the in-row plate calculator under the next barbell set',
+          q('.plates', firstCard) !== null)
+        check('D R3.1 keeps exercise art in the active workout',
+          q('.exercise__art', firstCard) !== null)
         const openMenu = async () => {
           q('.exercise-menu__trigger', q('[data-exercise]'))?.click()
           await settle()
@@ -186,8 +190,6 @@
         check('B6 a set can still be added',
           qa('.setrow:not(.setrow--head)', q('[data-exercise]')).length === beforeSwap + 1)
 
-        check('C the legacy inline plate calculator is removed from R3', q('.plates') === null)
-        check('D exercise art is removed from the active-workout block', q('.exercise__art') === null)
 
         await tempered.app.show('train')
         const details = await waitFor('[data-program-details="toggle"]')

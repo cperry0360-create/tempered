@@ -73,7 +73,7 @@
       check('session identifies Inspire FTX / Centr 2 peg mode', /FTX \/ CENTR 2 PEG MODE/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('session labels the calculation nominal', /NOMINAL/.test(q('.cable-mode-note', card)?.textContent ?? ''))
       check('migrated Previous history shows peg rather than pretending it was pounds',
-        /P7/.test(q('.setrow__record', card)?.textContent ?? ''), q('.setrow__record', card)?.textContent)
+        /P7/.test(q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent ?? ''), q('.setrow:not(.setrow--head) .setrow__record', card)?.textContent)
       check('R3 removes the legacy header PR pill', q('[data-kind="pr"]', card) === null)
 
       let weights = qa('.setrow__num[data-field="weight"]', card)

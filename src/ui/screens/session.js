@@ -121,6 +121,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       isFirstOfDay,
       rest,
       openPanel,
+      hasUnloggedEdits,
       elapsedSec: elapsedSeconds(),
     })
   }
@@ -277,6 +278,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     for (const [index, other] of entry.sets.entries()) {
       if (index === 0 || other.logged === true) continue
       other[key] = value
+      other.editedFields = { ...(other.editedFields ?? {}), [key]: true }
     }
   }
 
@@ -345,7 +347,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       if (!field) return el('span.setrow__num')
       const previousNumber = previousValue(entry, index, field.key)
       const current = set[field.key]
-      const usePreviousAsPlaceholder = !done && previousNumber !== null
+      const usePreviousAsPlaceholder = !done && previousNumber !== null && set.editedFields?.[field.key] !== true
       return el('input.setrow__num', {
         type: 'text',
         inputmode: field.mode,
@@ -356,6 +358,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         dataset: { field: field.key, exercise: entry.exercise.id, set: String(index) },
         oninput: (event) => {
           set[field.key] = numberOrNull(event.target.value)
+          set.editedFields = { ...(set.editedFields ?? {}), [field.key]: true }
           hasUnloggedEdits = true
           persistDraft()
         },
@@ -798,6 +801,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     })
     addingMovement = false
     addQuery = ''
+    hasUnloggedEdits = true
     persistDraft()
     render()
     requestAnimationFrame(() => root.querySelector(`[data-exercise="${exercise.id}"]`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
@@ -1080,7 +1084,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       openPanel = draft.openPanel ?? null
       confirmingFinish = false
       confirmingDiscard = false
-      hasUnloggedEdits = false
+      hasUnloggedEdits = draft.hasUnloggedEdits === true
       addingMovement = false
       addQuery = ''
       rest = draft.rest && Number(draft.rest.endsAt) > timeSource.now()

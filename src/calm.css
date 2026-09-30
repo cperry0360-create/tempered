@@ -1130,7 +1130,7 @@ button.today-item:disabled {
   position: relative;
   min-height: 52px;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 76px 60px 44px;
+  grid-template-columns: 36px minmax(0, 1fr) 76px 60px 45px;
   align-items: center;
   gap: 6px;
   padding: 0;
@@ -1209,7 +1209,8 @@ button.today-item:disabled {
 .exercise--r3 .setrow__check {
   appearance: none;
   position: relative;
-  width: 44px;
+  width: 45px;
+  min-width: 45px;
   height: 44px;
   min-height: 44px;
   display: grid;
@@ -1409,7 +1410,7 @@ button.today-item:disabled {
 
 @media (max-width: 390px) {
   .exercise--r3 .setrow {
-    grid-template-columns: 32px minmax(0, 1fr) 70px 56px 44px;
+    grid-template-columns: 32px minmax(0, 1fr) 70px 56px 45px;
     gap: 4px;
   }
 }

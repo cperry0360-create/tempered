@@ -423,7 +423,7 @@ export async function installCableMachineRuntime(context) {
           input.dispatchEvent(new Event('input', { bubbles: true }))
         }
       } else {
-        const previousWeight = Number(input.value)
+        const previousWeight = Number(input.value || input.placeholder)
         const peg = pegForCableLoad(previousWeight, { profile: machine, stacks })
         pegState.set(key, peg)
         const next = peg == null ? '' : String(peg)

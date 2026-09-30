@@ -113,8 +113,8 @@
         await settle()
         check('confirmed discard clears the resumable checkpoint', loadActiveSessionDraft() === null)
         check('confirmed discard removes the active-workout card', !mount.querySelector('[data-active-workout]'))
-        check('confirmed discard removes this attempt set logs', sessionId
-          ? (await second.workout.setsFor(sessionId)).length === 0
+        check('leaving with discarded unlogged edits preserves checked canonical sets', sessionId
+          ? (await second.workout.setsFor(sessionId)).length === 1
           : false)
 
         const passed = checks.every((entry) => entry.ok)

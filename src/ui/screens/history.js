@@ -155,224 +155,219 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return (daily.activities ?? []).filter((activity) => schedule[activity.id]?.cadence === 'daily')
   }
 
-  function metric(value, label, detail = null) {
-    return el('article.progress-metric', {}, [
-      el('strong.progress-metric__value', { text: value }),
-      el('span.progress-metric__label', { text: label }),
-      detail && el('span.progress-metric__detail', { text: detail }),
+  function percentDelta(current, previous) {
+    if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null
+    return ((current - previous) / Math.abs(previous)) * 100
+  }
+
+  function signed(value, suffix = '') {
+    if (!Number.isFinite(value)) return '—'
+    const rounded = Math.abs(value) >= 10 ? Math.round(value) : Math.round(value * 10) / 10
+    return `${rounded > 0 ? '+' : ''}${rounded}${suffix}`
+  }
+
+  function weekStart(key) {
+    const date = parseDate(key)
+    const offset = (date.getDay() + 6) % 7
+    date.setDate(date.getDate() - offset)
+    return dateKey(date)
+  }
+
+  function weeklySets() {
+    const today = clock.today()
+    const currentStart = weekStart(today)
+    const starts = Array.from({ length: 8 }, (_, index) => addDays(currentStart, (index - 7) * 7))
+    const counts = new Map(starts.map((key) => [key, 0]))
+    const sessionDates = new Map(sessions.map((session) => [session.id, session.date]))
+    for (const log of setLogs) {
+      if (log.isWarmup) continue
+      const date = sessionDates.get(log.sessionId)
+      if (!date) continue
+      const startKey = weekStart(date)
+      if (counts.has(startKey)) counts.set(startKey, counts.get(startKey) + 1)
+    }
+    return starts.map((key, index) => ({ key, count: counts.get(key) ?? 0, current: index === starts.length - 1 }))
+  }
+
+  function weeklySetsCard() {
+    const weeks = weeklySets()
+    const max = Math.max(1, ...weeks.map((week) => week.count))
+    const label = (key) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parseDate(key))
+    return el('section.progress-r5__card.progress-r5__weekly', {}, [
+      el('h2.progress-r5__card-title', { text: 'Weekly sets' }),
+      el('div.progress-r5__bars', { 'aria-label': 'Working sets over the last eight weeks' }, weeks.map((week) =>
+        el('div.progress-r5__bar-slot', { dataset: { current: String(week.current) } }, [
+          week.current && el('strong.progress-r5__bar-value', { text: String(week.count) }),
+          el('span.progress-r5__bar', { style: `height:${Math.max(4, Math.round((week.count / max) * 112))}px` }),
+        ]))),
+      el('div.progress-r5__axis', {}, [
+        el('span', { text: label(weeks[0].key) }),
+        el('span', { text: label(weeks.at(-1).key) }),
+      ]),
     ])
   }
 
-  function habitCompletionForDay(day) {
-    const activities = dailyActivities()
-    if (activities.length === 0) return { done: 0, total: 0, percent: 0 }
-    const done = activities.filter((activity) => completedActivity(activity, day)).length
-    return { done, total: activities.length, percent: Math.round((done / activities.length) * 100) }
+  function recentPrsCard() {
+    const recent = records
+      .filter((record) => record.bestE1RM?.date || record.bestWeight?.date)
+      .sort((a, b) => String(b.bestE1RM?.date ?? b.bestWeight?.date ?? '').localeCompare(String(a.bestE1RM?.date ?? a.bestWeight?.date ?? '')))
+      .slice(0, 3)
+    return el('section.progress-r5__card', {}, [
+      el('h2.progress-r5__card-title', { text: 'Recent PRs' }),
+      recent.length
+        ? el('div.progress-r5__rows', {}, recent.map((record) => {
+            const best = record.bestE1RM
+            const exercise = exercises.get(record.exerciseId)
+            return el('div.progress-r5__row', {}, [
+              el('div.progress-r5__row-copy', {}, [
+                el('strong', { text: exercise?.name ?? record.exerciseId }),
+                el('span', { text: shortDate(best?.date ?? record.bestWeight?.date) }),
+              ]),
+              el('strong.progress-r5__row-value', { text: best ? `${Math.round(best.value)} e1RM` : bestSetLabel(record.bestWeight) }),
+            ])
+          }))
+        : el('p.progress-r5__empty', { text: 'No PRs in this range' }),
+    ])
   }
 
-  function heatmap(days) {
-    return el('div.progress-heatmap', { 'aria-label': 'Daily habit completion' }, days.map((day) => {
-      const completion = habitCompletionForDay(day)
-      return el('span.progress-heatmap__day', {
-        title: `${shortDate(day.date)} · ${completion.percent}%`,
-        dataset: { level: String(Math.min(4, Math.ceil(completion.percent / 25))) },
-        'aria-label': `${shortDate(day.date)}, ${completion.percent}% habits complete`,
-      })
-    }))
+  function trendRow(label, value, delta, values, direction = 'neutral') {
+    const line = sparkline(values, 92, 28)
+    if (line) line.classList.add('progress-r5__spark')
+    return el('div.progress-r5__trend', { dataset: { direction } }, [
+      el('div.progress-r5__row-copy', {}, [
+        el('strong', { text: label }),
+        el('span', { text: delta }),
+      ]),
+      el('strong.progress-r5__trend-value', { text: value }),
+      line,
+    ])
   }
 
-  function summaryForDates(dates) {
-    const dataStart = progressDataStart({ dayLogs, sessions, today: clock.today() })
-    const trackedDates = observedProgressDates(dates, dataStart)
-    const days = daysForDates(trackedDates)
-    const dateSet = new Set(trackedDates)
-    const habits = dailyActivities()
-    const opportunities = days.length * habits.length
-    const habitDone = days.reduce((sum, day) => sum + habits.filter((activity) => completedActivity(activity, day)).length, 0)
-    const habitRate = opportunities ? Math.round((habitDone / opportunities) * 100) : null
-    const periodSessions = sessions.filter((session) => dateSet.has(session.date))
-    const sessionIds = new Set(periodSessions.map((session) => session.id))
-    const workingSets = setLogs.filter((log) => !log.isWarmup && sessionIds.has(log.sessionId)).length
-    const trainingDays = new Set(periodSessions.map((session) => session.date)).size
-    const avgSteps = average(days.map((day) => day.steps))
-    const avgSleep = average(days.map((day) => day.sleepHours))
-    const stepSamples = recordedSampleCount(days.map((day) => day.steps))
-    const sleepSamples = recordedSampleCount(days.map((day) => day.sleepHours))
-    const microMinutes = days.reduce((sum, day) => sum + (day.microCardioMinutes ?? 0), 0)
+  function trendsCard() {
+    const current = summaryForDates(selectedDates())
+    const previous = summaryForDates(previousDates())
+    const weights = current.weights.map((entry) => entry.value)
+    const steps = current.days.map((day) => day.steps).filter(Number.isFinite)
+    const sleep = current.days.map((day) => day.sleepHours).filter(Number.isFinite)
+    return el('section.progress-r5__card', {}, [
+      el('h2.progress-r5__card-title', { text: 'Trends' }),
+      el('div.progress-r5__rows', {}, [
+        trendRow(
+          'Weight',
+          current.latestWeight === null ? '—' : `${current.latestWeight.toFixed(1)} lb`,
+          current.weightChange === null ? 'No change yet' : `${signed(current.weightChange, ' lb')} in range`,
+          weights,
+        ),
+        trendRow(
+          'Steps',
+          current.avgSteps === null ? '—' : compactNumber(Math.round(current.avgSteps)),
+          signed(percentDelta(current.avgSteps, previous.avgSteps), '%'),
+          steps,
+          Number.isFinite(current.avgSteps) && Number.isFinite(previous.avgSteps) && current.avgSteps > previous.avgSteps ? 'good' : 'neutral',
+        ),
+        trendRow(
+          'Sleep',
+          current.avgSleep === null ? '—' : `${current.avgSleep.toFixed(1)} h`,
+          signed(percentDelta(current.avgSleep, previous.avgSleep), '%'),
+          sleep,
+          Number.isFinite(current.avgSleep) && Number.isFinite(previous.avgSleep) && current.avgSleep > previous.avgSleep ? 'good' : 'neutral',
+        ),
+      ]),
+    ])
+  }
 
-    const volumeByDate = new Map(days.map((day) => [day.date, 0]))
-    for (const session of periodSessions) {
-      const stats = sessionStats.get(session.id)
-      volumeByDate.set(session.date, (volumeByDate.get(session.date) ?? 0) + (stats?.volume ?? 0))
-    }
-    const volumeValues = days.map((day) => volumeByDate.get(day.date) ?? 0)
-    const totalVolume = volumeValues.reduce((sum, value) => sum + value, 0)
+  function recoveryCard() {
+    const today = dayLogs.find((day) => day.date === clock.today())
+    const values = [
+      ['Sleep', Number.isFinite(today?.sleepHours) ? `${today.sleepHours.toFixed(1)} h` : null],
+      ['Resting HR', Number.isFinite(today?.healthMetrics?.restingHr) ? `${Math.round(today.healthMetrics.restingHr)} bpm` : null],
+      ['HRV', Number.isFinite(today?.healthMetrics?.hrvMs) ? `${Math.round(today.healthMetrics.hrvMs)} ms` : null],
+      ['Respiration', Number.isFinite(today?.healthMetrics?.respRate) ? `${today.healthMetrics.respRate.toFixed(1)} / min` : null],
+    ].filter(([, value]) => value !== null)
+    if (!values.length) return null
+    return el('section.progress-r5__card', {}, [
+      el('h2.progress-r5__card-title', { text: 'Recovery' }),
+      el('div.progress-r5__recovery', {}, values.map(([label, value]) => el('div', {}, [
+        el('strong', { text: value }),
+        el('span', { text: label }),
+      ]))),
+    ])
+  }
 
-    const weights = days
-      .map((day) => ({ date: day.date, value: day.bodyMetrics?.weight }))
-      .filter((entry) => typeof entry.value === 'number')
-    const latestWeight = weights.at(-1)?.value ?? null
-    const firstWeight = weights[0]?.value ?? null
-    const weightChange = latestWeight !== null && firstWeight !== null ? latestWeight - firstWeight : null
-
-    return {
-      days, periodSessions, trainingDays, workingSets, habitRate, avgSteps, avgSleep,
-      microMinutes, volumeValues, totalVolume, weights, latestWeight, weightChange,
-      trackedDays: trackedDates.length,
-      requestedDays: dates.length,
-      fullCoverage: trackedDates.length === dates.length,
-      stepSamples,
-      sleepSamples,
-    }
+  function copyProgressReport() {
+    const current = summaryForDates(selectedDates())
+    const text = [
+      'Use this Tempered app data to give me a concise training progress report and practical coaching tips.',
+      '',
+      'TEMPERED_DATA',
+      `DATE=${clock.today()}`,
+      `RANGE_DAYS=${range}`,
+      `SESSIONS=${current.periodSessions.length}`,
+      `WORKING_SETS=${current.workingSets}`,
+      `SLEEP_AVG=${current.avgSleep === null ? '' : current.avgSleep.toFixed(1)}`,
+      `STEPS_AVG=${current.avgSteps === null ? '' : Math.round(current.avgSteps)}`,
+      `WEIGHT_CHANGE_LB=${current.weightChange === null ? '' : current.weightChange.toFixed(1)}`,
+    ].join('\\n')
+    navigator.clipboard?.writeText?.(text).catch(() => {})
   }
 
   function overviewView() {
-    const current = summaryForDates(selectedDates())
-    const previous = summaryForDates(previousDates())
-    const sleepText = current.avgSleep === null ? '—' : `${current.avgSleep.toFixed(1)}h`
-    const stepsText = current.avgSteps === null ? '—' : compactNumber(Math.round(current.avgSteps))
-    const bodyText = current.latestWeight === null ? '—' : `${current.latestWeight.toFixed(1)} lb`
-    const hasData = current.trackedDays > 0
-    const comparable = current.fullCoverage && previous.fullCoverage
-    const recapLabel = current.fullCoverage
-      ? `${range}-DAY RECAP`
-      : `${range}-DAY VIEW · ${current.trackedDays} ${current.trackedDays === 1 ? 'DAY' : 'DAYS'} OF DATA`
-    const comparisonTraining = comparable
-      ? deltaText(current.trainingDays, previous.trainingDays, { suffix: ' days' })
-      : 'no prior comparison yet'
-    const comparisonHabits = comparable
-      ? deltaText(current.habitRate, previous.habitRate, { points: true })
-      : 'no prior comparison yet'
-
     return [
-      el('section.progress-recap', { dataset: { recap: String(range) } }, [
-        el('div.progress-recap__top', {}, [
-          el('div', {}, [
-            el('span.progress-recap__eyebrow', { text: recapLabel }),
-            el('h2.progress-recap__headline', {
-              text: hasData
-                ? current.trainingDays === 1 ? '1 training day' : `${current.trainingDays} training days`
-                : 'No recorded data yet',
-            }),
-            el('p.progress-recap__sub', {
-              text: hasData
-                ? `${current.workingSets} working sets · ${compactNumber(current.totalVolume)} lb nominal training volume`
-                : 'Tempered will calculate this range from the first day you log.',
-            }),
-          ]),
-          el('div.progress-recap__score', {}, [
-            el('strong', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
-            el('span', { text: 'habits' }),
-          ]),
-        ]),
-        el('div.progress-recap__compare', {}, [
-          el('span', { text: comparisonTraining }),
-          el('span', { text: comparisonHabits }),
-        ]),
-        el('div.progress-recap__stats', {}, [
-          metric(hasData ? String(current.periodSessions.length) : '—', 'sessions', hasData ? `${current.workingSets} working sets` : null),
-          metric(stepsText, 'avg steps', current.avgSteps === null ? null : `${current.stepSamples} logged ${current.stepSamples === 1 ? 'day' : 'days'}`),
-          metric(sleepText, 'avg sleep', current.avgSleep === null ? null : `${current.sleepSamples} logged ${current.sleepSamples === 1 ? 'night' : 'nights'}`),
-          metric(bodyText, 'latest weight', current.weightChange === null ? 'log more days for a trend' : `${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb in range`),
-        ]),
-      ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Consistency' }),
-            el('p.progress-panel__sub', { text: 'Each square is one day of configured daily habits.' }),
-          ]),
-          el('strong.progress-panel__hero', { text: current.habitRate === null ? '—' : `${current.habitRate}%` }),
-        ]),
-        heatmap(current.days),
-      ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Training load' }),
-            el('p.progress-panel__sub', { text: `${compactNumber(current.totalVolume)} lb nominal volume across ${current.workingSets} working sets` }),
-          ]),
-          sparkline(current.volumeValues),
-        ]),
-        el('div.progress-panel__mini', {}, [
-          metric(String(current.trainingDays), 'training days'),
-          metric(String(current.workingSets), 'working sets'),
-          metric(`${Math.round(current.microMinutes)}m`, 'micro cardio'),
-        ]),
-      ]),
-
-      el('section.progress-panel', {}, [
-        el('div.progress-panel__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: 'Body trend' }),
-            el('p.progress-panel__sub', {
-              text: current.latestWeight === null
-                ? 'Log weight to build a trend.'
-                : `${current.latestWeight.toFixed(1)} lb${current.weightChange === null ? '' : ` · ${current.weightChange >= 0 ? '+' : ''}${current.weightChange.toFixed(1)} lb across this range`}`,
-            }),
-          ]),
-          sparkline(current.weights.map((entry) => entry.value)),
-        ]),
-      ]),
-    ]
+      weeklySetsCard(),
+      recentPrsCard(),
+      trendsCard(),
+      recoveryCard(),
+      el('button.progress-r5__report', { type: 'button', onclick: copyProgressReport }, ['Copy progress report for ChatGPT']),
+    ].filter(Boolean)
   }
 
   function habitsView() {
     const days = selectedDays()
     const activities = dailyActivities()
-    if (activities.length === 0) {
-      return [emptyState('No daily habits configured', 'Set activities to DAILY in Settings to build consistency stats.')]
-    }
-    if (days.length === 0) {
-      return [emptyState('No habit history yet', 'Tempered will calculate consistency from the first day you log.')]
-    }
+    if (activities.length === 0) return [emptyState('No daily habits configured', 'Set activities in Settings to build consistency stats.')]
+    if (days.length === 0) return [emptyState('No habit history yet', 'Consistency starts with your first logged day.')]
     return activities.map((activity) => {
       const values = days.map((day) => completedActivity(activity, day))
       const done = values.filter(Boolean).length
       const percent = Math.round((done / values.length) * 100)
       const streak = streaks(values)
-      return el('article.progress-habit', { dataset: { habit: activity.id } }, [
-        el('div.progress-habit__head', {}, [
-          el('div', {}, [
-            el('h3.progress-habit__name', { text: activity.short ?? activity.name }),
-            el('p.progress-habit__meta', { text: `${done} of ${values.length} days` }),
+      return el('article.progress-r5__habit', { dataset: { habit: activity.id } }, [
+        el('div.progress-r5__habit-head', {}, [
+          el('div.progress-r5__row-copy', {}, [
+            el('strong', { text: activity.short ?? activity.name }),
+            el('span', { text: `${done} of ${values.length} days · ${streak.current} current · ${streak.longest} best` }),
           ]),
-          el('strong.progress-habit__rate', { text: `${percent}%` }),
+          el('strong.progress-r5__habit-rate', { text: `${percent}%` }),
         ]),
-        el('div.progress-habit__bar', {}, [el('span', { style: `width:${percent}%` })]),
-        el('div.progress-habit__stats', {}, [
-          el('span', { text: `${streak.current} current streak` }),
-          el('span', { text: `${streak.longest} best streak` }),
-        ]),
+        el('div.progress-r5__habit-track', {}, [el('span', { style: `width:${percent}%` })]),
       ])
     })
   }
 
+  function liftTrend(record) {
+    const values = weightHistory.get(record.exerciseId) ?? []
+    const line = sparkline(values, 88, 28)
+    if (line) line.classList.add('progress-r5__spark')
+    const recent = values.slice(-2)
+    const delta = recent.length > 1 ? recent.at(-1) - recent.at(-2) : null
+    return { line, delta }
+  }
+
   function liftsView() {
-    const withRecords = records.filter((record) => record.bestWeight || record.bestVolume)
-    if (withRecords.length === 0) {
-      return [emptyState('No lifting progress yet', 'Records and trend lines build automatically from working sets.')]
-    }
+    const withRecords = records.filter((record) => record.bestE1RM)
+    if (!withRecords.length) return [emptyState('No lifting progress yet', 'Working sets build lift trends automatically.')]
     return withRecords
-      .sort((a, b) => (b.bestWeight?.weight ?? 0) - (a.bestWeight?.weight ?? 0))
+      .sort((a, b) => (b.bestE1RM?.value ?? 0) - (a.bestE1RM?.value ?? 0))
       .map((record) => {
         const exercise = exercises.get(record.exerciseId)
-        const line = sparkline(weightHistory.get(record.exerciseId) ?? [], 120, 30)
-        return el('article.progress-lift', { dataset: { record: record.exerciseId } }, [
-          el('div.progress-lift__head', {}, [
-            el('div', {}, [
-              el('h3.progress-lift__name', { text: exercise?.name ?? record.exerciseId }),
-              el('p.progress-lift__meta', { text: `${(weightHistory.get(record.exerciseId) ?? []).length} logged training day${(weightHistory.get(record.exerciseId) ?? []).length === 1 ? '' : 's'}` }),
-            ]),
-            line,
+        const trend = liftTrend(record)
+        return el('button.progress-r5__lift', { type: 'button', dataset: { record: record.exerciseId } }, [
+          el('div.progress-r5__row-copy', {}, [
+            el('strong', { text: exercise?.name ?? record.exerciseId }),
+            el('span', { text: trend.delta === null ? 'No 30D change yet' : `${signed(trend.delta, ' lb')} in 30D` }),
           ]),
-          el('div.progress-lift__stats', {}, [
-            record.bestWeight && stat(bestSetLabel(record.bestWeight), 'best set'),
-            record.bestVolume && stat(volume(record.bestVolume.volume), 'best volume'),
-            record.bestE1RM && stat(lbs(record.bestE1RM.value), 'est. 1RM'),
-          ].filter(Boolean)),
+          el('strong.progress-r5__lift-value', { text: `${Math.round(record.bestE1RM.value)} e1RM` }),
+          trend.line,
         ])
       })
   }
@@ -383,14 +378,10 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         type: 'button',
         dataset: { adjustDuration: session.id },
         onclick: () => { editingDurationId = session.id; render() },
-      }, ['ADJUST MINUTES'])
+      }, ['Adjust minutes'])
     }
-
     const input = el('input.today-editor__input', {
-      type: 'number',
-      min: '1',
-      max: '240',
-      step: '1',
+      type: 'number', min: '1', max: '240', step: '1',
       value: String(Math.round(Number(session.durationMinutes) || 1)),
       'aria-label': 'Correct workout minutes',
     })
@@ -404,44 +395,40 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           editingDurationId = null
           render()
         },
-      }, ['SAVE']),
-      el('button.actionpill', {
-        type: 'button',
-        onclick: () => { editingDurationId = null; render() },
-      }, ['CANCEL']),
+      }, ['Save']),
+      el('button.actionpill', { type: 'button', onclick: () => { editingDurationId = null; render() } }, ['Cancel']),
     ])
   }
 
   function sessionsView() {
     const dates = new Set(selectedDates())
     const period = sessions.filter((session) => dates.has(session.date))
-    if (period.length === 0) {
-      return [emptyState('No training in this range', 'Completed workouts and micro-set training days will appear here.')]
-    }
+    if (!period.length) return [emptyState('No training in this range', 'Completed workouts appear here.')]
     return period.map((session) => {
       const stats = sessionStats.get(session.id) ?? { volume: 0 }
+      const open = editingDurationId === session.id
       return el('article.card.historyrow', { dataset: { session: session.id } }, [
-        el('div.historyrow__head', {}, [
-          el('h3.historyrow__name', { text: session.routineName ?? session.routineId ?? 'Training day' }),
-          el('span.historyrow__date', { text: shortDate(session.date) }),
+        el('button.historyrow__open', {
+          type: 'button',
+          'aria-expanded': String(open),
+          onclick: () => { editingDurationId = open ? null : session.id; render() },
+        }, [
+          el('div', {}, [
+            el('h3.historyrow__name', { text: session.routineName ?? session.routineId ?? 'Training day' }),
+            el('p.historyrow__meta', { text: [
+              session.durationMinutes ? duration(session.durationMinutes) : null,
+              `${stats.sets ?? 0} sets`,
+              shortDate(session.date),
+            ].filter(Boolean).join(' · ') }),
+          ]),
+          el('span.historyrow__chevron', { text: open ? '⌄' : '›', 'aria-hidden': 'true' }),
         ]),
-        el('p.historyrow__meta', {
-          text: [
-            session.durationMinutes ? duration(session.durationMinutes) : null,
-            String(volume(stats.volume)) + ' lbs',
-            String(stats.sets ?? 0) + ' sets',
-          ].filter(Boolean).join(' · '),
-        }),
-        el('div.historyrow__actions', {}, [durationEditor(session)]),
+        open && el('div.historyrow__detail', {}, [
+          el('span', { text: `${volume(stats.volume)} lbs moved` }),
+          durationEditor(session),
+        ]),
       ])
     })
-  }
-
-  function stat(value, label) {
-    return el('div.stat.stat--small', {}, [
-      el('span.stat__value', { text: value }),
-      el('span.stat__label', { text: label }),
-    ])
   }
 
   function render() {
@@ -451,24 +438,26 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           : sessionsView()
 
     replace(root, [
-      el('header.progress-header', {}, [
-        el('div.progress-header__copyblock', {}, [
-          el('h1.screen__title', { text: 'Progress' }),
-          el('p.progress-header__copy', { text: 'A useful recap first. Detail when you want it.' }),
+      el('header.progress-r5__header', {}, [
+        el('h1.screen__title', { text: 'Progress' }),
+        el('label.progress-r5__range', {}, [
+          el('span.sr-only', { text: 'Time range' }),
+          el('select', {
+            value: String(range),
+            'aria-label': 'Time range',
+            onchange: (event) => { range = Number(event.target.value); render() },
+          }, [7, 30, 90].map((days) => el('option', { value: String(days) }, [`${days}D`]))),
         ]),
-        el('img.progress-header__mark', { src: progressIcon, alt: '', 'aria-hidden': 'true' }),
       ]),
-      el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress view' }, [
-        ['overview', 'Recap'], ['habits', 'Habits'], ['lifts', 'Lifts'], ['log', 'Log'],
+      el('div.segmented.progress-r5__segments', { role: 'group', 'aria-label': 'Progress view' }, [
+        ['overview', 'Overview'], ['lifts', 'Lifts'], ['habits', 'Habits'], ['log', 'Log'],
       ].map(([name, label]) => el('button.segmented__option', {
-        type: 'button', dataset: { view: name, active: String(view === name) },
-        'aria-pressed': String(view === name), onclick: () => { view = name; render() },
-      }, [label.toUpperCase()]))),
-      el('div.progress-range', { role: 'group', 'aria-label': 'Time range' }, [7, 30, 90].map((days) => el('button.progress-range__button', {
-        type: 'button', dataset: { active: String(range === days) },
-        'aria-pressed': String(range === days), onclick: () => { range = days; render() },
-      }, [`${days}D`]))),
-      el('div.progress-content', {}, viewContent),
+        type: 'button',
+        dataset: { view: name, active: String(view === name) },
+        'aria-pressed': String(view === name),
+        onclick: () => { view = name; render() },
+      }, [label]))),
+      el('div.progress-r5__content', {}, viewContent),
     ])
   }
 

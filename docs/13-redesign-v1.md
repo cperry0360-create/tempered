@@ -145,10 +145,29 @@ Top to bottom. Nothing else on this screen.
    `Tank · Lv 10` using the real name and level), gear on the right. Tapping the chip opens
    the existing Companion screen.
 2. **Title:** `Today` (large title), date line `Tuesday, 29 Sep` (subhead, `--text-2`).
-3. **Next session card:** session name as Title (`Pull A`), meta line
-   `Week 4 of 8 · 6 exercises · ~55 min`, full-width ember `Start session`. If today's
-   training is done, the card reads `Pull A done · 52 min · 23 sets` with a secondary
-   `View summary` button and no ember button.
+3. **Workout card (amended R6, restores the pre-R2 rollover behaviour).** Cory's favourite
+   feature: unfinished movements roll forward through the program week, and any single
+   movement can be logged on its own between calls. The card is driven by the existing
+   `buildDailyWorkoutQueue(await workout.weekStatus(), clock.today())` and
+   `remainingProgramDay()` in `src/ui/today-workout.js`. Render it natively in `today.js`;
+   do not bring back the MutationObserver enhancer.
+   - Title: today's program day (`Pull A`). Meta line from the queue, for example
+     `4 today · 2 from earlier this week` or `Week 4 of 8 · 6 exercises · ~55 min` when
+     nothing has rolled over.
+   - **Movement rows** for today's unfinished slots, 52px each: movement name, `1 / 3 sets`
+     in `--text-2`, and a `Log sets` (or `Continue` if started) secondary pill. Tapping a row
+     opens that single movement as a slot session (`app.startSession({ slotTask })`), the
+     between-call path. Sets logged there count toward the program day exactly as before.
+   - **From earlier this week:** a collapsible group below today's rows, header
+     `2 movements from earlier this week`, open by default when fewer than 6. Each row adds
+     `From Mon` in `--text-3`. Same tap behaviour.
+   - Completed movements collapse into one row at the bottom: `3 done` with a green check,
+     expandable.
+   - Full-width ember `Start full session` opens `remainingProgramDay()` (today's day plus
+     its unfinished slots).
+   - When everything today and earlier this week is done, the card reads
+     `Pull A done · 52 min · 23 sets` with a secondary `View summary` and no ember button.
+   - Train's next-session card shows the same rollover count in its meta line.
 4. **Readiness card:** three columns: Sleep, Resting HR, HRV (big number + label, small
    delta vs 7-day average under it). If there is no data for today, the whole card is one
    line: `No recovery data today` plus a text button `Import from Health`. Never show a
@@ -314,3 +333,33 @@ do not weaken tests of logging, persistence, or domain logic.
   (Settings, Setup, Program Builder, Summary, sheets) for tokens, sentence case, and
   explanation copy longer than one sentence. *Done when:* Progress capture matches mockup
   screen 4 and every screen passes the section 1 and 2 rules.
+- **R6 Rollover restore and device fixes** (from Cory's iPhone recording, 30 Sep).
+  1. **Rollover:** restore the Today workout card per amended section 5 Today item 3. R2
+     disconnected `installDailyWorkoutEnhancer` and the R3.1 audit missed it.
+  2. **Dead space at the bottom of every tab screen:** on the installed iPhone PWA the tab
+     bar sits roughly 50pt above the home-indicator area with an empty band under it. The
+     tab bar background must run to the physical bottom edge, with only
+     `env(safe-area-inset-bottom)` of padding under the labels. Find the real cause (likely
+     candidates: safe-area inset applied twice, `100vh` versus `100dvh` on html/body/app,
+     iOS standalone viewport height, or legacy tab bar rules in `style.css` and `calm.css`
+     that still offset `bottom`). Consolidate to one `.tabbar` rule. Page bottom padding
+     must equal tab bar height plus 16px, no more.
+  3. **Dead space at the top of the active workout:** the session header sits about 60pt
+     below the status bar. Apply the top safe-area inset once.
+  4. **Weekly sets chart is broken:** earlier weeks render as thin slivers along the top and
+     only the current week renders as a bar. Bars must share one baseline at the bottom,
+     heights proportional to each week's sets on a zero-based scale, value label above the
+     current week only. Remove the orphan line under the chart (`Micro cardio · 6 min`).
+  5. **Trends deltas:** show a delta only when both periods have at least 3 samples;
+     otherwise show nothing. A `-4,471` steps delta from 2 samples is noise.
+  6. **Display name bug:** `Standing Calf Raise · Standi...`. Never repeat the base name in
+     the suffix; if the suffix only restates the name, drop it.
+  7. **Readiness labels** use the short forms from the spec: `Sleep`, `Resting HR`, `HRV`,
+     so they fit on one line.
+  *Done when:* a browser test seeds a program week where Monday's day has 2 unfinished
+  slots and proves that on Wednesday Today lists them under "from earlier this week", that
+  tapping one opens a single-movement session, and that logging all its sets removes it from
+  the list (prove the test fails with the card removed); screenshots at both viewports show
+  the tab bar flush to the bottom and the session header directly under the status bar; and
+  the Weekly sets chart renders 8 bottom-aligned bars from seeded data. Ask Cory to confirm
+  the bottom spacing on his phone, since the simulator may not reproduce it.

@@ -1,228 +1,4 @@
-## 2026-09-30 â€” Redesign V1 R5 Progress and sweep
-
-- Progress is now a fixed 7D / 30D / 90D recap with Overview, Lifts, Habits, and Log views. Overview shows eight weeks of working sets, recent PRs, sample-aware weight/steps/sleep trends, Recovery only when samples exist, and a copyable ChatGPT report; exercise and log details retain their existing actions.
-- The remaining Settings, Setup, Program Builder, Summary, and sheet surfaces have been swept to token colors, sentence case, and one-sentence helper copy; the Health setup and import screens follow the same rules while preserving the machine-readable import format.
-- Retired configurable Progress dashboard code and its test page were removed, and stale background-art precache entries were cleared.
-- Release candidate: 0.42.1 (58). CI review found that the native range initially selected 7D, several browser contracts still targeted the retired dashboard, and the 430px workout summary clipped two measurements. R5.1 selects 30D, updates the contracts, and fixes the summary grid. Release evidence covers 22 screens at 390Ã—844 and 430Ã—932 (44 captures); final artifact review is pending.
-
-## 2026-09-30 â€” Redesign V1 R3.1 session feature restore
-
-- Applied the new feature-preservation rule to the d9850f5 pre-redesign baseline.
-- Active workout again shows real progression prescriptions in inputs, proposal coaching,
-  56px exercise art with full-image panel, Best performance, and per-side barbell plates.
-- Restored unapproved R2/R4 removals behind detail views: Today planner/date/day recap/program
-  exercise logging and Train hard-set/library-PR context.
-- Added fail-first browser coverage proving one-tap logging uses the prescription rather than
-  last-session values.
-- Release version: 0.41.1 (56).
-
-## 2026-09-30 â€” Redesign V1 R4 Train and Fuel
-
-- Train now follows the approved R4 hierarchy: one program header, next session, session rows, routines, and drill-in rows for Exercise library and Training rhythm. The duplicated program presentation, weekly slot bars, workout control center, stat tiles, and AI coaching handoff are removed from Train.
-- Program details expands the active-program description and links to Program Builder. Routines start from their detail view rather than directly from the list.
-- Fuel now follows approved mockup screen 3: energy ring, protein progress, three macro stats, one meal action, recent quick logs, and water controls. Recovery and companion content are absent from Fuel.
-- The Fuel ring represents calories eaten divided by the calorie goal and has a zero-length ember arc when calories eaten is 0.
-- Release version: 0.41.0 (55).
-
-## 2026-09-29 â€” Redesign V1 R3 Active workout
-
-- Active workout now follows approved mockup screen 2: sticky Cancel / title+elapsed / Finish header, dense exercise cards, Previous/lbs/Reps table, 52px rows, completed success tint, inline Add set, and fixed rest controls.
-- Legacy exercise art, LAST/PR header pills, visible action chips, and always-visible plate calculator are removed from the workout surface. Existing exercise actions live under the â‹¯ menu, including cable-machine settings.
-- Repeat-session values render as dim placeholders; one check tap logs those placeholder values. Set number opens Working/Warm-up/Drop/Failure type selection. Swipe-left deletes a set.
-- Rest timing is derived from a persisted absolute `endsAt` timestamp so backgrounding or sleeping the screen cannot pause the countdown.
-- R3 browser acceptance covers placeholder contrast, one-tap logging, stored-end-timestamp timing, menu actions, resume behavior, and 52px rows. `tools/verify-logging-speed.js` is now an explicit CI gate.
-- Release version: 0.40.0 (54).
-
-Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard now leads with companion/settings, next session, readiness, same-week training, Fuel, and the canonical Daily log. Legacy Today summary, calendar rail, planner, workout-control, Daily Recap, weekly-goal, and AI-check surfaces are removed from Today; logging and persistence remain canonical.
-
-# Tempered current state
-
-**Last updated:** 2026-09-30
-
-**Repository:** `cperry0360-create/tempered`  
-**Production:** `https://cperry0360-create.github.io/tempered/`  
-**Current release candidate:** 0.42.0 (57) â€” Redesign V1 R5 Progress and sweep; visual acceptance pending
-
-**Product maturity:** Pre-beta product completion
-
-Tempered is not yet beta-ready. It currently ships one seeded program and has no on-device
-program creation or editing system. First launch now teaches the tracker-first thesis, asks
-for a realistic goal, schedule, session length, and equipment, previews the starting path,
-and lands the user on a concrete next action. Full program creation and editing remain ahead.
-Product Phase 2 is therefore Program Foundation and Guided First Use. Release 0.27 establishes
-versioned program envelopes, immutable prescription revisions, and a safe migration for the
-existing November program. The builder and revised onboarding are still ahead. Expanded native
-distribution follows only after the exit criteria in
-[`docs/12-pre-beta-product-foundation.md`](12-pre-beta-product-foundation.md) pass.
-
-Release 0.26 keeps Health import above Daily Recap and redraws Today after import so sleep, steps, and scheduled habit rows update immediately. Nutrition now has an explicit date picker for correcting earlier records, Today offers a neutral review route for recent prior days with open items, readiness has Ready/Steady/Recover colors, and the ChatGPT coaching handoff includes the latest workout, strongest sets, workload, and confirmed load or volume PRs.
-
-Release 0.25 restores imported recovery signals to Progress, explains the readiness estimate using the user's own baselines, separates Fuel, hydration, and recovery into practical cards, and excludes current or flagged-partial nutrition days from calorie averages. Nutrition days can be marked Complete or Still Logging from the meal journal.
-
-This is the short handoff for the live product. It records the decisions recovered from
-the long Tempered build conversation and the companion-art share so a new session does
-not have to reconstruct the pivot from legacy RPG documents.
-
-Release 0.31.1 removes the final visible RPG explanation from onboarding and establishes
-the autonomous product-team release contract. CI now captures every core surface at both
-supported iPhone viewport classes as reviewable evidence. A release is not complete until
-those captures and the deployed product have been visually inspected. The operating contract
-is in [`docs/PRODUCT-TEAM.md`](PRODUCT-TEAM.md).
-
-Release 0.33.0 turns the starting path into a real template chooser. New users can choose
-Strength Foundation, November Physique, Mercy Mode, or start a safe blank draft. The visual
-system now uses warm amber action accents and lifted teal recovery accents instead of acid
-lime and moss green. Existing history and program records remain intact.
-
-Release 0.34.0 adds the first mobile Program Builder workflow. From Settings, a user can
-create or edit a day, add exercises, set sets and rep ranges, save a draft, and review before
-activating. Every save creates an immutable prescription revision; existing workout history is
-not rewritten.
-
-Release 0.35.0 adds First-Week Guidance to Today and Train. The app now names the next useful
-session, explains that repeatable work is enough, and treats recovery as part of the plan when
-today's work is complete. It adds no reminders, debt, or punitive streak behavior.
-
-Release 0.36.0 adds a browser acceptance harness for the Program Builder's complete path:
-open, add a day, add an exercise, save a draft, and review/activate. This begins the pre-beta
-proof pass; hosted browser and visual inspection remain required before TestFlight.
-
-Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
-plus recovery, keeps the local-first promise visible, captures the user's goal, realistic
-weekly rhythm, session length, equipment, and starting path, then reviews the current plan
-before saving. The companion remains optional and is presented as a reflection of completed
-work rather than a responsibility. Existing history and program records remain intact.
-
-Release 0.31 makes three distinct 30-minute days the weekly streak minimum. A fourth qualifying day makes it a strong week and advances keeper progress, so busy weeks count without removing the reward for doing more.
-
-Release 0.30 replaces the fixed two-week Training calendar with a horizontally scrolling weekly history. It includes every week from the first recorded workout, opens on the current week, and preserves the established outline for logged work and solid fill for 30-minute qualifying days.
-
-## Product direction
-
-Tempered is a mobile-first, local-first health, training, and lifestyle tracker with a
-small positive companion layer. It is not an RPG battle game. The visible navigation is:
-
-1. **Today** for sleep, steps, nutrition, water, recovery, habits, and today's workout.
-2. **Train** for scrollable weekly rhythm history, readiness, concise ChatGPT coaching handoff,
-   programs, ad-hoc exercises, fast set logging, history, and progression.
-3. **Fuel** for calories, protein, water, and sleep at a glance with quick logging. The
-   selectable companion is retained below this practical dashboard as an optional reward.
-4. **Progress** for a fixed recap plus a configurable widget dashboard.
-
-Character/Battle code remains only for backwards compatibility with existing IndexedDB
-data and regression fixtures. Do not put it back in navigation or expand it.
-
-## Product rules that must survive every change
-
-- Tracker first. The app must still be useful if Companion disappears.
-- Local-first and fully offline. No backend, embedded AI key, or required account.
-- No punishment. No lost levels, negative rewards, broken-streak shame, sick pet, decay,
-  or missed-day debt. Rest is part of tempering.
-- Completion is undoable, history is preserved, and reloads must not lose work.
-- Workout completion and Today use the same canonical logs. Never duplicate rewards or
-  create a second shadow tracker.
-- Nutrition keeps timestamped meal entries with calories, protein, carbohydrates, fat,
-  and fiber. The meal-photo helper fills the same reviewable form and never auto-saves.
-- ChatGPT Health paste import is available from Daily Recap with an exact prompt, parsed
-  preview, explicit confirmation, immediate recap refresh, and visible recovery signals.
-  Copy actions open ChatGPT with the prompt on the clipboard because no supported public
-  prompt-prefill link is used. The failed Shortcut automation stays hidden. The
-  future signed iOS wrapper can read supported HealthKit metrics directly.
-- Mobility opens a dedicated guided screen with four routines, movement cues, countdowns,
-  and explicit completion logging rather than expanding into an inline minutes field.
-- No social feed, leaderboards, notification machine, or giant generic exercise catalog.
-
-## Companion contract
-
-- Three saved companion types. Trailback Turtle is the default; Forge Guardian and the
-  original cream, teal, green, and warm-gold Ember Sprout remain selectable.
-- The style can be chosen in setup or changed directly on Companion. Changing art keeps
-  the companion name, care total, and growth level.
-- Ten levels with early thresholds at 0, 24, 50, 85, and 130 care, then 185, 250, 330,
-  430, and 550. Turtle and Forge have ten distinct forms. Turtle moves from Egg through
-  hatchling and athletic stages to Shredded. Sprout maps those levels onto its five
-  original forms while retaining a named checkpoint at every level.
-- Growth comes from completed training, working sets, and lifestyle logs.
-- The workout-complete screen makes that relationship explicit: session stats and new
-  records lead into the selected companion, exact care earned, the session/set split,
-  current growth, and a direct route to Companion when an evolution is ready.
-- Earned care may accumulate anywhere, but a form never changes silently. Companion holds
-  the last revealed level, opens an evolution-ready takeover, then performs the change
-  inside a fixed phone-safe stage over a 3.2-second old-to-new morph. The takeover is
-  mounted in a top-level app overlay, outside the animated scrolling screen, so iOS cannot
-  position it against the full Companion page or layer navigation above it. The checkpoint
-  is written only after the morph, and the completion splash remains until acknowledged.
-  A versioned presentation receipt replays corrected reveals once for affected installs,
-  and Replay Evolution can run the earned transformation again without changing care.
-- Each style has starter, mid, and fully upgraded habitat states. Turtle begins in a
-  rugged lakeside nest and expands into a natural pond-side training territory.
-- Daily moments may reflect training, hydration, reading, nutrition, sleep, or idle time.
-- The user can rename the companion. Nothing decays.
-
-## Progress widget dashboard
-
-The recap remains fixed. The configurable grid supports Add, Edit/Done, remove, reorder,
-and local persistence. The default widgets are:
-
-- Training Load
-- Sleep
-- Steps
-- Nutrition, showing calories and protein together
-- Water
-- Weight
-- Consistency
-
-Micro Cardio is available from the Add gallery. The dashboard must render on the first
-visit to Progress without requiring a second tap, and must remain mounted while idle.
-Release 0.14.3 removes the self-triggering observer loop that repeatedly deleted and
-rebuilt the dashboard, leaving it absent most of the time and its controls untappable.
-Release 0.14.4 keeps the same dashboard element and cards mounted while Add, Edit/Done,
-remove, and reorder controls run. These interactions update immediately and persist in
-sequence, without the scroll jumps and card flicker caused by asynchronous replacement.
-Release 0.15.0 also removes backdrop filtering and all animation from the card layer so
-iOS does not re-composite and flash cards while controls or DOM order change.
-Longer ranges begin at Tempered's first recorded day rather than inventing zeroes before
-the app had data. Partial 30/90-day views state their actual coverage, averages show sample
-counts, missing samples remain missing in charts, and prior-period comparisons wait until
-both periods have complete coverage.
-
-## Nutrition log
-
-Tapping Nutrition on Today opens a dedicated sub-screen. It shows daily totals, a meal
-form with a short description, time, and calories/protein/carbs/fat/fiber, plus timestamped
-meal history. Import AI Copy fills the description and nutrient fields and waits for review;
-Add Meal is the only save action and the screen stays open afterward. Once an entry has a
-description, recent/frequent meals appear as one-tap Quick Log choices with their saved
-amounts. The AI prompt requests a brief description in its copyable result. Entries can be
-deleted and immediately restored with Undo. Aggregate day fields remain canonical for
-existing Today, Progress, XP, and export logic. Totals logged before 0.15.0 are preserved
-as an Earlier total rather than assigned an invented meal time.
-
-## Today screen density and Daily Recap
-
-Today begins with one compact calendar rail and progress strip. The redundant visible
-Today heading and long date are gone; the selected date remains explicit in the calendar
-and accessible screen heading. Plan and Lifestyle logging rows remain directly on Today.
-
-Read-only lifestyle totals no longer sit above those logging rows. `DAILY RECAP` opens a
-dedicated card with sleep, steps, nutrition, water, weight, a compact Health import entry, and
-four exercise facts for the selected day: training minutes, working sets, movements, and
-sessions. The recap has no entrance animation or nested navigation, so it opens and closes
-without the card flicker seen in earlier iPhone builds. Mobility logging opens a card with
-four ready-to-use short flows, each showing its movements and filling its duration.
-
-## Planner, training navigation, and active sessions
-
-Personal and work tasks roll onto later dates until checked off. A rolled task keeps its
-original date and can be opened to read or edit its full title, notes, type, and optional
-due date. Due dates provide context and ordering; they never create an overdue penalty.
-
-Train opens with a compact, horizontally scrolling weekly training calendar. Days with 30
-or more completed workout minutes are circled. Three such days maintain the streak. A fourth
-makes it a strong week, and five strong weeks bank a streak keeper. A keeper automatically protects one completed quiet week, and an unfinished week
-never spends one. Settings also accepts retroactive or planned Away ranges. A completed away
-week preserves an existing rhythm without inventing workouts, spending a keeper, or advancing
-keeper progress. The system is positive-only. Completed sessions can be corrected later from
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíón½N‹Z–‹­¦ëeŠw¬ÔŒŒ€ÈÀÈØ´Àä´ÌÀƒŠPI•‘•Í¥¸XÄHÔAÉ½É•ÍÌ…¹Íİ••À((´AÉ½É•ÍÌ¥Ì¹½Ü„™¥á•€İ€¼€ÌÁ€¼€äÁÉ•…Àİ¥Ñ =Ù•ÉÙ¥•Ü°1¥™ÑÌ°!…‰¥ÑÌ°…¹1½œÙ¥•İÌ¸=Ù•ÉÙ¥•ÜÍ¡½İÌ•¥¡Ğİ••­Ì½˜İ½É­¥¹œÍ•ÑÌ°É••¹ĞAIÌ°Í…µÁ±”µ…İ…É”İ•¥¡Ğ½ÍÑ•ÁÌ½Í±••ÀÑÉ•¹‘Ì°I•½Ù•Éä½¹±äİ¡•¸Í…µÁ±•Ì•á¥ÍĞ°…¹„½Áå…‰±”¡…ÑAPÉ•Á½ÉĞì•á•É¥Í”…¹±½œ‘•Ñ…¥±ÌÉ•Ñ…¥¸Ñ¡•¥È•á¥ÍÑ¥¹œ…Ñ¥½¹Ì¸(´Q¡”É•µ…¥¹¥¹œM•ÑÑ¥¹Ì°M•ÑÕÀ°AÉ½É…´	Õ¥±‘•È°MÕµµ…Éä°…¹Í¡••ĞÍÕÉ™…•Ì¡…Ù”‰••¸Íİ•ÁĞÑ¼Ñ½­•¸½±½ÉÌ°Í•¹Ñ•¹”…Í”°…¹½¹”µÍ•¹Ñ•¹”¡•±Á•È½ÁäìÑ¡”!•…±Ñ Í•ÑÕÀ…¹¥µÁ½ÉĞÍÉ••¹Ì™½±±½ÜÑ¡”Í…µ”ÉÕ±•Ìİ¡¥±”ÁÉ•Í•ÉÙ¥¹œÑ¡”µ…¡¥¹”µÉ•…‘…‰±”¥µÁ½ÉĞ™½Éµ…Ğ¸(´I•Ñ¥É•½¹™¥ÕÉ…‰±”AÉ½É•ÍÌ‘…Í¡‰½…É½‘”…¹¥ÑÌÑ•ÍĞÁ…”İ•É”É•µ½Ù•°…¹ÍÑ…±”‰…­É½Õ¹µ…ÉĞÁÉ•…¡”•¹ÑÉ¥•Ìİ•É”±•…É•¸(´I•±•…Í”…¹‘¥‘…Ñ”è€À¸ĞÈ¸Ä€ Ôà¤¸HÔ¸ÄÍ•±•ÑÌ€ÌÁ‰ä‘•™…Õ±Ğ°ÕÁ‘…Ñ•Ì‰É½İÍ•È½¹ÑÉ…ÑÌÑ¼Ñ¡”™¥á•AÉ½É•ÍÌÙ¥•İÌ°…¹­••ÁÌÑ¡”ÍÕµµ…Éäµ•…ÍÕÉ•µ•¹ÑÌ…¹½µÁ…ĞM±••ÀÑÉ•¹Ù¥Í¥‰±”…Ğ‰½Ñ ÍÕÁÁ½ÉÑ•İ¥‘Ñ¡Ì¸Q¡”$É•±•…Í”…ÉÑ¥™…Ğ½¹Ñ…¥¹Ì€ÈÈÍÉ••¹Ì…Ğ€ÌäÃ\àĞĞ…¹€ĞÌÃ\äÌÈ€ ĞĞ…ÁÑÕÉ•Ì¤ì…±°İ•É”É•Ù¥•İ•…™Ñ•ÈÑ¡”™¥¹…°ÁÕÍ ¸AÉ½É•ÍÌµ…Ñ¡•Ìµ½­ÕÀÍÉ••¸€ĞÌÍÑÉÕÑÕÉ”°İ¥Ñ ‘…Ñ„µ‘É¥Ù•¸¡…ÉĞÙ…±Õ•Ì°!…‰¥ÑÌ¥¸Á±…”½˜Ñ¡”µ½­ÕÀÌ	½‘äÑ…ˆÁ•ÈÑ¡¥ÌÍÁ•Œ°Í…µÁ±”½Õ¹ÑÌ°…¹I•½Ù•Éäİ¡•¸‘…Ñ„•á¥ÍÑÌ¸Q¡”É•µ…¥¹¥¹œÍÉ••¹ÌÁ…ÍÌÑ¡”Ñ½­•¸µ½±½È°Í•¹Ñ•¹”µ…Í”°¹¼µ‰…­É½Õ¹µ…ÉĞ°…¹½¹”µÍ•¹Ñ•¹”µ¡•±Á•Èµ½ÁäÍİ••À¸1½…°Ñ•ÍÑÌÁ…ÍÌ€ØØà¼ØØàì™¥¹…°$É•É•ÍÍ¥½¸°‰É½İÍ•È…•ÁÑ…¹”°Ù¥ÍÕ…°…ÁÑÕÉ”°…¹¥=L‰Õ¥±©½‰ÌÁ…ÍÌ¸((ŒŒ€ÈÀÈØ´Àä´ÌÀƒŠPI•‘•Í¥¸XÄHÌ¸ÄÍ•ÍÍ¥½¸™•…ÑÕÉ”É•ÍÑ½É”((´ÁÁ±¥•Ñ¡”¹•Ü™•…ÑÕÉ”µÁÉ•Í•ÉÙ…Ñ¥½¸ÉÕ±”Ñ¼Ñ¡”äàÔÁ˜ÔÁÉ”µÉ•‘•Í¥¸‰…Í•±¥¹”¸(´Ñ¥Ù”İ½É­½ÕĞ……¥¸Í¡½İÌÉ•…°ÁÉ½É•ÍÍ¥½¸ÁÉ•ÍÉ¥ÁÑ¥½¹Ì¥¸¥¹ÁÕÑÌ°ÁÉ½Á½Í…°½…¡¥¹œ°(€€ÔÙÁà•á•É¥Í”…ÉĞİ¥Ñ ™Õ±°µ¥µ…”Á…¹•°°	•ÍĞÁ•É™½Éµ…¹”°…¹Á•ÈµÍ¥‘”‰…É‰•±°Á±…Ñ•Ì¸(´I•ÍÑ½É•Õ¹…ÁÁÉ½Ù•HÈ½HĞÉ•µ½Ù…±Ì‰•¡¥¹‘•Ñ…¥°Ù¥•İÌèQ½‘…äÁ±…¹¹•È½‘…Ñ”½‘…äÉ•…À½ÁÉ½É…´(€•á•É¥Í”±½¥¹œ…¹QÉ…¥¸¡…ÉµÍ•Ğ½±¥‰É…ÉäµAH½¹Ñ•áĞ¸(´‘‘•™…¥°µ™¥ÉÍĞ‰É½İÍ•È½Ù•É…”ÁÉ½Ù¥¹œ½¹”µÑ…À±½¥¹œÕÍ•ÌÑ¡”ÁÉ•ÍÉ¥ÁÑ¥½¸É…Ñ¡•ÈÑ¡…¸(€±…ÍĞµÍ•ÍÍ¥½¸Ù…±Õ•Ì¸(´I•±•…Í”Ù•ÉÍ¥½¸è€À¸ĞÄ¸Ä€ ÔØ¤¸((ŒŒ€ÈÀÈØ´Àä´ÌÀƒŠPI•‘•Í¥¸XÄHĞQÉ…¥¸…¹Õ•°((´QÉ…¥¸¹½Ü™½±±½İÌÑ¡”…ÁÁÉ½Ù•HĞ¡¥•É…É¡äè½¹”ÁÉ½É…´¡•…‘•È°¹•áĞÍ•ÍÍ¥½¸°Í•ÍÍ¥½¸É½İÌ°É½ÕÑ¥¹•Ì°…¹‘É¥±°µ¥¸É½İÌ™½Èá•É¥Í”±¥‰É…Éä…¹QÉ…¥¹¥¹œÉ¡åÑ¡´¸Q¡”‘ÕÁ±¥…Ñ•ÁÉ½É…´ÁÉ•Í•¹Ñ…Ñ¥½¸°İ••­±äÍ±½Ğ‰…ÉÌ°İ½É­½ÕĞ½¹ÑÉ½°•¹Ñ•È°ÍÑ…ĞÑ¥±•Ì°…¹$½…¡¥¹œ¡…¹‘½™˜…É”É•µ½Ù•™É½´QÉ…¥¸¸(´AÉ½É…´‘•Ñ…¥±Ì•áÁ…¹‘ÌÑ¡”…Ñ¥Ù”µÁÉ½É…´‘•ÍÉ¥ÁÑ¥½¸…¹±¥¹­ÌÑ¼AÉ½É…´	Õ¥±‘•È¸I½ÕÑ¥¹•ÌÍÑ…ÉĞ™É½´Ñ¡•¥È‘•Ñ…¥°Ù¥•ÜÉ…Ñ¡•ÈÑ¡…¸‘¥É•Ñ±ä™É½´Ñ¡”±¥ÍĞ¸(´Õ•°¹½Ü™½±±½İÌ…ÁÁÉ½Ù•µ½­ÕÀÍÉ••¸€Ìè•¹•ÉäÉ¥¹œ°ÁÉ½Ñ•¥¸ÁÉ½É•ÍÌ°Ñ¡É•”µ…É¼ÍÑ…ÑÌ°½¹”µ•…°…Ñ¥½¸°É••¹ĞÅÕ¥¬±½Ì°…¹İ…Ñ•È½¹ÑÉ½±Ì¸I•½Ù•Éä…¹½µÁ…¹¥½¸½¹Ñ•¹Ğ…É”…‰Í•¹Ğ™É½´Õ•°¸(´Q¡”Õ•°É¥¹œÉ•ÁÉ•Í•¹ÑÌ…±½É¥•Ì•…Ñ•¸‘¥Ù¥‘•‰äÑ¡”…±½É¥”½…°…¹¡…Ì„é•É¼µ±•¹Ñ •µ‰•È…ÉŒİ¡•¸…±½É¥•Ì•…Ñ•¸¥Ì€À¸(´I•±•…Í”Ù•ÉÍ¥½¸è€À¸ĞÄ¸À€ ÔÔ¤¸((ŒŒ€ÈÀÈØ´Àä´ÈäƒŠPI•‘•Í¥¸XÄHÌÑ¥Ù”İ½É­½ÕĞ((´Ñ¥Ù”İ½É­½ÕĞ¹½Ü™½±±½İÌ…ÁÁÉ½Ù•µ½­ÕÀÍÉ••¸€ÈèÍÑ¥­ä…¹•°€¼Ñ¥Ñ±”­•±…ÁÍ•€¼¥¹¥Í ¡•…‘•È°‘•¹Í”•á•É¥Í”…É‘Ì°AÉ•Ù¥½ÕÌ½±‰Ì½I•ÁÌÑ…‰±”°€ÔÉÁàÉ½İÌ°½µÁ±•Ñ•ÍÕ•ÍÌÑ¥¹Ğ°¥¹±¥¹”‘Í•Ğ°…¹™¥á•É•ÍĞ½¹ÑÉ½±Ì¸(´1•…ä•á•É¥Í”…ÉĞ°1MP½AH¡•…‘•ÈÁ¥±±Ì°Ù¥Í¥‰±”…Ñ¥½¸¡¥ÁÌ°…¹…±İ…åÌµÙ¥Í¥‰±”Á±…Ñ”…±Õ±…Ñ½È…É”É•µ½Ù•™É½´Ñ¡”İ½É­½ÕĞÍÕÉ™…”¸á¥ÍÑ¥¹œ•á•É¥Í”…Ñ¥½¹Ì±¥Ù”Õ¹‘•ÈÑ¡”ƒŠ.¼µ•¹Ô°¥¹±Õ‘¥¹œ…‰±”µµ…¡¥¹”Í•ÑÑ¥¹Ì¸(´I•Á•…ĞµÍ•ÍÍ¥½¸Ù…±Õ•ÌÉ•¹‘•È…Ì‘¥´Á±…•¡½±‘•ÉÌì½¹”¡•¬Ñ…À±½ÌÑ¡½Í”Á±…•¡½±‘•ÈÙ…±Õ•Ì¸M•Ğ¹Õµ‰•È½Á•¹Ì]½É­¥¹œ½]…É´µÕÀ½É½À½…¥±ÕÉ”ÑåÁ”Í•±•Ñ¥½¸¸Mİ¥Á”µ±•™Ğ‘•±•Ñ•Ì„Í•Ğ¸(´I•ÍĞÑ¥µ¥¹œ¥Ì‘•É¥Ù•™É½´„Á•ÉÍ¥ÍÑ•…‰Í½±ÕÑ”•¹‘ÍÑ€Ñ¥µ•ÍÑ…µÀÍ¼‰…­É½Õ¹‘¥¹œ½ÈÍ±••Á¥¹œÑ¡”ÍÉ••¸…¹¹½ĞÁ…ÕÍ”Ñ¡”½Õ¹Ñ‘½İ¸¸(´HÌ‰É½İÍ•È…•ÁÑ…¹”½Ù•ÉÌÁ±…•¡½±‘•È½¹ÑÉ…ÍĞ°½¹”µÑ…À±½¥¹œ°ÍÑ½É•µ•¹µÑ¥µ•ÍÑ…µÀÑ¥µ¥¹œ°µ•¹Ô…Ñ¥½¹Ì°É•ÍÕµ”‰•¡…Ù¥½È°…¹€ÔÉÁàÉ½İÌ¸Ñ½½±Ì½Ù•É¥™äµ±½¥¹œµÍÁ••¹©Í€¥Ì¹½Ü…¸•áÁ±¥¥Ğ$…Ñ”¸(´I•±•…Í”Ù•ÉÍ¥½¸è€À¸ĞÀ¸À€ ÔĞ¤¸()I•±•…Í”€À¸Ìä¸À½µÁ±•Ñ•ÌI•‘•Í¥¸XÄA¡…Í”HÈ™½ÈQ½‘…äèÑ¡”…ÁÁÉ½Ù•‘…Í¡‰½…É¹½Ü±•…‘Ìİ¥Ñ ½µÁ…¹¥½¸½Í•ÑÑ¥¹Ì°¹•áĞÍ•ÍÍ¥½¸°É•…‘¥¹•ÍÌ°Í…µ”µİ••¬ÑÉ…¥¹¥¹œ°Õ•°°…¹Ñ¡”…¹½¹¥…°…¥±ä±½œ¸1•…äQ½‘…äÍÕµµ…Éä°…±•¹‘…ÈÉ…¥°°Á±…¹¹•È°İ½É­½ÕĞµ½¹ÑÉ½°°…¥±äI•…À°İ••­±äµ½…°°…¹$µ¡•¬ÍÕÉ™…•Ì…É”É•µ½Ù•™É½´Q½‘…äì±½¥¹œ…¹Á•ÉÍ¥ÍÑ•¹”É•µ…¥¸…¹½¹¥…°¸((ŒQ•µÁ•É•ÕÉÉ•¹ĞÍÑ…Ñ”((¨©1…ÍĞÕÁ‘…Ñ•è¨¨€ÈÀÈØ´Àä´ÌÀ((¨©I•Á½Í¥Ñ½Éäè¨¨Á•ÉÉäÀÌØÀµÉ•…Ñ”½Ñ•µÁ•É•‘€€€(¨©AÉ½‘ÕÑ¥½¸è¨¨¡ÑÑÁÌè¼½Á•ÉÉäÀÌØÀµÉ•…Ñ”¹¥Ñ¡Õˆ¹¥¼½Ñ•µÁ•É•½€€€(¨©ÕÉÉ•¹ĞÉ•±•…Í”…¹‘¥‘…Ñ”è¨¨€À¸ĞÈ¸Ä€ Ôà¤ƒŠPI•‘•Í¥¸XÄHÔAÉ½É•ÍÌ…¹Íİ••ÀìÙ¥ÍÕ…°…•ÁÑ…¹”½µÁ±•Ñ”((¨©AÉ½‘ÕĞµ…ÑÕÉ¥Ñäè¨¨AÉ”µ‰•Ñ„ÁÉ½‘ÕĞ½µÁ±•Ñ¥½¸()Q•µÁ•É•¥Ì¹½Ğå•Ğ‰•Ñ„µÉ•…‘ä¸%ĞÕÉÉ•¹Ñ±äÍ¡¥ÁÌ½¹”Í••‘•ÁÉ½É…´…¹¡…Ì¹¼½¸µ‘•Ù¥”)ÁÉ½É…´É•…Ñ¥½¸½È•‘¥Ñ¥¹œÍåÍÑ•´¸¥ÉÍĞ±…Õ¹ ¹½ÜÑ•…¡•ÌÑ¡”ÑÉ…­•Èµ™¥ÉÍĞÑ¡•Í¥Ì°…Í­Ì)™½È„É•…±¥ÍÑ¥Œ½…°°Í¡•‘Õ±”°Í•ÍÍ¥½¸±•¹Ñ °…¹•ÅÕ¥Áµ•¹Ğ°ÁÉ•Ù¥•İÌÑ¡”ÍÑ…ÉÑ¥¹œÁ…Ñ °)…¹±…¹‘ÌÑ¡”ÕÍ•È½¸„½¹É•Ñ”¹•áĞ…Ñ¥½¸¸Õ±°ÁÉ½É…´É•…Ñ¥½¸…¹•‘¥Ñ¥¹œÉ•µ…¥¸…¡•…¸)AÉ½‘ÕĞA¡…Í”€È¥ÌÑ¡•É•™½É”AÉ½É…´½Õ¹‘…Ñ¥½¸…¹Õ¥‘•¥ÉÍĞUÍ”¸I•±•…Í”€À¸ÈÜ•ÍÑ…‰±¥Í¡•Ì)Ù•ÉÍ¥½¹•ÁÉ½É…´•¹Ù•±½Á•Ì°¥µµÕÑ…‰±”ÁÉ•ÍÉ¥ÁÑ¥½¸É•Ù¥Í¥½¹Ì°…¹„Í…™”µ¥É…Ñ¥½¸™½ÈÑ¡”)•á¥ÍÑ¥¹œ9½Ù•µ‰•ÈÁÉ½É…´¸Q¡”‰Õ¥±‘•È…¹É•Ù¥Í•½¹‰½…É‘¥¹œ…É”ÍÑ¥±°…¡•…¸áÁ…¹‘•¹…Ñ¥Ù”)‘¥ÍÑÉ¥‰ÕÑ¥½¸™½±±½İÌ½¹±ä…™Ñ•ÈÑ¡”•á¥ĞÉ¥Ñ•É¥„¥¸)m‘½Ì¼ÄÈµÁÉ”µ‰•Ñ„µÁÉ½‘ÕĞµ™½Õ¹‘…Ñ¥½¸¹µ‘t ÄÈµÁÉ”µ‰•Ñ„µÁÉ½‘ÕĞµ™½Õ¹‘…Ñ¥½¸¹µ¤Á…ÍÌ¸()I•±•…Í”€À¸ÈØ­••ÁÌ!•…±Ñ ¥µÁ½ÉĞ…‰½Ù”…¥±äI•…À…¹É•‘É…İÌQ½‘…ä…™Ñ•È¥µÁ½ÉĞÍ¼Í±••À°ÍÑ•ÁÌ°…¹Í¡•‘Õ±•¡…‰¥ĞÉ½İÌÕÁ‘…Ñ”¥µµ•‘¥…Ñ•±ä¸9ÕÑÉ¥Ñ¥½¸¹½Ü¡…Ì…¸•áÁ±¥¥Ğ‘…Ñ”Á¥­•È™½È½ÉÉ•Ñ¥¹œ•…É±¥•ÈÉ•½É‘Ì°Q½‘…ä½™™•ÉÌ„¹•ÕÑÉ…°É•Ù¥•ÜÉ½ÕÑ”™½ÈÉ••¹ĞÁÉ¥½È‘…åÌİ¥Ñ ½Á•¸¥Ñ•µÌ°É•…‘¥¹•ÍÌ¡…ÌI•…‘ä½MÑ•…‘ä½I•½Ù•È½±½ÉÌ°…¹Ñ¡”¡…ÑAP½…¡¥¹œ¡…¹‘½™˜¥¹±Õ‘•ÌÑ¡”±…Ñ•ÍĞİ½É­½ÕĞ°ÍÑÉ½¹•ÍĞÍ•ÑÌ°İ½É­±½…°…¹½¹™¥Éµ•±½…½ÈÙ½±Õµ”AIÌ¸()I•±•…Í”€À¸ÈÔÉ•ÍÑ½É•Ì¥µÁ½ÉÑ•É•½Ù•ÉäÍ¥¹…±ÌÑ¼AÉ½É•ÍÌ°•áÁ±…¥¹ÌÑ¡”É•…‘¥¹•ÍÌ•ÍÑ¥µ…Ñ”ÕÍ¥¹œÑ¡”ÕÍ•ÈÌ½İ¸‰…Í•±¥¹•Ì°Í•Á…É…Ñ•ÌÕ•°°¡å‘É…Ñ¥½¸°…¹É•½Ù•Éä¥¹Ñ¼ÁÉ…Ñ¥…°…É‘Ì°…¹•á±Õ‘•ÌÕÉÉ•¹Ğ½È™±…•µÁ…ÉÑ¥…°¹ÕÑÉ¥Ñ¥½¸‘…åÌ™É½´…±½É¥”…Ù•É…•Ì¸9ÕÑÉ¥Ñ¥½¸‘…åÌ…¸‰”µ…É­•½µÁ±•Ñ”½ÈMÑ¥±°1½¥¹œ™É½´Ñ¡”µ•…°©½ÕÉ¹…°¸()Q¡¥Ì¥ÌÑ¡”Í¡½ÉĞ¡…¹‘½™˜™½ÈÑ¡”±¥Ù”ÁÉ½‘ÕĞ¸%ĞÉ•½É‘ÌÑ¡”‘•¥Í¥½¹ÌÉ•½Ù•É•™É½´)Ñ¡”±½¹œQ•µÁ•É•‰Õ¥±½¹Ù•ÉÍ…Ñ¥½¸…¹Ñ¡”½µÁ…¹¥½¸µ…ÉĞÍ¡…É”Í¼„¹•ÜÍ•ÍÍ¥½¸‘½•Ì)¹½Ğ¡…Ù”Ñ¼É•½¹ÍÑÉÕĞÑ¡”Á¥Ù½Ğ™É½´±•…äIA‘½Õµ•¹ÑÌ¸()I•±•…Í”€À¸ÌÄ¸ÄÉ•µ½Ù•ÌÑ¡”™¥¹…°Ù¥Í¥‰±”IA•áÁ±…¹…Ñ¥½¸™É½´½¹‰½…É‘¥¹œ…¹•ÍÑ…‰±¥Í¡•Ì)Ñ¡”…ÕÑ½¹½µ½ÕÌÁÉ½‘ÕĞµÑ•…´É•±•…Í”½¹ÑÉ…Ğ¸$¹½Ü…ÁÑÕÉ•Ì•Ù•Éä½É”ÍÕÉ™…”…Ğ‰½Ñ )ÍÕÁÁ½ÉÑ•¥A¡½¹”Ù¥•İÁ½ÉĞ±…ÍÍ•Ì…ÌÉ•Ù¥•İ…‰±”•Ù¥‘•¹”¸É•±•…Í”¥Ì¹½Ğ½µÁ±•Ñ”Õ¹Ñ¥°)Ñ¡½Í”…ÁÑÕÉ•Ì…¹Ñ¡”‘•Á±½å•ÁÉ½‘ÕĞ¡…Ù”‰••¸Ù¥ÍÕ…±±ä¥¹ÍÁ•Ñ•¸Q¡”½Á•É…Ñ¥¹œ½¹ÑÉ…Ğ)¥Ì¥¸m‘½Ì½AI=UPµQ4¹µ‘t¡AI=UPµQ4¹µ¤¸()I•±•…Í”€À¸ÌÌ¸ÀÑÕÉ¹ÌÑ¡”ÍÑ…ÉÑ¥¹œÁ…Ñ ¥¹Ñ¼„É•…°Ñ•µÁ±…Ñ”¡½½Í•È¸9•ÜÕÍ•ÉÌ…¸¡½½Í”)MÑÉ•¹Ñ ½Õ¹‘…Ñ¥½¸°9½Ù•µ‰•ÈA¡åÍ¥ÅÕ”°5•Éä5½‘”°½ÈÍÑ…ÉĞ„Í…™”‰±…¹¬‘É…™Ğ¸Q¡”Ù¥ÍÕ…°)ÍåÍÑ•´¹½ÜÕÍ•Ìİ…É´…µ‰•È…Ñ¥½¸…•¹ÑÌ…¹±¥™Ñ•Ñ•…°É•½Ù•Éä…•¹ÑÌ¥¹ÍÑ•…½˜…¥)±¥µ”…¹µ½ÍÌÉ••¸¸á¥ÍÑ¥¹œ¡¥ÍÑ½Éä…¹ÁÉ½É…´É•½É‘ÌÉ•µ…¥¸¥¹Ñ…Ğ¸()I•±•…Í”€À¸ÌĞ¸À…‘‘ÌÑ¡”™¥ÉÍĞµ½‰¥±”AÉ½É…´	Õ¥±‘•Èİ½É­™±½Ü¸É½´M•ÑÑ¥¹Ì°„ÕÍ•È…¸)É•…Ñ”½È•‘¥Ğ„‘…ä°…‘•á•É¥Í•Ì°Í•ĞÍ•ÑÌ…¹É•ÀÉ‡}ºöÚ$z{-®éÜj×is positive-only. Completed sessions can be corrected later from
 Progress â†’ Log; a manual duration replaces the estimate and is bounded to a sensible 1â€“240 minutes.
 Train keeps the active program and routines on its main surface. The exercise library is a single button that opens a dedicated
 searchable screen. Any open workout can add another movement from that library without
@@ -288,8 +64,9 @@ track. Ember Sprout remains the optional warm, rounded wellness track. None of t
 should become photorealistic, painterly, generic AI fantasy, combat imagery, or a copy of
 another character or game scene.
 
-Production uses screen-specific scenic art for Today, Train, Companion, and Progress;
-five transparent Sprout cutouts; transparent ten-form Turtle and Forge sheets; three
+The active app no longer renders scenic background art on Today, Train, Companion, or
+Progress. Foreground Companion sprites and Summary celebration confetti remain. The repository
+retains five transparent Sprout cutouts; transparent ten-form Turtle and Forge sheets; three
 habitat states for each style; and Companion, Progress, and AI Nutrition support icons. Originals
 and references recovered from the shared ChatGPT conversation are preserved in
 `art/source/tempered-generated/`. Several generated

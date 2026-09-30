@@ -88,6 +88,23 @@ function availablePort() {
   })
 }
 
+async function activeDebugPort(profile, browserError, timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs
+  let lastError = null
+  const marker = join(profile, 'DevToolsActivePort')
+  while (Date.now() < deadline) {
+    try {
+      const [portLine] = (await readFile(marker, 'utf8')).trim().split(/\r?\n/)
+      const port = Number(portLine)
+      if (Number.isInteger(port) && port > 0) return port
+    } catch (error) {
+      lastError = error
+    }
+    await delay(100)
+  }
+  throw new Error(`Chromium did not publish DevToolsActivePort: ${lastError?.message ?? 'timeout'}\n${browserError()}`)
+}
+
 async function devToolsPage(port, browserError, timeoutMs = 15000) {
   const deadline = Date.now() + timeoutMs
   let lastError = null
@@ -158,11 +175,10 @@ const profile = await mkdtemp(join(tmpdir(), 'tempered-release-visual-'))
 const { server, port, nextReport } = await serve()
 const manifest = []
 let browserError = ''
-const debugPort = await availablePort()
 const browser = spawn(chrome, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
   '--no-first-run', '--no-default-browser-check', '--remote-debugging-address=127.0.0.1',
-  `--remote-debugging-port=${debugPort}`,
+  '--remote-debugging-port=0',
   `--user-data-dir=${profile}`, 'about:blank',
 ], { stdio: ['ignore', 'ignore', 'pipe'] })
 browser.stderr.on('data', (chunk) => { browserError += chunk })
@@ -170,6 +186,7 @@ const browserExit = new Promise((resolveExit) => browser.once('close', resolveEx
 let cdp = null
 
 try {
+  const debugPort = await activeDebugPort(profile, () => browserError.slice(-1600))
   cdp = await connectCdp(await devToolsPage(debugPort, () => browserError.slice(-1600)))
   await cdp.send('Page.enable')
   for (const viewport of VIEWPORTS) {

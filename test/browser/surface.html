@@ -92,7 +92,7 @@
         q('[data-programday="monday"]')?.click()
         await waitFor('.setrow__check')
 
-        const setTargets = qa('.setrow__check, .actionpill, .addset')
+        const setTargets = qa('.setrow__check, .exercise-menu__trigger, .addset')
           .filter((node) => node.getBoundingClientRect().height > 0)
         const smallSetTargets = setTargets.filter((node) => node.getBoundingClientRect().height < 44)
         check('workout actions remain thumb sized', smallSetTargets.length === 0,
@@ -103,15 +103,11 @@
         check('workout number fields remain distinct rounded cells', fields.length > 0 && unrounded.length === 0,
           `${fields.length - unrounded.length}/${fields.length} rounded`)
 
-        const activeRow = q('.setrow[data-active="true"]')
-        const edge = q('.setrow__edge', activeRow)
-        check('the active set still has its focused edge treatment',
-          edge !== null && Math.round(edge.getBoundingClientRect().width) === 4)
-
-        const pills = qa('.exercise .actionpill')
-        check('exercise actions remain visible rather than hidden in a menu',
-          pills.length >= 4 && pills.every((pill) => q('svg.icon', pill) !== null),
-          `${pills.length} visible actions`)
+        check('R3 removes the legacy active-edge treatment', q('.setrow__edge') === null)
+        check('exercise actions move behind one thumb-sized menu trigger',
+          qa('.exercise .exercise-menu__trigger').length === qa('.exercise').length
+          && qa('.exercise .actionpill').length === 0,
+          `${qa('.exercise .exercise-menu__trigger').length} menu triggers`)
 
         q('[data-action="finish"]')?.click()
         await waitFor('[data-action="confirm-finish"]')

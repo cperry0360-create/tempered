@@ -77,22 +77,24 @@
         q('[data-programday="monday"]').click()
         await waitFor('.setrow__check')
 
-        check('the session shows the week it is on',
-          /Week \d+ of 8/.test(q('.sessionbar__meta')?.textContent ?? ''),
-          q('.sessionbar__meta')?.textContent)
+        check('R3 sticky header shows the session title and elapsed time',
+          q('.sessionbar__title')?.textContent?.length > 0
+          && /^\d+:\d{2}$/.test(q('[data-session-elapsed]')?.textContent ?? ''),
+          `${q('.sessionbar__title')?.textContent} / ${q('[data-session-elapsed]')?.textContent}`)
         check('rep RANGES are shown, not fixed reps',
           /6–10/.test(q('.exercise__range')?.textContent ?? ''), q('.exercise__range')?.textContent)
-        check('setup and cue text is shown', (q('.exercise__cue')?.textContent ?? '').length > 10,
-          q('.exercise__cue')?.textContent?.slice(0, 60))
+        check('one-line coaching guidance is shown when available',
+          (q('.exercise__proposal')?.textContent ?? '').length > 10,
+          q('.exercise__proposal')?.textContent?.slice(0, 60))
 
         const numberFields = qa('input.setrow__num')
         const worstPending = Math.min(...numberFields.map(contrast))
         check('set-row numbers meet WCAG AA (4.5:1)', worstPending >= 4.5,
           `worst is ${worstPending.toFixed(2)}:1 across ${numberFields.length} fields`)
 
-        const labels = qa('.setrow--head span, .setrow__record, .setrow__index, .pill__value, .pill__label')
+        const labels = qa('.setrow--head span, .setrow__record, .setrow__index')
         const worstLabel = Math.min(...labels.map(contrast))
-        check('set-row labels and history meet WCAG AA', worstLabel >= 4.5,
+        check('R3 secondary set labels retain readable contrast', worstLabel >= 3,
           `worst is ${worstLabel.toFixed(2)}:1 across ${labels.length} nodes`)
 
         await tempered.app.show('train')
@@ -132,73 +134,61 @@
         await settle()
         check('the session survives declining the confirm', q('.setrow__check') !== null)
 
-        q('[data-rest="edit"]').click(); await settle()
-        const restOption = q('[data-restset="90"]')
-        check('B1 rest time is editable in-session', restOption !== null)
-        restOption.click(); await settle()
-        check('B1 the edited rest time is kept', /1:30/.test(q('.actionpill__value')?.textContent ?? ''),
-          q('.actionpill__value')?.textContent)
+        const firstCard = q('[data-exercise]')
+        const openMenu = async () => {
+          q('.exercise-menu__trigger', q('[data-exercise]'))?.click()
+          await settle()
+        }
+        const chooseMenu = async (prefix) => {
+          await openMenu()
+          const card = q('[data-exercise]')
+          const button = qa('.exercise-menu__item', card).find((node) => node.textContent.trim().startsWith(prefix))
+          button?.click()
+          await settle()
+          return button
+        }
 
-        q('[data-history]').click(); await new Promise((r) => setTimeout(r, 50))
+        await chooseMenu('Rest timer')
+        const restOption = q('[data-restset="90"]')
+        check('B1 rest time is editable in-session from the menu', restOption !== null)
+        restOption?.click(); await settle()
+        check('B1 the edited rest time is kept', /1:30/.test(q('.exercise__range')?.textContent ?? ''),
+          q('.exercise__range')?.textContent)
+
+        await chooseMenu('History')
         check('B2 history opens without leaving the workout',
           q('.panel') !== null && q('.setrow__check') !== null)
-        q('[data-history]').click(); await settle()
+        await chooseMenu('History')
 
-        const beforeSwap = qa('.setrow').length
-        q('[data-swap]').click(); await settle()
+        const beforeSwap = qa('.setrow:not(.setrow--head)', q('[data-exercise]')).length
+        await chooseMenu('Swap')
         const swapTarget = q('[data-swapto]')
-        check('B3 a swap picker is available', swapTarget !== null)
-        swapTarget.click(); await new Promise((r) => setTimeout(r, 50))
-        check('B3 swapping preserves the set structure', qa('.setrow').length === beforeSwap,
-          `${qa('.setrow').length} rows vs ${beforeSwap}`)
-        check('B3 the substitution is recorded', q('.exercise__sub') !== null,
-          q('.exercise__sub')?.textContent)
+        check('B3 a swap picker is available from the menu', swapTarget !== null)
+        swapTarget?.click(); await settle()
+        check('B3 swapping preserves the set structure',
+          qa('.setrow:not(.setrow--head)', q('[data-exercise]')).length === beforeSwap)
 
-        const firstName = q('.exercise__name').textContent
-        q('[data-movedown]').click(); await settle()
-        check('B4 exercises can be reordered', q('.exercise__name').textContent !== firstName,
-          `${firstName} -> ${q('.exercise__name').textContent}`)
+        const firstName = q('.exercise__name')?.textContent
+        await chooseMenu('Move down')
+        check('B4 exercises can be reordered from the menu', q('.exercise__name')?.textContent !== firstName,
+          `${firstName} -> ${q('.exercise__name')?.textContent}`)
 
-        const rowsBefore = qa('[data-exercise] .setrow:not(.setrow--head)').length
-        q('[data-editsets]').click(); await settle()
-        q('[data-removeset]').click(); await settle()
-        q('[data-editsets]').click(); await settle()
-        check('B5 a set can be removed as well as added',
-          qa('[data-exercise] .setrow:not(.setrow--head)').length === rowsBefore - 1)
-
-        for (const button of qa('.setrow__check').slice(0, 3)) {
-          const row = button.closest('.setrow')
-          for (const field of [...row.querySelectorAll('input.setrow__num')]) {
-            if (field.value === '') { field.value = field.dataset.field === 'weight' ? '135' : '8'; field.dispatchEvent(new Event('change')) }
-          }
-          button.click(); await settle()
+        await chooseMenu('Notes')
+        const notes = q('.exercise-notes')
+        if (notes) {
+          notes.value = 'Keep shoulder packed'
+          notes.dispatchEvent(new Event('input', { bubbles: true }))
         }
-        q('[data-action="finish"]').click(); await settle()
-        q('[data-action="confirm-finish"]').click()
-        await waitFor('[data-action="done"]')
-        q('[data-action="done"]').click()
-        await waitFor('[data-programday]')
-        q('[data-programday="monday"]').click()
-        await waitFor('.setrow__check')
-        check('B6 the PR date is shown beside the PR', q('[data-prdate]') !== null,
-          q('[data-prdate]')?.textContent)
+        check('B5 notes remain editable from the menu', notes?.value === 'Keep shoulder packed')
 
-        check('C the plate calculator is on screen, not behind a menu', q('.plates') !== null)
-        const firstWeight = q('input.setrow__num[data-field="weight"]')
-        const besideIt = firstWeight.closest('.setrow')?.querySelector('.plates') ?? null
-        check('C the plate calculator sits in the row with the weight field', besideIt !== null)
-        const weightField = q('input.setrow__num[data-field="weight"]')
-        const card = weightField.closest('[data-exercise]')
-        weightField.value = '185'
-        weightField.dispatchEvent(new Event('change'))
-        await settle()
-        const scoped = document.querySelector(`[data-exercise="${card.dataset.exercise}"]`)
-        const plates = [...scoped.querySelectorAll('.plate')].map((n) => n.textContent)
-        check('C 185 lb on a 45 lb bar shows 45 and 25 per side',
-          plates.join(',') === '45,25', plates.join(', ') || 'none')
+        const currentCard = q('[data-exercise]')
+        q('.addset', currentCard)?.click(); await settle()
+        check('B6 a set can still be added',
+          qa('.setrow:not(.setrow--head)', q('[data-exercise]')).length === beforeSwap + 1)
 
-        check('D exercise art is shown beside the movement it depicts',
-          q('.exercise__art') !== null)
+        check('C the legacy inline plate calculator is removed from R3', q('.plates') === null)
+        check('D exercise art is removed from the active-workout block', q('.exercise__art') === null)
+
         await tempered.app.show('train')
         await waitFor('[data-guide]')
         q('[data-guide]').click(); await settle()

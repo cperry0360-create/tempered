@@ -136,7 +136,7 @@
       check('Program day opens a workout session', Boolean(session))
       if (session) {
         thumbSized(q('.setrow__check:not([disabled])', session), 'Set log check')
-        thumbSized(q('.actionpill', session), 'Exercise action')
+        thumbSized(q('.exercise-menu__trigger', session), 'Exercise action')
       }
       await tempered.app.show('train')
       await settle(60)

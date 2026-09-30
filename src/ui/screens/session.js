@@ -160,6 +160,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       endsAt: timeSource.now() + durationSec * 1000,
     }
     persistDraft()
+    render()
     tick()
   }
 
@@ -341,7 +342,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       if (!field) return el('span.setrow__num')
       const previousNumber = previousValue(entry, index, field.key)
       const current = set[field.key]
-      const usePreviousAsPlaceholder = !done && previousNumber !== null && Number(current) === previousNumber
+      const usePreviousAsPlaceholder = !done && previousNumber !== null
       return el('input.setrow__num', {
         type: 'text',
         inputmode: field.mode,
@@ -384,7 +385,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             persistDraft()
             render()
           },
-          text: previous ? performance(previous) : '—',
+          text: previous
+            ? (Number.isInteger(previous.cablePeg)
+                ? `P${previous.cablePeg} · ${performance(previous)}`
+                : performance(previous))
+            : '—',
         })
 
     const check = el('button.setrow__check', {
@@ -854,7 +859,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     replace(root, [
       el('header.sessionbar.sessionbar--r3', {}, [
         el('button.sessionbar__cancel', {
-          type: 'button', onclick: cancelWorkout,
+          type: 'button',
+          dataset: { action: 'cancel-session' },
+          onclick: cancelWorkout,
         }, ['Cancel']),
         el('div.sessionbar__center', {}, [
           el('h1.sessionbar__title', { text: session?.title ?? 'Session' }),
@@ -911,6 +918,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             }, ['Keep editing']),
             el('button', {
               type: 'button',
+              dataset: { confirmAction: 'discard' },
               onclick: () => {
                 clearActiveSessionDraft()
                 releaseWorkoutWakeLock()

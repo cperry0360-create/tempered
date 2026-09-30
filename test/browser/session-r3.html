@@ -98,17 +98,19 @@
     check('stored rest end timestamp does not drift while rendering',
       Number(loadActiveSessionDraft()?.rest?.endsAt) === storedEnd)
 
-    q('.exercise-menu__trigger', card)?.click()
-    await settle()
-    const labels = qa('.exercise-menu__item', card).map((node) => node.textContent.trim())
+    const liveCard = q('[data-exercise="lat_pulldown"]')
+    q('.exercise-menu__trigger', liveCard)?.click()
+    await settle(160)
+    const menuCard = q('[data-exercise="lat_pulldown"]')
+    const labels = qa('.exercise-menu__item', menuCard).map((node) => node.textContent.trim())
     for (const label of ['History', 'Swap', 'Notes', 'Rest timer', 'Cable settings', 'Move up', 'Move down', 'Remove exercise']) {
       check(`exercise menu retains ${label}`, labels.some((value) => value.startsWith(label)), labels.join(' | '))
     }
-    check('legacy horizontal action chips are gone', q('.actions', card) === null)
+    check('legacy horizontal action chips are gone', q('.actions', menuCard) === null)
     check('legacy exercise art and LAST/PR header pills are gone',
-      q('.exercise__art, .exercise__history', card) === null)
+      q('.exercise__art, .exercise__history', menuCard) === null)
 
-    const rows = qa('.setrow:not(.setrow--head)', card)
+    const rows = qa('.setrow:not(.setrow--head)', menuCard)
     check('set rows are 52px tall', Math.round(rows[0]?.getBoundingClientRect().height ?? 0) === 52,
       rows[0]?.getBoundingClientRect().height ?? 0)
   } catch (error) {

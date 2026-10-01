@@ -8,6 +8,7 @@ import { lbs, volume, duration, shortDate, performance } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
 import { effectiveLoad } from '../../domain/records.js'
 import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
+import { summarizeTrend } from '../../domain/trend.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
 import {
   observedProgressDates,
@@ -101,6 +102,57 @@ function sparkline(values, width = 112, height = 34) {
   line.setAttribute('stroke-linecap', 'round')
   line.setAttribute('stroke-linejoin', 'round')
   svg.append(line)
+  return svg
+}
+
+/**
+ * R12 trend chart: faint daily readings, a bold rolling-average line, an end dot,
+ * and (Recovery) a soft usual-range band. Colour comes from the row's domain.
+ */
+function trendChart(summary, { width = 132, height = 48 } = {}) {
+  const readings = summary.readings ?? []
+  if (readings.length === 0) return null
+  const svgNs = 'http://www.w3.org/2000/svg'
+  const all = [...readings.map((p) => p.value), ...summary.trend.map((p) => p.value),
+    ...(summary.band ? [summary.band.low, summary.band.high] : [])]
+  const min = Math.min(...all), max = Math.max(...all), span = max - min || 1
+  const pad = 4
+  const first = Date.parse(readings[0].date + 'T12:00:00Z'), last = Date.parse(readings.at(-1).date + 'T12:00:00Z')
+  const x = (date, index) => last === first
+    ? (readings.length === 1 ? width / 2 : pad + index / (readings.length - 1) * (width - pad * 2))
+    : pad + (Date.parse(date + 'T12:00:00Z') - first) / (last - first) * (width - pad * 2)
+  const y = (value) => height - pad - ((value - min) / span) * (height - pad * 2)
+  const svg = document.createElementNS(svgNs, 'svg')
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  svg.setAttribute('class', 'trend-chart')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('focusable', 'false')
+  svg.dataset.sparse = String(summary.sparse)
+  if (summary.band) {
+    const band = document.createElementNS(svgNs, 'rect')
+    band.setAttribute('x', '0'); band.setAttribute('width', String(width))
+    band.setAttribute('y', y(summary.band.high).toFixed(1))
+    band.setAttribute('height', Math.max(1, y(summary.band.low) - y(summary.band.high)).toFixed(1))
+    band.setAttribute('class', 'trend-chart__band')
+    svg.append(band)
+  }
+  readings.forEach((point, index) => {
+    const dot = document.createElementNS(svgNs, 'circle')
+    dot.setAttribute('cx', x(point.date, index).toFixed(1)); dot.setAttribute('cy', y(point.value).toFixed(1))
+    dot.setAttribute('r', '1.75'); dot.setAttribute('class', 'trend-chart__reading')
+    svg.append(dot)
+  })
+  if (summary.trend.length > 1) {
+    const line = document.createElementNS(svgNs, 'polyline')
+    line.setAttribute('points', summary.trend.map((p, i) => x(p.date, i).toFixed(1) + ',' + y(p.value).toFixed(1)).join(' '))
+    line.setAttribute('class', 'trend-chart__line')
+    svg.append(line)
+  }
+  const end = readings.at(-1)
+  const dot = document.createElementNS(svgNs, 'circle')
+  dot.setAttribute('cx', x(end.date, readings.length - 1).toFixed(1)); dot.setAttribute('cy', y(end.value).toFixed(1))
+  dot.setAttribute('r', '2.5'); dot.setAttribute('class', 'trend-chart__latest')
+  svg.append(dot)
   return svg
 }
 
@@ -362,85 +414,47 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ])
   }
 
-  function trendRow(label, value, delta, values, sampleCount, domain = 'recovery', good = false) {
-    const samples = Number.isFinite(sampleCount) ? sampleCount : values.filter(Number.isFinite).length
-    return el('div.progress-trend', { dataset: { domain } }, [
+  function trendRow(label, value, summary, domain = 'recovery') {
+    return el('div.progress-trend', { dataset: { domain, metric: label } }, [
       el('div.progress-trend__copy', {}, [
         el('div.progress-trend__meta', {}, [
           el('span.progress-trend__label', { text: label }),
-          el('span.progress-trend__samples', { text: samples + ' sample' + (samples === 1 ? '' : 's') }),
         ]),
         el('div.progress-trend__values', {}, [
           el('strong.progress-trend__value', { text: value }),
-          delta && el('span.progress-trend__delta', { text: delta, dataset: { good: String(good) } }),
         ]),
+        el('span.progress-trend__delta', { text: summary.changeText, dataset: { good: String(summary.good), outside: summary.outside ?? 'none' } }),
       ]),
-      sparkline(values, 112, 34),
+      trendChart(summary),
     ])
   }
 
-  function trendsCard(current, previous, comparable) {
-    const latestWeight = current.latestWeight
-    const previousWeight = previous.latestWeight
-    const weightDelta = enoughComparisonSamples(current.weights.length, previous.weights.length, comparable)
-      ? deltaValue(latestWeight, previousWeight, ' lb', 1)
-      : null
-    const weightTrend = trendRow(
-      'Weight',
-      latestWeight === null ? '—' : lbs(latestWeight),
-      weightDelta,
-      current.weights.map((item) => item.value),
-      current.weights.length, 'fuel', false,
-    )
-    const currentStepSamples = current.days.filter((day) => Number.isFinite(day.steps)).length
-    const previousStepSamples = previous.days.filter((day) => Number.isFinite(day.steps)).length
-    const stepsDelta = enoughComparisonSamples(currentStepSamples, previousStepSamples, comparable)
-      ? deltaValue(current.avgSteps, previous.avgSteps, '', 0)
-      : null
-    const stepsTrend = trendRow(
-      'Steps',
-      current.avgSteps === null ? '—' : numberText(Math.round(current.avgSteps)) + ' avg',
-      stepsDelta,
-      current.days.map((day) => day.steps),
-      currentStepSamples, 'fuel', current.avgSteps > previous.avgSteps,
-    )
-    const currentSleepSamples = current.days.filter((day) => Number.isFinite(day.sleepHours)).length
-    const previousSleepSamples = previous.days.filter((day) => Number.isFinite(day.sleepHours)).length
-    const sleepDelta = enoughComparisonSamples(currentSleepSamples, previousSleepSamples, comparable)
-      ? deltaValue(current.avgSleep, previous.avgSleep, ' h', 1)
-      : null
-    const sleepTrend = trendRow(
-      'Sleep',
-      current.avgSleep === null ? '—' : numberText(current.avgSleep, 1) + 'h avg',
-      sleepDelta,
-      current.days.map((day) => day.sleepHours),
-      currentSleepSamples, 'recovery', current.avgSleep > previous.avgSleep,
-    )
+  function trendsCard(current) {
+    const label = range + ' days'
+    const daily = (key) => current.days.map((day) => ({ date: day.date, value: day[key] }))
+      .filter((p) => typeof p.value === 'number' && Number.isFinite(p.value))
+    const weight = summarizeTrend(current.weights, { metric: 'weight', unit: ' lb', digits: 1, rangeLabel: label })
+    const steps = summarizeTrend(daily('steps'), { metric: 'steps', digits: 0, rangeLabel: label })
+    const sleep = summarizeTrend(daily('sleepHours'), { metric: 'sleepHours', unit: ' h', digits: 1, rangeLabel: label })
     return el('section.progress-panel', {}, [
       el('h2.progress-panel__title', { text: 'Trends' }),
-      el('div.progress-trends', {}, [weightTrend, stepsTrend, sleepTrend]),
+      el('div.progress-trends', {}, [
+        trendRow('Weight', current.latestWeight === null ? '—' : lbs(current.latestWeight), weight, 'fuel'),
+        trendRow('Steps', current.avgSteps === null ? '—' : numberText(Math.round(current.avgSteps)) + ' avg', steps, 'fuel'),
+        trendRow('Sleep', current.avgSleep === null ? '—' : numberText(current.avgSleep, 1) + 'h avg', sleep, 'recovery'),
+      ]),
     ])
   }
 
-  function recoveryCard(current, previous, comparable) {
+  function recoveryCard(current) {
     const rows = current.recovery.filter((signal) => signal.values.length > 0)
     if (rows.length === 0) return null
     return el('section.progress-panel', {}, [
       el('h2.progress-panel__title', { text: 'Recovery' }),
       el('div.progress-trends.progress-trends--recovery', {}, rows.map((signal) => {
-        const currentValue = signal.values.at(-1)?.value
-        const previousValues = previous.recovery.find((item) => item.key === signal.key)?.values ?? []
-        const previousValue = previousValues.at(-1)?.value
-        const delta = enoughComparisonSamples(signal.values.length, previousValues.length, comparable)
-          ? deltaValue(currentValue, previousValue, signal.unit, signal.digits)
-          : null
-        return trendRow(
-          signal.label,
-          numberText(currentValue, signal.digits) + signal.unit,
-          delta,
-          signal.values.map((item) => item.value),
-          signal.values.length, 'recovery', signal.key === 'restingHr' ? currentValue < previousValue : ['hrvMs', 'spo2'].includes(signal.key) && currentValue > previousValue,
-        )
+        const summary = summarizeTrend(signal.values, { metric: signal.key, unit: signal.unit, digits: signal.digits,
+          rangeLabel: range + ' days', band: true })
+        return trendRow(signal.label, numberText(signal.values.at(-1)?.value, signal.digits) + signal.unit, summary, 'recovery')
       })),
     ])
   }
@@ -533,7 +547,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     if (!week) return null
     const text = week.away ? 'This week: away · not scored'
       : week.due === 0 && week.done === 0 ? 'This week: nothing due yet'
-      : `This week: ${week.done} of ${week.due} sets due so far · ${week.status === 'still to do' ? week.remaining + ' still to do' : week.status}${week.ahead ? ' · ' + week.ahead + ' ahead' : ''}`
+      : `This week: ${week.done} of ${week.due} sets due so far · ${week.remaining ? week.remaining + ' still to do' : 'on track'}${week.ahead ? ' · ' + week.ahead + ' sets ahead' : ''}`
     return el('p.progress-score__week', { dataset: { status: week.away ? 'away' : week.status }, text })
   }
 
@@ -551,7 +565,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       el('span.progress-footnote', { text: current ? 'Week of ' + monthDay(current.week) : 'Your first full week will be scored' }),
       el('div.progress-score__summary', {}, [
         el('strong.progress-score__number', { text: current ? current.score + ' · ' + current.grade : 'Building history' }),
-        result.change !== null && el('span.progress-score__change', { text: (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 0) + ' avg' }),
+        result.change !== null && el('span.progress-score__change', { text: result.change === 0 ? 'Level with your ' + numberText(result.average, 0) + ' avg' : (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 0) + ' avg' }),
       ].filter(Boolean)),
       thisWeekLine(result.thisWeek),
       weeks.length > 0 && scoreTrend(weeks),
@@ -757,7 +771,15 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
             el('strong', { text: lbs(top) }),
           ]),
         ].filter(Boolean)),
-        el('p.progress-footnote', { text: 'Based on completed working sets.' }),
+        (() => {
+          const summary = summarizeTrend(history, { metric: 'e1rm', unit: ' lb', digits: 1, average: { count: 3 },
+            rangeLabel: history.length + ' sessions' })
+          return el('div.progress-lift-detail__chart', {}, [
+            trendChart(summary, { width: 320, height: 120 }),
+            el('span.progress-trend__delta', { text: summary.changeText, dataset: { good: String(summary.good) } }),
+          ])
+        })(),
+        el('p.progress-footnote', { text: 'Dots are each session’s best estimated one rep max; the line is a 3-session average.' }),
         el('div.progress-lift-detail__history', {}, history.slice().reverse().map((point) =>
           el('div.progress-lift-detail__row', {}, [
             el('span', { text: shortDate(point.date) }),
@@ -785,7 +807,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       const name = exercise?.name ?? record.exerciseId
       const history = historyByExercise.get(record.exerciseId) ?? []
       const best = record.bestE1RM?.value ?? Math.max(0, ...history.map((point) => point.value))
-      const line = sparkline(history.map((point) => point.value), 98, 30)
+      const line = trendChart(summarizeTrend(history.slice(-12), { metric: 'e1rm', unit: ' lb', digits: 1, average: { count: 3 } }), { width: 120 })
       const delta = liftDelta(history)
       return el('button.progress-lift', {
         type: 'button',

@@ -121,7 +121,8 @@ test('REGRESSION: R5 Progress uses the fixed recap and removes configurable dash
   assert.match(history, /trendsCard/)
   assert.match(history, /recoveryCard/)
   assert.match(history, /Copy progress report for ChatGPT/)
-  assert.match(history, /progress-trend__samples/)
+  // R12 replaced sample counts with a plain-language change and a trend line.
+  assert.match(history, /summarizeTrend/)
   assert.doesNotMatch(history, /No prior comparison yet|calorieQualitySummary|progress-dashboard/)
   assert.match(progressCss, /\.progress-panel\s*\{/)
   const pivotCss = read('src/pivot.css')
@@ -135,7 +136,6 @@ test('REGRESSION: longer Progress ranges exclude unknown pre-Tempered history', 
   assert.match(history, /fullCoverage/)
   assert.match(history, /trackedDays/)
   assert.match(history, /requestedDays/)
-  assert.match(history, /progress-trend__samples/)
   assert.match(history, /rangeDates\(clock\.today\(\), range\)/)
 })
 

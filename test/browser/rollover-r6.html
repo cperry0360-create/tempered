@@ -128,16 +128,17 @@
         && Math.max(...bottoms) - Math.min(...bottoms) <= 1,
       `columns=${columns.length} visible=${nonzeroBars.length} baselines=${bottoms.map((value) => value.toFixed(1)).join(',')}`)
     const stepsRow = qa('.progress-trend').find((row) => q('.progress-trend__label', row)?.textContent === 'Steps')
-    check('Steps delta is hidden when either period has fewer than three samples',
-      Boolean(stepsRow) && !q('.progress-trend__delta', stepsRow),
+    // R12 supersedes R6 item 5: sparse data says so in words and never shows a number.
+    check('Steps shows no numeric change from sparse samples',
+      Boolean(stepsRow) && q('.progress-trend__delta', stepsRow)?.textContent === 'Not enough data for a trend',
       `delta=${q('.progress-trend__delta', stepsRow)?.textContent ?? 'none'}`)
     await storage.put('dayLogs', { date: '2026-09-06', steps: 9900 })
     await storage.put('dayLogs', { date: '2026-07-22', steps: 7000 })
     await tempered.app.show('history')
     await settle()
     const stepsAfterThree = qa('.progress-trend').find((row) => q('.progress-trend__label', row)?.textContent === 'Steps')
-    check('Steps delta appears after both periods reach three samples',
-      Boolean(q('.progress-trend__delta', stepsAfterThree)),
+    check('Steps still shows no trend until seven readings exist',
+      !/[↑↓]/.test(q('.progress-trend__delta', stepsAfterThree)?.textContent ?? ''),
       q('.progress-trend__delta', stepsAfterThree)?.textContent ?? 'missing')
   } catch (error) {
     check('R6 rollover harness completed without throwing', false, String(error?.stack ?? error).slice(0, 1200))

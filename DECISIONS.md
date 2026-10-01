@@ -2369,3 +2369,11 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Explanation:** `explainTrainingScore()` is pure template text from component data; the ChatGPT report includes it.
 - **Known unrelated failure:** `calorie-ai.html` "Meal keeps its timestamp and AI source" fails on this container before and after this change (time-zone dependent); not touched here.
 - **Needs Cory:** check that the recalculated weeks match how they felt, and mark the travel week away.
+
+## 2026-10-01 — R12 readable trend charts (0.49.0)
+
+- **Decision:** `src/domain/trend.js` (pure, tested) provides the rolling average (7 days for daily metrics, 3 sessions for lifts), change text, good-direction table, and usual-range band. Every Progress sparkline (Trends, Recovery, Lifts rows, Lift detail) now draws faint readings, a bold average line, an end dot, and on Recovery a usual-range band.
+- **Band width:** mean ± 1 SD but never narrower than ±2% of the mean. A pure ±1 SD band flagged blood oxygen at 98% as "above your usual range" because readings barely vary.
+- **Lifts rows** keep R10's 30-day peak change text; the chart uses the last 12 sessions.
+- **Superseded checks:** R6's "Steps delta appears after three samples" and the R5 regression asserting `progress-trend__samples` were updated: R12 replaces sample counts with a change sentence and requires 7 readings before showing a trend.
+- **Capture set:** added `progress-trends` (scrolled to Trends and Recovery) to the release visuals.

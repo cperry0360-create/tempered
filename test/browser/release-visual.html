@@ -42,7 +42,7 @@
     const route = {
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel',
-      progress: 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
+      progress: 'history', 'progress-trends': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder',
     }
@@ -71,7 +71,7 @@
           const r = node.getBoundingClientRect(), s = getComputedStyle(node)
           return r.width >= 80 && r.height >= 40 && ['Top','Right','Bottom','Left'].every(side => parseFloat(s['border'+side+'Width']) > 0 && s['border'+side+'Style'] !== 'none')
         }).map(node => node.className),
-        greyTrendLines: [...scope.querySelectorAll('.spark')].filter(node => visible(node) && !['var(--train-ink)','var(--fuel-ink)','var(--recovery-ink)'].some(value => {
+        greyTrendLines: [...scope.querySelectorAll('.spark, .trend-chart')].filter(node => visible(node) && !['var(--train-ink)','var(--fuel-ink)','var(--recovery-ink)'].some(value => {
           const probe = document.createElement('i'); probe.style.color = value; document.body.append(probe); const same = getComputedStyle(probe).color === getComputedStyle(node).color; probe.remove(); return same
         })).map(node => node.className.baseVal ?? node.className),
       }
@@ -304,7 +304,7 @@
 
     async function selectProgressView(tempered, target) {
       await tempered.app.show('history')
-      if (target === 'progress') return
+      if (target === 'progress' || target === 'progress-trends') return
       if (target.startsWith('progress-score-')) {
         mount.querySelector('[data-score-component="' + target.slice('progress-score-'.length) + '"]')?.click()
         await settle()
@@ -432,6 +432,7 @@
       }
       await settle()
       if (view === 'nutrition-meal') document.querySelector('.nutrition-meal-form')?.scrollIntoView({ block: 'start' })
+      if (view === 'progress-trends') document.querySelectorAll('.progress-trends')[0]?.closest('.progress-panel')?.scrollIntoView({ block: 'start' })
       if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })
       document.activeElement?.blur()
       await settle()

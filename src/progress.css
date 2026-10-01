@@ -760,3 +760,17 @@
 .score-explain__story { margin: 0; font-size: 17px; line-height: 24px; }
 .score-explain__method { margin: 0 0 6px; font-size: 13px; line-height: 18px; color: var(--text-2); }
 .score-explain__done { width: 100%; margin-top: 20px; }
+
+/* R12 — readable trend charts */
+.trend-chart { display: block; width: 100%; min-width: 120px; height: 48px; overflow: visible; color: var(--train-ink); }
+.trend-chart__reading { fill: currentColor; opacity: 0.4; }
+.trend-chart__line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.trend-chart__latest { fill: currentColor; }
+.trend-chart__band { fill: var(--recovery); opacity: 0.12; }
+.progress-trend[data-domain="fuel"] .trend-chart { color: var(--fuel-ink); }
+.progress-trend[data-domain="recovery"] .trend-chart { color: var(--recovery-ink); }
+.progress-lift .trend-chart { grid-column: 2; grid-row: 1; align-self: center; width: 120px; color: var(--train-ink); }
+.progress-trend .trend-chart { width: 132px; }
+.progress-trend__delta[data-outside="above"], .progress-trend__delta[data-outside="below"] { color: var(--text-1); font-weight: 600; }
+.progress-lift-detail__chart { display: grid; gap: 6px; margin: 8px 0; }
+.progress-lift-detail__chart .trend-chart { height: 120px; }

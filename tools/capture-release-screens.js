@@ -23,7 +23,7 @@ const TYPES = {
 const VIEWS = [
   'setup-welcome', 'setup-rhythm', 'setup-plan',
   'today', 'train', 'session', 'fuel',
-  'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
+  'progress-trends', 'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
   'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
   'settings', 'program-builder', 'summary',
   'train-rhythm', 'train-program-details', 'train-routine', 'train-library',

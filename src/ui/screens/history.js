@@ -7,7 +7,7 @@ import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate, performance } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
 import { effectiveLoad } from '../../domain/records.js'
-import { trainingScore } from '../../domain/training-score.js'
+import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
 import {
   observedProgressDates,
@@ -151,6 +151,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let programStates = []
   let revisions = []
   let selectedScoreComponent = null
+  let scoreExplainOpen = false
+  let awayPeriods = []
   let records = []
   let exercises = new Map()
   let sessionStats = new Map()
@@ -470,7 +472,10 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     if (signals.length) lines.push('Recovery: ' + signals.join(', ') + '.')
     const training = scoreData()
     const scored = training.current
-    lines.push('Training score · week of ' + scored.week + ' · so far: ' + (scored.score === null ? 'building history' : scored.score + ' / 100 · ' + scored.grade) + (scored.deload ? ' · deload' : '') + '.')
+    lines.push('Training score · week of ' + scored.week + ': ' + (scored.score === null ? 'building history' : scored.score + ' / 100 · ' + scored.grade) + (scored.deload ? ' · deload' : '') + '.')
+    const week = training.thisWeek
+    if (week) lines.push('This week so far: ' + (week.away ? 'away' : week.done + ' of ' + week.due + ' sets due · ' + week.status) + '.')
+    lines.push('Score explanation: ' + explainTrainingScore(training).sentences.join(' '))
     if (training.change !== null) lines.push('Score versus prior 4-week average: ' + (training.change > 0 ? '+' : '') + training.change + ' (' + numberText(training.average, 1) + ' average).')
     for (const component of scored.components) lines.push(component.label + ': ' + (component.value === null ? 'not scored' : Math.round(component.value * 100) + '%; ' + numberText(component.weight * 100, 1) + '% weight') + ' · ' + component.reason + '.')
     return lines.join('\n')
@@ -492,7 +497,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
 
   function scoreData() {
     return trainingScore({ today: clock.today(), sessions, setLogs, programs, programStates,
-      revisions, exercises })
+      revisions, exercises, awayPeriods })
   }
 
   function scoreTrend(weeks) {
@@ -524,24 +529,37 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return svg
   }
 
+  function thisWeekLine(week) {
+    if (!week) return null
+    const text = week.away ? 'This week: away · not scored'
+      : week.due === 0 && week.done === 0 ? 'This week: nothing due yet'
+      : `This week: ${week.done} of ${week.due} sets due so far · ${week.status === 'still to do' ? week.remaining + ' still to do' : week.status}${week.ahead ? ' · ' + week.ahead + ' ahead' : ''}`
+    return el('p.progress-score__week', { dataset: { status: week.away ? 'away' : week.status }, text })
+  }
+
   function trainingScoreCard() {
-    const result = scoreData(), current = result.current
+    const result = scoreData(), current = result.headline
+    const weeks = result.weeks
     return el('section.progress-panel.progress-score', {}, [
       el('div.progress-score__head', {}, [
         el('h2.progress-panel__title', { text: 'Training score' }),
-        el('span.progress-footnote', { text: 'This week · so far' }),
+        el('button.progress-score__info', {
+          type: 'button', 'aria-label': 'What this score means', dataset: { scoreInfo: 'open' },
+          onclick: () => { scoreExplainOpen = true; render() },
+        }, ['i']),
       ]),
+      el('span.progress-footnote', { text: current ? 'Week of ' + monthDay(current.week) : 'Your first full week will be scored' }),
       el('div.progress-score__summary', {}, [
-        el('strong.progress-score__number', { text: current.score === null ? 'Building history' : current.score + ' · ' + current.grade }),
-        result.change !== null && el('span.progress-score__change', { text: (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 1) + ' avg',
-          title: 'Compared with ' + Math.min(4, result.weeks.length - 1) + ' prior scored weeks' }),
+        el('strong.progress-score__number', { text: current ? current.score + ' · ' + current.grade : 'Building history' }),
+        result.change !== null && el('span.progress-score__change', { text: (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 0) + ' avg' }),
       ].filter(Boolean)),
-      scoreTrend(result.weeks),
-      el('div.progress-score__axis', {}, [
-        el('span', { text: result.weeks.length ? monthDay(result.weeks[0].week) : 'No training history yet' }),
-        el('span', { text: 'Last ' + result.weeks.length + ' of 12 weeks · 0–100' }),
+      thisWeekLine(result.thisWeek),
+      weeks.length > 0 && scoreTrend(weeks),
+      weeks.length > 0 && el('div.progress-score__axis', {}, [
+        el('span', { text: monthDay(weeks[0].week) }),
+        el('span', { text: 'Last ' + weeks.length + ' full weeks · 0–100' }),
       ]),
-      ...current.components.map(component => el('button.progress-score__component', {
+      ...(current?.components ?? []).map(component => el('button.progress-score__component', {
         type: 'button', dataset: { scoreComponent: component.id },
         onclick: () => { selectedScoreComponent = component.id; render() },
       }, [
@@ -550,23 +568,73 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           el('span', { text: component.value === null ? 'Not scored ›' : Math.round(component.value * 100) + '% · ' + Math.round(component.weight * 100) + '% weight ›' }),
         ]),
         el('div.progress-score__bar', {}, [el('span', { style: 'width:' + Math.round((component.value ?? 0) * 100) + '%' })]),
-        el('span.progress-score__reason', { text: component.id === 'adherence' && component.prescribed ? component.completed + ' of ' + component.prescribed + ' planned sets · ' + (component.repSets ? Math.round(component.reached / component.repSets * 100) + '% reps' : 'no rep samples') : component.reason }),
+        el('span.progress-score__reason', { text: component.id === 'adherence' && component.prescribed ? component.completed + ' of ' + component.prescribed + ' planned sets · ' + (component.repSets ? Math.round(component.reached / component.repSets * 100) + '% reached rep minimum' : 'no rep samples') : component.reason }),
       ])),
+      el('button.progress-score__component.progress-score__weeks-link', {
+        type: 'button', dataset: { scoreComponent: 'weeks' },
+        onclick: () => { selectedScoreComponent = 'weeks'; render() },
+      }, [el('div.progress-score__head', {}, [el('strong', { text: 'Weeks' }), el('span', { text: 'Mark travel or rest ›' })])]),
+      scoreExplainOpen && scoreExplainSheet(result),
+    ].filter(Boolean))
+  }
+
+  function scoreExplainSheet(result) {
+    const explanation = explainTrainingScore(result)
+    const close = () => { scoreExplainOpen = false; render() }
+    return el('div.score-explain', { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Training score explained',
+      onclick: (event) => { if (event.target === event.currentTarget) close() } }, [
+      el('div.score-explain__sheet', {}, [
+        el('h2', { text: 'Your training score' }),
+        el('p.score-explain__story', { text: explanation.sentences.join(' ') }),
+        el('h3', { text: 'How it works' }),
+        ...explanation.method.map(line => el('p.score-explain__method', { text: line })),
+        el('button.today-button.today-button--primary.score-explain__done', { type: 'button', onclick: close }, ['Done']),
+      ]),
     ])
   }
 
+  function scoreWeeksView() {
+    const result = scoreData(), sunday = (week) => addDays(week, 6)
+    const exact = (week) => awayPeriods.find(p => p.start === week && p.end === sunday(week))
+    const overlapping = (week) => awayPeriods.find(p => p.start <= sunday(week) && p.end >= week)
+    const rows = [...result.weeks, { week: result.thisWeek?.week, away: result.thisWeek?.away, score: null, current: true }]
+      .filter(w => w.week).reverse()
+    return [el('button.progress-back', { type: 'button', onclick: () => { selectedScoreComponent = null; render() } }, ['‹ Overview']),
+      el('section.progress-panel.progress-score-detail', {}, [
+        el('h2.progress-panel__title', { text: 'Weeks' }),
+        el('p.progress-footnote', { text: 'Away weeks are left out of the score, the trend, and every average. Rest is part of the plan.' }),
+        ...rows.map(w => {
+          const own = exact(w.week), other = !own && overlapping(w.week)
+          return el('div.progress-score-detail__row.progress-score-week', { dataset: { scoreWeek: w.week } }, [
+            el('span', { text: 'Week of ' + monthDay(w.week) + ' · ' + (w.away ? 'away' : w.current ? 'in progress' : w.score === null ? 'not scored' : w.score + ' · ' + w.grade) }),
+            other ? el('small', { text: 'Away in Settings' }) : el('button.progress-score-week__toggle', {
+              type: 'button', dataset: { awayToggle: w.week },
+              onclick: async () => {
+                if (own) await workout.removeAwayPeriod(own.id)
+                else await workout.addAwayPeriod(w.week, sunday(w.week))
+                awayPeriods = await workout.awayPeriods()
+                render()
+              },
+            }, [own ? 'Not away' : 'Mark away']),
+          ])
+        }),
+      ])]
+  }
+
   function trainingScoreDetail() {
-    const result = scoreData(), component = result.current.components.find(c => c.id === selectedScoreComponent)
+    if (selectedScoreComponent === 'weeks') return scoreWeeksView()
+    const result = scoreData(), component = result.headline?.components.find(c => c.id === selectedScoreComponent)
+    if (!component) { selectedScoreComponent = null; return overviewView() }
     return [el('button.progress-back', { type: 'button', onclick: () => { selectedScoreComponent = null; render() } }, ['‹ Overview']),
       el('section.progress-panel.progress-score-detail', {}, [
         el('h2.progress-panel__title', { text: component.label }),
-        el('p.progress-footnote', { text: component.reason }),
-        el('p.progress-footnote', { text: component.value === null ? 'Excluded from this week’s score; available components share the weight.' : Math.round(component.value * 100) + '% component · ' + numberText(component.weight * 100, 1) + '% of this week’s score.' }),
+        el('p.progress-footnote', { text: 'Week of ' + monthDay(result.headline.week) + ' · ' + component.reason }),
+        el('p.progress-footnote', { text: component.value === null ? 'Not scored this week; the other parts share its weight.' : Math.round(component.value * 100) + '% · ' + numberText(component.weight * 100, 0) + '% of the score.' }),
         ...component.details.map(detail => el('p.progress-score-detail__row', { text: detail.reason })),
-        component.id === 'consistency' && el('p.progress-footnote', { text: 'Days: 70% · weeks meeting the target: 30%; a day qualifies at 30 logged minutes.' }),
-        component.id === 'adherence' && el('p.progress-footnote', { text: 'Planned set completion: 70% · sets reaching their rep minimum: 30%; same-week leftovers count.' }),
-        component.id === 'progression' && el('p.progress-footnote', { text: 'Last 2 weeks versus the preceding 4: up = 100%, within 1% = 60%, down = 0%.' }),
-        component.id === 'volume' && el('p.progress-footnote', { text: 'At least 95% of the prior 4-week working-set average earns full credit.' }),
+        component.id === 'consistency' && el('p.progress-footnote', { text: 'Days: 70% · weeks reaching the plan: 30%. A training day is 6+ working sets or 30+ minutes, micro sets included.' }),
+        component.id === 'adherence' && el('p.progress-footnote', { text: 'Planned sets finished: 70% · sets reaching their rep minimum: 30%. Swaps, leftovers, and single-movement sessions count.' }),
+        component.id === 'progression' && el('p.progress-footnote', { text: 'Last 2 weeks against the 4 before: up = 100%, within 1% = 60%, down = 0%.' }),
+        component.id === 'volume' && el('p.progress-footnote', { text: 'At least 95% of your recent 4-week average earns full credit.' }),
       ].filter(Boolean))]
   }
 
@@ -898,6 +966,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         .map((session) => ({ ...session, routineName: session.routineName ?? routines.get(session.routineId)?.name }))
         .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
 
+      awayPeriods = workout.awayPeriods ? await workout.awayPeriods() : []
       ;[records, exercises, dayLogs, setLogs, schedule] = await Promise.all([
         storage.getAll('records'),
         workout.exerciseMap(),

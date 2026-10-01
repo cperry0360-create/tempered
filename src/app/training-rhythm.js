@@ -60,7 +60,8 @@ function awayWeeksFor(periods, today) {
 }
 
 /**
- * Three 30-minute days keep the weekly rhythm active. Four days make a strong
+ * A training day is 30+ minutes or 6+ working sets (micro sets between calls
+ * count). Three training days keep the weekly rhythm active. Four days make a strong
  * week, and every five strong weeks bank a keeper. A keeper automatically
  * protects the next quiet completed week.
  * An away week protects an existing rhythm without spending a keeper, adding
@@ -69,6 +70,8 @@ function awayWeeksFor(periods, today) {
  */
 export function trainingRhythm(minutesByDate, today, options = {}) {
   const minimumMinutes = Math.max(1, Number(options.minimumMinutes) || 30)
+  const minimumSets = Math.max(1, Number(options.minimumSets) || 6)
+  const setsByDate = options.setsByDate ?? {}
   const weeklyDays = Math.max(1, Number(options.weeklyDays) || 3)
   const strongWeekDays = Math.max(weeklyDays, Number(options.strongWeekDays) || 4)
   const keeperEvery = Math.max(1, Number(options.keeperEvery) || 5)
@@ -78,9 +81,9 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
     .filter(([date, minutes]) => date <= today && Number(minutes) > 0)
     .map(([date]) => date)
     .sort()
-  const qualifyingDates = Object.entries(minutesByDate ?? {})
-    .filter(([date, minutes]) => date <= today && Number(minutes) >= minimumMinutes)
-    .map(([date]) => date)
+  const qualifyingDates = [...new Set([...Object.keys(minutesByDate ?? {}), ...Object.keys(setsByDate)])]
+    .filter((date) => date <= today
+      && (Number(minutesByDate?.[date]) >= minimumMinutes || Number(setsByDate[date]) >= minimumSets))
     .sort()
   const currentWeek = mondayOf(today)
   const daysByWeek = new Map()
@@ -126,6 +129,7 @@ export function trainingRhythm(minutesByDate, today, options = {}) {
 
   return {
     minimumMinutes,
+    minimumSets,
     weeklyDays,
     strongWeekDays,
     keeperEvery,

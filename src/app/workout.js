@@ -382,8 +382,11 @@ export function createWorkoutService({ storage, clock, balance }) {
     const logs = await storage.getAll('setLogs')
     const profile = await storage.get('profile', 'profile')
     const minutesByDate = {}
+    const setsByDate = {}
     for (const session of sessions) {
       const sessionLogs = logs.filter((log) => log.sessionId === session.id)
+      const working = sessionLogs.filter((log) => !log.isWarmup && log.setType !== 'warmup').length
+      if (working) setsByDate[session.date] = (setsByDate[session.date] ?? 0) + working
       const inferred = timeUnderLoad(sessionLogs.map((log) => log.completedAt), balance)
       const recorded = Number(session.durationMinutes) || 0
       const minutes = session.durationMinutesSource === 'manual'
@@ -393,7 +396,8 @@ export function createWorkoutService({ storage, clock, balance }) {
     }
     return {
       minutesByDate,
-      ...deriveTrainingRhythm(minutesByDate, clock.today(), { awayPeriods: profile?.awayPeriods }),
+      setsByDate,
+      ...deriveTrainingRhythm(minutesByDate, clock.today(), { awayPeriods: profile?.awayPeriods, setsByDate }),
     }
   }
 

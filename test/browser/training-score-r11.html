@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R11 Training score</title><link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/progress.css"></head><body><div id="app"></div><script type="module">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R11 / R11.1 Training score</title><link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/progress.css"></head><body><div id="app"></div><script type="module">
 import { createHistoryScreen } from '../../src/ui/screens/history.js'
 import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 import { fixedClock } from '../../src/adapters/clock/clock.js'
@@ -17,26 +17,39 @@ try{
   for(let n=0;n<2;n++)await storage.put('setLogs',{id:id+n,sessionId:id,exerciseId:'lift',programId:'p',programDayId:'d'+d,slotIndex:0,weight:100+w*5,reps:6})
  }
  let copied='';Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{copied=text}}})
- const screen=createHistoryScreen({storage,clock,workout:{exerciseMap:async()=>exerciseMap},daily:{activities:[],activitySchedule:async()=>({})}})
+ let away=[];const workout={exerciseMap:async()=>exerciseMap,awayPeriods:async()=>away,addAwayPeriod:async(start,end)=>{away=[...away,{id:`away_${start}_${end}`,start,end}];return away},removeAwayPeriod:async id=>{away=away.filter(p=>p.id!==id);return away}}
+ const screen=createHistoryScreen({storage,clock,workout,daily:{activities:[],activitySchedule:async()=>({})}})
  q('#app').append(screen.root);await screen.refresh()
  for(const theme of ['light','dark']){
   document.documentElement.dataset.theme=theme
-  check(theme+' first Overview card has real score, grade, so far, four reasons',q('.progress-content')?.firstElementChild?.matches('.progress-score')&&q('.progress-score__number')?.textContent==='100 · A'&&/so far/.test(q('.progress-score')?.textContent)&&qa('[data-score-component]').length===4&&qa('.progress-score__reason').every(n=>n.textContent.length>10))
-  check(theme+' trend has exactly 12 tracked weekly points and accessible values',qa('.progress-score__trend circle').length===12&&q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-21: 100'))
+  check(theme+' headline is the last completed week, with this week shown as progress and four reasons',q('.progress-content')?.firstElementChild?.matches('.progress-score')&&q('.progress-score__number')?.textContent==='100 · A'&&/Week of Sep 14/.test(q('.progress-score')?.textContent)&&/This week: \d+ of \d+ sets due so far/.test(q('.progress-score__week')?.textContent)&&!/so far:/.test(q('.progress-score__number')?.textContent)&&qa('[data-score-component]').length===5&&qa('.progress-score__reason').every(n=>n.textContent.length>10),q('.progress-score')?.textContent)
+  check(theme+' trend has 12 completed weekly points and leaves out the unfinished week',qa('.progress-score__trend circle').length===12&&q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-14: 100')&&!q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-21'))
   for(const id of ['progression','adherence','consistency','volume']){
    q(`[data-score-component="${id}"]`)?.click()
    check(theme+' '+id+' drill-down traces the reason',qa('.progress-score-detail__row').length>0&&/Front squat|2026-09|Week of/.test(q('.progress-score-detail')?.textContent))
    q('.progress-back')?.click()
    check(theme+' '+id+' back retains score',q('.progress-score__number')?.textContent==='100 · A')
   }
+  q('[data-score-info]')?.click()
+  const sheet=q('.score-explain')
+  check(theme+' i button opens a short explanation naming the score',sheet&&/scored 100, an A/.test(sheet.textContent)&&/How it works/.test(sheet.textContent)&&qa('.score-explain__method').length>=4&&!/fail|missed|crushed/i.test(sheet.textContent),sheet?.textContent)
+  q('.score-explain__done')?.click()
+  check(theme+' Done closes the explanation',!q('.score-explain'))
  }
+ q('[data-score-component="weeks"]')?.click()
+ q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50))
+ check('Mark away stores the week through the workout service',away.some(p=>p.start==='2026-09-14'&&p.end==='2026-09-20'))
+ q('.progress-back')?.click()
+ check('an away week drops out: headline moves to the prior week and the trend shows a gap',/Week of Sep 7/.test(q('.progress-score')?.textContent)&&qa('.progress-score__trend circle').length===11,q('.progress-score')?.textContent)
+ q('[data-score-component="weeks"]')?.click();q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50));q('.progress-back')?.click()
+ check('Not away restores the week',away.length===0&&/Week of Sep 14/.test(q('.progress-score')?.textContent))
  q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
- check('ChatGPT report includes score, grade, delta and all component reasons',copied.includes('100 / 100 · A')&&copied.includes('Score versus prior 4-week average:')&&['Progression:','Plan adherence:','Consistency:','Volume trend:','planned sets','training days'].every(s=>copied.includes(s)),copied)
+ check('ChatGPT report includes score, grade, delta, this week, explanation and all component reasons',copied.includes('100 / 100 · A')&&copied.includes('This week so far:')&&copied.includes('Score explanation:')&&copied.includes('Score versus prior 4-week average:')&&['Progression:','Plan adherence:','Consistency:','Volume trend:','planned sets','training days'].every(s=>copied.includes(s)),copied)
  q('[data-view="log"]')?.click();check('existing Log remains available',qa('.progress-log-row').length>0)
  check('no runtime errors',errors.length===0,errors.join('\n'))
- const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map()},daily:{activities:[],activitySchedule:async()=>({})}})
+ const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map(),awayPeriods:async()=>[]},daily:{activities:[],activitySchedule:async()=>({})}})
  q('#app').replaceChildren(empty.root);await empty.refresh()
- check('empty state shows Building history and no fabricated trend points',q('.progress-score__number')?.textContent==='Building history'&&qa('.progress-score__trend circle').length===0&&qa('[data-score-component]').length===4)
+ check('empty state shows Building history and no fabricated trend points',q('.progress-score__number')?.textContent==='Building history'&&qa('.progress-score__trend circle').length===0&&qa('[data-score-component]').length===1)
 }catch(e){check('harness completed',false,e.stack)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'training-score-r11',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

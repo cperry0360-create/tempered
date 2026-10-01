@@ -2359,3 +2359,13 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - Release identity 0.48.0 (68), with training-score.js explicitly precached for offline Progress. Physical-device behaviour and all other screen layouts are unchanged.
 
 - Final engineering gates: 678 Node tests, 656 browser checks across 38 harnesses, 17 logging-speed checks, syntax and battle-art contract all pass. Reviewed the 20 new score/evidence captures in Light/Dark at both sizes against the mockup; 128 release captures total. Card summaries fit phone width; complete attainment counts remain in evidence/report. R11 is rebased onto the concurrent 0.47.1/0.47.2 device fixes and preserves them unchanged.
+
+## 2026-10-01 — R11.1 training score corrections (0.48.0)
+
+- **Headline:** the graded score is the last completed, non-away week. The week in progress shows `This week: X of Y sets due so far`, where due = prescribed sets for program days before today plus today's sets once logged. Program days map to weekdays by id (`monday` ...), otherwise by position.
+- **Training day:** 6+ working sets or 30+ total minutes on a date, in both the score and Training rhythm (`minimumSets` option, default 6).
+- **Away weeks:** reuse the existing profile `awayPeriods` (Settings) rather than a second store. New `Mark away` / `Not away` toggles in Progress › Training score › Weeks and in Training rhythm add or remove a Monday-Sunday period. Multi-week periods made in Settings show as "set in Settings" and are edited there.
+- **Slot matching:** exact slot identity first, then the slot's exercise or its `substitutedFor`, from any session type in that week, capped per slot, each set used once. The R11 test asserting that unplanned sets never fill a slot now uses a different exercise, because crediting the planned exercise logged outside its slot is the intended R11.1 behaviour.
+- **Explanation:** `explainTrainingScore()` is pure template text from component data; the ChatGPT report includes it.
+- **Known unrelated failure:** `calorie-ai.html` "Meal keeps its timestamp and AI source" fails on this container before and after this change (time-zone dependent); not touched here.
+- **Needs Cory:** check that the recalculated weeks match how they felt, and mark the travel week away.

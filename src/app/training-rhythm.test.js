@@ -117,3 +117,11 @@ test('away time never invents a streak or a qualifying workout day', () => {
   assert.deepEqual(result.qualifyingDates, [])
   assert.deepEqual(result.trainedDates, [])
 })
+
+test('R11.1: six working sets qualify a short micro-set day', () => {
+  const rhythm = trainingRhythm({ '2026-09-21': 8, '2026-09-22': 12, '2026-09-23': 40 }, '2026-09-24', {
+    setsByDate: { '2026-09-21': 20, '2026-09-22': 4, '2026-09-23': 9 },
+  })
+  assert.deepEqual(rhythm.qualifyingDates, ['2026-09-21', '2026-09-23'])
+  assert.equal(rhythm.minimumSets, 6)
+})

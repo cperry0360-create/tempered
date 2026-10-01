@@ -101,6 +101,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         el('strong', { text: weekStart === currentWeekStart ? 'Current week' : shortDate(weekStart) }),
         !compact && (rhythm.awayProtectedWeeks ?? []).includes(weekStart) && el('small', { text: 'Away week · rhythm protected' }),
         !compact && (rhythm.protectedWeeks ?? []).includes(weekStart) && el('small', { text: 'Keeper used · rhythm protected' }),
+        !compact && awayToggle(weekStart),
         el('div.train-r4__calendar', {}, [
           ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.train-r4__weekday', { text: day })),
           ...dates.map((date) => el('span.train-r4__day', {
@@ -114,6 +115,22 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         ]),
       ])
     })
+    function awayToggle(weekStart) {
+      const sunday = addUtcDays(weekStart, 6)
+      const periods = rhythm.awayPeriods ?? []
+      const own = periods.find((p) => p.start === weekStart && p.end === sunday)
+      if (!own && periods.some((p) => p.start <= sunday && p.end >= weekStart)) return el('small', { text: 'Away · set in Settings' })
+      return el('button.train-r4__away-toggle', {
+        type: 'button', dataset: { awayToggle: weekStart },
+        onclick: async (event) => {
+          event.stopPropagation()
+          if (own) await workout.removeAwayPeriod(own.id)
+          else await workout.addAwayPeriod(weekStart, sunday)
+          rhythm = await workout.trainingRhythm()
+          render()
+        },
+      }, [own ? 'Not away' : 'Mark away'])
+    }
     const scroller = el('div.train-r4__rhythm-scroll', {}, panels)
     queueMicrotask(() => {
       const current = scroller.querySelector('[data-current="true"]')
@@ -127,7 +144,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         el('h2', { text: rhythm.streakWeeks === 1 ? '1 week strong' : `${rhythm.streakWeeks} weeks strong` }),
         el('span', { text: `${rhythm.currentWeekDays} / ${rhythm.weeklyDays} days` }),
       ]),
-      !compact && el('p', { text: rhythm.currentWeekAway ? 'Away week · rhythm protected' : `${rhythm.minimumMinutes}+ minutes counts as a training day` }),
+      !compact && el('p', { text: rhythm.currentWeekAway ? 'Away week · rhythm protected' : `${rhythm.minimumSets ?? 6}+ working sets or ${rhythm.minimumMinutes}+ minutes counts as a training day` }),
       !compact && el('p', { text: `${rhythm.keepers ?? 0} keepers · ${rhythm.keeperProgress ?? 0} / ${rhythm.keeperEvery ?? 5} strong weeks toward next keeper` }),
       scroller,
     ])

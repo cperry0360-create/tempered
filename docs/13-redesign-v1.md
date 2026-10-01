@@ -480,3 +480,28 @@ do not weaken tests of logging, persistence, or domain logic.
   profile that has companion data and proves every tab and a full workout, including the
   summary, render without errors; CLAUDE.md and CURRENT-STATE no longer describe a
   companion.
+- **R9 Rollover and Today fixes** (found by Claude's browser probe of the R6 build, 30 Sep).
+  1. **"Week [object Object] of 8":** whenever nothing has rolled over, the Workout card meta
+     prints `[object Object]`. `weekStatus()` spreads the active program and then overwrites
+     `week` with the `weekTasks()` object, so `weekProgram.week` is not a number. Read the
+     program week number from the active state (or rename one of the two fields) and fix
+     the `week === 1` guidance check that has the same bug.
+  2. **Leftovers disappear on Sunday:** `buildDailyWorkoutQueue` orders days with Sunday as
+     index 0, so on Sunday every earlier program day (Mon to Sat) counts as "later" and the
+     rollover list is empty. Order days Monday-first so Sunday sees the whole week's
+     leftovers. The list still resets the following Monday.
+  3. **Today goes stale if the app stays open overnight:** `realToday` is captured once when
+     the Today screen is created. After midnight, `refresh()` moves `selectedDate` forward
+     but `isRealToday()` still compares with yesterday, so the Workout card shows
+     "Workout details are available for today." Recompute the real date on every refresh,
+     and refresh Today when the app becomes visible again (`visibilitychange`) if the date
+     has changed.
+  4. **Today done, leftovers waiting:** the card currently shows today's day name with
+     `0 today · 2 from earlier this week`, and the ember button opens a different day.
+     Instead: title `Minimal Legs + Abs done`, meta `2 left from earlier this week`, and the
+     button names what it opens: `Finish Push A`.
+  *Done when:* a browser test proves each item: meta shows `Week 2 of 8` with no rollover;
+  a fresh launch on Sunday lists Monday's unfinished movements and a fresh launch the next
+  Monday does not; with the clock moved past midnight and the app made visible again, Today
+  shows the new date's workout; and the done-plus-leftovers card shows the wording above.
+  Prove each check fails on the current code first.

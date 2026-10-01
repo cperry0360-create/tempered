@@ -28,7 +28,7 @@
 
 - Train now follows the approved R4 hierarchy: one program header, next session, session rows, routines, and drill-in rows for Exercise library and Training rhythm. The duplicated program presentation, weekly slot bars, workout control center, stat tiles, and AI coaching handoff are removed from Train.
 - Program details expands the active-program description and links to Program Builder. Routines start from their detail view rather than directly from the list.
-- Fuel now follows approved mockup screen 3: energy ring, protein progress, three macro stats, one meal action, recent quick logs, and water controls. Recovery and companion content are absent from Fuel.
+- Fuel now follows approved mockup screen 3: energy ring, protein progress, three macro stats, one meal action, recent quick logs, and water controls. Fuel stays focused on nutrition and hydration.
 - The Fuel ring represents calories eaten divided by the calorie goal and has a zero-length ember arc when calories eaten is 0.
 - Release version: 0.41.0 (55).
 
@@ -41,15 +41,34 @@
 - R3 browser acceptance covers placeholder contrast, one-tap logging, stored-end-timestamp timing, menu actions, resume behavior, and 52px rows. `tools/verify-logging-speed.js` is now an explicit CI gate.
 - Release version: 0.40.0 (54).
 
-Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard now leads with companion/settings, next session, readiness, same-week training, Fuel, and the canonical Daily log. Legacy Today summary, calendar rail, planner, workout-control, Daily Recap, weekly-goal, and AI-check surfaces are removed from Today; logging and persistence remain canonical.
+Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard now leads with Today settings, next session, readiness, same-week training, Fuel, and the canonical Daily log. Legacy Today summary, calendar rail, planner, workout-control, Daily Recap, weekly-goal, and AI-check surfaces are removed from Today; logging and persistence remain canonical.
+
+## 2026-10-01 — Redesign V1 R8 removal of reward surfaces
+
+- Removed the reward surfaces and their UI code, including Today, setup, workout summary,
+  settings/navigation, runtime illustrations, and the dedicated screen.
+- Existing reward-related profile values remain stored and are neither migrated nor deleted.
+  Legacy domain and service modules remain only for data compatibility and tests.
+- Active workout exercise photos remain available. Tracker screens use no decorative art.
+- Added a browser acceptance flow that seeds legacy profile values, visits every tab,
+  completes a workout and summary, and checks for runtime errors and preserved data.
+
+## 2026-10-01 — Redesign V1 R7 colour revision and light mode
+
+- Applied the revised palette through shared design tokens and ink tokens. Appearance
+  offers System, Light, and Dark, with System as the default and a persisted selection.
+- Light mode swaps tokens globally without per-screen theme overrides. The status-area
+  strip uses the shared status-bar token for legible iOS glyphs in both themes; device
+  verification remains part of phone acceptance.
+- Release version: 0.44.0 (61).
 
 # Tempered current state
 
-**Last updated:** 2026-09-30
+**Last updated:** 2026-10-01
 
 **Repository:** `cperry0360-create/tempered`
 **Production:** `https://cperry0360-create.github.io/tempered/`
-**Current release candidate:** 0.42.0 (57) — Redesign V1 R5 Progress and sweep; visual acceptance pending
+**Current release:** 0.45.0 (62) — Redesign V1 R8 removal of reward surfaces; visual acceptance pending
 
 **Product maturity:** Pre-beta product completion
 
@@ -68,8 +87,7 @@ Release 0.26 keeps Health import above Daily Recap and redraws Today after impor
 Release 0.25 restores imported recovery signals to Progress, explains the readiness estimate using the user's own baselines, separates Fuel, hydration, and recovery into practical cards, and excludes current or flagged-partial nutrition days from calorie averages. Nutrition days can be marked Complete or Still Logging from the meal journal.
 
 This is the short handoff for the live product. It records the decisions recovered from
-the long Tempered build conversation and the companion-art share so a new session does
-not have to reconstruct the pivot from legacy RPG documents.
+the long Tempered build conversation so a new session does not have to reconstruct the product direction from legacy RPG documents.
 
 Release 0.31.1 removes the final visible RPG explanation from onboarding and establishes
 the autonomous product-team release contract. CI now captures every core surface at both
@@ -98,8 +116,7 @@ proof pass; hosted browser and visual inspection remain required before TestFlig
 Release 0.32.0 turns onboarding into Guided First Use. The first launch now explains effort
 plus recovery, keeps the local-first promise visible, captures the user's goal, realistic
 weekly rhythm, session length, equipment, and starting path, then reviews the current plan
-before saving. The companion remains optional and is presented as a reflection of completed
-work rather than a responsibility. Existing history and program records remain intact.
+before saving. Existing history and program records remain intact.
 
 Release 0.31 makes three distinct 30-minute days the weekly streak minimum. A fourth qualifying day makes it a strong week and advances keeper progress, so busy weeks count without removing the reward for doing more.
 
@@ -108,13 +125,12 @@ Release 0.30 replaces the fixed two-week Training calendar with a horizontally s
 ## Product direction
 
 Tempered is a mobile-first, local-first health, training, and lifestyle tracker with a
-small positive companion layer. It is not an RPG battle game. The visible navigation is:
+clear and practical tracking flows. It is not an RPG battle game. The visible navigation is:
 
 1. **Today** for sleep, steps, nutrition, water, recovery, habits, and today's workout.
 2. **Train** for scrollable weekly rhythm history, readiness, concise ChatGPT coaching handoff,
    programs, ad-hoc exercises, fast set logging, history, and progression.
-3. **Fuel** for calories, protein, water, and sleep at a glance with quick logging. The
-   selectable companion is retained below this practical dashboard as an optional reward.
+3. **Fuel** for calories, protein, water, and sleep at a glance with quick logging.
 4. **Progress** for a fixed recap plus a configurable widget dashboard.
 
 Character/Battle code remains only for backwards compatibility with existing IndexedDB
@@ -122,9 +138,8 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 
 ## Product rules that must survive every change
 
-- Tracker first. The app must still be useful if Companion disappears.
 - Local-first and fully offline. No backend, embedded AI key, or required account.
-- No punishment. No lost levels, negative rewards, broken-streak shame, sick pet, decay,
+- No punishment. No lost levels, negative rewards, broken-streak shame, decay,
   or missed-day debt. Rest is part of tempering.
 - Completion is undoable, history is preserved, and reloads must not lose work.
 - Workout completion and Today use the same canonical logs. Never duplicate rewards or
@@ -139,33 +154,6 @@ data and regression fixtures. Do not put it back in navigation or expand it.
 - Mobility opens a dedicated guided screen with four routines, movement cues, countdowns,
   and explicit completion logging rather than expanding into an inline minutes field.
 - No social feed, leaderboards, notification machine, or giant generic exercise catalog.
-
-## Companion contract
-
-- Three saved companion types. Trailback Turtle is the default; Forge Guardian and the
-  original cream, teal, green, and warm-gold Ember Sprout remain selectable.
-- The style can be chosen in setup or changed directly on Companion. Changing art keeps
-  the companion name, care total, and growth level.
-- Ten levels with early thresholds at 0, 24, 50, 85, and 130 care, then 185, 250, 330,
-  430, and 550. Turtle and Forge have ten distinct forms. Turtle moves from Egg through
-  hatchling and athletic stages to Shredded. Sprout maps those levels onto its five
-  original forms while retaining a named checkpoint at every level.
-- Growth comes from completed training, working sets, and lifestyle logs.
-- The workout-complete screen makes that relationship explicit: session stats and new
-  records lead into the selected companion, exact care earned, the session/set split,
-  current growth, and a direct route to Companion when an evolution is ready.
-- Earned care may accumulate anywhere, but a form never changes silently. Companion holds
-  the last revealed level, opens an evolution-ready takeover, then performs the change
-  inside a fixed phone-safe stage over a 3.2-second old-to-new morph. The takeover is
-  mounted in a top-level app overlay, outside the animated scrolling screen, so iOS cannot
-  position it against the full Companion page or layer navigation above it. The checkpoint
-  is written only after the morph, and the completion splash remains until acknowledged.
-  A versioned presentation receipt replays corrected reveals once for affected installs,
-  and Replay Evolution can run the earned transformation again without changing care.
-- Each style has starter, mid, and fully upgraded habitat states. Turtle begins in a
-  rugged lakeside nest and expands into a natural pond-side training territory.
-- Daily moments may reflect training, hydration, reading, nutrition, sleep, or idle time.
-- The user can rename the companion. Nothing decays.
 
 ## Progress widget dashboard
 
@@ -285,24 +273,11 @@ Health data through its native iOS wrapper when private signing/TestFlight work 
 
 ## Visual direction and recovered art
 
-The default Trailback Turtle direction matches Cory's established cartoon-game language:
-bold dark outlines, chunky readable shapes, saturated blue/green cel shading, one hard
-shadow, and the tone "serious game, silly world." Its outdoor territory uses forest,
-mountain, lake, moss, stone, and warm-tan natural materials. The turtle becomes genuinely
-strong and heroic; the humor comes from taking its shredded final form seriously.
-
-Forge Guardian remains the optional blackened-steel, bronze, navy, and teal industrial
-track. Ember Sprout remains the optional warm, rounded wellness track. None of the styles
-should become photorealistic, painterly, generic AI fantasy, combat imagery, or a copy of
-another character or game scene.
-
-Production uses screen-specific scenic art for Today, Train, Companion, and Progress;
-five transparent Sprout cutouts; transparent ten-form Turtle and Forge sheets; three
-habitat states for each style; and Companion, Progress, and AI Nutrition support icons. Originals
-and references recovered from the shared ChatGPT conversation are preserved in
-`art/source/tempered-generated/`. Several generated
-"transparent" animation and widget-reference files contain a baked gray checkerboard.
-They are preserved as references but must not be rendered directly in the app.
+The approved Redesign V1 system in `docs/13-redesign-v1.md` is authoritative for
+current screen colors, typography, surfaces, and layout. Exercise photos are used only
+inside active workouts. Generated originals and references recovered from the shared
+conversation remain preserved under `art/source/tempered-generated/` and are not runtime
+assets.
 
 ## Engineering contract
 
@@ -339,4 +314,4 @@ owned by Tempered. The page and precache use the same unqueried `src/main.js` ca
 The original PRD targeted a visible RPG character reaching Level 10 in roughly 60
 consistent days. That target explains retained XP and battle-era code, but it no longer
 defines the visible product. Current work should improve the tracker, Progress, or the
-small positive Companion layer.
+the tracker and its supporting tools.

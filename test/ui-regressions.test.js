@@ -139,16 +139,6 @@ test('REGRESSION: longer Progress ranges exclude unknown pre-Tempered history', 
   assert.match(history, /rangeDates\(clock\.today\(\), range\)/)
 })
 
-test('REGRESSION: lower-row turtle stages use a taller undistorted viewport', () => {
-  const companion = read('src/companion.css')
-  const setup = read('src/setup.css')
-  const style = read('src/style.css')
-  assert.match(companion, /data-visual='8'[\s\S]*aspect-ratio:\s*\.89/)
-  assert.match(companion, /background-size:\s*500% auto/)
-  assert.match(setup, /data-style='turtle'[\s\S]*background-size:\s*500% auto/)
-  assert.match(style, /summary-power__art--turtle[\s\S]*background-size:\s*500% auto/)
-})
-
 test('REGRESSION: active workouts can add movements, minimize, and resume', () => {
   const session = read('src/ui/screens/session.js')
   const app = read('src/ui/app.js')

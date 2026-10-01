@@ -54,8 +54,8 @@
           qa('.screen--today > .today-card').map((node) => node.dataset.section).join('|') === 'next-session|readiness|week|fuel|daily')
         check('Today has no legacy summary, calendar, planner, or workout-control section',
           !q('[data-summary="daily"]') && !q('.today-calendar') && !q('[data-section="planner"]') && !q('[data-section="training"]'))
-        check('Today exposes companion and Settings in its own header',
-          Boolean(q('.today-companion')) && Boolean(q('.today-settings')))
+        check('Today exposes Settings from its title row',
+          Boolean(q('.today-heading .today-settings')))
         check('Today has one compact calendar-week signal',
           qa('[data-section="week"] .today-week__day').length === 7)
         check('Fuel has exactly two progress bars and one meal action',

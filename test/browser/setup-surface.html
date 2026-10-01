@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Tempered — companion setup preference</title>
+  <title>Tempered — setup surface</title>
   <link rel="stylesheet" href="../../src/style.css" />
   <link rel="stylesheet" href="../../src/setup.css" />
 </head>
@@ -54,8 +54,6 @@
       q('.setup__next')?.click()
       await settle()
 
-      check('Setup does not require a companion choice', !q('[data-style="turtle"]') && !q('[data-style="sprout"]') && !q('[data-style="forge"]'))
-
       while (q('.setup__next')) {
         q('.setup__next')?.click()
         await settle()
@@ -65,12 +63,12 @@
       check('Setup still completes and persists the profile', finished && profile?.setupComplete === true)
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
     } catch (error) {
-      check('Companion setup harness threw', false, String(error?.stack ?? error).slice(0, 900))
+      check('Setup harness threw', false, String(error?.stack ?? error).slice(0, 900))
     }
 
     await fetch('/__report', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ label: 'companion-setup', passed: checks.every((item) => item.ok), checks }),
+      body: JSON.stringify({ label: 'setup-surface', passed: checks.every((item) => item.ok), checks }),
     })
   </script>
 </body>

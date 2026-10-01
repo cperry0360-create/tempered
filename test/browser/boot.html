@@ -73,9 +73,10 @@
         const bodyStyle = getComputedStyle(document.body)
         const rootStyle = getComputedStyle(document.documentElement)
         const beforeStyle = getComputedStyle(document.body, '::before')
+        const expectedGround = document.documentElement.dataset.theme === 'light' ? '#F3F5F8' : '#1B222C'
         check('the Redesign V1 slate ground is painted without scenic art',
           bodyStyle.backgroundImage === 'none'
-          && rootStyle.getPropertyValue('--bg').trim() === '#1F252C'
+          && rootStyle.getPropertyValue('--bg').trim() === expectedGround
           && beforeStyle.backgroundImage === 'none',
           `${rootStyle.getPropertyValue('--bg').trim()} / ${beforeStyle.backgroundImage}`)
         check('numbers are tabular, so weights do not shift as they change',

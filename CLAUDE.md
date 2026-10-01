@@ -1,24 +1,20 @@
 # CLAUDE.md — read this first, every session
 
-You are building **Tempered**, a health, training, and lifestyle tracker with a small
-positive companion layer. This file is the contract. Re-read it at the start of every
+You are building **Tempered**, a health, training, and lifestyle tracker. This file is the contract. Re-read it at the start of every
 session, then read `docs/CURRENT-STATE.md` for the latest shipped state.
 
 ## The one-line version
 
-Make healthy things fast to record, make progress easy to understand, and let accumulated
-real-world care grow a warm companion world. The tracker must stand on its own.
+Make healthy things fast to record and make progress easy to understand.
 
 ## Non-negotiables
 
-1. **Tracker first.** Today, Train, and Progress must remain a good product without the
-   Companion. Never sacrifice logging speed or clarity for the reward layer.
+1. **Tracker first.** Today, Train, and Progress must make logging and progress clear.
 2. **Measured data stays authoritative.** Sets, load, reps, duration, steps, sleep,
    hydration, nutrition, and body metrics come from canonical logs. A visual reward or
    completion control must never manufacture a measurement.
-3. **The mapping must be legible.** What the user did should obviously explain what
-   changed in Progress or Companion. If it cannot be justified in one sentence, it is
-   wrong.
+3. **Explanations must be legible.** If an explanation cannot be justified in one
+   sentence, simplify it.
 4. **No punishment.** No negative XP, no lost levels, no broken-streak shaming. Missing
    days simply produces no gain. Rest is a loggable, rewarded action.
 5. **Local-first.** The app must work fully offline with no backend. All persistence
@@ -44,8 +40,6 @@ real-world care grow a warm companion world. The tracker must stand on its own.
 - Not an RPG or battle game. Character/Battle code remains internal only so old local
   data and regression fixtures keep working. It is absent from normal navigation and
   must not receive new product features.
-- Not a second pet-care obligation. The Companion never gets sick, decays, loses items,
-  or punishes inactivity. It grows from activity Tempered already records.
 - Not a 500-exercise database with muscle maps. Cory's lifts, extensible.
 - Not a social app. No feeds, no friends, no leaderboards in V1.
 - Not a notification machine. V1 sends none.

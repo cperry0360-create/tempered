@@ -1,50 +1,36 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { access, readFile } from 'node:fs/promises'
+import { access, readFile, readdir } from 'node:fs/promises'
 
 const root = new URL('../', import.meta.url)
-
-const habitats = [
-  'habitat-starter.webp', 'habitat-mid.webp', 'habitat-full.webp',
-  'habitat-forge-starter.webp', 'habitat-forge-mid.webp', 'habitat-forge-full.webp',
-  'habitat-turtle-starter.webp', 'habitat-turtle-mid.webp', 'habitat-turtle-full.webp',
-]
-const transparent = [
-  'companion-stage-1.png', 'companion-stage-2.png', 'companion-stage-3.png',
-  'companion-stage-4.png', 'companion-stage-5.png', 'companion-forge-stages.png',
-  'companion-turtle-stages.png', 'icon-companion.png',
-  'icon-progress.png', 'icon-nutrition-ai.png',
+const screenFiles = [
+  'src/ui/app.js', 'src/ui/screens/today.js', 'src/ui/screens/train.js',
+  'src/ui/screens/fuel.js', 'src/ui/screens/history.js', 'src/ui/screens/settings.js',
+  'src/ui/screens/setup.js', 'src/ui/screens/summary.js', 'src/ui/calorie-ai-runtime.js',
 ]
 
-async function file(path) {
-  return readFile(new URL(`art/tempered/${path}`, root))
-}
-
-test('the approved wellness art required by visible screens exists', async () => {
-  await Promise.all([...habitats, ...transparent].map((name) =>
-    access(new URL(`art/tempered/${name}`, root))))
-})
-
-test('production companion and icon PNGs carry a real alpha channel', async () => {
-  for (const name of transparent) {
-    const bytes = await file(name)
-    assert.equal(bytes.toString('ascii', 1, 4), 'PNG', `${name} is not a PNG`)
-    assert.equal(bytes[25], 6, `${name} must use RGBA color type, not a baked checkerboard`)
+test('active tracker screens use raster images only for workout exercise photos', async () => {
+  const sources = await Promise.all(screenFiles.map((path) => readFile(new URL(path, root), 'utf8')))
+  for (const [index, source] of sources.entries()) {
+    assert.doesNotMatch(source, /<img|art\/tempered\//, `${screenFiles[index]} adds a decorative image`)
   }
-})
+  const session = await readFile(new URL('src/ui/screens/session.js', root), 'utf8')
+  assert.match(session, /img\.exercise__thumb/)
+  assert.match(session, /img\.exercise__full/)
+  assert.match(session, /artUrl\(entry\.exercise\.art\)/)
 
-test('every visible wellness asset is available to the installed PWA offline', async () => {
+  const exerciseArt = (await readdir(new URL('art/exercises/', root)))
+    .filter((name) => /\.(?:png|jpe?g|webp|avif)$/i.test(name))
+  assert.ok(exerciseArt.length > 0, 'workout exercise photos must remain available')
   const worker = await readFile(new URL('sw.js', root), 'utf8')
-  for (const name of [...habitats, ...transparent]) {
-    assert.match(worker, new RegExp(`art/tempered/${name.replaceAll('.', '\\.')}`), `${name} is not precached`)
-  }
-  assert.doesNotMatch(worker, /art\/tempered\/bg-(?:wellness|today|train|progress)\.webp/)
+  for (const name of exerciseArt) assert.ok(worker.includes(`art/exercises/${name}`), `${name} is not cached offline`)
 })
 
-test('runtime styles never point at checkerboard source references', async () => {
-  const [pivot, companion] = await Promise.all([
-    readFile(new URL('src/pivot.css', root), 'utf8'),
-    readFile(new URL('src/companion.css', root), 'utf8'),
+test('the shell and offline cache no longer ship decorative product art', async () => {
+  const [index, worker] = await Promise.all([
+    readFile(new URL('index.html', root), 'utf8'),
+    readFile(new URL('sw.js', root), 'utf8'),
   ])
-  assert.doesNotMatch(`${pivot}\n${companion}`, /source\/tempered-generated|checkerboard/i)
+  assert.doesNotMatch(`${index}\n${worker}`, /art\/tempered\/|src\/companion\.css/)
+  await assert.rejects(access(new URL('art/tempered/', root)))
 })

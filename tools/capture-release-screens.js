@@ -24,7 +24,7 @@ const VIEWS = [
   'setup-welcome', 'setup-rhythm', 'setup-plan',
   'today', 'train', 'session', 'fuel',
   'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
-  'companion', 'settings', 'program-builder', 'summary',
+  'settings', 'program-builder', 'summary',
   'health-import', 'health-setup', 'health-launch', 'nutrition-log', 'session-discard',
 ]
 const VIEWPORTS = [

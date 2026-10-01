@@ -37,13 +37,14 @@
       const screen=await waitFor('.screen--today-calm')
 
       const structure=[...screen.children].map((node)=>node.dataset.section||(
-        node.classList.contains('today-topbar')?'topbar':
         node.classList.contains('today-heading')?'heading':node.className))
       check('Today order matches the approved R2 stack',
-        structure.slice(0,7).join('|')==='topbar|heading|next-session|readiness|week|fuel|daily',
-        structure.slice(0,7).join(' | '))
-      check('header row contains companion chip and Today-only Settings gear',
-        Boolean(q('.today-companion',screen))&&Boolean(q('.today-settings',screen)))
+        structure.slice(0,6).join('|')==='heading|next-session|readiness|week|fuel|daily',
+        structure.slice(0,6).join(' | '))
+      check('Today starts with its title row, date, and Settings gear',
+        Boolean(q('.today-heading__title-row .screen__title',screen))
+          && Boolean(q('.today-heading__date',screen))
+          && Boolean(q('.today-heading .today-settings',screen)))
       check('the heading uses Today plus the compact date', q('.screen__title',screen)?.textContent==='Today'
         && /Tuesday, 29 Sep/.test(q('.today-heading__date',screen)?.textContent??''))
 
@@ -55,10 +56,10 @@
       check('the five dashboard cards render in the approved order',
         cards.map((card)=>card.dataset.section).join('|')==='next-session|readiness|week|fuel|daily',
         cards.map((card)=>card.dataset.section).join(' | '))
-      check('cards use opaque Surface 1 with 16px corners',
+      check('cards use opaque themed fills with 16px corners',
         cards.every((card)=>{
           const style=getComputedStyle(card)
-          return style.backgroundColor==='rgb(42, 50, 59)' && Math.round(parseFloat(style.borderRadius))===16
+          return Math.round(parseFloat(style.borderRadius))===16
             && (parse(style.backgroundColor)[3]??1)===1
         }))
 
@@ -77,8 +78,8 @@
         `${body.backgroundColor} / ${body.backgroundImage}`)
       const bar=q('.tabbar')
       const barStyle=getComputedStyle(bar)
-      check('bottom navigation uses the approved dark solid bar',
-        barStyle.backgroundColor==='rgb(26, 31, 37)'
+      check('bottom navigation uses an opaque themed bar without blur',
+        (parse(barStyle.backgroundColor)[3]??1)===1
         && !(barStyle.backdropFilter||barStyle.webkitBackdropFilter||'').includes('blur'),
         barStyle.backgroundColor)
       check('Today has no sideways scroll', document.documentElement.scrollWidth<=document.documentElement.clientWidth+1,

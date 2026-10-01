@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R8 product flow</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/fuel.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+    const qa = (selector, root = document) => root ? [...root.querySelectorAll(selector)] : []
+    const wait = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+    const errors = []
+    const originalError = console.error
+    console.error = (...args) => { errors.push(args.map(String).join(' ')); originalError(...args) }
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    try {
+      const storage = createMemoryStorage()
+      await storage.open()
+      const legacy = {
+        companionName: 'Rook',
+        companionStyle: 'forge',
+        companionCare: 123,
+        companionRevealedLevel: 4,
+        companionStageSeen: 'Young Shell',
+      }
+      await storage.put('profile', { id: 'profile', name: 'R8 acceptance', setupComplete: true, ...legacy })
+      const clock = fixedClock(new Date(2026, 8, 29, 9, 0, 0))
+      const app = await bootstrapHarness({ storage, clock, mount: q('#app'), initialTab: 'today' })
+      await wait()
+
+      const persistedAtOpen = await storage.get('profile', 'profile')
+      check('a profile with legacy growth fields opens without rewriting those fields',
+        Object.entries(legacy).every(([key, value]) => value === persistedAtOpen?.[key]))
+      check('Today shows no saved-character chip or image',
+        q('.today-companion') === null && q('[class*="companion"]') === null,
+        q('.today-companion')?.textContent ?? 'no Today character surface')
+
+      const tabs = qa('.tabbar__tab')
+      check('all four tracker tabs remain available', tabs.map((tab) => tab.dataset.tab).join('|') === 'today|train|fuel|history')
+      for (const [tab, screen] of [['today', 'today'], ['train', 'train'], ['fuel', 'fuel'], ['history', 'history']]) {
+        const control = q(`[data-tab="${tab}"]`)
+        control?.click()
+        await wait(90)
+        check(`${tab} tab renders its screen`, Boolean(q(`.screen--${screen}`)))
+        check(`${tab} tab has no saved-character surface`, q('[class*="companion"]') === null)
+      }
+
+      await app.app.show('today')
+      await wait()
+      const start = q('.today-workout__start')
+      check('Today can start its full planned workout', Boolean(start))
+      start?.click()
+      await wait(220)
+      check('full workout screen starts with planned movement rows', Boolean(q('.screen--session')) && qa('.screen--session [data-exercise]').length > 0)
+      check('active workout contains no saved-character surface', q('[class*="companion"]') === null)
+
+      let loggedChecks = 0
+      for (let attempt = 0; attempt < 180; attempt += 1) {
+        const pending = qa('.screen--session .setrow__check').find((button) =>
+          !button.disabled && button.closest('.setrow')?.dataset.done !== 'true')
+        if (!pending) break
+        pending.click()
+        loggedChecks += 1
+        await wait(35)
+        q('.session-restbar__actions button:last-child')?.click()
+        await wait(15)
+      }
+      check('the full workout has working sets logged', loggedChecks > 0, `${loggedChecks} set controls used`)
+      q('[data-action="finish"]')?.click()
+      await wait()
+      q('[data-action="confirm-finish"]')?.click()
+      await wait(180)
+      check('the completed workout reaches its summary', Boolean(q('.screen--summary')) && /Workout complete/.test(q('.screen--summary')?.textContent ?? ''))
+      check('summary has no saved-character copy or payoff hooks',
+        q('.screen--summary [class*="companion"]') === null
+          && q('.screen--summary [data-section="companion-growth"]') === null
+          && !/Rook|Tank|companion/i.test(q('.screen--summary')?.textContent ?? ''))
+      const persistedAtFinish = await storage.get('profile', 'profile')
+      check('workout and summary keep legacy profile data untouched',
+        Object.entries(legacy).every(([key, value]) => value === persistedAtFinish?.[key]))
+      check('all tabs, the workout, and the summary produced no console errors', errors.length === 0, errors.join('\n'))
+    } catch (error) {
+      check('R8 flow threw', false, String(error?.stack ?? error).slice(0, 1200))
+    } finally {
+      console.error = originalError
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'retire-companion-r8', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

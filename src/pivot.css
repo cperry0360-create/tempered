@@ -19,9 +19,6 @@ body:has(.screen--summary)::before {
 body:has(.screen--history)::before {
   background-image: none;
 }
-body:has(.screen--companion)::before {
-  background-image: none;
-}
 
 /* RPG bookkeeping still exists underneath old backups, but it is no longer a product surface. */
 .today-summary__xp,
@@ -265,9 +262,6 @@ body:has(.screen--companion)::before {
 .health-import-sheet__actions .button { min-height: 48px; }
 .health-import-sheet__submit { border-color: var(--text-2); background: var(--surface-1); color: var(--text-2); }
 .health-import-sheet__submit:disabled { opacity: .55; }
-
-/* The legacy Character/Battle palette no longer drives normal navigation. */
-.tabbar__tab[data-tab='companion'][data-active='true'] { color: var(--text-2); }
 
 @media (max-width: 390px) {
   .health-bridge__actions,

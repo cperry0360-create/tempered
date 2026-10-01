@@ -61,7 +61,7 @@
   font-weight: 760;
   letter-spacing: 0;
 }
-.today-item--nutrition .today-item__ai-prompt img {
+.today-item--nutrition .today-item__ai-prompt .icon {
   width: 18px;
   height: 18px;
   object-fit: contain;

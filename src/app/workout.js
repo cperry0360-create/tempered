@@ -19,7 +19,6 @@ import { daysBetween } from '../adapters/clock/clock.js'
 import { timeUnderLoad } from '../domain/duration.js'
 import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
-import { companionWorkoutCare } from '../domain/companion-growth.js'
 import { slotPrescription } from '../domain/program-schema.js'
 import { normalizeAwayPeriods, trainingRhythm as deriveTrainingRhythm } from './training-rhythm.js'
 
@@ -576,9 +575,6 @@ export function createWorkoutService({ storage, clock, balance }) {
       setsCompleted: completedSets.length,
       totalReps: completedSets.reduce((sum, set) => sum + (Number(set.reps) || 0), 0),
       totalVolume,
-      companionCare: companionWorkoutCare(completedSets.length, {
-        includeSession: options.isFirstOfDay !== false,
-      }),
       awards,
       xpByAttribute: totalsByAttribute(awards),
       xpBySource: totalsBySource(awards),

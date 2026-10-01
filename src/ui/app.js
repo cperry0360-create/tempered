@@ -17,7 +17,6 @@ import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createFuelScreen } from './screens/fuel.js'
-import { createCompanionScreen } from './screens/companion.js'
 import { createProgramBuilderScreen } from './screens/program-builder.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
@@ -70,10 +69,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
   const fuel = createFuelScreen({ storage, daily, clock })
-  const companion = createCompanionScreen({
-    storage, daily, clock, overlayHost: overlays,
-    onToday: async () => { await show('today') },
-  })
   builder = createProgramBuilderScreen({ mount, storage, clock, onClose: () => show('settings') })
 
   let battleScreen = null
@@ -106,7 +101,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     onOpenSlot: (slot) => slot?.extra
       ? startSession({ exerciseId: slot.exerciseId })
       : startSession({ slotTask: slot }),
-    onCompanion: () => show('companion'),
     onSettings: () => openSettings(),
     onViewSummary: () => show('history'),
   })
@@ -116,7 +110,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     onDone: async () => { await show(returnTab) },
   })
   let session = null
-  const SCREENS = { today, train, fuel, companion, history, settings, character: characterScreen }
 
   function announce(text) {
     announcer.textContent = ''
@@ -249,7 +242,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   async function resumeSession(draft) {
     const savedReturn = draft?.session?.returnTab
-    returnTab = ['today', 'train', 'fuel', 'companion', 'history', 'character'].includes(savedReturn)
+    returnTab = ['today', 'train', 'fuel', 'history', 'character'].includes(savedReturn)
       ? savedReturn
       : 'today'
     session?.destroy()
@@ -283,7 +276,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     if (tab === 'history') { await history.refresh(); replace(body, [history.root]); return }
     if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
     if (tab === 'fuel') { await fuel.refresh(); replace(body, [fuel.root]); return }
-    if (tab === 'companion') { await companion.refresh(); replace(body, [companion.root]); return }
     if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
     if (tab === 'program-builder') { await builder.start(); return }
     await ensureLegacy()
@@ -294,10 +286,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   async function show(tab) {
     const requested = tab
     const visible = TABS.some((entry) => entry.id === requested)
-    const target = requested === 'settings' || requested === 'character' || requested === 'companion'
+    const target = requested === 'settings' || requested === 'character'
       || requested === 'program-builder' || visible ? requested : 'today'
     if (target !== 'fuel') fuel.deactivate()
-    if (target !== 'companion') companion.deactivate()
     if (target !== 'today') today.deactivate?.()
     active = target
     session?.destroy()

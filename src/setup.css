@@ -30,58 +30,9 @@
 .setup__activity,
 .setup__quiet,
 .setup__next,
-.setup__cadence,
-.setup__companionchoice { appearance: none; font-family: var(--font-display); cursor: pointer; }
+.setup__cadence { appearance: none; font-family: var(--font-display); cursor: pointer; }
 .setup__choice { min-height: 52px; border: 1px solid var(--edge); border-radius: var(--r-lg); background: var(--raised); color: var(--text-2); font-weight: 800; }
 .setup__choice[data-selected='true'] { border-color: var(--acid); color: var(--acid); background: var(--surface-1); }
-.setup__companionchoices { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.setup__companionchoice {
-  min-width: 0;
-  min-height: 104px;
-  display: grid;
-  grid-template-columns: 44px minmax(0,1fr) 16px;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--edge);
-  border-radius: var(--r-lg);
-  background: var(--raised);
-  color: var(--text);
-  text-align: left;
-}
-.setup__companionchoice[data-selected='true'] {
-  border-color: var(--acid);
-  background: var(--surface-1);
-  box-shadow: none;
-}
-.setup__companionchoice strong,
-.setup__companionchoice small { display: block; }
-.setup__companionchoice strong { font-size: 12px; line-height: 1.25; }
-.setup__companionchoice small { margin-top: 4px; color: var(--text-3); font-size: 12px; line-height: 1.25; }
-.setup__companionchoice i { color: var(--acid); font-style: normal; }
-.setup__companionpreview {
-  width: 44px;
-  height: 70px;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-.setup__companionchoice[data-style='forge'] .setup__companionpreview {
-  aspect-ratio: 3 / 5;
-  background-image: none;
-  background-position: 100% 100%;
-  background-size: 500% 200%;
-}
-.setup__companionchoice[data-style='turtle'] .setup__companionpreview {
-  width: 42px;
-  height: 47px;
-  background-image: none;
-  background-position: 100% 100%;
-  background-size: 500% auto;
-}
-.setup__companionchoice[data-style='sprout'] .setup__companionpreview {
-  background-image: none;
-  background-size: contain;
-}
 
 .setup__numberchoices { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .setup__number { min-width: 0; min-height: 58px; border: 1px solid var(--edge); border-radius: var(--r-lg); background: var(--raised); color: var(--text); font-size: var(--text-xl); font-weight: 900; }

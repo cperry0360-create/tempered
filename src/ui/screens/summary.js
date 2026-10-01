@@ -1,4 +1,4 @@
-/** Post-session recap: performance first, no companion layer. */
+/** Post-session recap focused on recorded workout performance. */
 import { el, replace } from '../dom.js'
 import { volume, duration, lbs } from '../format.js'
 
@@ -42,7 +42,6 @@ export function createSummaryScreen({ onDone }) {
         ]),
         el('div.summary-legacy-hooks',{hidden:true,'aria-hidden':'true'},[
           el('span',{dataset:{section:'xp'}}),
-          el('span',{dataset:{section:'companion-growth'}}),
           el('span.grew__why',{text:'Training recorded'}),
           el('span',{dataset:{section:'directive'}}),
         ]),

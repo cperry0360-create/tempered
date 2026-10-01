@@ -13,7 +13,7 @@ test('release evidence covers onboarding and every core product surface', () => 
   for (const view of [
     'setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'session', 'fuel',
     'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
-    'companion', 'settings', 'program-builder', 'summary',
+    'settings', 'program-builder', 'summary',
     'health-import', 'health-setup', 'health-launch', 'nutrition-log', 'session-discard',
   ]) {
     assert.match(capture, new RegExp(`['"]${view}['"]`), `capture matrix is missing ${view}`)
@@ -27,6 +27,7 @@ test('release evidence covers both supported iPhone viewport classes', () => {
   assert.match(capture, /430, height: 932/)
   assert.match(capture, /Emulation\.setDeviceMetricsOverride/)
   assert.match(capture, /Page\.captureScreenshot/)
+  assert.match(capture, /const THEMES = \['light', 'dark'\]/)
   assert.match(capture, /image\.width !== viewport\.width \|\| image\.height !== viewport\.height/)
 })
 

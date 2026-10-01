@@ -1,4 +1,5 @@
 import { nutritionLedger, nutritionSuggestions } from '../domain/nutrition.js'
+import { icon } from './icons.js'
 
 export const NUTRITION_PHOTO_PROMPT = `Estimate the total calories and macros in the food and drink visible in the attached meal photo or photos for my Tempered food log.
 
@@ -18,7 +19,6 @@ TEMPERED_FIBER=<grams of fiber>
 // continue to work while the feature grows into one Nutrition tracker.
 export const CALORIE_PHOTO_PROMPT = NUTRITION_PHOTO_PROMPT
 
-const nutritionAiIcon = new URL('../../art/tempered/icon-nutrition-ai.png', import.meta.url).href
 
 const FIELD_DEFINITIONS = Object.freeze([
   { key: 'calories', label: 'Calories', short: 'kcal', placeholder: 'kcal', step: '1' },
@@ -179,7 +179,7 @@ export function installCalorieAiRuntime() {
     button.rel = 'noopener'
     button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
     button.replaceChildren(
-      Object.assign(document.createElement('img'), { src: nutritionAiIcon, alt: '' }),
+      icon('food'),
       Object.assign(document.createElement('span'), { textContent: 'Meal photo' }),
     )
     button.dataset.calorieAi = 'prompt'

@@ -1,8 +1,8 @@
 /**
  * TODAY — Redesign V1.
  *
- * The screen is deliberately a compact dashboard: companion + settings, next
- * session, recovery, current calendar-week training, fuel, and the canonical
+ * The screen is deliberately a compact dashboard: settings, next session,
+ * recovery, current calendar-week training, fuel, and the canonical
  * habit log. Logging still flows through the daily service.
  */
 
@@ -10,10 +10,8 @@ import { el, replace } from '../dom.js'
 import { icon, iconForActivity } from '../icons.js'
 import { sortActivities } from '../../domain/activities.js'
 import { trainingReadiness } from '../../domain/readiness.js'
-import { companionStage, companionStyle, COMPANION_LEVELS } from '../../domain/companion-growth.js'
 import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
 
-const art = (name) => new URL(`../../../art/tempered/${name}`, import.meta.url).href
 const FUEL_ACTIVITY_IDS = new Set(['calories_logged', 'protein_target', 'nutrition_logged'])
 
 const DEFAULT_QUICK_ADD = Object.freeze({
@@ -174,10 +172,6 @@ function estimateSessionMinutes(day) {
   return Math.max(15, Math.round(estimate / 5) * 5)
 }
 
-function companionDefaultName(style) {
-  return style === 'forge' ? 'Atlas' : style === 'sprout' ? 'Pip' : 'Tank'
-}
-
 function compactMetric(value, unit, digits = 0) {
   if (!Number.isFinite(value)) return '—'
   const shown = digits ? value.toFixed(digits) : Math.round(value)
@@ -186,7 +180,7 @@ function compactMetric(value, unit, digits = 0) {
 }
 
 export function createTodayScreen({
-  workout, daily, planner, storage, clock, onStart, onOpenSlot, onCompanion, onSettings, onViewSummary,
+  workout, daily, planner, storage, clock, onStart, onOpenSlot, onSettings, onViewSummary,
 }) {
   const root = el('div.screen.screen--today.screen--today-calm')
   const realToday = clock.today()
@@ -563,51 +557,6 @@ export function createTodayScreen({
       try { navigator.vibrate(10) } catch { /* optional */ }
     }
     await reload()
-  }
-
-  function companionModel() {
-    const style = companionStyle(profile?.companionStyle)
-    const requested = Number.isInteger(profile?.companionRevealedLevel) ? profile.companionRevealedLevel : 1
-    const level = Math.max(1, Math.min(COMPANION_LEVELS.length, requested))
-    const stage = companionStage(COMPANION_LEVELS[level - 1].min, style)
-    return {
-      style,
-      level,
-      stage,
-      name: profile?.companionName || companionDefaultName(style),
-    }
-  }
-
-  function companionAvatar(model) {
-    if (model.style === 'sprout') {
-      return el('img.today-companion__avatar', {
-        src: art(`companion-stage-${model.stage.visual}.png`),
-        alt: '',
-      })
-    }
-    const sprites = model.style === 'forge' ? art('companion-forge-stages.png') : art('companion-turtle-stages.png')
-    return el(`span.today-companion__avatar.today-companion__avatar--sheet.today-companion__avatar--${model.style}`, {
-      'aria-hidden': 'true',
-      dataset: { visual: String(model.stage.visual) },
-      style: `--today-companion-sprites:url("${sprites}")`,
-    })
-  }
-
-  function header() {
-    const companion = companionModel()
-    return el('div.today-topbar', {}, [
-      el('button.today-companion', {
-        type: 'button',
-        'aria-label': `Open ${companion.name}, level ${companion.level}`,
-        onclick: onCompanion,
-      }, [
-        companionAvatar(companion),
-        el('span', { text: `${companion.name} · Lv ${companion.level}` }),
-      ]),
-      el('button.today-settings', {
-        type: 'button', 'aria-label': 'Settings', title: 'Settings', onclick: onSettings,
-      }, [icon('gear')]),
-    ])
   }
 
   function workoutSlotPayload(row) {
@@ -1150,9 +1099,13 @@ export function createTodayScreen({
     ])
 
     replace(root, [
-      header(),
       el('header.today-heading', {}, [
-        el('h1.screen__title', { text: isRealToday() ? 'Today' : 'Day review' }),
+        el('div.today-heading__title-row', {}, [
+          el('h1.screen__title', { text: isRealToday() ? 'Today' : 'Day review' }),
+          el('button.today-settings', {
+            type: 'button', 'aria-label': 'Settings', title: 'Settings', onclick: onSettings,
+          }, [icon('gear')]),
+        ]),
         el('p.today-heading__date', { text: dateLabel(selectedDate) }),
       ]),
       sessionCard(),

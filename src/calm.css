@@ -57,71 +57,6 @@ body::before {
   padding-bottom: 8px;
 }
 
-.today-topbar {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.today-companion {
-  appearance: none;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px 4px 4px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--text-1);
-  font: inherit;
-  font-size: 15px;
-  line-height: 20px;
-  font-weight: 400;
-}
-
-.today-companion__avatar {
-  width: 32px;
-  height: 32px;
-  flex: none;
-  object-fit: contain;
-  border-radius: 8px;
-}
-
-.today-companion__avatar--sheet {
-  display: block;
-  background-image: var(--today-companion-sprites);
-  background-repeat: no-repeat;
-  background-size: 500% 200%;
-}
-
-.today-companion__avatar--forge {
-  width: 26px;
-  height: 34px;
-  margin-inline: 3px;
-}
-
-.today-companion__avatar--turtle[data-visual='6'],
-.today-companion__avatar--turtle[data-visual='7'],
-.today-companion__avatar--turtle[data-visual='8'],
-.today-companion__avatar--turtle[data-visual='9'],
-.today-companion__avatar--turtle[data-visual='10'] {
-  background-size: 500% auto;
-}
-
-.today-companion__avatar--sheet[data-visual='1'] { background-position: 0% 0%; }
-.today-companion__avatar--sheet[data-visual='2'] { background-position: 25% 0%; }
-.today-companion__avatar--sheet[data-visual='3'] { background-position: 50% 0%; }
-.today-companion__avatar--sheet[data-visual='4'] { background-position: 75% 0%; }
-.today-companion__avatar--sheet[data-visual='5'] { background-position: 100% 0%; }
-.today-companion__avatar--sheet[data-visual='6'] { background-position: 0% 100%; }
-.today-companion__avatar--sheet[data-visual='7'] { background-position: 25% 100%; }
-.today-companion__avatar--sheet[data-visual='8'] { background-position: 50% 100%; }
-.today-companion__avatar--sheet[data-visual='9'] { background-position: 75% 100%; }
-.today-companion__avatar--sheet[data-visual='10'] { background-position: 100% 100%; }
-
 .today-settings {
   appearance: none;
   width: 44px;
@@ -141,10 +76,17 @@ body::before {
   stroke-width: 1.5;
 }
 
+.today-heading__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .today-heading {
   display: grid;
   gap: 0;
-  margin-top: -4px;
+  margin-top: 0;
 }
 
 .today-heading .screen__title {

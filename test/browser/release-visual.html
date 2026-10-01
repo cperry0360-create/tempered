@@ -42,7 +42,7 @@
     const route = {
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel',
-      progress: 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
+      progress: 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder',
     }
@@ -252,6 +252,11 @@
       const exerciseMap = new Map((await storage.getAll('exercises')).map((exercise) => [exercise.id, exercise]))
       const exerciseIds = ['rdl', 'split_squat', 'seated_row_close'].filter((id) => exerciseMap.has(id))
       if (exerciseIds.length === 0) throw new Error('Progress reference exercises are missing')
+      const scoreProgram = { id: 'visual-score-plan', name: 'Strength block', weeks: 12,
+        days: exerciseIds.map((exerciseId, i) => ({ id: 'score-day-' + i, exercises: [{ exerciseId, sets: 4, repMin: 6, repMax: 10 }] })) }
+      for (const state of await storage.getAll('programState')) await storage.delete('programState', state.programId)
+      await storage.put('programs', scoreProgram)
+      await storage.put('programState', { id: 'visual-score-plan', programId: scoreProgram.id, startedOn: '2026-07-20', active: true })
       const weeklySetCounts = [24, 36, 43, 58, 47, 72, 85, 110]
       for (let weekIndex = 0; weekIndex < weeklySetCounts.length; weekIndex += 1) {
         const sessionDate = new Date(today)
@@ -260,6 +265,7 @@
         const sessionId = `visual-progress-session-${weekIndex + 1}`
         await storage.put('sessions', {
           id: sessionId,
+          programId: scoreProgram.id,
           date: key,
           startedAt: `${key}T09:00:00.000Z`,
           endedAt: `${key}T09:52:00.000Z`,
@@ -271,6 +277,7 @@
           const exerciseId = exerciseIds[setIndex % exerciseIds.length]
           await storage.put('setLogs', {
             id: `${sessionId}-set-${setIndex + 1}`,
+            programId: scoreProgram.id, programDayId: 'score-day-' + (setIndex % exerciseIds.length), slotIndex: 0,
             sessionId,
             exerciseId,
             reps: 8,
@@ -298,6 +305,11 @@
     async function selectProgressView(tempered, target) {
       await tempered.app.show('history')
       if (target === 'progress') return
+      if (target.startsWith('progress-score-')) {
+        mount.querySelector('[data-score-component="' + target.slice('progress-score-'.length) + '"]')?.click()
+        await settle()
+        return
+      }
       const view = target.startsWith('progress-lift') ? 'lifts'
         : target.startsWith('progress-habit') ? 'habits' : 'log'
       mount.querySelector(`.progress-views [data-view="${view}"]`)?.click()

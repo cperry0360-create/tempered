@@ -1,3 +1,10 @@
+## 2026-10-01 — Redesign V1 R11 Training score
+
+- Progress Overview starts with a weekly 0–100 Training score, grade, change versus the prior four-week average and up to 12 tracked weeks of ember trend.
+- Progression (35%), plan adherence (30%), consistency (25%) and volume trend (10%) come from canonical finished sessions and working sets; each row opens its contributing lifts, slots, days or weeks. Deloads skip progression/volume and reweight the remaining components; insufficient history is excluded.
+- Existing ChatGPT progress report includes the weekly score, grade, change, component weights and one-line reasons. Other screens and stored history are unchanged.
+- Test-first five required fixtures failed before the implementation existed; domain and browser acceptance protect calculation, evidence navigation, report and empty state. Release 0.48.0 (68).
+
 ## 2026-10-01 — Redesign V1 R10 sub-screens, Today density and device fixes
 
 - Today defaults to one leftovers-first Next up movement, inline Show all disclosure and full-session action; the storage-backed choice lasts for that local day.
@@ -90,7 +97,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`
 **Production:** `https://cperry0360-create.github.io/tempered/`
-**Current release:** 0.47.0 (65) — R10 sub-screens, Today density and device fixes
+**Current release:** 0.48.0 (68) — R11 Training score
 
 **Product maturity:** Pre-beta product completion
 

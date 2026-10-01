@@ -7,6 +7,7 @@ import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate, performance } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
 import { effectiveLoad } from '../../domain/records.js'
+import { trainingScore } from '../../domain/training-score.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
 import {
   observedProgressDates,
@@ -147,6 +148,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let range = 30
   let sessions = []
   let programs = []
+  let programStates = []
+  let revisions = []
+  let selectedScoreComponent = null
   let records = []
   let exercises = new Map()
   let sessionStats = new Map()
@@ -464,6 +468,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       .filter((signal) => signal.values.length)
       .map((signal) => signal.label + ': ' + numberText(signal.values.at(-1).value, signal.digits) + signal.unit)
     if (signals.length) lines.push('Recovery: ' + signals.join(', ') + '.')
+    const training = scoreData()
+    const scored = training.current
+    lines.push('Training score · week of ' + scored.week + ' · so far: ' + (scored.score === null ? 'building history' : scored.score + ' / 100 · ' + scored.grade) + (scored.deload ? ' · deload' : '') + '.')
+    if (training.change !== null) lines.push('Score versus prior 4-week average: ' + (training.change > 0 ? '+' : '') + training.change + ' (' + numberText(training.average, 1) + ' average).')
+    for (const component of scored.components) lines.push(component.label + ': ' + (component.value === null ? 'not scored' : Math.round(component.value * 100) + '%; ' + numberText(component.weight * 100, 1) + '% weight') + ' · ' + component.reason + '.')
     return lines.join('\n')
   }
 
@@ -481,12 +490,94 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     render()
   }
 
+  function scoreData() {
+    return trainingScore({ today: clock.today(), sessions, setLogs, programs, programStates,
+      revisions, exercises })
+  }
+
+  function scoreTrend(weeks) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 320 76')
+    svg.setAttribute('class', 'progress-score__trend')
+    svg.setAttribute('role', 'img')
+    svg.setAttribute('aria-label', 'Weekly training scores: ' + weeks.map(w => w.week + ': ' + (w.score ?? 'building history')).join(', '))
+    let points = []
+    const flush = () => {
+      if (!points.length) return
+      const line = document.createElementNS(svg.namespaceURI, 'polyline')
+      line.setAttribute('points', points.join(' '))
+      line.setAttribute('fill', 'none'); line.setAttribute('stroke', 'currentColor'); line.setAttribute('stroke-width', '2')
+      svg.append(line); points = []
+    }
+    weeks.forEach((week, index) => {
+      if (week.score === null) { flush(); return }
+      const x = weeks.length === 1 ? 160 : 4 + index / (weeks.length - 1) * 312
+      const y = 72 - week.score / 100 * 68
+      points.push(x + ',' + y)
+      const dot = document.createElementNS(svg.namespaceURI, 'circle')
+      dot.setAttribute('cx', String(x)); dot.setAttribute('cy', String(y)); dot.setAttribute('r', '3'); dot.setAttribute('fill', 'currentColor')
+      const title = document.createElementNS(svg.namespaceURI, 'title')
+      title.textContent = week.week + ': ' + week.score + ' · ' + week.grade + (week.soFar ? ' so far' : '')
+      dot.append(title); svg.append(dot)
+    })
+    flush()
+    return svg
+  }
+
+  function trainingScoreCard() {
+    const result = scoreData(), current = result.current
+    return el('section.progress-panel.progress-score', {}, [
+      el('div.progress-score__head', {}, [
+        el('h2.progress-panel__title', { text: 'Training score' }),
+        el('span.progress-footnote', { text: 'This week · so far' }),
+      ]),
+      el('div.progress-score__summary', {}, [
+        el('strong.progress-score__number', { text: current.score === null ? 'Building history' : current.score + ' · ' + current.grade }),
+        result.change !== null && el('span.progress-score__change', { text: (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 1) + ' avg',
+          title: 'Compared with ' + Math.min(4, result.weeks.length - 1) + ' prior scored weeks' }),
+      ].filter(Boolean)),
+      scoreTrend(result.weeks),
+      el('div.progress-score__axis', {}, [
+        el('span', { text: result.weeks.length ? monthDay(result.weeks[0].week) : 'No training history yet' }),
+        el('span', { text: 'Last ' + result.weeks.length + ' of 12 weeks · 0–100' }),
+      ]),
+      ...current.components.map(component => el('button.progress-score__component', {
+        type: 'button', dataset: { scoreComponent: component.id },
+        onclick: () => { selectedScoreComponent = component.id; render() },
+      }, [
+        el('div.progress-score__head', {}, [
+          el('strong', { text: component.label }),
+          el('span', { text: component.value === null ? 'Not scored ›' : Math.round(component.value * 100) + '% · ' + Math.round(component.weight * 100) + '% weight ›' }),
+        ]),
+        el('div.progress-score__bar', {}, [el('span', { style: 'width:' + Math.round((component.value ?? 0) * 100) + '%' })]),
+        el('span.progress-score__reason', { text: component.id === 'adherence' && component.prescribed ? component.completed + ' of ' + component.prescribed + ' planned sets · ' + (component.repSets ? Math.round(component.reached / component.repSets * 100) + '% reps' : 'no rep samples') : component.reason }),
+      ])),
+    ])
+  }
+
+  function trainingScoreDetail() {
+    const result = scoreData(), component = result.current.components.find(c => c.id === selectedScoreComponent)
+    return [el('button.progress-back', { type: 'button', onclick: () => { selectedScoreComponent = null; render() } }, ['‹ Overview']),
+      el('section.progress-panel.progress-score-detail', {}, [
+        el('h2.progress-panel__title', { text: component.label }),
+        el('p.progress-footnote', { text: component.reason }),
+        el('p.progress-footnote', { text: component.value === null ? 'Excluded from this week’s score; available components share the weight.' : Math.round(component.value * 100) + '% component · ' + numberText(component.weight * 100, 1) + '% of this week’s score.' }),
+        ...component.details.map(detail => el('p.progress-score-detail__row', { text: detail.reason })),
+        component.id === 'consistency' && el('p.progress-footnote', { text: 'Days: 70% · weeks meeting the target: 30%; a day qualifies at 30 logged minutes.' }),
+        component.id === 'adherence' && el('p.progress-footnote', { text: 'Planned set completion: 70% · sets reaching their rep minimum: 30%; same-week leftovers count.' }),
+        component.id === 'progression' && el('p.progress-footnote', { text: 'Last 2 weeks versus the preceding 4: up = 100%, within 1% = 60%, down = 0%.' }),
+        component.id === 'volume' && el('p.progress-footnote', { text: 'At least 95% of the prior 4-week working-set average earns full credit.' }),
+      ].filter(Boolean))]
+  }
+
   function overviewView() {
+    if (selectedScoreComponent) return trainingScoreDetail()
     const current = summaryForDates(selectedDates())
     const previous = summaryForDates(previousDates())
     const comparable = current.fullCoverage && previous.fullCoverage
     const recovery = recoveryCard(current, previous, comparable)
     return [
+      trainingScoreCard(),
       weeklySetsCard(),
       coverageLine(current),
       recentPrsCard(),
@@ -791,7 +882,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         type: 'button',
         dataset: { view: name, active: String(view === name) },
         'aria-pressed': String(view === name),
-        onclick: () => { view = name; selectedLiftId = null; selectedSessionId = null; render() },
+        onclick: () => { selectedScoreComponent = null; view = name; selectedLiftId = null; selectedSessionId = null; render() },
       }, [label]))),
       el('div.progress-content', {}, viewContent),
     ])
@@ -800,7 +891,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   return {
     root,
     async refresh() {
-      programs = await storage.getAll('programs')
+      ;[programs, programStates, revisions] = await Promise.all([storage.getAll('programs'), storage.getAll('programState'), storage.getAll('programRevisions')])
       const routines = new Map((await storage.getAll('routines')).map((routine) => [routine.id, routine]))
       sessions = (await storage.getAll('sessions'))
         .filter((session) => session.endedAt)

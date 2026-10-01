@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>R11 Training score</title><link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/progress.css"></head><body><div id="app"></div><script type="module">
+import { createHistoryScreen } from '../../src/ui/screens/history.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks=[],check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)]
+const errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try{
+ const storage=createMemoryStorage(), clock=fixedClock(new Date(2026,8,27,12))
+ const exerciseMap=new Map([['lift',{id:'lift',name:'Front squat'}]])
+ const program={id:'p',weeks:16,days:[0,1].map(i=>({id:'d'+i,exercises:[{exerciseId:'lift',sets:2,repMin:6,repMax:10}]}))}
+ await storage.put('programs',program);await storage.put('programState',{id:'p',programId:'p',startedOn:'2026-06-29',active:true})
+ const shift=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10)
+ for(let w=0;w<13;w++)for(let d=0;d<2;d++){
+  const date=shift('2026-06-29',w*7+d*2),id=`s${w}${d}`
+  await storage.put('sessions',{id,date,programId:'p',endedAt:date+'T10:00:00Z',durationMinutes:30})
+  for(let n=0;n<2;n++)await storage.put('setLogs',{id:id+n,sessionId:id,exerciseId:'lift',programId:'p',programDayId:'d'+d,slotIndex:0,weight:100+w*5,reps:6})
+ }
+ let copied='';Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{copied=text}}})
+ const screen=createHistoryScreen({storage,clock,workout:{exerciseMap:async()=>exerciseMap},daily:{activities:[],activitySchedule:async()=>({})}})
+ q('#app').append(screen.root);await screen.refresh()
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.theme=theme
+  check(theme+' first Overview card has real score, grade, so far, four reasons',q('.progress-content')?.firstElementChild?.matches('.progress-score')&&q('.progress-score__number')?.textContent==='100 · A'&&/so far/.test(q('.progress-score')?.textContent)&&qa('[data-score-component]').length===4&&qa('.progress-score__reason').every(n=>n.textContent.length>10))
+  check(theme+' trend has exactly 12 tracked weekly points and accessible values',qa('.progress-score__trend circle').length===12&&q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-21: 100'))
+  for(const id of ['progression','adherence','consistency','volume']){
+   q(`[data-score-component="${id}"]`)?.click()
+   check(theme+' '+id+' drill-down traces the reason',qa('.progress-score-detail__row').length>0&&/Front squat|2026-09|Week of/.test(q('.progress-score-detail')?.textContent))
+   q('.progress-back')?.click()
+   check(theme+' '+id+' back retains score',q('.progress-score__number')?.textContent==='100 · A')
+  }
+ }
+ q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ check('ChatGPT report includes score, grade, delta and all component reasons',copied.includes('100 / 100 · A')&&copied.includes('Score versus prior 4-week average:')&&['Progression:','Plan adherence:','Consistency:','Volume trend:','planned sets','training days'].every(s=>copied.includes(s)),copied)
+ q('[data-view="log"]')?.click();check('existing Log remains available',qa('.progress-log-row').length>0)
+ check('no runtime errors',errors.length===0,errors.join('\n'))
+ const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map()},daily:{activities:[],activitySchedule:async()=>({})}})
+ q('#app').replaceChildren(empty.root);await empty.refresh()
+ check('empty state shows Building history and no fabricated trend points',q('.progress-score__number')?.textContent==='Building history'&&qa('.progress-score__trend circle').length===0&&qa('[data-score-component]').length===4)
+}catch(e){check('harness completed',false,e.stack)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'training-score-r11',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

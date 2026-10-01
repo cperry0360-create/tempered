@@ -1,10 +1,10 @@
 ## 2026-09-30 — Redesign V1 R6 rollover and device fixes
 
 - Restored the Today workout card natively from `workout.weekStatus()` and `buildDailyWorkoutQueue()`. Unfinished slots roll across the current program week, each starts a single-movement session with canonical day/slot metadata, and full sessions use `remainingProgramDay()`. Train reports the same rollover count.
-- Fixed the tab bar to span the viewport bottom with safe-area padding only; page bottom clearance is the bar height plus 16px. The actual label gap came from safe-area padding combined with extra bottom padding on each tab button. The active workout header now owns the top safe-area inset once.
+- The tab bar has safe-area padding for its labels. Follow-up from Cory's iPhone screenshot found the uncovered home-indicator band was caused by `.app` being locked to `100dvh` while the document is overflow-hidden; iOS standalone can report that unit short of the physical display. Standalone now uses `100vh` for `html`, `body`, and the app shell, leaving the tab-bar background visible behind the home indicator. Browser CI cannot validate this iOS-specific viewport behavior, so Cory should confirm the installed app after update.
 - Weekly sets now uses eight zero-based, bottom-aligned bars and labels only the current value. Removed the orphan Micro cardio line; trend deltas require at least three samples in both periods; Today readiness uses `Sleep`, `Resting HR`, and `HRV`; duplicated exercise-name suffixes are dropped.
 - Added a fail-first rollover browser acceptance test: on the pre-fix build, the expected Wednesday rollover group was missing and downstream slot-session/logging/removal checks failed. CI on the fixed build verifies rollover, viewport geometry, chart bars, and sample thresholds. R3.1 prescription, photos, and plate-line checks remain green.
-- Release candidate: 0.43.0 (59). CI captures 22 release surfaces at 390×844 and 430×932 (44 captures); R6 visual review confirms the tab bar reaches the viewport bottom, the session header begins at the top edge, and the eight Weekly sets bars share a baseline. Cory should confirm the home-indicator spacing on his installed iPhone PWA.
+- Release candidate: 0.43.1 (60). CI captures 22 release surfaces at 390×844 and 430×932 (44 captures); R6 visual review confirms the session header begins at the top edge and the eight Weekly sets bars share a baseline. Those browser captures did not cover the iOS standalone viewport, which Cory's screenshot exposed.
 
 ## 2026-09-30 — Redesign V1 R5 Progress and sweep
 

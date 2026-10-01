@@ -96,6 +96,12 @@ test('REGRESSION: every screen respects the safe area and 16px Redesign V1 gutte
   assert.match(style, /\.app__body\s*\{[\s\S]*padding:\s*calc\(env\(safe-area-inset-top\) \+ 16px\) 16px/)
 })
 
+test('REGRESSION: iOS standalone shell fills the home-indicator area behind the tab bar', () => {
+  const polish = read('src/polish.css')
+  assert.match(polish, /@media\s*\(display-mode:\s*standalone\)\s*\{[\s\S]*?html,[\s\S]*?height:\s*100vh;[\s\S]*?max-height:\s*100vh;/)
+  assert.match(read('src/style.css'), /padding:\s*8px 12px env\(safe-area-inset-bottom\)/)
+})
+
 test('REGRESSION: Character no longer carries a duplicate Settings button', () => {
   const character = read('src/ui/screens/character.js')
   assert.doesNotMatch(character, /\['SETTINGS'\]/)

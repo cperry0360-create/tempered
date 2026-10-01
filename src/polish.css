@@ -48,6 +48,19 @@ body { overflow: hidden; }
   grid-template-rows: minmax(0, 1fr) auto;
 }
 
+/* iOS standalone reports dynamic viewport units short of the physical screen
+   when viewport-fit=cover is active. Use the full viewport for the root shell;
+   the tab labels still stay clear of the home indicator via safe-area padding. */
+@media (display-mode: standalone) {
+  html,
+  body,
+  #app,
+  .app {
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
+
 .app__body {
   min-height: 0;
   height: 100%;

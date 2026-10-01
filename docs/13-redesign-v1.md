@@ -573,3 +573,31 @@ do not weaken tests of logging, persistence, or domain logic.
   *Done when:* domain tests cover the five fixtures and prove the weights, deload reweighting,
   and cap; the Overview capture shows the card with real seeded history; every number on
   the card can be traced to a one-line reason (non-negotiable 3).
+- **R12 Readable trend charts** (Cory, 1 Oct). Applies to every sparkline and line chart on
+  Progress: Trends, Recovery, Lifts rows, and Lift detail. Do not colour segments by up or
+  down; noise is not a trend, and "up" is good for some metrics and bad for others.
+  1. **Raw versus trend:** daily readings render as small dots (or a 1px line at 35% opacity)
+     in the row's domain colour; a 2px 7-day rolling average line in the full domain colour
+     (`-ink` token) sits on top. Lifts use best e1RM per session as the reading and a
+     3-session average as the trend.
+  2. **Latest value:** a 5px filled dot on the last reading.
+  3. **Change text replaces the sample count:** `↓ 1.2 lb over 30 days`, `↑ 4 ms`. It compares
+     the trend line's first and last values in the selected range. Colour it `--fuel-ink`
+     only when the direction is good for that metric, otherwise `--text-2`:
+     resting HR down is good; HRV, sleep, steps, and e1RM up are good; weight, respiratory
+     rate, and blood oxygen are neutral (always `--text-2`) unless the user has a weight goal,
+     in which case moving toward it is good.
+  4. **Normal range band (Recovery rows only):** a soft band of the user's 30-day mean ± 1
+     standard deviation, `--recovery` at 12%, behind the line. If the latest reading is
+     outside the band, the change text says so: `Above your usual range`.
+  5. **Sparse data:** with fewer than 7 readings in range, show dots only, no trend line, and
+     the change text reads `Not enough data for a trend`.
+  6. **Size:** charts are 48pt tall and at least 120pt wide, with 4pt vertical padding so
+     dots are not clipped.
+  7. Keep the domain colours from R10 item 5. Both themes.
+  Put the maths (rolling average, change, mean ± SD band, good-direction table) in
+  `src/domain/trend.js`, pure and test-first.
+  *Done when:* domain tests cover the rolling average, the change calculation, the band, the
+  sparse-data rule, and the good-direction table (including resting HR down = good); CI
+  captures of Progress Overview and Lifts in both themes show dots, trend line, end dot, and
+  change text, with bands on Recovery rows.

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>R10 Today density</title><link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/calm.css"></head><body><div id="app" class="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks = []
+const check = (name, ok, detail = '') => checks.push({name, ok: Boolean(ok), detail})
+const q = s => document.querySelector(s)
+const rows = () => [...document.querySelectorAll('.today-workout__movement')]
+try {
+ localStorage.clear()
+ const storage = createMemoryStorage()
+ const clock = fixedClock(new Date(2026, 8, 9, 9))
+ const context = await bootstrapHarness({ storage, clock, mount: q('#app') })
+ const state = (await storage.getAll('programState')).find(s => s.active)
+ await storage.put('programState', {...state, startedOn: '2026-08-31'})
+ const source = await storage.get('programs', state.programId)
+ const slots = source.days.flatMap(d => d.exercises)
+ const program = {...source, days: source.days.map(d => ({...d, exercises: d.id === 'monday' ? slots.slice(0,3) : d.id === 'wednesday' ? slots.slice(3,11) : []}))}
+ await storage.put('programs', program)
+ await context.app.show('today')
+ check('Collapsed by default: exactly one Next up row for first leftover', rows().length === 1 && q('[data-next-up]')?.textContent.includes('Next up') && rows()[0]?.dataset.exerciseId === slots[0].exerciseId, q('[data-section="next-session"]')?.textContent)
+ check('Collapsed card offers Show all 11 movements and full session', q('[data-workout-expand]')?.textContent === 'Show all 11 movements' && q('.today-workout__start')?.textContent === 'Start full session')
+ q('[data-workout-expand]')?.click()
+ check('Expanding exposes all 8 today and 3 earlier movements inline', q('[data-workout-expand]')?.getAttribute('aria-expanded') === 'true' && rows().length === 11 && document.querySelectorAll('[data-workout-slot]').length === 8 && document.querySelectorAll('[data-rollover-slot]').length === 3)
+ await context.app.show('train'); await context.app.show('today')
+ const preference = (await storage.get('profile', 'profile')).todayWorkoutDisclosure
+ check('Expansion saved through storage for reload', preference?.date === '2026-09-09' && preference.expanded === true)
+ check('Expansion remembered across tab refresh for the same day', q('[data-workout-expand]')?.getAttribute('aria-expanded') === 'true' && rows().length === 11)
+ q('[data-workout-expand]')?.click()
+ await context.app.show('today')
+ check('Collapse remembered on same-day refresh', rows().length === 1 && q('[data-workout-expand]')?.getAttribute('aria-expanded') === 'false')
+ const next = rows()[0]; next?.click()
+ await new Promise(r => setTimeout(r, 200))
+ check('Next up still opens a canonical single movement logger', !!q('.screen--session') && document.querySelectorAll('.exercise[data-exercise]').length === 1)
+ await context.app.show('today')
+ q('[data-workout-expand]')?.click()
+ clock.set(new Date(2026, 8, 10, 9))
+ await context.app.show('today')
+ check('New day resets to collapsed', rows().length === 1 && q('[data-workout-expand]')?.getAttribute('aria-expanded') === 'false')
+} catch(e) { check('Harness completed', false, String(e.stack)) }
+await fetch('/__report', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({label:'today-collapsed-r10', passed:checks.every(c=>c.ok), checks})})
+</script></body></html>

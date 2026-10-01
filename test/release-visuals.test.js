@@ -14,7 +14,9 @@ test('release evidence covers onboarding and every core product surface', () => 
     'setup-welcome', 'setup-rhythm', 'setup-plan', 'today', 'train', 'session', 'fuel',
     'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
     'settings', 'program-builder', 'summary',
-    'health-import', 'health-setup', 'health-launch', 'nutrition-log', 'session-discard',
+    'health-import', 'health-review', 'nutrition-log', 'nutrition-meal', 'session-discard',
+    'train-rhythm', 'train-program-details', 'train-routine', 'train-library',
+    'today-expanded', 'today-day-details', 'mobility',
   ]) {
     assert.match(capture, new RegExp(`['"]${view}['"]`), `capture matrix is missing ${view}`)
   }

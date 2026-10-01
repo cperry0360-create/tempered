@@ -26,7 +26,7 @@ body::before {
   min-height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: var(--r-full);
   background: var(--surface-2);
   color: var(--text-2);
@@ -38,6 +38,8 @@ body::before {
 .appearance__choice:has(input:checked) {
   border-color: var(--train-ink);
   color: var(--train-ink);
+
+  background: var(--surface-1);
 }
 
 .appearance__choice input {
@@ -107,7 +109,7 @@ body::before {
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-1);
 }
@@ -165,6 +167,8 @@ body::before {
 
 .today-workout {
   gap: 8px;
+  border-width: 1px;
+  border-style: solid;
   border-color: color-mix(in srgb, var(--train) 40%, var(--hairline));
   background: color-mix(in srgb, var(--train) 12%, var(--surface-1));
 }
@@ -294,6 +298,8 @@ body::before {
 .today-readiness__metric[data-direction='good'] small { color: var(--recovery-ink); }
 
 .today-readiness {
+  border-width: 1px;
+  border-style: solid;
   border-color: color-mix(in srgb, var(--recovery) 35%, var(--hairline));
   background: color-mix(in srgb, var(--recovery) 8%, var(--surface-1));
 }
@@ -635,7 +641,7 @@ button.today-item:disabled {
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 10px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -701,7 +707,7 @@ button.today-item:disabled {
   display: grid;
   gap: 2px;
   padding: 9px 11px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 10px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -810,7 +816,7 @@ button.today-item:disabled {
   display: grid;
   gap: 14px;
   padding: 16px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-1);
 }
@@ -824,7 +830,7 @@ button.today-item:disabled {
   width: 74px;
   aspect-ratio: 1;
   display: block;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 50%;
   background: var(--surface-2);
 }
@@ -858,7 +864,7 @@ button.today-item:disabled {
   grid-template-rows: 1fr auto;
   gap: 3px 9px;
   padding: 12px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -1077,7 +1083,7 @@ button.today-item:disabled {
   display: grid;
   gap: 8px;
   padding: 14px 12px 10px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-1);
 }
@@ -1169,7 +1175,7 @@ button.today-item:disabled {
   width: 220px;
   overflow: hidden;
   padding: 6px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 14px;
   background: var(--surface-3);
   box-shadow: 0 14px 34px rgba(0,0,0,.28);
@@ -1198,7 +1204,7 @@ button.today-item:disabled {
 .exercise-notes {
   width: 100%;
   resize: vertical;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 10px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -1367,7 +1373,7 @@ button.today-item:disabled {
   width: 190px;
   display: grid;
   padding: 6px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 12px;
   background: var(--surface-3);
   box-shadow: 0 12px 28px rgba(0,0,0,.25);
@@ -1470,7 +1476,7 @@ button.today-item:disabled {
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-3);
 }
@@ -1579,7 +1585,7 @@ button.today-item:disabled {
   left: 50%;
   width: min(calc(100% - 20px), 410px);
   transform: translateX(-50%);
-  border: 1px solid var(--hairline);
+  border: 0;
   border-bottom: 0;
   border-radius: 16px 16px 0 0;
 }
@@ -1631,3 +1637,7 @@ button.today-item:disabled {
   height: 46px;
   min-height: 46px;
 }
+
+.today-workout__next { display: grid; gap: 4px; }
+
+.today-workout__next-label { font-size: 13px; line-height: 18px; color: var(--train-ink); }

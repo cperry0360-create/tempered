@@ -58,7 +58,7 @@ SPO2=96`
       check('retired Shortcut controls are absent', !q('[data-health-bridge="run"]') && !q('[data-health-launch]'))
 
       importButton?.click()
-      check('Health import opens as a bounded review sheet', Boolean(await waitFor('[data-health-paste-overlay]')))
+      check('Health import opens as a full-screen review view', Boolean(await waitFor('[data-health-paste-overlay]')))
       q('[data-health-paste-read]')?.click()
       await settle(80)
       check('clipboard snapshot is shown before import', q('[data-health-paste-input]')?.value === snapshot)

@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>R10 sub-screens</title>
+<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/nutrition-today.css"><link rel="stylesheet" href="../../src/progress.css"><link rel="stylesheet" href="../../src/pivot.css"><link rel="stylesheet" href="../../src/calm.css"></head><body><div id="app" class="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { installHealthPasteRuntime } from '../../src/ui/health-paste-runtime.js'
+import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+const checks=[]; const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const q=s=>document.querySelector(s); const qa=s=>[...document.querySelectorAll(s)]
+const settle=()=>new Promise(r=>setTimeout(r,160))
+const token=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim()
+const color=(node,k)=>{ const probe=document.createElement('i'); probe.style.color=token(k); document.body.append(probe); const result=!!node&&getComputedStyle(node).color===getComputedStyle(probe).color; probe.remove(); return result }
+const errors=[]; addEventListener('error',e=>errors.push(e.message)); addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try {
+ localStorage.clear(); const storage=createMemoryStorage(); const clock=fixedClock(new Date(2026,8,7,9)); const app=await bootstrapHarness({storage,clock,mount:q('#app')})
+ const program=(await app.workout.activeProgram()).program; const exercise=program.days[0].exercises[0].exerciseId
+ for(let i=0;i<61;i++){const d=new Date(2026,8,7-i,12); const date=d.toISOString().slice(0,10); await storage.put('dayLogs',{date,steps:7000+i,sleepHours:7+i/100,bodyMetrics:{weight:166+i/100},healthMetrics:{restingHr:60+i/100,hrvMs:40+i/100},waterOz:i===0?0:120})}
+ for(const [id,date,weight,count] of [['first','2026-09-07',100,2],['second','2026-09-07',100,1],['prior','2026-08-01',90,1]]){
+  await storage.put('sessions',{id,date,programDayId:'monday',startedAt:date+'T09:00:00Z',endedAt:date+'T09:30:00Z',durationMinutes:30})
+  for(let n=0;n<count;n++)await storage.put('setLogs',{id:id+n,sessionId:id,exerciseId:exercise,weight,reps:6,isWarmup:false,setIndex:n,completedAt:date+'T09:10:00Z'})
+ }
+ await storage.put('records',{exerciseId:exercise,bestE1RM:{value:120,date:'2026-09-07'},bestWeight:{weight:100,reps:6,date:'2026-09-07'}})
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.theme=theme
+  await app.app.show('train')
+  check(theme+' Train week strip directly follows program header',q('.train-r4__program')?.nextElementSibling?.matches('[data-training-rhythm="open"]')&&qa('[data-training-rhythm="open"]').length===1)
+  q('[data-training-rhythm="open"]')?.click(); await settle()
+  const scroller=q('.train-r4__rhythm-scroll'); const label=q('.train-r4__rhythm-week[data-current="true"] > strong'); const box=label?.getBoundingClientRect(), scrollbox=scroller?.getBoundingClientRect()
+  check(theme+' current week label is fully visible in full history',box&&box.left>=scrollbox.left-1&&box.right<=scrollbox.right+1)
+  q('.train-r4__back')?.click(); q('[data-program-details]')?.click()
+  check(theme+' Program details keeps hard-set context and builder',!!q('.train-r4__details')&&/Program Builder/.test(q('.screen--train')?.textContent))
+  await app.app.show('history')
+  const trends=qa('.progress-trend')
+  check(theme+' all trends use their domain ink',trends.every(row=>color(row.querySelector('.spark'),row.dataset.domain==='fuel'?'--fuel-ink':'--recovery-ink')))
+  q('[data-view="lifts"]')?.click()
+  check(theme+' Lifts labels e1RM, real 30D change, colored spark with no dash',/e1RM 120 lb/.test(q('.progress-lift__e1rm')?.textContent)&&q('.progress-lift__delta')?.textContent==='+12.0 lb'&&color(q('.progress-lift .spark'),'--train-ink')&&!qa('.progress-lift__delta').some(n=>n.textContent==='—'), q('.progress-lift')?.textContent)
+  q('[data-view="habits"]')?.click()
+  check(theme+' Habits has Best and only nonzero current streak, labeled completion map',!qa('.progress-habit__streak').some(n=>/\b0 day streak/.test(n.textContent))&&qa('.progress-habit__streak').every(n=>/Best \d+ days/.test(n.textContent))&&!!q('.progress-heatmap')?.closest('section')?.textContent.includes('Daily habit completion'))
+  q('[data-view="log"]')?.click()
+  check(theme+' Log merges sessions by date and names program day',qa('.progress-log-row').length===1&&q('.progress-log-row__name')?.textContent===program.days[0].name&&/3 sets/.test(q('.progress-log-row__meta')?.textContent))
+  q('.progress-log-row')?.click()
+  check(theme+' day detail groups all sets but retains both session duration editors',q('.progress-back')?.textContent==='‹ Log'&&qa('.progress-session-detail__set').length===1&&/100 × 6, 100 × 6, 100 × 6/.test(q('.progress-session-detail__set')?.textContent)&&qa('.progress-session-detail__duration .progress-action').length===2)
+ }
+ const originalViewport = window.visualViewport
+ const viewport = new EventTarget(); viewport.height = innerHeight; viewport.offsetTop = 0
+ Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport })
+ const stopHealth=installHealthPasteRuntime(app); installCalorieAiRuntime()
+ await app.app.show('today'); dispatchEvent(new CustomEvent('tempered:open-health-import')); await settle()
+ check('Health is full screen with back and three numbered steps, one paste field, no stray preview',q('.health-paste-overlay')?.getBoundingClientRect().top===0&&q('.health-paste-overlay')?.getBoundingClientRect().height===innerHeight&&qa('.health-paste-step h3').length===3&&qa('.health-paste-overlay textarea, .health-paste-overlay input').length===1&&getComputedStyle(q('[data-health-paste-preview]')).display==='none')
+ check('Health opening does not force keyboard',document.activeElement!==q('[data-health-paste-input]'))
+ q('[data-health-paste-input]').focus(); viewport.height = 360; viewport.dispatchEvent(new Event('resize')); await settle()
+ const pasteBox = q('[data-health-paste-input]').getBoundingClientRect(), submitBox = q('[data-health-paste-submit]').getBoundingClientRect()
+ check('Health follows a keyboard-sized viewport with paste and import action visible', pasteBox.top >= q('.health-paste-sheet__head').getBoundingClientRect().bottom && pasteBox.bottom <= submitBox.top && submitBox.bottom <= 360)
+ viewport.height = innerHeight; viewport.dispatchEvent(new Event('resize'))
+ const input=q('[data-health-paste-input]'); input.value='TEMPERED_HEALTH_V1\nDATE=2026-09-07\nSTEPS=9000\nSLEEP=8'; input.dispatchEvent(new Event('input'))
+ check('Review displays parsed values without saving',/9,000/.test(q('[data-health-paste-metrics]')?.textContent)&&(await storage.get('dayLogs','2026-09-07')).steps===7000)
+ q('[data-health-paste-submit]')?.click(); await settle()
+ check('Health confirm imports and Done closes without a false failure',q('[data-health-paste-submit]')?.textContent==='Done'&&(await storage.get('dayLogs','2026-09-07')).steps===9000)
+ q('[data-health-paste-submit]')?.click(); check('Done returns from Health',!q('.health-paste-overlay')); stopHealth()
+ Object.defineProperty(window, 'visualViewport', { configurable: true, value: originalViewport })
+ dispatchEvent(new CustomEvent('tempered:open-nutrition',{detail:{date:'2026-09-07'}})); await settle()
+ const time=q('[data-entry="nutrition_time"]'); const form=q('.nutrition-meal-form');
+ check('Nutrition time fits the form',time.getBoundingClientRect().right<=form.getBoundingClientRect().right&&time.getBoundingClientRect().left>=form.getBoundingClientRect().left)
+ for(const theme of ['light','dark']){
+  document.documentElement.dataset.theme=theme
+  check(theme+' Nutrition has filled stat tiles and green ink values',qa('.nutrition-total').every(n=>getComputedStyle(n).borderTopWidth==='0px'&&color(n.querySelector('strong'),'--fuel-ink')))
+  check(theme+' Nutrition status has two segmented choices',qa('[data-nutrition-day-state]').length===2&&qa('[data-nutrition-day-state]').every(n=>getComputedStyle(n).borderTopWidth==='0px'))
+ }
+ q('[data-entry="nutrition_description"]').value='R10 meal'; q('[data-entry="nutrition_calories"]').value='220'; q('.nutrition-meal-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})); await settle()
+ check('Restyled Add meal still saves canonical history',/R10 meal/.test(q('[data-nutrition-history]')?.textContent))
+ check('No runtime errors',errors.length===0,errors.join('\n'))
+} catch(e){check('Harness completed',false,e.stack)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'subscreens-r10',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

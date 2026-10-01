@@ -79,6 +79,7 @@
       card()?.textContent ?? '')
 
     const sunday = await fixture(new Date(2026, 8, 13, 9))
+    q('[data-workout-expand]')?.click()
     const sundayRows = qa('[data-rollover-slot]')
     const mondayExerciseIds = sunday.program.days.find((day) => day.id === 'monday').exercises.map((slot) => slot.exerciseId)
     const sundayHasMonday = mondayExerciseIds.every((id) => sundayRows.some((row) => row.dataset.exerciseId === id))

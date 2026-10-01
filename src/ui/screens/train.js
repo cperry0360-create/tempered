@@ -68,13 +68,14 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         libraryOpen = false
         rhythmOpen = false
         selectedRoutine = null
+        programDetailsOpen = false
         query = ''
         render()
       },
     }, ['‹'])
   }
 
-  function trainingCalendar() {
+  function trainingCalendar(compact = false) {
     if (!rhythm) return el('section.train-r4__card', {}, [el('p', { text: 'No training rhythm yet.' })])
     const today = clock.today()
     const mondayOf = (date) => {
@@ -94,10 +95,12 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       (_, index) => addUtcDays(firstWeekStart, index * 7))
     const trained = new Set(rhythm.trainedDates)
     const qualified = new Set(rhythm.qualifyingDates)
-    const panels = weekStarts.map((weekStart) => {
+    const panels = (compact ? [currentWeekStart] : weekStarts).map((weekStart) => {
       const dates = Array.from({ length: 7 }, (_, index) => addUtcDays(weekStart, index))
       return el('section.train-r4__rhythm-week', { dataset: { current: String(weekStart === currentWeekStart) } }, [
         el('strong', { text: weekStart === currentWeekStart ? 'Current week' : shortDate(weekStart) }),
+        !compact && (rhythm.awayProtectedWeeks ?? []).includes(weekStart) && el('small', { text: 'Away week · rhythm protected' }),
+        !compact && (rhythm.protectedWeeks ?? []).includes(weekStart) && el('small', { text: 'Keeper used · rhythm protected' }),
         el('div.train-r4__calendar', {}, [
           ...['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => el('span.train-r4__weekday', { text: day })),
           ...dates.map((date) => el('span.train-r4__day', {
@@ -112,13 +115,20 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       ])
     })
     const scroller = el('div.train-r4__rhythm-scroll', {}, panels)
-    queueMicrotask(() => { scroller.scrollLeft = scroller.scrollWidth })
-    return el('section.train-r4__card.train-r4__rhythm-card', {}, [
-      el('div.train-r4__card-heading', {}, [
+    queueMicrotask(() => {
+      const current = scroller.querySelector('[data-current="true"]')
+      if (current) scroller.scrollLeft = current.offsetLeft - scroller.offsetLeft
+    })
+    return el(compact ? 'button.train-r4__card.train-r4__rhythm-card' : 'section.train-r4__card.train-r4__rhythm-card', compact ? {
+      type: 'button', dataset: { trainingRhythm: 'open' },
+      'aria-label': 'Open full Training rhythm history', onclick: () => { rhythmOpen = true; render() },
+    } : {}, [
+      compact ? el('p.train-r4__rhythm-meta', { text: `${rhythm.streakWeeks} ${rhythm.streakWeeks === 1 ? 'week' : 'weeks'} strong · ${rhythm.currentWeekDays} / ${rhythm.weeklyDays} days` }) : el('div.train-r4__card-heading', {}, [
         el('h2', { text: rhythm.streakWeeks === 1 ? '1 week strong' : `${rhythm.streakWeeks} weeks strong` }),
         el('span', { text: `${rhythm.currentWeekDays} / ${rhythm.weeklyDays} days` }),
       ]),
-      el('p', { text: rhythm.currentWeekAway ? 'Away week · rhythm protected' : `${rhythm.minimumMinutes}+ minutes counts as a training day` }),
+      !compact && el('p', { text: rhythm.currentWeekAway ? 'Away week · rhythm protected' : `${rhythm.minimumMinutes}+ minutes counts as a training day` }),
+      !compact && el('p', { text: `${rhythm.keepers ?? 0} keepers · ${rhythm.keeperProgress ?? 0} / ${rhythm.keeperEvery ?? 5} strong weeks toward next keeper` }),
       scroller,
     ])
   }
@@ -135,21 +145,32 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       el('button.train-r4__row', {
         type: 'button',
         dataset: { programDetails: 'toggle' },
-        onclick: () => { programDetailsOpen = !programDetailsOpen; render() },
+        onclick: () => { programDetailsOpen = true; render() },
       }, [el('span', { text: 'Program details' }), chevron()]),
-      programDetailsOpen && el('div.train-r4__details', {}, [
-        el('p', { text: program.note || 'Your active training plan.' }),
-        active.deload && el('p', { text: 'Hold the weight during deload week; recovery is half the process.' }),
-        weekView?.hardSets?.length && el('div.train-r4__hard-sets', {}, [
-          el('strong', { text: 'Hard sets this week' }),
-          ...weekView.hardSets.map((row) => el('div.train-r4__hard-set-row', {}, [
-            el('span', { text: row.group.replace(/_/g, ' ') }),
-            el('span', { text: row.target ? `${row.sets} / ${row.target[0]}–${row.target[1]}` : String(row.sets) }),
-          ])),
+
+    ])
+  }
+
+  function renderProgramDetails() {
+    const { program } = active
+    replace(root, [
+      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Program details' })]),
+      el('section.train-r4__card', {}, [
+        el('h2', { text: program.name }),
+        el('div.train-r4__details', {}, [
+          el('p', { text: program.note || 'Your active training plan.' }),
+          active.deload && el('p', { text: 'Hold the weight during deload week; recovery is half the process.' }),
+          weekView?.hardSets?.length > 0 && el('div.train-r4__hard-sets', {}, [
+            el('strong', { text: 'Hard sets this week' }),
+            ...weekView.hardSets.map((row) => el('div.train-r4__hard-set-row', {}, [
+              el('span', { text: row.group.replace(/_/g, ' ') }),
+              el('span', { text: row.target ? `${row.sets} / ${row.target[0]}–${row.target[1]}` : String(row.sets) }),
+            ])),
+          ]),
+          onProgramBuilder && el('button.train-r4__secondary', {
+            type: 'button', onclick: onProgramBuilder,
+          }, ['Open Program Builder']),
         ]),
-        onProgramBuilder && el('button.train-r4__secondary', {
-          type: 'button', onclick: onProgramBuilder,
-        }, ['Open Program Builder']),
       ]),
     ])
   }
@@ -216,10 +237,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         type: 'button', dataset: { exerciseLibrary: 'open' },
         onclick: () => { libraryOpen = true; query = ''; render() },
       }, [el('span', { text: 'Exercise library' }), chevron()]),
-      el('button.train-r4__row', {
-        type: 'button', dataset: { trainingRhythm: 'open' },
-        onclick: () => { rhythmOpen = true; render() },
-      }, [el('span', { text: 'Training rhythm' }), chevron()]),
+
     ])
   }
 
@@ -281,12 +299,14 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   }
 
   function render() {
+    if (programDetailsOpen) { renderProgramDetails(); return }
     if (libraryOpen) { renderLibrary(); return }
     if (selectedRoutine) { renderRoutine(); return }
     if (rhythmOpen) { renderRhythm(); return }
     replace(root, [
       el('h1.screen__title', { text: 'Train' }),
       programHeaderCard(),
+      trainingCalendar(true),
       nextSessionCard(),
       sessionsCard(),
       routinesCard(),
@@ -298,6 +318,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     root,
     primary() { return null },
     async refresh() {
+      programDetailsOpen = false
       libraryOpen = false
       rhythmOpen = false
       selectedRoutine = null

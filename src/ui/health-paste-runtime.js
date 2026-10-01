@@ -74,9 +74,10 @@ export function installHealthPasteRuntime(context) {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
   let overlay = null
+  let closeImport = null
 
   async function openImport(trigger = null) {
-    overlay?.remove()
+    closeImport?.()
     const today = context.clock.today()
     const node = document.createElement('div')
     node.className = 'health-paste-overlay'
@@ -84,19 +85,23 @@ export function installHealthPasteRuntime(context) {
     node.innerHTML = `
       <section class="health-paste-sheet" role="dialog" aria-modal="true" aria-labelledby="health-paste-title">
         <header class="health-paste-sheet__head">
-          <div>
-            <span>ChatGPT Health</span>
-            <h2 id="health-paste-title">Import health snapshot</h2>
-          </div>
-          <button type="button" data-health-paste-close aria-label="Close health import">×</button>
+          <button type="button" data-health-paste-close aria-label="Back to Today">‹</button>
+          <h2 id="health-paste-title">Import health data</h2>
         </header>
-        <p class="health-paste-sheet__intro">Run your pinned Tempered prompt in ChatGPT Health, then paste its nine-line result below; blank fields are skipped.</p>
-        <div class="health-paste-sheet__actions">
-          <button type="button" class="button" data-health-paste-read>Paste copy</button>
+        <div class="health-paste-sheet__content">
+        <section class="health-paste-step">
+          <h3><span>1</span> Copy prompt and open ChatGPT</h3>
+          <p class="health-paste-sheet__intro">Copy the prompt into ChatGPT Health; blank fields are skipped.</p>
           <a class="button" data-health-prompt-copy href="https://chatgpt.com/" target="_blank" rel="noopener">Copy prompt and open ChatGPT</a>
-        </div>
-        <label class="health-paste-sheet__label" for="health-paste-input">Health snapshot</label>
-        <textarea id="health-paste-input" class="health-paste-sheet__input" data-health-paste-input rows="10" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Paste the nine-line health snapshot here"></textarea>
+        </section>
+        <section class="health-paste-step health-paste-step--paste">
+          <h3><span>2</span> Paste health data</h3>
+          <label class="health-paste-sheet__label" for="health-paste-input">Nine-line health snapshot</label>
+          <textarea id="health-paste-input" class="health-paste-sheet__input" data-health-paste-input rows="6" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Paste the nine-line health snapshot here"></textarea>
+          <button type="button" class="button" data-health-paste-read>Paste copy</button>
+        </section>
+        <section class="health-paste-step">
+          <h3><span>3</span> Review and import</h3>
         <section class="health-paste-preview" data-health-paste-preview hidden>
           <div class="health-paste-preview__head">
             <strong data-health-paste-date></strong>
@@ -106,7 +111,11 @@ export function installHealthPasteRuntime(context) {
           <p data-health-paste-warning hidden></p>
         </section>
         <p class="health-paste-sheet__status" data-health-paste-status role="status">Nothing imports until you review and confirm.</p>
-        <button type="button" class="button health-paste-sheet__import" data-health-paste-submit disabled>Import health data</button>
+        </section>
+        </div>
+        <footer class="health-paste-sheet__footer">
+          <button type="button" class="button health-paste-sheet__import" data-health-paste-submit disabled>Review and import</button>
+        </footer>
       </section>`
 
     overlay = node
@@ -119,11 +128,25 @@ export function installHealthPasteRuntime(context) {
 
     const close = () => {
       document.removeEventListener('keydown', onKeyDown)
+      window.visualViewport?.removeEventListener('resize', fitViewport)
+      window.visualViewport?.removeEventListener('scroll', fitViewport)
+      closeImport = null
       node.remove()
       delete document.body.dataset.healthPasteOpen
       if (overlay === node) overlay = null
       if (trigger?.isConnected) trigger.focus()
     }
+    closeImport = close
+    const fitViewport = () => {
+      const viewport = window.visualViewport
+      if (!viewport) return
+      node.style.height = `${viewport.height}px`
+      node.style.top = `${viewport.offsetTop}px`
+      if (document.activeElement === input) input.scrollIntoView({ block: 'center' })
+    }
+    window.visualViewport?.addEventListener('resize', fitViewport)
+    window.visualViewport?.addEventListener('scroll', fitViewport)
+    fitViewport()
     const onKeyDown = (event) => { if (event.key === 'Escape') close() }
 
     const refreshPreview = () => {
@@ -196,7 +219,7 @@ export function installHealthPasteRuntime(context) {
         imported = true
         submit.textContent = 'Done'
         submit.disabled = false
-        await enhance()
+
       } catch {
         status.textContent = 'The health data could not be imported; your existing logs were not changed.'
         submit.textContent = 'Try import again'
@@ -207,7 +230,7 @@ export function installHealthPasteRuntime(context) {
     document.addEventListener('keydown', onKeyDown)
     document.body.append(node)
     document.body.dataset.healthPasteOpen = 'true'
-    requestAnimationFrame(() => input.focus())
+    requestAnimationFrame(() => node.querySelector('[data-health-paste-close]')?.focus())
   }
 
   const openRequested = (event) => {
@@ -220,7 +243,7 @@ export function installHealthPasteRuntime(context) {
 
   return () => {
     window.removeEventListener('tempered:open-health-import', openRequested)
-    overlay?.remove()
+    closeImport?.()
     delete document.body.dataset.healthPasteOpen
   }
 }

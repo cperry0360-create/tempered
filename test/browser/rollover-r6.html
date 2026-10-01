@@ -82,6 +82,7 @@
       Boolean(tabbarRect) && Math.abs(pageBottomPadding - tabbarRect.height - 16) <= 1,
       `padding=${pageBottomPadding} tabbar=${tabbarRect?.height}`)
 
+    q('[data-workout-expand]')?.click()
     const rollover = q('[data-rollover-group]')
     const rows = qa('[data-rollover-slot]', rollover)
     check('Wednesday Today groups two unfinished Monday movements under earlier this week',

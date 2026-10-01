@@ -208,6 +208,8 @@ export function createTodayScreen({
   let mobilityTimer = null
   let mobilityRemaining = 0
   let mobilityRunning = false
+  let workoutDisclosure = null
+  let disclosureSave = Promise.resolve()
   let rolloverOpen = null
   let completedWorkoutOpen = false
   let listeningForDateChange = false
@@ -604,7 +606,9 @@ export function createTodayScreen({
     const completedRows = queue.completed
     const programDay = queue.primaryDay ?? todayProgram?.day ?? queue.scheduledDay
     const name = todayProgram?.day?.name ?? queue.primaryDay?.name ?? queue.scheduledDay?.name ?? 'Workout'
-    const expandRollover = rolloverOpen ?? rolloverRows.length < 6
+    const expanded = workoutDisclosure?.date === realToday && workoutDisclosure.expanded
+    const expandRollover = rolloverOpen ?? true
+    const next = rolloverRows[0] ?? todayRows[0]
     // todayTasks retains the numeric active-program week; weekStatus.week holds tasks.
     const week = todayProgram?.week ?? 1
     const weeks = weekProgram?.program?.weeks ?? todayProgram?.program?.weeks ?? 1
@@ -636,8 +640,24 @@ export function createTodayScreen({
     }, [
       el('h2', { text: todayDoneWithLeftovers ? `${queue.scheduledDay.name} done` : name }),
       el('p.today-workout__summary', { text: meta }),
-      todayRows.length > 0 && el('div.today-workout__rows', {}, todayRows.map((row) => workoutMovement(row))),
-      rolloverRows.length > 0 && el('section.today-workout__rollover', { dataset: { rolloverGroup: 'true' } }, [
+      !expanded && next && el('div.today-workout__next', { dataset: { nextUp: 'true' } }, [
+        el('span.today-workout__next-label', { text: 'Next up' }),
+        workoutMovement(next, rolloverRows.includes(next)),
+      ]),
+      el('button.today-workout__group-toggle', {
+        type: 'button', dataset: { workoutExpand: 'true' }, 'aria-expanded': String(Boolean(expanded)),
+        onclick: () => {
+          workoutDisclosure = { date: realToday, expanded: !expanded }
+          render()
+          const choice = workoutDisclosure
+          disclosureSave = disclosureSave.then(async () => {
+            const saved = await storage.get('profile', 'profile')
+            await storage.put('profile', { ...saved, todayWorkoutDisclosure: choice })
+          })
+        },
+      }, [expanded ? 'Show fewer movements' : `Show all ${queue.active.length} movements`, icon(expanded ? 'up' : 'down')]),
+      expanded && todayRows.length > 0 && el('div.today-workout__rows', {}, todayRows.map((row) => workoutMovement(row))),
+      expanded && rolloverRows.length > 0 && el('section.today-workout__rollover', { dataset: { rolloverGroup: 'true' } }, [
         el('button.today-workout__group-toggle', {
           type: 'button', 'aria-expanded': String(expandRollover),
           onclick: () => { rolloverOpen = !expandRollover; render() },
@@ -1128,6 +1148,7 @@ export function createTodayScreen({
   }
 
   async function reload() {
+    await disclosureSave
     const dates = weekDates(selectedDate)
     ;[todayProgram, weekProgram, day, weekActivities, quickPresets, trainingStats, profile, dayLogs, weekTraining, plannerRows] = await Promise.all([
       isRealToday() ? workout.todayTasks() : Promise.resolve(null),
@@ -1141,6 +1162,7 @@ export function createTodayScreen({
       Promise.all(dates.map(async (date) => ({ date, stats: await workout.dayTrainingStats(date) }))),
       planner ? planner.list(selectedDate) : Promise.resolve([]),
     ])
+    workoutDisclosure = profile.todayWorkoutDisclosure ?? null
     render()
   }
 

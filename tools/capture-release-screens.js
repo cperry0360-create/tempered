@@ -25,7 +25,9 @@ const VIEWS = [
   'today', 'train', 'session', 'fuel',
   'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
   'settings', 'program-builder', 'summary',
-  'health-import', 'health-setup', 'health-launch', 'nutrition-log', 'session-discard',
+  'train-rhythm', 'train-program-details', 'train-routine', 'train-library',
+  'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
+  'health-import', 'nutrition-log', 'session-discard',
 ]
 const VIEWPORTS = [
   { label: 'iphone-compact', width: 390, height: 844 },
@@ -227,7 +229,7 @@ try {
       if (image.width !== viewport.width || image.height !== viewport.height || image.bytes < 5000) {
         throw new Error(`${filename} is ${image.width}×${image.height} and ${image.bytes} bytes`)
       }
-      manifest.push({ view, theme, viewport: viewport.label, ...image, file: filename })
+      manifest.push({ view, theme, audit: report.audit, viewport: viewport.label, ...image, file: filename })
       console.log(`CAPTURED ${filename} (${image.bytes} bytes)`)
     }
     }

@@ -1,3 +1,12 @@
+## 2026-10-01 — Redesign V1 R10 sub-screens, Today density and device fixes
+
+- Today defaults to one leftovers-first Next up movement, inline Show all disclosure and full-session action; the storage-backed choice lasts for that local day.
+- Train places the current-week rhythm directly under the program; tapping opens full history. Program details retains description, hard-set targets and builder in a detail view.
+- Health import is a full-screen numbered copy/paste/review flow, with a scrollable keyboard-aware body and bottom import action; empty preview no longer appears as a stray box.
+- Nutrition and other pushed views use token fills, domain ink and no neutral outlined tiles. Nutrition has green totals/Add meal, segmented day status and a bounded full-row time field.
+- Progress lines use domain ink; Lifts labels e1RM and real 30D changes; Log groups canonical sessions by date and sets by exercise while retaining every session's minutes correction; Habits hides zero current streaks and labels its daily map.
+- Release: 0.47.0 (65). Fail-first Today/sub-screen browser fixtures, 667 Node tests and 632 browser checks pass; release captures cover 28 views in both themes at both phone sizes. No stored history is removed or migrated. Physical-iPhone Health keyboard/clipboard and safe-area confirmation remains with Cory.
+
 ## 2026-09-30 — Redesign V1 R9 rollover and Today fixes
 
 - Today reads the numeric active-program week for its meta and first-week guidance.
@@ -81,7 +90,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`
 **Production:** `https://cperry0360-create.github.io/tempered/`
-**Current release:** 0.46.0 (64) — R9 rollover and Today fixes
+**Current release:** 0.47.0 (65) — R10 sub-screens, Today density and device fixes
 
 **Product maturity:** Pre-beta product completion
 

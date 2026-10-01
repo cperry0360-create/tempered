@@ -4,7 +4,7 @@
 
 import { el, replace } from '../dom.js'
 import { emptyState } from '../states.js'
-import { lbs, volume, duration, shortDate } from '../format.js'
+import { lbs, volume, duration, shortDate, performance } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
 import { effectiveLoad } from '../../domain/records.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
@@ -146,6 +146,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let view = 'overview'
   let range = 30
   let sessions = []
+  let programs = []
   let records = []
   let exercises = new Map()
   let sessionStats = new Map()
@@ -355,9 +356,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ])
   }
 
-  function trendRow(label, value, delta, values, sampleCount) {
+  function trendRow(label, value, delta, values, sampleCount, domain = 'recovery', good = false) {
     const samples = Number.isFinite(sampleCount) ? sampleCount : values.filter(Number.isFinite).length
-    return el('div.progress-trend', {}, [
+    return el('div.progress-trend', { dataset: { domain } }, [
       el('div.progress-trend__copy', {}, [
         el('div.progress-trend__meta', {}, [
           el('span.progress-trend__label', { text: label }),
@@ -365,7 +366,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         ]),
         el('div.progress-trend__values', {}, [
           el('strong.progress-trend__value', { text: value }),
-          delta && el('span.progress-trend__delta', { text: delta }),
+          delta && el('span.progress-trend__delta', { text: delta, dataset: { good: String(good) } }),
         ]),
       ]),
       sparkline(values, 112, 34),
@@ -383,7 +384,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       latestWeight === null ? '—' : lbs(latestWeight),
       weightDelta,
       current.weights.map((item) => item.value),
-      current.weights.length,
+      current.weights.length, 'fuel', false,
     )
     const currentStepSamples = current.days.filter((day) => Number.isFinite(day.steps)).length
     const previousStepSamples = previous.days.filter((day) => Number.isFinite(day.steps)).length
@@ -395,7 +396,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       current.avgSteps === null ? '—' : numberText(Math.round(current.avgSteps)) + ' avg',
       stepsDelta,
       current.days.map((day) => day.steps),
-      currentStepSamples,
+      currentStepSamples, 'fuel', current.avgSteps > previous.avgSteps,
     )
     const currentSleepSamples = current.days.filter((day) => Number.isFinite(day.sleepHours)).length
     const previousSleepSamples = previous.days.filter((day) => Number.isFinite(day.sleepHours)).length
@@ -407,7 +408,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       current.avgSleep === null ? '—' : numberText(current.avgSleep, 1) + 'h avg',
       sleepDelta,
       current.days.map((day) => day.sleepHours),
-      currentSleepSamples,
+      currentSleepSamples, 'recovery', current.avgSleep > previous.avgSleep,
     )
     return el('section.progress-panel', {}, [
       el('h2.progress-panel__title', { text: 'Trends' }),
@@ -432,7 +433,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           numberText(currentValue, signal.digits) + signal.unit,
           delta,
           signal.values.map((item) => item.value),
-          signal.values.length,
+          signal.values.length, 'recovery', signal.key === 'restingHr' ? currentValue < previousValue : ['hrvMs', 'spo2'].includes(signal.key) && currentValue > previousValue,
         )
       })),
     ])
@@ -527,14 +528,14 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           el('span', { style: 'width:' + percent + '%' }),
         ]),
         el('p.progress-habit__streak', {
-          text: streak.current + ' day streak · best ' + streak.longest + ' days',
+          text: (streak.current > 0 ? streak.current + ' day streak · ' : '') + 'Best ' + streak.longest + ' days',
         }),
       ])
     })
     const line = days.length < selectedDates().length
       ? el('p.progress-footnote', { text: 'Showing ' + days.length + ' days since tracking began.' })
       : null
-    return [line, ...rows, heatmap(days)].filter(Boolean)
+    return [line, ...rows, el('section.progress-panel', {}, [el('h2.progress-panel__title', { text: 'Daily habit completion' }), el('p.progress-footnote', { text: 'One square per day; green means every daily habit is complete.' }), heatmap(days)])].filter(Boolean)
   }
 
   function liftHistory() {
@@ -580,7 +581,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       el('button.progress-back', {
         type: 'button',
         onclick: () => { selectedLiftId = null; render() },
-      }, ['Lifts']),
+      }, ['‹ Lifts']),
       el('section.progress-panel.progress-lift-detail', {}, [
         el('h2.progress-panel__title', { text: name }),
         el('div.progress-lift-detail__stats', {}, [
@@ -635,8 +636,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       }, [
         el('div.progress-lift__copy', {}, [
           el('strong.progress-lift__name', { text: name }),
-          el('span.progress-lift__e1rm', { text: lbs(best) }),
-          el('span.progress-lift__delta', { text: delta ?? '—' }),
+          el('span.progress-lift__e1rm', { text: 'e1RM ' + lbs(best) + ' lb' }),
+          delta && el('span.progress-lift__delta', { text: delta, dataset: { good: String(delta.startsWith('+')) }, 'aria-label': '30D change ' + delta }),
         ]),
         line,
       ])
@@ -677,46 +678,67 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ])
   }
 
-  function sessionSetRows(session) {
-    return setLogs
-      .filter((log) => log.sessionId === session.id)
-      .sort((a, b) => (a.setIndex ?? 0) - (b.setIndex ?? 0))
-      .map((log) => {
-        const exercise = exercises.get(log.exerciseId)
-        const load = effectiveLoad(log, exercises)
-        const performed = Number.isFinite(log.reps) && log.reps > 0
-          ? (load > 0 ? lbs(load) + ' × ' : '') + log.reps + ' reps'
-          : 'Logged'
-        return el('div.progress-session-detail__set', {}, [
-          el('span', { text: exercise?.name ?? log.exerciseId }),
-          el('strong', { text: performed }),
-        ])
-      })
+  function daySessions(date) {
+    return sessions.filter((session) => session.date === date)
+  }
+
+  function dayName(date) {
+    const entries = daySessions(date)
+    const names = [...new Set(entries.map((session) => {
+      const programDay = programs.filter((program) => !session.programId || program.id === session.programId).flatMap((program) => program.days ?? []).find((day) => day.id === session.programDayId)
+      return session.routineName ?? (session.programDayId ? session.title ?? programDay?.name : null) ?? null
+    }).filter(Boolean))]
+    if (names.length) return names.join(' · ')
+    const ids = new Set(entries.map((session) => session.id))
+    const movements = new Set(setLogs.filter((log) => ids.has(log.sessionId)).map((log) => log.exerciseId)).size
+    return `Micro sets · ${movements} ${movements === 1 ? 'movement' : 'movements'}`
+  }
+
+  function dayStats(date) {
+    return daySessions(date).reduce((total, session) => {
+      const stats = sessionStats.get(session.id) ?? { sets: 0, volume: 0 }
+      return { sets: total.sets + stats.sets, volume: total.volume + stats.volume,
+        minutes: total.minutes + (Number(session.durationMinutes) || 0) }
+    }, { sets: 0, volume: 0, minutes: 0 })
+  }
+
+  function sessionSetRows(date) {
+    const ids = new Set(daySessions(date).map((session) => session.id))
+    const groups = new Map()
+    for (const log of setLogs.filter((row) => ids.has(row.sessionId)).sort((a, b) =>
+      String(a.completedAt ?? '').localeCompare(String(b.completedAt ?? '')) || (a.setIndex ?? 0) - (b.setIndex ?? 0))) {
+      // Keep method variants and warmups visible rather than mixing unlike loads.
+      const key = `${log.exerciseId}:${log.method ?? ''}`
+      const group = groups.get(key) ?? { exerciseId: log.exerciseId, method: log.method, values: [] }
+      const load = effectiveLoad(log, exercises)
+      const performed = performance({ ...log, weight: load > 0 ? load : null })
+      group.values.push(performed + (log.isWarmup ? ' (warm-up)' : ''))
+      groups.set(key, group)
+    }
+    return [...groups.values()].map((group) => el('div.progress-session-detail__set', {}, [
+      el('span', { text: (exercises.get(group.exerciseId)?.name ?? group.exerciseId) + (group.method ? ` · ${group.method}` : '') }),
+      el('strong', { text: group.values.join(', ') }),
+    ]))
   }
 
   function sessionDetail(session) {
-    const stats = sessionStats.get(session.id) ?? { volume: 0, sets: 0 }
+    const date = session.date
+    const stats = dayStats(date)
+    const entries = daySessions(date)
     return [
       el('button.progress-back', {
-        type: 'button',
-        onclick: () => { selectedSessionId = null; editingDurationId = null; render() },
-      }, ['Log']),
+        type: 'button', onclick: () => { selectedSessionId = null; editingDurationId = null; render() },
+      }, ['‹ Log']),
       el('section.progress-panel.progress-session-detail', {}, [
-        el('div.progress-session-detail__head', {}, [
-          el('div', {}, [
-            el('h2.progress-panel__title', { text: session.routineName ?? session.routineId ?? 'Training day' }),
-            el('p.progress-session-detail__date', { text: shortDate(session.date) }),
-          ]),
-        ]),
-        el('p.progress-session-detail__summary', {
-          text: [
-            session.durationMinutes ? duration(session.durationMinutes) : null,
-            stats.sets + ' sets',
-            volume(stats.volume) + ' lb',
-          ].filter(Boolean).join(' · '),
-        }),
-        el('div.progress-session-detail__sets', {}, sessionSetRows(session)),
-        durationEditor(session),
+        el('h2.progress-panel__title', { text: dayName(date) }),
+        el('p.progress-session-detail__date', { text: shortDate(date) }),
+        el('p.progress-session-detail__summary', { text: [stats.minutes ? duration(stats.minutes) : null,
+          `${stats.sets} sets`, volume(stats.volume) + ' lb'].filter(Boolean).join(' · ') }),
+        el('div.progress-session-detail__sets', {}, sessionSetRows(date)),
+        ...entries.map((entry) => el('div.progress-session-detail__duration', {}, [
+          el('p.progress-footnote', { text: `${entry.routineName ?? 'Session'} · ${entry.startedAt ? new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(entry.startedAt)) : entry.id} · ${entry.durationMinutes ?? 0} min` }),
+          durationEditor(entry),
+        ])),
       ]),
     ]
   }
@@ -729,24 +751,19 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const dates = new Set(selectedDates())
     const period = sessions.filter((session) => dates.has(session.date))
     if (period.length === 0) return [emptyState('No training in this range', 'Completed workouts will appear here.')]
-    return period.map((session) => {
-      const stats = sessionStats.get(session.id) ?? { volume: 0, sets: 0 }
+    return [...new Set(period.map((session) => session.date))].map((date) => {
+      const session = period.find((entry) => entry.date === date)
+      const stats = dayStats(date)
       return el('button.progress-log-row', {
-        type: 'button',
-        dataset: { session: session.id },
+        type: 'button', dataset: { session: session.id, date },
         onclick: () => { selectedSessionId = session.id; render() },
       }, [
         el('div.progress-log-row__head', {}, [
-          el('strong.progress-log-row__name', { text: session.routineName ?? session.routineId ?? 'Training day' }),
-          el('span.progress-log-row__date', { text: shortDate(session.date) }),
+          el('strong.progress-log-row__name', { text: dayName(date) }),
+          el('span.progress-log-row__date', { text: shortDate(date) }),
         ]),
-        el('span.progress-log-row__meta', {
-          text: [
-            session.durationMinutes ? duration(session.durationMinutes) : null,
-            stats.sets + ' sets',
-            volume(stats.volume) + ' lb',
-          ].filter(Boolean).join(' · '),
-        }),
+        el('span.progress-log-row__meta', { text: [stats.minutes ? duration(stats.minutes) : null,
+          `${stats.sets} sets`, volume(stats.volume) + ' lb'].filter(Boolean).join(' · ') }),
       ])
     })
   }
@@ -783,10 +800,11 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   return {
     root,
     async refresh() {
+      programs = await storage.getAll('programs')
       const routines = new Map((await storage.getAll('routines')).map((routine) => [routine.id, routine]))
       sessions = (await storage.getAll('sessions'))
         .filter((session) => session.endedAt)
-        .map((session) => ({ ...session, routineName: routines.get(session.routineId)?.name }))
+        .map((session) => ({ ...session, routineName: session.routineName ?? routines.get(session.routineId)?.name }))
         .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
 
       ;[records, exercises, dayLogs, setLogs, schedule] = await Promise.all([

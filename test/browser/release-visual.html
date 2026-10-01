@@ -40,7 +40,8 @@
     localStorage.clear()
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
-      today: 'today', train: 'train', fuel: 'fuel',
+      today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
+      train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel',
       progress: 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder',
@@ -62,11 +63,23 @@
     }
 
     async function report(ok, error = '') {
+      const scope = document.querySelector('.health-paste-overlay, .nutrition-log-overlay, .mobility-screen-overlay, .session-sheet-overlay') ?? mount
+      const visible = node => { const r = node.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && getComputedStyle(node).visibility !== 'hidden' }
+      const audit = {
+        outlinedTiles: [...scope.querySelectorAll('*')].filter(node => {
+          if (!visible(node) || node.matches('.today-session-card, .today-readiness')) return false
+          const r = node.getBoundingClientRect(), s = getComputedStyle(node)
+          return r.width >= 80 && r.height >= 40 && ['Top','Right','Bottom','Left'].every(side => parseFloat(s['border'+side+'Width']) > 0 && s['border'+side+'Style'] !== 'none')
+        }).map(node => node.className),
+        greyTrendLines: [...scope.querySelectorAll('.spark')].filter(node => visible(node) && !['var(--train-ink)','var(--fuel-ink)','var(--recovery-ink)'].some(value => {
+          const probe = document.createElement('i'); probe.style.color = value; document.body.append(probe); const same = getComputedStyle(probe).color === getComputedStyle(node).color; probe.remove(); return same
+        })).map(node => node.className.baseVal ?? node.className),
+      }
       document.documentElement.dataset.visualReady = String(ok)
       await fetch('/__visual-ready', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ view, ok, error }),
+        body: JSON.stringify({ view, ok, error, audit }),
       })
     }
 
@@ -350,16 +363,21 @@
         mount.querySelector('.app__body')?.replaceChildren(summary.root)
         const tabs = mount.querySelector('.tabbar')
         if (tabs) tabs.hidden = true
-      } else if (view === 'health-import' || view === 'nutrition-log' || view === 'session-discard') {
+      } else if (view === 'health-import' || view === 'health-review' || view === 'nutrition-log' || view === 'nutrition-meal' || view === 'session-discard') {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: view === 'session-discard' ? 'train' : 'today' })
         installCalorieAiRuntime()
         installHealthPasteRuntime(tempered)
         await installCableMachineRuntime(tempered)
-        if (view === 'nutrition-log') {
+        if (view === 'nutrition-log' || view === 'nutrition-meal') {
           await seedFuelReference(storage)
           window.dispatchEvent(new CustomEvent('tempered:open-nutrition', { detail: { date: '2026-09-07' } }))
-        } else if (view === 'health-import') {
+        } else if (view === 'health-import' || view === 'health-review') {
           window.dispatchEvent(new CustomEvent('tempered:open-health-import'))
+          if (view === 'health-review') {
+            const input = document.querySelector('[data-health-paste-input]')
+            input.value = 'TEMPERED_HEALTH_V1\nDATE=2026-09-07\nSTEPS=9000\nSLEEP=7.5\nWEIGHT_LB=166\nRESTING_HR=60\nHRV_MS=40\nRESP_RATE=14\nSPO2=98'
+            input.dispatchEvent(new Event('input'))
+          }
         } else {
           void confirmDiscardExercise(2)
         }
@@ -377,18 +395,33 @@
         const target = route[view]
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: target })
         await installCableMachineRuntime(tempered)
-        if (view === 'today') await seedTodayReference(storage)
+        if (view.startsWith('today') || view === 'mobility' || view.startsWith('train-')) await seedTodayReference(storage)
         if (view === 'fuel') await seedFuelReference(storage)
-        if (view === 'settings') installHealthShortcutRuntime(tempered)
+        // Retired Shortcut UI is not mounted in production Settings.
         if (view.startsWith('progress')) {
           await seedProgressReference(storage)
           await selectProgressView(tempered, view)
         } else {
           await tempered.app.show(target)
+          if (view === 'train-rhythm') mount.querySelector('[data-training-rhythm="open"]')?.click()
+          if (view === 'train-program-details') mount.querySelector('[data-program-details]')?.click()
+          if (view === 'train-routine') mount.querySelector('[data-routine]')?.click()
+          if (view === 'train-library') mount.querySelector('[data-exercise-library]')?.click()
+          if (view === 'today-expanded') mount.querySelector('[data-workout-expand]')?.click()
+          if (view === 'today-day-details') mount.querySelector('[data-day-details]')?.click()
+          if (view === 'mobility') {
+            mount.querySelector('[data-other="toggle"]')?.click()
+            mount.querySelector('[data-activity="mobility"] .today-item__body')?.click()
+            if (!document.querySelector('[data-mobility-screen]')) throw new Error('Mobility view did not open')
+          }
         }
       } else {
         throw new Error(`Unknown release visual: ${view}`)
       }
+      await settle()
+      if (view === 'nutrition-meal') document.querySelector('.nutrition-meal-form')?.scrollIntoView({ block: 'start' })
+      if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })
+      document.activeElement?.blur()
       await settle()
       if (!mount.firstElementChild) throw new Error('App did not render a surface')
       await report(true)

@@ -2229,3 +2229,98 @@ stored data, validation, navigation, and behavior.
 
 - R9 verification: syntax checks; 667 Node tests; 595 real-browser checks across 35 harnesses; logging-speed and battle-art checks all passed. The R9 acceptance page also passes at the larger phone viewport. Native wrapper remains unchanged; the full iOS build runs in post-push CI.
 - Visual QA: captured all 84 release surfaces plus 20 R9-specific states (numeric week, Sunday, following Monday, overnight foreground, done/leftovers × Light/Dark × 390×844/430×932). Inspected both matrices. The Today changes match the R9 spec; the finished-day title, exact count, and Finish Push A fit without clipping. Other screens keep R7/R8 presentation. Compared with the approved R7 Today mockup: the missing character strip/gear beside title are approved R8 changes; seeded movement counts, expanded rollover, dates, and empty readiness differ intentionally by scenario. No unexplained layout or behavior changes remain.
+
+## 2026-10-01 — R10 feature inventory before edits (section 0.1)
+
+Read `CLAUDE.md`, the full redesign spec on `5d99f3d`, current state and release contract.
+Reviewed `git show d9850f5:<path>` for Today, Train, History, Settings, Health paste runtime,
+and Nutrition runtime. Existing R3.1 inventories remain the broader baseline audit.
+
+- Today: dated activity logging/undo, editable sleep/additive values, quick presets, weekly
+  targets, extra logging, date navigation, planner CRUD/rollover/notes/due date/type,
+  program exercise/frequency logging, recap/Health, guided mobility timers and completion,
+  readiness/baselines, weekly training, nutrition entry and workout/summary routes. Keep all;
+  only the workout movement lists gain a disclosure and leftovers-first Next up.
+- Train: program/week/deload, prescriptions, next/full/single exercise/routine sessions,
+  searchable library with last/PR context, hard-set targets, program builder, training
+  history including qualifying days, today, strong weeks/keepers/away protection. Keep all;
+  current week moves under program, complete history remains a drill-in.
+- Progress: ranges, observed coverage, canonical working sets/volume, PRs/e1RM/lift
+  history, habits/rates/current/best streak and daily completion map, session dates/minutes
+  correction. Keep all; date rows merge for presentation only, every constituent session
+  retains its own duration editor, sets group by exercise, heatmap gets a visible label.
+  R5's explicitly retired customizable dashboard is not reinstated.
+- Nutrition: dated totals including carryover, all five macro fields, description and time,
+  AI photo prompt/import review, manual save, recents/frequent quick logging, timestamped
+  history/delete/undo, complete/partial day status. Keep all in the same view; restyle only.
+- Health: exact copy/open prompt, clipboard and long-press paste, field/date preview,
+  blank-field skipping, future/earlier-date warnings, explicit canonical import, provenance,
+  underlying recap refresh, Done/back/escape. Keep all in a full-screen numbered flow.
+- Settings: plan/setup/builder, appearance, away ranges/remove, calorie/steps targets,
+  cadence/frequency, backup/export/preview/confirmed restore, persistence report, credits,
+  version/update and explicitly confirmed reset. Keep all; neutral fills/ember selection.
+
+Before runtime edits, the R10 Today browser fixture seeds 8 today + 3 leftovers.
+The baseline fails collapsed default, disclosure, collapse persistence and next-day reset;
+expanded assertions also require the actual disclosure state, avoiding baseline false passes.
+
+## 2026-10-01 — R10 implementation and release evidence
+
+All nine approved items implemented. Today stores `{date, expanded}` on the existing profile
+through the storage adapter, so navigation/reload keeps the choice until the local day changes.
+Its collapsed movement prioritizes leftovers; expanded lists retain all slot and full-session
+routes and completed-movement disclosure. Saves are serialized before refreshing to avoid a
+quick collapse/navigation race. R6/R9 tests now expand before inspecting the full queue.
+
+Train exposes the current-week strip immediately under the program card and opens the complete
+history on tap. Program details becomes a pushed view with description/deload, hard-set targets
+and builder. Keeper progress and protected-week labels remain available in full history.
+Health uses a full-screen three-step view with a scrollable body and a separate bottom action,
+sized to the visual viewport as the keyboard changes; it does not summon the keyboard on open.
+The apparent stray input was the empty preview's grid style overriding the HTML hidden state.
+Only parsed data reveals that preview. Removed an obsolete `enhance()` call that made a successful
+import report a false failure; preview, date warnings, confirmation, provenance and Done remain.
+
+Nutrition has plain surface-2 totals, green macro ink/quick Add and one green Add meal primary;
+copied-nutrition import is secondary. Day status is a two-choice segmented control. The time
+input spans its own row with bounded sizing and native appearance normalization. All meal fields,
+history, carryover, quick-log, delete/undo, date corrections and AI review remain functional.
+Pushed views use their owning token styles rather than a new override stylesheet; neutral
+rectangular outlines are removed while specified Today tint borders, circular day/check markers,
+dividers and keyboard focus indicators are retained. No colors or important rules added.
+
+Progress uses train ink for lift lines, recovery ink for sleep/recovery, and fuel ink for
+weight/steps. Only favorable deltas use fuel ink; weight and respiratory changes stay neutral.
+Lifts explicitly labels e1RM in lb and omits an unavailable change instead of a stray dash.
+Log has one row per date, using routine/program day names where known and otherwise a canonical
+movement count. Detail groups every set by exercise/method with warm-up and non-rep measurements
+preserved, and exposes each original session's minutes correction independently. No records
+are merged in storage. Habits retains Best, shows current streak only above zero, and labels
+its daily completion map.
+
+Fail-first: final Today fixture on `5d99f3d` reports 8 checks / 7 failures; Next up's underlying
+single-slot path was already valid and remains a regression guard. The separate sub-screen
+fixture reports 29 checks / 20 failures on that baseline. Fixed versions pass all 37 checks.
+Full gates: 667 Node tests; 632 browser checks across 37 harnesses; syntax, logging-speed,
+battle-art, token and no-uppercase checks pass. Version is 0.47.0 (65).
+
+Visual review: expanded CI matrix has 28 views × 2 sizes × 2 themes = 112 captures. Reviewed
+both compact/large contact sheets in Light/Dark. Per-view computed audit also records rectangular
+outline and non-domain spark findings in the manifest; none remain. Retired Shortcut setup/launch
+fixtures are excluded from release captures and production Settings mounting, because production
+has used the independent ChatGPT Health import since 0.24; retained archive code/tests are unchanged.
+The matrix adds current Health review, Nutrition meal form, Train history/details/routine/library,
+Today expansion/day details and Mobility. Captures blur keyboard focus after navigation so a
+focus outline is not mistaken for a tile border.
+
+Mockup comparison: Today adds the approved R10 Next up/disclosure and R8 removes the character;
+R7/R10 intentionally add domain tints/colors and Light mode. Core order is preserved. Fuel's
+empty ring, green meal action and water controls match the revised spec. The session fixture
+shows a real RDL prescription/photo/plate line per R3.1, rather than the mockup's two generic
+exercises. Progress uses real seeded PRs/trends and Habits rather than the mockup Body tab;
+colored chart lines supersede its grey lines. Data, fixture date/week and long names differ;
+no unexplained outlines, clipping or layout differences in touched views remain.
+
+Needs Cory: installed-iPhone Health keyboard/paste/back flow and status/home-indicator safe
+areas need physical-device confirmation; the browser tests simulate the visual-viewport shrink
+but cannot reproduce iOS clipboard permissions, native date/time rendering or standalone chrome.

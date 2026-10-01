@@ -23,7 +23,7 @@
   min-width: 76px;
   min-height: 44px;
   padding: 0 28px 0 12px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 12px;
   background: var(--surface-2);
   color: var(--text-1);
@@ -72,7 +72,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
   padding: 3px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 13px;
   background: var(--surface-1);
 }
@@ -107,7 +107,7 @@
   display: grid;
   gap: 12px;
   padding: 14px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 16px;
   background: var(--surface-1);
 }
@@ -292,7 +292,7 @@
 .progress-lift .spark {
   width: 100%;
   height: 34px;
-  color: var(--chart);
+  color: var(--train-ink);
 }
 
 .progress-report {
@@ -305,13 +305,13 @@
 .progress-back {
   appearance: none;
   min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text-1);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--train-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 550;
   cursor: pointer;
 }
@@ -332,7 +332,7 @@
   display: grid;
   gap: 8px;
   padding: 13px 14px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 14px;
   background: var(--surface-1);
 }
@@ -372,7 +372,7 @@
   height: 5px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--chart);
+  background: var(--surface-2);
 }
 
 .progress-habit__bar span {
@@ -422,7 +422,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 13px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 14px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -476,6 +476,16 @@
 
 .progress-back {
   justify-self: start;
+
+  background: transparent;
+
+  padding: 0;
+
+  border-radius: 0;
+
+  color: var(--train-ink);
+
+  font-size: 17px;
 }
 
 .progress-lift-detail__stats {
@@ -495,13 +505,13 @@
 
 .progress-lift-detail__stat span {
   color: var(--text-2);
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .progress-lift-detail__stat strong {
   overflow-wrap: anywhere;
-  color: var(--text-1);
+  color: var(--train-ink);
   font-size: 13px;
   line-height: 17px;
   font-variant-numeric: tabular-nums;
@@ -534,7 +544,7 @@
   display: grid;
   gap: 4px;
   padding: 12px 13px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 14px;
   background: var(--surface-1);
   color: var(--text-1);
@@ -579,7 +589,7 @@
 
 .progress-session-detail__summary {
   margin: 0;
-  color: var(--text-2);
+  color: var(--train-ink);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
@@ -589,14 +599,16 @@
 }
 
 .progress-session-detail__set {
-  display: flex;
+  display: grid;
   justify-content: space-between;
   align-items: baseline;
-  gap: 10px;
+  gap: 4px;
   min-height: 38px;
   padding: 8px 0;
   border-top: 1px solid var(--hairline);
   font-size: 13px;
+
+  grid-template-columns: 1fr;
 }
 
 .progress-session-detail__set span {
@@ -608,10 +620,14 @@
 }
 
 .progress-session-detail__set strong {
-  flex: none;
-  color: var(--text-1);
-  font-size: 12px;
+  min-width: 0;
+  color: var(--text-2);
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
 }
 
 .progress-duration {
@@ -626,7 +642,7 @@
   width: 92px;
   min-height: 44px;
   padding: 0 10px;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text-1);
@@ -666,3 +682,14 @@
     padding: 8px;
   }
 }
+
+.progress-trend[data-domain="fuel"] .spark { color: var(--fuel-ink); }
+
+.progress-trend[data-domain="recovery"] .spark { color: var(--recovery-ink); }
+
+.progress-trend__delta[data-good="true"],
+.progress-lift__delta[data-good="true"] { color: var(--fuel-ink); }
+
+.progress-action { color: var(--train-ink); }
+
+.progress-session-detail__duration { display: grid; gap: 8px; padding-top: 12px; }

@@ -9,20 +9,20 @@
  */
 
 const DAY_INDEX = Object.freeze({
-  sunday: 0,
-  monday: 1,
-  tuesday: 2,
-  wednesday: 3,
-  thursday: 4,
-  friday: 5,
-  saturday: 6,
+  monday: 0,
+  tuesday: 1,
+  wednesday: 2,
+  thursday: 3,
+  friday: 4,
+  saturday: 5,
+  sunday: 6,
 })
 
 const COMPLETED_SLOT_SENTINEL = '__tempered_completed_slot__'
 
 function weekdayIndex(dateKey) {
   const date = new Date(`${dateKey}T12:00:00`)
-  return Number.isNaN(date.getTime()) ? null : date.getDay()
+  return Number.isNaN(date.getTime()) ? null : (date.getDay() + 6) % 7
 }
 
 function dayIndex(day) {

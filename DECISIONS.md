@@ -2215,3 +2215,17 @@ stored data, validation, navigation, and behavior.
 - The R9 browser test was written before its fixes and produced seven failures across all four requested defects at 5c318d6. The next-Monday and correct target-session controls already passed and remain regression guards.
 
 - R8.1 validation: 667 Node tests, 585 checks across 34 browser harnesses, and logging speed pass. The exact curated staging commands now succeed locally. Captured the complete 84-view Light/Dark matrix and inspected the restored summary at 390×844 and 430×932; retained Done controls/recorded-workout celebration match the pre-removal styles, with no character surface.
+
+
+## 2026-09-30 — R9 rollover and Today fixes
+
+- Started from remote main 3f1c9c7, which includes the completed R8 and delivery repair. Read CLAUDE.md and the complete redesign spec, including section 0.1 and all four R9 items.
+- Feature inventory: the d9850f5 Today inventory from R3.1 remains the baseline. R9 retains every movement row, completed/rollover expansion, single-slot opening, full-session opening, summary link, readiness and details, calendar-week stats, Fuel, all Daily log actions, prior-date review, day recap and planner. Changes affect only the Today workout card, queue weekday ordering, and Today's date-refresh lifecycle. Version and continuity notes are release bookkeeping. No other runtime surface, storage or domain engine is edited.
+- Test first: added today-r9.html, then ran it on unmodified 5c318d6 and again on current main 3f1c9c7. Both report 10 checks / seven failures: numeric week meta and week-one guidance; Sunday's rollover and the paired Sunday/Monday contract; foreground-after-midnight and explicit refresh; done-plus-leftovers wording. The already-correct Monday-reset and target-session checks remain guards. No fixes preceded these failing runs.
+- Use todayTasks().week, the numeric value spread from activeProgram(), rather than changing the public shape of weekStatus().week. The same number drives the week-one guidance branch.
+- Weekday indices are Monday-first in the existing queue helper. Existing canonical per-slot/week completion, full-session construction, and storage stay intact.
+- Refresh recomputes realToday before loading data. A visible, mounted Today refreshes only if the clock's local date changed; navigation deactivates the listener.
+- Completed-today-plus-rollover uses the scheduled day's done title and remaining count; the button names queue.primaryDay and opens the same remainingProgramDay route.
+
+- R9 verification: syntax checks; 667 Node tests; 595 real-browser checks across 35 harnesses; logging-speed and battle-art checks all passed. The R9 acceptance page also passes at the larger phone viewport. Native wrapper remains unchanged; the full iOS build runs in post-push CI.
+- Visual QA: captured all 84 release surfaces plus 20 R9-specific states (numeric week, Sunday, following Monday, overnight foreground, done/leftovers × Light/Dark × 390×844/430×932). Inspected both matrices. The Today changes match the R9 spec; the finished-day title, exact count, and Finish Push A fit without clipping. Other screens keep R7/R8 presentation. Compared with the approved R7 Today mockup: the missing character strip/gear beside title are approved R8 changes; seeded movement counts, expanded rollover, dates, and empty readiness differ intentionally by scenario. No unexplained layout or behavior changes remain.

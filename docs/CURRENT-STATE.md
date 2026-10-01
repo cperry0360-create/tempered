@@ -1,3 +1,11 @@
+## 2026-09-30 — Redesign V1 R9 rollover and Today fixes
+
+- Today reads the numeric active-program week for its meta and first-week guidance.
+- Daily queue ordering is Monday-first: Sunday includes the same week's earlier unfinished movements, with no rollover group on the following Monday.
+- Today recomputes the calendar-local date on refresh and refreshes its mounted screen after returning visible on a changed date. Date listeners detach off Today; other screens and active workouts are not redrawn.
+- When today's movements are complete but earlier work remains, the card reads the finished day's name plus done, the exact remaining count, and Finish followed by the day its button opens.
+- Release identity: 0.46.0 (64). Logging, stored records, prescriptions, and all other screens are unchanged.
+
 ## 2026-09-30 — R8.1 delivery recovery
 
 - R8 removed the runtime art directory, but the curated Pages staging step still copied it. Staging now includes only retained runtime assets. The independent recorded-workout summary action and celebration styles are preserved under section 0.1.
@@ -73,7 +81,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`
 **Production:** `https://cperry0360-create.github.io/tempered/`
-**Current release:** 0.45.1 (63) — R8 delivery recovery
+**Current release:** 0.46.0 (64) — R9 rollover and Today fixes
 
 **Product maturity:** Pre-beta product completion
 

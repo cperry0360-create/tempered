@@ -183,7 +183,7 @@ export function createTodayScreen({
   workout, daily, planner, storage, clock, onStart, onOpenSlot, onSettings, onViewSummary,
 }) {
   const root = el('div.screen.screen--today.screen--today-calm')
-  const realToday = clock.today()
+  let realToday = clock.today()
   let selectedDate = realToday
   let todayProgram = null
   let weekProgram = null
@@ -210,6 +210,7 @@ export function createTodayScreen({
   let mobilityRunning = false
   let rolloverOpen = null
   let completedWorkoutOpen = false
+  let listeningForDateChange = false
 
   const canLogSelected = () => selectedDate <= realToday
   const isRealToday = () => selectedDate === realToday
@@ -604,7 +605,8 @@ export function createTodayScreen({
     const programDay = queue.primaryDay ?? todayProgram?.day ?? queue.scheduledDay
     const name = todayProgram?.day?.name ?? queue.primaryDay?.name ?? queue.scheduledDay?.name ?? 'Workout'
     const expandRollover = rolloverOpen ?? rolloverRows.length < 6
-    const week = weekProgram?.week ?? todayProgram?.week ?? 1
+    // todayTasks retains the numeric active-program week; weekStatus.week holds tasks.
+    const week = todayProgram?.week ?? 1
     const weeks = weekProgram?.program?.weeks ?? todayProgram?.program?.weeks ?? 1
 
     if (queue.active.length === 0 && completedRows.length > 0) {
@@ -622,14 +624,17 @@ export function createTodayScreen({
       ])
     }
 
+    const todayDoneWithLeftovers = completedRows.length > 0 && todayRows.length === 0 && rolloverRows.length > 0
     const exerciseCount = todayProgram?.day?.exercises?.length ?? queue.today.length
-    const meta = rolloverRows.length > 0
+    const meta = todayDoneWithLeftovers
+      ? `${rolloverRows.length} left from earlier this week`
+      : rolloverRows.length > 0
       ? `${todayRows.length} today · ${rolloverRows.length} from earlier this week`
       : `Week ${week} of ${weeks} · ${exerciseCount} exercises · ~${estimateSessionMinutes(programDay)} min`
     return el('section.today-card.today-session-card.today-workout', {
       dataset: { section: 'next-session' },
     }, [
-      el('h2', { text: name }),
+      el('h2', { text: todayDoneWithLeftovers ? `${queue.scheduledDay.name} done` : name }),
       el('p.today-workout__summary', { text: meta }),
       todayRows.length > 0 && el('div.today-workout__rows', {}, todayRows.map((row) => workoutMovement(row))),
       rolloverRows.length > 0 && el('section.today-workout__rollover', { dataset: { rolloverGroup: 'true' } }, [
@@ -649,7 +654,7 @@ export function createTodayScreen({
       programDay && queue.active.length > 0 && el('button.today-button.today-button--primary.today-workout__start', {
         type: 'button', dataset: { startday: programDay.id },
         onclick: () => onStart({ programDay: remainingProgramDay(weekProgram, programDay) }),
-      }, ['Start full session']),
+      }, [todayDoneWithLeftovers ? `Finish ${programDay.name}` : 'Start full session']),
       week === 1 && rolloverRows.length === 0 && el('p.today-session-card__guidance', {
         text: 'Start when you have a useful window; record what happened so the plan can meet you where you are.',
       }),
@@ -1151,9 +1156,20 @@ export function createTodayScreen({
     await reload()
   }
 
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible' && root.isConnected && clock.today() !== realToday) {
+      refresh().catch((error) => console.error('[tempered] Today date refresh failed', error))
+    }
+  }
+
   async function refresh() {
+    if (!listeningForDateChange) {
+      document.addEventListener('visibilitychange', onVisibilityChange)
+      listeningForDateChange = true
+    }
     closeMobilityScreen()
-    selectedDate = clock.today()
+    realToday = clock.today()
+    selectedDate = realToday
     openActivityId = null
     selectedMobilityRoutineId = null
     readinessInfoOpen = false
@@ -1170,6 +1186,10 @@ export function createTodayScreen({
     primary() { return null },
     refresh,
     showDate: selectDate,
-    deactivate() { closeMobilityScreen() },
+    deactivate() {
+      closeMobilityScreen()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      listeningForDateChange = false
+    },
   }
 }

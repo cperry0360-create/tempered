@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — R9 Today acceptance</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (selector) => document.querySelector(selector)
+  const qa = (selector) => [...document.querySelectorAll(selector)]
+  const settle = (ms = 100) => new Promise((resolve) => setTimeout(resolve, ms))
+  const errors = []
+  window.addEventListener('error', (event) => errors.push(String(event.message)))
+  window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason?.stack ?? event.reason)))
+  const originalError = console.error
+  console.error = (...args) => { errors.push(args.map(String).join(' ')); originalError(...args) }
+  const mount = q('#app')
+  const card = () => q('[data-section="next-session"]')
+
+  async function fixture(instant, startedOn = '2026-09-07') {
+    localStorage.clear()
+    const storage = createMemoryStorage()
+    const clock = fixedClock(instant)
+    const app = await bootstrapHarness({ storage, clock, mount })
+    const state = (await storage.getAll('programState')).find((row) => row.active)
+    await storage.put('programState', { ...state, startedOn })
+    const source = await storage.get('programs', state.programId)
+    const names = { monday: 'Push A', tuesday: 'Pull A', wednesday: 'Minimal Legs + Abs' }
+    const program = {
+      ...source, weeks: 8,
+      days: source.days.map((day) => ({
+        ...day, name: names[day.id] ?? day.name,
+        exercises: day.id === 'monday' ? day.exercises.slice(0, 2).map((slot) => ({ ...slot, sets: 1 }))
+          : ['tuesday', 'wednesday'].includes(day.id) ? day.exercises.slice(0, 1).map((slot) => ({ ...slot, sets: 1 })) : [],
+      })),
+    }
+    await storage.put('programs', program)
+    await app.app.show('today')
+    await settle()
+    return { app, clock, storage, program, state }
+  }
+
+  async function completeDay(f, dayId, date) {
+    const day = f.program.days.find((row) => row.id === dayId)
+    const id = `r9-${dayId}-${date}`
+    await f.storage.put('sessions', {
+      id, date, startedAt: `${date}T09:00:00.000Z`, endedAt: `${date}T09:30:00.000Z`, programDayId: dayId,
+    })
+    for (const [index, slot] of day.exercises.entries()) {
+      for (let set = 0; set < slot.sets; set += 1) {
+        await f.storage.put('setLogs', {
+          id: `${id}-${index}-${set}`, sessionId: id, exerciseId: slot.exerciseId,
+          programDayId: dayId, slotIndex: index, weight: 100, reps: 8, isWarmup: false,
+          completedAt: `${date}T09:10:00.000Z`,
+        })
+      }
+    }
+  }
+
+  try {
+    const week = await fixture(new Date(2026, 8, 7, 9), '2026-08-31')
+    const meta = q('.today-workout__summary')?.textContent ?? ''
+    check('R9.1 no-rollover meta reads Week 2 of 8, never [object Object]',
+      /Week 2 of 8/.test(meta) && !/\[object Object\]/.test(card()?.textContent ?? '') && !q('[data-rollover-group]'), meta)
+    await week.storage.put('programState', { ...week.state, startedOn: '2026-09-07' })
+    await week.app.app.show('today')
+    check('R9.1 first-week guidance uses the numeric program week', Boolean(q('.today-session-card__guidance')),
+      card()?.textContent ?? '')
+
+    const sunday = await fixture(new Date(2026, 8, 13, 9))
+    const sundayRows = qa('[data-rollover-slot]')
+    const mondayExerciseIds = sunday.program.days.find((day) => day.id === 'monday').exercises.map((slot) => slot.exerciseId)
+    const sundayHasMonday = mondayExerciseIds.every((id) => sundayRows.some((row) => row.dataset.exerciseId === id))
+    check('R9.2 a fresh Sunday launch lists both unfinished Monday movements',
+      sundayHasMonday && sundayRows.length === 4, `${sundayRows.length} rollover rows: ${card()?.textContent ?? ''}`)
+    sunday.clock.set(new Date(2026, 8, 14, 9))
+    const mondayLaunch = await bootstrapHarness({ storage: sunday.storage, clock: sunday.clock, mount, initialTab: 'today' })
+    await settle()
+    const mondayHasNoRollover = !q('[data-rollover-group]') && qa('[data-rollover-slot]').length === 0
+    check('R9.2 next Monday has no prior-week rollover (fresh launch)', mondayHasNoRollover,
+      card()?.textContent ?? '')
+    check('R9.2 rollover lasts through Sunday and resets on Monday', sundayHasMonday && mondayHasNoRollover)
+    mondayLaunch.appearance.dispose()
+
+    const overnight = await fixture(new Date(2026, 8, 8, 23, 59))
+    await completeDay(overnight, 'monday', '2026-09-07')
+    await completeDay(overnight, 'tuesday', '2026-09-08')
+    await overnight.app.app.show('today')
+    let visibility = 'hidden'
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility })
+    document.dispatchEvent(new Event('visibilitychange'))
+    overnight.clock.set(new Date(2026, 8, 9, 0, 1))
+    visibility = 'visible'
+    document.dispatchEvent(new Event('visibilitychange'))
+    await settle(250)
+    const date = q('.today-heading__date')?.textContent ?? ''
+    const title = q('.today-heading .screen__title')?.textContent ?? ''
+    check('R9.3 midnight plus becoming visible refreshes Today to Wednesday and its workout',
+      q('.screen--today')?.dataset.date === '2026-09-09' && /Wednesday, 9 Sep/.test(date)
+        && title === 'Today' && q('[data-section="next-session"] h2')?.textContent === 'Minimal Legs + Abs'
+        && qa('[data-workout-slot]').length === 1
+        && !/Workout details are available for today/.test(card()?.textContent ?? ''),
+      `${title} / ${date} / ${card()?.textContent ?? ''}`)
+    await overnight.app.app.show('today')
+    check('R9.3 an explicit refresh after midnight also shows the live workout',
+      q('.today-heading .screen__title')?.textContent === 'Today' && qa('[data-workout-slot]').length === 1,
+      card()?.textContent ?? '')
+    delete document.visibilityState
+
+    const done = await fixture(new Date(2026, 8, 9, 9))
+    await completeDay(done, 'tuesday', '2026-09-08')
+    await completeDay(done, 'wednesday', '2026-09-09')
+    await done.app.app.show('today')
+    await settle()
+    const doneTitle = q('[data-section="next-session"] h2')?.textContent ?? ''
+    const doneMeta = q('.today-workout__summary')?.textContent ?? ''
+    const button = q('.today-workout__start')
+    check('R9.4 today done plus leftovers names the finished day and exact remaining count',
+      doneTitle === 'Minimal Legs + Abs done' && doneMeta === '2 left from earlier this week'
+        && button?.textContent === 'Finish Push A' && button?.dataset.startday === 'monday',
+      `${doneTitle} / ${doneMeta} / ${button?.textContent ?? 'no button'}`)
+    button?.click()
+    await settle(250)
+    check('R9.4 Finish Push A actually opens the two unfinished Monday movements',
+      Boolean(q('.screen--session')) && /Push A/.test(q('.sessionbar__title')?.textContent ?? q('.sessionbar__center')?.textContent ?? '')
+        && qa('.screen--session .exercise[data-exercise]').length === 2,
+      q('.sessionbar__center')?.textContent ?? '')
+    check('R9 scenarios produce no console errors or unhandled failures', errors.length === 0, errors.join('\n'))
+  } catch (error) {
+    check('R9 acceptance completed without throwing', false, String(error?.stack ?? error).slice(0, 1500))
+  } finally {
+    console.error = originalError
+    delete document.visibilityState
+  }
+
+  await fetch('/__report', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'today-r9', passed: checks.every((item) => item.ok), checks }),
+  })
+</script>
+</body>
+</html>

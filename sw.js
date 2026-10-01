@@ -33,6 +33,7 @@ const PRECACHE = [
   './data/exercises.json',
   './data/programs.json',
   './src/app/maintenance.js',
+  './src/app/appearance.js',
   './src/app/bootstrap.js',
   './src/app/daily.js',
   './src/app/companion-care.js',

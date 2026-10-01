@@ -1,21 +1,30 @@
-/* Redesign V1 foundation — approved palette, type, spacing, and shape tokens. */
+/* Redesign V1 colour, type, spacing, and shape tokens. */
 :root {
-  --bg: #1F252C;
-  --surface-1: #2A323B;
-  --surface-2: #36404B;
-  --surface-3: #414C58;
-  --hairline: #4A5562;
-  --tabbar: #1A1F25;
-  --text-1: #F4F6F8;
-  --text-2: #C2CAD2;
-  --text-3: #A9B3BD;
-  --accent: #E8833A;
+  --bg: #1B222C;
+  --surface-1: #242D39;
+  --surface-2: #2F3A48;
+  --surface-3: #3A4656;
+  --hairline: #445164;
+  --tabbar: #161C24;
+  --status-bar: #161C24;
+  --text-1: #F3F6FA;
+  --text-2: #BCC7D4;
+  --text-3: #A2AEBD;
+  --train: #E8833A;
+  --train-ink: #E8833A;
+  --train-muted: #8A5A3A;
+  --fuel: #4FB286;
+  --fuel-ink: #4FB286;
+  --recovery: #5FA8E8;
+  --recovery-ink: #5FA8E8;
   --on-accent: #15191D;
-  --success: #4FB286;
   --success-tint: rgba(79,178,134,0.14);
-  --warning: #E0B04A;
-  --danger: #E5484D;
+  --warning: var(--text-2);
+  --danger: var(--text-2);
   --chart: #7A8592;
+
+  --accent: var(--train);
+  --success: var(--fuel);
 
   --bg-0: var(--bg);
   --bg-1: var(--bg);
@@ -40,7 +49,7 @@
   --might: var(--chart);
   --wind: var(--chart);
   --grit: var(--chart);
-  --vitality: var(--success);
+  --vitality: var(--fuel);
   --mind: var(--chart);
   --text: var(--text-1);
 
@@ -71,4 +80,34 @@
   --font-display: var(--font-ui);
 
   color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #F3F5F8;
+  --surface-1: #FFFFFF;
+  --surface-2: #EBEFF4;
+  --surface-3: #DFE5EC;
+  --hairline: #D3DAE3;
+  --tabbar: #FFFFFF;
+  --status-bar: #161C24;
+  --text-1: #141A22;
+  --text-2: #4A5563;
+  --text-3: #5F6B7A;
+  --train-ink: #A04E0C;
+  --train-muted: #EDC7A6;
+  --fuel-ink: #1F7A55;
+  --recovery-ink: #2B6CB0;
+  --chart: #9AA5B2;
+  --blue: var(--text-2);
+  --lantern: var(--chart);
+  --wisp: var(--chart);
+  --moss: var(--chart);
+  --cap: var(--chart);
+  --might: var(--chart);
+  --wind: var(--chart);
+  --grit: var(--chart);
+  --mind: var(--chart);
+  --text: var(--text-1);
+
+  color-scheme: light;
 }

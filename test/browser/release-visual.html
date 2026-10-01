@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1B222C" />
   <title>Tempered — release visual</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
   <link rel="stylesheet" href="../../src/style.css" />
   <link rel="stylesheet" href="../../src/setup.css" />
   <link rel="stylesheet" href="../../src/program-builder.css" />
@@ -33,6 +35,7 @@
     import { confirmDiscardExercise } from '../../src/ui/session-guard.js'
 
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
+    const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')
     localStorage.clear()
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
@@ -322,6 +325,10 @@
     try {
       await installShippedInlineCss()
       const storage = createMemoryStorage()
+      if (!view.startsWith('setup-')) {
+        await storage.open()
+        await storage.put('profile', { id: 'profile', setupComplete: true, appearance: theme })
+      }
       if (view === 'setup-welcome' || view === 'setup-rhythm' || view === 'setup-plan') {
         await bootstrap({ storage, clock, mount })
         if (view === 'setup-rhythm') {

@@ -108,8 +108,8 @@ test('PHASE 8: Redesign V1 tokens load before the real styles and the HTML has n
   assert.ok(tokens < style && style < setup && setup < cadence && cadence < polish)
   assert.ok(polish < uplift && uplift < progress && progress < mobileFixes && mobileFixes < calm)
   assert.doesNotMatch(index, /battle\.css|expedition\.css|battle-fidelity\.css|character\.css/)
-  assert.match(index, /name="color-scheme" content="dark"/)
-  assert.doesNotMatch(index, /#[0-9a-fA-F]{3,8}\b/)
+  assert.match(index, /name="color-scheme" content="light dark"/)
+  assert.doesNotMatch(index, /style="[^"]*#[0-9a-fA-F]{3,8}\b/)
 })
 
 test('PHASE 8: new runtime files are available offline', () => {

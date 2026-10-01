@@ -420,7 +420,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     if (rows.length === 0) return null
     return el('section.progress-panel', {}, [
       el('h2.progress-panel__title', { text: 'Recovery' }),
-      el('div.progress-trends', {}, rows.map((signal) => {
+      el('div.progress-trends.progress-trends--recovery', {}, rows.map((signal) => {
         const currentValue = signal.values.at(-1)?.value
         const previousValues = previous.recovery.find((item) => item.key === signal.key)?.values ?? []
         const previousValue = previousValues.at(-1)?.value

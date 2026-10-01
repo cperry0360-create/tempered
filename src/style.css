@@ -1944,7 +1944,7 @@ button.row__act { cursor: pointer; }
   color: var(--vitality);
 }
 .button--danger:disabled { box-shadow: none; color: var(--text-3); cursor: default; }
-.button--danger:not(:disabled):active { background: var(--vitality); color: var(--canopy); }
+.button--danger:not(:disabled):active { background: var(--surface-3); color: var(--text-1); }
 
 .notice {
   margin: 0;
@@ -2051,9 +2051,9 @@ body::before { content: none; background-image: none; }
 .button[data-acid='primary'] {
   min-height: 52px;
   width: 100%;
-  background: var(--accent);
+  background: var(--train);
   color: var(--on-accent);
-  border-color: var(--accent);
+  border-color: var(--train);
 }
 .tabbar__tabs { gap: 0; }
 .tabbar__tab {
@@ -2072,7 +2072,7 @@ body::before { content: none; background-image: none; }
   padding: 4px 2px 0;
 }
 .tabbar__tab .icon { width: 22px; height: 22px; stroke-width: 1.5; }
-.tabbar__tab[data-active='true'] { color: var(--accent); background: transparent; }
+.tabbar__tab[data-active='true'] { color: var(--train-ink); background: transparent; }
 .active-workout-dock {
   left: 0;
   right: 0;
@@ -2250,7 +2250,7 @@ body,
   background: var(--surface-2);
 }
 
-.train-r4__segment[data-filled='true'] { background: var(--accent); }
+.train-r4__segment[data-filled='true'] { background: var(--train); }
 
 .train-r4__row {
   appearance: none;
@@ -2401,6 +2401,6 @@ body,
   line-height: 18px;
   font-variant-numeric: tabular-nums;
 }
-.train-r4__day[data-trained='true'] { border-color: var(--accent); }
-.train-r4__day[data-qualified='true'] { background: var(--accent); color: var(--on-accent); }
-.train-r4__day[data-today='true'][data-qualified='false'] { border-color: var(--accent); }
+.train-r4__day[data-trained='true'] { border-color: var(--train); }
+.train-r4__day[data-qualified='true'] { background: var(--train); color: var(--on-accent); }
+.train-r4__day[data-today='true'][data-qualified='false'] { border-color: var(--train); }

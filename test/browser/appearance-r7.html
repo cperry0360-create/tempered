@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1B222C" />
+  <title>Tempered — R7 Appearance</title>
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root.querySelector(selector)
+    const wait = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms))
+    async function waitFor(selector, root = document) {
+      for (let i = 0; i < 100; i += 1) {
+        const found = q(selector, root)
+        if (found) return found
+        await wait()
+      }
+      throw new Error(`timed out waiting for ${selector}`)
+    }
+
+    const listeners = new Set()
+    const systemColor = {
+      matches: false,
+      addEventListener(_type, listener) { listeners.add(listener) },
+      removeEventListener(_type, listener) { listeners.delete(listener) },
+      set(matches) {
+        this.matches = matches
+        for (const listener of listeners) listener({ matches })
+      },
+    }
+    const nativeMatchMedia = window.matchMedia.bind(window)
+    window.matchMedia = (query) => query === '(prefers-color-scheme: dark)' ? systemColor : nativeMatchMedia(query)
+
+    try {
+      const storage = createMemoryStorage()
+      const first = await bootstrapHarness({ storage, mount: q('#app') })
+      await first.app.show('settings')
+      check('new profiles default to System and follow the current light system theme',
+        document.documentElement.dataset.theme === 'light'
+          && q('[name="appearance"][value="system"]')?.checked === true)
+      check('active light theme updates the browser theme color',
+        q('meta[name="theme-color"]')?.content === '#F3F5F8')
+
+      const light = q('[name="appearance"][value="light"]')
+      check('Settings offers System, Light, and Dark',
+        Boolean(light) && Boolean(q('[name="appearance"][value="system"]'))
+          && Boolean(q('[name="appearance"][value="dark"]')))
+      light?.click()
+      await wait(40)
+      check('choosing Light applies immediately and saves through the profile adapter',
+        document.documentElement.dataset.theme === 'light'
+          && (await storage.get('profile', 'profile'))?.appearance === 'light')
+
+      const secondMount = document.createElement('div')
+      secondMount.className = 'app'
+      document.body.append(secondMount)
+      const second = await bootstrapHarness({ storage, mount: secondMount })
+      await second.app.show('settings')
+      check('Light persists across a new app launch even if the system is dark',
+        systemColor.matches === false
+          && document.documentElement.dataset.theme === 'light'
+          && q('[name="appearance"][value="light"]', secondMount)?.checked === true)
+
+      q('[name="appearance"][value="system"]', secondMount)?.click()
+      await wait(40)
+      systemColor.set(true)
+      await wait(10)
+      check('System follows a live switch to dark mode', document.documentElement.dataset.theme === 'dark')
+      check('dark theme updates the browser theme color',
+        q('meta[name="theme-color"]')?.content === '#1B222C')
+      systemColor.set(false)
+      await wait(10)
+      check('System follows a live switch back to light mode', document.documentElement.dataset.theme === 'light')
+
+      first.appearance?.dispose?.()
+      second.appearance?.dispose?.()
+    } catch (error) {
+      check('harness threw', false, String(error?.stack ?? error).slice(0, 500))
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'appearance-r7', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

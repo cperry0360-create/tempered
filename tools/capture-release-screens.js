@@ -31,6 +31,7 @@ const VIEWPORTS = [
   { label: 'iphone-compact', width: 390, height: 844 },
   { label: 'iphone-large', width: 430, height: 932 },
 ]
+const THEMES = ['light', 'dark']
 
 function argument(name, fallback = null) {
   const index = process.argv.indexOf(name)
@@ -204,11 +205,13 @@ try {
       screenWidth: viewport.width,
       screenHeight: viewport.height,
     })
+    for (const theme of THEMES) {
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] })
     for (const view of VIEWS) {
-      const filename = `${viewport.label}-${view}.png`
+      const filename = `${viewport.label}-${theme}-${view}.png`
       const destination = join(output, filename)
       const reportPromise = nextReport()
-      const url = `http://127.0.0.1:${port}/test/browser/release-visual.html?view=${encodeURIComponent(view)}`
+      const url = `http://127.0.0.1:${port}/test/browser/release-visual.html?view=${encodeURIComponent(view)}&theme=${theme}`
       await cdp.send('Page.navigate', { url })
       const report = await reportPromise
       if (report.view !== view || report.ok !== true) {
@@ -224,8 +227,9 @@ try {
       if (image.width !== viewport.width || image.height !== viewport.height || image.bytes < 5000) {
         throw new Error(`${filename} is ${image.width}×${image.height} and ${image.bytes} bytes`)
       }
-      manifest.push({ view, viewport: viewport.label, ...image, file: filename })
+      manifest.push({ view, theme, viewport: viewport.label, ...image, file: filename })
       console.log(`CAPTURED ${filename} (${image.bytes} bytes)`)
+    }
     }
   }
   await writeFile(join(output, 'manifest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), captures: manifest }, null, 2)}\n`)

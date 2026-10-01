@@ -801,7 +801,7 @@
 .fuel-r4__ring-track { stroke: var(--surface-2); }
 
 .fuel-r4__ring-arc {
-  stroke: var(--accent);
+  stroke: var(--fuel);
   stroke-linecap: round;
 }
 
@@ -849,7 +849,7 @@
   display: block;
   min-width: 0;
   border-radius: inherit;
-  background: var(--chart);
+  background: var(--fuel);
 }
 
 .fuel-r4__macros {
@@ -890,7 +890,7 @@
   min-height: 52px;
   border: 0;
   border-radius: var(--r-full);
-  background: var(--accent);
+  background: var(--fuel);
   color: var(--on-accent);
   font: inherit;
   font-size: 17px;

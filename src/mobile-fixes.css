@@ -68,7 +68,7 @@
   }
   .portrait-lock__phone {
     display: block;
-    color: var(--accent);
+    color: var(--train-ink);
     font-size: 54px;
     line-height: 1;
     transform: rotate(0deg);

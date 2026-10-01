@@ -10,7 +10,7 @@ import { downloadExport, readFileAsText } from '../../adapters/storage/file-tran
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 
-export function createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup, onProgramBuilder }) {
+export function createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder }) {
   const root = el('div.screen.screen--settings')
   let typed = ''
   let update = null
@@ -39,6 +39,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
 
   async function load() {
     const profile = await storage.get('profile', 'profile')
+    const selectedAppearance = await appearance?.getPreference?.() ?? 'system'
     const schedule = await daily.activitySchedule()
     const weekStatus = workout ? await workout.weekStatus() : null
     const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}
@@ -58,6 +59,23 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
 
     replace(root, [
       el('h1.screen__title', { text: 'Settings' }),
+
+      el('section.card', { dataset: { section: 'appearance' } }, [
+        el('h2.block__title', { text: 'Appearance' }),
+        el('div.appearance__choices', { role: 'radiogroup', 'aria-label': 'Appearance' },
+          ['system', 'light', 'dark'].map((value) => el('label.appearance__choice', {}, [
+            el('input', {
+              type: 'radio', name: 'appearance', value,
+              checked: selectedAppearance === value,
+              onchange: async () => {
+                await appearance?.setPreference?.(value)
+                await load()
+              },
+            }),
+            el('span', { text: value === 'system' ? 'System' : value === 'light' ? 'Light' : 'Dark' }),
+          ])),
+        ),
+      ]),
 
       el('section.card', {}, [
         el('h2.block__title', { text: 'Plan' }),

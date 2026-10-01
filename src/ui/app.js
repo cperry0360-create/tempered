@@ -49,7 +49,7 @@ function loadLegacyStyles() {
   })))
 }
 
-export function createApp({ mount, workout, daily, planner, maintenance, storage, clock, loadLegacy, onSetup }) {
+export function createApp({ mount, workout, daily, planner, maintenance, storage, clock, appearance, loadLegacy, onSetup }) {
   const body = el('main.app__body', { 'aria-busy': 'false' })
   const overlays = el('div.app__overlays')
   const announcer = liveRegion()
@@ -68,7 +68,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     onProgramBuilder: openBuilder,
   })
   const history = createHistoryScreen({ storage, workout, daily, clock })
-  const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, onSetup, onProgramBuilder: openBuilder })
+  const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
   const fuel = createFuelScreen({ storage, daily, clock })
   const companion = createCompanionScreen({
     storage, daily, clock, overlayHost: overlays,

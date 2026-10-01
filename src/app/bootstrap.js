@@ -13,6 +13,7 @@ import { createDailyService } from './daily.js'
 import { createHealthSyncService } from './health-sync.js'
 import { createPlannerService } from './planner.js'
 import { createMaintenanceService } from './maintenance.js'
+import { createAppearanceService } from './appearance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
@@ -49,6 +50,8 @@ export async function bootstrap(options = {}) {
   await seedLibrary(storage, library)
   await seedPrograms(storage, catalogue, clock)
   const profile = await ensureProfile(storage, clock)
+  const appearance = createAppearanceService({ storage })
+  await appearance.initialize()
 
   const workout = createWorkoutService({ storage, clock, balance })
   const health = appleHealthBridgeAvailable()
@@ -63,7 +66,7 @@ export async function bootstrap(options = {}) {
   await maintenance.protectStorage()
 
   const exposed = {
-    storage, clock, workout, daily, planner, character: null, battle: null,
+    storage, clock, workout, daily, planner, appearance, character: null, battle: null,
     maintenance, health, healthSync,
     balance, library, catalogue, activities, titles: null, enemies: null, itemRoster: null,
     app: null,
@@ -117,7 +120,7 @@ export async function bootstrap(options = {}) {
 
   async function showApp() {
     const app = createApp({
-      mount, workout, daily, planner, maintenance, storage, clock, loadLegacy,
+      mount, workout, daily, planner, maintenance, storage, clock, appearance, loadLegacy,
       onSetup: () => showSetup(true),
     })
     exposed.app = app

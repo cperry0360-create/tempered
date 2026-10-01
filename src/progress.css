@@ -175,12 +175,14 @@
   width: 100%;
   height: var(--bar-height, 0px);
   border-radius: 2px 2px 0 0;
-  background: var(--chart);
+  background: var(--train-muted);
 }
 
 .progress-weekly__bar[data-current='true'] {
-  background: var(--accent);
+  background: var(--train);
 }
+
+.progress-trends--recovery .spark { color: var(--recovery-ink); }
 
 .progress-weekly__axis {
   display: flex;
@@ -377,7 +379,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--success);
+  background: var(--fuel);
 }
 
 .progress-habit__streak {
@@ -408,7 +410,7 @@
 }
 
 .progress-heatmap__day[data-level='4'] {
-  background: var(--success);
+  background: var(--fuel);
 }
 
 .progress-lift {

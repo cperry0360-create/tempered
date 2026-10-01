@@ -1649,3 +1649,6 @@ button.today-item:disabled {
   border-radius: var(--r-full); background: var(--surface-2); color: var(--text-1);
   font: 500 13px/1 var(--font-ui);
 }
+
+/* Health import stays reachable after the day has data. */
+.today-readiness__import { margin-left: auto; color: var(--recovery-ink); min-height: 44px; padding: 0 8px; }

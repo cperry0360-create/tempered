@@ -83,6 +83,11 @@ SPO2=96`
       check('the import records ChatGPT Health as its source', day.healthBridge?.source === 'chatgpt-health', day.healthBridge?.source)
       check('Today redraws to the three-metric Readiness card after import',
         document.querySelectorAll('[data-section="readiness"] .today-readiness__metric').length === 3)
+      const again = q('[data-section="readiness"] [data-health-import]')
+      check('Readiness keeps an Import action after data exists, so a day can be refreshed', Boolean(again))
+      q('[data-health-paste-close]')?.click(); await settle(80)
+      again?.click()
+      check('the Import action on a filled Readiness card opens the import view', Boolean(await waitFor('[data-health-paste-overlay]')))
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
       stop()
     } catch (error) {

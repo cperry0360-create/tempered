@@ -723,6 +723,10 @@ export function createTodayScreen({
     return `${shown > 0 ? '+' : ''}${shown}`
   }
 
+  function openHealthImport(event) {
+    window.dispatchEvent(new CustomEvent('tempered:open-health-import', { detail: { trigger: event.currentTarget } }))
+  }
+
   function readinessCard() {
     const metrics = readinessMetrics()
     const hasAny = metrics.some((metric) => Number.isFinite(metric.value))
@@ -730,10 +734,8 @@ export function createTodayScreen({
       return el('section.today-card.today-readiness.today-readiness--empty', { dataset: { section: 'readiness' } }, [
         el('span', { text: 'No recovery data today' }),
         el('button.today-text-button', {
-          type: 'button',
-          onclick: (event) => window.dispatchEvent(new CustomEvent('tempered:open-health-import', {
-            detail: { trigger: event.currentTarget },
-          })),
+          type: 'button', dataset: { healthImport: 'open' },
+          onclick: openHealthImport,
         }, ['Import from Health']),
       ])
     }
@@ -741,6 +743,11 @@ export function createTodayScreen({
     return el('section.today-card.today-readiness', { dataset: { section: 'readiness' } }, [
       el('div.today-card__heading-row', {}, [
         el('h2', { text: 'Readiness' }),
+        el('button.today-text-button.today-readiness__import', {
+          type: 'button', dataset: { healthImport: 'open' },
+          'aria-label': 'Import health data from ChatGPT',
+          onclick: openHealthImport,
+        }, ['Import']),
         el('button.today-info-button', {
           type: 'button',
           'aria-label': readinessInfoOpen ? 'Hide readiness explanation' : 'Explain readiness',

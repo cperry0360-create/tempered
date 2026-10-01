@@ -2392,3 +2392,7 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 ## 2026-10-01 — Explanation credits points added (0.49.3)
 
 - **Decision:** "X carried it" names the component with the largest value × weight, not the highest raw percentage. Cory's real week read "Volume trend carried it" because volume (10% weight) scored 100%.
+
+## 2026-10-01 — Health import always reachable (0.49.4)
+
+- **Decision:** Readiness on Today always shows an `Import` button (recovery blue) beside its info button, in addition to the empty-state `Import from Health`. Since R2 the import view was reachable only when today had no recovery values, so logging sleep in the Daily log removed the only way in.

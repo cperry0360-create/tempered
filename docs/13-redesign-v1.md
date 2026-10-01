@@ -90,6 +90,50 @@ Colour rules:
 - **No scenic or painted background anywhere behind UI.** Remove `body::before` background
   art and the inline background style in `index.html`.
 
+## 1.1 Colour revision (R7, approved 30 Sep, supersedes the section 1 values it names)
+
+Cory found the single-accent grey too flat. Each part of the app now owns one colour, used
+on its icons, bars, rings, chart lines, and its one tinted card. Text and other card
+backgrounds stay neutral. There is no fourth colour; habits use green because they are
+about completion.
+
+Surfaces (slightly blue slate) and text, replacing the section 1 values:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#1B222C` |
+| `--surface-1` | `#242D39` |
+| `--surface-2` | `#2F3A48` |
+| `--surface-3` | `#3A4656` |
+| `--hairline` | `#445164` |
+| `--tabbar` | `#161C24` |
+| `--text-1` | `#F3F6FA` |
+| `--text-2` | `#BCC7D4` |
+| `--text-3` | `#A2AEBD` |
+
+Domain colours (new tokens):
+
+| Token | Value | Owns |
+|---|---|---|
+| `--train` | `#E8833A` (same as `--accent`) | Workout card, Start buttons, set progress, PR badges, Weekly sets current bar, rest bar, Finish, active tab, This week dots |
+| `--train-muted` | `#8A5A3A` | Weekly sets earlier bars |
+| `--fuel` | `#4FB286` (same as `--success`) | Calorie ring, kcal and protein bars, water bar, `Log a meal` button fill on Fuel, Daily log progress bars and checks, completed set rows |
+| `--recovery` | `#5FA8E8` | Readiness deltas, sleep, resting HR, HRV and respiration sparklines, recovery card in Progress |
+
+Rules:
+
+- **Tinted cards, two only:** the Today Workout card uses `--train` at 12% over
+  `--surface-1` with a 1px `--train` border at 40%. The Readiness card uses `--recovery` at
+  8% with a 1px `--recovery` border at 35%. Every other card is plain `--surface-1`.
+- Each screen still has at most one filled primary button. On Fuel it is green (`--fuel`
+  fill, `--on-accent` text); elsewhere ember.
+- Daily log: icons `--text-2`, progress bars and checks `--fuel`, quick-add pills
+  `--surface-2` with `--text-1` text.
+- Weight and steps sparklines stay neutral `--chart`; weight deltas stay `--text-2`.
+- No violet, teal, gold, or any other hue. No gradients, glow, or shadows.
+- Reference image: `docs/mockups/redesign-v1-today-r7.png` (ignore its companion strip,
+  which R8 removes).
+
 ## 2. Type
 
 - Font stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif`.
@@ -288,12 +332,22 @@ The most important screen. Speed between sets is the metric.
    thin `--chart` bar with `--success` fill). Streak text on one line.
 6. **Log:** existing training day rows; move "Adjust minutes" into the row's detail view.
 
-### Companion
+### Companion (retired in R8, Cory's decision 30 Sep)
 
-- The companion is reached only from the Today chip. Restore any companion elements that
-  `slate.css` hid; the companion screen keeps its existing art and features.
-- Companion art is the only illustration in the app and appears only on the Companion
-  screen and the workout summary.
+Cory never used the companion during testing and wants it gone. R8 removes it from every
+user-facing surface: the Today chip or strip, the Companion screen and its route, the
+workout summary payoff, setup and onboarding mentions, Settings, and any copy that refers
+to it. Today starts with the title row and then the Workout card.
+
+- Remove the UI code and its stylesheet rules. Do not just hide them.
+- **Do not delete or migrate stored data.** Companion records in IndexedDB stay untouched so
+  old local data loads without errors. Domain code in `src/domain/companion-*.js` and
+  `src/app/companion-care.js` may stay unreferenced with its tests, like the legacy
+  Character/Battle code.
+- Update CLAUDE.md: the one-line version, non-negotiables 1 and 3, and "What this is NOT"
+  so they no longer describe a companion. Tempered is a tracker with no reward character.
+  Update `docs/CURRENT-STATE.md` the same way.
+- The exercise photos in the active workout are now the only images in the app.
 
 ---
 
@@ -363,3 +417,15 @@ do not weaken tests of logging, persistence, or domain logic.
   the tab bar flush to the bottom and the session header directly under the status bar; and
   the Weekly sets chart renders 8 bottom-aligned bars from seeded data. Ask Cory to confirm
   the bottom spacing on his phone, since the simulator may not reproduce it.
+- **R7 Colour revision.** Apply section 1.1 in `tokens.css` and wherever colours are used
+  on Today, Train, the active workout, Fuel, and Progress. Section 0.1 still applies: no
+  feature, row, or behaviour changes in this phase.
+  *Done when:* `grep -rE "#[0-9a-fA-F]{3,8}\b" src/*.css` still finds only `tokens.css`; CI
+  captures show the Today Workout card ember-tinted and the Readiness card blue-tinted, the
+  Fuel ring and bars green, recovery sparklines blue, and no violet anywhere.
+- **R8 Retire the companion.** Apply the "Companion (retired in R8)" section.
+  *Done when:* `grep -rniE "companion|tank" src/ui index.html` finds no user-facing
+  reference (comments explaining retained data are allowed); a browser test loads a
+  profile that has companion data and proves every tab and a full workout, including the
+  summary, render without errors; CLAUDE.md and CURRENT-STATE no longer describe a
+  companion.

@@ -2377,3 +2377,9 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Lifts rows** keep R10's 30-day peak change text; the chart uses the last 12 sessions.
 - **Superseded checks:** R6's "Steps delta appears after three samples" and the R5 regression asserting `progress-trend__samples` were updated: R12 replaces sample counts with a change sentence and requires 7 readings before showing a trend.
 - **Capture set:** added `progress-trends` (scrolled to Trends and Recovery) to the release visuals.
+
+## 2026-10-01 — Smoother, contained trend charts (0.49.1)
+
+- **Overflow:** charts were a fixed 132px inside a 104px (88px on small phones) grid column, so they ran off the card. Charts now fill their column (112px, 96px under 390px wide) with `overflow: hidden`.
+- **Smoothing:** daily metrics use time-aware exponential smoothing (7-day half-life) run forward then backward, so the line is smooth and has no lag; drawn as a monotone cubic curve that cannot overshoot the data. Lifts keep the 3-session average.
+- **Change text:** daily metrics compare the mean of the last 7 days of readings with the first 7 days, so one odd day at either end does not set the headline.

@@ -106,17 +106,46 @@ function sparkline(values, width = 112, height = 34) {
 }
 
 /**
+ * Monotone cubic curve (Fritsch-Carlson) through points: smooth, and never
+ * bulges above or below the data the way a plain spline can.
+ * @param {[number, number][]} pts
+ */
+function monotonePath(pts) {
+  const n = pts.length
+  if (n < 3) return 'M' + pts.map(([px, py]) => px.toFixed(1) + ',' + py.toFixed(1)).join('L')
+  const dx = [], slope = []
+  for (let i = 0; i < n - 1; i += 1) {
+    dx[i] = pts[i + 1][0] - pts[i][0] || 1e-6
+    slope[i] = (pts[i + 1][1] - pts[i][1]) / dx[i]
+  }
+  const tangent = [slope[0]]
+  for (let i = 1; i < n - 1; i += 1) {
+    tangent[i] = slope[i - 1] * slope[i] <= 0 ? 0 : 3 * (dx[i - 1] + dx[i])
+      / ((2 * dx[i] + dx[i - 1]) / slope[i - 1] + (dx[i] + 2 * dx[i - 1]) / slope[i])
+  }
+  tangent[n - 1] = slope[n - 2]
+  let d = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1)
+  for (let i = 0; i < n - 1; i += 1) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], h = dx[i] / 3
+    d += 'C' + (x0 + h).toFixed(1) + ',' + (y0 + tangent[i] * h).toFixed(1) + ' '
+      + (x1 - h).toFixed(1) + ',' + (y1 - tangent[i + 1] * h).toFixed(1) + ' '
+      + x1.toFixed(1) + ',' + y1.toFixed(1)
+  }
+  return d
+}
+
+/**
  * R12 trend chart: faint daily readings, a bold rolling-average line, an end dot,
  * and (Recovery) a soft usual-range band. Colour comes from the row's domain.
  */
-function trendChart(summary, { width = 132, height = 48 } = {}) {
+function trendChart(summary, { width = 112, height = 48 } = {}) {
   const readings = summary.readings ?? []
   if (readings.length === 0) return null
   const svgNs = 'http://www.w3.org/2000/svg'
   const all = [...readings.map((p) => p.value), ...summary.trend.map((p) => p.value),
     ...(summary.band ? [summary.band.low, summary.band.high] : [])]
   const min = Math.min(...all), max = Math.max(...all), span = max - min || 1
-  const pad = 4
+  const pad = 5
   const first = Date.parse(readings[0].date + 'T12:00:00Z'), last = Date.parse(readings.at(-1).date + 'T12:00:00Z')
   const x = (date, index) => last === first
     ? (readings.length === 1 ? width / 2 : pad + index / (readings.length - 1) * (width - pad * 2))
@@ -143,8 +172,8 @@ function trendChart(summary, { width = 132, height = 48 } = {}) {
     svg.append(dot)
   })
   if (summary.trend.length > 1) {
-    const line = document.createElementNS(svgNs, 'polyline')
-    line.setAttribute('points', summary.trend.map((p, i) => x(p.date, i).toFixed(1) + ',' + y(p.value).toFixed(1)).join(' '))
+    const line = document.createElementNS(svgNs, 'path')
+    line.setAttribute('d', monotonePath(summary.trend.map((p, i) => [x(p.date, i), y(p.value)])))
     line.setAttribute('class', 'trend-chart__line')
     svg.append(line)
   }
@@ -807,7 +836,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       const name = exercise?.name ?? record.exerciseId
       const history = historyByExercise.get(record.exerciseId) ?? []
       const best = record.bestE1RM?.value ?? Math.max(0, ...history.map((point) => point.value))
-      const line = trendChart(summarizeTrend(history.slice(-12), { metric: 'e1rm', unit: ' lb', digits: 1, average: { count: 3 } }), { width: 120 })
+      const line = trendChart(summarizeTrend(history.slice(-12), { metric: 'e1rm', unit: ' lb', digits: 1, average: { count: 3 } }), { width: 104 })
       const delta = liftDelta(history)
       return el('button.progress-lift', {
         type: 'button',

@@ -60,3 +60,20 @@ test('a barely varying metric is not flagged for a one-point wobble', async () =
   const s = summarizeTrend(days([97, 98, 97, 98, 97, 98, 97, 98, 97, 98]), { metric: 'spo2', unit: '%', band: true })
   assert.equal(s.outside, null); assert.doesNotMatch(s.changeText, /usual range/)
 })
+
+test('time-aware smoothing damps day-to-day noise and respects gaps', async () => {
+  const { smoothTrend } = await run()
+  const noisy = days([168, 170, 167, 170, 167, 170, 167, 170, 167, 170])
+  const smooth = smoothTrend(noisy, { halfLifeDays: 7 }).map(p => p.value)
+  const swing = (xs) => Math.max(...xs.slice(1).map((x, i) => Math.abs(x - xs[i])))
+  assert.ok(swing(smooth) < swing(noisy.map(p => p.value)) / 4, 'smoothed day-to-day swing is far smaller')
+  const gap = smoothTrend([{ date: '2026-09-01', value: 100 }, { date: '2026-09-02', value: 110 }, { date: '2026-09-30', value: 110 }], { halfLifeDays: 7 })
+  assert.ok(gap[2].value - gap[1].value > (gap[1].value - gap[0].value) * 3, 'a long gap lets the trend catch up')
+})
+
+test('daily change compares the first and last week of readings, not single days', async () => {
+  const { summarizeTrend } = await run()
+  // A single high first day must not dominate the change.
+  const s = summarizeTrend(days([12000, 6000, 6100, 5900, 6000, 6050, 5950, 6000, 6100, 5900, 6000, 6050, 5950, 6000]), { metric: 'steps', rangeLabel: '30 days' })
+  assert.ok(Math.abs(s.change) < 1000, `change ${s.change}`)
+})

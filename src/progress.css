@@ -762,15 +762,18 @@
 .score-explain__done { width: 100%; margin-top: 20px; }
 
 /* R12 — readable trend charts */
-.trend-chart { display: block; width: 100%; min-width: 120px; height: 48px; overflow: visible; color: var(--train-ink); }
-.trend-chart__reading { fill: currentColor; opacity: 0.4; }
-.trend-chart__line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.trend-chart { display: block; width: 100%; max-width: 100%; height: 48px; overflow: hidden; color: var(--train-ink); }
+.trend-chart__reading { fill: currentColor; opacity: 0.35; }
+.trend-chart__line { fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
 .trend-chart__latest { fill: currentColor; }
 .trend-chart__band { fill: var(--recovery); opacity: 0.12; }
+.progress-trend { grid-template-columns: minmax(0, 1fr) 112px; }
 .progress-trend[data-domain="fuel"] .trend-chart { color: var(--fuel-ink); }
 .progress-trend[data-domain="recovery"] .trend-chart { color: var(--recovery-ink); }
-.progress-lift .trend-chart { grid-column: 2; grid-row: 1; align-self: center; width: 120px; color: var(--train-ink); }
-.progress-trend .trend-chart { width: 132px; }
+.progress-lift .trend-chart { grid-column: 2; grid-row: 1; align-self: center; color: var(--train-ink); }
 .progress-trend__delta[data-outside="above"], .progress-trend__delta[data-outside="below"] { color: var(--text-1); font-weight: 600; }
 .progress-lift-detail__chart { display: grid; gap: 6px; margin: 8px 0; }
 .progress-lift-detail__chart .trend-chart { height: 120px; }
+@media (max-width: 389px) {
+  .progress-trend { grid-template-columns: minmax(0, 1fr) 96px; }
+}

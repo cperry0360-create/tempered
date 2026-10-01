@@ -39,6 +39,28 @@ export function rollingAverage(points, { days = null, count = null } = {}) {
 }
 
 /**
+ * Time-aware exponential smoothing (the weight-trend style used by MacroFactor
+ * and Happy Scale), run forward and then backward so the line has no lag. Each
+ * reading pulls the trend by an amount that grows with the gap in days.
+ * @param {{date:string,value:number}[]} points sorted by date
+ * @param {{halfLifeDays?:number}} [options]
+ */
+export function smoothTrend(points, { halfLifeDays = 7 } = {}) {
+  const pass = (rows) => {
+    let previous = null
+    return rows.map((point) => {
+      if (!previous) { previous = { date: point.date, value: point.value }; return { ...previous } }
+      const gapDays = Math.max(1, Math.abs(stamp(point.date) - stamp(previous.date)) / DAY)
+      const pull = 1 - Math.pow(0.5, gapDays / halfLifeDays)
+      previous = { date: point.date, value: previous.value + pull * (point.value - previous.value) }
+      return { ...previous }
+    })
+  }
+  // Forward then backward: a history chart should not lag behind its own data.
+  return pass(pass(points).reverse()).reverse()
+}
+
+/**
  * Usual range: mean ± 1 population standard deviation, never narrower than ±2%
  * of the mean, so a metric that barely varies (blood oxygen) is not flagged for
  * a one-point wobble.
@@ -72,10 +94,10 @@ const format = (value, digits) => Math.abs(value).toLocaleString('en-US', {
  * Everything a trend row needs.
  * @param {{date:string,value:number}[]} points sorted by date
  * @param {{metric:string, unit?:string, digits?:number, rangeLabel?:string,
- *   average?:{days?:number,count?:number}, band?:boolean, weightGoal?:'up'|'down'|null}} options
+ *   average?:{halfLifeDays?:number,count?:number}, band?:boolean, weightGoal?:'up'|'down'|null}} options
  */
 export function summarizeTrend(points, {
-  metric, unit = '', digits = 0, rangeLabel = '', average = { days: 7 }, band = false, weightGoal = null,
+  metric, unit = '', digits = 0, rangeLabel = '', average = { halfLifeDays: 7 }, band = false, weightGoal = null,
 } = {}) {
   const readings = points.filter((p) => Number.isFinite(p?.value))
   const latest = readings.at(-1) ?? null
@@ -83,8 +105,13 @@ export function summarizeTrend(points, {
     return { readings, trend: [], latest, sparse: true, change: null, good: false, band: null, outside: null,
       changeText: 'Not enough data for a trend' }
   }
-  const trend = rollingAverage(readings, average)
-  const change = trend.at(-1).value - trend[0].value
+  const trend = average.count ? rollingAverage(readings, average) : smoothTrend(readings, average)
+  // Daily metrics: last week of readings against the first week, so one odd day
+  // at either end cannot set the headline. Session metrics: trend end to end.
+  const mean = (xs) => xs.reduce((sum, p) => sum + p.value, 0) / xs.length
+  const firstWeek = readings.filter((p) => stamp(p.date) - stamp(readings[0].date) < 7 * DAY)
+  const lastWeek = readings.filter((p) => stamp(latest.date) - stamp(p.date) < 7 * DAY)
+  const change = average.count ? trend.at(-1).value - trend[0].value : mean(lastWeek) - mean(firstWeek)
   const usual = band ? normalBand(readings.slice(-31, -1).map((p) => p.value)) : null
   const outside = usual && latest.value > usual.high ? 'above' : usual && latest.value < usual.low ? 'below' : null
   const rounded = Number(format(change, digits).replace(/,/g, ''))

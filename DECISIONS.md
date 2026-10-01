@@ -2205,3 +2205,13 @@ stored data, validation, navigation, and behavior.
 **Needs Cory:** none; placements and wording follow the R5 screen list and existing actions.
 
 ---
+
+
+## 2026-09-30 — R8.1 recovery and delivery
+
+- The original R8 task pushed ba00920 while the recovery checkout was validating. Its Node/browser/native checks passed; the explicit Pages deploy failed because its staging step still copied the deleted art/tempered directory. Remove that retired directory from staging, preserving runtime exercise photos and internal legacy assets.
+- The R8 stylesheet removal also swept up the independent summary Done-button container and recorded-workout confetti rules. Restore those existing styles from R7 under section 0.1; no character payoff is reintroduced.
+- Recovery evidence: R8 acceptance failed three checks at 5c318d6 and passes after removal, including all four tabs, 19 real set logs, summary, and unchanged legacy profile fields. No stored data is changed.
+- The R9 browser test was written before its fixes and produced seven failures across all four requested defects at 5c318d6. The next-Monday and correct target-session controls already passed and remain regression guards.
+
+- R8.1 validation: 667 Node tests, 585 checks across 34 browser harnesses, and logging speed pass. The exact curated staging commands now succeed locally. Captured the complete 84-view Light/Dark matrix and inspected the restored summary at 390×844 and 430×932; retained Done controls/recorded-workout celebration match the pre-removal styles, with no character surface.

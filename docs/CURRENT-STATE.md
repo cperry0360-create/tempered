@@ -1,3 +1,8 @@
+## 2026-09-30 — R8.1 delivery recovery
+
+- R8 removed the runtime art directory, but the curated Pages staging step still copied it. Staging now includes only retained runtime assets. The independent recorded-workout summary action and celebration styles are preserved under section 0.1.
+- Release identity: 0.45.1 (63). Stored legacy data remains untouched.
+
 ## 2026-09-30 — Redesign V1 R6 rollover and device fixes
 
 - Restored the Today workout card natively from `workout.weekStatus()` and `buildDailyWorkoutQueue()`. Unfinished slots roll across the current program week, each starts a single-movement session with canonical day/slot metadata, and full sessions use `remainingProgramDay()`. Train reports the same rollover count.
@@ -68,7 +73,7 @@ Release 0.39.0 completes Redesign V1 Phase R2 for Today: the approved dashboard 
 
 **Repository:** `cperry0360-create/tempered`
 **Production:** `https://cperry0360-create.github.io/tempered/`
-**Current release:** 0.45.0 (62) — Redesign V1 R8 removal of reward surfaces; visual acceptance pending
+**Current release:** 0.45.1 (63) — R8 delivery recovery
 
 **Product maturity:** Pre-beta product completion
 

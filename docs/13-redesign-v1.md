@@ -134,6 +134,54 @@ Rules:
 - Reference image: `docs/mockups/redesign-v1-today-r7.png` (ignore its companion strip,
   which R8 removes).
 
+## 1.2 Light mode and theme setting (R7, approved 30 Sep)
+
+**Setting:** Settings gets an `Appearance` row with three choices: `System` (default,
+follows the iPhone's light/dark setting), `Light`, `Dark`. Store the choice in local
+settings through the storage adapter. Apply it immediately by setting
+`data-theme="light"` or `"dark"` on `<html>`; for `System`, follow
+`prefers-color-scheme` and update live when the phone switches.
+
+**How:** light mode is a token swap only. Every colour already comes from `tokens.css`, so
+define the light values under `:root[data-theme="light"]` and change nothing else. If a
+screen looks wrong in light mode, the fix is a missing token, never a per-screen override.
+
+**Fill versus ink:** domain colours are bright enough for fills (buttons, bars, rings,
+tinted cards) in both modes, but too light for text and thin lines on a white background.
+Add `-ink` tokens and use them for any domain-coloured text, icon, sparkline, or 1-2px
+line. In dark mode each `-ink` equals its fill colour.
+
+| Token | Dark | Light |
+|---|---|---|
+| `--bg` | `#1B222C` | `#F3F5F8` |
+| `--surface-1` | `#242D39` | `#FFFFFF` |
+| `--surface-2` | `#2F3A48` | `#EBEFF4` |
+| `--surface-3` | `#3A4656` | `#DFE5EC` |
+| `--hairline` | `#445164` | `#D3DAE3` |
+| `--tabbar` | `#161C24` | `#FFFFFF` |
+| `--text-1` | `#F3F6FA` | `#141A22` |
+| `--text-2` | `#BCC7D4` | `#4A5563` |
+| `--text-3` | `#A2AEBD` | `#5F6B7A` |
+| `--train` (fill) | `#E8833A` | `#E8833A` |
+| `--train-ink` | `#E8833A` | `#A04E0C` |
+| `--train-muted` | `#8A5A3A` | `#EDC7A6` |
+| `--fuel` (fill) | `#4FB286` | `#4FB286` |
+| `--fuel-ink` | `#4FB286` | `#1F7A55` |
+| `--recovery` (fill) | `#5FA8E8` | `#5FA8E8` |
+| `--recovery-ink` | `#5FA8E8` | `#2B6CB0` |
+| `--on-accent` | `#15191D` | `#15191D` |
+| `--chart` | `#7A8592` | `#9AA5B2` |
+
+All text pairs above pass 4.5:1 on their surfaces. Tinted cards keep the same percentages
+in light mode. Completed set rows use `--fuel` at 14% in both modes.
+
+**iOS status bar:** `index.html` uses `apple-mobile-web-app-status-bar-style` =
+`black-translucent`, which keeps the status bar text white. In light mode that text would
+be invisible on `#F3F5F8`. Find a fix that keeps the clock and battery readable in both
+modes on an installed iPhone web app (for example, a dark-tinted strip behind the status
+bar in light mode only), and flag in "Needs Cory" if no clean option exists. Update
+`<meta name="theme-color">` to match the active theme.
+
 ## 2. Type
 
 - Font stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif`.
@@ -420,9 +468,12 @@ do not weaken tests of logging, persistence, or domain logic.
 - **R7 Colour revision.** Apply section 1.1 in `tokens.css` and wherever colours are used
   on Today, Train, the active workout, Fuel, and Progress. Section 0.1 still applies: no
   feature, row, or behaviour changes in this phase.
+  Also apply section 1.2: the light theme tokens, `-ink` tokens, and the Appearance setting.
   *Done when:* `grep -rE "#[0-9a-fA-F]{3,8}\b" src/*.css` still finds only `tokens.css`; CI
   captures show the Today Workout card ember-tinted and the Readiness card blue-tinted, the
-  Fuel ring and bars green, recovery sparklines blue, and no violet anywhere.
+  Fuel ring and bars green, recovery sparklines blue, and no violet anywhere; the capture
+  matrix includes every core screen in both Light and Dark, and a browser test proves the
+  Appearance choice persists across reloads and that System follows `prefers-color-scheme`.
 - **R8 Retire the companion.** Apply the "Companion (retired in R8)" section.
   *Done when:* `grep -rniE "companion|tank" src/ui index.html` finds no user-facing
   reference (comments explaining retained data are allowed); a browser test loads a

@@ -2330,3 +2330,9 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Decision:** The session header content now starts 10px below `env(safe-area-inset-top)` and its height includes the inset; the dark-theme `--status-bar` strip matches `--bg`.
 - **Reasoning:** On Cory's iPhone the header title sat flush under the status bar and rendered faded, consistent with iOS 26 standalone blurring content just below the status bar, and the darker strip drew a visible band above the header. Light theme keeps its dark strip for status-text legibility.
 - **Needs Cory:** confirm on the installed app that the title is crisp and no band shows.
+
+## 2026-10-01 — Screen entry animation no longer leaves a transform (0.47.2)
+
+- **Decision:** `phase8-screen-enter` now ends at `transform: none` and uses `animation-fill-mode: backwards`, so no transform remains on `.screen` after it plays.
+- **Reasoning:** 0.47.1 moved the session header lower but the title stayed blurry while Cancel and the timer were sharp, so position was not the cause. A permanent identity transform keeps the screen composited, and iOS WebKit can rasterize sticky header text at fractional offsets inside that layer. Best hypothesis, not reproducible in desktop Chromium.
+- **Needs Cory:** confirm the workout title is sharp on the installed app.

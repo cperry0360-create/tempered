@@ -132,11 +132,13 @@ body { overflow: hidden; }
    untouched. Reduced-motion below removes both. */
 @keyframes phase8-screen-enter {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .screen {
-  animation: phase8-screen-enter var(--motion-screen) ease-out both;
+  /* backwards, not both: a transform left on .screen after the animation keeps it
+     composited, and iOS WebKit then renders sticky header text blurry. */
+  animation: phase8-screen-enter var(--motion-screen) ease-out backwards;
 }
 
 .button:active,

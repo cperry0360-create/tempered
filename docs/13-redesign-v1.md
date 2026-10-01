@@ -505,3 +505,71 @@ do not weaken tests of logging, persistence, or domain logic.
   Monday does not; with the clock moved past midnight and the app made visible again, Today
   shows the new date's workout; and the done-plus-leftovers card shows the wording above.
   Prove each check fails on the current code first.
+- **R10 Sub-screens, Today density, and device fixes** (Cory's recording, 1 Oct).
+  1. **Today Workout card is too tall.** With 8 today and 3 leftovers it fills two screens.
+     Collapsed by default: title, meta (`8 today · 3 from earlier this week`), one
+     `Next up` row (the first unfinished movement, leftovers first), a row
+     `Show all 11 movements` that expands the full today and leftover lists inline, then
+     `Start full session`. Remember expanded or collapsed for the rest of the day.
+  2. **Calendar buried in Train.** Move the Training rhythm current-week strip (dates,
+     filled training days, today ring) directly under the program header card on Train,
+     with `3 weeks strong · 2 / 3 days` as its meta line. Tapping it opens the full Training
+     rhythm history. Remove the `Training rhythm` row at the bottom. Fix the clipped
+     `urrent week` label.
+  3. **Import from Health sheet** is pinned to the bottom, neither full screen nor floating,
+     with an empty stray input under the text box. Make it a full-screen view like Nutrition:
+     header with back chevron and `Import health data`; three numbered steps
+     (1 `Copy prompt and open ChatGPT`, 2 paste box, 3 `Review and import`). Remove the stray
+     input. The paste box and button must stay visible above the keyboard.
+  4. **Sub-screens are still grey and use the old look.** Apply sections 1.1 and 1.2 to every
+     pushed view, not only the four tabs: Nutrition (green: macro values, `Add meal` primary
+     green button, quick-log `Add`, Day status as a two-option segmented control; replace the
+     outlined stat tiles with plain `--surface-2` tiles), Training rhythm and Program details
+     (ember), Log day detail (ember), Health import (blue), Settings (neutral with ember
+     selection). No outlined boxes anywhere; surfaces separate by fill.
+  5. **Progress trend lines are grey.** Colour every sparkline and line chart by domain:
+     lifts and training `--train-ink`, sleep and recovery `--recovery-ink`, weight and steps
+     `--fuel-ink`. This supersedes the "weight and steps stay neutral" rule in section 1.1.
+     Deltas: up in a good direction `--fuel-ink`, otherwise `--text-2`.
+  6. **Lifts tab:** label the number (`e1RM 94.7 lb`), show the 30D change
+     (`+4.2 lb`), and remove the stray `—` before each sparkline.
+  7. **Log tab:** name each day by what was trained (`Pull A`, or `Micro sets · 3 movements`)
+     instead of `Training day`; merge multiple sessions on the same date into one row; the
+     detail view's back control is a chevron `‹ Log`, not a pill; in the detail, group sets
+     by exercise (`Front Squat · 45 × 6, 45 × 6, 45 × 6`) instead of one line per set.
+  8. **Habits tab:** drop `0 day streak`; show `Best 11 days` only, plus the current streak
+     when it is above zero (non-negotiable 4). Label or remove the unlabeled row of dots under
+     the last habit.
+  9. **Nutrition Add meal:** the time field overflows the right edge of its card.
+  *Done when:* CI captures in both themes show every pushed view using tokens and domain
+  colour with no outlined tiles; a browser test proves the Today card is collapsed by
+  default with one Next up row and expands to all rows; the Train capture shows the week
+  strip under the program header; and Cory confirms the Health import view on his phone.
+- **R11 Training score.** A weekly 0-100 score that answers "am I improving as a lifter?",
+  with a grade and a 12-week trend. Domain logic in `src/domain/training-score.js`, pure and
+  test-first, with fixtures for an improving block, a stalled block, a deload week, a missed
+  week, and a brand-new user.
+  - **Progression, 35%:** for each lift with at least 3 sessions in the last 6 weeks, compare
+    best e1RM over the last 2 weeks with the 4 weeks before. Up (or more reps at the same
+    load) = 1, holding within 1% = 0.6, down = 0. Component = average.
+  - **Plan adherence, 30%:** prescribed working sets completed this week / prescribed
+    (capped at 100%), 70%; working sets that reached the bottom of their rep range, 30%.
+    Leftovers finished later in the week count.
+  - **Consistency, 25%:** qualifying training days this week versus the program's planned
+    days (existing 30-minute rule), 70%; weeks meeting that target in the last 4, 30%.
+  - **Volume trend, 10%:** hard sets this week versus the 4-week average; 95% or more = full
+    credit, scaled down below that.
+  - **Deload weeks** skip Progression and Volume trend and reweight the rest. Lifts with too
+    little history are left out, not scored as zero. Weeks before tracking began are not
+    shown.
+  - **Grade:** 90+ A, 80-89 B, 70-79 C, 60-69 D, under 60 `Rebuild week` (no F; non-negotiable
+    4). The current week shows as `so far`.
+  - **UI:** first card on Progress Overview. Big score and grade (`82 · B`), change versus the
+    4-week average (`+6`), a 12-week ember line of weekly scores, then four component rows
+    with a thin bar and a one-line reason (`9 of 13 lifts up`, `31 of 34 planned sets`,
+    `4 of 4 training days`, `55 sets vs 49 avg`). Tapping a row lists what drove it (which
+    lifts went up, held, or dropped). Add the score and components to the existing
+    `Copy progress report for ChatGPT` text.
+  *Done when:* domain tests cover the five fixtures and prove the weights, deload reweighting,
+  and cap; the Overview capture shows the card with real seeded history; every number on
+  the card can be traced to a one-line reason (non-negotiable 3).

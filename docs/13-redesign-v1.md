@@ -601,3 +601,34 @@ do not weaken tests of logging, persistence, or domain logic.
   sparse-data rule, and the good-direction table (including resting HR down = good); CI
   captures of Progress Overview and Lifts in both themes show dots, trend line, end dot, and
   change text, with bands on Recovery rows.
+- **R11.1 Training score corrections** (Cory, 1 Oct: "I hit nearly all my trainings"). The
+  first build scored his training far below reality. Fix in `src/domain/training-score.js`,
+  test-first, then the card.
+  1. **Partial week judged against the whole week.** On Thursday, Plan adherence compared
+     Mon-Wed work against all five days' prescribed sets (44 of 93), and Volume trend compared
+     a partial week with full-week averages. The headline score and grade now come from the
+     **last completed week**. The current week is shown below it as progress, not a grade:
+     `This week: 44 of 47 sets due so far · on track`, where "due" counts program days
+     scheduled before today plus any leftovers, and today's day only once its sets are
+     logged. Volume for the current week is compared with the average pro-rated by elapsed
+     days. Never grade an unfinished week.
+  2. **Training day definition excluded micro-set days.** A day counted only with 30+ session
+     minutes, but between-call micro sets produce many short sessions (`4 min · 35 sets`), so
+     real training days failed. A training day now qualifies with **6 or more working sets,
+     or 30+ total minutes**, summing every session that date. Apply the same rule wherever the
+     30-minute rule is used for streaks and Training rhythm, and say so in its explanation.
+  3. **Away weeks.** Add `Mark week as away` (in the score detail and in Training rhythm),
+     stored through the storage adapter. Away weeks render as a gap in the trend line, are
+     excluded from the 4-week average, the weeks-met-target count, and Volume baselines, and
+     their consistency is not scored. An away week can be unmarked. Rest is part of the plan
+     (non-negotiables 4 and 9).
+  4. **Sets matched only by exact program slot.** Count a working set toward a slot when it
+     is that slot's exercise or its recorded substitute (`substitutedFor`) in that program
+     week, whether logged through a full session, a single-movement session, or an ad-hoc
+     add, capped at the slot's prescribed sets. Program edits mid-week use the revision in
+     force on the day the set was logged.
+  5. Recompute all historical weeks with these rules.
+  *Done when:* domain tests prove: a Thursday with Mon-Wed fully done reads "on track" and is
+  not graded; a day of 20 working sets across eight 3-minute sessions qualifies; an away week
+  is excluded from averages and targets; a swapped exercise counts toward its slot; and each
+  test fails on the R11 code first. Cory confirms the score matches how his weeks felt.

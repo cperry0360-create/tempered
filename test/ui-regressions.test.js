@@ -244,7 +244,8 @@ test('REGRESSION: R4 removes the AI coaching dashboard from Train', () => {
 
 test('REGRESSION: R4 Fuel keeps nutrition and hydration but removes recovery', () => {
   const fuel = read('src/ui/screens/fuel.js')
-  assert.match(fuel, /Log a meal/)
+  // 0.51.0 moved meal entry inline: Fuel mounts the nutrition panel instead of a Log a meal button.
+  assert.match(fuel, /mount-nutrition-panel/)
   // 0.50.0 replaced the three-item Recent list with a searchable My foods library.
   assert.match(fuel, /My foods/)
   assert.match(fuel, /Water/)

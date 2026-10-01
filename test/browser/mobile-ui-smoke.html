@@ -26,6 +26,7 @@
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
     import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
+    import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
 
     const checks = []
     const runtimeErrors = []
@@ -143,7 +144,9 @@
 
       await tab('fuel', '.screen--fuel')
       check('Fuel screen renders', Boolean(q('.screen--fuel')))
-      thumbSized(q('.fuel-r4__primary'), 'Fuel meal action')
+      // 0.51.0: meal entry is inline on Fuel; its Add meal button is the meal action.
+      installCalorieAiRuntime(); await tempered.app.show('fuel'); await settle(200)
+      thumbSized(q('.screen--fuel [data-action="nutrition-log"]'), 'Fuel meal action')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__select')

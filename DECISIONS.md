@@ -2402,3 +2402,10 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Decision:** Fuel's three-item Recent list is now `My foods`: a search box over every distinct food ever logged (same description and macros), the three most-logged pinned under `Most logged` (only foods logged more than once), and `All foods` newest first (5 shown, `Show all N foods`). One tap on + logs the saved macros to today; the row confirms `Added to today`. Search requires every typed word, any order, case-insensitive. Typing updates only the results so the keyboard stays up.
 - Domain: `foodLibrary()` and `searchFoods()` in `src/domain/nutrition.js`, test-first. Browser proof: `test/browser/fuel-foods.html`.
 - Copy and R4 regression tests that named the old Recent list were updated to the new names.
+
+## 2026-10-01 — Meal entry inline on Fuel (0.51.0)
+
+- **Decision:** Fuel no longer sends meal entry to a separate screen. The nutrition runtime builds an inline panel (once per date, reused across Fuel re-renders so half-typed meals survive) containing `Add a meal` (meal, time, five nutrients, Meal photo, Import copied nutrition, Add meal), `Today's meals` with delete and Undo, Day status, and `Log for an earlier day`, which opens the existing dated full-screen view. Fuel's `Log a meal` button is gone; Add meal is the single filled button.
+- **Mechanics:** Fuel dispatches `tempered:mount-nutrition-panel` with a persistent slot only when the slot is empty or the date changed; My foods taps dispatch `tempered:nutrition-refresh`. The runtime's shared helpers resolve the active host (overlay if open, otherwise the panel). A browser test proves no idle refresh loop.
+- **Search to entry:** a My foods search with no match offers `Add "…" as a new meal`, filling the form and focusing Calories.
+- **Kept:** Today's Fuel `+` still opens the full-screen entry view for a quick add without leaving Today; the dated view remains for earlier days.

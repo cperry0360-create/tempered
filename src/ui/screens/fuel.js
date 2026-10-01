@@ -10,6 +10,9 @@ export function createFuelScreen({ storage, daily, clock }) {
   let foodQuery = ''
   let showAllFoods = false
   let justAdded = null
+  // The add-meal form and today's meals live here, built once by the nutrition
+  // runtime and reused across re-renders so half-typed entries survive.
+  const mealPanel = el('div.fuel-r4__meal-panel')
 
   const onFuelUpdated = (event) => {
     if (root.isConnected && (!event?.detail?.date || event.detail.date === clock.today())) refresh().catch(() => {})
@@ -36,6 +39,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     await daily.addNutrition(clock.today(), values)
     justAdded = food.description
     await refresh()
+    window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
     setTimeout(() => { if (justAdded === food.description) { justAdded = null; if (root.isConnected) render() } }, 2000)
   }
 
@@ -67,7 +71,11 @@ export function createFuelScreen({ storage, daily, clock }) {
       const matches = searchFoods(all, foodQuery)
       return matches.length
         ? [el('div.fuel-food__list', {}, matches.slice(0, 30).map(foodRow))]
-        : [el('p.fuel-r4__empty', { text: `No saved food matches "${foodQuery.trim()}". Log it once from Log a meal.` })]
+        : [el('p.fuel-r4__empty', { text: `No saved food matches "${foodQuery.trim()}".` }),
+            el('button.fuel-food__more', {
+              type: 'button', dataset: { foodNew: foodQuery.trim() },
+              onclick: () => startNewMeal(foodQuery.trim()),
+            }, [`Add "${foodQuery.trim()}" as a new meal`])]
     }
     const visible = showAllFoods ? rest : rest.slice(0, 5)
     return [
@@ -79,6 +87,16 @@ export function createFuelScreen({ storage, daily, clock }) {
         type: 'button', onclick: () => { showAllFoods = true; render() },
       }, [`Show all ${rest.length} foods`]),
     ].filter(Boolean)
+  }
+
+  function startNewMeal(name) {
+    const description = mealPanel.querySelector('[data-entry="nutrition_description"]')
+    if (!description) return
+    description.value = name
+    description.dispatchEvent(new Event('input', { bubbles: true }))
+    const calories = mealPanel.querySelector('[data-entry="nutrition_calories"]')
+    calories?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    calories?.focus()
   }
 
   function foodsCard() {
@@ -149,9 +167,6 @@ export function createFuelScreen({ storage, daily, clock }) {
     const energyProgress = percent(calories, calorieGoal)
     const proteinProgress = percent(protein, proteinGoal)
     const waterProgress = percent(water, waterGoal)
-    const openNutrition = (event) => window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
-      detail: { date: clock.today(), trigger: event.currentTarget },
-    }))
 
     replace(root, [
       el('h1.screen__title', { text: 'Fuel' }),
@@ -169,9 +184,9 @@ export function createFuelScreen({ storage, daily, clock }) {
           el('span', { text: label }),
           el('strong', { text: `${Math.round(value)} g` }),
         ]))),
-        el('button.fuel-r4__primary', { type: 'button', onclick: openNutrition }, ['Log a meal']),
       ]),
       foodsCard(),
+      mealPanel,
       el('section.fuel-r4__card.fuel-r4__water', {}, [
         el('h2', { text: 'Water' }),
         el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),
@@ -182,6 +197,11 @@ export function createFuelScreen({ storage, daily, clock }) {
           }, [`+${amount}`]))),
       ]),
     ])
+    const today = clock.today()
+    if (!mealPanel.firstChild || mealPanel.dataset.date !== today) {
+      mealPanel.dataset.date = today
+      window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel', { detail: { slot: mealPanel, date: today } }))
+    }
   }
 
   async function refresh() { await load(); render() }

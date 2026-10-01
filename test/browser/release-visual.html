@@ -41,7 +41,7 @@
     const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
-      train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel',
+      train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder',
@@ -409,7 +409,7 @@
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: target })
         await installCableMachineRuntime(tempered)
         if (view.startsWith('today') || view === 'mobility' || view.startsWith('train-')) await seedTodayReference(storage)
-        if (view === 'fuel') await seedFuelReference(storage)
+        if (view.startsWith('fuel')) { installCalorieAiRuntime(); await seedFuelReference(storage) }
         // Retired Shortcut UI is not mounted in production Settings.
         if (view.startsWith('progress')) {
           await seedProgressReference(storage)
@@ -433,6 +433,8 @@
       }
       await settle()
       if (view === 'nutrition-meal') document.querySelector('.nutrition-meal-form')?.scrollIntoView({ block: 'start' })
+      if (view === 'fuel-entry') document.querySelector('.nutrition-panel__add')?.scrollIntoView({ block: 'start' })
+      if (view === 'fuel-meals') document.querySelector('.nutrition-panel__meals')?.scrollIntoView({ block: 'start' })
       if (view === 'progress-trends') document.querySelectorAll('.progress-trends')[0]?.closest('.progress-panel')?.scrollIntoView({ block: 'start' })
       if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })
       document.activeElement?.blur()

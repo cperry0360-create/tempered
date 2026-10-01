@@ -158,8 +158,12 @@ function nutrientLine(values) {
 export function installCalorieAiRuntime() {
   const mount = document.getElementById('app')
   if (!mount) return () => {}
+  // The full-screen overlay (earlier days, Today's +) and the inline panel on
+  // Fuel share every builder below; host() is whichever is active.
   let nutritionScreen = null
+  let panelScreen = null
   let lastNutritionTrigger = null
+  const host = () => (nutritionScreen?.isConnected ? nutritionScreen : panelScreen?.isConnected ? panelScreen : null)
   let lastDeleted = null
 
 
@@ -197,7 +201,7 @@ export function installCalorieAiRuntime() {
     return button
   }
 
-  async function refreshUnderlyingSurfaces(date = nutritionScreen?.dataset.date) {
+  async function refreshUnderlyingSurfaces(date = host()?.dataset.date) {
     if (!date) return
     window.dispatchEvent(new CustomEvent('tempered:fuel-updated', { detail: { date } }))
     const context = globalThis.tempered
@@ -209,7 +213,7 @@ export function installCalorieAiRuntime() {
   }
 
   function setScreenStatus(message, state = '') {
-    const status = nutritionScreen?.querySelector('[data-nutrition-status]')
+    const status = host()?.querySelector('[data-nutrition-status]')
     if (!status) return
     status.dataset.state = state
     status.textContent = message
@@ -286,10 +290,10 @@ export function installCalorieAiRuntime() {
   }
 
   function renderUndo() {
-    const host = nutritionScreen?.querySelector('[data-nutrition-undo]')
-    if (!host) return
-    host.replaceChildren()
-    host.hidden = !lastDeleted
+    const target = host()?.querySelector('[data-nutrition-undo]')
+    if (!target) return
+    target.replaceChildren()
+    target.hidden = !lastDeleted
     if (!lastDeleted) return
     const message = document.createElement('span')
     message.textContent = 'Meal deleted.'
@@ -307,16 +311,16 @@ export function installCalorieAiRuntime() {
         setScreenStatus('Could not restore that entry.', 'error')
       }
     }
-    host.append(message, undo)
+    target.append(message, undo)
   }
 
   function renderSuggestions(date, days) {
-    const section = nutritionScreen?.querySelector('[data-nutrition-suggestions-section]')
-    const host = nutritionScreen?.querySelector('[data-nutrition-suggestions]')
-    if (!section || !host) return
+    const section = host()?.querySelector('[data-nutrition-suggestions-section]')
+    const list = host()?.querySelector('[data-nutrition-suggestions]')
+    if (!section || !list) return
     const suggestions = nutritionSuggestions(days, 4)
     section.hidden = suggestions.length === 0
-    host.replaceChildren(...suggestions.map((suggestion) => {
+    list.replaceChildren(...suggestions.map((suggestion) => {
       const button = makeButton('nutrition-suggestion', '', `Log ${suggestion.description} again`)
       button.dataset.nutritionSuggestion = suggestion.description
       const name = document.createElement('strong')
@@ -347,15 +351,16 @@ export function installCalorieAiRuntime() {
   }
 
   async function renderNutritionData() {
-    if (!nutritionScreen?.isConnected) return
+    const screen = host()
+    if (!screen) return
     const context = globalThis.tempered
-    const date = nutritionScreen.dataset.date
+    const date = screen.dataset.date
     const [view, day, days] = await Promise.all([
       context.daily.forDate(date), context.daily.dayLog(date), context.storage.getAll('dayLogs'),
     ])
-    if (!nutritionScreen?.isConnected || nutritionScreen.dataset.date !== date) return
+    if (host() !== screen || screen.dataset.date !== date) return
     const ledger = nutritionLedger(day)
-    const dayStatus = nutritionScreen.querySelector('[data-nutrition-day-status]')
+    const dayStatus = screen.querySelector('[data-nutrition-day-status]')
     if (dayStatus) {
       const state = day?.nutritionStatus ?? (date === context.clock.today() ? 'partial' : 'unreviewed')
       dayStatus.dataset.state = state
@@ -371,8 +376,8 @@ export function installCalorieAiRuntime() {
     const protein = activityById(view, 'protein_target')
     const caloriesGoal = Number(calories?.dailyCap)
     const proteinGoal = Number(protein?.dailyCap)
-    const totals = nutritionScreen.querySelector('[data-nutrition-totals]')
-    totals.replaceChildren(
+    const totals = screen.querySelector('[data-nutrition-totals]')
+    totals?.replaceChildren(
       totalCard('Calories', `${shownNumber(ledger.totals.calories)} kcal`, Number.isFinite(caloriesGoal) && caloriesGoal > 0 ? `${shownNumber(caloriesGoal)} target` : '', 'calories'),
       totalCard('Protein', `${shownNumber(ledger.totals.protein)} g`, Number.isFinite(proteinGoal) && proteinGoal > 0 ? `${shownNumber(proteinGoal)} target` : '', 'protein'),
       totalCard('Carbs', `${shownNumber(ledger.totals.carbs)} g`, '', 'carbs'),
@@ -380,14 +385,14 @@ export function installCalorieAiRuntime() {
       totalCard('Fiber', `${shownNumber(ledger.totals.fiber)} g`, '', 'fiber'),
     )
 
-    const list = nutritionScreen.querySelector('[data-nutrition-history]')
+    const list = screen.querySelector('[data-nutrition-history]')
     const entries = [...ledger.entries].sort((a, b) => b.loggedAt.localeCompare(a.loggedAt))
     const rows = entries.map((entry) => historyItem(entry, date))
     if (ledger.hasCarryover) rows.push(carryoverItem(ledger.carryover))
     if (rows.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'nutrition-history__empty'
-      empty.textContent = 'No meals logged yet; add one above to start your history.'
+      empty.textContent = screen === panelScreen ? 'No meals yet today.' : 'No meals logged yet; add one above to start your history.'
       rows.push(empty)
     }
     list.replaceChildren(...rows)
@@ -435,8 +440,8 @@ export function installCalorieAiRuntime() {
     requestAnimationFrame(() => nutritionScreen?.querySelector('[data-nutrition-date]')?.focus())
   }
 
-  function buildNutritionScreen(date, trigger) {
-    lastNutritionTrigger = trigger
+  function buildNutritionScreen(date, trigger, { embedded = false } = {}) {
+    if (!embedded) lastNutritionTrigger = trigger
     lastDeleted = null
     const overlay = document.createElement('div')
     overlay.className = 'nutrition-log-overlay'
@@ -581,6 +586,7 @@ export function installCalorieAiRuntime() {
     const add = makeButton('nutrition-meal-form__add', 'Add meal', 'Add meal to Nutrition history')
     add.type = 'submit'
     add.dataset.action = 'nutrition-log'
+    if (embedded) actions.append(promptButton('nutrition-meal-form__photo'))
     actions.append(paste, add)
     form.append(formTitle, fields, status, actions)
     form.onsubmit = async (event) => {
@@ -609,7 +615,7 @@ export function installCalorieAiRuntime() {
         lastDeleted = null
         await renderNutritionData()
         await refreshUnderlyingSurfaces()
-        setScreenStatus('Meal added to today’s history.', 'success')
+        setScreenStatus(embedded ? 'Meal added.' : 'Meal added to today’s history.', 'success')
       } catch {
         setScreenStatus('Could not add that meal; your saved data was not changed.', 'error')
       } finally {
@@ -622,6 +628,25 @@ export function installCalorieAiRuntime() {
     undo.className = 'nutrition-undo'
     undo.dataset.nutritionUndo = 'true'
     undo.hidden = true
+    if (embedded) {
+      const panel = document.createElement('div')
+      panel.className = 'nutrition-panel'
+      panel.dataset.nutritionPanel = 'true'
+      panel.dataset.date = date
+      formTitle.textContent = 'Add a meal'
+      historyTitle.textContent = 'Today’s meals'
+      const earlier = makeButton('nutrition-panel__earlier', 'Log for an earlier day', 'Log or fix meals on an earlier day')
+      earlier.dataset.nutritionEarlier = 'true'
+      earlier.onclick = () => openNutritionScreen(earlier, shiftedDate(date, -1))
+      const addCard = document.createElement('section')
+      addCard.className = 'fuel-r4__card nutrition-panel__add'
+      addCard.append(form)
+      const mealsCard = document.createElement('section')
+      mealsCard.className = 'fuel-r4__card nutrition-panel__meals'
+      mealsCard.append(historySection, undo, dayStatus, earlier)
+      panel.append(addCard, mealsCard)
+      return panel
+    }
     screen.append(header, datePicker, totals, dayStatus, suggestionSection, form, historySection, undo)
     overlay.append(screen)
     overlay.onclick = (event) => { if (event.target === overlay) closeNutritionScreen() }
@@ -653,6 +678,21 @@ export function installCalorieAiRuntime() {
     if (lastNutritionTrigger?.isConnected) lastNutritionTrigger.focus()
     lastNutritionTrigger = null
     lastDeleted = null
+    if (panelScreen?.isConnected) renderNutritionData().catch(() => {})
+  }
+
+  /** Fuel asks for the inline panel; it is built once per date and reused across re-renders. */
+  const mountPanel = (event) => {
+    const slot = event?.detail?.slot, date = event?.detail?.date
+    if (!slot || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) return
+    if (!(panelScreen && panelScreen.dataset.date === date && slot.contains(panelScreen))) {
+      panelScreen = buildNutritionScreen(date, null, { embedded: true })
+      slot.replaceChildren(panelScreen)
+    }
+    if (!nutritionScreen?.isConnected) renderNutritionData().catch(() => setScreenStatus('Meals could not load; try again.', 'error'))
+  }
+  const refreshPanel = () => {
+    if (panelScreen?.isConnected && !nutritionScreen?.isConnected) renderNutritionData().catch(() => {})
   }
 
   const screenShown = (event) => {
@@ -664,9 +704,13 @@ export function installCalorieAiRuntime() {
   )
   window.addEventListener('tempered:screen-shown', screenShown)
   window.addEventListener('tempered:open-nutrition', nutritionRequested)
+  window.addEventListener('tempered:mount-nutrition-panel', mountPanel)
+  window.addEventListener('tempered:nutrition-refresh', refreshPanel)
   return () => {
     window.removeEventListener('tempered:screen-shown', screenShown)
     window.removeEventListener('tempered:open-nutrition', nutritionRequested)
+    window.removeEventListener('tempered:mount-nutrition-panel', mountPanel)
+    window.removeEventListener('tempered:nutrition-refresh', refreshPanel)
     closeNutritionScreen()
   }
 }

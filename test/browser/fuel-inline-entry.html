@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tempered — meal entry on Fuel</title>
+<link rel="stylesheet" href="../../src/tokens.css" /><link rel="stylesheet" href="../../src/style.css" />
+<link rel="stylesheet" href="../../src/nutrition-today.css" /><link rel="stylesheet" href="../../src/calm.css" /><link rel="stylesheet" href="../../src/fuel.css" />
+</head><body><div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+  import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (s) => document.querySelector(s), qa = (s) => [...document.querySelectorAll(s)]
+  const settle = (ms = 200) => new Promise((r) => setTimeout(r, ms))
+  const errors = []; addEventListener('error', (e) => errors.push(e.message)); addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)))
+  const type = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })) }
+  try {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { async writeText() {}, async readText() { return '' } } })
+    const storage = createMemoryStorage(), clock = fixedClock(new Date(2026, 9, 1, 12, 30))
+    const t = await bootstrapHarness({ storage, clock, mount: q('#app') })
+    installCalorieAiRuntime()
+    await t.daily.addNutrition('2026-09-28', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-28T10:00:00.000Z' })
+    await t.daily.addNutrition('2026-09-29', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-29T10:00:00.000Z' })
+    await t.app.show('fuel'); await settle(400)
+    const form = q('.screen--fuel [data-nutrition-form]')
+    check('the add-meal form is on the Fuel tab itself, no extra screen', Boolean(form) && !q('.nutrition-log-overlay'))
+    check('Meal photo and Import copied nutrition are on Fuel', Boolean(q('.screen--fuel [data-calorie-ai="prompt"]')) && Boolean(q('.screen--fuel [data-calorie-ai="paste"]')))
+    check('Day status is on Fuel', Boolean(q('.screen--fuel [data-nutrition-day-status]')))
+    check('only one filled primary button on Fuel', qa('.screen--fuel .fuel-r4__primary').length === 0)
+
+    type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
+    q('.fuel-r4__water-actions button')?.click(); await settle(300)
+    check('half-typed meal survives a Fuel refresh (water tap)', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
+
+    type(q('.screen--fuel [data-entry="nutrition_calories"]'), '740')
+    type(q('.screen--fuel [data-entry="nutrition_protein"]'), '38')
+    q('.screen--fuel [data-action="nutrition-log"]')?.click(); await settle(500)
+    let day = await t.daily.dayLog('2026-10-01')
+    check('Add meal logs to today', day.calories === 740 && day.proteinGrams === 38, `${day.calories}/${day.proteinGrams}`)
+    check('the ring updates on the same screen', /1,360/.test(q('.screen--fuel')?.textContent ?? ''), q('.fuel-r4__ring, .screen--fuel')?.textContent.slice(0, 80))
+    check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
+    check('My foods now includes the new meal', Boolean(q('[data-food="Turkey sandwich"]')))
+
+    q('[data-food-add="Protein shake"]')?.click(); await settle(500)
+    check("a My foods tap appears in today's meals", (q('.screen--fuel [data-nutrition-history]')?.textContent.match(/Protein shake/g) ?? []).length === 1)
+
+    q('.screen--fuel .nutrition-entry__delete')?.click(); await settle(400)
+    check('delete offers Undo', q('.screen--fuel [data-nutrition-undo]')?.hidden === false)
+    q('.screen--fuel .nutrition-undo__button')?.click(); await settle(400)
+    day = await t.daily.dayLog('2026-10-01')
+    check('Undo restores the meal', day.calories === 900, day.calories)
+
+    const search = q('.fuel-food__search'); type(search, 'pizza'); await settle(50)
+    q('[data-food-new]')?.click(); await settle(100)
+    check('no-match search offers to add it, filling the form', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'pizza' && document.activeElement === q('.screen--fuel [data-entry="nutrition_calories"]'))
+
+    q('[data-nutrition-earlier]')?.click(); await settle(300)
+    check('earlier days still open the dated entry screen', Boolean(q('.nutrition-log-overlay [data-nutrition-date]')))
+    q('.nutrition-log-overlay .nutrition-log-header__back')?.click(); await settle(300)
+    let updates = 0; const count = () => { updates += 1 }
+    addEventListener('tempered:fuel-updated', count); await settle(1500); removeEventListener('tempered:fuel-updated', count)
+    check('Fuel and the meal panel do not refresh each other in a loop', updates <= 1, `${updates} updates while idle`)
+    check('no runtime errors', errors.length === 0, errors.join(' | '))
+  } catch (error) { check('fuel inline harness completed', false, String(error?.stack ?? error).slice(0, 900)) }
+  await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'fuel-inline-entry', passed: checks.every((c) => c.ok), checks }) })
+</script></body></html>

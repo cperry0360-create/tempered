@@ -282,3 +282,25 @@
   min-height: 44px; border: 0; background: transparent; color: var(--fuel-ink);
   font: 500 15px/20px var(--font-ui); text-align: left; padding: 0 2px;
 }
+
+/* Meal entry inline on Fuel (0.51.0): the cards are Fuel's, so the form and
+   history drop their own card chrome. */
+.fuel-r4__meal-panel, .nutrition-panel { display: grid; gap: 16px; }
+.nutrition-panel .nutrition-meal-form,
+.nutrition-panel .nutrition-history { padding: 0; background: none; border-radius: 0; }
+.nutrition-panel .nutrition-meal-form h3,
+.nutrition-panel .nutrition-history h3 { font: 600 22px/28px var(--font-ui); }
+.nutrition-panel .nutrition-meal-form__actions { grid-template-columns: 1fr 1fr; }
+.nutrition-panel .nutrition-meal-form__add { grid-column: 1 / -1; }
+.nutrition-panel .nutrition-meal-form__paste { font-size: 15px; font-weight: 600; min-height: 48px; }
+.nutrition-meal-form__photo {
+  min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: var(--r-full); background: var(--surface-2); color: var(--text-1);
+  font: 600 15px/20px var(--font-ui); text-decoration: none;
+}
+.nutrition-meal-form__photo svg, .nutrition-meal-form__photo img { width: 20px; height: 20px; flex: none; color: var(--fuel-ink); }
+.nutrition-panel .nutrition-day-status { padding: 12px; background: var(--surface-2); }
+.nutrition-panel__earlier {
+  min-height: 44px; border: 0; background: transparent; color: var(--fuel-ink);
+  font: 500 15px/20px var(--font-ui); text-align: left; padding: 0 2px; appearance: none;
+}

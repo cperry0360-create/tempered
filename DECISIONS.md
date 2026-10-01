@@ -2324,3 +2324,9 @@ no unexplained outlines, clipping or layout differences in touched views remain.
 Needs Cory: installed-iPhone Health keyboard/paste/back flow and status/home-indicator safe
 areas need physical-device confirmation; the browser tests simulate the visual-viewport shrink
 but cannot reproduce iOS clipboard permissions, native date/time rendering or standalone chrome.
+
+## 2026-10-01 — Active workout header clearance (0.47.1)
+
+- **Decision:** The session header content now starts 10px below `env(safe-area-inset-top)` and its height includes the inset; the dark-theme `--status-bar` strip matches `--bg`.
+- **Reasoning:** On Cory's iPhone the header title sat flush under the status bar and rendered faded, consistent with iOS 26 standalone blurring content just below the status bar, and the darker strip drew a visible band above the header. Light theme keeps its dark strip for status-text legibility.
+- **Needs Cory:** confirm on the installed app that the title is crisp and no band shows.

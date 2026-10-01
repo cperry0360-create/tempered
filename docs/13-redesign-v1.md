@@ -628,7 +628,21 @@ do not weaken tests of logging, persistence, or domain logic.
      add, capped at the slot's prescribed sets. Program edits mid-week use the revision in
      force on the day the set was logged.
   5. Recompute all historical weeks with these rules.
+  6. **Score explanation (`i` button).** A 44pt `i` button beside the `Training score`
+     title opens a bottom sheet with a short narrative for the headline week, 3 to 4 plain
+     sentences built from the component data by a pure function in the domain (template
+     text, no AI, no network). Order: the score and grade; the component that helped most,
+     with its reason; the component that held it back most, with its reason and the specific
+     movements or days involved; one concrete next step. Example: `Last week scored 84, a B.
+     Progression carried it: 11 of 13 lifts went up. Plan adherence held it back: you
+     finished 78 of 93 planned sets, mostly Delts + Arms. Finishing this week's leftovers is
+     the quickest way up.` Mention deload and away weeks when they apply. Follow
+     non-negotiable 9 wording (no "failed", "missed", "crushed"); say "left" or "still to do".
+     A second short paragraph explains how the score works in one sentence per component,
+     with its weight. Close with `Done`.
   *Done when:* domain tests prove: a Thursday with Mon-Wed fully done reads "on track" and is
   not graded; a day of 20 working sets across eight 3-minute sessions qualifies; an away week
   is excluded from averages and targets; a swapped exercise counts toward its slot; and each
-  test fails on the R11 code first. Cory confirms the score matches how his weeks felt.
+  test fails on the R11 code first; a domain test proves the narrative names the top and
+  bottom components and their reasons for a fixture week, and uses none of the avoided words.
+  Cory confirms the score matches how his weeks felt.

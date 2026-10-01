@@ -777,3 +777,5 @@
 @media (max-width: 389px) {
   .progress-trend { grid-template-columns: minmax(0, 1fr) 96px; }
 }
+.score-explain { z-index: 2000; }
+html.sheet-open .app__body { overflow: hidden; }

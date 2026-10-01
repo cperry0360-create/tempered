@@ -42,7 +42,7 @@
     const route = {
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel',
-      progress: 'history', 'progress-trends': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
+      progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder',
     }
@@ -305,6 +305,7 @@
     async function selectProgressView(tempered, target) {
       await tempered.app.show('history')
       if (target === 'progress' || target === 'progress-trends') return
+      if (target === 'progress-score-explain') { mount.querySelector('[data-score-info]')?.click(); await settle(); return }
       if (target.startsWith('progress-score-')) {
         mount.querySelector('[data-score-component="' + target.slice('progress-score-'.length) + '"]')?.click()
         await settle()

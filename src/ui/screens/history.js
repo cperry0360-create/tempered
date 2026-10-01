@@ -617,8 +617,17 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         type: 'button', dataset: { scoreComponent: 'weeks' },
         onclick: () => { selectedScoreComponent = 'weeks'; render() },
       }, [el('div.progress-score__head', {}, [el('strong', { text: 'Weeks' }), el('span', { text: 'Mark travel or rest ›' })])]),
-      scoreExplainOpen && scoreExplainSheet(result),
     ].filter(Boolean))
+  }
+
+  /**
+   * The explanation is mounted on <body>, not inside the card: the scrolling page
+   * is its own stacking context, which kept the sheet under the tab bar.
+   */
+  function syncScoreExplainSheet() {
+    document.querySelectorAll('.score-explain').forEach((node) => node.remove())
+    document.documentElement.classList.toggle('sheet-open', scoreExplainOpen)
+    if (scoreExplainOpen && view === 'overview' && !selectedScoreComponent) document.body.append(scoreExplainSheet(scoreData()))
   }
 
   function scoreExplainSheet(result) {
@@ -1005,6 +1014,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       }, [label]))),
       el('div.progress-content', {}, viewContent),
     ])
+    syncScoreExplainSheet()
   }
 
   return {

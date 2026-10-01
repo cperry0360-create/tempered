@@ -2383,3 +2383,8 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Overflow:** charts were a fixed 132px inside a 104px (88px on small phones) grid column, so they ran off the card. Charts now fill their column (112px, 96px under 390px wide) with `overflow: hidden`.
 - **Smoothing:** daily metrics use time-aware exponential smoothing (7-day half-life) run forward then backward, so the line is smooth and has no lag; drawn as a monotone cubic curve that cannot overshoot the data. Lifts keep the 3-session average.
 - **Change text:** daily metrics compare the mean of the last 7 days of readings with the first 7 days, so one odd day at either end does not set the headline.
+
+## 2026-10-01 — Score explanation sheet above the tab bar (0.49.2)
+
+- **Decision:** the explanation sheet is mounted on `<body>` and closed on every re-render that leaves Overview; the page behind it stops scrolling while open. Inside the card it was trapped in the scrolling page's stacking context, so the tab bar covered it and hid Done.
+- Added `progress-score-explain` to the release captures.

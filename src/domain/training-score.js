@@ -234,7 +234,8 @@ export function explainTrainingScore(result) {
   const sentences = [`${lastWeek ? 'Last week' : 'The week of ' + shortDay(h.week)} scored ${h.score}, ${gradePhrase(h.grade)}.`]
   if (h.deload) sentences.push('It was a deload week, so progression and volume rested.')
   const scored = h.components.filter(c => c.value !== null)
-  const best = [...scored].sort((a, b) => b.value - a.value || b.weight - a.weight)[0]
+  // Credit the part that added the most points, not merely the highest percentage.
+  const best = [...scored].sort((a, b) => b.value * b.weight - a.value * a.weight)[0]
   const worst = [...scored].sort((a, b) => (1 - b.value) * b.weight - (1 - a.value) * a.weight)[0]
   const phrase = (c, held) => {
     if (c.id === 'progression') {

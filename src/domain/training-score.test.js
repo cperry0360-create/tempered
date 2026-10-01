@@ -145,9 +145,20 @@ test('R11.1: the explanation names what helped and what held back, without avoid
   input.setLogs=input.setLogs.filter(s=>!ids.has(s.sessionId)||!s.id.endsWith('1'))
   const r=await run(input);const x=explainTrainingScore(r);const text=x.sentences.join(' ')
   const comps=r.current.components.filter(c=>c.value!==null)
-  const top=[...comps].sort((a,b)=>b.value-a.value)[0],low=[...comps].sort((a,b)=>(1-b.value)*b.weight-(1-a.value)*a.weight)[0]
+  const top=[...comps].sort((a,b)=>b.value*b.weight-a.value*a.weight)[0],low=[...comps].sort((a,b)=>(1-b.value)*b.weight-(1-a.value)*a.weight)[0]
   assert.match(text,new RegExp(String(r.current.score)));assert.ok(text.includes(top.label),text);assert.ok(text.includes(low.label),text)
   assert.ok(x.sentences.length>=3&&x.sentences.length<=5,text);assert.equal(x.method.length>=4,true)
   assert.doesNotMatch(text+x.method.join(' '),/fail|missed|crushed|streak lost|no excuses|beast mode/i)
   const d=explainTrainingScore(await run(block({deload:true})));assert.match(d.sentences.join(' '),/deload/i)
+})
+
+test('R11.1: "carried it" credits points added, so a 10% part cannot outrank a strong 35% part',async()=>{
+  const { explainTrainingScore }=await import('./training-score.js')
+  const fake={ thisWeek:{week:'2026-09-28'}, weeks:[], headline:{ week:'2026-09-21', score:79, grade:'C', deload:false, components:[
+    { id:'progression', label:'Progression', value:.85, weight:.35, details:[{status:'up',reason:'A: up'}] },
+    { id:'adherence', label:'Plan adherence', value:.8, weight:.30, completed:40, prescribed:50, details:[] },
+    { id:'consistency', label:'Consistency', value:.6, weight:.25, days:3, plannedDays:5, metWeeks:1, trackedWeeks:4, details:[] },
+    { id:'volume', label:'Volume trend', value:1, weight:.10, sets:78, average:57, details:[] } ] } }
+  const text=explainTrainingScore(fake).sentences.join(' ')
+  assert.match(text,/Progression carried it/);assert.doesNotMatch(text,/Volume trend carried it/)
 })

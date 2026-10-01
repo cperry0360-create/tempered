@@ -2388,3 +2388,7 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 
 - **Decision:** the explanation sheet is mounted on `<body>` and closed on every re-render that leaves Overview; the page behind it stops scrolling while open. Inside the card it was trapped in the scrolling page's stacking context, so the tab bar covered it and hid Done.
 - Added `progress-score-explain` to the release captures.
+
+## 2026-10-01 — Explanation credits points added (0.49.3)
+
+- **Decision:** "X carried it" names the component with the largest value × weight, not the highest raw percentage. Cory's real week read "Volume trend carried it" because volume (10% weight) scored 100%.

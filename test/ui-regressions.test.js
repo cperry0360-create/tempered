@@ -245,9 +245,11 @@ test('REGRESSION: R4 removes the AI coaching dashboard from Train', () => {
 test('REGRESSION: R4 Fuel keeps nutrition and hydration but removes recovery', () => {
   const fuel = read('src/ui/screens/fuel.js')
   assert.match(fuel, /Log a meal/)
-  assert.match(fuel, /Recent/)
+  // 0.50.0 replaced the three-item Recent list with a searchable My foods library.
+  assert.match(fuel, /My foods/)
   assert.match(fuel, /Water/)
-  assert.match(fuel, /nutritionSuggestions/)
+  assert.match(fuel, /foodLibrary/)
+  assert.match(fuel, /searchFoods/)
   assert.doesNotMatch(fuel, /Recovery|RESTING HR|fuel-recovery|trainingReadiness/)
   const history = read('src/ui/screens/history.js')
   assert.match(history, /function recoveryCard/)

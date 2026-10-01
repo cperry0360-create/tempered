@@ -62,7 +62,7 @@ test('there is copy to check', () => {
   const total = files.reduce((sum, f) => sum + f.copy.length, 0)
   assert.ok(total > 800, `only extracted ${total} characters of copy — is the extractor working?`)
   // The extractor must be finding real sentences, not just button labels.
-  assert.ok(files.some((f) => /Recent meals will appear here/i.test(f.copy)),
+  assert.ok(files.some((f) => /Foods you log appear here/i.test(f.copy)),
     'expected visible Fuel copy to be extracted')
 })
 

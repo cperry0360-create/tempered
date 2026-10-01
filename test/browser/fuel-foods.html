@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tempered — My foods</title>
+<link rel="stylesheet" href="../../src/tokens.css" /><link rel="stylesheet" href="../../src/style.css" />
+<link rel="stylesheet" href="../../src/calm.css" /><link rel="stylesheet" href="../../src/fuel.css" />
+</head><body><div id="app" class="app"></div>
+<script type="module">
+  import { bootstrapHarness } from './harness.js'
+  import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+  import { fixedClock } from '../../src/adapters/clock/clock.js'
+  const checks = []
+  const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+  const q = (s) => document.querySelector(s), qa = (s) => [...document.querySelectorAll(s)]
+  const settle = (ms = 150) => new Promise((r) => setTimeout(r, ms))
+  const errors = []; addEventListener('error', (e) => errors.push(e.message)); addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)))
+  try {
+    const storage = createMemoryStorage(), clock = fixedClock(new Date(2026, 9, 1, 12))
+    const t = await bootstrapHarness({ storage, clock, mount: q('#app') })
+    const meals = [
+      ['2026-09-20', 'fairlife Core Power chocolate protein shake', 150, 30, 4],
+      ['2026-09-22', 'Chicken rice bowl', 640, 42, 2],
+      ['2026-09-24', 'Greek yogurt + berries', 220, 20, 3],
+      ['2026-09-25', 'Protein bar, chocolate peanut', 210, 20, 1],
+      ['2026-09-26', 'Turkey sandwich', 740, 38, 1],
+      ['2026-09-27', 'Whiskey shot', 100, 0, 1],
+    ]
+    for (const [date, description, calories, protein, n] of meals)
+      for (let i = 0; i < n; i += 1) await t.daily.addNutrition(date, { description, calories, protein }, { loggedAt: `${date}T1${i}:00:00.000Z` })
+    await t.app.show('fuel'); await settle()
+    const names = (scope) => qa(scope + ' .fuel-food__name').map((n) => n.textContent)
+    const lists = qa('.fuel-food__list')
+    check('Most logged shows the top three by count', lists[0] && [...lists[0].querySelectorAll('.fuel-food__name')].map((n) => n.textContent).join('|') === 'fairlife Core Power chocolate protein shake|Greek yogurt + berries|Chicken rice bowl', lists[0]?.textContent)
+    check('rows show calories, protein and times logged', /150 kcal · 30 g protein · 4×/.test(lists[0]?.textContent))
+    check('All foods lists the rest, newest first', lists[1] && [...lists[1].querySelectorAll('.fuel-food__name')].map((n) => n.textContent)[0] === 'Whiskey shot')
+    const search = q('.fuel-food__search')
+    check('search box counts every saved food', search?.placeholder === 'Search 6 foods', search?.placeholder)
+    search.focus(); search.value = 'choc prot'; search.dispatchEvent(new Event('input', { bubbles: true })); await settle(50)
+    check('search matches every word in any order', qa('.fuel-food__name').map((n) => n.textContent).join('|') === 'fairlife Core Power chocolate protein shake|Protein bar, chocolate peanut', qa('.fuel-food__name').map((n) => n.textContent).join('|'))
+    check('typing keeps focus in the search box', document.activeElement === search)
+    search.value = 'pizza'; search.dispatchEvent(new Event('input', { bubbles: true })); await settle(50)
+    check('no match says how to add it', /No saved food matches "pizza"/.test(q('.fuel-food__results')?.textContent))
+    search.value = 'bowl'; search.dispatchEvent(new Event('input', { bubbles: true })); await settle(50)
+    q('[data-food-add="Chicken rice bowl"]')?.click(); await settle(250)
+    const today = await t.daily.dayLog('2026-10-01')
+    check('one tap logs the food to today with its saved macros', today.calories === 640 && today.proteinGrams === 42, `${today.calories}/${today.proteinGrams}`)
+    check('the row confirms it was added', q('[data-food="Chicken rice bowl"]')?.dataset.added === 'true')
+    check('the search is kept after logging', q('.fuel-food__search')?.value === 'bowl')
+    check('no runtime errors', errors.length === 0, errors.join(' | '))
+  } catch (error) { check('fuel foods harness completed', false, String(error?.stack ?? error).slice(0, 900)) }
+  await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ label: 'fuel-foods', passed: checks.every((c) => c.ok), checks }) })
+</script></body></html>

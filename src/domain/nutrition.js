@@ -197,3 +197,33 @@ export function nutritionSuggestions(days, limit = 4) {
     .sort((a, b) => b.count - a.count || b.lastLoggedAt.localeCompare(a.lastLoggedAt))
     .slice(0, Math.max(0, Number(limit) || 0))
 }
+
+/**
+ * Every distinct food ever logged (same description and macros), with the three
+ * most-logged pinned on top and the rest newest first.
+ * @param {any[]} days
+ * @param {number} [topCount]
+ */
+export function foodLibrary(days, topCount = 3) {
+  const all = nutritionSuggestions(days, Infinity)
+  const top = all.slice(0, topCount).filter((food) => food.count > 1 || all.length <= topCount)
+  const pinned = new Set(top)
+  const rest = all.filter((food) => !pinned.has(food))
+    .sort((a, b) => b.lastLoggedAt.localeCompare(a.lastLoggedAt))
+  return { all, top, rest }
+}
+
+/**
+ * Case-insensitive search where every word must appear, in any order. Results
+ * keep the order of the list given (most logged first from `foodLibrary().all`).
+ * @param {{description:string}[]} foods
+ * @param {string} query
+ */
+export function searchFoods(foods, query) {
+  const words = String(query ?? '').toLowerCase().split(/\s+/).filter(Boolean)
+  if (!words.length) return [...foods]
+  return foods.filter((food) => {
+    const text = String(food.description ?? '').toLowerCase()
+    return words.every((word) => text.includes(word))
+  })
+}

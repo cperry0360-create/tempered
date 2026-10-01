@@ -2396,3 +2396,9 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 ## 2026-10-01 — Health import always reachable (0.49.4)
 
 - **Decision:** Readiness on Today always shows an `Import` button (recovery blue) beside its info button, in addition to the empty-state `Import from Health`. Since R2 the import view was reachable only when today had no recovery values, so logging sleep in the Daily log removed the only way in.
+
+## 2026-10-01 — My foods replaces Recent on Fuel (0.50.0)
+
+- **Decision:** Fuel's three-item Recent list is now `My foods`: a search box over every distinct food ever logged (same description and macros), the three most-logged pinned under `Most logged` (only foods logged more than once), and `All foods` newest first (5 shown, `Show all N foods`). One tap on + logs the saved macros to today; the row confirms `Added to today`. Search requires every typed word, any order, case-insensitive. Typing updates only the results so the keyboard stays up.
+- Domain: `foodLibrary()` and `searchFoods()` in `src/domain/nutrition.js`, test-first. Browser proof: `test/browser/fuel-foods.html`.
+- Copy and R4 regression tests that named the old Recent list were updated to the new names.

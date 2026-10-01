@@ -70,3 +70,38 @@ test('quick-log suggestions rank repeated meals before merely recent meals', () 
   assert.equal(suggestions[0].count, 2)
   assert.equal(suggestions[1].description, 'Greek yogurt')
 })
+
+test('food library: every distinct food, top three by count, the rest most recent first', async () => {
+  const { foodLibrary } = await import('./nutrition.js')
+  let days = []
+  const log = (date, description, calories, protein, n = 1) => {
+    for (let i = 0; i < n; i += 1) {
+      const day = days.find((d) => d.date === date) ?? { date }
+      days = days.filter((d) => d.date !== date)
+      days.push(addNutritionEntry(day, { description, calories, protein }, {
+        id: `${description}-${date}-${i}`, loggedAt: `${date}T0${i}:00:00.000Z`, source: 'manual' }))
+    }
+  }
+  log('2026-09-01', 'Protein shake', 150, 30, 3)
+  log('2026-09-02', 'Chicken rice bowl', 640, 42, 2)
+  log('2026-09-03', 'Greek yogurt', 180, 20, 2)
+  log('2026-09-04', 'Whiskey shot', 100, 0, 1)
+  log('2026-09-05', 'Turkey sandwich', 740, 38, 1)
+  const library = foodLibrary(days)
+  assert.deepEqual(library.top.map((f) => f.description), ['Protein shake', 'Greek yogurt', 'Chicken rice bowl'])
+  assert.deepEqual(library.rest.map((f) => f.description), ['Turkey sandwich', 'Whiskey shot'])
+  assert.equal(library.all.length, 5)
+})
+
+test('food search matches every word, any order, ignoring case', async () => {
+  const { searchFoods } = await import('./nutrition.js')
+  const foods = [
+    { description: 'fairlife Core Power chocolate protein shake', count: 10 },
+    { description: 'Chicken rice bowl', count: 2 },
+    { description: 'Protein bar, chocolate peanut', count: 4 },
+  ]
+  assert.deepEqual(searchFoods(foods, 'choc protein').map((f) => f.count), [10, 4])
+  assert.deepEqual(searchFoods(foods, 'BOWL').map((f) => f.description), ['Chicken rice bowl'])
+  assert.equal(searchFoods(foods, '  ').length, 3)
+  assert.equal(searchFoods(foods, 'pizza').length, 0)
+})

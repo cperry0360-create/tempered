@@ -1,12 +1,15 @@
 /**
  * FUEL — nutrition and hydration, optimized for fast logging.
  */
-import { nutritionLedger, nutritionSuggestions } from '../../domain/nutrition.js'
+import { nutritionLedger, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 
 export function createFuelScreen({ storage, daily, clock }) {
   const root = el('div.screen.screen--fuel.screen--fuel-r4')
   let model = null
+  let foodQuery = ''
+  let showAllFoods = false
+  let justAdded = null
 
   const onFuelUpdated = (event) => {
     if (root.isConnected && (!event?.detail?.date || event.detail.date === clock.today())) refresh().catch(() => {})
@@ -19,7 +22,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     model = {
       day: days.find((day) => day.date === todayKey) ?? { date: todayKey },
       todayView,
-      suggestions: nutritionSuggestions(days, 3),
+      foods: foodLibrary(days, 3),
     }
   }
 
@@ -28,9 +31,68 @@ export function createFuelScreen({ storage, daily, clock }) {
     await refresh()
   }
 
-  async function quickLog(suggestion) {
-    await daily.addNutrition(clock.today(), suggestion)
+  async function quickLog(food) {
+    const { count, lastLoggedAt, ...values } = food
+    await daily.addNutrition(clock.today(), values)
+    justAdded = food.description
     await refresh()
+    setTimeout(() => { if (justAdded === food.description) { justAdded = null; if (root.isConnected) render() } }, 2000)
+  }
+
+  function foodMeta(food) {
+    const parts = [`${Math.round(food.calories ?? 0)} kcal`]
+    if (Number.isFinite(food.proteinGrams)) parts.push(`${Math.round(food.proteinGrams)} g protein`)
+    if (food.count > 1) parts.push(`${food.count}×`)
+    return parts.join(' · ')
+  }
+
+  function foodRow(food) {
+    const added = justAdded === food.description
+    return el('div.fuel-food', { dataset: { food: food.description, added: String(added) } }, [
+      el('div.fuel-food__copy', {}, [
+        el('span.fuel-food__name', { text: food.description }),
+        el('span.fuel-food__meta', { text: added ? 'Added to today' : foodMeta(food) }),
+      ]),
+      el('button.fuel-food__add', {
+        type: 'button', 'aria-label': `Log ${food.description}`, dataset: { foodAdd: food.description },
+        onclick: () => quickLog(food),
+      }, [added ? '✓' : '+']),
+    ])
+  }
+
+  function foodResults() {
+    const { top, rest, all } = model.foods
+    if (all.length === 0) return [el('p.fuel-r4__empty', { text: 'Foods you log appear here, ready to log again in one tap.' })]
+    if (foodQuery.trim()) {
+      const matches = searchFoods(all, foodQuery)
+      return matches.length
+        ? [el('div.fuel-food__list', {}, matches.slice(0, 30).map(foodRow))]
+        : [el('p.fuel-r4__empty', { text: `No saved food matches "${foodQuery.trim()}". Log it once from Log a meal.` })]
+    }
+    const visible = showAllFoods ? rest : rest.slice(0, 5)
+    return [
+      top.length > 0 && el('h3.fuel-food__heading', { text: 'Most logged' }),
+      top.length > 0 && el('div.fuel-food__list', {}, top.map(foodRow)),
+      rest.length > 0 && el('h3.fuel-food__heading', { text: top.length ? 'All foods' : 'Your foods' }),
+      rest.length > 0 && el('div.fuel-food__list', {}, visible.map(foodRow)),
+      rest.length > visible.length && el('button.fuel-food__more', {
+        type: 'button', onclick: () => { showAllFoods = true; render() },
+      }, [`Show all ${rest.length} foods`]),
+    ].filter(Boolean)
+  }
+
+  function foodsCard() {
+    const results = el('div.fuel-food__results', {}, foodResults())
+    return el('section.fuel-r4__card.fuel-r4__foods', {}, [
+      el('h2', { text: 'My foods' }),
+      model.foods.all.length > 0 && el('input.fuel-food__search', {
+        type: 'search', placeholder: `Search ${model.foods.all.length} foods`, value: foodQuery,
+        autocomplete: 'off', autocapitalize: 'off', spellcheck: false, enterkeyhint: 'search',
+        'aria-label': 'Search your foods',
+        oninput: (event) => { foodQuery = event.target.value; replace(results, foodResults()) },
+      }),
+      results,
+    ].filter(Boolean))
   }
 
   function number(value) {
@@ -109,18 +171,7 @@ export function createFuelScreen({ storage, daily, clock }) {
         ]))),
         el('button.fuel-r4__primary', { type: 'button', onclick: openNutrition }, ['Log a meal']),
       ]),
-      el('section.fuel-r4__card.fuel-r4__recent', {}, [
-        el('h2', { text: 'Recent' }),
-        el('div.fuel-r4__rows', {}, model.suggestions.length
-          ? model.suggestions.map((suggestion) => el('button.fuel-r4__recent-row', {
-              type: 'button',
-              onclick: () => quickLog(suggestion),
-            }, [
-              el('span', { text: `${suggestion.description} · ${Math.round(suggestion.calories ?? 0)} kcal` }),
-              el('span.fuel-r4__plus', { 'aria-hidden': 'true', text: '+' }),
-            ]))
-          : [el('p.fuel-r4__empty', { text: 'Recent meals will appear here after you log them.' })]),
-      ]),
+      foodsCard(),
       el('section.fuel-r4__card.fuel-r4__water', {}, [
         el('h2', { text: 'Water' }),
         el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),

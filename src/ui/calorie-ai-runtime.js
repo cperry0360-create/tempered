@@ -690,14 +690,23 @@ export function installCalorieAiRuntime() {
       panelScreen = buildNutritionScreen(date, null, { embedded: true })
       slot.replaceChildren(panelScreen)
     }
-    if (!nutritionScreen?.isConnected) renderNutritionData().catch(() => setScreenStatus('Meals could not load; try again.', 'error'))
+    refreshPanelWhenShown()
   }
   const refreshPanel = () => {
     if (panelScreen?.isConnected && !nutritionScreen?.isConnected) renderNutritionData().catch(() => {})
   }
+  /**
+   * Fuel builds its screen before the app attaches it to the page, so a panel
+   * mounted during that build is not connected yet. Wait for it, then load.
+   */
+  function refreshPanelWhenShown(tries = 0) {
+    if (panelScreen?.isConnected) { refreshPanel(); return }
+    if (panelScreen && tries < 60) requestAnimationFrame(() => refreshPanelWhenShown(tries + 1))
+  }
 
   const screenShown = (event) => {
     if (event?.detail?.tab !== 'today' && event?.detail?.tab !== 'fuel') closeNutritionScreen()
+    if (event?.detail?.tab === 'fuel') refreshPanelWhenShown()
   }
   const nutritionRequested = (event) => openNutritionScreen(
     event?.detail?.trigger ?? null,

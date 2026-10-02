@@ -2415,3 +2415,8 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Portions:** tapping a food's name in My foods reveals ½, 1½, 2, 3; + still logs one serving. Entries store the eaten (scaled) amounts plus `portion`, so day totals stay plain sums; suggestions divide by the portion so a 2× log groups with the single-serving food. Today's meals shows `· 2×`.
 - **Fuzzy title, root cause:** iOS 26 lays a Liquid Glass scroll-edge blur over the top of installed web apps. WebKit skips it only when an opaque fixed element covers the top edge. Our cover was `body::before` and the workout header was sticky, which iOS treats as scrolling content. Now the cover is a real `div.status-bar-cover` and the workout header is `position: fixed` with the screen reserving its height. Sources: community fixes in devswha/herdr-web-ui#106 and bergeronK/Twilight#147. Device confirmation pending (Needs Cory).
 - **Plate row:** a legacy `.plates { grid-column: 3 / -1 }` added implicit columns to the set-row wrapper and shifted the active row's inputs; overridden to span the wrapper.
+
+## 2026-10-02 — Today's meals load when Fuel opens (0.52.1)
+
+- **Bug:** since 0.51.0, meals logged earlier in the day did not appear under Today's meals on Fuel until something new was added. The app renders Fuel before attaching it to the page; the panel's first load ran while detached, returned early, and was never retried.
+- **Fix:** the runtime waits for the panel to be on the page before loading, and reloads it every time the Fuel tab is shown. The inline-entry browser test now seeds a meal for today before first open and checks it after leaving and returning; both checks failed before the fix.

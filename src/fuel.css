@@ -304,3 +304,14 @@
   min-height: 44px; border: 0; background: transparent; color: var(--fuel-ink);
   font: 500 15px/20px var(--font-ui); text-align: left; padding: 0 2px; appearance: none;
 }
+
+/* Portions: tap a food's name for ½, 1½, 2, 3 (0.52.0) */
+button.fuel-food__copy {
+  appearance: none; border: 0; background: transparent; padding: 0; text-align: left; font: inherit; color: inherit;
+  min-height: 44px; align-content: center;
+}
+.fuel-food__portions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 2px 8px 6px 0; }
+.fuel-food__portion {
+  min-height: 40px; border: 0; border-radius: var(--r-full); background: var(--surface-1); color: var(--fuel-ink);
+  font: 600 15px/20px var(--font-ui); font-variant-numeric: tabular-nums;
+}

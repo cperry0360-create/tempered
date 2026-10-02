@@ -105,3 +105,25 @@ test('food search matches every word, any order, ignoring case', async () => {
   assert.equal(searchFoods(foods, '  ').length, 3)
   assert.equal(searchFoods(foods, 'pizza').length, 0)
 })
+
+test('a portion scales the saved food and is remembered on the entry', () => {
+  const day = addNutritionEntry({ date: '2026-10-02' }, { description: 'Protein shake', calories: 150, protein: 30, portion: 2 },
+    { id: 'p2', loggedAt: '2026-10-02T10:00:00.000Z', source: 'manual' })
+  const [entry] = nutritionLedger(day).entries
+  assert.equal(entry.calories, 300); assert.equal(entry.proteinGrams, 60); assert.equal(entry.portion, 2)
+  assert.equal(day.calories, 300)
+  const half = addNutritionEntry({ date: '2026-10-02' }, { description: 'Chicken rice bowl', calories: 640, protein: 42, portion: 0.5 },
+    { id: 'h', loggedAt: '2026-10-02T12:00:00.000Z', source: 'manual' })
+  assert.equal(nutritionLedger(half).entries[0].calories, 320)
+  const plain = addNutritionEntry({ date: '2026-10-02' }, { description: 'Greek yogurt', calories: 180 }, { id: 'g', loggedAt: '2026-10-02T09:00:00.000Z', source: 'manual' })
+  assert.equal('portion' in nutritionLedger(plain).entries[0], false)
+})
+
+test('portions group with the single-serving food in suggestions', () => {
+  const one = addNutritionEntry({ date: '2026-10-01' }, { description: 'Protein shake', calories: 150, protein: 30 },
+    { id: 'a', loggedAt: '2026-10-01T10:00:00.000Z', source: 'manual' })
+  const two = addNutritionEntry({ date: '2026-10-02' }, { description: 'Protein shake', calories: 150, protein: 30, portion: 2 },
+    { id: 'b', loggedAt: '2026-10-02T10:00:00.000Z', source: 'manual' })
+  const [food] = nutritionSuggestions([one, two])
+  assert.equal(food.count, 2); assert.equal(food.calories, 150); assert.equal(food.proteinGrams, 30)
+})

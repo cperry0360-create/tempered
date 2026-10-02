@@ -33,6 +33,8 @@
     <script type="module" src="./src/main.js"></script>
   </head>
   <body>
+    <!-- A real fixed element on the top edge: iOS 26 skips its Liquid Glass edge blur for it. -->
+    <div class="status-bar-cover" aria-hidden="true"></div>
     <div class="portrait-lock" role="status" aria-live="polite">
       <span class="portrait-lock__phone" aria-hidden="true">▯</span>
       <strong>Rotate to portrait</strong>

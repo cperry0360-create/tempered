@@ -10,6 +10,8 @@ export function createFuelScreen({ storage, daily, clock }) {
   let foodQuery = ''
   let showAllFoods = false
   let justAdded = null
+  let justAddedPortion = 1
+  let portionFood = null
   // The add-meal form and today's meals live here, built once by the nutrition
   // runtime and reused across re-renders so half-typed entries survive.
   const mealPanel = el('div.fuel-r4__meal-panel')
@@ -34,10 +36,12 @@ export function createFuelScreen({ storage, daily, clock }) {
     await refresh()
   }
 
-  async function quickLog(food) {
+  async function quickLog(food, portion = 1) {
     const { count, lastLoggedAt, ...values } = food
-    await daily.addNutrition(clock.today(), values)
+    await daily.addNutrition(clock.today(), portion === 1 ? values : { ...values, portion })
     justAdded = food.description
+    justAddedPortion = portion
+    portionFood = null
     await refresh()
     window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
     setTimeout(() => { if (justAdded === food.description) { justAdded = null; if (root.isConnected) render() } }, 2000)
@@ -50,18 +54,31 @@ export function createFuelScreen({ storage, daily, clock }) {
     return parts.join(' · ')
   }
 
+  const PORTIONS = [[0.5, '½'], [1.5, '1½'], [2, '2'], [3, '3']]
+
   function foodRow(food) {
     const added = justAdded === food.description
-    return el('div.fuel-food', { dataset: { food: food.description, added: String(added) } }, [
-      el('div.fuel-food__copy', {}, [
+    const open = portionFood === food.description
+    return el('div.fuel-food', { dataset: { food: food.description, added: String(added), open: String(open) } }, [
+      el('button.fuel-food__copy', {
+        type: 'button', 'aria-expanded': String(open), dataset: { foodToggle: food.description },
+        'aria-label': `${food.description}, choose a portion`,
+        onclick: () => { portionFood = open ? null : food.description; render() },
+      }, [
         el('span.fuel-food__name', { text: food.description }),
-        el('span.fuel-food__meta', { text: added ? 'Added to today' : foodMeta(food) }),
+        el('span.fuel-food__meta', { text: added ? (justAddedPortion === 1 ? 'Added to today' : `Added ${PORTIONS.find(([n]) => n === justAddedPortion)?.[1] ?? justAddedPortion}× to today`) : foodMeta(food) }),
       ]),
       el('button.fuel-food__add', {
-        type: 'button', 'aria-label': `Log ${food.description}`, dataset: { foodAdd: food.description },
+        type: 'button', 'aria-label': `Log one serving of ${food.description}`, dataset: { foodAdd: food.description },
         onclick: () => quickLog(food),
       }, [added ? '✓' : '+']),
-    ])
+      open && el('div.fuel-food__portions', { role: 'group', 'aria-label': 'Portion' }, PORTIONS.map(([portion, label]) =>
+        el('button.fuel-food__portion', {
+          type: 'button', dataset: { portion: String(portion) },
+          'aria-label': `Log ${label} of ${food.description}, ${Math.round((food.calories ?? 0) * portion)} kcal`,
+          onclick: () => quickLog(food, portion),
+        }, [label]))),
+    ].filter(Boolean))
   }
 
   function foodResults() {

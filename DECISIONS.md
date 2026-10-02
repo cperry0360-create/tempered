@@ -2409,3 +2409,9 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Mechanics:** Fuel dispatches `tempered:mount-nutrition-panel` with a persistent slot only when the slot is empty or the date changed; My foods taps dispatch `tempered:nutrition-refresh`. The runtime's shared helpers resolve the active host (overlay if open, otherwise the panel). A browser test proves no idle refresh loop.
 - **Search to entry:** a My foods search with no match offers `Add "…" as a new meal`, filling the form and focusing Calories.
 - **Kept:** Today's Fuel `+` still opens the full-screen entry view for a quick add without leaving Today; the dated view remains for earlier days.
+
+## 2026-10-02 — Portions, iOS 26 edge blur, plate-row alignment (0.52.0)
+
+- **Portions:** tapping a food's name in My foods reveals ½, 1½, 2, 3; + still logs one serving. Entries store the eaten (scaled) amounts plus `portion`, so day totals stay plain sums; suggestions divide by the portion so a 2× log groups with the single-serving food. Today's meals shows `· 2×`.
+- **Fuzzy title, root cause:** iOS 26 lays a Liquid Glass scroll-edge blur over the top of installed web apps. WebKit skips it only when an opaque fixed element covers the top edge. Our cover was `body::before` and the workout header was sticky, which iOS treats as scrolling content. Now the cover is a real `div.status-bar-cover` and the workout header is `position: fixed` with the screen reserving its height. Sources: community fixes in devswha/herdr-web-ui#106 and bergeronK/Twilight#147. Device confirmation pending (Needs Cory).
+- **Plate row:** a legacy `.plates { grid-column: 3 / -1 }` added implicit columns to the set-row wrapper and shifted the active row's inputs; overridden to span the wrapper.

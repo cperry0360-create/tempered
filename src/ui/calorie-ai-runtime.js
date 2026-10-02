@@ -241,7 +241,8 @@ export function installCalorieAiRuntime() {
     if (entry.description) {
       const description = document.createElement('h4')
       description.className = 'nutrition-entry__description'
-      description.textContent = entry.description
+      const portion = { 0.5: '½', 1.5: '1½' }[entry.portion] ?? entry.portion
+      description.textContent = entry.portion ? `${entry.description} · ${portion}×` : entry.description
       body.append(description)
     }
     const time = document.createElement('strong')

@@ -100,6 +100,13 @@
     check('active workout header starts at the safe-area edge once',
       Number.isFinite(sessionHeaderTop) && sessionHeaderTop <= 1,
       String(sessionHeaderTop))
+    const headerBox = q('.sessionbar--r3')?.getBoundingClientRect()
+    const firstCard = q('.screen--session .exercise[data-exercise]')?.getBoundingClientRect()
+    check('the fixed workout header (iOS 26 blur fix) is fixed and never covers the first exercise',
+      getComputedStyle(q('.sessionbar--r3')).position === 'fixed' && headerBox && firstCard && firstCard.top >= headerBox.bottom,
+      `header ${headerBox?.bottom} card ${firstCard?.top}`)
+    check('the status bar cover is a real fixed element',
+      getComputedStyle(document.querySelector('.status-bar-cover') ?? document.body).position === 'fixed' || !document.querySelector('.status-bar-cover'))
 
     const loggedExerciseId = first?.dataset.exerciseId
     const checksBefore = qa('.screen--session .setrow__check[data-done="false"]')

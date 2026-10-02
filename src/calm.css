@@ -2,8 +2,10 @@
    Redesign V1 — Today (R2)
    --------------------------------------------------------------------------- */
 
-/* iOS standalone keeps white status text in black-translucent mode. */
-body::before {
+/* iOS standalone keeps white status text in black-translucent mode. This is a
+   real element, not body::before: iOS 26 only skips its scroll-edge blur when an
+   opaque fixed element covers the top edge, and it did not count the pseudo-element. */
+.status-bar-cover {
   content: '';
   position: fixed;
   z-index: 1000;
@@ -1024,18 +1026,22 @@ button.today-item:disabled {
 
 .screen--session {
   gap: 12px;
-  padding: 0 16px calc(104px + env(safe-area-inset-bottom));
+  padding: calc(76px + env(safe-area-inset-top)) 16px calc(104px + env(safe-area-inset-bottom));
 }
 
+/* Fixed, not sticky: iOS 26 treats a sticky header as scrolling content and
+   blurs it under the status bar. The screen reserves the header's height. */
 .sessionbar--r3 {
-  position: sticky;
+  position: fixed;
   z-index: 40;
   top: 0;
+  left: 0;
+  right: 0;
   /* iOS 26 standalone blurs content just under the status bar, so the header's
      content starts 10px below the inset, and its height includes the inset. */
   min-height: calc(64px + env(safe-area-inset-top));
-  margin: 0 -16px 0;
-  padding: calc(env(safe-area-inset-top) + 10px) 16px 8px;
+  margin: 0;
+  padding: calc(env(safe-area-inset-top) + 10px) max(16px, calc((100vw - 430px) / 2 + 16px)) 8px;
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 72px;
   align-items: center;
@@ -1295,6 +1301,10 @@ button.today-item:disabled {
 
 .exercise--r3 .plates {
   display: block;
+  /* The legacy rule placed this at grid-column 3 / -1, which added implicit
+     columns to the wrapper and narrowed the set row above it. */
+  grid-column: 1 / -1;
+  grid-row: auto;
   padding: 0 45px 4px 42px;
 }
 

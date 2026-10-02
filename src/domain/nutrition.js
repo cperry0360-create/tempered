@@ -78,14 +78,22 @@ function cleanCarryover(day) {
   }
 }
 
+/** A logged portion of a saved food: ½, 1½, 2, 3 … (1 is never stored). */
+function cleanPortion(value) {
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 && n <= 20 && n !== 1 ? Math.round(n * 100) / 100 : null
+}
+
 function cleanEntry(entry) {
   const nutrients = cleanNutrients(entry)
   if (!entry?.id || !entry?.loggedAt || !hasPositiveNutrient(nutrients)) return null
+  const portion = cleanPortion(entry.portion)
   return {
     id: String(entry.id),
     loggedAt: String(entry.loggedAt),
     source: entry.source === 'ai' ? 'ai' : 'manual',
     ...(cleanDescription(entry.description) ? { description: cleanDescription(entry.description) } : {}),
+    ...(portion ? { portion } : {}),
     ...nutrients,
   }
 }
@@ -142,15 +150,21 @@ function applyLedger(day, carryover, entries) {
 
 /** Add one timestamped meal while preserving any pre-ledger running total. */
 export function addNutritionEntry(day, values, meta) {
-  const nutrients = cleanNutrients(values)
-  if (!hasPositiveNutrient(nutrients)) throw new Error('Enter at least one nutrition value')
+  const base = cleanNutrients(values)
+  if (!hasPositiveNutrient(base)) throw new Error('Enter at least one nutrition value')
   if (!meta?.id || !meta?.loggedAt) throw new Error('Nutrition entries need an id and timestamp')
+  // A portion stores the eaten amounts, so day totals stay simple sums.
+  const portion = cleanPortion(values?.portion)
+  const nutrients = portion
+    ? Object.fromEntries(Object.entries(base).map(([key, value]) => [key, Math.round(value * portion * 10) / 10]))
+    : base
   const { carryover, entries } = nutritionLedger(day)
   const entry = cleanEntry({
     id: meta.id,
     loggedAt: meta.loggedAt,
     source: meta.source,
     description: values?.description ?? meta.description,
+    portion,
     ...nutrients,
   })
   return applyLedger(day, carryover, [...entries, entry])
@@ -179,8 +193,10 @@ export function nutritionSuggestions(days, limit = 4) {
   for (const day of Array.isArray(days) ? days : []) {
     for (const entry of nutritionLedger(day).entries) {
       if (!entry.description) continue
+      // Group portions with their single serving: divide back to one portion.
+      const per = entry.portion ?? 1
       const nutrients = Object.fromEntries(NUTRIENTS.flatMap(({ entryField }) =>
-        Number.isFinite(entry[entryField]) ? [[entryField, entry[entryField]]] : []))
+        Number.isFinite(entry[entryField]) ? [[entryField, Math.round(entry[entryField] / per * 10) / 10]] : []))
       const key = JSON.stringify([entry.description.toLowerCase(), nutrients])
       const existing = groups.get(key)
       if (!existing) groups.set(key, { ...nutrients, description: entry.description, count: 1, lastLoggedAt: entry.loggedAt })

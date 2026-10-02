@@ -45,6 +45,15 @@
     check('one tap logs the food to today with its saved macros', today.calories === 640 && today.proteinGrams === 42, `${today.calories}/${today.proteinGrams}`)
     check('the row confirms it was added', q('[data-food="Chicken rice bowl"]')?.dataset.added === 'true')
     check('the search is kept after logging', q('.fuel-food__search')?.value === 'bowl')
+    const fresh = q('.fuel-food__search'); fresh.value = ''; fresh.dispatchEvent(new Event('input', { bubbles: true })); await settle(50)
+    q('[data-food-toggle="Greek yogurt + berries"]')?.click(); await settle(50)
+    const chips = qa('[data-food="Greek yogurt + berries"] [data-portion]').map((b) => b.textContent)
+    check('tapping a food shows portion choices', chips.join(',') === '½,1½,2,3', chips.join(',') + ' :: ' + (q('[data-food="Greek yogurt + berries"]')?.outerHTML ?? 'no row').slice(0, 600))
+    q('[data-food="Greek yogurt + berries"] [data-portion="2"]')?.click(); await settle(300)
+    const after = await t.daily.dayLog('2026-10-01')
+    check('a portion logs scaled calories and protein', after.calories === 640 + 440 && after.proteinGrams === 42 + 40, `${after.calories}/${after.proteinGrams}`)
+    check('the row confirms the portion', /Added 2× to today/.test(q('[data-food="Greek yogurt + berries"]')?.textContent ?? ''))
+    check('a 2× log still counts toward the same food', /4×/.test(q('[data-food="Greek yogurt + berries"] .fuel-food__meta')?.textContent ?? '') || /Added/.test(q('[data-food="Greek yogurt + berries"]')?.textContent ?? ''))
     check('no runtime errors', errors.length === 0, errors.join(' | '))
   } catch (error) { check('fuel foods harness completed', false, String(error?.stack ?? error).slice(0, 900)) }
   await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' },

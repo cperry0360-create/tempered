@@ -260,8 +260,12 @@ Top to bottom. Nothing else on this screen.
    - When everything today and earlier this week is done, the card reads
      `Pull A done · 52 min · 23 sets` with a secondary `View summary` and no ember button.
    - Train's next-session card shows the same rollover count in its meta line.
-4. **Readiness card:** three columns: Sleep, Resting HR, HRV (big number + label, small
-   delta vs 7-day average under it). If there is no data for today, the whole card is one
+4. **Readiness card (amended 0.53.0):** a headline first: a 60px score dial (0-100) beside
+   the label (`Ready` green, `Steady` blue, `Recover` ember) and its action, then one
+   sentence naming what is pulling readiness down. Below it, three columns: Sleep, Resting
+   HR, HRV (big number + label, plain-word status under it such as `On target`, `Normal`,
+   `Below normal`, `Elevated`; never a signed raw delta). With only one signal the dial is
+   omitted. If there is no data for today, the whole card is one
    line: `No recovery data today` plus a text button `Import from Health`. Never show a
    grid of dashes.
 5. **This week card:** one meta line `2 sessions · 41 sets · 118 min` and seven dots

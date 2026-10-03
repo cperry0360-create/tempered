@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — Readiness grade</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/fuel.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+    const qa = (selector, root = document) => root ? [...root.querySelectorAll(selector)] : []
+    const wait = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+    const errors = []
+    const originalError = console.error
+    console.error = (...args) => { errors.push(args.map(String).join(' ')); originalError(...args) }
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    const text = (node) => node?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+    async function open(days) {
+      const storage = createMemoryStorage()
+      await storage.open()
+      await storage.put('profile', { id: 'profile', name: 'Readiness', setupComplete: true })
+      for (const day of days) await storage.put('dayLogs', day)
+      q('#app').replaceChildren()
+      const clock = fixedClock(new Date(2026, 9, 3, 9, 0, 0))
+      await bootstrapHarness({ storage, clock, mount: q('#app'), initialTab: 'today' })
+      await wait(120)
+      return q('[data-section="readiness"]')
+    }
+    const history = (hrv, resting) => Array.from({ length: 7 }, (_, i) => ({
+      date: `2026-09-${String(26 + i).padStart(2, '0')}`, sleepHours: 7.5, healthMetrics: { hrvMs: hrv, restingHr: resting },
+    }))
+
+    try {
+      // The reported morning: 8.0 h sleep, resting HR 62, HRV 29.3 against a ~41 ms normal.
+      let card = await open([...history(41, 61), { date: '2026-10-03', sleepHours: 8, healthMetrics: { hrvMs: 29.3, restingHr: 62 } }])
+      const summary = q('[data-readiness-summary]', card)
+      check('Readiness leads with a score out of 100', text(q('[data-readiness-score]', card)) === '66', text(q('[data-readiness-score]', card)))
+      check('the score carries its label and what to do', summary?.dataset.readinessLabel === 'steady'
+        && /Steady/.test(text(summary)) && /Train as planned; ease off if heavy/.test(text(summary)), text(summary))
+      check('one sentence says what is pulling it down',
+        text(q('[data-readiness-reason]', card)) === 'HRV is below your normal; sleep and resting HR look fine.', text(q('[data-readiness-reason]', card)))
+      const statuses = qa('.today-readiness__metric', card).map((m) => `${m.dataset.metric}:${m.dataset.tone}:${text(q('small', m))}`)
+      check('each metric reads as a plain word, not a raw delta',
+        statuses.join('|') === 'sleep:good:On target|restingHr:usual:Normal|hrv:low:Below normal', statuses.join('|'))
+      check('no signed raw deltas remain', !qa('.today-readiness__metric small', card).some((n) => /^[+-]?\d/.test(text(n))))
+      check('the three values are still shown', /8\.0h/.test(text(card)) && /62 bpm/.test(text(card)) && /29\.3 ms/.test(text(card)), text(card))
+      q('.today-info-button', card)?.click()
+      await wait()
+      card = q('[data-section="readiness"]')
+      const info = text(q('.today-readiness__info', card))
+      check('the info explains the bands and shows your normal', /82/.test(info) && /65/.test(info) && /41 ms/.test(info) && /61 bpm/.test(info), info)
+
+      // A strong morning reads Ready.
+      card = await open([...history(40, 60), { date: '2026-10-03', sleepHours: 8, healthMetrics: { hrvMs: 44, restingHr: 58 } }])
+      check('a strong morning is Ready', q('[data-readiness-summary]', card)?.dataset.readinessLabel === 'ready', text(card))
+
+      // A new user: values but no history yet. No invented score.
+      card = await open([{ date: '2026-10-03', healthMetrics: { hrvMs: 35, restingHr: 60 } }])
+      check('without history there is no score', !q('[data-readiness-score]', card))
+      check('metrics say the baseline is still building',
+        qa('.today-readiness__metric small', card).filter((n) => text(n) === 'Needs history').length === 2, text(card))
+
+      // Sleep alone: a label and reason, but no number that could read as 100 while saying Steady.
+      card = await open([{ date: '2026-10-03', sleepHours: 8, healthMetrics: { hrvMs: 35, restingHr: 60 } }])
+      check('sleep-only readiness shows a label without a score',
+        Boolean(q('[data-readiness-summary]', card)) && !q('[data-readiness-score]', card), text(card))
+      check('sleep-only reason says what is missing',
+        /HRV and resting HR need a few days of history first/.test(text(q('[data-readiness-reason]', card))), text(card))
+      check('no console errors', errors.length === 0, errors.join('\n'))
+    } catch (error) {
+      check('readiness harness threw', false, String(error?.stack ?? error).slice(0, 1200))
+    } finally {
+      console.error = originalError
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'readiness-grade', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

@@ -157,14 +157,6 @@ function percent(value, target) {
   return Math.min(100, Math.max(0, Math.round((value / target) * 100)))
 }
 
-function average(values) {
-  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
-}
-
-function oneDecimal(value) {
-  return Number(value.toFixed(1))
-}
-
 function estimateSessionMinutes(day) {
   const exercises = day?.exercises ?? []
   const sets = exercises.reduce((sum, exercise) => sum + (Number(exercise.sets) || 0), 0)
@@ -681,46 +673,30 @@ export function createTodayScreen({
     ])
   }
 
-  function sevenDayAverage(read) {
-    const start = addDays(selectedDate, -7)
-    const values = dayLogs
-      .filter((row) => row.date >= start && row.date < selectedDate)
-      .map(read)
-      .filter((value) => Number.isFinite(value) && value > 0)
-    return average(values)
-  }
-
   function readinessMetrics() {
     const current = day?.day ?? {}
-    const metrics = [
-      {
-        key: 'sleep', label: 'Sleep', value: number(current.sleepHours, NaN),
-        unit: 'h', digits: 1, baseline: sevenDayAverage((row) => row.sleepHours),
-        good: (delta) => delta > 0,
-      },
-      {
-        key: 'restingHr', label: 'Resting HR', value: number(current.healthMetrics?.restingHr, NaN),
-        unit: 'bpm', digits: 0, baseline: sevenDayAverage((row) => row.healthMetrics?.restingHr),
-        good: (delta) => delta < 0,
-      },
-      {
-        key: 'hrv', label: 'HRV', value: number(current.healthMetrics?.hrvMs, NaN),
-        unit: 'ms', digits: 1, baseline: sevenDayAverage((row) => row.healthMetrics?.hrvMs),
-        good: (delta) => delta > 0,
-      },
+    return [
+      { key: 'sleep', label: 'Sleep', value: number(current.sleepHours, NaN), unit: 'h', digits: 1 },
+      { key: 'restingHr', label: 'Resting HR', value: number(current.healthMetrics?.restingHr, NaN), unit: 'bpm', digits: 0 },
+      { key: 'hrv', label: 'HRV', value: number(current.healthMetrics?.hrvMs, NaN), unit: 'ms', digits: 1 },
     ]
-    return metrics.map((metric) => {
-      const delta = Number.isFinite(metric.value) && Number.isFinite(metric.baseline)
-        ? metric.value - metric.baseline
-        : null
-      return { ...metric, delta }
-    })
   }
 
-  function deltaText(metric) {
-    if (!Number.isFinite(metric.delta)) return ''
-    const shown = metric.digits ? oneDecimal(metric.delta) : Math.round(metric.delta)
-    return `${shown > 0 ? '+' : ''}${shown}`
+  /** The plain word under each value: the domain's status, or why there is none. */
+  function metricStatus(metric, signal) {
+    if (signal?.status) return signal.status
+    if (!Number.isFinite(metric.value)) return { text: 'Not logged', tone: 'usual' }
+    return { text: 'Needs history', tone: 'usual' }
+  }
+
+  function readinessExplanation(readiness) {
+    if (readiness.score === null) return readiness.reason
+    const normal = readiness.signals
+      .filter((signal) => signal.key !== 'sleep')
+      .map((signal) => `${signal.key === 'hrv' ? 'HRV' : 'resting HR'} ${Math.round(signal.baseline)} ${signal.unit}`)
+    return 'Sleep is scored against 7 to 9 hours; HRV and resting HR against your last two weeks'
+      + (normal.length ? ` (normal: ${normal.join(', ')})` : '')
+      + '. 82 and up is Ready, 65 to 81 Steady, below 65 Recover. Use it alongside how you feel.'
   }
 
   function openHealthImport(event) {
@@ -740,6 +716,8 @@ export function createTodayScreen({
       ])
     }
     const readiness = trainingReadiness(dayLogs, selectedDate)
+    const signals = Object.fromEntries(readiness.signals.map((signal) => [signal.key, signal]))
+    const scored = readiness.score !== null
     return el('section.today-card.today-readiness', { dataset: { section: 'readiness' } }, [
       el('div.today-card__heading-row', {}, [
         el('h2', { text: 'Readiness' }),
@@ -755,21 +733,30 @@ export function createTodayScreen({
           onclick: () => { readinessInfoOpen = !readinessInfoOpen; render() },
         }, ['i']),
       ]),
-      el('div.today-readiness__grid', {}, metrics.map((metric) => el('div.today-readiness__metric', {
-        dataset: {
-          metric: metric.key,
-          direction: Number.isFinite(metric.delta) && metric.good(metric.delta) ? 'good' : 'neutral',
-        },
+      scored && el('div.today-readiness__summary', {
+        dataset: { readinessSummary: 'true', readinessLabel: readiness.label.toLowerCase(), coverage: readiness.coverage },
       }, [
-        el('strong', { text: compactMetric(metric.value, metric.unit, metric.digits) }),
-        el('span', { text: metric.label }),
-        el('small', { text: deltaText(metric) }),
-      ]))),
-      readinessInfoOpen && el('p.today-readiness__info', {
-        text: readiness.score === null
-          ? 'Values compare with your previous seven days when enough history is available.'
-          : `Values compare with your recent baseline; the score does not replace how you feel (${readiness.label.toLowerCase()}).`,
-      }),
+        // One signal is not enough for a number; the label and reason carry it.
+        readiness.coverage === 'good' && el('div.today-readiness__dial', {
+          style: `--readiness: ${readiness.score}`,
+          role: 'img',
+          'aria-label': `Readiness ${readiness.score} out of 100`,
+        }, [el('strong', { dataset: { readinessScore: 'true' }, text: String(readiness.score) })]),
+        el('div.today-readiness__verdict', {}, [
+          el('strong', { text: readiness.label }),
+          el('span', { text: readiness.action }),
+        ]),
+      ]),
+      scored && el('p.today-readiness__reason', { dataset: { readinessReason: 'true' }, text: readiness.reason }),
+      el('div.today-readiness__grid', {}, readinessMetrics().map((metric) => {
+        const status = metricStatus(metric, signals[metric.key])
+        return el('div.today-readiness__metric', { dataset: { metric: metric.key, tone: status.tone } }, [
+          el('strong', { text: compactMetric(metric.value, metric.unit, metric.digits) }),
+          el('span', { text: metric.label }),
+          el('small', { text: status.text }),
+        ])
+      })),
+      readinessInfoOpen && el('p.today-readiness__info', { text: readinessExplanation(readiness) }),
     ])
   }
 

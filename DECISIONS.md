@@ -2427,3 +2427,23 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Fix:** the finish and discard sheets now mount on `<body>` beside the rest bar, and every overlay the workout owns is cleared together on render, minimize, finish, discard and teardown. The rest timer keeps running behind the sheet, and "Keep going" returns to it.
 - **Evidence:** new `test/browser/finish-over-rest.html` emulates iOS stacking (`isolation: isolate` on `.app__body`) and hit-tests the sheet buttons with `elementFromPoint`; four checks failed before the fix and pass after. Release visual `session-finish-rest` added; `capture-release-screens.js` accepts `--views` to capture a subset.
 - Copy: "1 sets logged" now reads "1 set logged".
+
+## 2026-10-03 — Readiness leads with a score and plain words (0.53.0)
+
+- **Request:** Cory said the readiness numbers (8.0h, 62 bpm, 29.3 ms with +0.3 / +1 / -11.7) did not translate into anything. He asked for a grade or other indicator.
+- **What changed:**
+  - The card now leads with the score the domain already computed but never showed: a 0-100 dial, the label (Ready / Steady / Recover), and what to do.
+  - One sentence names what is pulling the score down, for example "HRV is below your normal; sleep and resting HR look fine."
+  - Each metric shows a plain-word status instead of a signed delta.
+  - The info button explains the bands and shows the user's own normal values.
+- **Why a 0-100 score and not a letter grade:** it matches the scale the existing readiness formula uses. A letter grade like D on a low-recovery morning reads as failure, which conflicts with CLAUDE.md rule 4 and the tempering framing: recovery is half the work. The Recover label stays ember, not red.
+- **Status thresholds (guessed, flag for Cory):**
+  - HRV: at least 5% above the two-week mean is Above normal; within -10% is Normal; lower is Below normal.
+  - Resting HR: 2 bpm under the mean is Lower (good); 3 bpm or more over is Elevated.
+  - Sleep: 7 to 9 h is On target; under 7 is Short; over 9 is Long (neutral).
+- **Consistency fix:** the metric words now come from the same 14-day baseline as the score. Previously, the deltas used a separate 7-day average, so the number and the score could disagree.
+- **Single signal:** with sleep alone the dial is hidden, because showing 100 beside "Steady" contradicts itself. The label and reason still show.
+- **Evidence:**
+  - Domain tests cover statuses, the reason sentence and the copy guard.
+  - The new `test/browser/readiness-grade.html` reproduces the reported morning and expects score 66, Steady, the HRV reason, and no signed deltas. It failed 8 of 11 checks before the change.
+  - The release-visual Today seed now includes HRV and resting-HR history, so the reference screenshot shows the full card.

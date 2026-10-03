@@ -357,11 +357,18 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
-      } else if (view === 'session') {
+      } else if (view === 'session' || view === 'session-finish-rest') {
         await storage.open()
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+        if (view === 'session-finish-rest') {
+          // The confirmation must sit above a running rest timer.
+          ;[...document.querySelectorAll('.screen--session .setrow__check')]
+            .find((button) => !button.disabled && button.closest('.setrow')?.dataset.done !== 'true')?.click()
+          await new Promise((resolve) => setTimeout(resolve, 60))
+          document.querySelector('[data-action="finish"]')?.click()
+        }
       } else if (view === 'summary') {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         const summary = createSummaryScreen({ onDone: () => tempered.app.show('today') })

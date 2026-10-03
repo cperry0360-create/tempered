@@ -28,7 +28,7 @@ const VIEWS = [
   'settings', 'program-builder', 'summary',
   'train-rhythm', 'train-program-details', 'train-routine', 'train-library',
   'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
-  'health-import', 'nutrition-log', 'session-discard',
+  'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest',
 ]
 const VIEWPORTS = [
   { label: 'iphone-compact', width: 390, height: 844 },
@@ -210,7 +210,8 @@ try {
     })
     for (const theme of THEMES) {
     await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] })
-    for (const view of VIEWS) {
+    const only = argument('--views')?.split(',') ?? null
+    for (const view of VIEWS.filter((name) => !only || only.includes(name))) {
       const filename = `${viewport.label}-${theme}-${view}.png`
       const destination = join(output, filename)
       const reportPromise = nextReport()

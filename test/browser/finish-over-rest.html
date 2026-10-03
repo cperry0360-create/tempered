@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tempered — Finish over rest timer</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/setup.css" />
+  <link rel="stylesheet" href="../../src/polish.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/fuel.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <style>
+    /* iOS WebKit makes a touch-scrolling container its own stacking context;
+       Chromium does not. Reproduce the phone's stacking here, or this harness
+       passes on desktop while the phone stays broken. */
+    .app__body { isolation: isolate; }
+  </style>
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script type="module">
+    import { bootstrapHarness } from './harness.js'
+    import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+    const checks = []
+    const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail: String(detail ?? '') })
+    const q = (selector, root = document) => root?.querySelector?.(selector) ?? null
+    const qa = (selector, root = document) => root ? [...root.querySelectorAll(selector)] : []
+    const wait = (ms = 40) => new Promise((resolve) => setTimeout(resolve, ms))
+    const errors = []
+    const originalError = console.error
+    console.error = (...args) => { errors.push(args.map(String).join(' ')); originalError(...args) }
+    window.addEventListener('error', (event) => errors.push(event.message || 'runtime error'))
+    window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason || 'rejection')))
+
+    try {
+      const storage = createMemoryStorage()
+      await storage.open()
+      await storage.put('profile', { id: 'profile', name: 'Finish over rest', setupComplete: true })
+      const clock = fixedClock(new Date(2026, 8, 29, 9, 0, 0))
+      const app = await bootstrapHarness({ storage, clock, mount: q('#app'), initialTab: 'today' })
+      await wait()
+      q('.today-workout__start')?.click()
+      await wait(220)
+      const first = qa('.screen--session .setrow__check').find((b) => !b.disabled)
+      first?.click()
+      await wait(60)
+      check('logging a set starts the rest timer', Boolean(q('.session-restbar')))
+
+      // Hit-test: the control a thumb lands on, not merely that it exists.
+      const onTop = (node) => {
+        if (!node) return false
+        const box = node.getBoundingClientRect()
+        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+        return Boolean(hit && (hit === node || node.contains(hit)))
+      }
+      q('[data-action="finish"]')?.click()
+      await wait()
+      const confirm = q('[data-action="confirm-finish"]')
+      const keep = q('[data-action="cancel-finish"]')
+      check('Finish opens the confirmation while resting', Boolean(confirm))
+      check('confirm Finish is the topmost control at its own centre', onTop(confirm),
+        document.elementFromPoint(...(() => { const b = confirm?.getBoundingClientRect(); return b ? [b.left + b.width / 2, b.top + b.height / 2] : [0, 0] })())?.className)
+      check('Keep going is the topmost control at its own centre', onTop(keep))
+
+      keep?.click()
+      await wait()
+      check('Keep going returns to the workout with the rest timer still running',
+        !q('[data-action="confirm-finish"]') && Boolean(q('.session-restbar')))
+
+      q('[data-action="finish"]')?.click()
+      await wait()
+      const again = q('[data-action="confirm-finish"]')
+      if (onTop(again)) again.click()
+      await wait(220)
+      check('confirming during rest reaches the summary', Boolean(q('.screen--summary')))
+      check('no rest bar is left behind after finishing', !q('.session-restbar'))
+      check('no console errors', errors.length === 0, errors.join('\n'))
+    } catch (error) {
+      check('finish-over-rest flow threw', false, String(error?.stack ?? error).slice(0, 1200))
+    } finally {
+      console.error = originalError
+    }
+
+    await fetch('/__report', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'finish-over-rest', passed: checks.every((item) => item.ok), checks }),
+    })
+  </script>
+</body>
+</html>

@@ -679,7 +679,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           dataset: { action: 'minimize-workout' },
           onclick: () => {
             persistDraft()
-            document.querySelector('[data-session-rest-overlay]')?.remove()
+            clearBodyOverlays()
             onMinimize?.()
           },
         }, ['Minimize workout']),
@@ -851,7 +851,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   function restBar() {
     if (!rest) return null
     const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
-    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true' } }, [
+    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true', sessionOverlay: 'true' } }, [
       el('div.session-restbar__progress', {}, [
         el('i', {
           dataset: { restProgress: 'true' },
@@ -865,6 +865,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('button', { type: 'button', onclick: skipRest }, ['Skip']),
       ]),
     ])
+  }
+
+  /** The rest bar and confirmation sheets live on <body>, outside the screen:
+   *  iOS makes the scrolling app body its own stacking context, so a sheet left
+   *  inside it can never rise above the body-level rest bar. */
+  function clearBodyOverlays() {
+    document.querySelectorAll('[data-session-overlay]').forEach((node) => node.remove())
   }
 
   function cancelWorkout() {
@@ -914,52 +921,59 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             },
           }, [icon('plus'), 'Add movement']),
 
-      confirmingFinish && el('div.session-sheet', {}, [
-        el('div.session-sheet__card', {}, [
-          el('p.session-sheet__title', { text: `Finish with ${loggedCount()} sets logged?` }),
-          el('div.session-sheet__actions', {}, [
-            el('button', {
-              type: 'button', dataset: { action: 'cancel-finish' },
-              onclick: () => { confirmingFinish = false; render() },
-            }, ['Keep going']),
-            el('button', {
-              type: 'button', dataset: { action: 'confirm-finish' },
-              onclick: finish,
-            }, ['Finish']),
-          ]),
-        ]),
-      ]),
-
-      confirmingDiscard && el('div.session-sheet', {}, [
-        el('div.session-sheet__card', {}, [
-          el('p.session-sheet__title', { text: 'Discard unlogged edits?' }),
-          el('p.session-sheet__copy', { text: 'Checked sets stay in your log. Unchecked changes will be discarded.' }),
-          el('div.session-sheet__actions', {}, [
-            el('button', {
-              type: 'button',
-              onclick: () => { confirmingDiscard = false; render() },
-            }, ['Keep editing']),
-            el('button', {
-              type: 'button',
-              dataset: { confirmAction: 'discard' },
-              onclick: () => {
-                clearActiveSessionDraft()
-                releaseWorkoutWakeLock()
-                onFinish(null)
-              },
-            }, ['Discard']),
-          ]),
-        ]),
-      ]),
-
     ])
-    document.querySelector('[data-session-rest-overlay]')?.remove()
+    clearBodyOverlays()
     if (rest) document.body.append(restBar())
+    const sheet = confirmingFinish ? finishSheet() : confirmingDiscard ? discardSheet() : null
+    if (sheet) document.body.append(sheet)
     tick()
   }
 
+  function finishSheet() {
+    return el('div.session-sheet', { dataset: { sessionOverlay: 'true' } }, [
+      el('div.session-sheet__card', {}, [
+        el('p.session-sheet__title', { text: `Finish with ${loggedCount()} ${loggedCount() === 1 ? 'set' : 'sets'} logged?` }),
+        el('div.session-sheet__actions', {}, [
+          el('button', {
+            type: 'button', dataset: { action: 'cancel-finish' },
+            onclick: () => { confirmingFinish = false; render() },
+          }, ['Keep going']),
+          el('button', {
+            type: 'button', dataset: { action: 'confirm-finish' },
+            onclick: finish,
+          }, ['Finish']),
+        ]),
+      ]),
+      ])
+  }
+
+  function discardSheet() {
+    return el('div.session-sheet', { dataset: { sessionOverlay: 'true' } }, [
+      el('div.session-sheet__card', {}, [
+        el('p.session-sheet__title', { text: 'Discard unlogged edits?' }),
+        el('p.session-sheet__copy', { text: 'Checked sets stay in your log. Unchecked changes will be discarded.' }),
+        el('div.session-sheet__actions', {}, [
+          el('button', {
+            type: 'button',
+            onclick: () => { confirmingDiscard = false; render() },
+          }, ['Keep editing']),
+          el('button', {
+            type: 'button',
+            dataset: { confirmAction: 'discard' },
+            onclick: () => {
+              clearBodyOverlays()
+              clearActiveSessionDraft()
+              releaseWorkoutWakeLock()
+              onFinish(null)
+            },
+          }, ['Discard']),
+        ]),
+      ]),
+      ])
+  }
+
   async function finish() {
-    document.querySelector('[data-session-rest-overlay]')?.remove()
+    clearBodyOverlays()
     const summary = await workout.finishSession(session, {
       isFirstOfDay,
       // A block settles everything it logged; a single slot settles only itself,
@@ -1147,7 +1161,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       releaseWorkoutWakeLock()
       document.removeEventListener('visibilitychange', checkpointWhenHidden)
       window.removeEventListener('pagehide', checkpointOnPageHide)
-      document.querySelector('[data-session-rest-overlay]')?.remove()
+      clearBodyOverlays()
     },
   }
 }

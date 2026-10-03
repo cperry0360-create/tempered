@@ -2420,3 +2420,10 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 
 - **Bug:** since 0.51.0, meals logged earlier in the day did not appear under Today's meals on Fuel until something new was added. The app renders Fuel before attaching it to the page; the panel's first load ran while detached, returned early, and was never retried.
 - **Fix:** the runtime waits for the panel to be on the page before loading, and reloads it every time the Fuel tab is shown. The inline-entry browser test now seeds a meal for today before first open and checks it after leaving and returning; both checks failed before the fix.
+
+## 2026-10-03 — Finish confirmation sits above the rest timer (0.52.2)
+
+- **Bug:** tapping Finish during a rest left the "Finish with N sets logged?" sheet underneath the rest bar, so its buttons could not be reached until the rest ended or was skipped. The rest bar is mounted on `<body>`; the sheet was inside the screen. iOS WebKit makes the scrolling app body its own stacking context, so the sheet's z-index could never rise above the body-level bar. Desktop Chromium does not do this, which is why no harness caught it.
+- **Fix:** the finish and discard sheets now mount on `<body>` beside the rest bar, and every overlay the workout owns is cleared together on render, minimize, finish, discard and teardown. The rest timer keeps running behind the sheet, and "Keep going" returns to it.
+- **Evidence:** new `test/browser/finish-over-rest.html` emulates iOS stacking (`isolation: isolate` on `.app__body`) and hit-tests the sheet buttons with `elementFromPoint`; four checks failed before the fix and pass after. Release visual `session-finish-rest` added; `capture-release-screens.js` accepts `--views` to capture a subset.
+- Copy: "1 sets logged" now reads "1 set logged".

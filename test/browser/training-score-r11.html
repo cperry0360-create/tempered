@@ -16,6 +16,7 @@ try{
   await storage.put('sessions',{id,date,programId:'p',endedAt:date+'T10:00:00Z',durationMinutes:30})
   for(let n=0;n<2;n++)await storage.put('setLogs',{id:id+n,sessionId:id,exerciseId:'lift',programId:'p',programDayId:'d'+d,slotIndex:0,weight:100+w*5,reps:6})
  }
+ for(let n=0;n<12;n++)await storage.put('dayLogs',{date:shift('2026-09-16',n),healthMetrics:{spo2:n===11?93:96+(n%2)}})
  let copied='';Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{copied=text}}})
  let away=[];const workout={exerciseMap:async()=>exerciseMap,awayPeriods:async()=>away,addAwayPeriod:async(start,end)=>{away=[...away,{id:`away_${start}_${end}`,start,end}];return away},removeAwayPeriod:async id=>{away=away.filter(p=>p.id!==id);return away}}
  const screen=createHistoryScreen({storage,clock,workout,daily:{activities:[],activitySchedule:async()=>({})}})
@@ -40,11 +41,18 @@ try{
  q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50))
  check('Mark away stores the week through the workout service',away.some(p=>p.start==='2026-09-14'&&p.end==='2026-09-20'))
  q('.progress-back')?.click()
+ check('the card says why its graded week is older than last week',/Sep 14 away/.test(q('.progress-score')?.textContent),q('.progress-score')?.textContent)
+ q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ check('the report names the latest graded week and why newer weeks are not graded',
+  copied.includes('Training score · latest graded week, Sep 7:')&&copied.includes('Sep 14 was marked away, so Sep 7 is your latest graded week.')&&copied.includes('Weeks after it not graded: Sep 14 (away).'),copied)
  check('an away week drops out: headline moves to the prior week and the trend shows a gap',/Week of Sep 7/.test(q('.progress-score')?.textContent)&&qa('.progress-score__trend circle').length===11,q('.progress-score')?.textContent)
  q('[data-score-component="weeks"]')?.click();q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50));q('.progress-back')?.click()
  check('Not away restores the week',away.length===0&&/Week of Sep 14/.test(q('.progress-score')?.textContent))
  q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
  check('ChatGPT report includes score, grade, delta, this week, explanation and all component reasons',copied.includes('100 / 100 · A')&&copied.includes('This week so far:')&&copied.includes('Score explanation:')&&copied.includes('Score versus prior 4-week average:')&&['Progression:','Plan adherence:','Consistency:','Volume trend:','planned sets','training days'].every(s=>copied.includes(s)),copied)
+ check('the report shows the arithmetic inside adherence and consistency',/Plan adherence: \d+% · \d+(\.\d)?% of score · 70% × \d+% of planned sets finished \(\d+ of \d+\) \+ 30% × \d+% of logged sets at the rep minimum \(\d+ of \d+\) = \d+%\./.test(copied)&&/Consistency: [^\n]*70% × \d+% of planned training days/.test(copied),copied)
+ check('the report states how the score is built',copied.includes('How the score works:')&&copied.includes('70% planned sets finished, 30% sets that reached the rep minimum'),copied)
+ check('recovery lines give latest, usual range and trend, not a bare reading',/Blood oxygen 93% \(usual 9\d–9\d%; below your usual range\)/.test(copied),copied.split('\n').find(l=>l.startsWith('Recovery')))
  q('[data-view="log"]')?.click();check('existing Log remains available',qa('.progress-log-row').length>0)
  check('no runtime errors',errors.length===0,errors.join('\n'))
  const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map(),awayPeriods:async()=>[]},daily:{activities:[],activitySchedule:async()=>({})}})

@@ -509,18 +509,31 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       const sessionsDelta = deltaValue(current.periodSessions.length, previous.periodSessions.length, '')
       if (sessionsDelta) lines.push('Sessions versus the prior period: ' + sessionsDelta + '.')
     }
+    // A bare latest reading invites over-reading; give its usual range and trend too.
     const signals = current.recovery
       .filter((signal) => signal.values.length)
-      .map((signal) => signal.label + ': ' + numberText(signal.values.at(-1).value, signal.digits) + signal.unit)
-    if (signals.length) lines.push('Recovery: ' + signals.join(', ') + '.')
+      .map((signal) => {
+        const summary = summarizeTrend(signal.values, { metric: signal.key, unit: signal.unit, digits: signal.digits,
+          rangeLabel: range + ' days', band: true })
+        const notes = []
+        if (summary.band) notes.push('usual ' + numberText(summary.band.low, signal.digits) + '–' + numberText(summary.band.high, signal.digits) + signal.unit.trim())
+        notes.push(summary.sparse ? 'too few readings for a trend' : summary.changeText.replace(/^Above/, 'above').replace(/^Below/, 'below').replace(/^Steady/, 'steady'))
+        return signal.label + ' ' + numberText(signal.values.at(-1).value, signal.digits) + signal.unit + ' (' + notes.join('; ') + ')'
+      })
+    if (signals.length) lines.push('Recovery, latest reading with its usual range and trend: ' + signals.join(', ') + '.')
     const training = scoreData()
     const scored = training.current
-    lines.push('Training score · week of ' + scored.week + ': ' + (scored.score === null ? 'building history' : scored.score + ' / 100 · ' + scored.grade) + (scored.deload ? ' · deload' : '') + '.')
+    lines.push((training.headline ? 'Training score · latest graded week, ' + monthDay(scored.week) : 'Training score') + ': '
+      + (scored.score === null ? 'building history' : scored.score + ' / 100 · ' + scored.grade) + (scored.deload ? ' · deload' : '') + '.')
+    if (training.skipped.length) lines.push('Weeks after it not graded: ' + training.skipped.map((w) => monthDay(w.week) + ' (' + (w.reason === 'away' ? 'away' : 'no plan to grade') + ')').join(', ') + '.')
     const week = training.thisWeek
     if (week) lines.push('This week so far: ' + (week.away ? 'away' : week.done + ' of ' + week.due + ' sets due · ' + week.status) + '.')
-    lines.push('Score explanation: ' + explainTrainingScore(training).sentences.join(' '))
+    const explained = explainTrainingScore(training)
+    lines.push('Score explanation: ' + explained.sentences.join(' '))
+    lines.push('How the score works: ' + explained.method.join(' '))
     if (training.change !== null) lines.push('Score versus prior 4-week average: ' + (training.change > 0 ? '+' : '') + training.change + ' (' + numberText(training.average, 1) + ' average).')
-    for (const component of scored.components) lines.push(component.label + ': ' + (component.value === null ? 'not scored' : Math.round(component.value * 100) + '%; ' + numberText(component.weight * 100, 1) + '% weight') + ' · ' + component.reason + '.')
+    for (const component of scored.components) lines.push(component.label + ': ' + (component.value === null ? 'not scored · ' + component.reason
+      : Math.round(component.value * 100) + '% · ' + numberText(component.weight * 100, 1) + '% of score · ' + (component.formula ?? component.reason)) + '.')
     return lines.join('\n')
   }
 
@@ -591,7 +604,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           onclick: () => { scoreExplainOpen = true; render() },
         }, ['i']),
       ]),
-      el('span.progress-footnote', { text: current ? 'Week of ' + monthDay(current.week) : 'Your first full week will be scored' }),
+      el('span.progress-footnote', { text: current
+        ? 'Week of ' + monthDay(current.week) + (result.skipped.length ? ' · ' + result.skipped.map((w) => monthDay(w.week) + (w.reason === 'away' ? ' away' : ' not graded')).join(', ') : '')
+        : 'Your first full week will be scored' }),
       el('div.progress-score__summary', {}, [
         el('strong.progress-score__number', { text: current ? current.score + ' · ' + current.grade : 'Building history' }),
         result.change !== null && el('span.progress-score__change', { text: result.change === 0 ? 'Level with your ' + numberText(result.average, 0) + ' avg' : (result.change > 0 ? '+' : '') + result.change + ' vs ' + numberText(result.average, 0) + ' avg' }),

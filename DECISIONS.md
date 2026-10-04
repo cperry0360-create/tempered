@@ -2447,3 +2447,27 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
   - Domain tests cover statuses, the reason sentence and the copy guard.
   - The new `test/browser/readiness-grade.html` reproduces the reported morning and expects score 66, Steady, the HRV reason, and no signed deltas. It failed 8 of 11 checks before the change.
   - The release-visual Today seed now includes HRV and resting-HR history, so the reference screenshot shows the full card.
+
+## 2026-10-04 — Progress report explains an older graded week and its own arithmetic (0.53.1)
+
+- **Report:** ChatGPT, reading Cory's progress report, flagged three problems:
+  - The score described the week of Sep 14 in a report ending Oct 4, with no reason given.
+  - Plan adherence of 85% did not match 74 of 93 sets (80%).
+  - Recovery readings were single values that could not establish a trend.
+- **Diagnosis:** the maths was right; the report left out its reasons.
+  - The headline is the last completed, graded week. Later weeks marked away, or with nothing to grade, are skipped silently.
+  - Adherence is 70% set completion plus 30% rep-minimum attainment, and the report never said so. Consistency has the same 70/30 split.
+- **Fix (domain, test-first):**
+  - `trainingScore` now returns `skipped` (the completed weeks after the headline, each with its reason: away or unscored).
+  - The explanation adds "Sep 21 was marked away, so Sep 14 is your latest graded week."
+  - Adherence and consistency carry a `formula` string showing the arithmetic.
+  - The method text spells out the 70/30 split.
+- **Fix (report and card):**
+  - The report's score line reads "latest graded week, Sep 14", followed by a "Weeks after it not graded" line.
+  - Component lines show the formula, and a "How the score works" line is added.
+  - Recovery lines now give each latest reading with its usual range and trend direction.
+  - The score card footnote shows skipped weeks, for example "Week of Sep 14 · Sep 21 away".
+- **Unchanged:** the current week is still never graded, even on Sunday, because it is unfinished. Its progress appears as "This week so far".
+- **Evidence:**
+  - Three new domain tests.
+  - Five new checks in `training-score-r11.html`, all of which failed before the change.

@@ -162,3 +162,35 @@ test('R11.1: "carried it" credits points added, so a 10% part cannot outrank a s
   const text=explainTrainingScore(fake).sentences.join(' ')
   assert.match(text,/Progression carried it/);assert.doesNotMatch(text,/Volume trend carried it/)
 })
+
+test('a headline older than last week says which weeks were skipped and why',async()=>{
+  const { explainTrainingScore }=await import('./training-score.js')
+  const input=block({missed:true});input.awayPeriods=[{start:'2026-09-21',end:'2026-09-27'}]
+  const r=await run(input)
+  assert.equal(r.headline.week,'2026-09-14')
+  assert.deepEqual(r.skipped,[{week:'2026-09-21',reason:'away'}])
+  const text=explainTrainingScore(r).sentences.join(' ')
+  assert.match(text,/The week of Sep 14 scored/)
+  assert.match(text,/Sep 21 was marked away, so Sep 14 is your latest graded week\./,text)
+  const fresh=await run(block({stalled:true}));assert.deepEqual(fresh.skipped,[])
+  assert.doesNotMatch(explainTrainingScore(fresh).sentences.join(' '),/latest graded week/)
+})
+
+test('adherence and consistency carry the arithmetic behind their percentage',async()=>{
+  const input=block({stalled:true});const ids=new Set(input.sessions.filter(s=>s.date>='2026-09-21').map(s=>s.id))
+  input.setLogs=input.setLogs.filter(s=>!ids.has(s.sessionId)||!s.id.endsWith('1'))
+  const [,a,c]=(await run(input)).current.components
+  const pct=n=>Math.round(n*100)+'%'
+  const sets=a.completed/a.prescribed,reps=a.repSets?a.reached/a.repSets:0
+  assert.equal(a.formula,`70% × ${pct(sets)} of planned sets finished (${a.completed} of ${a.prescribed}) + 30% × ${pct(reps)} of logged sets at the rep minimum (${a.reached} of ${a.repSets}) = ${pct(a.value)}`)
+  assert.ok(Math.abs(.7*sets+.3*reps-a.value)<1e-9)
+  const days=Math.min(1,c.days/c.plannedDays),weeks=c.trackedWeeks?c.metWeeks/c.trackedWeeks:0
+  assert.equal(c.formula,`70% × ${pct(days)} of planned training days (${c.days} of ${c.plannedDays}) + 30% × ${pct(weeks)} of recent weeks that met the plan (${c.metWeeks} of ${c.trackedWeeks}) = ${pct(c.value)}`)
+})
+
+test('the method spells out the 70/30 split inside adherence and consistency',async()=>{
+  const { explainTrainingScore }=await import('./training-score.js')
+  const m=explainTrainingScore(await run(block({stalled:true}))).method.join(' ')
+  assert.match(m,/Plan adherence \(30%\): 70% planned sets finished, 30% sets that reached the rep minimum\./)
+  assert.match(m,/Consistency \(25%\): 70% training days against your plan, 30% recent weeks that met the plan\./)
+})

@@ -25,6 +25,7 @@ const monday = date => shift(date, -(((Math.floor(stamp(date) / DAY) + 3) % 7 + 
 const mean = values => values.length ? values.reduce((sum, n) => sum + n, 0) / values.length : null
 const cap = n => Math.max(0, Math.min(1, n))
 const rounded = n => Math.round(n * 10) / 10
+const pct = n => Math.round(n * 100) + '%'
 const grade = n => n >= 90 ? 'A' : n >= 80 ? 'B' : n >= 70 ? 'C' : n >= 60 ? 'D' : 'Rebuild week'
 
 /**
@@ -155,6 +156,7 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
       value: prescribed ? .7 * cap(completed / prescribed) + .3 * (repSets ? cap(reached / repSets) : 0) : null,
       prescribed, completed, reached, repSets,
       reason:prescribed ? `${completed} of ${prescribed} planned sets · ${reached} of ${repSets} reached rep minimum` : 'No prescribed working sets for this week', details:adherenceDetails }
+    if (prescribed) adherence.formula = `70% × ${pct(cap(completed / prescribed))} of planned sets finished (${completed} of ${prescribed}) + 30% × ${pct(repSets ? cap(reached / repSets) : 0)} of logged sets at the rep minimum (${reached} of ${repSets}) = ${pct(adherence.value)}`
     const days = dayCounts(week), target = plannedDays(week)
     const recentWeeks = [0,1,2,3].map(n => shift(week,-n*7)).filter(w => start && shift(w,6) >= start && !away.has(w))
     const weekDetails = recentWeeks.map(w => ({ week:w, days:dayCounts(w).filter(d => d.qualifies).length, target:plannedDays(w) })).filter(w => w.target > 0)
@@ -164,6 +166,7 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
       days:qualified, plannedDays:target, metWeeks:met, trackedWeeks:weekDetails.length,
       reason:target ? `${qualified} of ${target} training days · ${met} of ${weekDetails.length} weeks met target` : 'No planned training days for this week',
       details:[...days.map(d => ({ reason:`${d.date}: ${d.sets} working sets · ${rounded(d.minutes)} min · ${d.qualifies ? 'training day' : '6 sets or 30 min counts'}` })), ...weekDetails.map(w => ({ reason:`Week of ${w.week}: ${w.days} of ${w.target} days` }))] }
+    if (target) consistency.formula = `70% × ${pct(cap(qualified / target))} of planned training days (${qualified} of ${target}) + 30% × ${pct(weekDetails.length ? met / weekDetails.length : 0)} of recent weeks that met the plan (${met} of ${weekDetails.length}) = ${pct(consistency.value)}`
     const prior = [1,2,3,4].map(n => shift(week,-n*7)).filter(w => start && shift(w,6) >= start && !away.has(w))
     const baseline = mean(prior.map(w => logs.filter(s => inWeek(s.date,w)).length))
     const volume = { id:'volume', label:'Volume trend', baseWeight:.10,
@@ -185,7 +188,9 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
   const comparison = headline ? graded.filter(w => w.week < headline.week).slice(-4) : []
   const average = mean(comparison.map(w => w.score))
   const current = headline ?? { week: currentStart, away: false, score: null, grade: null, soFar: false, deload: false, components: [] }
-  return { current, headline, thisWeek: progressThisWeek(), weeks: all.slice(-12), average,
+  // Completed weeks after the headline that got no grade, so a report can say why the headline is older.
+  const skipped = headline ? all.filter(w => w.week > headline.week).map(w => ({ week: w.week, reason: w.away ? 'away' : 'unscored' })) : []
+  return { current, headline, skipped, thisWeek: progressThisWeek(), weeks: all.slice(-12), average,
     change: headline && average !== null ? Math.round(headline.score - average) : null }
 
   /** The week in progress, as work due so far rather than a grade. */
@@ -223,8 +228,8 @@ const shortDay = date => MONTHS[Number(date.slice(5, 7)) - 1] + ' ' + Number(dat
 export function explainTrainingScore(result) {
   const method = [
     'Progression (35%): your lifts over the last 2 weeks against the 4 weeks before.',
-    'Plan adherence (30%): planned sets finished, and sets that reached the rep minimum.',
-    'Consistency (25%): days with 6+ working sets or 30+ minutes, against your plan.',
+    'Plan adherence (30%): 70% planned sets finished, 30% sets that reached the rep minimum.',
+    'Consistency (25%): 70% training days against your plan, 30% recent weeks that met the plan. A training day is 6+ working sets or 30+ minutes.',
     'Volume trend (10%): working sets against your recent average.',
     'Deload and away weeks skip the parts that would count against rest.',
   ]
@@ -232,6 +237,15 @@ export function explainTrainingScore(result) {
   if (!h) return { sentences: ['Your first full week will get a score. Until then, this card shows the work you have logged.'], method }
   const lastWeek = shift(monday(result.thisWeek?.week ?? h.week), -7) === h.week
   const sentences = [`${lastWeek ? 'Last week' : 'The week of ' + shortDay(h.week)} scored ${h.score}, ${gradePhrase(h.grade)}.`]
+  const skipped = result.skipped ?? []
+  if (skipped.length) {
+    const names = skipped.map(w => shortDay(w.week))
+    const list = names.length < 2 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names.at(-1)
+    const plural = names.length > 1
+    const why = skipped.every(w => w.reason === 'away') ? (plural ? 'were marked away' : 'was marked away')
+      : skipped.every(w => w.reason !== 'away') ? (plural ? 'had no plan to grade' : 'had no plan to grade') : 'were away or had no plan to grade'
+    sentences.push(`${list} ${why}, so ${shortDay(h.week)} is your latest graded week.`)
+  }
   if (h.deload) sentences.push('It was a deload week, so progression and volume rested.')
   const scored = h.components.filter(c => c.value !== null)
   // Credit the part that added the most points, not merely the highest percentage.

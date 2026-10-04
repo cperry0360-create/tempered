@@ -481,7 +481,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       else scoringRecords.delete(exerciseId)
     }
 
-    const endedAt = clock.nowIso()
+    const endedAt = options.endedAt ?? clock.nowIso()
     // docs/11 F1. Wall-clock from `startedAt` measured the day, not the work:
     // under the micro-set model this record is the DAY's, so a set at seven and
     // another at half past nine read as a two-and-a-half hour session. Duration
@@ -565,6 +565,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       durationMinutes,
       durationMinutesSource: 'measured',
       xpBySource: xpBySourceTotal,
+      ...(options.recovered ? { recovered: true } : {}),
     }
     await storage.put('sessions', completed)
 
@@ -663,6 +664,38 @@ export function createWorkoutService({ storage, clock, balance }) {
    *
    * @returns {Promise<{session: any, isFirstOfDay: boolean}>}
    */
+  /**
+   * Settles sessions that hold logged sets but were never finished — closed by
+   * Cancel, or orphaned when the app restarted mid-workout. Checked sets are
+   * canonical the moment they are logged; an open session only hides them from
+   * history, the score and the calendar. Nothing is invented: the session ends
+   * at its last logged set, on its own date. Empty sessions from earlier days
+   * are removed, as finishing them would. The workout currently on screen is
+   * left alone.
+   *
+   * @param {{keepSessionId?: string|null}} [options]
+   */
+  async function settleOpenSessions({ keepSessionId = null } = {}) {
+    const today = clock.today()
+    const open = (await storage.getAll('sessions'))
+      .filter((s) => !s.endedAt && s.id !== keepSessionId)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.startedAt).localeCompare(String(b.startedAt)))
+    const settled = [], removed = []
+    for (const session of open) {
+      const sets = await setsFor(session.id)
+      if (sets.length === 0) {
+        if (session.date < today) { await storage.delete('sessions', session.id); removed.push(session.id) }
+        continue
+      }
+      const last = sets.map((set) => set.completedAt).filter(Boolean).sort().at(-1) ?? session.startedAt ?? null
+      const earlierThatDay = (await storage.getAll('sessions'))
+        .some((s) => s.id !== session.id && s.date === session.date && s.endedAt)
+      await finishSession(session, { endedAt: last ?? undefined, recovered: true, isFirstOfDay: !earlierThatDay })
+      settled.push(session.id)
+    }
+    return { settled, removed }
+  }
+
   async function openDaySession(programContext = null) {
     const today = clock.today()
     const existing = (await storage.getAll('sessions')).find((s) => s.date === today)
@@ -725,7 +758,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
-    startSession, logSet, setsFor, finishSession, adjustSessionDuration,
+    startSession, logSet, setsFor, finishSession, adjustSessionDuration, settleOpenSessions,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },
     async attributeSummary() {

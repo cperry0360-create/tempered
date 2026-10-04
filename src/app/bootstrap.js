@@ -16,6 +16,7 @@ import { createMaintenanceService } from './maintenance.js'
 import { createAppearanceService } from './appearance.js'
 import { seedLibrary, ensureProfile, seedPrograms } from './seed.js'
 import { createApp } from '../ui/app.js'
+import { loadActiveSessionDraft } from '../ui/session-draft.js'
 import { createSetupScreen } from '../ui/screens/setup.js'
 
 /** Relative, so the app runs at the repo root or under /tempered/ alike. */
@@ -64,6 +65,15 @@ export async function bootstrap(options = {}) {
   const planner = createPlannerService({ storage, clock })
   const maintenance = createMaintenanceService({ storage, clock })
   await maintenance.protectStorage()
+  // Workouts closed by Cancel, or orphaned by a restart, kept their checked sets
+  // but never ended, so history and the score could not see them. Settle them
+  // before anything reads history. The resumable workout is left open.
+  try {
+    const recovered = await workout.settleOpenSessions({ keepSessionId: loadActiveSessionDraft()?.session?.id ?? null })
+    if (recovered.settled.length) console.info('[tempered] recovered unfinished workouts', recovered.settled)
+  } catch (error) {
+    console.warn('[tempered] could not settle unfinished workouts', error)
+  }
 
   const exposed = {
     storage, clock, workout, daily, planner, appearance, character: null, battle: null,

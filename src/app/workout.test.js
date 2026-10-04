@@ -556,3 +556,38 @@ test('exercise frequency can override the program and counts distinct training d
   assert.equal(week.exerciseFrequencyTargets.squat_bb, 3)
   assert.equal(week.exerciseFrequencyDone.squat_bb, 2)
 })
+
+test('open sessions with logged sets are settled on their own date, keeping every set', async () => {
+  const { storage, workout } = await freshApp('2026-10-04T12:00:00.000Z')
+  // Left open by Cancel on Sep 22: sets were saved, the session never ended.
+  await storage.put('sessions', { id: 'lost', date: '2026-09-22', startedAt: '2026-09-22T10:00:00.000Z', endedAt: null, programId: 'p' })
+  for (let n = 0; n < 4; n += 1) {
+    await storage.put('setLogs', { id: 'lost' + n, sessionId: 'lost', exerciseId: 'bench_press', weight: 135, reps: 8,
+      isWarmup: false, setType: 'working', completedAt: `2026-09-22T10:${String(n * 3).padStart(2, '0')}:00.000Z` })
+  }
+  // Started and abandoned with nothing logged.
+  await storage.put('sessions', { id: 'empty', date: '2026-09-23', startedAt: '2026-09-23T10:00:00.000Z', endedAt: null })
+  // The workout currently open on screen must not be touched.
+  await storage.put('sessions', { id: 'live', date: '2026-10-04', startedAt: '2026-10-04T11:30:00.000Z', endedAt: null })
+  await storage.put('setLogs', { id: 'live0', sessionId: 'live', exerciseId: 'bench_press', weight: 135, reps: 8, isWarmup: false, setType: 'working', completedAt: '2026-10-04T11:35:00.000Z' })
+
+  const result = await workout.settleOpenSessions({ keepSessionId: 'live' })
+
+  assert.deepEqual(result, { settled: ['lost'], removed: ['empty'] })
+  const lost = await storage.get('sessions', 'lost')
+  assert.equal(lost.date, '2026-09-22')
+  assert.equal(lost.endedAt, '2026-09-22T10:09:00.000Z', 'ends at its last logged set, not at recovery time')
+  assert.equal(lost.recovered, true)
+  assert.ok(lost.durationMinutes >= 1)
+  assert.equal((await storage.getAllByIndex('setLogs', 'sessionId', 'lost')).length, 4)
+  assert.ok(!(await storage.get('sessions', 'empty')))
+  assert.equal((await storage.get('sessions', 'live')).endedAt, null)
+  assert.deepEqual(await workout.settleOpenSessions({ keepSessionId: 'live' }), { settled: [], removed: [] }, 'idempotent')
+})
+
+test('an empty session from today is left alone, since it may be about to receive sets', async () => {
+  const { storage, workout } = await freshApp('2026-10-04T12:00:00.000Z')
+  await storage.put('sessions', { id: 'today-empty', date: '2026-10-04', startedAt: '2026-10-04T11:58:00.000Z', endedAt: null })
+  assert.deepEqual(await workout.settleOpenSessions(), { settled: [], removed: [] })
+  assert.ok(await storage.get('sessions', 'today-empty'))
+})

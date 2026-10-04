@@ -875,6 +875,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function cancelWorkout() {
+    // Checked sets are already saved. Closing without finishing would leave them
+    // in an open session that history and the score cannot see, so Cancel with
+    // logged work asks to finish instead.
+    if (loggedCount() > 0) {
+      confirmingFinish = true
+      render()
+      return
+    }
     if (hasUnloggedEdits) {
       confirmingDiscard = true
       render()
@@ -933,6 +941,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return el('div.session-sheet', { dataset: { sessionOverlay: 'true' } }, [
       el('div.session-sheet__card', {}, [
         el('p.session-sheet__title', { text: `Finish with ${loggedCount()} ${loggedCount() === 1 ? 'set' : 'sets'} logged?` }),
+        el('p.session-sheet__copy', { text: 'Logged sets are kept and count toward your history when you finish.' }),
         el('div.session-sheet__actions', {}, [
           el('button', {
             type: 'button', dataset: { action: 'cancel-finish' },

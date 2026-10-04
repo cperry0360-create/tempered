@@ -78,6 +78,32 @@
       await wait(220)
       check('confirming during rest reaches the summary', Boolean(q('.screen--summary')))
       check('no rest bar is left behind after finishing', !q('.session-restbar'))
+
+      // Cancel with logged sets must not quietly leave the workout open and unseen.
+      await app.app.show('today'); await wait(80)
+      q('.today-workout__start')?.click(); await wait(220)
+      qa('.screen--session .setrow__check').find((b) => !b.disabled && b.closest('.setrow')?.dataset.done !== 'true')?.click()
+      await wait(60)
+      q('[data-action="cancel-session"]')?.click(); await wait()
+      check('Cancel with logged sets asks to finish instead of closing', Boolean(q('[data-action="confirm-finish"]')) && Boolean(q('.screen--session')))
+      check('the sheet says logged sets are kept', /kept/i.test(q('.session-sheet')?.textContent ?? ''), q('.session-sheet')?.textContent)
+      q('[data-action="cancel-finish"]')?.click(); await wait()
+
+      // A workout left open by an older build: sets saved, session never ended.
+      const storage2 = createMemoryStorage(); await storage2.open()
+      await storage2.put('profile', { id: 'profile', name: 'Recovery', setupComplete: true })
+      await storage2.put('sessions', { id: 'orphan', date: '2026-09-23', startedAt: '2026-09-23T14:00:00.000Z', endedAt: null })
+      for (let n = 0; n < 6; n += 1) await storage2.put('setLogs', { id: 'orphan' + n, sessionId: 'orphan', exerciseId: 'bench_press',
+        weight: 135, reps: 8, isWarmup: false, setType: 'working', completedAt: `2026-09-23T14:${String(n * 3).padStart(2, '0')}:00.000Z` })
+      q('#app').replaceChildren()
+      const second = await bootstrapHarness({ storage: storage2, clock, mount: q('#app'), initialTab: 'history' })
+      await wait(120)
+      const orphan = await storage2.get('sessions', 'orphan')
+      check('launch settles a workout left open with logged sets', Boolean(orphan?.endedAt) && orphan.date === '2026-09-23', JSON.stringify(orphan))
+      await second.app.show('history'); await wait(120)
+      q('[data-view="log"]')?.click(); await wait(80)
+      check('the recovered workout appears in the Log', /Sep 23|23 Sep/.test(q('.screen--history, .screen--progress, .progress-content')?.textContent ?? ''),
+        (q('.progress-content')?.textContent ?? '').slice(0, 300))
       check('no console errors', errors.length === 0, errors.join('\n'))
     } catch (error) {
       check('finish-over-rest flow threw', false, String(error?.stack ?? error).slice(0, 1200))

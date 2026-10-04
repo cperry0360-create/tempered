@@ -107,14 +107,18 @@
           mount.querySelector('[data-session-elapsed]')?.textContent === '0:00',
           mount.querySelector('[data-session-elapsed]')?.textContent ?? 'missing')
 
+        // Cancel with a checked set asks to finish: closing would leave the set
+        // in an open session that history and the score never see.
         mount.querySelector('[data-action="cancel-session"]').click()
         await settle()
-        document.querySelector('[data-confirm-action="discard"]').click()
-        await settle()
-        check('confirmed discard clears the resumable checkpoint', loadActiveSessionDraft() === null)
-        check('confirmed discard removes the active-workout card', !mount.querySelector('[data-active-workout]'))
-        check('leaving with discarded unlogged edits preserves checked canonical sets', sessionId
-          ? (await second.workout.setsFor(sessionId)).length === 1
+        check('Cancel with a checked set offers Finish, not Discard',
+          Boolean(document.querySelector('[data-action="confirm-finish"]')) && !document.querySelector('[data-confirm-action="discard"]'))
+        document.querySelector('[data-action="confirm-finish"]').click()
+        await settle(300)
+        check('finishing clears the resumable checkpoint', loadActiveSessionDraft() === null)
+        check('finishing removes the active-workout card', !mount.querySelector('[data-active-workout]'))
+        check('leaving drops unlogged edits and keeps checked canonical sets in a finished session', sessionId
+          ? (await second.workout.setsFor(sessionId)).length === 1 && Boolean((await second.storage.get('sessions', sessionId))?.endedAt)
           : false)
 
         const passed = checks.every((entry) => entry.ok)

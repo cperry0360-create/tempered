@@ -2471,3 +2471,22 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Evidence:**
   - Three new domain tests.
   - Five new checks in `training-score-r11.html`, all of which failed before the change.
+
+## 2026-10-04 — Recover workouts left open; Cancel with logged sets asks to finish (0.54.0)
+
+- **Report:** Cory completed a week of training, but only a few of those sessions show in the Log, and the score skipped the week.
+- **Cause:** checked sets are written to `setLogs` the moment they are ticked. The session record only gets `endedAt` when Finish completes, and Log, Progress, the calendar and the training score all read only ended sessions. Two paths left a session open for good:
+  - Cancel with every set checked closed the workout without finishing it. The discard sheet even promised "Checked sets stay in your log", but those sets were invisible. Until 0.52.2 the Finish confirmation was hidden behind the rest timer, so Cancel was the natural way out.
+  - Restarting the PWA mid-workout (iOS eviction or an update reload) without a valid resume checkpoint, or starting a new workout over a minimized one, orphaned the open session.
+- **Fix:**
+  - `workout.settleOpenSessions` runs at launch. It finishes every open session that holds logged sets, except the resumable one, on its own date, ending at its last logged set and marked `recovered: true`. Empty open sessions from earlier days are removed, as finishing them would do. Today's empty session is left alone.
+  - Nothing is invented. The sets are canonical logs, and only the closing timestamp is derived from them.
+  - Cancel with any logged set now opens the Finish confirmation instead of closing. Its copy says logged sets are kept and count once finished.
+  - Discard remains available when nothing is logged.
+- **Side effects:**
+  - Recovered sessions run through the normal finish path, so records update and legacy XP is awarded internally. XP is not surfaced in the product.
+  - `session-resume.html` asserted the old Cancel-then-Discard flow with a checked set. That flow was the bug, so the test now expects Finish and asserts the session ended.
+- **Needs Cory:** if the week in question is marked away in Progress → weeks, the recovered sessions will appear in the Log but the week stays unscored until the away mark is removed.
+- **Evidence:**
+  - Two workout service tests.
+  - Four new checks in `finish-over-rest.html`. The recovery and Log checks were proven to fail with the launch step disabled.

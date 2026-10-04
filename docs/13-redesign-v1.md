@@ -561,6 +561,10 @@ do not weaken tests of logging, persistence, or domain logic.
     Leftovers finished later in the week count.
   - **Consistency, 25%:** qualifying training days this week versus the program's planned
     days (existing 30-minute rule), 70%; weeks meeting that target in the last 4, 30%.
+    *Amended 0.55.0:* days trained is the larger of calendar training days (6+ working sets
+    or 30+ minutes) and planned days finished, where a planned day counts once two thirds
+    of its sets are done on any day. Catching up after travel by doubling up is not
+    marked down.
   - **Volume trend, 10%:** hard sets this week versus the 4-week average; 95% or more = full
     credit, scaled down below that.
   - **Deload weeks** skip Progression and Volume trend and reweight the rest. Lifts with too

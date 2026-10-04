@@ -86,6 +86,55 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
     const p = planAt(week === currentStart ? today : shift(week, 6))
     return p?.program.days?.filter(d => (d.exercises ?? []).some(s => s.sets > 0)).length ?? 0
   }
+  /** Planned slots for a week, each filled by that week's matching sets. */
+  function fillSlots(plan, weekLogs) {
+    const slots = (plan?.program.days ?? []).flatMap((day, dayPos) => (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex:dayIndexOf(day, dayPos), index, slot })))
+    // Exact slot identity first, then the planned exercise or its recorded substitute,
+    // however it was logged. Each set fills at most one slot, capped at its prescription.
+    const used = new Set(), filled = new Map(slots.map(s => [s, []]))
+    const isPlanned = s => !s.programId && !s.session.programId || (s.programId ?? s.session.programId) === plan?.program.id
+    for (const entry of slots) {
+      for (const log of weekLogs) {
+        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
+        if (!used.has(log) && isPlanned(log) && log.programDayId === entry.dayId && log.slotIndex === entry.index) { used.add(log); filled.get(entry).push(log) }
+      }
+    }
+    for (const entry of slots) {
+      for (const log of weekLogs) {
+        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
+        if (used.has(log) || (log.programDayId != null && log.slotIndex != null && slots.some(o => o.dayId === log.programDayId && o.index === log.slotIndex))) continue
+        if (log.exerciseId === entry.slot.exerciseId || log.substitutedFor === entry.slot.exerciseId) { used.add(log); filled.get(entry).push(log) }
+      }
+    }
+    return slots.map(entry => {
+      const { dayId, dayName, dayIndex, slot } = entry, matching = filled.get(entry)
+      const target = Math.max(0, slot.sets || 0)
+      const completed = Math.min(target, matching.length)
+      const repSets = matching.filter(s => Number.isFinite(s.reps) && Number.isFinite(s.prescribed?.repMin ?? slot.repMin))
+      const reached = repSets.filter(s => s.reps >= (s.prescribed?.repMin ?? slot.repMin)).length
+      return { completed, prescribed:target, reached, repSets:repSets.length, dayId, dayName, dayIndex,
+        exerciseName: exercises.get(slot.exerciseId)?.name ?? slot.exerciseId,
+        reason:`${exercises.get(slot.exerciseId)?.name ?? slot.exerciseId} · ${dayName}: ${completed} of ${target} sets; ${reached} of ${repSets.length} reached the rep minimum` }
+    })
+  }
+  /** Planned days with at least two thirds of their sets done, on whatever day. */
+  const PLANNED_DAY_DONE = 2 / 3
+  function plannedDaysDone(details) {
+    const byDay = new Map()
+    for (const d of details) {
+      const row = byDay.get(d.dayId) ?? { done: 0, prescribed: 0 }
+      row.done += d.completed; row.prescribed += d.prescribed
+      byDay.set(d.dayId, row)
+    }
+    return [...byDay.values()].filter(r => r.prescribed > 0 && r.done / r.prescribed >= PLANNED_DAY_DONE).length
+  }
+  /** Calendar training days, or planned days finished, whichever is more. */
+  function creditedDays(week) {
+    const calendar = dayCounts(week).filter(d => d.qualifies).length
+    const plan = planAt(week === currentStart ? today : shift(week, 6))
+    const planned = plannedDaysDone(fillSlots(plan, logs.filter(s => inWeek(s.date, week))))
+    return { calendar, planned, days: Math.max(calendar, planned) }
+  }
   function calculate(week) {
     if (away.has(week)) return { week, away: true, score: null, grade: null, soFar: week === currentStart, deload: false, components: [] }
     const end = week === currentStart ? today : shift(week, 6)
@@ -122,34 +171,7 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
       value: plan?.deload ? null : mean(progressionDetails.map(d => d.value)),
       reason: plan?.deload ? 'Deload: progression rests this week' : progressionDetails.length ? `${progressionDetails.filter(d => d.status === 'up').length} of ${progressionDetails.length} lifts up` : 'Needs 3 sessions per lift across both comparison periods',
       details: progressionDetails }
-    const slots = (plan?.program.days ?? []).flatMap((day, dayPos) => (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex:dayIndexOf(day, dayPos), index, slot })))
-    // Exact slot identity first, then the planned exercise or its recorded substitute,
-    // however it was logged. Each set fills at most one slot, capped at its prescription.
-    const used = new Set(), filled = new Map(slots.map(s => [s, []]))
-    const isPlanned = s => !s.programId && !s.session.programId || (s.programId ?? s.session.programId) === plan?.program.id
-    for (const entry of slots) {
-      for (const log of weekLogs) {
-        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
-        if (!used.has(log) && isPlanned(log) && log.programDayId === entry.dayId && log.slotIndex === entry.index) { used.add(log); filled.get(entry).push(log) }
-      }
-    }
-    for (const entry of slots) {
-      for (const log of weekLogs) {
-        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
-        if (used.has(log) || (log.programDayId != null && log.slotIndex != null && slots.some(o => o.dayId === log.programDayId && o.index === log.slotIndex))) continue
-        if (log.exerciseId === entry.slot.exerciseId || log.substitutedFor === entry.slot.exerciseId) { used.add(log); filled.get(entry).push(log) }
-      }
-    }
-    const adherenceDetails = slots.map(entry => {
-      const { dayId, dayName, dayIndex, slot } = entry, matching = filled.get(entry)
-      const target = Math.max(0, slot.sets || 0)
-      const completed = Math.min(target, matching.length)
-      const repSets = matching.filter(s => Number.isFinite(s.reps) && Number.isFinite(s.prescribed?.repMin ?? slot.repMin))
-      const reached = repSets.filter(s => s.reps >= (s.prescribed?.repMin ?? slot.repMin)).length
-      return { completed, prescribed:target, reached, repSets:repSets.length, dayId, dayName, dayIndex,
-        exerciseName: exercises.get(slot.exerciseId)?.name ?? slot.exerciseId,
-        reason:`${exercises.get(slot.exerciseId)?.name ?? slot.exerciseId} · ${dayName}: ${completed} of ${target} sets; ${reached} of ${repSets.length} reached the rep minimum` }
-    })
+    const adherenceDetails = fillSlots(plan, weekLogs)
     const sum = key => adherenceDetails.reduce((n, d) => n + d[key], 0)
     const prescribed = sum('prescribed'), completed = sum('completed'), repSets = sum('repSets'), reached = sum('reached')
     const adherence = { id:'adherence', label:'Plan adherence', baseWeight:.30,
@@ -159,12 +181,14 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
     if (prescribed) adherence.formula = `70% × ${pct(cap(completed / prescribed))} of planned sets finished (${completed} of ${prescribed}) + 30% × ${pct(repSets ? cap(reached / repSets) : 0)} of logged sets at the rep minimum (${reached} of ${repSets}) = ${pct(adherence.value)}`
     const days = dayCounts(week), target = plannedDays(week)
     const recentWeeks = [0,1,2,3].map(n => shift(week,-n*7)).filter(w => start && shift(w,6) >= start && !away.has(w))
-    const weekDetails = recentWeeks.map(w => ({ week:w, days:dayCounts(w).filter(d => d.qualifies).length, target:plannedDays(w) })).filter(w => w.target > 0)
-    const met = weekDetails.filter(w => w.days >= w.target).length, qualified = days.filter(d => d.qualifies).length
+    const weekDetails = recentWeeks.map(w => ({ week:w, days:creditedDays(w).days, target:plannedDays(w) })).filter(w => w.target > 0)
+    const credit = creditedDays(week)
+    const met = weekDetails.filter(w => w.days >= w.target).length, qualified = credit.days
     const consistency = { id:'consistency', label:'Consistency', baseWeight:.25,
       value:target ? .7 * cap(qualified / target) + .3 * (weekDetails.length ? met / weekDetails.length : 0) : null,
       days:qualified, plannedDays:target, metWeeks:met, trackedWeeks:weekDetails.length,
-      reason:target ? `${qualified} of ${target} training days · ${met} of ${weekDetails.length} weeks met target` : 'No planned training days for this week',
+      calendarDays:credit.calendar, plannedDaysDone:credit.planned,
+      reason:target ? (credit.planned >= credit.calendar ? `${qualified} of ${target} planned days done` : `${qualified} of ${target} training days`) + ` · ${met} of ${weekDetails.length} weeks met target` : 'No planned training days for this week',
       details:[...days.map(d => ({ reason:`${d.date}: ${d.sets} working sets · ${rounded(d.minutes)} min · ${d.qualifies ? 'training day' : '6 sets or 30 min counts'}` })), ...weekDetails.map(w => ({ reason:`Week of ${w.week}: ${w.days} of ${w.target} days` }))] }
     if (target) consistency.formula = `70% × ${pct(cap(qualified / target))} of planned training days (${qualified} of ${target}) + 30% × ${pct(weekDetails.length ? met / weekDetails.length : 0)} of recent weeks that met the plan (${met} of ${weekDetails.length}) = ${pct(consistency.value)}`
     const prior = [1,2,3,4].map(n => shift(week,-n*7)).filter(w => start && shift(w,6) >= start && !away.has(w))
@@ -229,7 +253,7 @@ export function explainTrainingScore(result) {
   const method = [
     'Progression (35%): your lifts over the last 2 weeks against the 4 weeks before.',
     'Plan adherence (30%): 70% planned sets finished, 30% sets that reached the rep minimum.',
-    'Consistency (25%): 70% training days against your plan, 30% recent weeks that met the plan. A training day is 6+ working sets or 30+ minutes.',
+    'Consistency (25%): 70% days trained against your plan, 30% recent weeks that met the plan. A planned day counts once two thirds of its sets are done, on any day; otherwise a day of 6+ working sets or 30+ minutes counts.',
     'Volume trend (10%): working sets against your recent average.',
     'Deload and away weeks skip the parts that would count against rest.',
   ]
@@ -263,7 +287,7 @@ export function explainTrainingScore(result) {
       const most = [...byDay].sort((a, b) => b[1] - a[1])[0]
       return `you finished ${c.completed} of ${c.prescribed} planned sets` + (held && most?.[1] > 0 ? `, with the most still to do in ${most[0]}` : '')
     }
-    if (c.id === 'consistency') return `${c.days} of ${c.plannedDays} training days` + (held ? `, and ${c.metWeeks} of ${c.trackedWeeks} recent weeks reached the plan` : '')
+    if (c.id === 'consistency') return `${c.days} of ${c.plannedDays} ${c.plannedDaysDone >= c.calendarDays ? 'planned days done' : 'training days'}` + (held ? `, and ${c.metWeeks} of ${c.trackedWeeks} recent weeks reached the plan` : '')
     return `${c.sets} working sets against a ${rounded(c.average)} average`
   }
   if (best) sentences.push(`${best.label} carried it: ${phrase(best, false)}.`)

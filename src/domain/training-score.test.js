@@ -53,7 +53,8 @@ test('rep minimum and completion use same-week slot identity, not day of session
  input.setLogs.push({id:'warmup',sessionId:current[0].id,exerciseId:'lift',isWarmup:true,programId:'p',programDayId:'d0',slotIndex:0,weight:999,reps:99})
  const c=(await run(input)).current.components
  assert.equal(c[1].completed,4);assert.equal(c[1].value,.85);assert.equal(c[1].reached,2)
- assert.equal(c[2].days,1);assert.equal(c[3].sets,4);assert.equal(c[0].value,.6)
+ // One calendar day, but both planned days are finished, so both count.
+ assert.equal(c[2].calendarDays,1);assert.equal(c[2].days,2);assert.equal(c[3].sets,4);assert.equal(c[0].value,.6)
 })
 test('volume below 95% scales, and unplanned sets cannot complete a planned slot',async()=>{
  const input=block();const ids=new Set(input.sessions.filter(s=>s.date>='2026-09-21').map(s=>s.id))
@@ -122,7 +123,8 @@ test('R11.1: a day of micro sets qualifies as a training day',async()=>{
   input.sessions=input.sessions.filter(s=>!ids.has(s.id));input.setLogs=input.setLogs.filter(s=>!ids.has(s.sessionId))
   for(let k=0;k<8;k++){const id='micro'+k;input.sessions.push({id,date:'2026-09-23',endedAt:'2026-09-23T1'+k+':00:00Z',durationMinutes:3,programId:'p'})
     for(let n=0;n<(k<4?3:2);n++)input.setLogs.push({id:id+n,sessionId:id,exerciseId:'lift',programId:'p',programDayId:k<4?'d0':'d1',slotIndex:0,weight:100,reps:6})}
-  const c=(await run(input)).current.components;assert.equal(c[2].days,1)
+  // One calendar day of micro sets that also finishes both planned days.
+  const c=(await run(input)).current.components;assert.equal(c[2].calendarDays,1);assert.equal(c[2].days,2)
 })
 test('R11.1: an away week is excluded from the trend, averages, targets and baselines',async()=>{
   const input=block({missed:true})
@@ -192,5 +194,30 @@ test('the method spells out the 70/30 split inside adherence and consistency',as
   const { explainTrainingScore }=await import('./training-score.js')
   const m=explainTrainingScore(await run(block({stalled:true}))).method.join(' ')
   assert.match(m,/Plan adherence \(30%\): 70% planned sets finished, 30% sets that reached the rep minimum\./)
-  assert.match(m,/Consistency \(25%\): 70% training days against your plan, 30% recent weeks that met the plan\./)
+  assert.match(m,/Consistency \(25%\): 70% days trained against your plan, 30% recent weeks that met the plan\./)
+  assert.match(m,/A planned day counts once two thirds of its sets are done, on any day/)
+})
+
+test('consistency credits planned days finished on other days, as after travel',async()=>{
+  // Five planned days, three sets each. Away Mon-Tue; caught up Wed-Fri by doubling up.
+  const program={id:'p',weeks:8,days:weekdays.map(id=>({id,name:id,exercises:[{exerciseId:'lift_'+id,sets:3,repMin:6,repMax:10}]}))}
+  const sessions=[],setLogs=[]
+  const add=(date,days)=>{const id='s'+date;sessions.push({id,date,endedAt:date+'T10:00:00Z',durationMinutes:40,programId:'p'})
+    for(const day of days)for(let n=0;n<3;n++)setLogs.push({id:id+day+n,sessionId:id,exerciseId:'lift_'+day,programId:'p',programDayId:day,slotIndex:0,weight:100,reps:8})}
+  add('2026-09-23',['monday','tuesday']);add('2026-09-24',['wednesday','thursday']);add('2026-09-25',['friday'])
+  const r=await run({today:'2026-09-28',sessions,setLogs,programs:[program],programStates:[{programId:'p',startedOn:'2026-09-21',active:true}]})
+  const c=r.current.components.find(x=>x.id==='consistency')
+  assert.equal(r.current.week,'2026-09-21')
+  assert.equal(c.days,5,'all five planned days were finished, on three calendar days')
+  assert.equal(c.metWeeks,1)
+  assert.match(c.reason,/5 of 5 planned days done/)
+})
+
+test('a planned day needs most of its sets to count as done',async()=>{
+  const program={id:'p',weeks:8,days:['monday','tuesday'].map(id=>({id,name:id,exercises:[{exerciseId:'lift_'+id,sets:6,repMin:6,repMax:10}]}))}
+  const sessions=[{id:'a',date:'2026-09-22',endedAt:'x',durationMinutes:5,programId:'p'}],setLogs=[]
+  for(let n=0;n<6;n++)setLogs.push({id:'m'+n,sessionId:'a',exerciseId:'lift_monday',programId:'p',programDayId:'monday',slotIndex:0,weight:100,reps:8})
+  for(let n=0;n<3;n++)setLogs.push({id:'t'+n,sessionId:'a',exerciseId:'lift_tuesday',programId:'p',programDayId:'tuesday',slotIndex:0,weight:100,reps:8})
+  const r=await run({today:'2026-09-28',sessions,setLogs,programs:[program],programStates:[{programId:'p',startedOn:'2026-09-21',active:true}]})
+  assert.equal(r.current.components.find(x=>x.id==='consistency').days,1,'3 of 6 sets is not a finished day')
 })

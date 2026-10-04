@@ -2490,3 +2490,19 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
 - **Evidence:**
   - Two workout service tests.
   - Four new checks in `finish-over-rest.html`. The recovery and Log checks were proven to fail with the launch step disabled.
+
+## 2026-10-04 — Consistency credits planned days finished on any day (0.55.0)
+
+- **Report:** Cory said he completed the week of Sep 21 but saw only a few sessions in the Log. Unmarking the week as away dropped his grade to C.
+- **What his backup showed:**
+  - No data is missing.
+  - Nothing was logged Sep 19–23 (travel).
+  - Wed Sep 24 held the Wednesday and Thursday plans (35 sets). Thu Sep 25 held Monday (20). Fri Sep 26 held Saturday plus 4 Tuesday sets (23).
+  - That is 78 of 93 planned sets and 4 of 5 planned days, done on 3 calendar days.
+  - The 0.54.0 launch recovery also ran on his device. It settled four previously open sessions (Sep 7, Sep 18, and two on Sep 30). None were in that week.
+- **Cause:** Consistency counted calendar training days (3 of 5), so doubling up to catch up after travel was marked down. Rollover is a core feature, and the score contradicted it.
+- **Change:** days trained = max(calendar qualifying days, planned days finished). A planned day is finished when at least 2/3 of its prescribed sets are filled that week, on any day, using the same slot matching as adherence. Weeks-met uses the same rule.
+  - The slot matching was extracted into `fillSlots` so adherence and consistency share it.
+  - Two tests asserted the old calendar-day count for two planned days done on one day. They now assert both `calendarDays` (1) and the credited days (2).
+- **Result on his real data:** the week of Sep 21 goes from 79 (C) to 82 (B). Consistency rises from 50% to 63%; the rest of the gap is 1 of 4 recent weeks meeting the full 5-day plan.
+- **Needs Cory:** the 2/3 threshold is a guess. Under it, his 4 of 19 Tuesday sets do not make a finished day.

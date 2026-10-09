@@ -25,8 +25,8 @@ const VIEWS = [
   'today', 'train', 'session', 'fuel', 'fuel-entry', 'fuel-meals',
   'progress-trends', 'progress-score-explain', 'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
   'progress', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
-  'settings', 'program-builder', 'summary',
-  'train-rhythm', 'train-program-details', 'train-routine', 'train-library',
+  'settings', 'program-builder', 'program-custom-exercise', 'session-custom-exercise', 'summary',
+  'train-rhythm', 'train-program-details', 'train-routine', 'train-library', 'train-custom-exercise',
   'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
   'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest',
 ]

@@ -69,7 +69,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
   const fuel = createFuelScreen({ storage, daily, clock })
-  builder = createProgramBuilderScreen({ mount, storage, clock, onClose: () => show('settings') })
+  builder = createProgramBuilderScreen({ mount, storage, clock, workout, onClose: () => show('settings') })
 
   let battleScreen = null
   let characterScreen = null

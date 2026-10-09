@@ -2506,3 +2506,19 @@ but cannot reproduce iOS clipboard permissions, native date/time rendering or st
   - Two tests asserted the old calendar-day count for two planned days done on one day. They now assert both `calendarDays` (1) and the credited days (2).
 - **Result on his real data:** the week of Sep 21 goes from 79 (C) to 82 (B). Consistency rises from 50% to 63%; the rest of the gap is 1 of 4 recent weeks meeting the full 5-day plan.
 - **Needs Cory:** the 2/3 threshold is a guess. Under it, his 4 of 19 Tuesday sets do not make a finished day.
+
+## 2026-10-09 — Library additions and custom exercises
+
+Cory requested lever/belt squats and a way out of missing-library dead ends.
+Lever Squat and Belt Squat are separate machine movements with independent history,
+no prescribed starting load, and the squat library's existing activation mapping.
+Create custom exercise is available in Train's library, the session Add movement
+picker, and Program Builder. Creation saves through the storage adapter; session
+creation also adds it to the current workout, builder creation to the selected day.
+Names, equipment, group, classification and tracking mode are configurable. Duplicate
+names are rejected so the existing movement can be reused. New records never edit
+seed records or logs and are included by the existing backup/restore path.
+Custom movements use existing weight/reps, bodyweight, time or carry logger schemas
+and corresponding progression rules. Muscle activation and bodyweight notional load
+are left unspecified rather than manufacturing credit from a muscle group or body
+weight. The form states this limitation. Release 0.56.0 (83).

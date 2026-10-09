@@ -1,3 +1,11 @@
+## 2026-10-09 — Custom exercise library, 0.56.0 (83)
+
+- Lever Squat and Belt Squat seed additively, including on existing installs.
+- Create custom exercise is available in Train → Exercise library, active workout → Add movement, and Program Builder. Saved movements persist locally and use the existing backup/restore path.
+- Name, equipment, muscle group, compound/isolation and tracking mode are configurable. No starting load, bodyweight credit or muscle activation is invented.
+- Domain tests fail before implementation; the new browser journey fails on the 0.55.0 baseline and covers creation and reuse across all three entry points.
+- Phone check: open Train → Exercise library, search both squats, create a uniquely named exercise, log it from the library, then find it in Add movement and Program Builder after reopening the app.
+
 ## 2026-10-01 — Redesign V1 R11 Training score
 
 - Progress Overview starts with a weekly 0–100 Training score, grade, change versus the prior four-week average and up to 12 tracked weeks of ember trend.

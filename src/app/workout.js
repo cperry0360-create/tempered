@@ -17,6 +17,7 @@ import { rankFromLevels } from '../domain/rank.js'
 import { generateDirective } from '../domain/directive.js'
 import { daysBetween } from '../adapters/clock/clock.js'
 import { timeUnderLoad } from '../domain/duration.js'
+import { customExercise } from '../domain/custom-exercise.js'
 import { methodForExercise, methodForSet, methodsForExercise, setUsesMethod } from '../domain/exercise-method.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
 import { slotPrescription } from '../domain/program-schema.js'
@@ -755,6 +756,19 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   return {
     exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
+    async createExercise(input) {
+      const existing = await exerciseMap()
+      let suffix = 0
+      const base = `custom-${clock.nowIso()}`
+      let id = base
+      while (existing.has(id)) id = `${base}-${++suffix}`
+      const exercise = customExercise(input, id)
+      if ([...existing.values()].some((entry) => entry.name.trim().toLowerCase() === exercise.name.toLowerCase())) {
+        throw new Error('An exercise with that name already exists. Choose it from the library or use a distinct name.')
+      }
+      await storage.put('exercises', exercise)
+      return exercise
+    },
     activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,

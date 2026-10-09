@@ -130,6 +130,28 @@
   ],
   "exercises": [
     {
+      "id": "lever_squat",
+      "name": "Lever Squat",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": { "quads": 1, "glutes": 1 }
+    },
+    {
+      "id": "belt_squat",
+      "name": "Belt Squat",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": { "quads": 1, "glutes": 1 }
+    },
+    {
       "id": "deadlift_bb",
       "name": "Deadlift (Barbell)",
       "variant": "Barbell",

@@ -22,6 +22,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
@@ -839,6 +840,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         'aria-label': 'Search exercises to add',
         oninput: (event) => { addQuery = event.target.value; render(); root.querySelector('.session-add__search')?.focus() },
       }),
+      el('details', {}, [el('summary.button', { text: 'Create custom exercise' }), customExerciseForm({ workout, name: addQuery, onCancel: () => render(), onSave: async (exercise) => { library.push(exercise); await addMovement(exercise) } })]),
       el('div.swaplist', {}, choices.length
         ? choices.map((exercise) => el('button.swaplist__option', {
             type: 'button', dataset: { addExercise: exercise.id },

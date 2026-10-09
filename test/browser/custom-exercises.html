@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../src/style.css"></head><body><div id="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { createProgramBuilderScreen } from '../../src/ui/screens/program-builder.js'
+import { seedLibrary } from '../../src/app/seed.js'
+const checks = []
+const check = (name, ok) => checks.push({ name, ok: Boolean(ok) })
+const q = (selector) => document.querySelector(selector)
+const settle = () => new Promise((resolve) => setTimeout(resolve, 100))
+const fill = (form, name) => { const input = form.querySelector('[aria-label="Exercise name"]'); input.value = name; input.dispatchEvent(new Event('input')); form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) }
+try {
+  const storage = createMemoryStorage()
+  const app = await bootstrapHarness({ storage, clock: fixedClock('2026-10-09T12:00:00Z'), mount: q('#app') })
+  check('lever and belt squats available on existing installs', Boolean(await storage.get('exercises', 'lever_squat')) && Boolean(await storage.get('exercises', 'belt_squat')))
+  q('[data-exercise-library="open"]').click()
+  check('library provides custom exercise creation', Boolean(q('[data-create-exercise]')))
+  q('[data-create-exercise]').click()
+  fill(q('[data-custom-exercise-form]'), 'My custom press')
+  await settle()
+  const custom = (await storage.getAll('exercises')).find((exercise) => exercise.name === 'My custom press')
+  check('saved custom exercise appears in library', custom && q(`[data-exercise="${custom.id}"]`))
+  q(`[data-exercise="${custom.id}"]`).click()
+  await settle()
+  check('custom exercise starts a loggable session', Boolean(q('.screen--session [data-exercise]')))
+  const add = q('[data-action="add-movement"]')
+  add.click()
+  await settle()
+  fill(q('[data-custom-exercise-form]'), 'My custom carry')
+  await settle()
+  const carry = (await storage.getAll('exercises')).find((exercise) => exercise.name === 'My custom carry')
+  check('session creation saves and adds the exercise', carry && q(`.screen--session [data-exercise="${carry.id}"]`))
+  const builder = createProgramBuilderScreen({ mount: q('#app'), storage, clock: fixedClock('2026-10-09T12:00:00Z'), workout: app.workout, onClose() {} })
+  await builder.start()
+  check('builder picker includes saved custom exercises', [...document.querySelectorAll('option')].some((option) => option.value === custom.id))
+  fill(q('[data-custom-exercise-form]'), 'My custom row')
+  await settle()
+  check('builder creation adds the exercise to this day', q('.program-builder__exercise-list').textContent.includes('My custom row'))
+  await seedLibrary(storage, app.library)
+  check('existing custom exercise survives reseeding', Boolean(await storage.get('exercises', custom.id)))
+} catch (error) { checks.push({ name: 'custom exercise journey', ok: false, detail: String(error.stack) }) }
+await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label: 'custom-exercises', passed: checks.every((check) => check.ok), checks }) })
+</script></body></html>

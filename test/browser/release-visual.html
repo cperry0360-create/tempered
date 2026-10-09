@@ -38,13 +38,13 @@
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')
     localStorage.clear()
-    const clock = fixedClock((view === 'today' || view === 'session') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
+    const clock = fixedClock((view === 'today' || view === 'session' || view === 'session-custom-exercise') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
-      train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
+      train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', 'train-custom-exercise': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
-      settings: 'settings', 'program-builder': 'program-builder',
+      settings: 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
     }
 
     async function installShippedInlineCss() {
@@ -358,11 +358,17 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
-      } else if (view === 'session' || view === 'session-finish-rest') {
+      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise') {
         await storage.open()
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+        if (view === 'session-custom-exercise') {
+          mount.querySelector('[data-action="add-movement"]')?.click()
+          const details = mount.querySelector('[data-add-movement-panel] details')
+          details.open = true
+          details.scrollIntoView({ block: 'start' })
+        }
         if (view === 'session-finish-rest') {
           // The confirmation must sit above a running rest timer.
           ;[...document.querySelectorAll('.screen--session .setrow__check')]
@@ -424,10 +430,19 @@
           await selectProgressView(tempered, view)
         } else {
           await tempered.app.show(target)
+          if (view === 'program-custom-exercise') {
+            const details = mount.querySelector('.program-builder details')
+            details.open = true
+            details.scrollIntoView({ block: 'start' })
+          }
           if (view === 'train-rhythm') mount.querySelector('[data-training-rhythm="open"]')?.click()
           if (view === 'train-program-details') mount.querySelector('[data-program-details]')?.click()
           if (view === 'train-routine') mount.querySelector('[data-routine]')?.click()
           if (view === 'train-library') mount.querySelector('[data-exercise-library]')?.click()
+          if (view === 'train-custom-exercise') {
+            mount.querySelector('[data-exercise-library]')?.click()
+            mount.querySelector('[data-create-exercise]')?.click()
+          }
           if (view === 'today-expanded') mount.querySelector('[data-workout-expand]')?.click()
           if (view === 'today-day-details') mount.querySelector('[data-day-details]')?.click()
           if (view === 'mobility') {

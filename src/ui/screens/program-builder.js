@@ -1,11 +1,12 @@
 /** Small, reversible mobile program builder. */
 
 import { el, replace } from '../dom.js'
+import { customExerciseForm } from '../custom-exercise-form.js'
 import { createProgramRevision, migrateProgramRecord, validateProgram } from '../../domain/program-schema.js'
 
 const copy = (value) => JSON.parse(JSON.stringify(value))
 
-export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
+export function createProgramBuilderScreen({ mount, storage, clock, workout, onClose }) {
   const root = el('main.program-builder')
   let programs = []
   let exercises = []
@@ -88,6 +89,7 @@ export function createProgramBuilderScreen({ mount, storage, clock, onClose }) {
               render()
             } }, ['Add exercise']),
           ]),
+          workout && el('details', {}, [el('summary.button', { text: 'Create custom exercise' }), customExerciseForm({ workout, onCancel: () => render(), onSave: async (exercise) => { exercises.push(exercise); day.exercises.push({ exerciseId: exercise.id, name: exercise.name, sets: 3, repMin: 8, repMax: 12, restSec: [90, 120] }); render() } })]),
         ]),
         el('div.program-builder__actions', {}, [
           el('button.button', { type: 'button', onclick: () => save(false) }, ['Save draft']),

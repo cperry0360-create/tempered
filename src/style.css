@@ -2293,3 +2293,11 @@ body,
 .train-r4__hard-set-row { display: flex; justify-content: space-between; min-height: 32px; }
 
 .train-r4__hard-set-row span:last-child { color: var(--train-ink); }
+/* Local exercise creation, shared by every exercise picker. */
+.custom-exercise { display: grid; gap: 12px; padding: 16px; background: var(--surface); border-radius: 20px; margin-block: 16px; }
+.custom-exercise h2 { margin: 0; font-size: 22px; }
+.custom-exercise p { margin: 0; font-size: 15px; }
+.custom-exercise .notice:empty { display: none; }
+.custom-exercise__field { display: grid; gap: 8px; font-weight: 600; }
+.custom-exercise input, .custom-exercise select { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border-radius: 12px; font: inherit; color: var(--text); background: var(--raised); border: 0; }
+.custom-exercise__actions { display: flex; flex-wrap: wrap; gap: 12px; }

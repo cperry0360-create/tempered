@@ -12,6 +12,21 @@ const balance = loadBalance()
 const library = JSON.parse(readFileSync(new URL('../../data/exercises.json', import.meta.url), 'utf8'))
 const catalogue = JSON.parse(readFileSync(new URL('../../data/programs.json', import.meta.url), 'utf8'))
 
+test('custom exercise creation persists, rejects duplicates, and preserves existing records on reseed', async () => {
+  const { storage, workout } = await freshApp()
+  const first = await workout.createExercise({ name: 'My press' })
+  const second = await workout.createExercise({ name: 'My carry', tracking: 'distance' })
+  assert.notEqual(first.id, second.id)
+  await assert.rejects(workout.createExercise({ name: ' my PRESS ' }), /already exists/)
+  await assert.rejects(workout.createExercise({ name: ' ' }), /name/)
+  assert.equal(await storage.count('exercises'), library.exercises.length + 2)
+  await seedLibrary(storage, library)
+  assert.deepEqual(await storage.get('exercises', first.id), first)
+  const prepared = await workout.prepareExercise(second.id)
+  assert.equal(prepared.exercise.metric, 'distance')
+  assert.equal(prepared.proposal.sets[0].weight, null)
+})
+
 async function freshApp(at = '2026-09-04T18:00:00.000Z') {
   const storage = createMemoryStorage()
   await storage.open()

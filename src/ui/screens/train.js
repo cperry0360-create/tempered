@@ -3,6 +3,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
 import { lbs, since } from '../format.js'
 import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
@@ -19,6 +20,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   const root = el('div.screen.screen--train.screen--train-r4')
   let query = ''
   let libraryOpen = false
+  let creatingExercise = false
   let rhythmOpen = false
   let programDetailsOpen = false
   let selectedRoutine = null
@@ -282,6 +284,8 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       : exercises
     replace(root, [
       el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Exercise library' })]),
+      creatingExercise ? customExerciseForm({ workout, name: query, onCancel: () => { creatingExercise = false; render() }, onSave: async (exercise) => { exercises.push(exercise); exercises.sort((a, b) => a.name.localeCompare(b.name)); query = ''; creatingExercise = false; render() } })
+        : el('button.button', { type: 'button', dataset: { createExercise: 'true' }, onclick: () => { creatingExercise = true; render() } }, ['Create custom exercise']),
       el('input.search', {
         type: 'search', placeholder: 'Search exercises', value: query,
         'aria-label': 'Search exercises',
@@ -337,6 +341,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     async refresh() {
       programDetailsOpen = false
       libraryOpen = false
+      creatingExercise = false
       rhythmOpen = false
       selectedRoutine = null
       query = ''

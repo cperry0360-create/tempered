@@ -18,6 +18,15 @@ const toUnits = (lbs) => Math.round(lbs * UNITS_PER_LB)
 /** @param {number} units */
 const toLbs = (units) => units / UNITS_PER_LB
 
+/** Total load for a symmetric bar, given the plates on ONE side. */
+export function loadedBarWeight(perSide, bar = 45) {
+  if (!Number.isFinite(bar) || bar < 0 || !Array.isArray(perSide)
+    || perSide.some((plate) => !Number.isFinite(plate) || plate <= 0)) {
+    throw new Error('Use a nonnegative bar weight and positive plate weights.')
+  }
+  return Math.round((bar + 2 * perSide.reduce((sum, plate) => sum + plate, 0)) * 1e6) / 1e6
+}
+
 /**
  * @typedef {object} PlateSolution
  * @property {number[]} perSide     Plates on one side, heaviest first.
@@ -42,15 +51,16 @@ export function solvePlates(target, options = {}) {
     .sort((a, b) => b - a)
   const perPlateLimit = options.pairsPerPlate ?? Infinity
 
-  if (!Number.isFinite(target) || target < bar) return null
+  if (!Number.isFinite(target) || !Number.isFinite(bar) || bar < 0 || target < bar) return null
   if (denominations.length === 0) {
     return { perSide: [], achieved: bar, exact: target === bar, plateCount: 0, note: 'No plates available.' }
   }
 
   // Everything below is per side: the bar is loaded symmetrically.
-  const wantedUnits = Math.round((toUnits(target) - toUnits(bar)) / 2)
+  const desiredUnits = (target - bar) * UNITS_PER_LB / 2
+  const wantedUnits = Math.round(desiredUnits)
   if (wantedUnits === 0) {
-    return { perSide: [], achieved: bar, exact: true, plateCount: 0, note: 'Empty bar.' }
+    return { perSide: [], achieved: bar, exact: target === bar, plateCount: 0, note: target === bar ? 'Empty bar.' : `${target} lb cannot be made with these plates. Closest is ${bar} lb.` }
   }
   if (wantedUnits < 0) return null
 
@@ -77,12 +87,14 @@ export function solvePlates(target, options = {}) {
 
   if (best[wantedUnits]) {
     const perSide = best[wantedUnits].plates.map(toLbs).sort((a, b) => b - a)
+    const achieved = loadedBarWeight(perSide, bar)
+    const exact = Math.abs(achieved - target) < 1e-6
     return {
       perSide,
-      achieved: target,
-      exact: true,
+      achieved,
+      exact,
       plateCount: perSide.length,
-      note: `${perSide.length} plate${perSide.length === 1 ? '' : 's'} per side.`,
+      note: exact ? `${perSide.length} plate${perSide.length === 1 ? '' : 's'} per side.` : `${target} lb cannot be made with these plates. Closest is ${achieved} lb.`,
     }
   }
 
@@ -97,12 +109,11 @@ export function solvePlates(target, options = {}) {
     if (solution) { over = { sum, solution }; break }
   }
 
-  const underDistance = wantedUnits - nearest
-  const overDistance = over ? over.sum - wantedUnits : Infinity
-  const chosenSum = overDistance < underDistance ? over.sum : nearest
+  const underDistance = desiredUnits - nearest
+  const overDistance = over ? over.sum - desiredUnits : Infinity
   const chosenPlates = overDistance < underDistance ? over.solution.plates : best[nearest].plates
   const perSide = chosenPlates.map(toLbs).sort((a, b) => b - a)
-  const achieved = toLbs(toUnits(bar) + chosenSum * 2)
+  const achieved = loadedBarWeight(perSide, bar)
 
   return {
     perSide,

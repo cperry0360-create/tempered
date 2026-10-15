@@ -1,3 +1,28 @@
+## 2026-10-15 — Always-available two-way plate calculator
+
+Cory requested a calculator like the supplied RackMath example, with total-to-plates
+and plates-to-total entry. The calculator icon lives in Train's sticky toolbar,
+the Exercise library and other Train detail headers, and the active workout's fixed
+header beside Finish. It opens a local, offline native dialog with adjustable bar
+weight (including zero), the existing plate denominations, and explicit per-side
+counts. Each plus/minus changes a symmetric pair; the total includes both sides and
+the bar. Switching directions carries the current loading, Done/Escape returns
+focus, and the live total remains visible while scrolling. Calculator scratch state
+lasts until reload and never changes an entered set, prescription, history or logs.
+
+Existing session features remain: Cancel, title/elapsed timer, Finish, minimizing,
+logging, inline per-set plate strip, equipment configuration, rest timer, add/swap
+movements and finish/discard sheets. Train retains programs, routines, rhythm,
+library and custom creation. The added header icon reduces the session title's
+available width; ellipsis preserves the existing fixed header height and actions.
+The calculator uses Tempered's neutral surfaces and ember ink, rather than the
+reference app's red chrome or ads. A diagram shows one sleeve and labels Each side.
+
+Test-first reverse-load and fractional-target tests failed before the fix; the
+browser fixture failed on 0.56.0 with the calculator entry point absent. Fractional
+targets previously could be called exact despite mismatching the plates; achieved
+load now comes from actual plates plus the bar. Release 0.57.0 (84).
+
 ## 2026-10-01 — iOS standalone bottom band
 
 Cory's installed iPhone screenshot showed the area below the tab bar using the page

@@ -86,3 +86,11 @@ test('common gym weights all solve exactly on a standard rack', () => {
     assert.equal(solution.perSide.reduce((a, b) => a + b, 0) * 2 + 45, weight)
   }
 })
+
+test('fractional targets never claim a loading weighs more than its plates', () => {
+  for (const target of [45.1, 135.1, 145.2]) {
+    const solution = solvePlates(target)
+    assert.equal(solution.achieved, 45 + 2 * solution.perSide.reduce((sum, plate) => sum + plate, 0))
+    assert.equal(solution.exact, false)
+  }
+})

@@ -358,11 +358,15 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
-      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise') {
+      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise' || view.startsWith('plate-calculator-')) {
         await storage.open()
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+        if (view.startsWith('plate-calculator-')) {
+          mount.querySelector('[data-open-plate-calculator]')?.click()
+          if (view === 'plate-calculator-build') document.querySelector('[data-plate-mode="build"]')?.click()
+        }
         if (view === 'session-custom-exercise') {
           mount.querySelector('[data-action="add-movement"]')?.click()
           const details = mount.querySelector('[data-add-movement-panel] details')

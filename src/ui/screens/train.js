@@ -3,6 +3,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { plateCalculatorButton } from '../plate-calculator.js'
 import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
 import { lbs, since } from '../format.js'
@@ -173,7 +174,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   function renderProgramDetails() {
     const { program } = active
     replace(root, [
-      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Program details' })]),
+      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Program details' }), plateCalculatorButton()]),
       el('section.train-r4__card', {}, [
         el('h2', { text: program.name }),
         el('div.train-r4__details', {}, [
@@ -283,7 +284,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       ? exercises.filter((exercise) => `${exercise.name} ${exercise.group ?? ''} ${exercise.pattern ?? ''}`.toLowerCase().includes(query))
       : exercises
     replace(root, [
-      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Exercise library' })]),
+      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Exercise library' }), plateCalculatorButton()]),
       creatingExercise ? customExerciseForm({ workout, name: query, onCancel: () => { creatingExercise = false; render() }, onSave: async (exercise) => { exercises.push(exercise); exercises.sort((a, b) => a.name.localeCompare(b.name)); query = ''; creatingExercise = false; render() } })
         : el('button.button', { type: 'button', dataset: { createExercise: 'true' }, onclick: () => { creatingExercise = true; render() } }, ['Create custom exercise']),
       el('input.search', {
@@ -302,7 +303,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       return exercise?.name ?? item.name ?? item.id
     })
     replace(root, [
-      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: routine?.name ?? 'Routine' })]),
+      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: routine?.name ?? 'Routine' }), plateCalculatorButton()]),
       el('section.train-r4__card.train-r4__routine-detail', {}, [
         el('div.train-r4__routine-exercises', {}, names.map((name) => el('p', { text: name }))),
         el('button.train-r4__secondary', {
@@ -314,7 +315,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function renderRhythm() {
     replace(root, [
-      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Training rhythm' })]),
+      el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Training rhythm' }), plateCalculatorButton()]),
       trainingCalendar(),
     ])
   }
@@ -325,7 +326,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     if (selectedRoutine) { renderRoutine(); return }
     if (rhythmOpen) { renderRhythm(); return }
     replace(root, [
-      el('h1.screen__title', { text: 'Train' }),
+      el('header.train-calculator-bar', {}, [el('h1.screen__title', { text: 'Train' }), plateCalculatorButton()]),
       programHeaderCard(),
       trainingCalendar(true),
       nextSessionCard(),

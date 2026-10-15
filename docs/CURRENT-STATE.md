@@ -1,3 +1,11 @@
+## 2026-10-15 — Plate calculator, 0.57.0 (84)
+
+- Calculator icon in Train and its detail headers, plus the fixed active-workout header. The tool is available without starting a session and stays accessible while scrolling.
+- Weight → plates and Plates → weight, adjustable bar weight, per-side add/remove/clear, standard fractional plates and a bar diagram. The total stays in the sticky calculator header.
+- Scratch calculations never write sets or change entered workout values. Existing inline plate previews and equipment settings remain.
+- Domain and browser fail-first coverage includes reverse totals, impossible/fractional targets, direction switching, custom bars, header access, focus return and no workout mutations.
+- Phone check: tap the calculator beside Finish, enter 145 with a 45 lb bar, then switch direction and build 45 + 5 per side. Confirm 145 lb, scroll to smaller plates, and return to the unchanged workout. Check keyboard and safe-area behavior on the installed app.
+
 ## 2026-10-09 — Custom exercise library, 0.56.0 (83)
 
 - Lever Squat and Belt Squat seed additively, including on existing installs.

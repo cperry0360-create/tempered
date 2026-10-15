@@ -22,6 +22,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { plateCalculatorButton } from '../plate-calculator.js'
 import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
@@ -910,11 +911,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             text: clock(elapsedSeconds()),
           }),
         ]),
-        el('button.sessionbar__finish', {
+        el('div.sessionbar__actions', {}, [plateCalculatorButton(), el('button.sessionbar__finish', {
           type: 'button',
           dataset: { action: 'finish' },
           onclick: () => { confirmingFinish = true; render() },
-        }, ['Finish']),
+        }, ['Finish'])]),
       ]),
 
       session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),

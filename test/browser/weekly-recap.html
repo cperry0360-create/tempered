@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../src/style.css"></head><body><div id="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks = []
+const check = (name, ok) => checks.push({ name, ok: Boolean(ok) })
+const settle = () => new Promise(resolve => setTimeout(resolve, 100))
+const q = selector => document.querySelector(selector)
+try {
+  localStorage.clear()
+  const storage = createMemoryStorage()
+  const clock = fixedClock('2026-10-12T12:00:00Z')
+  const context = await bootstrapHarness({ storage, clock, mount: q('#app') })
+  await storage.put('sessions', { id: 'last-week', date: '2026-10-05', endedAt: 'done', durationMinutes: 30 })
+  await storage.put('setLogs', { id: 'set', sessionId: 'last-week', exerciseId: 'squat_bb', weight: 100, reps: 8 })
+  await storage.put('dayLogs', { date: '2026-10-06', sleepHours: 8, steps: 6000 })
+  // Dynamic import ensures the pre-change harness reports the missing feature.
+  const { installWeeklyRecapRuntime } = await import('../../src/ui/weekly-recap-runtime.js')
+  const runtime = await installWeeklyRecapRuntime(context)
+  check('first launch after reset opens prior-week recap', q('[data-weekly-recap][open]') && q('[data-weekly-recap]').textContent.includes('Oct 5'))
+  check('recap shows recorded training and health data', /6,?000/.test(q('[data-weekly-recap]').textContent) && q('[data-weekly-recap]').textContent.includes('30'))
+  q('[data-weekly-recap-close]').click()
+  await settle()
+  await runtime.check()
+  check('does not reopen after dismissal in the same week', !q('[data-weekly-recap]'))
+  runtime.destroy()
+  const relaunched = await installWeeklyRecapRuntime(context)
+  check('persisted acknowledgment prevents a repeat on relaunch', !q('[data-weekly-recap]'))
+  await context.app.show('history')
+  q('[data-open-weekly-recap]').click()
+  await settle()
+  check('Progress can reopen the recap on demand', Boolean(q('[data-weekly-recap][open]')))
+  q('[data-weekly-recap-close]').click()
+  await settle()
+  clock.advanceDays(7)
+  await context.app.startSession({ exerciseId: 'squat_bb' })
+  await relaunched.check()
+  check('new-week recap is deferred while a workout is active', !q('[data-weekly-recap]'))
+  await context.app.show('today')
+  await settle()
+  check('resume checkpoint also defers the recap on the main screen', !q('[data-weekly-recap]') && q('[data-active-workout]'))
+  localStorage.clear()
+  await context.app.show('today')
+  await settle()
+  check('deferred recap appears after returning safely to the app', Boolean(q('[data-weekly-recap][open]')))
+  check('next reset is acknowledged without changing training logs', (await storage.get('profile', 'profile')).weeklyRecapLastSeenWeek === '2026-10-12' && (await storage.getAll('setLogs')).length === 1)
+  relaunched.destroy()
+} catch (error) { checks.push({ name: 'weekly recap journey', ok: false, detail: String(error.stack) }) }
+await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label: 'weekly-recap', passed: checks.every(check => check.ok), checks }) })
+</script></body></html>

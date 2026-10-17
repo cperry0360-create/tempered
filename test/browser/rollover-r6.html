@@ -96,6 +96,9 @@
     check('opening a rollover movement creates a one-movement slot session',
       Boolean(q('.screen--session')) && exercises.length === 1,
       `session=${Boolean(q('.screen--session'))} exercises=${exercises.length}`)
+    // Measure the settled header, not a frame of the screen entrance animation.
+    // The fixed 220ms delay can expire before the animation on a busy runner.
+    await Promise.all(q('.screen--session').getAnimations().map(animation => animation.finished.catch(() => {})))
     const sessionHeaderTop = q('.sessionbar--r3')?.getBoundingClientRect().top
     check('active workout header starts at the safe-area edge once',
       Number.isFinite(sessionHeaderTop) && sessionHeaderTop <= 1,

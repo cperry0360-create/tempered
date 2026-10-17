@@ -2333,3 +2333,27 @@ body,
 .plate-calculator__plate-row span { text-align: center; font-variant-numeric: tabular-nums; }
 .plate-calculator__plate-row button { min-height: 44px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--text-1); font: inherit; font-size: 24px; }
 .plate-calculator__plate-row button:disabled { color: var(--text-3); background: transparent; }
+.weekly-recap { width: calc(100% - 24px); max-width: 430px; max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px); padding: 0; border: 0; border-radius: 24px; background: var(--bg); color: var(--text-1); overscroll-behavior: contain; }
+.weekly-recap::backdrop { background: var(--tabbar); opacity: .78; }
+.weekly-recap__header { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 16px; background: var(--bg); }
+.weekly-recap__header h1 { margin: 4px 0 0; font-size: 24px; }
+.weekly-recap__eyebrow { margin: 0; color: var(--train-ink); font-size: 15px; font-weight: 600; }
+.weekly-recap__body { display: grid; gap: 16px; padding: 0 12px 16px; }
+.weekly-recap__card { padding: 16px; border-radius: 20px; background: var(--surface-1); }
+.weekly-recap__card h2 { margin: 0 0 12px; font-size: 20px; }
+.weekly-recap__card p { font-size: 15px; line-height: 1.45; }
+.weekly-recap__score { color: var(--train-ink); font-size: 36px; }
+.weekly-recap__muted { color: var(--text-2); }
+.weekly-recap__component { margin-top: 16px; }
+.weekly-recap__breakdown summary { min-height: 44px; padding-block: 12px; color: var(--train-ink); font-weight: 600; }
+.weekly-recap__component-label { display: flex; justify-content: space-between; gap: 12px; }
+.weekly-recap__component p { margin: 4px 0 0; }
+.weekly-recap__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.weekly-recap__stats div { display: grid; gap: 4px; }
+.weekly-recap__stats strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.weekly-recap__stats span { color: var(--text-2); font-size: 14px; }
+.weekly-recap__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; }
+.weekly-recap__row div { text-align: right; }
+.weekly-recap__row strong, .weekly-recap__row small { display: block; }
+.weekly-recap__row small { margin-top: 4px; font-size: 13px; color: var(--text-2); }
+.weekly-recap__progress { width: 100%; }

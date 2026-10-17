@@ -1,3 +1,10 @@
+## 2026-10-17 — Weekly launch recap, 0.58.0 (85)
+
+- First safe launch/foreground after the Monday reset opens the completed prior week's recap once. An active or resumable workout defers it; fresh users receive no pre-tracking recap.
+- Reuses the exact prior-week Training score, components and explanation from Progress, with away/unscored states. Completed training totals and available daily recovery, steps, nutrition and activities are read-only summaries with sample-day counts.
+- Done/Escape dismisses. Progress Overview → Last week's recap reopens it. The profile stores the last displayed week through the existing adapter and backup format.
+- Phone check: reopen after updating to see last week's report, dismiss and relaunch to confirm it stays dismissed, then reopen it from Progress. Confirm dates, scrolling, score explanation, keyboard focus and Done at the top. Next Monday's first safe foreground should show the next recap.
+
 ## 2026-10-15 — Plate calculator, 0.57.0 (84)
 
 - Calculator icon in Train and its detail headers, plus the fixed active-workout header. The tool is available without starting a session and stays accessible while scrolling.

@@ -723,6 +723,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           type: 'button',
           onclick: () => { copyProgressReport() },
         }, ['Copy progress report for ChatGPT']),
+        el('button.progress-report__button', { type: 'button', dataset: { openWeeklyRecap: 'true' }, onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')) }, ["Last week's recap"]),
         reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
       ]),
     ].filter(Boolean)

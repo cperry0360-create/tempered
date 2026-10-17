@@ -1,3 +1,40 @@
+## 2026-10-17 — Prior-week launch recap
+
+Cory requested a popup on the first launch after weekly reset. Use the existing
+Monday reset shared by Progress and daily planning; the report covers the immediately
+completed Monday–Sunday. First launch or foreground in a new week shows just that
+week, with no backlog of older popups. Existing installs can see last week's report
+on their first launch after upgrading. Fresh users are not shown pre-tracking weeks.
+
+Reuse `trainingScore` and its explanation without changing scoring. Select the exact
+prior week rather than an older graded headline: away weeks have no grade and quiet
+weeks show only what was actually recorded. The recap includes completed workouts,
+working sets, minutes, volume, and available daily sleep/steps/water, calories/protein,
+rest days, cardio, recovery signals and personal activities. Daily averages show sample
+day counts; blank days never become zero. Weight is a neutral display-only summary in
+the application layer, outside scoring domains. No history, awards, prescriptions or
+plans are changed.
+
+Persist the last displayed week in the existing profile through the storage adapter,
+so backup/restore carries it without a schema migration. Native Done/Escape dismisses
+the modal. A Progress Overview action reopens it on demand. Automatic display defers
+for setup, active/resumable workouts and other dialogs, and resumes when safe. The
+runtime is installed from the production entry point, following the existing optional
+feature pattern; tests explicitly install it to exercise launch/foreground behavior.
+Storage errors leave the tracker usable and allow a retry next launch. Recap scratch
+data is recomputed from canonical records, not saved as a second source of truth.
+
+The modal follows Tempered tokens rather than introducing a new visual system. Its
+header keeps Done visible; the score explanation is expandable so training totals fit
+in the first phone view. Existing Progress navigation, score drill-downs, copy report,
+date filters and logs remain available. Domain tests failed without the module and the
+browser journey failed on 0.57.0 before the runtime existed. Release 0.58.0 (85).
+
+QA also reproduced the existing rollover-header timing failure on the untouched
+0.57.0 baseline: its 220ms sleep sampled the screen entrance animation. The test
+now awaits that animation before asserting the same header coordinates; the
+assertion is unchanged and no workout behavior is altered.
+
 ## 2026-10-15 — Always-available two-way plate calculator
 
 Cory requested a calculator like the supplied RackMath example, with total-to-plates

@@ -6,6 +6,7 @@ import { installMobileInteractions } from './ui/mobile-interactions.js'
 import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
+import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 
 registerServiceWorker()
 installMobileInteractions()
@@ -18,6 +19,7 @@ bootstrap()
     // supplies a predictable nine-line snapshot, so expose only the explicit
     // review-and-paste bridge in Daily Recap.
     installHealthPasteRuntime(context)
+    await installWeeklyRecapRuntime(context)
     try {
       await installCableMachineRuntime(context)
     } catch (error) {

@@ -20,7 +20,7 @@ test('the opt-in Duo manifest can launch unfolded', () => {
 
 test('layout and manifest switch are enabled only by the exact Duo opt-in URL', () => {
   const html = read('index.html')
-  assert.match(html, /get\('layout'\) === 'duo'/)
+  assert.match(html, /duoInstall = new URLSearchParams\(location.search\).get\('layout'\) === 'duo'/)
   assert.match(html, /dataset\.layout = 'duo'/)
   assert.match(html, /manifest-duo\.webmanifest/)
   assert.match(html, /src\/duo\.css/)

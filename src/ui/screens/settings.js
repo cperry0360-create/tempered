@@ -7,6 +7,7 @@ import { RESET_PHRASE } from '../../app/maintenance.js'
 import { DEFAULT_STEP_TARGET } from '../../app/daily.js'
 import { shortDate } from '../format.js'
 import { downloadExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
+import { getDuoLayoutEnabled, setDuoLayoutEnabled } from '../duo-layout.js'
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
 
@@ -23,6 +24,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
   let awayStart = ''
   let awayEnd = ''
   let awayNotice = ''
+  let layoutSaveNotice = ''
 
   const armed = () => typed.trim().toUpperCase() === RESET_PHRASE
 
@@ -75,6 +77,30 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             el('span', { text: value === 'system' ? 'System' : value === 'light' ? 'Light' : 'Dark' }),
           ])),
         ),
+        el('div.duo-layout-setting', { dataset: { setting: 'duo-layout' } }, [
+          el('label.duo-layout-setting__row', {}, [
+            el('span.duo-layout-setting__copy', {}, [
+              el('strong', { text: 'Foldable / Duo layout' }),
+              el('small', { text: 'Move navigation to the right and adapt cards to wide screens.' }),
+            ]),
+            el('input.duo-layout-setting__toggle', {
+              type: 'checkbox',
+              checked: getDuoLayoutEnabled(),
+              'aria-label': 'Use Foldable / Duo layout',
+              onchange: async (event) => {
+                const saved = setDuoLayoutEnabled(event.target.checked)
+                layoutSaveNotice = saved ? '' : 'Layout changed, but this browser could not save the preference.'
+                await load()
+              },
+            }),
+          ]),
+          getDuoLayoutEnabled() && el('p.duo-layout-setting__help', {}, [
+            'For unfolded landscape in the Home Screen app, install from the ',
+            el('a', { href: './?layout=duo', text: 'Duo installation link' }),
+            '. The layout switch alone cannot change an existing installation\'s orientation permission.',
+          ]),
+          layoutSaveNotice && el('p.duo-layout-setting__help', { text: layoutSaveNotice }),
+        ]),
       ]),
 
       el('section.card', {}, [

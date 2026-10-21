@@ -50,7 +50,7 @@ test('the persisted preference is read synchronously before the first paint', as
   const html = await (await import('node:fs/promises')).readFile(new URL('../index.html', import.meta.url), 'utf8')
   assert.match(html, /getItem\('tempered:duo-layout'\)/)
   assert.match(html, /saved === 'enabled'/)
-  assert.match(html, /saved === 'disabled'/)
+  assert.match(html, /saved !== 'disabled'/)
   assert.match(html, /dataset\.layout = 'duo'/)
 })
 

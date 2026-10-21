@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="../../src/fuel.css" />
   <link rel="stylesheet" href="../../src/pivot.css" />
   <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/duo.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -34,6 +35,7 @@
     import { installHealthShortcutRuntime } from '../../src/ui/health-shortcut-runtime.js'
     import { confirmDiscardExercise } from '../../src/ui/session-guard.js'
 
+    if (new URLSearchParams(location.search).get('layout') === 'duo') document.documentElement.dataset.layout = 'duo'
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')

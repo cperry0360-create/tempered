@@ -1,5 +1,15 @@
 ## 2026-10-21 — iPhone Duo opt-in layout candidate (unreleased)
 
+- Settings > Appearance now has an opt-in "Foldable / Duo layout" checkbox
+  (off by default on ordinary installations). It changes immediately and
+  persists across launches within that installation. The switch can be
+  reversed without changing user logs or installing another app.
+- `?layout=duo` remains the optional installation entry for Home Screen
+  orientation support; the Settings checkbox cannot retroactively alter
+  a portrait-only installation manifest. The user-facing text explains this.
+- Planned physical QA viewports: 466×678 cover, 890×626 inner, plus normal
+  390×844 and 430×932 captures.
+
 - Branch-only: install from `/?layout=duo` to use a distinct foldable PWA
   manifest and opt-in right-side four-tab navigation. The default install
   and its portrait-only orientation remain unchanged.

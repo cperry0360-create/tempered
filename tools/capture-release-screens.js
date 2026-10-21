@@ -39,7 +39,8 @@ const VIEWPORTS = DUO_MODE
     { label: 'iphone-compact', width: 390, height: 844 },
     { label: 'iphone-large', width: 430, height: 932 },
   ]
-const THEMES = DUO_MODE ? ['light'] : ['light', 'dark']
+const THEMES = ['light', 'dark']
+const captureThemes = DUO_MODE ? ['light'] : THEMES
 
 function argument(name, fallback = null) {
   const index = process.argv.indexOf(name)
@@ -213,7 +214,7 @@ try {
       screenWidth: viewport.width,
       screenHeight: viewport.height,
     })
-    for (const theme of THEMES) {
+    for (const theme of captureThemes) {
     await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] })
     const only = argument('--views')?.split(',') ?? null
     for (const view of VIEWS.filter((name) => !only || only.includes(name))) {

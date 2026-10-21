@@ -1,5 +1,21 @@
 ## 2026-10-21 — Opt-in iPhone Duo layout candidate
 
+The later user approval changed activation to a Settings > Appearance checkbox,
+"Foldable / Duo layout". This preference is deliberately separate from canonical
+workout/profile history and stored per installation in localStorage. Its default
+is off for ordinary entry. It applies synchronously before the first paint on
+relaunch; on a `?layout=duo` entry point the default is on unless the user
+explicitly saved off. Settings changes the layout immediately, without
+reload, and toggling off restores standard navigation. Denied storage permits
+the current-session change with a save warning.
+
+The specialized Duo manifest is still needed only for a fresh unfolded-capable
+Home Screen install. The toggle by itself cannot override a portrait-only
+manifest already captured by an installed app; Settings explains the
+installation link. Both manifests and the preference module are precached,
+with Node regressions for the normal portrait contract and preference
+precedence. Release candidate remains opt-in and requires fold/unfold QA.
+
 Cory requested a right-hand navigation rail and foldable aspect-ratio optimization
 without changing Tempered for other users. Do not guess a device model from Safari
 user-agent strings or assign a global width breakpoint: it would affect iPads and

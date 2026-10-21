@@ -30,11 +30,16 @@ const VIEWS = [
   'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
   'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest',
 ]
-const VIEWPORTS = [
-  { label: 'iphone-compact', width: 390, height: 844 },
-  { label: 'iphone-large', width: 430, height: 932 },
-]
-const THEMES = ['light', 'dark']
+const DUO_MODE = process.argv.includes('--duo')
+const VIEWPORTS = DUO_MODE
+  ? [
+    { label: 'duo-cover', width: 466, height: 678 },
+    { label: 'duo-inner', width: 890, height: 626 },
+  ] : [
+    { label: 'iphone-compact', width: 390, height: 844 },
+    { label: 'iphone-large', width: 430, height: 932 },
+  ]
+const THEMES = DUO_MODE ? ['light'] : ['light', 'dark']
 
 function argument(name, fallback = null) {
   const index = process.argv.indexOf(name)
@@ -215,7 +220,7 @@ try {
       const filename = `${viewport.label}-${theme}-${view}.png`
       const destination = join(output, filename)
       const reportPromise = nextReport()
-      const url = `http://127.0.0.1:${port}/test/browser/release-visual.html?view=${encodeURIComponent(view)}&theme=${theme}`
+      const url = `http://127.0.0.1:${port}/test/browser/release-visual.html?view=${encodeURIComponent(view)}&theme=${theme}${DUO_MODE ? '&layout=duo' : ''}`
       await cdp.send('Page.navigate', { url })
       const report = await reportPromise
       if (report.view !== view || report.ok !== true) {

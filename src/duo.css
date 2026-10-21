@@ -1,3 +1,51 @@
+/* Settings is the temporary user-facing control until the native app has
+   platform layout preferences. Native checkbox keeps accessibility semantics. */
+.duo-layout-setting {
+  border-top: 1px solid var(--hairline);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.duo-layout-setting__row {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+}
+.duo-layout-setting__copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+.duo-layout-setting__copy strong {
+  font-size: 15px;
+  color: var(--text-1);
+  font-weight: 600;
+}
+.duo-layout-setting__copy small,
+.duo-layout-setting__help {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.duo-layout-setting__toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0 3px;
+  accent-color: var(--train);
+}
+.duo-layout-setting__help {
+  margin: 8px 0 0;
+}
+.duo-layout-setting__help a {
+  color: var(--train-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Opt-in iPhone Duo shell. The default app never acquires data-layout="duo".
    Use /tempered/?layout=duo to install the wide-layout PWA. Neither CSS width
    nor user-agent sniffing is used as a device identifier. */

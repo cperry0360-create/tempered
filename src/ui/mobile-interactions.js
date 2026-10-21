@@ -106,6 +106,13 @@ export function installMobileInteractions() {
   })
 
   attemptPortraitLock()
+  document.addEventListener('tempered:layout-changed', () => {
+    if (document.documentElement.dataset.layout === 'duo') {
+      try { screen.orientation?.unlock?.() } catch { /* The manifest owns orientation. */ }
+    } else {
+      attemptPortraitLock()
+    }
+  })
   window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') attemptPortraitLock()
   })

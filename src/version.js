@@ -6,7 +6,7 @@
  * installed Home Screen copies receive a clean asset handoff on release.
  */
 
-export const VERSION = '0.58.0 (85)'
+export const VERSION = '0.58.1 (86)'
 
 /** The day this version was cut. Shown in Settings beside the version. */
-export const BUILD_DATE = '2026-10-17'
+export const BUILD_DATE = '2026-10-21'

@@ -26,10 +26,18 @@
     <link rel="stylesheet" href="./src/duo.css" />
     <link id="tempered-manifest" rel="manifest" href="./manifest.webmanifest" />
     <script>
-      // Install the alternate foldable PWA only from the explicit Duo URL.
-      // No Safari device sniffing and no changes for the ordinary app.
-      if (new URLSearchParams(window.location.search).get('layout') === 'duo') {
+      // Render the saved preference before first paint. No device sniffing:
+      // ordinary users keep the standard layout until they turn it on.
+      let saved = null
+      try { saved = localStorage.getItem('tempered:duo-layout') } catch {}
+      const duoInstall = new URLSearchParams(location.search).get('layout') === 'duo'
+      if (saved === 'enabled' || (saved !== 'disabled' && duoInstall)) {
         document.documentElement.dataset.layout = 'duo'
+      }
+      // Only a fresh install opened via the Duo URL requests a manifest
+      // that permits unfolding/rotation; toggling CSS cannot change the
+      // orientation contract of an already installed Home Screen PWA.
+      if (duoInstall) {
         document.getElementById('tempered-manifest').href = './manifest-duo.webmanifest'
       }
     </script>

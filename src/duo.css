@@ -1,0 +1,171 @@
+/* Settings is the temporary user-facing control until the native app has
+   platform layout preferences. Native checkbox keeps accessibility semantics. */
+.duo-layout-setting {
+  border-top: 1px solid var(--hairline);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.duo-layout-setting__row {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+}
+.duo-layout-setting__copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+.duo-layout-setting__copy strong {
+  font-size: 15px;
+  color: var(--text-1);
+  font-weight: 600;
+}
+.duo-layout-setting__copy small,
+.duo-layout-setting__help {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.duo-layout-setting__toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0 3px;
+  accent-color: var(--train);
+}
+.duo-layout-setting__help {
+  margin: 8px 0 0;
+}
+.duo-layout-setting__help a {
+  color: var(--train-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Opt-in iPhone Duo shell. The default app never acquires data-layout="duo".
+   Use /tempered/?layout=duo to install the wide-layout PWA. Neither CSS width
+   nor user-agent sniffing is used as a device identifier. */
+
+html[data-layout="duo"] {
+  --duo-rail-width: clamp(66px, 9vw, 88px);
+}
+
+/* Leave the workout session and full-screen flows full-width when tabs hide. */
+html[data-layout="duo"] .app__body {
+  box-sizing: border-box;
+  width: calc(100% - var(--duo-rail-width));
+  min-width: 0;
+  padding: calc(env(safe-area-inset-top) + 16px)
+    clamp(12px, 2.2vw, 24px)
+    calc(env(safe-area-inset-bottom) + 18px)
+    clamp(12px, 2.2vw, 24px);
+  scroll-padding-bottom: 26px;
+  scroll-margin-bottom: 0;
+}
+html[data-layout="duo"] #app:has(.tabbar[hidden]) .app__body {
+  width: 100%;
+}
+html[data-layout="duo"] .tabbar {
+  position: fixed;
+  inset: 0 0 0 auto;
+  box-sizing: border-box;
+  width: var(--duo-rail-width);
+  height: 100%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top) + 12px)
+    max(4px, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 12px)
+    4px;
+  border-top: 0;
+  border-left: 1px solid var(--hairline);
+  border-radius: 0;
+  background: var(--tabbar);
+}
+html[data-layout="duo"] .tabbar[hidden] { display: none; }
+html[data-layout="duo"] .tabbar__tabs {
+  flex: 0 1 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(4, 68px);
+  align-content: center;
+  gap: 8px;
+}
+html[data-layout="duo"] .tabbar__tab {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  padding: 4px 0;
+  line-height: 1.2;
+  gap: 5px;
+}
+html[data-layout="duo"] .tabbar__tab .icon {
+  width: 24px;
+  height: 24px;
+}
+html[data-layout="duo"] .active-workout-dock {
+  left: 0;
+  right: var(--duo-rail-width);
+  bottom: 0;
+}
+html[data-layout="duo"] #app:has(.active-workout-dock:not([hidden])) .app__body {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  scroll-padding-bottom: 86px;
+}
+
+/* A Duo can remain landscape while unfolded. Other phones keep the standard
+   portrait guard and screen-orientation request. */
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  html[data-layout="duo"] .portrait-lock { display: none; }
+}
+
+/* Expanded screen: offer two legible card columns while keeping the existing
+   flows, interactions and canonical logging logic unchanged. */
+@media (min-width: 740px) {
+  html[data-layout="duo"] .app__body > .screen {
+    width: min(100%, 980px);
+    margin-inline: auto;
+  }
+  html[data-layout="duo"] .screen--today-calm:has(> .today-heading),
+  html[data-layout="duo"] .screen--train-r4:has(> .train-calculator-bar),
+  html[data-layout="duo"] .screen--fuel-r4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    align-items: start;
+    gap: 16px;
+  }
+  html[data-layout="duo"] .screen--today-calm > .today-heading,
+  html[data-layout="duo"] .screen--today-calm > .today-daily-log,
+  html[data-layout="duo"] .screen--train-r4 > .train-calculator-bar,
+  html[data-layout="duo"] .screen--fuel-r4 > .screen__title {
+    grid-column: 1 / -1;
+  }
+  html[data-layout="duo"] .screen--today-calm > *,
+  html[data-layout="duo"] .screen--train-r4 > *,
+  html[data-layout="duo"] .screen--fuel-r4 > * {
+    min-width: 0;
+  }
+  html[data-layout="duo"] .screen--settings,
+  html[data-layout="duo"] .screen--session {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+}
+
+/* The cover display is short. Keep the right rail but compact its targets
+   instead of stealing extra vertical space from the phone's content. */
+@media (max-height: 660px) {
+  html[data-layout="duo"] .tabbar__tabs {
+    grid-template-rows: repeat(4, minmax(54px, 60px));
+    gap: 2px;
+  }
+  html[data-layout="duo"] .tabbar__tab { min-height: 54px; }
+}

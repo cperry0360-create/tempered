@@ -79,11 +79,19 @@ jobs:
           node-version: 24
       - name: Capture required release surfaces
         run: node tools/capture-release-screens.js
+      - name: Capture opt-in Duo cover and inner layouts
+        run: node tools/capture-release-screens.js --duo --views today,train,fuel,progress,settings,session,program-builder,summary --output artifacts/duo-visuals
       - name: Preserve visual QA evidence
         uses: actions/upload-artifact@v4
         with:
           name: tempered-mobile-visuals
           path: artifacts/release-visuals
+          retention-days: 14
+      - name: Preserve Duo visual QA evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tempered-duo-visuals
+          path: artifacts/duo-visuals
           retention-days: 14
 
   ios-native:

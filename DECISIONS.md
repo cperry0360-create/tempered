@@ -1,3 +1,47 @@
+## 2026-10-21 — Opt-in iPhone Duo layout candidate
+
+The later user approval changed activation to a Settings > Appearance checkbox,
+"Foldable / Duo layout". This preference is deliberately separate from canonical
+workout/profile history and stored per installation in localStorage. Its default
+is off for ordinary entry. It applies synchronously before the first paint on
+relaunch; on a `?layout=duo` entry point the default is on unless the user
+explicitly saved off. Settings changes the layout immediately, without
+reload, and toggling off restores standard navigation. Denied storage permits
+the current-session change with a save warning.
+
+The specialized Duo manifest is still needed only for a fresh unfolded-capable
+Home Screen install. The toggle by itself cannot override a portrait-only
+manifest already captured by an installed app; Settings explains the
+installation link. Both manifests and the preference module are precached,
+with Node regressions for the normal portrait contract and preference
+precedence. Release candidate remains opt-in and requires fold/unfold QA.
+
+Cory requested a right-hand navigation rail and foldable aspect-ratio optimization
+without changing Tempered for other users. Do not guess a device model from Safari
+user-agent strings or assign a global width breakpoint: it would affect iPads and
+other handsets. Instead, `?layout=duo` is an explicit per-install entry point.
+The separate `manifest-duo.webmanifest` has `orientation: any` and a Duo start
+URL. The original manifest, portrait request and landscape guard are unchanged
+for ordinary users. Runtime Duo detection uses the explicit URL, not a globally
+persisted profile value or new canonical data field.
+
+The Duo style layer makes Today, Train, Fuel and Progress use a fixed right rail;
+on sufficiently wide viewports the main Today, Train and Fuel screens gain
+two-column card presentation. At cover-display widths it retains the same right
+rail but single-column content. Full-screen workout flows stay full width when
+tab navigation is hidden. The resumed-session dock moves to the foot of the
+content area. Fold/unfold resize is CSS-driven and does not rebuild app screens
+or touch measured data, storage, backup, progression or nutrition.
+
+This work is a candidate branch, not a signed-off release. Before merging, run
+the full Node suite and browser harnesses, inspect visual captures at 390x844,
+430x932, and Duo cover/inner aspect ratios (including both orientations and
+keyboard focus), then physically validate a Home Screen install, side rail,
+session fullscreen, landscape, safe areas, and fold/unfold continuity on the
+Duo. Confirm the separate manifest is selected on iOS and existing device data
+is exported/restored using the normal backup path. If iOS disregards the
+alternate PWA manifest, revisit orientation strategy before release.
+
 ## 2026-10-17 — Prior-week launch recap
 
 Cory requested a popup on the first launch after weekly reset. Use the existing

@@ -46,7 +46,7 @@ test('failed storage does not prevent changing the current layout', () => {
   assert.equal(f.dataset.layout, 'duo')
 })
 
-test('the persisted preference is read synchronously before the first paint', () => {
+test('the persisted preference is read synchronously before the first paint', async () => {
   const html = await (await import('node:fs/promises')).readFile(new URL('../index.html', import.meta.url), 'utf8')
   assert.match(html, /getItem\('tempered:duo-layout'\)/)
   assert.match(html, /saved === 'enabled'/)

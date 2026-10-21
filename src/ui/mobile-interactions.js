@@ -6,6 +6,9 @@
 let installed = false
 
 function attemptPortraitLock() {
+  // The Duo install has its own orientation-any manifest. Keep other phones
+  // portrait-locked exactly as before.
+  if (document.documentElement.dataset.layout === 'duo') return
   const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches
     || navigator.standalone === true
   if (!standalone || typeof screen?.orientation?.lock !== 'function') return

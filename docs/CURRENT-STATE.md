@@ -1,3 +1,17 @@
+## 2026-10-21 — iPhone Duo opt-in layout candidate (unreleased)
+
+- Branch-only: install from `/?layout=duo` to use a distinct foldable PWA
+  manifest and opt-in right-side four-tab navigation. The default install
+  and its portrait-only orientation remain unchanged.
+- The rail works on both cover and expanded displays; expanded viewports use
+  two-column cards for the main Today, Train, and Fuel surfaces. Tab-hidden
+  session, program builder, and summary views keep the full canvas.
+- Runtime portrait lock does not run on this explicit Duo installation;
+  the ordinary phone flow is unchanged. CSS responds to screen resizing.
+- Release gate: inspect physical iOS Duo fold/unfold, Safari vs Home Screen,
+  orientation and safe-area behavior, live session/dock, all tabs, overlays,
+  calendar, and keyboard before merging. This candidate is not yet deployed.
+
 ## 2026-10-17 — Weekly launch recap, 0.58.0 (85)
 
 - First safe launch/foreground after the Monday reset opens the completed prior week's recap once. An active or resumable workout defers it; fresh users receive no pre-tracking recap.

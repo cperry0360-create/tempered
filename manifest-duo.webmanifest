@@ -1,0 +1,16 @@
+{
+  "id": "./?layout=duo",
+  "name": "Tempered Duo",
+  "short_name": "Tempered",
+  "description": "Tempered with an opt-in foldable layout and right-side navigation.",
+  "start_url": "./?layout=duo",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1F252C",
+  "theme_color": "#1F252C",
+  "icons": [
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ]
+}

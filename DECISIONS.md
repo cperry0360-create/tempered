@@ -2685,3 +2685,11 @@ Browser proof: 86 checks pass across 932×656, 890×626, 466×678, 626×890,
 and the ordinary 390×844 view. The same journey rejects the previous source.
 CI captures both split and rest states in light/dark Duo viewports. Physical
 hinge placement and iOS keyboard behavior remain device checks for Cory.
+
+
+Hosted release verification for 0.59.0: all five jobs are green on the tested
+code commit. Node 22/24 regressions, 897 browser checks across 47 harnesses,
+logging-speed verification, iOS Simulator build, and mobile/Duo light/dark
+captures pass. The official recap harness passes, resolving the local iframe
+runner limitation without changing the recap feature. Publish the same code
+with these release notes; device-specific hinge and keyboard QA remains open.

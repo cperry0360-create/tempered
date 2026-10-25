@@ -1,4 +1,4 @@
-## 2026-10-25 — Duo layout and Half-fold candidate, 0.59.0 (87)
+## 2026-10-25 — Duo layout and Half-fold, 0.59.0 (87)
 
 - Duo workouts offer a Half-fold button. The upper half shows the selected
   movement's existing exercise reference, cue, targets and real set progress;
@@ -25,10 +25,10 @@
 - Local proof: 741 Node regressions and 45 Duo geometry assertions pass; all
   197 JavaScript files pass syntax checks. Core-tab, ordinary-phone light/dark,
   and expanded-session logging/rest controls were visually inspected.
-- The local iframe browser runner passes 42 of 43 harnesses (688/693 checks).
-  Weekly recap is also red on the previous build in this runner. Official CI,
-  native build, and production verification remain pending publication.
-- Cory authorized publication on 25 Oct. Hosted CI and deployment are in progress.
+- Hosted release gates pass: 897 checks across all 47 browser harnesses,
+  both Node 22/24 regression jobs, the native iOS build, and the expanded
+  light/dark visual matrix. The recap harness passes in official CI.
+- Cory authorized publication on 25 Oct.
 - Browser acceptance exercises 932×656, 890×626, 466×678, 626×890, simulated
   top/right safe insets, and both ordinary phone widths. Physical iOS status-area,
   keyboard, and fold/unfold behavior still need confirmation on Cory's device.

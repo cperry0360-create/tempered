@@ -36,7 +36,7 @@
       await tempered.app.show('today')
       const screen=await waitFor('.screen--today-calm')
 
-      const structure=[...screen.children].map((node)=>node.dataset.section||(
+      const structure=[...screen.querySelectorAll('.today-heading, .today-card[data-section]')].map((node)=>node.dataset.section||(
         node.classList.contains('today-heading')?'heading':node.className))
       check('Today order matches the approved R2 stack',
         structure.slice(0,6).join('|')==='heading|next-session|readiness|week|fuel|daily',

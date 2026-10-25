@@ -2628,3 +2628,39 @@ Custom movements use existing weight/reps, bodyweight, time or carry logger sche
 and corresponding progression rules. Muscle activation and bodyweight notional load
 are left unspecified rather than manufacturing credit from a muscle group or body
 weight. The form states this limitation. Release 0.56.0 (83).
+
+
+## 2026-10-25 — Duo layout polish (0.58.2)
+
+Cory's screenshots show cards behind the Train title, a second white navigation
+band, and empty space caused by the original two-column row grid. Use a 64px
+cover / 72px expanded rail on the same ground as the app, with the right safe
+inset added once. Do not attempt to draw into an operating-system-owned status
+area. Start the scroller at zero and let the opaque Train header cover the full
+content edge. At 740px and above, group existing cards into independent stacks:
+Today overview / Daily log; Train program, rhythm, next session / sessions,
+routines, library; Fuel energy / food, meal entry, water; Progress training /
+health and reports. Transparent groups preserve ordinary-phone order and all
+existing actions. No data migration or measurement changes.
+
+Feature-preservation inventory: Today retains next movement/full session,
+readiness/import, week, fuel and daily logging including Day details; Train
+retains program details, rhythm history, next session, all days, routines,
+library and calculator; Fuel retains energy/protein/macros, recent food/meal
+entry and water; Progress retains score/drill-ins, sets, coverage, PRs, trends,
+recovery, report and weekly recap. Only their layout containers change.
+
+Also stage manifest-duo.webmanifest on Pages: the service worker already
+precache-requires it, so omitting it can prevent an atomic offline install.
+
+
+Duo QA note: 741 Node tests, 197 syntax checks, and 45 viewport/safe-area
+assertions pass. The local in-browser runner isolates each existing harness in
+an iframe with fresh storage and a timer-backed animation-frame callback to
+avoid background-tab throttling. It passes 688/693 checks across 42/43 harnesses;
+weekly recap remains red on both prior and candidate source in this runner.
+Official CI remains required before production publication. One score
+assertion now identifies the first semantic panel through the new containers;
+the nutrition timestamp assertion compares the entered local time as an ISO
+instant rather than assuming the browser runs in UTC. Neither changes product
+behavior. Cory authorized publishing this candidate on 25 Oct.

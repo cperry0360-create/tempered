@@ -6,7 +6,7 @@ const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.m
 
 test('Pages publishes a curated runtime artifact instead of the repository root', () => {
   assert.match(workflow, /mkdir -p _site\/art/)
-  assert.match(workflow, /cp index\.html manifest\.webmanifest sw\.js _site\//)
+  assert.match(workflow, /cp index\.html manifest\.webmanifest manifest-duo\.webmanifest sw\.js _site\//)
   assert.match(workflow, /cp -R src data icons _site\//)
   assert.match(workflow, /cp -R art\/exercises art\/dist art\/battle _site\/art\//)
   assert.match(workflow, /path:\s*_site/)

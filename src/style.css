@@ -220,6 +220,22 @@ body::before {
 
 .screen { display: grid; gap: var(--s4); }
 
+/* These semantic groups are transparent on ordinary phones, preserving the
+   existing single-column order. Expanded Duo screens give each stack its own
+   height instead of stretching unrelated cards into shared grid rows. */
+.today-dashboard,
+.today-dashboard__overview,
+.train-r4__dashboard,
+.train-r4__column--primary,
+.train-r4__column--secondary,
+.fuel-r4__dashboard,
+.fuel-r4__details,
+.progress-overview,
+.progress-overview__training,
+.progress-overview__health {
+  display: contents;
+}
+
 /* Headings are big, bold and all caps. The old system's timidity was mostly a
    type failure: a section heading was a small grey label. */
 .screen__title {

@@ -64,7 +64,7 @@
       await tempered.app.show('today')
       await waitFor('[data-section="daily"]')
 
-      const ordered = [...document.querySelectorAll('.screen--today > [data-section], .screen--today > .today-heading')]
+      const ordered = [...document.querySelectorAll('.screen--today .today-card[data-section], .screen--today > .today-heading')]
         .map((node) => node.dataset.section || 'heading')
       check('R2 Today uses the approved top-to-bottom dashboard order',
         ordered.join('|') === 'heading|next-session|readiness|week|fuel|daily', ordered.join(' | '))

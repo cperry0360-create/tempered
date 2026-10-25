@@ -26,7 +26,7 @@ jobs:
       - name: Stage runtime-only site
         run: |
           mkdir -p _site/art
-          cp index.html manifest.webmanifest sw.js _site/
+          cp index.html manifest.webmanifest manifest-duo.webmanifest sw.js _site/
           cp -R src data icons _site/
           cp -R art/exercises art/dist art/battle _site/art/
       - uses: actions/configure-pages@v5

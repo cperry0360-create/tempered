@@ -116,7 +116,7 @@
       check('Itemized logger preserves old protein and adds the meal', day.proteinGrams === 52, day.proteinGrams)
       check('Itemized logger stores carb, fat and fiber totals', day.carbsGrams === 61 && day.fatGrams === 24 && day.fiberGrams === 9,
         `${day.carbsGrams}/${day.fatGrams}/${day.fiberGrams}`)
-      check('Meal keeps its timestamp and AI source', day.nutritionEntries?.[0]?.loggedAt.includes('T09:15:') && day.nutritionEntries?.[0]?.source === 'ai', JSON.stringify(day.nutritionEntries?.[0]))
+      check('Meal keeps its timestamp and AI source', day.nutritionEntries?.[0]?.loggedAt === new Date(2026, 8, 9, 9, 15).toISOString() && day.nutritionEntries?.[0]?.source === 'ai', JSON.stringify(day.nutritionEntries?.[0]))
       check('Recent meals immediately become a one-tap quick log', Boolean(q('[data-nutrition-suggestion="Chicken rice bowl with avocado"]')))
       check('Logging Nutrition still satisfies Logged your food', day.nutritionLogged === true, day.nutritionLogged)
 

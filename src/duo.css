@@ -46,28 +46,36 @@
   text-underline-offset: 2px;
 }
 
-/* Opt-in iPhone Duo shell. The default app never acquires data-layout="duo".
-   Use /tempered/?layout=duo to install the wide-layout PWA. Neither CSS width
-   nor user-agent sniffing is used as a device identifier. */
-
+/* Explicit opt-in only. The right safe inset belongs to the rail, once;
+   it must not also become an empty column in the scrolling content. */
 html[data-layout="duo"] {
-  --duo-rail-width: clamp(66px, 9vw, 88px);
+  --duo-nav-width: 64px;
+  --duo-inset-top: env(safe-area-inset-top, 0px);
+  --duo-inset-right: env(safe-area-inset-right, 0px);
+  --duo-inset-left: env(safe-area-inset-left, 0px);
+  --duo-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --duo-rail-width: calc(var(--duo-nav-width) + var(--duo-inset-right));
+  --duo-gutter: clamp(12px, 2vw, 20px);
 }
-
-/* Leave the workout session and full-screen flows full-width when tabs hide. */
+html[data-layout="duo"] .status-bar-cover { background: var(--bg); }
 html[data-layout="duo"] .app__body {
   box-sizing: border-box;
   width: calc(100% - var(--duo-rail-width));
   min-width: 0;
-  padding: calc(env(safe-area-inset-top) + 16px)
-    clamp(12px, 2.2vw, 24px)
-    calc(env(safe-area-inset-bottom) + 18px)
-    clamp(12px, 2.2vw, 24px);
+  padding: 0 var(--duo-gutter)
+    calc(var(--duo-inset-bottom) + 18px)
+    calc(var(--duo-gutter) + var(--duo-inset-left));
+  scroll-padding-top: calc(var(--duo-inset-top) + 76px);
   scroll-padding-bottom: 26px;
   scroll-margin-bottom: 0;
 }
+html[data-layout="duo"] .app__body > .screen {
+  padding-top: calc(var(--duo-inset-top) + 12px);
+  min-width: 0;
+}
 html[data-layout="duo"] #app:has(.tabbar[hidden]) .app__body {
   width: 100%;
+  padding-right: calc(var(--duo-gutter) + var(--duo-inset-right));
 }
 html[data-layout="duo"] .tabbar {
   position: fixed;
@@ -80,14 +88,12 @@ html[data-layout="duo"] .tabbar {
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  padding: calc(env(safe-area-inset-top) + 12px)
-    max(4px, env(safe-area-inset-right))
-    calc(env(safe-area-inset-bottom) + 12px)
-    4px;
-  border-top: 0;
-  border-left: 1px solid var(--hairline);
+  padding: calc(var(--duo-inset-top) + 8px)
+    calc(var(--duo-inset-right) + 4px)
+    calc(var(--duo-inset-bottom) + 8px) 4px;
+  border: 0;
   border-radius: 0;
-  background: var(--tabbar);
+  background: var(--bg);
 }
 html[data-layout="duo"] .tabbar[hidden] { display: none; }
 html[data-layout="duo"] .tabbar__tabs {
@@ -95,76 +101,105 @@ html[data-layout="duo"] .tabbar__tabs {
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(4, 68px);
+  grid-template-rows: repeat(4, 64px);
   align-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 html[data-layout="duo"] .tabbar__tab {
   width: 100%;
   min-width: 0;
-  min-height: 60px;
-  padding: 4px 0;
+  min-height: 56px;
+  padding: 6px 0;
+  border-radius: 14px;
+  font-size: 11px;
   line-height: 1.2;
   gap: 5px;
 }
-html[data-layout="duo"] .tabbar__tab .icon {
-  width: 24px;
-  height: 24px;
+html[data-layout="duo"] .tabbar__tab[data-active="true"] {
+  background: var(--surface-2);
 }
+html[data-layout="duo"] .tabbar__tab .icon { width: 24px; height: 24px; }
 html[data-layout="duo"] .active-workout-dock {
-  left: 0;
+  left: var(--duo-inset-left);
   right: var(--duo-rail-width);
   bottom: 0;
 }
 html[data-layout="duo"] #app:has(.active-workout-dock:not([hidden])) .app__body {
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: calc(80px + var(--duo-inset-bottom));
   scroll-padding-bottom: 86px;
 }
 
-/* A Duo can remain landscape while unfolded. Other phones keep the standard
-   portrait guard and screen-orientation request. */
+/* The scrolling viewport starts at zero. Bleed the opaque header to that edge
+   and across the gutters, so cards cannot peek above or beside a stuck title. */
+html[data-layout="duo"] .train-calculator-bar {
+  top: 0;
+  z-index: 31;
+  margin: calc(-1 * (var(--duo-inset-top) + 12px)) calc(-1 * var(--duo-gutter)) 0;
+  padding: calc(var(--duo-inset-top) + 12px) var(--duo-gutter) 12px;
+  background: var(--bg);
+}
+html[data-layout="duo"] .train-calculator-bar .screen__title { margin: 0; }
+
+/* Tab-hidden logging flows use the whole canvas, with fixed controls aligned
+   to the wider form instead of the ordinary phone's 430px content column. */
+html[data-layout="duo"] #app:has(.screen--session) .app__body { padding: 0; }
+html[data-layout="duo"] .app__body > .screen--session {
+  padding: calc(76px + var(--duo-inset-top))
+    max(16px, var(--duo-inset-right))
+    calc(104px + var(--duo-inset-bottom))
+    max(16px, var(--duo-inset-left));
+}
+html[data-layout="duo"] .sessionbar--r3 {
+  padding-inline: max(16px, calc((100vw - 760px) / 2 + 16px), var(--duo-inset-left))
+    max(16px, calc((100vw - 760px) / 2 + 16px), var(--duo-inset-right));
+}
+html[data-layout="duo"] .session-restbar {
+  width: min(calc(100% - var(--duo-inset-left) - var(--duo-inset-right) - 24px), 728px);
+}
+
 @media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
   html[data-layout="duo"] .portrait-lock { display: none; }
 }
 
-/* Expanded screen: offer two legible card columns while keeping the existing
-   flows, interactions and canonical logging logic unchanged. */
 @media (min-width: 740px) {
+  html[data-layout="duo"] { --duo-nav-width: 72px; }
   html[data-layout="duo"] .app__body > .screen {
-    width: min(100%, 980px);
+    width: min(100%, 1100px);
     margin-inline: auto;
   }
-  html[data-layout="duo"] .screen--today-calm:has(> .today-heading),
-  html[data-layout="duo"] .screen--train-r4:has(> .train-calculator-bar),
-  html[data-layout="duo"] .screen--fuel-r4 {
+  html[data-layout="duo"] .today-dashboard,
+  html[data-layout="duo"] .train-r4__dashboard,
+  html[data-layout="duo"] .fuel-r4__dashboard,
+  html[data-layout="duo"] .progress-overview {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
     align-items: start;
     gap: 16px;
-  }
-  html[data-layout="duo"] .screen--today-calm > .today-heading,
-  html[data-layout="duo"] .screen--today-calm > .today-daily-log,
-  html[data-layout="duo"] .screen--train-r4 > .train-calculator-bar,
-  html[data-layout="duo"] .screen--fuel-r4 > .screen__title {
-    grid-column: 1 / -1;
-  }
-  html[data-layout="duo"] .screen--today-calm > *,
-  html[data-layout="duo"] .screen--train-r4 > *,
-  html[data-layout="duo"] .screen--fuel-r4 > * {
     min-width: 0;
   }
-  html[data-layout="duo"] .screen--settings,
-  html[data-layout="duo"] .screen--session {
-    max-width: 760px;
-    margin-inline: auto;
+  html[data-layout="duo"] .today-dashboard__overview,
+  html[data-layout="duo"] .train-r4__column--primary,
+  html[data-layout="duo"] .train-r4__column--secondary,
+  html[data-layout="duo"] .fuel-r4__details,
+  html[data-layout="duo"] .progress-overview__training,
+  html[data-layout="duo"] .progress-overview__health {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    min-width: 0;
   }
+  html[data-layout="duo"] .today-readiness--empty {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  html[data-layout="duo"] .screen--settings,
+  html[data-layout="duo"] .screen--session { max-width: 760px; }
 }
 
-/* The cover display is short. Keep the right rail but compact its targets
-   instead of stealing extra vertical space from the phone's content. */
 @media (max-height: 660px) {
   html[data-layout="duo"] .tabbar__tabs {
-    grid-template-rows: repeat(4, minmax(54px, 60px));
+    grid-template-rows: repeat(4, 58px);
     gap: 2px;
   }
   html[data-layout="duo"] .tabbar__tab { min-height: 54px; }

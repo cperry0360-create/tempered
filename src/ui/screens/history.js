@@ -712,19 +712,25 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const comparable = current.fullCoverage && previous.fullCoverage
     const recovery = recoveryCard(current, previous, comparable)
     return [
-      trainingScoreCard(),
-      weeklySetsCard(),
-      coverageLine(current),
-      recentPrsCard(),
-      trendsCard(current, previous, comparable),
-      recovery,
-      el('section.progress-report', {}, [
-        el('button.progress-report__button', {
-          type: 'button',
-          onclick: () => { copyProgressReport() },
-        }, ['Copy progress report for ChatGPT']),
-        el('button.progress-report__button', { type: 'button', dataset: { openWeeklyRecap: 'true' }, onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')) }, ["Last week's recap"]),
-        reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
+      el('div.progress-overview', {}, [
+        el('div.progress-overview__training', {}, [
+          trainingScoreCard(),
+          weeklySetsCard(),
+          coverageLine(current),
+          recentPrsCard(),
+        ]),
+        el('div.progress-overview__health', {}, [
+          trendsCard(current, previous, comparable),
+          recovery,
+          el('section.progress-report', {}, [
+            el('button.progress-report__button', {
+              type: 'button',
+              onclick: () => { copyProgressReport() },
+            }, ['Copy progress report for ChatGPT']),
+            el('button.progress-report__button', { type: 'button', dataset: { openWeeklyRecap: 'true' }, onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')) }, ["Last week's recap"]),
+            reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
+          ]),
+        ]),
       ]),
     ].filter(Boolean)
   }

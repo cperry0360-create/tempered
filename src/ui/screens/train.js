@@ -216,7 +216,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function sessionsCard() {
     if (!active?.program?.days?.length) return null
-    return el('section.train-r4__card.train-r4__list-card', {}, [
+    return el('section.train-r4__card.train-r4__list-card.train-r4__sessions', {}, [
       el('h2', { text: 'Sessions' }),
       el('div.train-r4__rows', {}, active.program.days.map((day) =>
         el('button.train-r4__row.train-r4__session-row', {
@@ -233,7 +233,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   }
 
   function routinesCard() {
-    return el('section.train-r4__card.train-r4__list-card', {}, [
+    return el('section.train-r4__card.train-r4__list-card.train-r4__routines', {}, [
       el('h2', { text: 'Routines' }),
       el('div.train-r4__rows', {}, routines.map((routine) => {
         const setCount = (routine.exercises ?? []).reduce((sum, exercise) => sum + (exercise.sets ?? 0), 0)
@@ -327,12 +327,18 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     if (rhythmOpen) { renderRhythm(); return }
     replace(root, [
       el('header.train-calculator-bar', {}, [el('h1.screen__title', { text: 'Train' }), plateCalculatorButton()]),
-      programHeaderCard(),
-      trainingCalendar(true),
-      nextSessionCard(),
-      sessionsCard(),
-      routinesCard(),
-      utilityRows(),
+      el('div.train-r4__dashboard', {}, [
+        el('div.train-r4__column--primary', {}, [
+          programHeaderCard(),
+          trainingCalendar(true),
+          nextSessionCard(),
+        ]),
+        el('div.train-r4__column--secondary', {}, [
+          sessionsCard(),
+          routinesCard(),
+          utilityRows(),
+        ]),
+      ]),
     ])
   }
 

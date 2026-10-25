@@ -1127,11 +1127,15 @@ export function createTodayScreen({
         ]),
         el('p.today-heading__date', { text: dateLabel(selectedDate) }),
       ]),
-      sessionCard(),
-      readinessCard(),
-      weekCard(),
-      fuelCard(allActivities),
-      dailyLogCard(allActivities),
+      el('div.today-dashboard', {}, [
+        el('div.today-dashboard__overview', {}, [
+          sessionCard(),
+          readinessCard(),
+          weekCard(),
+          fuelCard(allActivities),
+        ]),
+        dailyLogCard(allActivities),
+      ]),
     ])
 
     if (typeof window !== 'undefined') {

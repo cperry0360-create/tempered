@@ -1,3 +1,27 @@
+## 2026-10-25 — Duo layout polish candidate, 0.58.2 (87)
+
+- The opt-in rail is narrower, shares the canvas background, and accounts for the
+  right safe inset once. The operating system retains its own status area.
+- Train's sticky title paints to the top edge and across the content gutters;
+  scrolling cards cannot peek above the header.
+- Expanded Today places the daily log beside the workout/recovery overview.
+  Train, Fuel, and Progress use independent semantic card stacks, removing
+  empty grid rows caused by pairing cards of different heights. Ordinary phone
+  card order and bottom navigation stay unchanged through transparent groups.
+- Session header/rest controls align to the wider form. Folded layouts remain
+  single-column; full-screen flows still hide navigation.
+- Pages now stages the Duo manifest required by the offline precache.
+- Local proof: 741 Node regressions and 45 Duo geometry assertions pass; all
+  197 JavaScript files pass syntax checks. Core-tab, ordinary-phone light/dark,
+  and expanded-session logging/rest controls were visually inspected.
+- The local iframe browser runner passes 42 of 43 harnesses (688/693 checks).
+  Weekly recap is also red on the previous build in this runner. Official CI,
+  native build, and production verification remain pending publication.
+- Cory authorized publication on 25 Oct. Hosted CI and deployment are in progress.
+- Browser acceptance exercises 932×656, 890×626, 466×678, 626×890, simulated
+  top/right safe insets, and both ordinary phone widths. Physical iOS status-area,
+  keyboard, and fold/unfold behavior still need confirmation on Cory's device.
+
 ## 2026-10-21 — iPhone Duo opt-in layout candidate (unreleased)
 
 - Settings > Appearance now has an opt-in "Foldable / Duo layout" checkbox

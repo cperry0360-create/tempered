@@ -1,5 +1,16 @@
-## 2026-10-25 — Duo layout polish candidate, 0.58.2 (87)
+## 2026-10-25 — Duo layout and Half-fold candidate, 0.59.0 (87)
 
+- Duo workouts offer a Half-fold button. The upper half shows the selected
+  movement's existing exercise reference, cue, targets and real set progress;
+  the lower half has movement selection and the canonical set/rest controls.
+  Full screen restores all cards. The choice and selected movement survive
+  minimize/resume, while a new workout starts in the standard view.
+- Half-fold is manual, so no unverified hinge-angle detection is required.
+  Keyboard resizing temporarily contracts the split into the visible viewport.
+  No domain logic, prescriptions or existing logs are migrated.
+- The half-fold acceptance journey passes 86 checks at four Duo sizes/themes
+  and an ordinary phone, including preservation, rest timing, keyboard, resume
+  and finish. It rejects the prior build, which has no Half-fold control.
 - The opt-in rail is narrower, shares the canvas background, and accounts for the
   right safe inset once. The operating system retains its own status area.
 - Train's sticky title paints to the top edge and across the content gutters;

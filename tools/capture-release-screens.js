@@ -28,7 +28,7 @@ const VIEWS = [
   'settings', 'program-builder', 'program-custom-exercise', 'session-custom-exercise', 'summary',
   'train-rhythm', 'train-program-details', 'train-routine', 'train-library', 'train-custom-exercise',
   'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
-  'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest',
+  'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest', 'session-half-fold', 'session-half-fold-rest',
 ]
 const DUO_MODE = process.argv.includes('--duo')
 const VIEWPORTS = DUO_MODE
@@ -40,7 +40,7 @@ const VIEWPORTS = DUO_MODE
     { label: 'iphone-large', width: 430, height: 932 },
   ]
 const THEMES = ['light', 'dark']
-const captureThemes = DUO_MODE ? ['light'] : THEMES
+const captureThemes = THEMES
 
 function argument(name, fallback = null) {
   const index = process.argv.indexOf(name)
@@ -217,7 +217,7 @@ try {
     for (const theme of captureThemes) {
     await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] })
     const only = argument('--views')?.split(',') ?? null
-    for (const view of VIEWS.filter((name) => !only || only.includes(name))) {
+    for (const view of VIEWS.filter((name) => (!only || only.includes(name)) && (DUO_MODE || !name.startsWith('session-half-fold')))) {
       const filename = `${viewport.label}-${theme}-${view}.png`
       const destination = join(output, filename)
       const reportPromise = nextReport()

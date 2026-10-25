@@ -40,7 +40,7 @@
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')
     localStorage.clear()
-    const clock = fixedClock((view === 'today' || view === 'session' || view === 'session-custom-exercise') ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
+    const clock = fixedClock((view === 'today' || view.startsWith('session')) ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
       'weekly-recap': 'today', 'weekly-recap-details': 'today', 'weekly-recap-daily': 'today', 'weekly-recap-away': 'today', 'weekly-recap-quiet': 'today',
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
@@ -361,11 +361,19 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
-      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise' || view.startsWith('plate-calculator-')) {
+      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise' || view.startsWith('session-half-fold') || view.startsWith('plate-calculator-')) {
         await storage.open()
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+        if (view.startsWith('session-half-fold')) {
+          mount.querySelector('[data-half-fold-toggle]')?.click()
+          if (mount.querySelector('.screen--session')?.dataset.halfFold !== 'true') throw new Error('Half-fold mode did not open')
+          if (view === 'session-half-fold-rest') {
+            mount.querySelector('.setrow__check')?.click()
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
+        }
         if (view.startsWith('plate-calculator-')) {
           mount.querySelector('[data-open-plate-calculator]')?.click()
           if (view === 'plate-calculator-build') document.querySelector('[data-plate-mode="build"]')?.click()

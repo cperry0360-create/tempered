@@ -70,6 +70,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let wakeLock = null
   let hasUnloggedEdits = false
   let confirmingDiscard = false
+  let halfFold = false
+  let halfFoldIndex = 0
+
+  function syncHalfFoldViewport() {
+    if (!halfFold) return
+    const viewport = window.visualViewport
+    const visibleBottom = viewport ? viewport.height + viewport.offsetTop : window.innerHeight
+    root.style.setProperty('--half-fold-visible-height', `${Math.max(1, visibleBottom - root.getBoundingClientRect().top)}px`)
+  }
+  window.visualViewport?.addEventListener('resize', syncHalfFoldViewport)
+  window.visualViewport?.addEventListener('scroll', syncHalfFoldViewport)
+  window.addEventListener('resize', syncHalfFoldViewport)
 
   function elapsedSeconds() {
     const active = activeSince === null ? 0 : Math.max(0, (timeSource.now() - activeSince) / 1000)
@@ -125,6 +137,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       openPanel,
       hasUnloggedEdits,
       elapsedSec: elapsedSeconds(),
+      halfFold,
+      halfFoldIndex,
     })
   }
 
@@ -799,6 +813,89 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return plan.reduce((total, entry) => total + entry.sets.filter((s) => s.logged).length, 0)
   }
 
+  function setHalfFold(enabled) {
+    halfFold = enabled && plan.length > 0
+    openPanel = null
+    persistDraft()
+    render()
+  }
+
+  function halfFoldToggle() {
+    return el('button.session-layout-toggle', {
+      type: 'button',
+      dataset: { halfFoldToggle: 'true' },
+      'aria-pressed': String(halfFold),
+      onclick: () => setHalfFold(!halfFold),
+    }, [halfFold ? 'Full screen' : 'Half-fold'])
+  }
+
+  function selectHalfFoldExercise(index) {
+    halfFoldIndex = Math.max(0, Math.min(plan.length - 1, Number(index) || 0))
+    openPanel = null
+    addingMovement = false
+    persistDraft()
+    render()
+  }
+
+  function halfFoldStage(entry) {
+    const completed = entry.sets.filter(set => set.logged).length
+    const next = entry.sets.findIndex(set => !set.logged)
+    const target = entry.slot
+      ? `${entry.slot.repMin}–${entry.slot.repMax} reps · ${clock(entry.restSec)} rest`
+      : `${entry.sets.length} sets · ${clock(entry.restSec)} rest`
+    return el('section.half-fold__stage', { 'aria-label': 'Exercise display' }, [
+      el('div.half-fold__visual', {}, [
+        entry.exercise.art
+          ? el('img.half-fold__art', { src: artUrl(entry.exercise.art), alt: `${entry.exercise.name} exercise reference` })
+          : el('div.half-fold__art-fallback', {}, [icon('train')]),
+        el('div.half-fold__guidance', {}, [
+          el('p.half-fold__eyebrow', { text: `Exercise ${halfFoldIndex + 1} of ${plan.length}` }),
+          el('h2.half-fold__title', { text: displayName(entry.exercise, entry.slot) }),
+          el('p.half-fold__target', { text: target }),
+          session?.deload && el('p.half-fold__deload', { text: 'Deload week. Hold the weight; recovery is half the work.' }),
+          el('p.half-fold__cue', { text: entry.slot?.cue || entry.slot?.setup || entry.proposal?.reason || 'Record the work you actually do.' }),
+          el('div.half-fold__progress-copy', {}, [
+            el('strong', { text: next < 0 ? 'Movement complete' : `Next: set ${next + 1}` }),
+            el('span', { text: `${completed} / ${entry.sets.length} logged` }),
+          ]),
+          el('progress.half-fold__progress', { max: Math.max(1, entry.sets.length), value: completed, 'aria-label': 'Current movement sets logged' }),
+          el('p.half-fold__total', { text: `${loggedCount()} / ${plan.reduce((sum, item) => sum + item.sets.length, 0)} sets this workout` }),
+        ]),
+      ]),
+    ])
+  }
+
+  function halfFoldControls(entry) {
+    return el('section.half-fold__controls', { 'aria-label': 'Workout controls' }, [
+      el('div.half-fold__toolbar', {}, [
+        el('button.half-fold__step', { type: 'button', 'aria-label': 'Previous movement', disabled: halfFoldIndex === 0, onclick: () => selectHalfFoldExercise(halfFoldIndex - 1) }, ['‹']),
+        el('select.half-fold__select', {
+          'aria-label': 'Workout movement',
+          onchange: event => selectHalfFoldExercise(event.target.value),
+        }, plan.map((item, index) => el('option', { value: String(index), selected: index === halfFoldIndex }, [`${index + 1}. ${displayName(item.exercise, item.slot)}`]))),
+        el('button.half-fold__step', { type: 'button', 'aria-label': 'Next movement', disabled: halfFoldIndex === plan.length - 1, onclick: () => selectHalfFoldExercise(halfFoldIndex + 1) }, ['›']),
+        halfFoldToggle(),
+      ]),
+      el('div.half-fold__logging', {}, [
+        exerciseCard(entry, halfFoldIndex),
+        movementPicker(),
+      ]),
+    ])
+  }
+
+  function movementPicker() {
+    return addingMovement
+      ? addMovementPanel()
+      : el('button.button.button--wide.session-add__open', {
+          type: 'button', dataset: { action: 'add-movement' },
+          onclick: () => {
+            addingMovement = true
+            render()
+            requestAnimationFrame(() => root.querySelector('.session-add__search')?.focus())
+          },
+        }, [icon('plus'), 'Add movement'])
+  }
+
   async function addMovement(exercise) {
     const prepared = await workout.prepareExercise(exercise.id, {
       sets: 3, reps: null, weight: null,
@@ -810,6 +907,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       restSec: 150,
       sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
     })
+    if (halfFold) halfFoldIndex = plan.length - 1
     addingMovement = false
     addQuery = ''
     hasUnloggedEdits = true
@@ -897,6 +995,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function render() {
+    const duoLayout = document.documentElement.dataset.layout === 'duo'
+    if (plan.length === 0 || !duoLayout) halfFold = false
+    halfFoldIndex = Math.max(0, Math.min(plan.length - 1, halfFoldIndex))
+    root.dataset.halfFold = String(halfFold)
+    root.dataset.restActive = String(Boolean(rest))
+    const selectedEntry = plan[halfFoldIndex]
     replace(root, [
       el('header.sessionbar.sessionbar--r3', {}, [
         el('button.sessionbar__cancel', {
@@ -918,25 +1022,25 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         }, ['Finish'])]),
       ]),
 
-      session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
-      ...plan.map(exerciseCard),
-
-      addingMovement
-        ? addMovementPanel()
-        : el('button.button.button--wide.session-add__open', {
-            type: 'button', dataset: { action: 'add-movement' },
-            onclick: () => {
-              addingMovement = true
-              render()
-              requestAnimationFrame(() => root.querySelector('.session-add__search')?.focus())
-            },
-          }, [icon('plus'), 'Add movement']),
+      ...(halfFold ? [halfFoldStage(selectedEntry), halfFoldControls(selectedEntry)] : [
+        duoLayout && plan.length > 0 && el('div.session-display-tools', {}, [
+          el('span', { text: 'Set the phone down. Keep the controls close.' }),
+          halfFoldToggle(),
+        ]),
+        session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
+        ...plan.map(exerciseCard),
+        movementPicker(),
+      ]),
 
     ])
     clearBodyOverlays()
     if (rest) document.body.append(restBar())
     const sheet = confirmingFinish ? finishSheet() : confirmingDiscard ? discardSheet() : null
     if (sheet) document.body.append(sheet)
+    syncHalfFoldViewport()
+    if (halfFold && !openPanel && !addingMovement) requestAnimationFrame(() => {
+      root.querySelector('.half-fold__logging .setrow[data-done="false"]')?.scrollIntoView({ block: 'nearest' })
+    })
     tick()
   }
 
@@ -1020,6 +1124,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
     async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
+      halfFold = false
+      halfFoldIndex = 0
       elapsedSec = 0
       activeSince = null
       activateWorkoutScreen()
@@ -1115,6 +1221,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       session = { ...draft.session }
       plan = Array.isArray(draft.plan) ? draft.plan : []
+      halfFold = draft.halfFold === true
+      halfFoldIndex = Number.isInteger(draft.halfFoldIndex) ? draft.halfFoldIndex : 0
       isFirstOfDay = draft.isFirstOfDay !== false
       openPanel = draft.openPanel ?? null
       confirmingFinish = false
@@ -1173,6 +1281,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       releaseWorkoutWakeLock()
       document.removeEventListener('visibilitychange', checkpointWhenHidden)
       window.removeEventListener('pagehide', checkpointOnPageHide)
+      window.visualViewport?.removeEventListener('resize', syncHalfFoldViewport)
+      window.visualViewport?.removeEventListener('scroll', syncHalfFoldViewport)
+      window.removeEventListener('resize', syncHalfFoldViewport)
       clearBodyOverlays()
     },
   }

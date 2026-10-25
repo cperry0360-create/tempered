@@ -2664,3 +2664,24 @@ assertion now identifies the first semantic panel through the new containers;
 the nutrition timestamp assertion compares the entered local time as an ISO
 instant rather than assuming the browser runs in UTC. Neither changes product
 behavior. Cory authorized publishing this candidate on 25 Oct.
+
+
+## 2026-10-25 — Half-fold workout mode, 0.59.0 (87)
+
+Cory asked for a Netflix-like folded workout experience while the approved Duo
+release was being prepared. Add a manual, workout-only Half-fold control to
+Duo sessions. The split meets at 50% of the visible canvas: existing exercise
+reference/cues/real progress above; movement selection and the existing set
+card/rest timer below. Reuse the original controls and their handlers instead
+of creating a second logging model. All history, method, cable, plate, swap,
+notes, add/remove and finish actions remain available. A keyboard contracts the
+split above the visible keyboard; closing it restores the resting geometry.
+
+The optional halfFold and halfFoldIndex checkpoint fields preserve view choice
+and movement while minimizing/resuming. They change no measurement or program
+record; old checkpoints continue to open normally. Each fresh workout starts
+in Full screen. Turning Duo off returns to the ordinary workout layout.
+Browser proof: 86 checks pass across 932×656, 890×626, 466×678, 626×890,
+and the ordinary 390×844 view. The same journey rejects the previous source.
+CI captures both split and rest states in light/dark Duo viewports. Physical
+hinge placement and iOS keyboard behavior remain device checks for Cory.

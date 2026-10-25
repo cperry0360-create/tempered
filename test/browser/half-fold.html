@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Half-fold workout acceptance</title></head><body><div id="app" class="app"></div><pre id="results"></pre><script type="module">
+const params = new URLSearchParams(location.search)
+const settle = (ms=100) => new Promise(resolve=>setTimeout(resolve,ms))
+if(params.has('fixture')) {
+ const base = params.has('baseline') ? '../../baseline/' : '../../'
+ const html = new DOMParser().parseFromString(await fetch(base+'index.html').then(r=>r.text()),'text/html')
+ await Promise.all([...html.querySelectorAll('link[rel="stylesheet"]')].map(link=>new Promise((resolve,reject)=>{
+  const copy=document.createElement('link');copy.rel='stylesheet';copy.href=base+link.getAttribute('href').replace('./','');copy.onload=resolve;copy.onerror=reject;document.head.append(copy)
+ })))
+ localStorage.clear()
+ if(!params.has('standard'))document.documentElement.dataset.layout='duo'
+ document.documentElement.style.setProperty('--motion-screen','0ms')
+ const {bootstrapHarness}=await import(base+'test/browser/harness.js')
+ const {createMemoryStorage}=await import(base+'src/adapters/storage/memory-storage.js')
+ const {fixedClock}=await import(base+'src/adapters/clock/clock.js')
+ const originalViewport=window.visualViewport, viewport=new EventTarget()
+ viewport.height=innerHeight;viewport.offsetTop=0
+ Object.defineProperty(window,'visualViewport',{configurable:true,value:viewport})
+ const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,9,25,12))
+ const app=await bootstrapHarness({storage,clock,mount:document.querySelector('#app')})
+ await app.appearance.setPreference(params.get('theme')??'light')
+ const day=(await app.workout.activeProgram()).program.days[0]
+ await app.app.startSession({programDay:day});await settle()
+ const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)]
+ const checks=[],check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+ const enter=(selector,value)=>{const input=q(selector);input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}))}
+ const toggle=()=>q('[data-half-fold-toggle]')?.click()
+ try {
+  if(params.has('standard')) {
+   check('ordinary phone does not acquire a new layout control',!q('[data-half-fold-toggle]'))
+   check('ordinary workout still shows all prescribed movements',qa('.exercise--r3').length===day.exercises.length)
+  } else {
+   check('Duo starts in the existing full workout view',q('.screen--session')?.dataset.halfFold==='false'&&qa('.exercise--r3').length===day.exercises.length)
+   check('Duo has a visible opt-in Half-fold control',q('[data-half-fold-toggle]')?.textContent==='Half-fold')
+   if(!q('[data-half-fold-toggle]'))throw Error('Half-fold control is missing')
+   enter('[data-field="weight"]',95);enter('[data-field="reps"]',8)
+   toggle();await settle()
+   if(params.has('reviewFixture')) {
+    parent.postMessage({halfFoldReady:true},location.origin)
+   } else {
+    const stage=q('.half-fold__stage').getBoundingClientRect(), controls=q('.half-fold__controls').getBoundingClientRect(),root=q('.screen--session').getBoundingClientRect()
+    check('exercise display and controls meet at the middle',Math.abs(stage.bottom-root.height/2)<2&&Math.abs(controls.top-stage.bottom)<2)
+    check('canonical set inputs live only in the lower half',qa('[data-field]').every(n=>n.closest('.half-fold__logging'))&&qa('.exercise--r3').length===1)
+    check('unlogged weight and reps survive entering Half-fold',q('[data-field="weight"]').value==='95'&&q('[data-field="reps"]').value==='8')
+    check('layout changes do not create logs',(await storage.getAll('setLogs')).length===0)
+    q('[data-log]').click();await settle()
+    const logs=await storage.getAll('setLogs')
+    check('one check saves exactly the entered weight and reps',logs.length===1&&logs[0].weight===95&&logs[0].reps===8)
+    check('upper progress reads the real checked set count',q('.half-fold__progress')?.value===1&&/1 \/ 4 logged/.test(q('.half-fold__progress-copy')?.textContent))
+    const rest=q('.session-restbar')?.getBoundingClientRect()
+    check('rest controls remain in the lower half',rest&&rest.top>=controls.top&&rest.bottom<=innerHeight+1)
+    clock.set(clock.now()+30000);await settle(550)
+    check('rest uses the original absolute end time',q('[data-rest-remaining]')?.textContent==='Rest 1:30',q('[data-rest-remaining]')?.textContent)
+    q('[aria-label="Next movement"]').click();await settle()
+    check('next movement switches the display and logging together',q('.half-fold__select').value==='1'&&q('.half-fold__title').textContent===q('.exercise__name').textContent)
+    enter('[data-field="weight"]',35)
+    q('[aria-label="Previous movement"]').click();await settle()
+    check('switching movements preserves checked sets',q('[data-log]')?.dataset.done==='true'&&(await storage.getAll('setLogs')).length===1)
+    q('[aria-label="Next movement"]').click();await settle()
+    check('switching movements preserves unlogged edits',q('[data-field="weight"]').value==='35')
+    viewport.height=innerHeight-180;viewport.dispatchEvent(new Event('resize'));await settle()
+    check('the split contracts above a keyboard-sized viewport',q('.screen--session').getBoundingClientRect().bottom<=viewport.height+1)
+    viewport.height=innerHeight;viewport.dispatchEvent(new Event('resize'));await settle()
+    check('closing the keyboard restores the full split',Math.abs(q('.half-fold__controls').getBoundingClientRect().top-innerHeight/2)<2)
+    toggle();await settle()
+    check('Full screen restores the entire workout without changing logs',qa('.exercise--r3').length===day.exercises.length&&(await storage.getAll('setLogs')).length===1)
+    toggle();await settle()
+    q('.exercise-menu__trigger').click();q('[data-action="minimize-workout"]').click();await settle()
+    check('minimizing removes the split from the dashboard',!q('.half-fold__controls')&&q('[data-active-workout]'))
+    q('[data-active-workout]').click();await settle()
+    check('resume restores Half-fold and the selected movement',q('.screen--session')?.dataset.halfFold==='true'&&q('.half-fold__select')?.value==='1'&&q('[data-field="weight"]')?.value==='35')
+    q('[data-action="finish"]').click();await settle()
+    check('finish confirmation remains above the split and rest controls',q('.session-sheet')&&Number(getComputedStyle(q('.session-sheet')).zIndex)>Number(getComputedStyle(q('.session-restbar')).zIndex))
+    q('[data-action="confirm-finish"]').click();await settle()
+    check('finishing clears the split and keeps the one real set',!q('.half-fold__controls')&&(await storage.getAll('setLogs')).length===1)
+    await app.app.startSession({programDay:day});await settle()
+    check('a fresh workout starts in Full screen',q('.screen--session')?.dataset.halfFold==='false')
+   }
+  }
+ } catch(error) {check('Half-fold journey completed',false,error.stack)}
+ if(!params.has('reviewFixture'))parent.postMessage({halfFoldReport:{passed:checks.every(c=>c.ok),checks}},location.origin)
+} else {
+ const frame=document.createElement('iframe');frame.style.cssText='position:fixed;left:0;top:0;border:0';document.body.append(frame)
+ if(params.has('review')) {
+  frame.style.width=(params.get('width')??932)+'px';frame.style.height=(params.get('height')??656)+'px'
+  const query=new URLSearchParams(params);query.delete('review');query.set('fixture','1');query.set('reviewFixture','1')
+  frame.src='?'+query;document.body.replaceChildren(frame);document.body.style.margin='0'
+ } else {
+  const checks=[]
+  for(const [width,height,theme,standard]of [[932,656,'light',false],[890,626,'dark',false],[466,678,'light',false],[626,890,'dark',false],[390,844,'light',true]]) {
+   frame.style.width=width+'px';frame.style.height=height+'px'
+   const result=await new Promise(resolve=>{
+    const timer=setTimeout(()=>{removeEventListener('message',receive);resolve({checks:[{name:'Fixture completed',ok:false,detail:'Timeout'}]})},25000)
+    function receive(event){if(event.source===frame.contentWindow&&event.data.halfFoldReport){clearTimeout(timer);removeEventListener('message',receive);resolve(event.data.halfFoldReport)}}
+    addEventListener('message',receive);frame.src=`?fixture=1&theme=${theme}${standard?'&standard=1':''}${params.has('baseline')?'&baseline=1':''}`
+   })
+   checks.push(...result.checks.map(c=>({...c,name:`${width}×${height} ${theme}: ${c.name}`})))
+  }
+  frame.remove();const report={label:'half-fold',passed:checks.every(c=>c.ok),checks};document.querySelector('#results').textContent=JSON.stringify(report,null,2)
+  await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(report)})
+ }
+}
+</script></body></html>

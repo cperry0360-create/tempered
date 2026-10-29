@@ -3,6 +3,7 @@
  */
 import { nutritionLedger, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
+import { dayBefore, nutritionDayStatus, openNutritionDates } from '../../domain/nutrition-review.js'
 
 export function createFuelScreen({ storage, daily, clock }) {
   const root = el('div.screen.screen--fuel.screen--fuel-r4')
@@ -12,6 +13,9 @@ export function createFuelScreen({ storage, daily, clock }) {
   let justAdded = null
   let justAddedPortion = 1
   let portionFood = null
+  let calendarWeeksBack = 0
+  let backlogExpanded = false
+  let dismissedReminderFor = ''
   // The add-meal form and today's meals live here, built once by the nutrition
   // runtime and reused across re-renders so half-typed entries survive.
   const mealPanel = el('div.fuel-r4__meal-panel')
@@ -19,14 +23,27 @@ export function createFuelScreen({ storage, daily, clock }) {
   const onFuelUpdated = (event) => {
     if (root.isConnected && (!event?.detail?.date || event.detail.date === clock.today())) refresh().catch(() => {})
   }
+  const onReviewUpdated = () => { if (root.isConnected) refresh().catch(() => {}) }
   window.addEventListener('tempered:fuel-updated', onFuelUpdated)
+  window.addEventListener('tempered:nutrition-review-changed', onReviewUpdated)
 
   async function load() {
     const todayKey = clock.today()
-    const [days, todayView] = await Promise.all([storage.getAll('dayLogs'), daily.forDate(todayKey)])
+    const [days, todayView, profile] = await Promise.all([
+      storage.getAll('dayLogs'), daily.forDate(todayKey), storage.get('profile', 'profile'),
+    ])
+    // Start tracking explicit closeouts from first use. Do not turn years of
+    // blank historic dates into retroactive "missed" days.
+    const reviewStart = profile?.nutritionReviewStartOn ?? todayKey
+    if (!profile?.nutritionReviewStartOn) {
+      await storage.put('profile', { ...(profile ?? { id: 'profile' }), nutritionReviewStartOn: todayKey })
+    }
     model = {
       day: days.find((day) => day.date === todayKey) ?? { date: todayKey },
       todayView,
+      days,
+      reviewStart,
+      reminderDismissed: profile?.nutritionReminderDismissedOn === todayKey,
       foods: foodLibrary(days, 3),
     }
   }
@@ -45,6 +62,119 @@ export function createFuelScreen({ storage, daily, clock }) {
     await refresh()
     window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
     setTimeout(() => { if (justAdded === food.description) { justAdded = null; if (root.isConnected) render() } }, 2000)
+  }
+
+  function reviewDate(date) {
+    window.dispatchEvent(new CustomEvent('tempered:open-nutrition', { detail: { date } }))
+  }
+
+  async function closeToday() {
+    const state = model.day?.nutritionStatus === 'complete' ? 'partial' : 'complete'
+    await daily.setNutritionStatus(clock.today(), state)
+    await refresh()
+    window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
+  }
+
+  async function dismissReminder() {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    await storage.put('profile', { ...profile, nutritionReminderDismissedOn: clock.today() })
+    dismissedReminderFor = clock.today()
+    await refresh()
+  }
+
+  function dateOfWeek(offset) {
+    const today = new Date(clock.today() + 'T12:00:00Z')
+    const weekday = (today.getUTCDay() + 6) % 7
+    today.setUTCDate(today.getUTCDate() - weekday - offset * 7)
+    return today
+  }
+
+  function diaryCalendar() {
+    const today = clock.today()
+    const byDate = new Map(model.days.map((day) => [day.date, day]))
+    const start = dateOfWeek(calendarWeeksBack)
+    const previous = document.createElement('button')
+    previous.className = 'fuel-diary__nav'
+    previous.textContent = '‹'
+    previous.type = 'button'
+    previous.setAttribute('aria-label', 'Previous week')
+    previous.onclick = () => { calendarWeeksBack++; render() }
+    const next = document.createElement('button')
+    next.className = 'fuel-diary__nav'
+    next.textContent = '›'
+    next.type = 'button'
+    next.disabled = calendarWeeksBack === 0
+    next.setAttribute('aria-label', 'Next week')
+    next.onclick = () => { calendarWeeksBack = Math.max(0, calendarWeeksBack - 1); render() }
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const at = new Date(start)
+      at.setUTCDate(at.getUTCDate() + index)
+      const date = at.toISOString().slice(0, 10)
+      const status = nutritionDayStatus(byDate.get(date), date, model.reviewStart, today)
+      const isToday = date === today
+      return el('button.fuel-diary__day', {
+        type: 'button', disabled: date > today,
+        dataset: { diaryDate: date, state: status, selected: String(isToday && calendarWeeksBack === 0) },
+        'aria-label': date + ': ' + (isToday ? 'today' : status === 'closed' ? 'complete'
+          : status === 'open' || status === 'unlogged' ? 'not closed' : 'not tracked'),
+        onclick: () => date === today ? null : reviewDate(date),
+      }, [
+        el('span.fuel-diary__weekday', { text: ['M','T','W','T','F','S','S'][index] }),
+        el('strong', { text: String(at.getUTCDate()) }),
+        el('span.fuel-diary__marker', { 'aria-hidden': 'true',
+          text: status === 'closed' ? '✓' : status === 'open' || (status === 'unlogged' && date < today) ? '•' : '·' }),
+      ])
+    })
+    const left = start.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
+    const end = new Date(start); end.setUTCDate(end.getUTCDate() + 6)
+    const right = end.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
+    return el('section.fuel-diary', { dataset: { diaryCalendar: 'true' } }, [
+      el('div.fuel-diary__heading', {}, [
+        el('div', {}, [
+          el('span.fuel-diary__eyebrow', { text: 'FOOD LOG' }),
+          el('h2', { text: left === right ? left + ' · ' + start.getUTCFullYear()
+            : left + ' — ' + right + ' · ' + end.getUTCFullYear() }),
+        ]),
+        el('div.fuel-diary__legend', {}, [
+          el('span', { text: '✓ Closed' }),
+          el('span', { text: '• Needs review' }),
+        ]),
+      ]),
+      el('div.fuel-diary__week', {}, [previous, ...days, next]),
+    ])
+  }
+
+  function openDaysCard() {
+    const today = clock.today()
+    const open = openNutritionDates(model.days, today, model.reviewStart)
+    const yesterday = dayBefore(today)
+    const lastDay = open.find((row) => row.date === yesterday)
+    const notice = lastDay && !model.reminderDismissed && dismissedReminderFor !== today
+      ? el('section.fuel-diary__reminder', { dataset: { nutritionReminder: 'true' } }, [
+        el('div', {}, [
+          el('strong', { text: 'Yesterday’s food diary is not closed' }),
+          el('p', { text: 'Finish any missing meals, then mark the day complete. Your totals are not judged against your budget.' }),
+        ]),
+        el('div.fuel-diary__reminder-actions', {}, [
+          el('button', { type: 'button', dataset: { reviewYesterday: yesterday },
+            onclick: () => reviewDate(yesterday) }, ['Review yesterday']),
+          el('button', { type: 'button', onclick: dismissReminder }, ['Later']),
+        ]),
+      ]) : null
+    return [
+      notice,
+      open.length > 0 && el('section.fuel-diary__backlog', { dataset: { openNutritionDays: String(open.length) } }, [
+        el('div.fuel-diary__backlog-head', {}, [
+          el('span', { text: open.length + (open.length === 1 ? ' earlier day needs review' : ' earlier days need review') }),
+          el('button', { type: 'button', onclick: () => { backlogExpanded = !backlogExpanded; render() },
+            'aria-expanded': String(backlogExpanded) }, [backlogExpanded ? 'Hide' : 'Show dates']),
+        ]),
+        backlogExpanded && el('div.fuel-diary__backlog-days', {}, open.map((row) =>
+          el('button', { type: 'button', dataset: { backlogDate: row.date },
+            onclick: () => reviewDate(row.date) },
+          [row.date, row.status === 'unlogged' ? ' · No entries' : ' · Not closed']))),
+      ]),
+    ].filter(Boolean)
   }
 
   function foodMeta(food) {
@@ -186,13 +316,37 @@ export function createFuelScreen({ storage, daily, clock }) {
     const waterProgress = percent(water, waterGoal)
 
     replace(root, [
-      el('h1.screen__title', { text: 'Fuel' }),
+      el('div.fuel-r4__topline', {}, [
+        el('h1.screen__title', { text: 'Fuel' }),
+        el('span.fuel-r4__today-tag', { text: day.nutritionStatus === 'complete' ? '✓ DAY CLOSED' : '● DAY OPEN' }),
+      ]),
+      diaryCalendar(),
+      ...openDaysCard(),
       el('div.fuel-r4__dashboard', {}, [
         // One persistent overview pane on an unfolded Duo; ordinary phones
         // still show a single natural scrolling column.
         el('div.fuel-r4__overview', {}, [
           el('section.fuel-r4__card.fuel-r4__energy', {}, [
-            energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
+            el('div.fuel-r4__budget-heading', {}, [
+              el('div', {}, [
+                el('span', { text: 'DAILY CALORIE BUDGET' }),
+                el('strong', { text: Math.round(calories).toLocaleString() + ' kcal' }),
+                el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' logged target' }),
+              ]),
+              energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
+            ]),
+            el('div.fuel-r4__budget-track', { role: 'progressbar',
+              'aria-label': 'Calories logged', 'aria-valuemin': '0',
+              'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
+              el('span', { style: 'width:' + energyProgress + '%' }),
+            ]),
+            el('button.fuel-r4__finish', {
+              type: 'button', dataset: { diaryFinishToday: 'true', closed: String(day.nutritionStatus === 'complete') },
+              onclick: closeToday,
+            }, [day.nutritionStatus === 'complete' ? 'Reopen today’s diary' : 'Mark today’s food diary complete']),
+            el('p.fuel-r4__finish-note', {
+              text: 'Closing confirms your meals are logged. It is not a calorie goal or weight-loss score.',
+            }),
             el('div.fuel-r4__protein', {}, [
               el('span', { text: `Protein ${Math.round(protein)} / ${Math.round(proteinGoal)} g` }),
               el('div.fuel-r4__bar', {}, [el('i', { style: `width:${proteinProgress}%` })]),

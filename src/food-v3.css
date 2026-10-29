@@ -1,0 +1,233 @@
+/* Food feedback pass: clarify statuses, remove visual clutter, preserve data.
+   All color values are theme tokens. The Beach Cut background is an Unsplash
+   photograph taken at Moon Palace, Cancún (Meg von Haartman, Feb 2025).
+   It has a gradient fallback when offline/network-blocked. */
+
+/* The only new accent needed beyond the Food V2 palette is missed-day red. */
+.food-v3__search {
+  min-width:0;
+  background:var(--food-v2-panel);
+  border:1px solid var(--food-v2-line);
+  border-radius:16px;
+  padding:9px;
+  color:var(--food-v2-text);
+}
+.food-v3__search-line {
+  display:flex; align-items:center; gap:8px; min-width:0;
+  background:var(--food-v2-panel-2); border:1px solid var(--food-v2-line);
+  border-radius:12px; padding:2px 8px 2px 12px;
+}
+.food-v3__search-line > .icon { width:20px; height:20px; flex:none; color:var(--food-v2-blue); }
+.screen--fuel-r4 .food-v3__search-input {
+  min-width:0; flex:1; border:0; outline:0; background:transparent;
+  color:var(--food-v2-text); font-size:13px; min-height:42px;
+}
+.screen--fuel-r4 .food-v3__search-input::placeholder { color:var(--food-v2-muted); }
+.food-v3__browse {
+  border:0; background:transparent; color:var(--food-v2-blue);
+  padding:0 7px; min-height:42px; font-size:12px; font-weight:800; cursor:pointer;
+}
+.food-v3__search .fuel-food__results:not(:empty) {
+  border-top:1px solid var(--food-v2-line); margin-top:10px; padding-top:7px;
+  max-height:min(38vh,290px); overflow-y:auto; overscroll-behavior:contain;
+}
+.food-v3__search .fuel-food__list { background:transparent; }
+.food-v3__search .fuel-food { border-bottom:1px solid var(--food-v2-line); }
+.food-v3__search .fuel-food__name { color:var(--food-v2-text); font-size:13px; }
+.food-v3__search .fuel-food__meta { color:var(--food-v2-muted); }
+.food-v3__search .fuel-food__add { color:var(--food-v2-blue); font-size:17px; }
+.food-v3__search-empty { color:var(--food-v2-muted); font-size:12px; padding:8px 5px; margin:0; }
+.screen--fuel-r4 .food-v2__quick { padding-block:13px; }
+.screen--fuel-r4 .food-v2__recents { margin-top:0; }
+.screen--fuel-r4 .food-v2__recent-graphic { aspect-ratio:2; }
+.food-v2__recent-graphic .icon { width:22px; height:22px; color:var(--food-v2-blue); }
+.screen--fuel-r4 .food-v2__macro-card { gap:9px; }
+.food-v3__diary .fuel-diary__heading {
+  align-items:center; gap:8px;
+}
+.food-v3__diary .fuel-diary__heading h2 { font-size:16px; }
+.food-v3__week-label {
+  color:var(--food-v2-muted); font-size:10px; font-weight:700;
+  white-space:nowrap;
+}
+.food-v3__diary .fuel-diary__week {
+  display:grid; grid-template-columns:20px repeat(7,minmax(0,1fr)) 20px;
+  gap:3px; align-items:stretch;
+}
+.food-v3__diary .fuel-diary__nav {
+  width:20px; padding:0; border-radius:9px; min-height:81px; font-size:19px;
+}
+.screen--fuel-r4 .food-v3__diary .food-v3__day {
+  min-width:0; min-height:88px; padding:6px 1px 4px;
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:space-around; gap:1px;
+  border:1px solid transparent;
+  background:var(--food-v2-panel-2); border-radius:9px;
+  color:var(--food-v2-text); opacity:1;
+}
+.screen--fuel-r4 .food-v3__diary .food-v3__day:disabled {
+  opacity:.35; cursor:default;
+}
+.food-v3__diary .fuel-diary__weekday { font-size:9px; font-weight:750; color:var(--food-v2-muted); }
+.food-v3__diary .food-v3__day > strong { font-size:13px; font-weight:750; }
+.food-v3__diary .fuel-diary__marker.food-v3__day-icon {
+  width:22px; height:22px; flex:none; border-radius:50%;
+  display:grid; place-items:center; font-size:16px; font-weight:900;
+  color:var(--food-v2-muted); border:2px solid var(--food-v2-line);
+  background:transparent; box-sizing:border-box; line-height:1;
+}
+.food-v3__day[data-visual="closed"] .food-v3__day-icon {
+  background:var(--food-v2-fiber); border-color:var(--food-v2-fiber);
+  color:var(--food-v2-deep);
+}
+.food-v3__day[data-visual="partial"] .food-v3__day-icon {
+  background:color-mix(in srgb,var(--food-v2-carbs) 22%,var(--food-v2-deep));
+  border-color:var(--food-v2-carbs); color:var(--food-v2-carbs);
+}
+.food-v3__day[data-visual="missed"] .food-v3__day-icon {
+  background:color-mix(in srgb,var(--food-v3-danger) 16%,var(--food-v2-deep));
+  border-color:var(--food-v3-danger); color:var(--food-v3-danger);
+}
+.food-v3__day[data-visual="neutral"] .food-v3__day-icon { opacity:.4; }
+.food-v3__diary .food-v3__day-cal {
+  font-size:9px; font-variant-numeric:tabular-nums;
+  color:var(--food-v2-muted); letter-spacing:-.035em;
+  white-space:nowrap; line-height:1.1;
+}
+.food-v3__day[data-visual="closed"] .food-v3__day-cal { color:var(--food-v2-fiber); }
+.screen--fuel-r4 .food-v3__diary .food-v3__day[data-selected="true"] {
+  border-color:var(--food-v2-blue);
+  box-shadow:inset 0 0 0 1px var(--food-v2-blue);
+}
+.screen--fuel-r4 .food-v3__diary { padding:13px 10px; }
+
+/* A photo-led motivator; the photo is decorative, the weight-derived
+   trend message remains plain text, and the actual image may be absent offline. */
+.screen--fuel-r4 .food-v3__beach {
+  position:relative; min-height:169px; overflow:hidden; padding:13px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  border:1px solid var(--food-v2-line); border-radius:17px;
+  background-color:var(--food-v2-beach-base);
+  background-image:linear-gradient(90deg,
+      color-mix(in srgb,var(--food-v2-deep) 91%,transparent),
+      color-mix(in srgb,var(--food-v2-deep) 48%,transparent) 75%),
+    url("https://images.unsplash.com/photo-1739295193392-a706a8449749?auto=format&fit=crop&w=900&q=75");
+  background-position:center; background-size:cover;
+  color:var(--food-v2-text);
+}
+.food-v3__beach-content { position:relative; z-index:1; display:grid; align-content:start; gap:3px; }
+.food-v3__beach-eyebrow { font-size:9px; letter-spacing:.1em; font-weight:850; color:var(--food-v2-text); }
+.food-v3__beach-content > strong {
+  font-size:clamp(33px,3.6vw,46px); font-weight:850; letter-spacing:-.05em;
+  line-height:1; font-variant-numeric:tabular-nums;
+}
+.food-v3__beach-days { font-size:12px; font-weight:750; }
+.food-v3__beach-status {
+  display:inline-flex; justify-self:start; margin-top:5px;
+  padding:4px 9px; border-radius:99px;
+  background:color-mix(in srgb,var(--food-v2-deep) 75%,transparent);
+  color:var(--food-v2-text); border:1px solid var(--food-v2-muted);
+  font-size:11px; font-weight:800;
+}
+.food-v3__beach-status[data-pace="on-track"] {
+  border-color:var(--food-v2-fiber); color:var(--food-v2-fiber);
+}
+.food-v3__beach-status[data-pace="review-pace"],
+.food-v3__beach-status[data-pace="losing-too-quickly"] {
+  border-color:var(--food-v2-carbs); color:var(--food-v2-carbs);
+}
+.food-v3__beach-detail { font-size:10px; color:var(--food-v2-text); }
+.food-v3__beach .food-v2__beach-progress {
+  position:relative; z-index:1; background:color-mix(in srgb,var(--food-v2-deep) 64%,transparent);
+}
+.food-v3__beach-attribution {
+  position:relative; z-index:1;
+  display:block; font-size:8px; line-height:1.2;
+  color:var(--food-v2-text); opacity:.8;
+}
+
+/* Timeline groups are derived from local meal timestamps; no data migration. */
+.screen--fuel-r4 .nutrition-timeline__group {
+  border-left:2px solid var(--food-v2-line);
+  margin-left:4px; padding-left:10px; min-width:0;
+}
+.nutrition-timeline__heading {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin:7px 0 10px; min-width:0;
+}
+.nutrition-timeline__heading > strong {
+  font-size:13px; color:var(--food-v2-text); font-weight:850;
+}
+.nutrition-timeline__heading > span {
+  color:var(--food-v2-muted); font-size:11px; font-variant-numeric:tabular-nums;
+}
+.nutrition-timeline__items { display:grid; gap:7px; }
+.screen--fuel-r4 .nutrition-timeline__items .nutrition-entry { margin:0 0 3px; }
+.screen--fuel-r4 .nutrition-timeline__items .nutrition-entry::before {
+  left:-16px; background:var(--food-v2-blue); width:8px; height:8px;
+}
+.screen--fuel-r4 .food-v2__details .nutrition-history { min-width:0; }
+
+/* A smaller, fully accessible in-app rail. The Safari/iOS system dock itself
+   is not editable by a PWA; this uses only the app's own viewport. */
+html[data-layout="duo"] {
+  --duo-nav-width:48px;
+  --duo-rail-width:calc(var(--duo-nav-width) + var(--duo-inset-right));
+}
+html[data-layout="duo"] .tabbar {
+  width:var(--duo-rail-width);
+  padding:calc(var(--duo-inset-top) + 8px)
+    calc(var(--duo-inset-right) + 2px)
+    calc(var(--duo-inset-bottom) + 8px) 2px;
+  background:var(--bg);
+  border:0;
+}
+html[data-layout="duo"] .tabbar__tabs {
+  gap:10px;
+  grid-template-rows:repeat(4,48px);
+}
+html[data-layout="duo"] .tabbar__tab {
+  position:relative; height:46px; min-height:46px;
+  width:44px; max-width:100%; margin:auto;
+  padding:0; display:flex; align-items:center;
+  justify-content:center; border-radius:14px;
+}
+html[data-layout="duo"] .tabbar__tab > span {
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  white-space:nowrap; clip-path:inset(50%);
+}
+html[data-layout="duo"] .tabbar__tab .icon { width:24px; height:24px; }
+html[data-layout="duo"] .tabbar__tab[data-active="true"] {
+  background:color-mix(in srgb,var(--food-v2-blue) 18%,var(--bg));
+  box-shadow:inset 3px 0 0 var(--food-v2-blue);
+}
+html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
+
+/* The calorie card stays at the head of the left side even when its own
+   long macro/calendar panel is scrolled, fixing the recording's lead card. */
+@media (min-width:740px) {
+  html[data-layout="duo"] .screen--fuel-r4 .food-v2__energy {
+    position:sticky; top:0; z-index:3;
+    box-shadow:0 10px 20px color-mix(in srgb,var(--food-v2-deep) 65%,transparent);
+  }
+  html[data-layout="duo"] .food-v2__small-row {
+    grid-template-columns:minmax(0,.86fr) minmax(0,1.35fr);
+  }
+  html[data-layout="duo"] .food-v3__diary .fuel-diary__week {
+    grid-template-columns:17px repeat(7,minmax(0,1fr)) 17px;
+    gap:2px;
+  }
+}
+@media (max-width:740px) {
+  .screen--fuel-r4 .food-v3__beach { min-height:157px; }
+  .food-v3__diary .fuel-diary__week {
+    grid-template-columns:20px repeat(7,minmax(0,1fr)) 20px; gap:3px;
+  }
+}
+@media (max-width:380px) {
+  .food-v3__diary .fuel-diary__week {
+    grid-template-columns:16px repeat(7,minmax(0,1fr)) 16px;
+    gap:2px;
+  }
+  .food-v3__diary .food-v3__day-cal { font-size:8px; }
+}

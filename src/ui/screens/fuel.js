@@ -353,6 +353,9 @@ export function createFuelScreen({ storage, daily, clock }) {
 
   function foodResults() {
     const all = model.foods.all
+    if (all.length === 0) return [
+      el('p.food-v3__search-empty', { text: 'Foods you log appear here when you search or browse.' }),
+    ]
     if (!foodQuery.trim() && !showAllFoods) return []
     const matches = foodQuery.trim() ? searchFoods(all, foodQuery) : all
     if (!matches.length) return [

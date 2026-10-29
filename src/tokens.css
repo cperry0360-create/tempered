@@ -22,6 +22,14 @@
   --warning: var(--text-2);
   --danger: var(--text-2);
   --chart: #7A8592;
+  --cut-ink: #F4FAFF;
+  --cut-secondary: #AFBED3;
+  --cut-deep: #071424;
+  --cut-mid: #102F50;
+  --cut-blue: #4EC0FF;
+  --cut-panel: #172A3E;
+  --cut-outline: #2A4A65;
+  --cut-muted: #799DB8;
 
   --accent: var(--train);
   --success: var(--fuel);

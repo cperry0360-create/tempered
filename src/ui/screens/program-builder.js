@@ -53,6 +53,8 @@ export function createProgramBuilderScreen({ mount, storage, clock, workout, onC
         el('p.program-builder__copy', { text: 'Create or edit a custom plan. Built-in programs stay unchanged, and your previous workouts are preserved.' }),
         notice && el('p.notice', { dataset: { builderNotice: '' }, text: notice }),
         error && el('p.notice', { dataset: { builderError: '' }, text: error }),
+        el('div.program-builder__workspace', {}, [
+          el('div.program-builder__sidebar', {}, [
         el('section.program-builder__card', {}, [
           el('label.program-builder__label', { text: 'Program name' }),
           el('input.program-builder__input', {
@@ -73,6 +75,8 @@ export function createProgramBuilderScreen({ mount, storage, clock, workout, onC
               }, [entry.name || `Day ${index + 1}`, el('small', { text: `${entry.exercises?.length ?? 0} exercises` })])))
             : el('p.program-builder__empty', { text: 'Add exercises after creating a training day.' }),
         ]),
+          ]),
+          el('div.program-builder__editor', {}, [
         day && el('section.program-builder__card', {}, [
           el('label.program-builder__label', { text: 'Day name' }),
           el('input.program-builder__input', { value: day.name, 'aria-label': 'Training day name', oninput: (event) => { day.name = event.target.value } }),
@@ -101,6 +105,8 @@ export function createProgramBuilderScreen({ mount, storage, clock, workout, onC
             } }, ['Add exercise']),
           ]),
           workout && el('details', {}, [el('summary.button', { text: 'Create custom exercise' }), customExerciseForm({ workout, onCancel: () => render(), onSave: async (exercise) => { exercises.push(exercise); day.exercises.push({ exerciseId: exercise.id, name: exercise.name, sets: 3, repMin: 8, repMax: 12, restSec: [90, 120] }); render() } })]),
+        ]),
+          ]),
         ]),
         el('div.program-builder__actions', {}, [
           el('button.button', { type: 'button', onclick: () => save(false) }, ['Save draft']),

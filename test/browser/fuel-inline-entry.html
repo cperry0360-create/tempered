@@ -31,6 +31,11 @@
     check('the add-meal form is on the Fuel tab itself, no extra screen', Boolean(form) && !q('.nutrition-log-overlay'))
     check('Meal photo and Import copied nutrition are on Fuel', Boolean(q('.screen--fuel [data-calorie-ai="prompt"]')) && Boolean(q('.screen--fuel [data-calorie-ai="paste"]')))
     check('Day status is on Fuel', Boolean(q('.screen--fuel [data-nutrition-day-status]')))
+    check('calorie budget and food input appear before open-day reminder backlog',
+      Boolean(q('.fuel-r4__dashboard')) && Boolean(q('[data-open-nutrition-days]'))
+      && Boolean(q('.fuel-r4__dashboard').compareDocumentPosition(q('[data-open-nutrition-days]'))
+        & Node.DOCUMENT_POSITION_FOLLOWING))
+
     check('seven-day review calendar is visible before the food form',
       qa('.screen--fuel [data-diary-date]').length === 7)
     check('old logged but unclosed days are retained in the review queue',

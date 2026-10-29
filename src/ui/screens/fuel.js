@@ -138,6 +138,10 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('div.fuel-diary__legend', {}, [
           el('span', { text: '✓ Closed' }),
           el('span', { text: '• Needs review' }),
+          (() => {
+            const count = openNutritionDates(model.days, today, model.reviewStart).length
+            return count > 0 ? el('span.fuel-diary__open-count', { text: count + ' open' }) : null
+          })(),
         ]),
       ]),
       el('div.fuel-diary__week', {}, [previous, ...days, next]),
@@ -321,7 +325,6 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('span.fuel-r4__today-tag', { text: day.nutritionStatus === 'complete' ? '✓ DAY CLOSED' : '● DAY OPEN' }),
       ]),
       diaryCalendar(),
-      ...openDaysCard(),
       el('div.fuel-r4__dashboard', {}, [
         // One persistent overview pane on an unfolded Duo; ordinary phones
         // still show a single natural scrolling column.
@@ -375,6 +378,7 @@ export function createFuelScreen({ storage, daily, clock }) {
           mealPanel,
         ]),
       ]),
+      ...openDaysCard(),
     ])
     const today = clock.today()
     if (!mealPanel.firstChild || mealPanel.dataset.date !== today) {

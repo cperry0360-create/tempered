@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tempered — body measurements editor</title>
+<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/calm.css"><link rel="stylesheet" href="../../src/progress.css">
+<link rel="stylesheet" href="../../src/duo.css"><link rel="stylesheet" href="../../src/refined-ui.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks = [], check = (name, ok, detail='') => checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const q = selector => document.querySelector(selector)
+const settle = (ms=120) => new Promise(resolve=>setTimeout(resolve,ms))
+const errors = []
+addEventListener('error', event => errors.push(event.message))
+addEventListener('unhandledrejection', event => errors.push(String(event.reason)))
+try {
+  const storage = createMemoryStorage(), clock = fixedClock(new Date(2026,9,29,10))
+  const t = await bootstrapHarness({storage,clock,mount:q('#app')})
+  await t.daily.setCadence('waist_measurement','biweekly')
+  await t.app.show('today');await settle()
+  const row = q('[data-activity="waist_measurement"] .today-item__body')
+  check('Measurements is available in the habit log', Boolean(row))
+  row?.click();await settle()
+  const fields = [...document.querySelectorAll('[data-measure]')]
+  check('Body measurements check-in has five independently labeled fields', fields.length === 5,
+    fields.map(item=>item.dataset.measure).join(','))
+  const set=(key,value)=>{const field=q('[data-measure="'+key+'"]');if(field)field.value=String(value)}
+  set('waist','34.4');set('chest','40.2');set('hips','37.8');set('arm','13.3');set('thigh','22.1')
+  q('[data-action="log-measurements"]')?.click();await settle(340)
+  const day=await storage.get('dayLogs','2026-10-29')
+  check('One save stores waist and all optional circumferences',day?.waistInches===34.4
+    && day.bodyMeasurements?.chest===40.2 && day.bodyMeasurements?.hips===37.8
+    && day.bodyMeasurements?.arm===13.3 && day.bodyMeasurements?.thigh===22.1)
+  const profile=await storage.get('profile','profile')
+  check('Fortnightly habit schedule survives saving data',profile.activitySchedule?.waist_measurement?.cadence==='biweekly')
+  await t.app.show('history');await settle()
+  q('[data-view="habits"]')?.click();await settle()
+  check('Measurement review shows all recorded fields and frequency',
+    Boolean(q('.progress-measure__grid')) && /40.2 in/.test(q('.progress-waist-habit')?.textContent??'')
+    && /Every 2 weeks/.test(q('.progress-waist-habit')?.textContent??''))
+  await t.app.show('today');await settle()
+  q('[data-activity="waist_measurement"] .today-item__body')?.click();await settle()
+  check('Reopening check-in retains values rather than wiping them',
+    q('[data-measure="waist"]')?.value==='34.4' && q('[data-measure="chest"]')?.value==='40.2')
+  set('waist','34.1');set('hips','38.0')
+  q('[data-action="log-measurements"]')?.click();await settle(340)
+  const edited=await storage.get('dayLogs','2026-10-29')
+  check('Editing updates chosen fields but preserves omitted measurements',
+    edited.waistInches===34.1 && edited.bodyMeasurements.hips===38
+      && edited.bodyMeasurements.chest===40.2 && edited.bodyMeasurements.arm===13.3)
+  check('No runtime exceptions',errors.length===0,errors.join(' | '))
+} catch(error) {check('Measurement harness completed',false,String(error?.stack??error).slice(0,1000))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'body-measurements',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

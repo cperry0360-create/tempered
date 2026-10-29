@@ -63,7 +63,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const openProgramLibrary = async () => {
     await show('settings')
     const section = body.querySelector('[data-section="program-library"]')
-    section?.scrollIntoView({ behavior: 'instant', block: 'start' })
+    section?.scrollIntoView({ behavior: 'auto', block: 'start' })
   }
 
   const train = createTrainScreen({

@@ -57,7 +57,7 @@ if (params.has('fixture')) {
       q('[data-tab="train"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       if (wide) check(label + ' Train stacks cards independently', r('.train-r4__sessions') && r('.train-r4__routines') && close(r('.train-r4__sessions').top, r('.train-r4__program').top) && close(r('.train-r4__routines').top, r('.train-r4__sessions').bottom + 16))
       check(label + ' active plan is explicitly identified', Boolean(q('[data-active-program="true"]')))
-      const planRow = q('[data-programday]')
+      const planRow = q('[data-preview-day]')
       check(label + ' plan rows provide a preview without starting immediately', Boolean(planRow))
       planRow?.click()
       await settle()
@@ -98,7 +98,7 @@ if (params.has('fixture')) {
       check(width + ' ordinary phone keeps its card order',cards.every((node,i) => !i || rect(node).top > rect(cards[i-1]).top))
       check(width + ' ordinary phone keeps bottom navigation',close(rect(d.querySelector('.tabbar')).width,width) && w.getComputedStyle(d.querySelector('.tabbar')).flexDirection !== 'column')
       d.querySelector('[data-tab="train"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
-      d.querySelector('[data-programday]')?.click(); await settle()
+      d.querySelector('[data-preview-day]')?.click(); await settle()
       check(width + ' phone plan preview lists exercises without opening session',
         Boolean(d.querySelector('[data-program-preview] .train-r4__preview-exercise'))
         && !d.querySelector('.screen--session'))

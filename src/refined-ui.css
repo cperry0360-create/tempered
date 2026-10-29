@@ -1,0 +1,296 @@
+/* Tempered R15 — deliberate Duo interface, not a stretched phone screen.
+   Palette values are tokens; layout is CSS-only and has no effect on IndexedDB.
+   All viewports retain accessible target sizes and a single scrolling shell. */
+
+:root {
+  --ui-tight: 10px;
+  --ui-space: 16px;
+  --ui-radius: 19px;
+  --ui-shadow: 0 8px 24px color-mix(in srgb, var(--cut-deep) 9%, transparent);
+  --ui-elevated: color-mix(in srgb, var(--surface-1) 91%, var(--surface-2));
+}
+
+.screen__title { font-size: clamp(26px, 3vw, 34px); letter-spacing: -.04em; line-height: 1.08; }
+.screen { gap: 14px; min-width: 0; }
+.screen button { -webkit-tap-highlight-color: transparent; }
+.screen button:focus-visible, .tabbar__tab:focus-visible {
+  outline: 3px solid var(--train-ink); outline-offset: 3px;
+}
+.screen .card, .screen .progress-panel, .train-r4__card, .fuel-r4__card,
+.today-card, .nutrition-meal-form, .nutrition-history {
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+}
+.screen .card, .screen .progress-panel { border: 1px solid var(--hairline); }
+.screen h2, .nutrition-meal-form h3 { letter-spacing: -.02em; }
+.screen small, .screen .progress-footnote { line-height: 1.45; }
+.screen select, .screen input, .screen button { font-family: var(--font-ui); }
+.screen button[disabled] { cursor: default; }
+.screen .button, .screen .today-button { min-height: 44px; }
+
+/* Modern rail: a single obvious selection, not multiple competing pills. */
+html[data-layout="duo"] .tabbar {
+  border-left: 1px solid var(--hairline);
+  background: var(--surface-1);
+}
+html[data-layout="duo"] .tabbar__tabs { gap: 10px; }
+html[data-layout="duo"] .tabbar__tab {
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  border-radius: 16px;
+  color: var(--text-2);
+  font-size: 10px; font-weight: 700;
+  transition: background-color .14s ease, color .14s ease;
+}
+html[data-layout="duo"] .tabbar__tab .icon { width: 24px; height: 24px; }
+html[data-layout="duo"] .tabbar__tab[data-active="true"] {
+  background: color-mix(in srgb, var(--train) 12%, var(--surface-1));
+  color: var(--text-1);
+  box-shadow: inset 3px 0 0 var(--train);
+}
+html[data-layout="duo"] .tabbar__tab[data-tab="fuel"][data-active="true"] {
+  background: color-mix(in srgb, var(--fuel) 13%, var(--surface-1));
+  box-shadow: inset 3px 0 0 var(--fuel);
+}
+html[data-layout="duo"] .tabbar__tab[data-tab="history"][data-active="true"] {
+  background: color-mix(in srgb, var(--recovery) 13%, var(--surface-1));
+  box-shadow: inset 3px 0 0 var(--recovery);
+}
+html[data-layout="duo"] .app__body > .screen {
+  width: min(100%, 1130px);
+  padding-bottom: max(22px, var(--duo-inset-bottom));
+}
+html[data-layout="duo"] .today-dashboard,
+html[data-layout="duo"] .train-r4__dashboard,
+html[data-layout="duo"] .fuel-r4__dashboard,
+html[data-layout="duo"] .progress-overview { column-gap: 18px; row-gap: 14px; }
+html[data-layout="duo"] .screen .screen__title { font-size: clamp(26px, 2.6vw, 34px); }
+html[data-layout="duo"] .screen--settings, html[data-layout="duo"] .screen--progress {
+  max-width: 1130px;
+}
+html[data-layout="duo"] .screen--settings > .card {
+  padding: clamp(14px, 2vw, 23px);
+}
+html[data-layout="duo"] .train-calculator-bar {
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Train — active program lives on a dark identity panel. Right-hand rows
+   preview a prescription; Start is a separate, strong action. */
+.train-r4__program[data-active-program="true"] {
+  padding: clamp(17px, 2.2vw, 26px);
+  border: 1px solid var(--cut-outline);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 92% 4%, var(--cut-mid), transparent 68%), var(--cut-deep);
+  color: var(--cut-ink);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--cut-deep) 19%, transparent);
+}
+.train-r4__program[data-active-program="true"] .train-r4__eyebrow { color: var(--cut-blue); }
+.train-r4__program[data-active-program="true"] h2 {
+  margin: 3px 0;
+  font-size: clamp(22px, 2.5vw, 32px);
+  line-height: 1.14;
+  letter-spacing: -.035em;
+  color: var(--cut-ink);
+}
+.train-r4__program[data-active-program="true"] .train-r4__program-subtitle,
+.train-r4__program[data-active-program="true"] .train-r4__program-tip,
+.train-r4__program[data-active-program="true"] .train-r4__active-since {
+  color: var(--cut-secondary);
+}
+.train-r4__active-since { display:block; font-size:11px; font-weight:650; margin-top:-4px; }
+.train-r4__program[data-active-program="true"] .train-r4__row {
+  min-height:44px; background:transparent; color:var(--cut-ink);
+  border-top: 1px solid var(--cut-outline);
+}
+.train-r4__program[data-active-program="true"] .train-r4__row .train-r4__chevron { color:var(--cut-blue); }
+.train-r4__program[data-active-program="true"] .train-r4__segments { margin-block: 10px 4px; }
+.train-r4__program[data-active-program="true"] .train-r4__segments span[data-filled="true"] { background: var(--cut-blue); }
+.train-r4__list-card, .train-r4__plan-preview, .train-r4__rhythm-card, .train-r4__next {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+}
+.train-r4__sessions h2 { margin: 2px 0 12px; font-size: 20px; }
+.train-r4__session-entry {
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(66px, 76px);
+  padding: 5px 0;
+  border-top: 1px solid var(--hairline);
+}
+.train-r4__session-entry:first-child { border-top: 0; }
+.train-r4__session-row { min-height: 72px; border:0; padding: 8px 7px 8px 0; }
+.train-r4__session-row strong { font-size: 14px; color: var(--text-1); }
+.train-r4__session-row small { font-size: 11px; color: var(--text-2); }
+.train-r4__session-movements { display:block; font-size: 12px; color: var(--text-2); line-height:1.35; margin-top:4px; }
+.train-r4__last-trained { display:block; color: var(--train-ink); font-size:11px; margin-top:4px; }
+.train-r4__quick-start, .train-r4__start {
+  min-height: 44px;
+  border: 0; border-radius: 12px;
+  background: var(--train); color: var(--on-accent);
+  font-weight: 800; cursor:pointer;
+}
+.train-r4__quick-start { padding: 0 9px; }
+.train-r4__plan-preview {
+  border-color: color-mix(in srgb, var(--train) 34%, var(--hairline));
+}
+.train-r4__preview-heading { border-bottom: 1px solid var(--hairline); padding-bottom:12px; }
+.train-r4__preview-heading h2 { font-size: clamp(19px, 2.1vw, 26px); letter-spacing:-.025em; }
+.train-r4__preview-exercise { padding-block: 11px; }
+.train-r4__preview-index {
+  display:grid; place-items:center; border-radius:9px;
+  width:29px; height:29px;
+  background: color-mix(in srgb,var(--train) 14%,var(--surface-1));
+}
+.train-r4__routines { opacity: .95; }
+.train-r4__routines-note { font-size: 12px; }
+
+/* Fuel — dense editorial budget above a skimmable diary, inspired by the
+   reference's balance of calendar, macronutrients, and a full-height meal log. */
+.fuel-r4__topline { min-height: 42px; align-items:center; }
+.fuel-r4__today-tag { background: color-mix(in srgb, var(--fuel) 12%, var(--surface-1)); }
+.fuel-diary {
+  border: 1px solid var(--hairline);
+  box-shadow: var(--ui-shadow);
+  border-radius: 21px;
+  padding: clamp(12px, 1.8vw, 18px);
+}
+.fuel-diary__heading h2 { font-size: 17px; }
+.fuel-diary__week { gap: clamp(3px, .8vw, 9px); }
+.fuel-diary__day { min-height: 64px; border-radius: 14px; background: var(--surface-2); }
+.fuel-diary__day[data-state="closed"] {
+  border-color: var(--fuel);
+  background: color-mix(in srgb, var(--fuel) 11%, var(--surface-1));
+}
+.fuel-diary__day[data-state="open"],
+.fuel-diary__day[data-state="unlogged"]:not([disabled]) {
+  border-color: color-mix(in srgb, var(--train) 35%, transparent);
+}
+.fuel-diary__day[data-selected="true"] {
+  box-shadow: inset 0 0 0 2px var(--fuel-ink);
+}
+.fuel-diary__day strong { font-size: 16px; }
+.fuel-diary__marker { font-size: 14px; }
+.fuel-r4__budget-heading > div:first-child strong {
+  font-size: clamp(27px, 3.5vw, 44px);
+  font-weight:800; letter-spacing:-.055em;
+}
+.fuel-r4__budget-track { height: 10px; }
+.fuel-r4__finish { min-height: 49px; font-size: 14px; letter-spacing:-.01em; }
+.fuel-r4__energy, .fuel-r4__foods, .fuel-r4__water,
+.nutrition-panel__add, .nutrition-panel__meals {
+  border: 1px solid var(--hairline);
+  border-radius: 21px;
+}
+.fuel-r4__details { min-width:0; }
+.fuel-food__name { font-weight: 650; }
+.nutrition-panel__meals { min-width:0; }
+.nutrition-meal-form, .nutrition-history { border: 0; }
+.fuel-r4__energy .fuel-r4__protein { margin-top: 2px; }
+.fuel-r4__macros strong { font-size: clamp(15px, 1.7vw, 20px); }
+.fuel-diary__backlog, .fuel-diary__reminder { box-shadow: var(--ui-shadow); }
+html[data-layout="duo"] .fuel-r4__overview { gap: 14px; scrollbar-width: thin; }
+html[data-layout="duo"] .fuel-r4__details { gap: 14px; }
+html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.92fr) minmax(0,1.08fr); }
+
+/* Progress — one coherent control panel. Real logged data only. */
+.progress-cut {
+  border-radius: 23px;
+  border: 1px solid var(--cut-outline);
+  overflow:hidden;
+  box-shadow: 0 16px 36px color-mix(in srgb,var(--cut-deep) 22%,transparent);
+}
+.progress-cut__hero { padding: clamp(19px, 2.5vw, 29px); }
+.progress-cut__headline {
+  font-size: clamp(24px, 3.1vw, 38px);
+  max-width: 17ch;
+  letter-spacing: -.045em;
+}
+.progress-cut__countdown {
+  min-width: clamp(105px, 15vw, 170px);
+  background: color-mix(in srgb,var(--cut-panel) 92%,transparent);
+}
+.progress-cut__countdown strong { font-size: clamp(52px, 8vw, 90px); }
+.progress-cut__body { padding: clamp(13px, 2vw, 22px); gap: 12px; }
+.progress-cut__stats { gap: 10px; }
+.progress-cut__metric { padding: clamp(12px, 1.5vw, 18px); border-radius: 16px; }
+.progress-cut__metric-title { color: var(--cut-secondary); font-size: 10px; }
+.progress-cut__metric-value { font-size: clamp(19px, 2.3vw, 29px); letter-spacing: -.035em; }
+.progress-cut__chart { min-width:0; padding: clamp(12px, 1.6vw, 18px); }
+.progress-cut__sparkline { height: 115px; }
+.progress-cut__extra {
+  min-width:0; border: 1px solid var(--cut-outline);
+  border-radius:15px; background: var(--cut-panel);
+}
+.progress-cut__extra > summary {
+  min-height: 44px; cursor:pointer; padding: 13px 16px;
+  color: var(--cut-secondary); font-size: 12px; font-weight:750;
+}
+.progress-cut__measure-grid {
+  display:grid; grid-template-columns: repeat(5, minmax(0,1fr));
+  gap:9px; padding: 0 12px 12px;
+}
+.progress-cut__measure-grid .progress-measure__tile {
+  min-width:0; background: var(--cut-deep); border:1px solid var(--cut-outline);
+}
+.progress-cut__measure-grid .progress-measure__tile strong { color: var(--cut-ink); }
+.progress-cut__measure-grid .progress-measure__tile span,
+.progress-cut__measure-grid .progress-measure__tile small { color: var(--cut-secondary); }
+.progress-measure__head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.progress-measure__eyebrow { font-size:10px; font-weight:800; letter-spacing:.11em; color:var(--recovery-ink); }
+.progress-measure__cadence {
+  border-radius:99px; padding:8px 11px; background:var(--surface-2);
+  font-size:11px; color:var(--text-1); font-weight:800; white-space:nowrap;
+}
+.progress-measure__grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:9px;
+}
+.progress-measure__tile {
+  min-width:0; display:grid; gap:5px; padding:13px;
+  border: 1px solid var(--hairline); border-radius:13px;
+  background:var(--surface-2);
+}
+.progress-measure__tile span { font-size:11px; color:var(--text-2); }
+.progress-measure__tile strong { font-size:clamp(18px,2vw,24px); color:var(--text-1); font-variant-numeric:tabular-nums; }
+.progress-measure__tile small { font-size:10px; color:var(--text-2); line-height:1.35; }
+.progress-measure__history { border-top:1px solid var(--hairline); padding-top:10px; }
+.progress-measure__history summary { font-size:12px; font-weight:750; min-height:44px; display:flex; align-items:center; cursor:pointer; }
+.progress-views.segmented { border:1px solid var(--hairline); border-radius:15px; }
+.progress-views .segmented__option[data-active="true"] { box-shadow: inset 0 -3px 0 var(--recovery); }
+.progress-score, .progress-weekly { min-width:0; }
+
+/* Today's full body measurement form, optional and non-scored. */
+.today-measure { border:1px solid var(--hairline); border-radius:16px; padding:13px; gap:11px; }
+.today-measure__heading { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.today-measure__heading strong { font-size:14px; }
+.today-measure__heading small { font-size:11px; color:var(--text-2); }
+.today-measure__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.today-measure__field { display:grid; gap:5px; color:var(--text-2); font-size:12px; min-width:0; }
+.today-measure__field input { width:100%; min-width:0; min-height:46px; font-size:16px; }
+.today-measure__field:first-child { grid-column:1/-1; }
+.today-measure__save { width:100%; min-height:48px; }
+.today-dashboard .today-card { border:1px solid var(--hairline); }
+.today-calendar__day[data-selected="true"] { box-shadow: inset 0 -3px 0 var(--train); }
+
+@media (min-width:740px) {
+  html[data-layout="duo"] .train-r4__dashboard { grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr); }
+  html[data-layout="duo"] .progress-overview { grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr); }
+  html[data-layout="duo"] .progress-cut__hero { grid-template-columns:minmax(0,1fr) minmax(110px,22%); }
+  html[data-layout="duo"] .today-dashboard { grid-template-columns:minmax(0,.98fr) minmax(0,1.02fr); }
+  html[data-layout="duo"] .train-r4__column--primary,
+  html[data-layout="duo"] .train-r4__column--secondary { gap:14px; }
+}
+@media (max-width:730px) {
+  .progress-cut__measure-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .progress-cut__stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .progress-cut__countdown { min-width:90px; }
+}
+@media (max-width:380px) {
+  .fuel-diary__legend span:last-child { display:none; }
+  .fuel-r4__budget-heading > div:first-child strong { font-size:25px; }
+  .progress-measure__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .progress-cut__countdown strong { font-size:47px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] .tabbar__tab { transition:none; }
+}

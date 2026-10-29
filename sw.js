@@ -22,6 +22,7 @@ const PRECACHE = [
   './src/duo.css',
   './src/refined-ui.css',
   './src/food-v2.css',
+  './src/food-v3.css',
   './src/nutrition-today.css',
   './src/uplift.css',
   './src/progress.css',

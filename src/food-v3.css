@@ -247,3 +247,13 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
   }
   html[data-layout="duo"] .screen--fuel-r4 .food-v2__header-add { display:none; }
 }
+
+/* No empty phantom column when the seasonal Cancún card is not shown. */
+.screen--fuel-r4 .food-v2__small-row:not(:has(.food-v3__beach)) {
+  grid-template-columns:minmax(0,1fr);
+}
+@media (min-width:740px) {
+  html[data-layout="duo"] .screen--fuel-r4 .food-v2__small-row:not(:has(.food-v3__beach)) {
+    grid-template-columns:minmax(0,1fr);
+  }
+}

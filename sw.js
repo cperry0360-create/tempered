@@ -20,6 +20,7 @@ const PRECACHE = [
   './src/ux-fixes.css',
   './src/calm.css',
   './src/duo.css',
+  './src/refined-ui.css',
   './src/nutrition-today.css',
   './src/uplift.css',
   './src/progress.css',

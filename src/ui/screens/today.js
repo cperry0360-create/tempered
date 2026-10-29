@@ -6,6 +6,7 @@
  * habit log. Logging still flows through the daily service.
  */
 
+import { dayBefore, nutritionDayStatus, nutritionHasEntry } from '../../domain/nutrition-review.js'
 import { el, replace } from '../dom.js'
 import { icon, iconForActivity } from '../icons.js'
 import { sortActivities } from '../../domain/activities.js'
@@ -1074,6 +1075,32 @@ export function createTodayScreen({
     ])
   }
 
+  function yesterdayNutritionReminder() {
+    if (!isRealToday() || !profile.nutritionReviewStartOn
+      || profile.nutritionReminderDismissedOn === clock.today()) return null
+    const yesterday = dayBefore(clock.today())
+    const lastDay = dayLogs.find((item) => item.date === yesterday)
+    if (yesterday < profile.nutritionReviewStartOn && !nutritionHasEntry(lastDay)) return null
+    const state = nutritionDayStatus(lastDay, yesterday, profile.nutritionReviewStartOn, clock.today())
+    if (state === 'closed' || state === 'outside') return null
+    return el('section.today-card.today-nutrition-reminder', { dataset: { nutritionReminderToday: yesterday } }, [
+      el('div.today-nutrition-reminder__copy', {}, [
+        el('strong', { text: 'Yesterday’s food log is still open' }),
+        el('span', { text: 'Review anything you have not logged, then close the day.' }),
+      ]),
+      el('div.today-nutrition-reminder__actions', {}, [
+        el('button', { type: 'button', dataset: { reviewNutritionDate: yesterday },
+          onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-nutrition',
+            { detail: { date: yesterday } })) }, ['Review yesterday']),
+        el('button', { type: 'button', onclick: async () => {
+          profile = { ...profile, nutritionReminderDismissedOn: clock.today() }
+          await storage.put('profile', profile)
+          render()
+        } }, ['Later']),
+      ]),
+    ])
+  }
+
   function dailyLogCard(allActivities) {
     const dailyRows = allActivities
       .filter((activity) => activity.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(activity.id))
@@ -1128,6 +1155,7 @@ export function createTodayScreen({
         ]),
         el('p.today-heading__date', { text: dateLabel(selectedDate) }),
       ]),
+      yesterdayNutritionReminder(),
       el('div.today-dashboard', {}, [
         el('div.today-dashboard__overview', {}, [
           sessionCard(),

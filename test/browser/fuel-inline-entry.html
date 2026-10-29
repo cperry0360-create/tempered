@@ -31,6 +31,11 @@
     check('the add-meal form is on the Fuel tab itself, no extra screen', Boolean(form) && !q('.nutrition-log-overlay'))
     check('Meal photo and Import copied nutrition are on Fuel', Boolean(q('.screen--fuel [data-calorie-ai="prompt"]')) && Boolean(q('.screen--fuel [data-calorie-ai="paste"]')))
     check('Day status is on Fuel', Boolean(q('.screen--fuel [data-nutrition-day-status]')))
+    check('seven-day review calendar is visible before the food form',
+      qa('.screen--fuel [data-diary-date]').length === 7)
+    check('old logged but unclosed days are retained in the review queue',
+      Number(q('[data-open-nutrition-days]')?.dataset.openNutritionDays) === 2)
+
     check('only one filled primary button on Fuel', qa('.screen--fuel .fuel-r4__primary').length === 0)
 
     type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
@@ -65,6 +70,30 @@
     let updates = 0; const count = () => { updates += 1 }
     addEventListener('tempered:fuel-updated', count); await settle(1500); removeEventListener('tempered:fuel-updated', count)
     check('Fuel and the meal panel do not refresh each other in a loop', updates <= 1, `${updates} updates while idle`)
+    q('[data-diary-finish-today]')?.click(); await settle(300)
+    day = await t.daily.dayLog('2026-10-01')
+    check('a nutrition day closes only when user explicitly finishes it',
+      day.nutritionStatus === 'complete' && Boolean(day.nutritionClosedAt))
+    await t.daily.addNutrition('2026-10-01', { description: 'Forgotten snack', calories: 140, protein: 7 })
+    day = await t.daily.dayLog('2026-10-01')
+    check('correcting a previously closed diary reopens it without deleting meals',
+      day.nutritionStatus === 'partial' && day.calories === 1340)
+    clock.advanceDays(1)
+    await t.app.show('today'); await settle(250)
+    check('the next morning shows a review prompt for yesterday',
+      Boolean(q('[data-nutrition-reminder-today="2026-10-01"]')))
+    q('[data-review-nutrition-date="2026-10-01"]')?.click(); await settle(300)
+    check('morning review opens yesterday rather than today',
+      q('.nutrition-log-overlay')?.dataset.date === '2026-10-01')
+    q('.nutrition-log-overlay [data-nutrition-day-state="complete"]')?.click(); await settle(350)
+    day = await t.daily.dayLog('2026-10-01')
+    check('closing yesterday from the review prompt persists',
+      day.nutritionStatus === 'complete')
+    q('.nutrition-log-overlay .nutrition-log-header__back')?.click(); await settle(160)
+    await t.app.show('today'); await settle(180)
+    check('closed yesterday no longer produces a morning reminder',
+      !q('[data-nutrition-reminder-today]'))
+
     check('no runtime errors', errors.length === 0, errors.join(' | '))
   } catch (error) { check('fuel inline harness completed', false, String(error?.stack ?? error).slice(0, 900)) }
   await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' },

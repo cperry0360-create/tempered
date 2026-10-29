@@ -319,3 +319,95 @@ button.fuel-food__copy {
   min-height: 40px; border: 0; border-radius: var(--r-full); background: var(--surface-1); color: var(--fuel-ink);
   font: 600 15px/20px var(--font-ui); font-variant-numeric: tabular-nums;
 }
+
+/* R14: make diary status and the calorie budget the organizing principles.
+   Purely presentational; all calorie and nutrient values come from the log. */
+.fuel-r4__topline { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.fuel-r4__topline .screen__title { margin:0; }
+.fuel-r4__today-tag { border-radius:999px; background:var(--surface-2); padding:8px 11px;
+  font-size:11px; font-weight:800; letter-spacing:.06em; white-space:nowrap; color:var(--fuel-ink); }
+.fuel-diary { display:grid; gap:12px; padding:clamp(12px,2vw,18px); border:1px solid var(--hairline);
+  border-radius:20px; background:var(--surface-1); min-width:0; }
+.fuel-diary__heading { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; }
+.fuel-diary__heading h2 { margin:2px 0 0; font-size:15px; font-weight:740; }
+.fuel-diary__eyebrow { font-size:10px; font-weight:800; letter-spacing:.1em; color:var(--fuel-ink); }
+.fuel-diary__legend { display:flex; gap:10px; font-size:10px; white-space:nowrap; color:var(--text-2); }
+.fuel-diary__week { display:grid; grid-template-columns:36px repeat(7,minmax(0,1fr)) 36px;
+  align-items:stretch; gap:5px; min-width:0; }
+.fuel-diary__nav { border:0; min-width:0; border-radius:12px; color:var(--text-1); background:var(--surface-2);
+  font-size:23px; font-weight:500; cursor:pointer; }
+.fuel-diary__nav:disabled { opacity:.3; }
+.fuel-diary__day { min-width:0; min-height:68px; padding:6px 2px; border-radius:12px; border:1px solid transparent;
+  background:var(--surface-2); color:var(--text-1);
+  display:grid; justify-items:center; align-content:center; gap:2px; cursor:pointer; }
+.fuel-diary__day:disabled { opacity:.35; cursor:default; }
+.fuel-diary__day .fuel-diary__weekday { font-size:10px; color:var(--text-2); }
+.fuel-diary__day strong { font-size:15px; font-variant-numeric:tabular-nums; }
+.fuel-diary__marker { display:grid; place-items:center; height:14px; font-size:13px; font-weight:900; }
+.fuel-diary__day[data-state="closed"] { border-color:color-mix(in srgb,var(--fuel) 45%,transparent); }
+.fuel-diary__day[data-state="closed"] .fuel-diary__marker { color:var(--fuel-ink); }
+.fuel-diary__day[data-state="open"] .fuel-diary__marker,
+.fuel-diary__day[data-state="unlogged"] .fuel-diary__marker { color:var(--train-ink); }
+.fuel-diary__day[data-selected="true"] { background:var(--surface-3); border-color:var(--fuel-ink); }
+.fuel-diary__reminder { padding:15px; border-radius:16px; background:var(--surface-1);
+  border-inline-start:4px solid var(--train); display:flex; flex-wrap:wrap; align-items:center;
+  justify-content:space-between; gap:12px; }
+.fuel-diary__reminder strong { font-size:14px; }
+.fuel-diary__reminder p { margin:4px 0 0; color:var(--text-2); font-size:12px; line-height:1.45; }
+.fuel-diary__reminder-actions { display:flex; gap:8px; }
+.fuel-diary__reminder-actions button { min-height:44px; padding:0 13px; background:var(--surface-2);
+  color:var(--text-1); border:0; border-radius:12px; font:650 12px var(--font-ui); }
+.fuel-diary__reminder-actions button:first-child { background:var(--train); color:var(--on-accent); }
+.fuel-diary__backlog { min-width:0; border:1px solid var(--hairline); border-radius:14px; padding:12px;
+  background:var(--surface-1); }
+.fuel-diary__backlog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.fuel-diary__backlog-head span { color:var(--text-2); font-size:13px; font-weight:650; }
+.fuel-diary__backlog-head button { border:0; color:var(--fuel-ink); background:transparent;
+  min-height:44px; font:700 12px var(--font-ui); }
+.fuel-diary__backlog-days { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:7px; max-height:320px;
+  overflow-y:auto; border-top:1px solid var(--hairline); padding-top:8px; }
+.fuel-diary__backlog-days button { text-align:left; border:0; border-radius:10px; background:var(--surface-2);
+  color:var(--text-1); padding:10px 12px; min-height:44px; font:600 12px var(--font-ui); }
+.fuel-r4__energy { padding:clamp(14px,2vw,24px); background:var(--surface-1); border-radius:20px; }
+.fuel-r4__budget-heading { min-width:0; display:flex; justify-content:space-between; gap:10px; align-items:center; }
+.fuel-r4__budget-heading > div:first-child { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.fuel-r4__budget-heading > div:first-child span { color:var(--fuel-ink); font-size:11px; font-weight:850; letter-spacing:.09em; }
+.fuel-r4__budget-heading > div:first-child strong { color:var(--text-1); font-size:clamp(28px,4vw,43px);
+  letter-spacing:-.035em; line-height:1.04; font-weight:750; white-space:nowrap; }
+.fuel-r4__budget-heading > div:first-child small { color:var(--text-2); font-size:13px; }
+.fuel-r4__budget-heading .fuel-r4__ring { width:108px; height:108px; flex:0 0 108px; }
+.fuel-r4__budget-heading .fuel-r4__ring-copy strong { font-size:24px; }
+.fuel-r4__budget-heading .fuel-r4__ring-copy span { font-size:11px; }
+.fuel-r4__budget-track { width:100%; height:9px; overflow:hidden; border-radius:99px; background:var(--surface-3); }
+.fuel-r4__budget-track span { display:block; height:100%; border-radius:inherit;
+  background:linear-gradient(90deg,var(--fuel),var(--fuel-ink)); }
+.fuel-r4__finish { min-height:48px; border-radius:13px; border:1px solid var(--fuel-ink); width:100%;
+  background:var(--fuel); color:var(--on-accent); font:750 14px var(--font-ui); cursor:pointer; }
+.fuel-r4__finish[data-closed="true"] { color:var(--fuel-ink); background:var(--surface-2); }
+.fuel-r4__finish-note { color:var(--text-2); font-size:11px; line-height:1.45; margin:0; }
+.today-nutrition-reminder { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:12px; border-inline-start:4px solid var(--train); }
+.today-nutrition-reminder__copy { display:grid; gap:5px; }
+.today-nutrition-reminder__copy strong { font-size:14px; }
+.today-nutrition-reminder__copy span { font-size:12px; color:var(--text-2); }
+.today-nutrition-reminder__actions { display:flex; gap:8px; }
+.today-nutrition-reminder__actions button { border:0; background:var(--surface-2); color:var(--text-1);
+  border-radius:12px; min-height:44px; padding-inline:13px; font:700 12px var(--font-ui); }
+.today-nutrition-reminder__actions button:first-child { background:var(--train); color:var(--on-accent); }
+@media (min-width:740px) {
+  html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns:minmax(0,.97fr) minmax(0,1.1fr); }
+  html[data-layout="duo"] .fuel-r4__budget-heading > div:first-child strong { font-size:clamp(26px,3vw,39px); }
+  html[data-layout="duo"] .fuel-r4__budget-heading .fuel-r4__ring { width:94px; height:94px; flex-basis:94px; }
+  html[data-layout="duo"] .fuel-r4__budget-heading .fuel-r4__ring-copy strong { font-size:20px; }
+}
+@media (max-width:440px) {
+  .fuel-diary { padding:10px; gap:8px; }
+  .fuel-diary__week { grid-template-columns:25px repeat(7,minmax(0,1fr)) 25px; gap:3px; }
+  .fuel-diary__nav { font-size:18px; }
+  .fuel-diary__day { min-height:60px; padding-inline:0; border-radius:9px; }
+  .fuel-diary__day strong { font-size:13px; }
+  .fuel-diary__legend { gap:5px; font-size:9px; }
+  .fuel-r4__budget-heading .fuel-r4__ring { width:95px; height:95px; flex-basis:95px; }
+  .fuel-r4__budget-heading .fuel-r4__ring-copy strong { font-size:20px; }
+  .fuel-r4__budget-heading > div:first-child strong { font-size:28px; }
+}

@@ -271,7 +271,22 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   async function logAt(date, activityId, value = null, options = {}) {
     const day = await dayLog(date)
     if (date > clock.today() || !ACTIVITY_FIELDS[activityId]) return emptyResult(day)
-    return settleDay(applyActivity(day, activityId, value, options))
+    const next = applyActivity(day, activityId, value, options)
+    const isFood = ['nutrition_logged', 'calories_logged', 'protein_target'].includes(activityId)
+    return settleDay(isFood && next !== day ? { ...next, nutritionStatus: 'partial' } : next)
+  }
+
+  /** Closing is an explicit diary review, not proof of staying below a target. */
+  async function setNutritionStatus(date, status) {
+    if (date > clock.today() || !['complete', 'partial'].includes(status)) return dayLog(date)
+    const day = await dayLog(date)
+    const next = { ...day, nutritionStatus: status,
+      ...(status === 'complete'
+        ? { nutritionClosedAt: clock.nowIso() }
+        : { nutritionClosedAt: null }),
+    }
+    await storage.put('dayLogs', next)
+    return next
   }
 
   /** One activity, logged for today. */
@@ -302,7 +317,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       loggedAt,
       source: options.source,
     })
-    return settleDay(next)
+    return settleDay({ ...next, nutritionStatus: 'partial', nutritionClosedAt: null })
   }
 
   /** Remove one itemized meal. Previously paid XP is intentionally never revoked. */
@@ -312,7 +327,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const index = ledger.entries.findIndex((entry) => entry.id === entryId)
     if (index < 0) return { ...emptyResult(day), removed: null, index: -1 }
     const removed = ledger.entries[index]
-    const result = await settleDay(removeNutritionEntry(day, entryId))
+    const result = await settleDay({ ...removeNutritionEntry(day, entryId), nutritionStatus: 'partial', nutritionClosedAt: null })
     return { ...result, removed, index }
   }
 
@@ -320,7 +335,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   async function restoreNutrition(date, entry, index) {
     const day = await dayLog(date)
     if (date > clock.today()) return emptyResult(day)
-    return settleDay(restoreNutritionEntry(day, entry, index))
+    return settleDay({ ...restoreNutritionEntry(day, entry, index), nutritionStatus: 'partial', nutritionClosedAt: null })
   }
 
   /** Decorate one catalogue row against one day. */
@@ -431,6 +446,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
     setProteinTargetGrams,
     stepTarget, setStepTarget,
-    quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition,
+    quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition, setNutritionStatus,
   }
 }

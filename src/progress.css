@@ -779,3 +779,91 @@
 }
 .score-explain { z-index: 2000; }
 html.sheet-open .app__body { overflow: hidden; }
+
+/* Beach Cut R13 — editorial, data-led dashboard. Values come only from logs. */
+.progress-cut {
+  min-width: 0;
+  display: grid;
+  overflow: hidden;
+  border-radius: 23px;
+  background: var(--cut-deep);
+  color: var(--cut-ink);
+  border: 1px solid var(--cut-outline);
+  box-shadow: 0 12px 34px color-mix(in srgb, var(--cut-deep) 24%, transparent);
+}
+.progress-cut__hero {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(14px, 2.5vw, 26px);
+  padding: clamp(18px, 3vw, 28px);
+  background: radial-gradient(ellipse at 80% 5%, var(--cut-mid), transparent 66%), var(--cut-deep);
+}
+.progress-cut__intro { min-width: 0; }
+.progress-cut__eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  color: var(--cut-blue);
+}
+.progress-cut__headline {
+  margin: 10px 0 6px;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.08;
+  font-weight: 750;
+  letter-spacing: -.035em;
+}
+.progress-cut__subhead { font-size: 13px; line-height: 1.4; color: var(--cut-secondary); margin: 0 0 18px; }
+.progress-cut__phase { display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-bottom: 6px; }
+.progress-cut__phase strong { font-variant-numeric: tabular-nums; }
+.progress-cut__track { height: 7px; overflow: hidden; border-radius: 99px; background: var(--cut-outline); }
+.progress-cut__track span { height: 100%; display: block; border-radius: inherit; background: var(--cut-blue); }
+.progress-cut__footnote { font-size: 11px; line-height: 1.5; color: var(--cut-secondary); margin: 14px 0 0; }
+.progress-cut__countdown {
+  min-width: 106px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--cut-panel) 80%, transparent);
+  border: 1px solid var(--cut-outline);
+}
+.progress-cut__countdown span { font-size: 10px; letter-spacing: .11em; font-weight: 750; color: var(--cut-secondary); text-align: center; }
+.progress-cut__countdown strong { font-size: clamp(48px, 8vw, 85px); font-weight: 760; line-height: 1.05; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.progress-cut__countdown small { color: var(--cut-blue); font-size: 12px; }
+.progress-cut__body { padding: clamp(12px, 2vw, 22px); display: grid; gap: 14px; min-width: 0; }
+.progress-cut__stats { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.progress-cut__metric {
+  min-width: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: 7px;
+  padding: 13px; border-radius: 14px;
+  background: var(--cut-panel); border: 1px solid var(--cut-outline);
+}
+.progress-cut__metric[data-featured="true"] { border-color: var(--cut-blue); }
+.progress-cut__metric-title { color: var(--cut-secondary); font-size: 10px; font-weight: 750; letter-spacing: .05em; }
+.progress-cut__metric-value { color: var(--cut-ink); font-size: clamp(18px, 2.2vw, 28px); line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.progress-cut__metric-subtitle { font-size: 11px; line-height: 1.4; color: var(--cut-secondary); }
+.progress-cut__chart {
+  min-width: 0; padding: 14px; border-radius: 15px;
+  border: 1px solid var(--cut-outline); background: var(--cut-panel);
+}
+.progress-cut__chart-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; font-size: 13px; }
+.progress-cut__chart-heading small { color: var(--cut-secondary); font-size: 11px; }
+.progress-cut__sparkline { width: 100%; height: 90px; display: block; color: var(--cut-blue); margin-block: 10px 2px; }
+.progress-cut__chart-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--cut-secondary); }
+.progress-cut__chart-empty { font-size: 12px; color: var(--cut-secondary); }
+.progress-waist-habit__row { display: flex; justify-content: space-between; align-items: center; padding-block: 9px; border-bottom: 1px solid var(--hairline); }
+@media (max-width: 720px) {
+  .progress-cut__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .progress-cut__metric-value { font-size: clamp(18px, 4.6vw, 24px); }
+}
+@media (max-width: 380px) {
+  .progress-cut__hero { grid-template-columns: minmax(0, 1fr) 90px; gap: 8px; padding: 14px; }
+  .progress-cut__countdown { min-width: 0; padding: 8px 3px; }
+  .progress-cut__headline { font-size: 21px; }
+  .progress-cut__stats { gap: 7px; }
+  .progress-cut__metric { padding: 10px; }
+}

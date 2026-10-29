@@ -49,6 +49,37 @@
       check('sparse history is explained in sentence case', /Showing 1 of 30 days since tracking began\./.test(screen?.textContent ?? ''))
       check('Recovery stays hidden without samples', !qa('.progress-panel__title', screen).some((node) => node.textContent === 'Recovery'))
       check('no horizontal scrolling is introduced', document.documentElement.scrollWidth <= document.documentElement.clientWidth, `${document.documentElement.scrollWidth}/${document.documentElement.clientWidth}`)
+      // A separate activated cut fixture checks the real countdown and
+      // measurement graph rather than merely matching source-code strings.
+      for (const row of await storage.getAll('programState')) {
+        await storage.put('programState', { ...row, active: false })
+      }
+      await storage.put('programState', {
+        programId: 'beach-cut-2026', startedOn: '2026-09-07', active: true,
+        revisionId: 'beach-cut-2026:r1',
+      })
+      await storage.put('dayLogs', {
+        date: '2026-09-05', bodyMetricsLogged: true,
+        bodyMetrics: { weight: 168.0 }, waistInches: 34.0,
+      })
+      await storage.put('dayLogs', {
+        date: '2026-09-07', bodyMetricsLogged: true,
+        bodyMetrics: { weight: 167.6 }, waistInches: 33.7,
+        calories: 2250, caloriesLogged: true, proteinGrams: 174,
+      })
+      await app.app.show('history')
+      await settle()
+      const cut = q('[data-dashboard="beach-cut"]')
+      check('activated Beach Cut displays the designed countdown', Boolean(cut)
+        && /Thanksgiving/i.test(cut.textContent) && /days remaining/.test(cut.textContent))
+      check('cut dashboard uses real weigh-ins and waist values',
+        /167\.8 lb/.test(cut?.textContent ?? '') && /33\.7 in/.test(cut?.textContent ?? '')
+        && Boolean(q('.progress-cut__sparkline', cut)))
+      q('[data-view="habits"]')?.click()
+      await settle()
+      check('weekly waist measurements appear under Habits',
+        /Waist measurements/.test(q('.progress-waist-habit')?.textContent ?? ''))
+
     } catch (error) {
       check('Progress overview harness threw', false, String(error?.stack ?? error).slice(0, 900))
     }

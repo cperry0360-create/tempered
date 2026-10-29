@@ -358,3 +358,63 @@ html[data-layout="duo"] .app__body > .screen--session[data-half-fold="true"] {
   .half-fold__toolbar .session-layout-toggle { padding-inline: 9px; font-size: 12px; }
   .half-fold__cue { font-size: 12px; margin-block: 6px; }
 }
+
+/* Duo R13 — compact, legible two-pane training informed by landscape dashboards.
+   Make the active plan unmistakable; keep right-side navigation and readable
+   exercise previews independent of program editor/standalone routines. */
+.train-r4__eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .1em; color: var(--train-ink); }
+.train-r4__program-subtitle { font-size: 13px; color: var(--text-2); }
+.train-r4__program-tip { font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.train-r4__section-title { font-size: 15px; margin: 8px 0 0; }
+.train-r4__day-preview { display: grid; gap: 4px; padding: 11px; background: var(--surface-2); border-radius: 12px; }
+.train-r4__day-preview p { font-size: 12px; margin: 0; color: var(--text-2); }
+.train-r4__routines-note { font-size: 11px; color: var(--text-2); line-height: 1.4; margin: 0 0 6px; }
+.train-r4__preview-heading { display:flex; justify-content:space-between; align-items:start; gap:14px; min-width: 0; }
+.train-r4__preview-heading > div { min-width: 0; }
+.train-r4__preview-heading h2 { margin: 5px 0; font-size: 23px; }
+.train-r4__preview-heading p { font-size: 12px; color: var(--text-2); }
+.train-r4__preview-exercises { display: grid; gap: 0; }
+.train-r4__preview-exercise { min-width: 0; display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--hairline); }
+.train-r4__preview-exercise > div { display: grid; gap: 4px; }
+.train-r4__preview-exercise strong { font-size: 14px; line-height: 1.3; }
+.train-r4__preview-exercise small { color: var(--text-2); font-size: 12px; }
+.train-r4__preview-index { color: var(--train-ink); font-size: 11px; font-weight: 800; }
+.train-r4__start { background: var(--train); color: var(--on-accent); margin-top: 6px; }
+.train-r4__program[data-active-program="true"] {
+  border: 1px solid color-mix(in srgb, var(--train) 36%, var(--hairline));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--train) 7%, transparent);
+}
+@media (min-width: 740px) {
+  html[data-layout="duo"] .screen--train .train-r4__dashboard {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.14fr);
+    gap: clamp(12px, 1.8vw, 20px);
+  }
+  html[data-layout="duo"] .train-r4__program {
+    border-radius: 20px;
+    padding: clamp(16px, 2vw, 24px);
+    background: radial-gradient(circle at 90% 0%, var(--cut-mid), transparent 72%), var(--cut-deep);
+    color: var(--cut-ink);
+  }
+  html[data-layout="duo"] .train-r4__program h2 { font-size: clamp(20px, 2.5vw, 28px); line-height: 1.14; }
+  html[data-layout="duo"] .train-r4__program .train-r4__eyebrow { color: var(--cut-blue); }
+  html[data-layout="duo"] .train-r4__program .train-r4__program-subtitle,
+  html[data-layout="duo"] .train-r4__program .train-r4__program-tip { color: var(--cut-secondary); }
+  html[data-layout="duo"] .train-r4__program .train-r4__row { color: var(--cut-ink); border-color: var(--cut-outline); }
+  html[data-layout="duo"] .train-r4__program .train-r4__segments span[data-filled="true"] { background: var(--cut-blue); }
+  html[data-layout="duo"] .train-r4__column--primary,
+  html[data-layout="duo"] .train-r4__column--secondary { gap: 16px; }
+  html[data-layout="duo"] .train-r4__list-card, html[data-layout="duo"] .train-r4__plan-preview { border-radius: 18px; }
+  html[data-layout="duo"] .train-r4__plan-preview { position: sticky; top: calc(var(--duo-inset-top) + 10px); max-height: calc(100dvh - var(--duo-inset-top) - 36px); overflow-y: auto; }
+  html[data-layout="duo"] .progress-cut__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html[data-layout="duo"] .progress-cut__metric-value { font-size: clamp(17px, 2.1vw, 25px); }
+}
+
+/* Preview and Start are separate tap targets; no ambiguity on program rows. */
+.train-r4__session-entry { display: grid; grid-template-columns: minmax(0,1fr) 66px; gap: 6px; align-items: center; }
+.train-r4__session-entry .train-r4__session-row { min-width: 0; text-align: left; }
+.train-r4__quick-start {
+  border: 0; border-radius: 11px; background: var(--surface-2);
+  color: var(--text-1); min-height: 44px; font: 650 12px/1 var(--font-ui);
+  cursor: pointer;
+}
+.train-r4__quick-start:focus-visible { outline: 3px solid var(--train); outline-offset: 2px; }

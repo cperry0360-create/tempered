@@ -123,6 +123,7 @@ export function iconForActivity(activityId) {
     alcohol_free: 'check',
     protein_target: 'protein',
     body_metrics: 'body',
+    waist_measurement: 'body',
     steps: 'steps',
     micro_cardio: 'steps',
     mobility: 'mobility',

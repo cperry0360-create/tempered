@@ -21,7 +21,7 @@ import {
 
 /** @type {import('../domain/types.js').AttributeId[]} */
 const ATTRIBUTE_IDS = ['might', 'wind', 'grit', 'vitality', 'mind']
-const CADENCES = new Set(['off', 'daily', 'weekly'])
+const CADENCES = new Set(['off', 'daily', 'weekly', 'biweekly'])
 export const DEFAULT_STEP_TARGET = 10000
 
 const clampTarget = (value) => Math.max(1, Math.min(7, Math.round(Number(value) || 1)))
@@ -156,9 +156,11 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
         return [activity.id, {
           cadence: raw.cadence,
           target: raw.cadence === 'weekly' ? clampTarget(raw.target) : 1,
+          ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
       if (activity.id === 'micro_cardio') return [activity.id, { cadence: 'daily', target: 1 }]
+      if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]
       return [activity.id, legacyDaily.has(activity.id)
         ? { cadence: 'daily', target: 1 }
         : { cadence: 'off', target: 1 }]
@@ -181,6 +183,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     schedule[activityId] = {
       cadence,
       target: cadence === 'weekly' ? clampTarget(target) : 1,
+      ...(cadence === 'biweekly' ? { startOn: schedule[activityId]?.startOn ?? calendarWeekStart(clock.today()) } : {}),
     }
     const legacyDaily = activities.map((a) => a.id)
       .filter((id) => schedule[id]?.cadence === 'daily')
@@ -386,11 +389,27 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       ? row.proteinTargetMet === true
       : isLogged(activity, row)
 
+    const logs = await storage.getAll('dayLogs')
     const weekly = activities
-      .filter((activity) => schedule[activity.id]?.cadence === 'weekly')
+      .filter((activity) => ['weekly', 'biweekly'].includes(schedule[activity.id]?.cadence))
       .map((activity) => {
-        const target = clampTarget(schedule[activity.id]?.target)
-        const done = days.filter((day) => completedOnDay(activity, day)).length
+        const settings = schedule[activity.id]
+        const target = settings.cadence === 'biweekly' ? 1 : clampTarget(settings.target)
+        // Biweekly periods are fixed Monday-to-Sunday fortnights, anchored
+        // when the user selects the cadence. Prior weeks aren't reclassified.
+        const anchor = calendarWeekStart(settings.startOn ?? '2026-10-26')
+        const elapsed = Math.floor((Date.parse(start + 'T12:00:00Z') - Date.parse(anchor + 'T12:00:00Z')) / 86400000)
+        const startAt = settings.cadence === 'biweekly'
+          ? (() => {
+              const shifted = new Date(start + 'T12:00:00Z')
+              shifted.setUTCDate(shifted.getUTCDate() - (((elapsed % 14) + 14) % 14))
+              return shifted.toISOString().slice(0, 10)
+            })()
+          : start
+        const periodDays = settings.cadence === 'biweekly'
+          ? logs.filter((day) => day.date >= startAt && day.date <= anchorDate)
+          : days
+        const done = periodDays.filter((day) => completedOnDay(activity, day)).length
         return {
           ...decorate(activity, anchorDay, schedule, proteinGoal, caloriesGoal, stepsGoal),
           weeklyDone: done,

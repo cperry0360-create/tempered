@@ -9,7 +9,10 @@
       "daily": true,
       "kind": "derived",
       "unit": "hours",
-      "band": [7, 9],
+      "band": [
+        7,
+        9
+      ],
       "help": "Scored highest between seven and nine hours. More is not better."
     },
     {
@@ -85,6 +88,16 @@
       "daily": true,
       "kind": "marked",
       "help": "Daily weigh-in for trend averages. The habit is scored; the number never is."
+    },
+    {
+      "id": "waist_measurement",
+      "name": "Waist measurement",
+      "short": "Waist",
+      "attribute": "vitality",
+      "daily": false,
+      "kind": "derived",
+      "unit": "in",
+      "help": "Measure at the same spot, relaxed, once weekly or every two weeks. Optional reminder; an unchecked habit does not mean you skipped it."
     },
     {
       "id": "steps",

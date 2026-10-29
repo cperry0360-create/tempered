@@ -56,6 +56,18 @@ if (params.has('fixture')) {
       check(label + ' daily log uses its own column only when expanded', wide ? close(r('.today-daily-log').top, r('.today-session-card').top) && r('.today-daily-log').left > r('.today-session-card').right : r('.today-daily-log').top > r('.today-fuel-card').top)
       q('[data-tab="train"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       if (wide) check(label + ' Train stacks cards independently', r('.train-r4__sessions') && r('.train-r4__routines') && close(r('.train-r4__sessions').top, r('.train-r4__program').top) && close(r('.train-r4__routines').top, r('.train-r4__sessions').bottom + 16))
+      check(label + ' active plan is explicitly identified', Boolean(q('[data-active-program="true"]')))
+      const planRow = q('[data-preview-day]')
+      check(label + ' plan rows provide a preview without starting immediately', Boolean(planRow))
+      planRow?.click()
+      await settle()
+      check(label + ' exercises and sets are visible before starting',
+        Boolean(q('[data-program-preview] .train-r4__preview-exercise'))
+        && Boolean(q('[data-start-preview]'))
+        && !q('.screen--session'))
+      q('.train-r4__plan-preview .train-r4__back')?.click()
+      await settle()
+      check(label + ' user can return to planned sessions', Boolean(q('.train-r4__sessions')))
       q('.app__body').scrollTop = 160; await settle()
       const header = r('.train-calculator-bar')
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
@@ -85,6 +97,12 @@ if (params.has('fixture')) {
       const cards = [...d.querySelectorAll('.today-session-card,.today-readiness,.today-week,.today-fuel-card,.today-daily-log')]
       check(width + ' ordinary phone keeps its card order',cards.every((node,i) => !i || rect(node).top > rect(cards[i-1]).top))
       check(width + ' ordinary phone keeps bottom navigation',close(rect(d.querySelector('.tabbar')).width,width) && w.getComputedStyle(d.querySelector('.tabbar')).flexDirection !== 'column')
+      d.querySelector('[data-tab="train"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
+      d.querySelector('[data-preview-day]')?.click(); await settle()
+      check(width + ' phone plan preview lists exercises without opening session',
+        Boolean(d.querySelector('[data-program-preview] .train-r4__preview-exercise'))
+        && !d.querySelector('.screen--session'))
+      d.querySelector('.train-r4__back')?.click(); await settle()
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
       check(width + ' ordinary phone still puts Water beneath meals',

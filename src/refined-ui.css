@@ -31,7 +31,7 @@
 /* Modern rail: a single obvious selection, not multiple competing pills. */
 html[data-layout="duo"] .tabbar {
   border-left: 1px solid var(--hairline);
-  background: var(--surface-1);
+  background: var(--bg);
 }
 html[data-layout="duo"] .tabbar__tabs { gap: 10px; }
 html[data-layout="duo"] .tabbar__tab {
@@ -278,7 +278,7 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
   html[data-layout="duo"] .progress-cut__hero { grid-template-columns:minmax(0,1fr) minmax(110px,22%); }
   html[data-layout="duo"] .today-dashboard { grid-template-columns:minmax(0,.98fr) minmax(0,1.02fr); }
   html[data-layout="duo"] .train-r4__column--primary,
-  html[data-layout="duo"] .train-r4__column--secondary { gap:14px; }
+  html[data-layout="duo"] .train-r4__column--secondary { gap:16px; }
 }
 @media (max-width:730px) {
   .progress-cut__measure-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }

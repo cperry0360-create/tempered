@@ -166,6 +166,9 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       el('span.train-r4__eyebrow', { text: '● ACTIVE PROGRAM' }),
       el('h2', { text: program.name }),
       el('p.train-r4__program-subtitle', { text: `Week ${week} of ${program.weeks} · ${program.days.length} days · ${totalSets} planned sets/week` }),
+      active.state?.startedOn && el('span.train-r4__active-since', {
+        text: 'Active since ' + shortDate(active.state.startedOn),
+      }),
       el('div.train-r4__segments', { 'aria-label': `Week ${week} of ${program.weeks}` }, segments),
       el('p.train-r4__program-tip', { text: 'These are the exercises currently in your plan. Tap a day to preview before starting.' }),
       el('button.train-r4__row', {
@@ -239,6 +242,9 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
           el('span.train-r4__eyebrow', { text: 'IN YOUR ACTIVE PROGRAM' }),
           el('h2', { text: day.name }),
           el('p', { text: `${movements.length} exercises · ${workingSets} working sets` }),
+          lastByProgramDay.get(day.id) && el('small.train-r4__last-trained', {
+            text: 'Last logged ' + shortDate(lastByProgramDay.get(day.id)),
+          }),
         ]),
         el('button.train-r4__back', {
           type: 'button', 'aria-label': 'Back to planned sessions',
@@ -273,7 +279,13 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
           }, [
             el('span.train-r4__row-copy', {}, [
               el('strong', { text: day.name }),
-              el('small', { text: `${day.exercises?.length ?? 0} exercises · ${(day.exercises ?? []).reduce((n, slot) => n + slot.sets, 0)} sets · Preview` }),
+              el('small', { text: `${day.exercises?.length ?? 0} exercises · ${(day.exercises ?? []).reduce((n, slot) => n + slot.sets, 0)} planned sets` }),
+              el('span.train-r4__session-movements', { text: (day.exercises ?? []).slice(0, 2)
+                .map((slot) => slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId)
+                .join(' · ') + ((day.exercises?.length ?? 0) > 2 ? ' +' + (day.exercises.length - 2) + ' more' : '') }),
+              lastByProgramDay.get(day.id) && el('small.train-r4__last-trained', {
+                text: 'Last logged ' + shortDate(lastByProgramDay.get(day.id)),
+              }),
             ]),
             chevron(),
           ]),

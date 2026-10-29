@@ -280,6 +280,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               cadenceButton(activity, current, 'off', 'Off'),
               cadenceButton(activity, current, 'daily', 'Daily'),
               cadenceButton(activity, current, 'weekly', current.cadence === 'weekly' ? `${current.target}× / week` : 'Weekly'),
+              activity.id === 'waist_measurement' && cadenceButton(activity, current, 'biweekly', 'Every 2 weeks'),
             ]),
           ])
         })),

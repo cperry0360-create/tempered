@@ -450,10 +450,16 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('span.food-v2__eyebrow', { text: 'TEMPERED / NUTRITION' }),
         el('h1.screen__title', { text: 'Food' }),
       ]),
-      el('button.food-v2__date', {
-        type: 'button', dataset: { foodDate: clock.today() },
-        onclick: () => reviewDate(clock.today()),
-      }, [icon('calendar'), dailyDateLabel()]),
+      el('div.food-v2__header-actions', {}, [
+        el('button.food-v2__date', {
+          type: 'button', dataset: { foodDate: clock.today() },
+          onclick: () => reviewDate(clock.today()),
+        }, [icon('calendar'), dailyDateLabel()]),
+        el('button.food-v2__header-add', {
+          type: 'button', dataset: { foodHeaderAdd: 'true' },
+          onclick: focusMealEntry,
+        }, [icon('plus'), ' Add food']),
+      ]),
     ])
     const energy = el('section.fuel-r4__card.fuel-r4__energy.food-v2__energy', {}, [
       el('div.food-v2__section-title', {}, [
@@ -538,9 +544,9 @@ export function createFuelScreen({ storage, daily, clock }) {
         ]),
         el('div.fuel-r4__details.food-v2__details', {}, [
           actions,
-          recents,
           finish,
           mealPanel,
+          recents,
           foodsCard(),
           ...openDaysCard(),
         ]),

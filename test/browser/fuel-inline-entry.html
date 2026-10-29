@@ -71,10 +71,13 @@
     check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)
     check('the calorie hero updates on the same screen', /1,040/.test(q('.food-v2__energy')?.textContent ?? ''), q('.food-v2__energy')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
-    check('My foods now includes the new meal', Boolean(q('[data-food="Turkey sandwich"]')))
-
-    q('[data-food-add="Protein shake"]')?.click(); await settle(500)
-    check("a My foods tap appears in today's meals", (q('.screen--fuel [data-nutrition-history]')?.textContent.match(/Protein shake/g) ?? []).length === 1)
+    const lookup = q('.food-v3__search-input')
+    type(lookup, 'Turkey sandwich')
+    check('new meals are immediately searchable', Boolean(q('[data-food="Turkey sandwich"]')))
+    type(lookup, '')
+    q('[data-recent-food="Protein shake"]')?.click(); await settle(500)
+    check("Frequent meal taps add directly to today's meals",
+      (q('.screen--fuel [data-nutrition-history]')?.textContent.match(/Protein shake/g) ?? []).length === 1)
 
     q('.screen--fuel .nutrition-entry__delete')?.click(); await settle(400)
     check('delete offers Undo', q('.screen--fuel [data-nutrition-undo]')?.hidden === false)
@@ -82,7 +85,7 @@
     day = await t.daily.dayLog('2026-10-01')
     check('Undo restores the meal', day.calories === 1200, day.calories)
 
-    const search = q('.fuel-food__search'); type(search, 'pizza'); await settle(50)
+    const search = q('.food-v3__search-input'); type(search, 'pizza'); await settle(50)
     q('[data-food-new]')?.click(); await settle(100)
     check('no-match search offers to add it, filling the form', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'pizza' && document.activeElement === q('.screen--fuel [data-entry="nutrition_calories"]'))
 

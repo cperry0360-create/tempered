@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Tempered — meal entry on Fuel</title>
 <link rel="stylesheet" href="../../src/tokens.css" /><link rel="stylesheet" href="../../src/style.css" />
-<link rel="stylesheet" href="../../src/nutrition-today.css" /><link rel="stylesheet" href="../../src/calm.css" /><link rel="stylesheet" href="../../src/fuel.css" />
+<link rel="stylesheet" href="../../src/nutrition-today.css" /><link rel="stylesheet" href="../../src/calm.css" /><link rel="stylesheet" href="../../src/fuel.css" /><link rel="stylesheet" href="../../src/food-v2.css" />
 </head><body><div id="app" class="app"></div>
 <script type="module">
   import { bootstrapHarness } from './harness.js'
@@ -41,7 +41,14 @@
     check('old logged but unclosed days are retained in the review queue',
       Number(q('[data-open-nutrition-days]')?.dataset.openNutritionDays) === 2)
 
-    check('only one filled primary button on Fuel', qa('.screen--fuel .fuel-r4__primary').length === 0)
+    check('four useful quick actions are available', qa('[data-food-action]').length >= 4)
+    check('quick Add meal focuses the existing entry field', (()=>{ q('[data-food-action="add"]')?.click(); return document.activeElement === q('[data-entry="nutrition_description"]') })())
+    check('recent meals are reusable without a second form', Boolean(q('[data-recent-food="Protein shake"]')))
+    check('calorie, macros, water, diary and meal entry are on the Food screen',
+      Boolean(q('.food-v2__energy')) && Boolean(q('.food-v2__macro-card'))
+      && Boolean(q('.food-v2__water')) && Boolean(q('[data-diary-calendar]'))
+      && Boolean(q('.food-v2__details [data-nutrition-form]')))
+    check('only one Food dashboard', qa('.food-v2__layout').length === 1)
 
     type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
     q('.fuel-r4__water-actions button')?.click(); await settle(300)
@@ -52,7 +59,7 @@
     q('.screen--fuel [data-action="nutrition-log"]')?.click(); await settle(500)
     let day = await t.daily.dayLog('2026-10-01')
     check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)
-    check('the ring updates on the same screen', /1,060/.test(q('.screen--fuel')?.textContent ?? ''), q('.fuel-r4__ring, .screen--fuel')?.textContent.slice(0, 80))
+    check('the calorie hero updates on the same screen', /1,040/.test(q('.food-v2__energy')?.textContent ?? ''), q('.food-v2__energy')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
     check('My foods now includes the new meal', Boolean(q('[data-food="Turkey sandwich"]')))
 

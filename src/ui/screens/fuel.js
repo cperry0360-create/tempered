@@ -3,6 +3,7 @@
  */
 import { nutritionLedger, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
+import { icon } from '../icons.js'
 import { dayBefore, nutritionDayStatus, openNutritionDates } from '../../domain/nutrition-review.js'
 
 export function createFuelScreen({ storage, daily, clock }) {
@@ -16,6 +17,7 @@ export function createFuelScreen({ storage, daily, clock }) {
   let calendarWeeksBack = 0
   let backlogExpanded = false
   let dismissedReminderFor = ''
+  let foodActionsOpen = false
   // The add-meal form and today's meals live here, built once by the nutrition
   // runtime and reused across re-renders so half-typed entries survive.
   const mealPanel = el('div.fuel-r4__meal-panel')
@@ -181,6 +183,117 @@ export function createFuelScreen({ storage, daily, clock }) {
     ].filter(Boolean)
   }
 
+  function dailyDateLabel() {
+    const [year, month, day] = clock.today().split('-').map(Number)
+    return new Date(year, month - 1, day, 12).toLocaleDateString(undefined, {
+      weekday: 'long', month: 'short', day: 'numeric',
+    })
+  }
+
+  function focusMealEntry() {
+    const input = mealPanel.querySelector('[data-entry="nutrition_description"]')
+    if (!input) return
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    input.focus()
+  }
+
+  function openFoodSearch() {
+    const input = root.querySelector('.fuel-food__search')
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      input.focus()
+    } else focusMealEntry()
+  }
+
+  function actionButton(glyph, title, subtitle, callback, data) {
+    return el('button.food-v2__action', {
+      type: 'button', dataset: { foodAction: data }, onclick: callback,
+    }, [
+      el('span.food-v2__action-glyph', {}, [icon(glyph)]),
+      el('span.food-v2__action-text', {}, [
+        el('strong', { text: title }),
+        el('small', { text: subtitle }),
+      ]),
+    ])
+  }
+
+  function quickActions() {
+    const repeat = model.foods.top[0] ?? model.foods.all[0]
+    return el('section.food-v2__quick', { 'aria-label': 'Quick food logging' }, [
+      el('div.food-v2__section-title', {}, [
+        el('div', {}, [el('small.food-v2__eyebrow', { text: 'QUICK ENTRY' }),
+          el('h2', { text: 'Log something' })]),
+        el('button.food-v2__more-toggle', {
+          type: 'button', 'aria-expanded': String(foodActionsOpen),
+          onclick: () => { foodActionsOpen = !foodActionsOpen; render() },
+        }, [foodActionsOpen ? 'Less' : 'More']),
+      ]),
+      el('div.food-v2__quick-grid', {}, [
+        actionButton('plus', 'Add meal', 'Enter food + macros', focusMealEntry, 'add'),
+        actionButton('food', 'Meal photo', 'ChatGPT estimate', () => {
+          mealPanel.querySelector('[data-calorie-ai="prompt"]')?.click()
+        }, 'photo'),
+        actionButton('down', 'Import AI', 'Paste nutrition', () => {
+          mealPanel.querySelector('[data-calorie-ai="paste"]')?.click()
+        }, 'import'),
+        actionButton('history', repeat ? 'Repeat meal' : 'My foods',
+          repeat ? repeat.description : 'Find past meals',
+          () => repeat ? quickLog(repeat) : openFoodSearch(), 'repeat'),
+        foodActionsOpen && actionButton('calendar', 'Earlier day', 'Correct a past diary',
+          () => reviewDate(dayBefore(clock.today())), 'earlier'),
+        foodActionsOpen && actionButton('history', 'Browse foods', 'Saved + recent meals',
+          openFoodSearch, 'search'),
+      ]),
+      el('p.food-v2__quick-note', {
+        text: 'Photo estimate opens ChatGPT; import brings the reviewed numbers back. No scanner or food database is connected.',
+      }),
+    ])
+  }
+
+  function recentFoodsStrip() {
+    const foods = model.foods.top.slice(0, 4)
+    if (foods.length === 0) return null
+    return el('section.food-v2__recents', {}, [
+      el('div.food-v2__section-title', {}, [
+        el('h2', { text: 'Frequent foods' }),
+        el('button.food-v2__more-toggle', { type: 'button', onclick: openFoodSearch }, ['See all']),
+      ]),
+      el('div.food-v2__recent-grid', {}, foods.map((food, index) =>
+        el('button.food-v2__recent', {
+          type: 'button', dataset: { recentFood: food.description },
+          'aria-label': 'Log a serving of ' + food.description,
+          onclick: () => quickLog(food),
+        }, [
+          el('span.food-v2__recent-graphic', { 'aria-hidden': 'true',
+            text: ['◈', '✳', '◉', '❖'][index % 4] }),
+          el('strong', { text: food.description }),
+          el('small', { text: Math.round(food.calories ?? 0) + ' kcal · + Log' }),
+        ]))),
+    ])
+  }
+
+  function beachCutStrip() {
+    const today = Date.parse(clock.today() + 'T12:00:00Z')
+    const end = Date.parse('2026-11-26T12:00:00Z')
+    const start = Date.parse('2026-11-02T12:00:00Z')
+    const days = Math.max(0, Math.ceil((end - today) / 86400000))
+    const progress = Math.max(0, Math.min(100, Math.round((today - start) / (end - start) * 100)))
+    if (today > end + 86400000 || today < start - 14 * 86400000) return null
+    return el('section.food-v2__beach', { 'aria-label': 'Thanksgiving Beach Cut' }, [
+      el('div', {}, [
+        el('span.food-v2__eyebrow', { text: 'THANKSGIVING BEACH CUT' }),
+        el('strong', { text: days + (days === 1 ? ' day to go' : ' days to go') }),
+        el('small', { text: 'Keep strength · steady nutrition' }),
+      ]),
+      el('div.food-v2__beach-progress', { role: 'progressbar',
+        'aria-label': 'Days through Beach Cut',
+        'aria-valuemin': '0', 'aria-valuemax': '100',
+        'aria-valuenow': String(progress) }, [
+        el('span', { style: 'width:' + progress + '%' }),
+      ]),
+    ])
+  }
+
   function foodMeta(food) {
     const parts = [`${Math.round(food.calories ?? 0)} kcal`]
     if (Number.isFinite(food.proteinGrams)) parts.push(`${Math.round(food.proteinGrams)} g protein`)
@@ -318,67 +431,126 @@ export function createFuelScreen({ storage, daily, clock }) {
     const energyProgress = percent(calories, calorieGoal)
     const proteinProgress = percent(protein, proteinGoal)
     const waterProgress = percent(water, waterGoal)
-
+    const closed = day.nutritionStatus === 'complete'
+    const remaining = Math.max(0, calorieGoal - calories)
+    const dayStatus = closed ? '✓ Day closed' : '● Day open'
+    const macroTile = (label, grams, glyph, progress, tone, detail) =>
+      el('div.food-v2__macro', { dataset: { nutrient: label.toLowerCase() } }, [
+        el('span.food-v2__macro-ring', { style: '--macro-progress:' + progress + '%;--macro-tone:' + tone }, [
+          icon(glyph),
+        ]),
+        el('strong', { text: Math.round(grams).toLocaleString() + ' g' }),
+        el('span', { text: label }),
+        el('small', { text: detail }),
+      ])
+    const macroCalShare = (grams, factor) =>
+      Math.min(100, calorieGoal > 0 ? Math.round(grams * factor / calorieGoal * 100) : 0)
+    const top = el('div.food-v2__topline', {}, [
+      el('div', {}, [
+        el('span.food-v2__eyebrow', { text: 'TEMPERED / NUTRITION' }),
+        el('h1.screen__title', { text: 'Food' }),
+      ]),
+      el('div.food-v2__header-actions', {}, [
+        el('button.food-v2__date', {
+          type: 'button', dataset: { foodDate: clock.today() },
+          onclick: () => reviewDate(clock.today()),
+        }, [icon('calendar'), dailyDateLabel()]),
+        el('button.food-v2__header-add', {
+          type: 'button', dataset: { foodHeaderAdd: 'true' },
+          onclick: focusMealEntry,
+        }, [icon('plus'), ' Add food']),
+      ]),
+    ])
+    const energy = el('section.fuel-r4__card.fuel-r4__energy.food-v2__energy', {}, [
+      el('div.food-v2__section-title', {}, [
+        el('div', {}, [
+          el('small.food-v2__eyebrow', { text: 'TODAY’S CALORIE BUDGET' }),
+          el('h2', { text: 'Calories' }),
+        ]),
+        el('span.food-v2__energy-status', { dataset: { closed: String(closed) }, text: dayStatus }),
+      ]),
+      el('div.fuel-r4__budget-heading.food-v2__budget-heading', {}, [
+        el('div', {}, [
+          el('strong', { text: Math.round(calories).toLocaleString() }),
+          el('span.food-v2__kcal', { text: 'kcal logged' }),
+          el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' kcal target' }),
+        ]),
+        energyRing(energyProgress, remaining),
+      ]),
+      el('div.food-v2__energy-footer', {}, [
+        el('div.fuel-r4__budget-track', { role: 'progressbar',
+          'aria-label': 'Calories logged', 'aria-valuemin': '0',
+          'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
+          el('span', { style: 'width:' + energyProgress + '%' }),
+        ]),
+        el('span', { text: calories > calorieGoal
+          ? Math.round(calories - calorieGoal) + ' kcal over target'
+          : Math.round(remaining) + ' kcal remaining' }),
+      ]),
+    ])
+    const macros = el('section.food-v2__macro-card', {}, [
+      el('div.food-v2__section-title', {}, [
+        el('h2', { text: 'Macros' }),
+        el('span.food-v2__caption', { text: 'From logged food' }),
+      ]),
+      el('div.food-v2__macro-grid', {}, [
+        macroTile('Protein', protein, 'protein', proteinProgress, 'var(--food-v2-protein)',
+          Math.round(proteinGoal) + ' g goal'),
+        macroTile('Carbs', ledger.totals.carbs, 'food',
+          macroCalShare(ledger.totals.carbs, 4), 'var(--food-v2-carbs)', 'of calories'),
+        macroTile('Fat', ledger.totals.fat, 'food',
+          macroCalShare(ledger.totals.fat, 9), 'var(--food-v2-fat)', 'of calories'),
+        macroTile('Fiber', ledger.totals.fiber, 'food',
+          Math.min(100, ledger.totals.fiber / 30 * 100), 'var(--food-v2-fiber)', 'grams logged'),
+      ]),
+      el('p.food-v2__macro-note', { text: 'Protein ring tracks your goal; other rings are visual guides, not prescribed macro targets.' }),
+    ])
+    const waterCard = el('section.fuel-r4__card.fuel-r4__water.food-v2__water', {}, [
+      el('div.food-v2__section-title', {}, [
+        el('h2', {}, [icon('water'), ' Water']),
+        el('span.food-v2__caption', { text: 'Quick add · oz' }),
+      ]),
+      el('div.food-v2__water-main', {}, [
+        el('strong', { text: Math.round(water).toLocaleString() + ' oz' }),
+        el('small', { text: 'of ' + Math.round(waterGoal) + ' oz' }),
+      ]),
+      el('div.fuel-r4__bar', {}, [el('i', { style: 'width:' + waterProgress + '%' })]),
+      el('div.fuel-r4__water-actions', {}, [8, 12, 25].map(amount =>
+        el('button.fuel-r4__secondary', {
+          type: 'button', onclick: () => addWater(amount),
+        }, ['+' + amount]))),
+    ])
+    const diary = diaryCalendar()
+    const recents = recentFoodsStrip()
+    const actions = quickActions()
+    const finish = el('section.food-v2__day-finish', { dataset: { dayClosed: String(closed) } }, [
+      el('div', {}, [
+        el('strong', { text: closed ? 'Today is complete' : 'Your food diary is open' }),
+        el('small', { text: closed ? 'Reopen to make corrections.' : 'Close it when you’ve recorded everything you ate.' }),
+      ]),
+      el('button.fuel-r4__finish', {
+        type: 'button', dataset: { diaryFinishToday: 'true', closed: String(closed) },
+        onclick: closeToday,
+      }, [closed ? 'Reopen day' : 'Close day']),
+    ])
     replace(root, [
-      el('div.fuel-r4__topline', {}, [
-        el('h1.screen__title', { text: 'Fuel' }),
-        el('span.fuel-r4__today-tag', { text: day.nutritionStatus === 'complete' ? '✓ DAY CLOSED' : '● DAY OPEN' }),
-      ]),
-      diaryCalendar(),
-      el('div.fuel-r4__dashboard', {}, [
-        // One persistent overview pane on an unfolded Duo; ordinary phones
-        // still show a single natural scrolling column.
-        el('div.fuel-r4__overview', {}, [
-          el('section.fuel-r4__card.fuel-r4__energy', {}, [
-            el('div.fuel-r4__budget-heading', {}, [
-              el('div', {}, [
-                el('span', { text: 'DAILY CALORIE BUDGET' }),
-                el('strong', { text: Math.round(calories).toLocaleString() + ' kcal' }),
-                el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' logged target' }),
-              ]),
-              energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
-            ]),
-            el('div.fuel-r4__budget-track', { role: 'progressbar',
-              'aria-label': 'Calories logged', 'aria-valuemin': '0',
-              'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
-              el('span', { style: 'width:' + energyProgress + '%' }),
-            ]),
-            el('button.fuel-r4__finish', {
-              type: 'button', dataset: { diaryFinishToday: 'true', closed: String(day.nutritionStatus === 'complete') },
-              onclick: closeToday,
-            }, [day.nutritionStatus === 'complete' ? 'Reopen today’s diary' : 'Mark today’s food diary complete']),
-            el('p.fuel-r4__finish-note', {
-              text: 'Closing confirms your meals are logged. It is not a calorie goal or weight-loss score.',
-            }),
-            el('div.fuel-r4__protein', {}, [
-              el('span', { text: `Protein ${Math.round(protein)} / ${Math.round(proteinGoal)} g` }),
-              el('div.fuel-r4__bar', {}, [el('i', { style: `width:${proteinProgress}%` })]),
-            ]),
-            el('div.fuel-r4__macros', {}, [
-              ['Carbs', ledger.totals.carbs],
-              ['Fat', ledger.totals.fat],
-              ['Fiber', ledger.totals.fiber],
-            ].map(([label, value]) => el('div', {}, [
-              el('span', { text: label }),
-              el('strong', { text: `${Math.round(value)} g` }),
-            ]))),
-          ]),
-          el('section.fuel-r4__card.fuel-r4__water', {}, [
-            el('h2', { text: 'Water' }),
-            el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),
-            el('div.fuel-r4__bar', {}, [el('i', { style: `width:${waterProgress}%` })]),
-            el('div.fuel-r4__water-actions', {}, [8, 12, 25].map((amount) =>
-              el('button.fuel-r4__secondary', {
-                type: 'button', onclick: () => addWater(amount),
-              }, [`+${amount}`]))),
-          ]),
+      top,
+      el('div.fuel-r4__dashboard.food-v2__layout', {}, [
+        el('div.fuel-r4__overview.food-v2__overview', {}, [
+          energy,
+          macros,
+          el('div.food-v2__small-row', {}, [waterCard, beachCutStrip()]),
+          diary,
         ]),
-        el('div.fuel-r4__details', {}, [
-          foodsCard(),
+        el('div.fuel-r4__details.food-v2__details', {}, [
+          actions,
+          finish,
           mealPanel,
+          recents,
+          foodsCard(),
+          ...openDaysCard(),
         ]),
       ]),
-      ...openDaysCard(),
     ])
     const today = clock.today()
     if (!mealPanel.firstChild || mealPanel.dataset.date !== today) {

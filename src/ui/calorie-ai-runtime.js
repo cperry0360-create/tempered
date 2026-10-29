@@ -646,7 +646,9 @@ export function installCalorieAiRuntime() {
       const mealsCard = document.createElement('section')
       mealsCard.className = 'fuel-r4__card nutrition-panel__meals'
       mealsCard.append(historySection, undo, dayStatus, earlier)
-      panel.append(addCard, mealsCard)
+      // The diary-first right pane shows recent entries before the detailed
+      // input form. Quick entry tiles above can focus the same retained form.
+      panel.append(mealsCard, addCard)
       return panel
     }
     screen.append(header, datePicker, totals, dayStatus, suggestionSection, form, historySection, undo)

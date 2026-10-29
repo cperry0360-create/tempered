@@ -367,8 +367,9 @@ export function installCalorieAiRuntime() {
       dayStatus.dataset.state = state
       const copy = dayStatus.querySelector('[data-nutrition-day-status-copy]')
       if (copy) copy.textContent = state === 'complete'
-        ? 'Complete day · included in calorie averages'
-        : state === 'partial' ? 'Still logging · excluded from calorie averages' : 'Not reviewed · eligible totals may be included'
+        ? 'Closed · diary reviewed'
+        : state === 'partial' ? 'Open · some meals may still be missing'
+          : 'Not reviewed · close when your meals are entered'
       dayStatus.querySelectorAll('[data-nutrition-day-state]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.dataset.nutritionDayState === state))
       })
@@ -495,9 +496,9 @@ export function installCalorieAiRuntime() {
       button.dataset.nutritionDayState = state
       button.onclick = async () => {
         const context = globalThis.tempered
-        const current = await context.daily.dayLog(date)
-        await context.storage.put('dayLogs', { ...(current ?? { date }), date, nutritionStatus: state })
+        await context.daily.setNutritionStatus(date, state)
         await renderNutritionData()
+        window.dispatchEvent(new CustomEvent('tempered:nutrition-review-changed', { detail: { date } }))
       }
       dayStatusActions.append(button)
     }

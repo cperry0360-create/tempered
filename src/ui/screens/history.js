@@ -770,8 +770,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const phaseProgress = Math.min(100, Math.round(daysElapsed / 24 * 100))
     const last7 = dayLogs.filter((day) => day.date >= addDays(today, -6) && day.date <= today)
     const weighIns = last7.map((day) => day.bodyMetrics?.weight).filter((v) => Number.isFinite(v) && v > 0)
-    const calLogs = last7.map((day) => day.calories).filter((v) => Number.isFinite(v) && v > 0)
-    const proteinLogs = last7.map((day) => day.proteinGrams).filter((v) => Number.isFinite(v) && v > 0)
+    const closed7 = last7.filter((day) => day.nutritionStatus === 'complete')
+    const calLogs = closed7.map((day) => day.calories).filter((v) => Number.isFinite(v) && v >= 0)
+    const proteinLogs = closed7.map((day) => day.proteinGrams).filter((v) => Number.isFinite(v) && v >= 0)
     const latestWaist = dayLogs.filter((day) => day.date <= today
       && Number.isFinite(day.waistInches) && day.waistInches > 0)
       .sort((a,b) => b.date.localeCompare(a.date))[0]
@@ -813,8 +814,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       el('div.progress-cut__body', {}, [
         el('div.progress-cut__stats', {}, [
           metric('7-DAY WEIGHT', format(average(weighIns), ' lb', 1), weighIns.length + ' of 7 readings', true),
-          metric('CALORIES / LOGGED DAY', format(average(calLogs), ' kcal'), calLogs.length + ' logged days · initial target 2,250'),
-          metric('PROTEIN / LOGGED DAY', format(average(proteinLogs), ' g'), proteinLogs.length + ' logged days · aim 165–180 g'),
+          metric('CALORIES / CLOSED DAY', format(average(calLogs), ' kcal'), calLogs.length + ' closed days · initial target 2,250'),
+          metric('PROTEIN / CLOSED DAY', format(average(proteinLogs), ' g'), proteinLogs.length + ' closed days · aim 165–180 g'),
           metric('WAIST', format(latestWaist?.waistInches, ' in', 1),
             latestWaist ? monthDay(latestWaist.date) +
               (priorWaist ? ' · ' + deltaValue(latestWaist.waistInches, priorWaist.waistInches, ' in', 1) : ' · first measurement')

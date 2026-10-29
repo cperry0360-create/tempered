@@ -78,8 +78,8 @@ if (params.has('fixture')) {
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       if (wide) {
-        check(label + ' Food actions begin beside calorie hero',
-          close(r('.food-v2__quick').top, r('.fuel-r4__energy').top))
+        check(label + ' Food search begins beside calorie hero',
+          close(r('.food-v3__search').top, r('.fuel-r4__energy').top))
         check(label + ' energy and Water share the left pane',
           q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
           && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))

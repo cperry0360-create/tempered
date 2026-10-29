@@ -2,7 +2,11 @@
    Redesign V1 — Fuel (R4)
    --------------------------------------------------------------------------- */
 
+/* Keep the existing single-column reading order on ordinary phones.
+   The unfolded Duo turns the overview wrapper into a sticky left pane. */
 .screen--fuel-r4 { gap: 16px; padding-bottom: 8px; }
+.fuel-r4__overview { display: contents; }
+.fuel-r4__water { order: 10; }
 
 .screen--fuel-r4 > .screen__title {
   margin: 0;

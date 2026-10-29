@@ -2373,3 +2373,14 @@ body,
 .weekly-recap__row strong, .weekly-recap__row small { display: block; }
 .weekly-recap__row small { margin-top: 4px; font-size: 13px; color: var(--text-2); }
 .weekly-recap__progress { width: 100%; }
+
+/* Active-program session rows use separate 44px+ Preview and Start targets.
+   Base stylesheet is loaded even by the minimal standalone browser harnesses. */
+.train-r4__session-entry { display: grid; grid-template-columns: minmax(0, 1fr) 68px; align-items: center; gap: 8px; }
+.train-r4__session-entry .train-r4__session-row { min-width: 0; text-align: left; }
+.train-r4__quick-start {
+  appearance: none; border: 0; border-radius: 11px; min-height: 48px;
+  min-width: 64px; background: var(--surface-2); color: var(--text-1);
+  font: 650 13px/1 var(--font-ui); cursor: pointer;
+}
+.train-r4__quick-start:focus-visible { outline: 3px solid var(--train); outline-offset: 2px; }

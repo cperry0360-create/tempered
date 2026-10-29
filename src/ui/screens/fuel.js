@@ -345,6 +345,16 @@ export function createFuelScreen({ storage, daily, clock }) {
     ].filter(Boolean))
   }
 
+  function startNewMeal(name) {
+    const description = mealPanel.querySelector('[data-entry="nutrition_description"]')
+    if (!description) return
+    description.value = name
+    description.dispatchEvent(new Event('input', { bubbles: true }))
+    const calories = mealPanel.querySelector('[data-entry="nutrition_calories"]')
+    calories?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    calories?.focus()
+  }
+
   function foodResults() {
     const all = model.foods.all
     if (all.length === 0) return [

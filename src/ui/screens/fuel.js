@@ -188,7 +188,10 @@ export function createFuelScreen({ storage, daily, clock }) {
     replace(root, [
       el('h1.screen__title', { text: 'Fuel' }),
       el('div.fuel-r4__dashboard', {}, [
-        el('section.fuel-r4__card.fuel-r4__energy', {}, [
+        // One persistent overview pane on an unfolded Duo; ordinary phones
+        // still show a single natural scrolling column.
+        el('div.fuel-r4__overview', {}, [
+          el('section.fuel-r4__card.fuel-r4__energy', {}, [
           energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
           el('div.fuel-r4__protein', {}, [
             el('span', { text: `Protein ${Math.round(protein)} / ${Math.round(proteinGoal)} g` }),
@@ -203,18 +206,19 @@ export function createFuelScreen({ storage, daily, clock }) {
             el('strong', { text: `${Math.round(value)} g` }),
           ]))),
         ]),
+          el('section.fuel-r4__card.fuel-r4__water', {}, [
+              el('h2', { text: 'Water' }),
+              el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),
+              el('div.fuel-r4__bar', {}, [el('i', { style: `width:${waterProgress}%` })]),
+              el('div.fuel-r4__water-actions', {}, [8, 12, 25].map((amount) =>
+                el('button.fuel-r4__secondary', {
+                  type: 'button', onclick: () => addWater(amount),
+                }, [`+${amount}`]))),
+            ]),
+        ]),
         el('div.fuel-r4__details', {}, [
           foodsCard(),
           mealPanel,
-          el('section.fuel-r4__card.fuel-r4__water', {}, [
-            el('h2', { text: 'Water' }),
-            el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),
-            el('div.fuel-r4__bar', {}, [el('i', { style: `width:${waterProgress}%` })]),
-            el('div.fuel-r4__water-actions', {}, [8, 12, 25].map((amount) =>
-              el('button.fuel-r4__secondary', {
-                type: 'button', onclick: () => addWater(amount),
-              }, [`+${amount}`]))),
-          ]),
         ]),
       ]),
     ])

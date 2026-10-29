@@ -23,6 +23,9 @@
     await t.daily.addNutrition('2026-09-28', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-28T10:00:00.000Z' })
     await t.daily.addNutrition('2026-09-29', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-29T10:00:00.000Z' })
     await t.daily.addNutrition('2026-10-01', { description: 'Morning oats', calories: 300, protein: 12 }, { loggedAt: '2026-10-01T12:00:00.000Z' })
+    await t.daily.setNutritionStatus('2026-09-28', 'complete')
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    await storage.put('profile', { ...profile, nutritionReviewStartOn: '2026-09-28' })
     await t.app.show('fuel'); await settle(400)
     check("meals already logged today show the moment Fuel opens", /Morning oats/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''), q('.screen--fuel [data-nutrition-history]')?.textContent || 'empty list')
     await t.app.show('today'); await settle(200); await t.app.show('fuel'); await settle(400)
@@ -42,6 +45,12 @@
       qa('[data-diary-date]').length === 7
       && qa('[data-diary-date] .food-v3__day-icon').length === 7
       && qa('[data-diary-date] .food-v3__day-cal').length === 7)
+    check('closed day renders green check and its actual calories',
+      Boolean(q('[data-diary-date="2026-09-28"][data-visual="closed"]'))
+      && q('[data-diary-date="2026-09-28"] .food-v3__day-cal')?.textContent === '160')
+    check('unfinished day has amber half-circle while unlogged day has red X',
+      Boolean(q('[data-diary-date="2026-09-29"][data-visual="partial"]'))
+      && Boolean(q('[data-diary-date="2026-09-30"][data-visual="missed"]')))
     check('macro guidance clutter is absent',
       !q('.food-v2__macro-note') && !q('.food-v2__macro-card .food-v2__caption'))
     check('beach card has a real photo background and pace state',
@@ -71,6 +80,9 @@
     check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)
     check('the calorie hero updates on the same screen', /1,040/.test(q('.food-v2__energy')?.textContent ?? ''), q('.food-v2__energy')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
+    check('meal timeline groups existing entries by time of day',
+      Boolean(q('[data-meal-group]')) && Boolean(q('.nutrition-timeline__heading'))
+      && Boolean(q('[data-meal-group] .nutrition-entry')))
     const lookup = q('.food-v3__search-input')
     type(lookup, 'Turkey sandwich')
     check('new meals are immediately searchable', Boolean(q('[data-food="Turkey sandwich"]')))

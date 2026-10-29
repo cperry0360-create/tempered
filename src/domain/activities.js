@@ -14,7 +14,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
   alcohol_free: { field: 'alcoholFree', entry: 'mark' },
   sauna: { field: 'saunaLogged', entry: 'mark' },
   body_metrics: { field: 'bodyMetricsLogged', entry: 'number', mode: 'replace', stores: 'bodyMetrics' },
-  waist_measurement: { field: 'waistInches', entry: 'number', mode: 'replace' },
+  waist_measurement: { field: 'waistInches', entry: 'number', mode: 'replace', unscored: true },
   mobility: { field: 'mobilityMinutes', entry: 'number', mode: 'add' },
   read: { field: 'readingMinutes', entry: 'number', mode: 'add' },
   study: { field: 'studyMinutes', entry: 'number', mode: 'add' },

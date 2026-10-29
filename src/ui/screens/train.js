@@ -266,15 +266,22 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
       el('span.train-r4__eyebrow', { text: 'CURRENT PRESCRIPTION' }),
       el('h2', { text: 'Planned Sessions' }),
       el('div.train-r4__rows', {}, active.program.days.map((day) =>
-        el('button.train-r4__row.train-r4__session-row', {
-          type: 'button', dataset: { programday: day.id },
-          onclick: () => { selectedProgramDay = day; render() },
-        }, [
-          el('span.train-r4__row-copy', {}, [
-            el('strong', { text: day.name }),
-            el('small', { text: `${day.exercises?.length ?? 0} exercises · ${(day.exercises ?? []).reduce((n, slot) => n + slot.sets, 0)} sets · preview` }),
+        el('div.train-r4__session-entry', {}, [
+          el('button.train-r4__row.train-r4__session-row', {
+            type: 'button', dataset: { previewDay: day.id },
+            onclick: () => { selectedProgramDay = day; render() },
+          }, [
+            el('span.train-r4__row-copy', {}, [
+              el('strong', { text: day.name }),
+              el('small', { text: `${day.exercises?.length ?? 0} exercises · ${(day.exercises ?? []).reduce((n, slot) => n + slot.sets, 0)} sets · Preview` }),
+            ]),
+            chevron(),
           ]),
-          chevron(),
+          el('button.train-r4__quick-start', {
+            type: 'button', dataset: { programday: day.id },
+            'aria-label': 'Start ' + day.name,
+            onclick: () => onStart({ programDay: day }),
+          }, ['Start']),
         ]))),
     ])
   }

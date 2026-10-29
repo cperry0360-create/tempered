@@ -362,7 +362,8 @@ export function createFuelScreen({ storage, daily, clock }) {
       el('p.food-v3__search-empty', { text: foodQuery.trim()
         ? 'No previously logged food found.' : 'Your logged foods will appear here.' }),
       foodQuery.trim() && el('button.fuel-food__more', {
-        type: 'button', onclick: () => startNewMeal(foodQuery.trim()),
+        type: 'button', dataset: { foodNew: foodQuery.trim() },
+        onclick: () => startNewMeal(foodQuery.trim()),
       }, ['Add "' + foodQuery.trim() + '" as a new food']),
     ].filter(Boolean)
     return [

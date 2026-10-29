@@ -276,21 +276,44 @@ export function createFuelScreen({ storage, daily, clock }) {
     const today = Date.parse(clock.today() + 'T12:00:00Z')
     const end = Date.parse('2026-11-26T12:00:00Z')
     const start = Date.parse('2026-11-02T12:00:00Z')
+    if (today > end + 86400000 || today < start - 14 * 86400000) return null
     const days = Math.max(0, Math.ceil((end - today) / 86400000))
     const progress = Math.max(0, Math.min(100, Math.round((today - start) / (end - start) * 100)))
-    if (today > end + 86400000 || today < start - 14 * 86400000) return null
-    return el('section.food-v2__beach', { 'aria-label': 'Thanksgiving Beach Cut' }, [
-      el('div', {}, [
-        el('span.food-v2__eyebrow', { text: 'THANKSGIVING BEACH CUT' }),
-        el('strong', { text: days + (days === 1 ? ' day to go' : ' days to go') }),
-        el('small', { text: 'Keep strength · steady nutrition' }),
+    const weights = model.days
+      .filter(day => day.date <= clock.today() && day.date >= '2026-10-16'
+        && Number.isFinite(day.bodyMetrics?.weight) && day.bodyMetrics.weight > 0)
+      .sort((left, right) => left.date.localeCompare(right.date))
+    let pace = 'Trend pending'
+    let detail = 'Log weight to see your trend'
+    if (weights.length >= 4) {
+      const first = weights.slice(0, 2), last = weights.slice(-2)
+      const span = (Date.parse(last.at(-1).date + 'T12:00:00Z')
+        - Date.parse(first[0].date + 'T12:00:00Z')) / 86400000
+      if (span >= 7) {
+        const firstMean = first.reduce((sum, row) => sum + row.bodyMetrics.weight, 0) / first.length
+        const lastMean = last.reduce((sum, row) => sum + row.bodyMetrics.weight, 0) / last.length
+        const lossPerWeek = (firstMean - lastMean) * 7 / span
+        pace = lossPerWeek >= 0.4 && lossPerWeek <= 1.4 ? 'On track'
+          : lossPerWeek > 1.4 ? 'Losing too quickly' : 'Review pace'
+        detail = 'About ' + Math.abs(lossPerWeek).toFixed(1)
+          + ' lb/week ' + (lossPerWeek >= 0 ? 'down' : 'up')
+      }
+    }
+    return el('section.food-v2__beach.food-v3__beach', {
+      'aria-label': 'Thanksgiving Beach Cut — Moon Palace, Cancún inspiration',
+    }, [
+      el('div.food-v3__beach-content', {}, [
+        el('span.food-v3__beach-eyebrow', { text: 'CANCÚN · BEACH CUT' }),
+        el('strong', { text: String(days) }),
+        el('span.food-v3__beach-days', { text: days === 1 ? 'day to go' : 'days to go' }),
+        el('span.food-v3__beach-status', { dataset: { pace: pace.toLowerCase().replace(/[^a-z]+/g, '-') }, text: pace }),
+        el('small.food-v3__beach-detail', { text: detail }),
       ]),
-      el('div.food-v2__beach-progress', { role: 'progressbar',
-        'aria-label': 'Days through Beach Cut',
-        'aria-valuemin': '0', 'aria-valuemax': '100',
-        'aria-valuenow': String(progress) }, [
-        el('span', { style: 'width:' + progress + '%' }),
-      ]),
+      el('div.food-v2__beach-progress', {
+        role: 'progressbar', 'aria-label': 'Beach Cut time elapsed',
+        'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(progress),
+      }, [el('span', { style: 'width:' + progress + '%' })]),
+      el('span.food-v3__beach-attribution', { text: 'Moon Palace beach photo · Meg von Haartman / Unsplash' }),
     ])
   }
 

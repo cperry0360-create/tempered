@@ -294,3 +294,49 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
 @media (prefers-reduced-motion:reduce) {
   html[data-layout="duo"] .tabbar__tab { transition:none; }
 }
+
+/* Duo program editor: two real working panes, not a 560px phone form. */
+.program-builder__workspace { min-width:0; display:grid; gap:15px; align-items:start; }
+.program-builder__sidebar, .program-builder__editor { min-width:0; display:grid; gap:15px; align-content:start; }
+.program-builder__card { min-width:0; border:1px solid var(--hairline); border-radius:19px; background:var(--surface-1); box-shadow:var(--ui-shadow); }
+.program-builder__day { border:1px solid transparent; background:var(--surface-2); }
+.program-builder__day[data-selected="true"] {
+  border-color:var(--train-ink);
+  background:color-mix(in srgb,var(--train) 11%,var(--surface-1));
+  color:var(--text-1);
+}
+.program-builder__exercise { background:var(--surface-2); border:1px solid var(--hairline); }
+.program-builder__actions { gap:12px; }
+.program-builder__actions .button { border-radius:12px; }
+.app__body > .program-builder { min-height:0; overflow:visible; }
+@media (min-width:740px) {
+  html[data-layout="duo"] .program-builder {
+    width:100%;
+    max-width:none;
+    padding:calc(var(--duo-inset-top) + 12px) clamp(12px,2vw,24px)
+      max(20px,var(--duo-inset-bottom));
+  }
+  html[data-layout="duo"] .program-builder__inner {
+    width:min(100%,1050px); max-width:none;
+    gap:12px; margin-inline:auto;
+  }
+  html[data-layout="duo"] .program-builder__back { min-height:44px; }
+  html[data-layout="duo"] .program-builder__eyebrow { margin:0; }
+  html[data-layout="duo"] .program-builder__title {
+    font-size:clamp(27px,3.4vw,39px);
+    line-height:1.08;
+    letter-spacing:-.045em;
+  }
+  html[data-layout="duo"] .program-builder__copy { font-size:13px; line-height:1.4; }
+  html[data-layout="duo"] .program-builder__workspace {
+    grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);
+    gap:16px;
+  }
+  html[data-layout="duo"] .program-builder__sidebar,
+  html[data-layout="duo"] .program-builder__editor { gap:14px; }
+  html[data-layout="duo"] .program-builder__days { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  html[data-layout="duo"] .program-builder__card { padding:16px; }
+  html[data-layout="duo"] .program-builder__exercise-list {
+    max-height:440px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin;
+  }
+}

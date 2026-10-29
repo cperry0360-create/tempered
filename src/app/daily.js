@@ -59,6 +59,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
 
   async function proteinGoalFor(date, candidateDay = null) {
     const profile = await storage.get('profile', 'profile')
+    const override = Number(profile?.proteinTargetGrams)
+    if (Number.isFinite(override) && override >= 1 && override <= 500) return Math.round(override)
     let weight = candidateDay?.bodyMetrics?.weight
     if (!(typeof weight === 'number' && Number.isFinite(weight) && weight > 0)) {
       const latest = (await storage.getAll('dayLogs'))
@@ -81,6 +83,15 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       proteinGoalGrams: goal,
       proteinTargetMet: proteinGoalMet(day.proteinGrams, goal),
     }
+  }
+
+  async function setProteinTargetGrams(value) {
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    const parsed = Number(value)
+    const target = String(value ?? '').trim() !== '' && Number.isFinite(parsed)
+      && parsed >= 1 && parsed <= 500 ? Math.round(parsed) : null
+    await storage.put('profile', { ...profile, proteinTargetGrams: target })
+    return target
   }
 
   async function calorieTarget() {
@@ -325,7 +336,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       logged: isLogged(activity, day),
     }
     if (activity.id === 'protein_target') {
-      return { ...decorated, dailyCap: day.proteinGoalGrams ?? dynamicProteinGoal ?? null }
+      return { ...decorated, dailyCap: dynamicProteinGoal ?? day.proteinGoalGrams ?? null }
     }
     if (activity.id === 'calories_logged') {
       return { ...decorated, dailyCap: dynamicCalorieTarget ?? null }
@@ -399,6 +410,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   return {
     activities, today, forDate, week, log, logAt, settle, dayLog, sample,
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
+    setProteinTargetGrams,
     stepTarget, setStepTarget,
     quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition,
   }

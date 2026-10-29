@@ -43,7 +43,7 @@
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')
     localStorage.clear()
-    const clock = fixedClock(view === 'progress-cut'
+    const clock = fixedClock(['progress-cut','fuel','fuel-entry','fuel-meals'].includes(view)
       ? new Date(2026, 9, 29, 12, 0, 0)
       : (view === 'today' || view.startsWith('session'))
         ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
@@ -152,49 +152,51 @@
 
     async function seedFuelReference(storage) {
       await storage.put('profile', {
-        id: 'profile',
-        setupComplete: true,
-        calorieTarget: 2100,
+        id: 'profile', setupComplete: true,
+        calorieTarget: 2250, proteinTargetGrams: 170,
+        nutritionReviewStartOn: '2026-10-26',
       })
-      await storage.put('dayLogs', {
-        date: '2026-09-07',
-        calories: 0,
-        proteinGrams: 0,
-        carbsGrams: 0,
-        fatGrams: 0,
-        fiberGrams: 0,
-        waterOz: 0,
-      })
-      const recent = [
-        ['2026-09-06', 'Greek yogurt + berries', 220, 20, 28, 3, 5],
-        ['2026-09-05', 'Chicken rice bowl', 640, 45, 72, 18, 6],
-        ['2026-09-04', 'Protein shake', 160, 30, 6, 2, 1],
+      const values = [
+        ['2026-10-26', 'Greek yogurt + berries', 2075, 165, 'complete'],
+        ['2026-10-27', 'Chicken rice bowl', 1825, 148, 'partial'],
+        ['2026-10-29', 'Protein shake', 340, 48, 'partial'],
       ]
-      for (const [date, description, calories, proteinGrams, carbsGrams, fatGrams, fiberGrams] of recent) {
+      for (const [date, description, calories, proteinGrams, state] of values) {
+        const ingredients = date === '2026-10-29'
+          ? [
+              ['Protein shake', 340, 48, 18, 6, 2, '09:30'],
+              ['Chicken and rice bowl', 680, 52, 62, 20, 5, '12:30'],
+              ['Greek yogurt with berries', 320, 26, 33, 5, 4, '15:45'],
+            ]
+          : [[description, calories, proteinGrams, 48, 18, 5, '12:00']]
+        const entries = ingredients.map(([name,kcal,protein,carbs,fat,fiber,time],i) => ({
+          id: 'visual-' + date + '-' + i,
+          loggedAt: date + 'T' + time + ':00.000Z',
+          source: 'manual',
+          description: name,
+          calories: kcal, proteinGrams: protein,
+          carbsGrams: carbs, fatGrams: fat, fiberGrams: fiber,
+        }))
+        const totals = {
+          calories: entries.reduce((n,e) => n + e.calories, 0),
+          proteinGrams: entries.reduce((n,e) => n + e.proteinGrams, 0),
+          carbsGrams: entries.reduce((n,e) => n + e.carbsGrams, 0),
+          fatGrams: entries.reduce((n,e) => n + e.fatGrams, 0),
+          fiberGrams: entries.reduce((n,e) => n + e.fiberGrams, 0),
+        }
         await storage.put('dayLogs', {
-          date,
+          date, ...totals,
           nutritionLedgerVersion: 1,
-          nutritionCarryover: {},
-          nutritionEntries: [{
-            id: `visual-${date}`,
-            loggedAt: `${date}T12:00:00.000Z`,
-            source: 'manual',
-            description,
-            calories,
-            proteinGrams,
-            carbsGrams,
-            fatGrams,
-            fiberGrams,
-          }],
-          calories,
-          proteinGrams,
-          carbsGrams,
-          fatGrams,
-          fiberGrams,
-          nutritionLogged: true,
-          caloriesLogged: true,
+          nutritionCarryover: {}, nutritionEntries: entries,
+          nutritionLogged: true, caloriesLogged: true,
+          nutritionStatus: state,
+          ...(date === '2026-10-29'
+            ? { waterOz: 60, bodyMetrics: { weight: 166.8 } } : {}),
         })
       }
+      await storage.put('dayLogs', {
+        date:'2026-10-23', bodyMetrics:{weight:167.8},
+      })
     }
 
     async function seedSessionReference(storage) {

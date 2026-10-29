@@ -77,6 +77,9 @@ if (params.has('fixture')) {
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
+      if (!wide) check(label + ' cover Food cards use the full pane width',
+        Math.abs(r('.fuel-r4__energy').width - r('.food-v2__macro-card').width) <= 2
+        && Math.abs(r('.food-v2__macro-card').width - r('.food-v2__small-row').width) <= 2)
       if (wide) {
         check(label + ' Food search begins beside calorie hero',
           close(r('.food-v3__search').top, r('.fuel-r4__energy').top))

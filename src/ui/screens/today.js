@@ -1086,7 +1086,7 @@ export function createTodayScreen({
     return el('section.today-card.today-nutrition-reminder', { dataset: { nutritionReminderToday: yesterday } }, [
       el('div.today-nutrition-reminder__copy', {}, [
         el('strong', { text: 'Yesterday’s food log is still open' }),
-        el('span', { text: 'Review any missing food, then close the day.' }),
+        el('span', { text: 'Review anything you have not logged, then close the day.' }),
       ]),
       el('div.today-nutrition-reminder__actions', {}, [
         el('button', { type: 'button', dataset: { reviewNutritionDate: yesterday },

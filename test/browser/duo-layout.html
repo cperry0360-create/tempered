@@ -61,13 +61,37 @@ if (params.has('fixture')) {
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
-      if(wide) check(label + ' Fuel details begin beside energy', close(r('.fuel-r4__foods').top,r('.fuel-r4__energy').top))
+      if (wide) {
+        check(label + ' Fuel details begin beside energy',
+          close(r('.fuel-r4__foods').top, r('.fuel-r4__energy').top))
+        check(label + ' energy and Water share the left pane',
+          q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
+          && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))
+          && q('.fuel-r4__details')?.contains(q('.fuel-r4__meal-panel'))
+          && r('.fuel-r4__water').right <= r('.fuel-r4__foods').left)
+        const details = q('.fuel-r4__details')
+        details.style.paddingBottom = '1500px'
+        q('.app__body').scrollTop = 650
+        await settle()
+        check(label + ' left overview stays visible during long meal log scrolling',
+          r('.fuel-r4__overview').top >= -2 &&
+          r('.fuel-r4__overview').top <= top + 44 &&
+          r('.fuel-r4__energy').bottom > 0,
+          JSON.stringify({overview: r('.fuel-r4__overview').top, scroll: q('.app__body').scrollTop}))
+      }
     }
     for (const width of [390,430]) {
       const d = await load(width,844,'view=today'), w = frame.contentWindow
       const cards = [...d.querySelectorAll('.today-session-card,.today-readiness,.today-week,.today-fuel-card,.today-daily-log')]
       check(width + ' ordinary phone keeps its card order',cards.every((node,i) => !i || rect(node).top > rect(cards[i-1]).top))
       check(width + ' ordinary phone keeps bottom navigation',close(rect(d.querySelector('.tabbar')).width,width) && w.getComputedStyle(d.querySelector('.tabbar')).flexDirection !== 'column')
+      d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
+      const f = selector => rect(d.querySelector(selector))
+      check(width + ' ordinary phone still puts Water beneath meals',
+        f('.fuel-r4__energy').top < f('.fuel-r4__foods').top
+        && f('.fuel-r4__water').top > f('.fuel-r4__meal-panel').top)
+      check(width + ' ordinary phone Fuel does not overflow',
+        d.querySelector('.app__body').scrollWidth <= d.querySelector('.app__body').clientWidth + 1)
     }
   } catch(error) {check('Harness completed',false,error.stack)}
   frame.remove()

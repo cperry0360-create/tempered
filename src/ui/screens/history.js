@@ -717,7 +717,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const proteinLogs = last7.map((day) => day.proteinGrams).filter((v) => Number.isFinite(v) && v > 0)
     const latest = dayLogs.filter((day) => day.date <= today && Number.isFinite(day.bodyMetrics?.weight))
       .sort((a, b) => b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
-    const metric = (name, value, help) => el('div.progress-cut__metric', {}, [
+    const metric = (name, value, help) => el('div.progress-cut__metric', { style: 'display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:12px;box-shadow:inset 0 0 0 1px currentColor;min-width:0' }, [
       el('span', { text: name }), el('strong', { text: value }), el('small', { text: help }),
     ])
     const format = (value, unit, digits = 0) =>
@@ -725,8 +725,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return el('section.progress-panel.progress-cut', { dataset: { dashboard: 'beach-cut' } }, [
       el('small.progress-cut__eyebrow', { text: 'BEACH CUT · PHASE 2' }),
       el('h2.progress-panel__title', { text: daysLeft + ' days to Thanksgiving' }),
-      el('p.progress-footnote', { text: 'Keep strength. Reduce body fat gradually. Missing logs are unknown, not failed habits.' }),
-      el('div.progress-cut__metrics', {}, [
+      el('p.progress-footnote', { text: 'Keep strength. Reduce body fat gradually. Unlogged fields are unknown, not proof of poor adherence.' }),
+      el('div.progress-cut__metrics', { style: 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0' }, [
         metric('7-day weight average', format(average(weighIns), ' lb', 1),
           weighIns.length + ' / 7 weigh-ins'),
         metric('Latest weight', Number.isFinite(latest) ? numberText(latest, 1) + ' lb' : '—',

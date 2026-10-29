@@ -56,7 +56,7 @@ export function downloadExport(exportDocument, clock, dom = globalThis.document)
   } finally {
     // Revoked on the next tick: revoking synchronously can cancel the download
     // before the browser has finished reading the blob.
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
   }
   return filename
 }
@@ -76,4 +76,31 @@ export async function readFileAsText(file) {
     reader.onerror = () => reject(reader.error ?? new Error('Could not read that file'))
     reader.readAsText(file)
   })
+}
+
+/**
+ * iOS Home Screen apps need a separate user tap after IndexedDB preparation.
+ * The Share Sheet or download is started synchronously on that tap.
+ */
+export function savePreparedExport(prepared, clock, host = globalThis) {
+  if (typeof prepared?.json !== 'string') throw new Error('Prepare the file before saving.')
+  const filename = prepared.filename ?? exportFilename(clock)
+  const content = new Blob([prepared.json], { type: EXPORT_MIME })
+  const nav = host.navigator
+  if (typeof host.File === 'function' && typeof nav?.share === 'function') {
+    const file = new host.File([content], filename, { type: EXPORT_MIME })
+    if (typeof nav.canShare !== 'function' || nav.canShare({ files: [file] })) {
+      return Promise.resolve(nav.share({ files: [file], title: 'Tempered export' }))
+        .then(() => ({ mode: 'share', filename }))
+    }
+  }
+  const url = host.URL.createObjectURL(content)
+  const link = host.document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.rel = 'noopener'
+  host.document.body.append(link)
+  try { link.click() }
+  finally { link.remove(); setTimeout(() => host.URL.revokeObjectURL(url), 60_000) }
+  return Promise.resolve({ mode: 'download', filename })
 }

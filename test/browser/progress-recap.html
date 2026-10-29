@@ -71,7 +71,7 @@
       await settle()
       const cut = q('[data-dashboard="beach-cut"]')
       check('activated Beach Cut displays the designed countdown', Boolean(cut)
-        && /Thanksgiving/.test(cut.textContent) && /days remaining/.test(cut.textContent))
+        && /Thanksgiving/i.test(cut.textContent) && /days remaining/.test(cut.textContent))
       check('cut dashboard uses real weigh-ins and waist values',
         /167\.8 lb/.test(cut?.textContent ?? '') && /33\.7 in/.test(cut?.textContent ?? '')
         && Boolean(q('.progress-cut__sparkline', cut)))

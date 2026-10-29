@@ -69,6 +69,7 @@ export const MOBILITY_ROUTINES = Object.freeze([
 
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
+  if (activity.id === 'waist_measurement') return 'in'
   return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal' }[activity.unit] ?? ''
 }
 
@@ -219,7 +220,7 @@ export function createTodayScreen({
   function statusFor(activity, weekly = null) {
     if (weekly) {
       const suffix = weekly.loggedToday && !weekly.complete ? ' · done today' : ''
-      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} this week${suffix}`
+      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} ${weekly.cadence === 'biweekly' ? 'this fortnight' : 'this week'}${suffix}`
     }
     if (hasDailyGoal(activity)) return dailyGoalLabel(activity)
     if (activity.logged) return valueLabel(activity, activity.value)

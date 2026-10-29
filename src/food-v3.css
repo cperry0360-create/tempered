@@ -231,3 +231,19 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
   }
   .food-v3__diary .food-v3__day-cal { font-size:8px; }
 }
+
+/* One search + three genuinely useful actions; repeated foods live directly beneath. */
+.screen--fuel-r4 .food-v2__quick-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.screen--fuel-r4 .food-v3__backlog {
+  background:transparent; border:0; box-shadow:none; padding:0;
+}
+.screen--fuel-r4 .food-v3__review-older {
+  font-size:12px; text-align:left; padding:8px;
+  color:var(--food-v2-muted);
+}
+@media (min-width:740px) {
+  html[data-layout="duo"] .screen--fuel-r4 .food-v2__quick-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  html[data-layout="duo"] .screen--fuel-r4 .food-v2__header-add { display:none; }
+}

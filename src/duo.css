@@ -402,9 +402,19 @@ html[data-layout="duo"] .app__body > .screen--session[data-half-fold="true"] {
   html[data-layout="duo"] .train-r4__program .train-r4__row { color: var(--cut-ink); border-color: var(--cut-outline); }
   html[data-layout="duo"] .train-r4__program .train-r4__segments span[data-filled="true"] { background: var(--cut-blue); }
   html[data-layout="duo"] .train-r4__column--primary,
-  html[data-layout="duo"] .train-r4__column--secondary { gap: 12px; }
+  html[data-layout="duo"] .train-r4__column--secondary { gap: 16px; }
   html[data-layout="duo"] .train-r4__list-card, html[data-layout="duo"] .train-r4__plan-preview { border-radius: 18px; }
   html[data-layout="duo"] .train-r4__plan-preview { position: sticky; top: calc(var(--duo-inset-top) + 10px); max-height: calc(100dvh - var(--duo-inset-top) - 36px); overflow-y: auto; }
   html[data-layout="duo"] .progress-cut__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   html[data-layout="duo"] .progress-cut__metric-value { font-size: clamp(17px, 2.1vw, 25px); }
 }
+
+/* Preview and Start are separate tap targets; no ambiguity on program rows. */
+.train-r4__session-entry { display: grid; grid-template-columns: minmax(0,1fr) 66px; gap: 6px; align-items: center; }
+.train-r4__session-entry .train-r4__session-row { min-width: 0; text-align: left; }
+.train-r4__quick-start {
+  border: 0; border-radius: 11px; background: var(--surface-2);
+  color: var(--text-1); min-height: 44px; font: 650 12px/1 var(--font-ui);
+  cursor: pointer;
+}
+.train-r4__quick-start:focus-visible { outline: 3px solid var(--train); outline-offset: 2px; }

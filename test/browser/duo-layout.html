@@ -49,8 +49,12 @@ if (params.has('fixture')) {
       const d = await load(width,height,`layout=duo&right=${right}&top=${top}`), w = frame.contentWindow
       const q = s => d.querySelector(s), r = s => rect(q(s)), label = `${width}×${height} right ${right}`
       check(label + ' rail shares the canvas', w.getComputedStyle(q('.tabbar')).backgroundColor === w.getComputedStyle(q('#app')).backgroundColor)
-      check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, (width < 740 ? 64 : 72) + right))
+      check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
       check(label + ' content stops at the rail', close(r('.app__body').right, r('.tabbar').left))
+      check(label + ' navigation uses compact, accessible icons',
+        q('.tabbar__tab[aria-current="page"]') !== null
+        && r('.tabbar').width <= 48 + right + 1
+        && w.getComputedStyle(q('.tabbar__tab span')).clipPath === 'inset(50%)')
       check(label + ' no horizontal overflow', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       const wide = width >= 740
       check(label + ' daily log uses its own column only when expanded', wide ? close(r('.today-daily-log').top, r('.today-session-card').top) && r('.today-daily-log').left > r('.today-session-card').right : r('.today-daily-log').top > r('.today-fuel-card').top)

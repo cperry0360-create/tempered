@@ -91,6 +91,17 @@ if (params.has('fixture')) {
           r('.fuel-r4__energy').bottom > 0,
           JSON.stringify({overview: r('.fuel-r4__overview').top, scroll: q('.app__body').scrollTop}))
       }
+      await w.tempered.app.show('settings'); await settle()
+      q('[data-action="program-builder"]')?.click(); await new Promise(resolve => setTimeout(resolve,180)); await settle()
+      check(label + ' Program Builder exposes independent editing panes',
+        Boolean(q('.program-builder__sidebar')) && Boolean(q('.program-builder__editor')))
+      if (wide) check(label + ' Program Builder uses both Duo columns',
+        r('.program-builder__sidebar').right < r('.program-builder__editor').left
+        && r('.program-builder__editor').width >= 270)
+      else check(label + ' Program Builder stacks on narrow viewports',
+        r('.program-builder__editor').top >= r('.program-builder__sidebar').bottom)
+      q('[data-action="builder-back"]')?.click(); await settle()
+      check(label + ' Builder closes back to Settings', Boolean(q('[data-section="program-library"]')))
     }
     for (const width of [390,430]) {
       const d = await load(width,844,'view=today'), w = frame.contentWindow

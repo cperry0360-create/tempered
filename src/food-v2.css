@@ -65,8 +65,8 @@
   letter-spacing:-.055em; line-height:1; font-variant-numeric:tabular-nums;
 }
 .screen--fuel-r4 .food-v2__kcal {
-  color:var(--food-v2-text) !important; font-size:13px !important;
-  font-weight:750; letter-spacing:0 !important;
+  color:var(--food-v2-text); font-size:13px;
+  font-weight:750; letter-spacing:0;
 }
 .screen--fuel-r4 .food-v2__budget-heading > div:first-child small { color:var(--food-v2-muted); font-size:12px; }
 .screen--fuel-r4 .food-v2__budget-heading .fuel-r4__ring {

@@ -38,6 +38,7 @@ test('every mapped field is one the XP engine actually reads', () => {
     'bodyMetricsLogged',
   ])
   for (const [id, spec] of Object.entries(ACTIVITY_FIELDS)) {
+    if (spec.unscored === true) continue // Body circumferences are recorded, not rewarded.
     const scoredField = spec.scoredField ?? spec.trackedField ?? spec.field
     assert.ok(engineFields.has(scoredField),
       `${id} resolves to ${scoredField}, which nothing scores`)

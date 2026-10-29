@@ -1,20 +1,8 @@
 /* Food V2 — approved dashboard-first dual-screen concept.
    This stylesheet belongs to Food only. It reuses the current diary/form
    implementation and actual logged nutrition values; no data migration. */
-:root {
-  --food-v2-deep:#061424;
-  --food-v2-blue:#359DF3;
-  --food-v2-panel:#0D2238;
-  --food-v2-panel-2:#102A43;
-  --food-v2-line:#274560;
-  --food-v2-muted:#A5BDD0;
-  --food-v2-protein:#F36A9C;
-  --food-v2-carbs:#F4B84D;
-  --food-v2-fat:#28C8C5;
-  --food-v2-fiber:#72D994;
-}
 .screen--fuel-r4 {
-  --food-v2-text:#F5F9FF;
+
   --food-v2-shadow:0 14px 33px color-mix(in srgb,var(--food-v2-deep) 30%,transparent);
   gap:14px; min-width:0;
 }
@@ -93,7 +81,7 @@
 .food-v2__energy-footer > span { color:var(--food-v2-muted); font-size:11px; text-align:right; }
 .screen--fuel-r4 .food-v2__energy-footer .fuel-r4__budget-track { background:var(--food-v2-line); height:8px; }
 .screen--fuel-r4 .food-v2__energy-footer .fuel-r4__budget-track span {
-  background:linear-gradient(90deg,var(--food-v2-blue),#76C3FF);
+  background:linear-gradient(90deg,var(--food-v2-blue),var(--food-v2-blue-light));
 }
 .screen--fuel-r4 .food-v2__macro-card { display:grid; gap:12px; }
 .food-v2__macro-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; min-width:0; }
@@ -130,7 +118,7 @@
 .food-v2__beach {
   min-width:0; display:flex; flex-direction:column; justify-content:space-between; gap:10px;
   border-radius:19px; border:1px solid var(--food-v2-line);
-  background:radial-gradient(ellipse at 85% 80%,#207991 0,transparent 60%),linear-gradient(145deg,#16436B,var(--food-v2-deep) 85%);
+  background:radial-gradient(ellipse at 85% 80%,var(--food-v2-water-glow) 0,transparent 60%),linear-gradient(145deg,var(--food-v2-beach-base),var(--food-v2-deep) 85%);
   padding:14px; color:var(--food-v2-text);
 }
 .food-v2__beach > div:first-child { display:grid; gap:7px; }
@@ -165,7 +153,7 @@
   font:inherit; cursor:pointer;
 }
 .food-v2__action[data-food-action="add"] {
-  background:linear-gradient(125deg,#1266AF,#338EE2); border-color:var(--food-v2-blue);
+  background:linear-gradient(125deg,var(--food-v2-action-base),var(--food-v2-action-bright)); border-color:var(--food-v2-blue);
 }
 .food-v2__action-glyph { display:grid; place-items:center; flex:0 0 32px; width:32px; height:32px; border-radius:11px; background:color-mix(in srgb,var(--food-v2-blue) 22%,var(--food-v2-deep)); }
 .food-v2__action-glyph .icon { width:19px; height:19px; color:var(--food-v2-text); }
@@ -181,7 +169,7 @@
   padding:8px; cursor:pointer;
 }
 .food-v2__recent-graphic {
-  background:radial-gradient(circle at 25% 20%,#1D597A,var(--food-v2-deep));
+  background:radial-gradient(circle at 25% 20%,var(--food-v2-recent-base),var(--food-v2-deep));
   aspect-ratio:1.7; border-radius:8px; display:grid; place-items:center;
   font-size:20px; color:var(--food-v2-blue);
 }

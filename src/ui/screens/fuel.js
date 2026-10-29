@@ -188,24 +188,24 @@ export function createFuelScreen({ storage, daily, clock }) {
     replace(root, [
       el('h1.screen__title', { text: 'Fuel' }),
       el('div.fuel-r4__dashboard', {}, [
-        el('section.fuel-r4__card.fuel-r4__energy', {}, [
-          energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
-          el('div.fuel-r4__protein', {}, [
-            el('span', { text: `Protein ${Math.round(protein)} / ${Math.round(proteinGoal)} g` }),
-            el('div.fuel-r4__bar', {}, [el('i', { style: `width:${proteinProgress}%` })]),
+        // One persistent overview pane on an unfolded Duo; ordinary phones
+        // still show a single natural scrolling column.
+        el('div.fuel-r4__overview', {}, [
+          el('section.fuel-r4__card.fuel-r4__energy', {}, [
+            energyRing(energyProgress, Math.max(0, calorieGoal - calories)),
+            el('div.fuel-r4__protein', {}, [
+              el('span', { text: `Protein ${Math.round(protein)} / ${Math.round(proteinGoal)} g` }),
+              el('div.fuel-r4__bar', {}, [el('i', { style: `width:${proteinProgress}%` })]),
+            ]),
+            el('div.fuel-r4__macros', {}, [
+              ['Carbs', ledger.totals.carbs],
+              ['Fat', ledger.totals.fat],
+              ['Fiber', ledger.totals.fiber],
+            ].map(([label, value]) => el('div', {}, [
+              el('span', { text: label }),
+              el('strong', { text: `${Math.round(value)} g` }),
+            ]))),
           ]),
-          el('div.fuel-r4__macros', {}, [
-            ['Carbs', ledger.totals.carbs],
-            ['Fat', ledger.totals.fat],
-            ['Fiber', ledger.totals.fiber],
-          ].map(([label, value]) => el('div', {}, [
-            el('span', { text: label }),
-            el('strong', { text: `${Math.round(value)} g` }),
-          ]))),
-        ]),
-        el('div.fuel-r4__details', {}, [
-          foodsCard(),
-          mealPanel,
           el('section.fuel-r4__card.fuel-r4__water', {}, [
             el('h2', { text: 'Water' }),
             el('span.fuel-r4__water-total', { text: `${Math.round(water)} / ${Math.round(waterGoal)} oz` }),
@@ -215,6 +215,10 @@ export function createFuelScreen({ storage, daily, clock }) {
                 type: 'button', onclick: () => addWater(amount),
               }, [`+${amount}`]))),
           ]),
+        ]),
+        el('div.fuel-r4__details', {}, [
+          foodsCard(),
+          mealPanel,
         ]),
       ]),
     ])

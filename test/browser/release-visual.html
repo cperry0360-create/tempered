@@ -41,13 +41,16 @@
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'
     const mount = document.querySelector('#app')
     localStorage.clear()
-    const clock = fixedClock((view === 'today' || view.startsWith('session')) ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
+    const clock = fixedClock(view === 'progress-cut'
+      ? new Date(2026, 9, 29, 12, 0, 0)
+      : (view === 'today' || view.startsWith('session'))
+        ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
       'weekly-recap': 'today', 'weekly-recap-details': 'today', 'weekly-recap-daily': 'today', 'weekly-recap-away': 'today', 'weekly-recap-quiet': 'today',
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', 'train-custom-exercise': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
-      'progress-habits': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
+      'progress-habits': 'history', 'progress-cut': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
     }
 
@@ -454,6 +457,27 @@
         // Retired Shortcut UI is not mounted in production Settings.
         if (view.startsWith('progress')) {
           await seedProgressReference(storage)
+          if (view === 'progress-cut') {
+            for (const row of await storage.getAll('programState')) {
+              await storage.put('programState', { ...row, active: false })
+            }
+            await storage.put('programState', {
+              programId: 'beach-cut-2026', active: true,
+              startedOn: '2026-10-26', revisionId: 'beach-cut-2026:r1',
+            })
+            for (const [date, weight, waist, calories, protein] of [
+              ['2026-10-27', 167.2, 34.1, 2290, 169],
+              ['2026-10-28', 166.8, 33.9, 2220, 173],
+              ['2026-10-29', 166.7, 33.8, 2200, 171],
+            ]) {
+              await storage.put('dayLogs', {
+                date, bodyMetrics: { weight }, bodyMetricsLogged: true, waistInches: waist,
+                bodyMeasurements: { chest: 39.2, hips: 37.1, arm: 13.2, thigh: 21.7 },
+                calories, proteinGrams: protein,
+                caloriesLogged: true, nutritionLogged: true, nutritionStatus: 'complete',
+              })
+            }
+          }
           await selectProgressView(tempered, view)
         } else {
           await tempered.app.show(target)

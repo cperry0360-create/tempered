@@ -6,7 +6,7 @@ import { VERSION, BUILD_DATE } from '../../version.js'
 import { RESET_PHRASE } from '../../app/maintenance.js'
 import { DEFAULT_STEP_TARGET } from '../../app/daily.js'
 import { shortDate } from '../format.js'
-import { downloadExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
+import { savePreparedExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
 import { getDuoLayoutEnabled, setDuoLayoutEnabled } from '../duo-layout.js'
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
@@ -16,6 +16,10 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
   let typed = ''
   let update = null
   let saved = null
+  let preparedExport = null
+  let exportBusy = false
+  let exportMessage = ''
+  let libraryMessage = ''
   let busy = false
   let restorePlan = null
   let restoreName = ''
@@ -42,6 +46,8 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
   async function load() {
     const profile = await storage.get('profile', 'profile')
     const selectedAppearance = await appearance?.getPreference?.() ?? 'system'
+    const savedPrograms = await storage.getAll('programs')
+    const activeId = (await storage.getAll('programState')).find((row) => row.active)?.programId
     const schedule = await daily.activitySchedule()
     const weekStatus = workout ? await workout.weekStatus() : null
     const exerciseTargets = workout ? await workout.exerciseFrequencyTargets() : {}
@@ -121,6 +127,30 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         }, ['Open program builder']),
       ]),
 
+      workout && el('section.card', { dataset: { section: 'program-library' } }, [
+        el('h2.block__title', { text: 'Program library' }),
+        el('p.block__hint', { text: 'Switch programs without deleting anything. Activating a different program starts it at Week 1; all completed workouts stay saved.' }),
+        ...savedPrograms.slice().sort((a,b) => a.name.localeCompare(b.name)).map((program) =>
+          el('div.setting', { dataset: { libraryProgram: program.id } }, [
+            el('span.setting__label', {}, [
+              el('strong', { text: program.name }),
+              el('small', { text: `${program.weeks ?? 1} weeks · ${program.days?.length ?? 0} sessions/week` }),
+            ]),
+            activeId === program.id
+              ? el('span.setting__value', { text: 'Active' })
+              : el('button.setup__cadence', {
+                type: 'button', onclick: async () => {
+                  try {
+                    await workout.activateStoredProgram(program.id)
+                    libraryMessage = program.name + ' activated; your earlier plan and history remain saved.'
+                  } catch (error) { libraryMessage = error?.message ?? 'Activation failed.' }
+                  await load()
+                },
+              }, ['Activate']),
+          ])),
+        libraryMessage && el('p.notice', { text: libraryMessage }),
+      ]),
+
       workout && el('section.card', { dataset: { section: 'away' } }, [
         el('h2.block__title', { text: 'Away mode' }),
         el('p.block__hint', {
@@ -173,7 +203,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
 
       el('section.card', { dataset: { section: 'targets' } }, [
         el('h2.block__title', { text: 'Daily targets' }),
-        el('p.block__hint', { text: 'Protein follows body weight; calories and steps are configurable.' }),
+        el('p.block__hint', { text: 'Set calories, protein and steps. Leave protein blank for your automatic weight-based target.' }),
         el('div.setting', {}, [
           el('span.setting__label', { text: 'Calories' }),
           (() => {
@@ -185,6 +215,22 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               input,
               el('button.setup__cadence', {
                 type: 'button', onclick: async () => { await daily.setCalorieTarget(input.value); await load() },
+              }, ['Save']),
+            ])
+          })(),
+        ]),
+        el('div.setting', {}, [
+          el('span.setting__label', { text: 'Protein (grams)' }),
+          (() => {
+            const input = el('input.entry__value', {
+              type: 'text', inputmode: 'numeric',
+              value: profile?.proteinTargetGrams ?? '', placeholder: 'Auto',
+              'aria-label': 'Daily protein target in grams',
+            })
+            return el('span.setting__value', {}, [
+              input, el('button.setup__cadence', {
+                type: 'button',
+                onclick: async () => { await daily.setProteinTargetGrams(input.value); await load() },
               }, ['Save']),
             ])
           })(),
@@ -275,13 +321,58 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         }),
         el('div.confirm-sheet__actions', {}, [
           el('button.button', {
-            type: 'button', dataset: { action: 'backup' },
+            type: 'button', disabled: exportBusy, dataset: { action: 'backup' },
             onclick: async () => {
-              const file = await maintenance.backup()
-              saved = downloadExport(file.document, clock)
+              exportBusy = true
+              preparedExport = null
+              exportMessage = 'Preparing full backup…'
               await load()
+              try {
+                preparedExport = await maintenance.backup()
+                exportMessage = 'Ready. Tap Share / save JSON to Files.'
+              } catch {
+                exportMessage = 'Could not prepare backup. Your data is unchanged.'
+              } finally { exportBusy = false; await load() }
             },
-          }, [icon('down'), saved ? 'Save again' : 'Save backup']),
+          }, [exportBusy ? 'Preparing…' : 'Prepare full backup']),
+          el('button.button', {
+            type: 'button', disabled: exportBusy, dataset: { action: 'training-export' },
+            onclick: async () => {
+              exportBusy = true
+              preparedExport = null
+              exportMessage = 'Preparing training export…'
+              await load()
+              try {
+                preparedExport = await maintenance.trainingExport()
+                exportMessage = 'Ready. Tap Share / save JSON to Files.'
+              } catch {
+                exportMessage = 'Training export failed. Your data is unchanged.'
+              } finally { exportBusy = false; await load() }
+            },
+          }, ['Prepare training-only JSON']),
+          preparedExport && el('button.button.button--primary', {
+            type: 'button', dataset: { action: 'save-prepared' },
+            onclick: () => {
+              // Start sharing synchronously within this separate user gesture.
+              try {
+                savePreparedExport(preparedExport, clock).then((result) => {
+                  saved = result.filename
+                  exportMessage = result.mode === 'share'
+                    ? 'Share sheet closed. Confirm the JSON is in Files.'
+                    : 'Download started. Look in Files / Downloads.'
+                  load()
+                }).catch((error) => {
+                  exportMessage = error?.name === 'AbortError'
+                    ? 'Share cancelled; prepared file is still ready.'
+                    : 'Sharing failed. Please try again.'
+                  load()
+                })
+              } catch {
+                exportMessage = 'Unable to open file sharing. Your data is unchanged.'
+                load()
+              }
+            },
+          }, ['Share / save JSON']),
           (() => {
             const input = el('input', {
               type: 'file', accept: 'application/json,.json', hidden: true,
@@ -310,7 +401,8 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             ])
           })(),
         ]),
-        saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
+        exportMessage && el('p.notice', { role: 'status', text: exportMessage }),
+        saved && el('p.notice', { dataset: { saved: '' }, text: `Prepared ${saved}.` }),
         restoreNotice && el('p.notice', { dataset: { restoreError: '' }, text: restoreNotice }),
         restorePlan && el('div.notice', { dataset: { restorePreview: '' } }, [
           el('strong', { text: restoreName || 'Tempered backup' }),

@@ -91,13 +91,13 @@
     },
     {
       "id": "waist_measurement",
-      "name": "Waist measurement",
-      "short": "Waist",
+      "name": "Body measurements",
+      "short": "Measurements",
       "attribute": "vitality",
       "daily": false,
       "kind": "derived",
       "unit": "in",
-      "help": "Measure at the same spot, relaxed, once weekly or every two weeks. Optional reminder; an unchecked habit does not mean you skipped it."
+      "help": "Measure waist weekly or every two weeks, with optional chest, hips, upper arm and thigh. A reminder is not an adherence score."
     },
     {
       "id": "steps",

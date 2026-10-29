@@ -736,7 +736,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         metric('Average logged protein', format(average(proteinLogs), ' g'),
           proteinLogs.length + ' / 7 days logged · goal 165–180'),
       ]),
-      el('p.progress-footnote', { text: 'Walking stays in Apple Health until automatic sync is available; this dashboard does not guess missing steps.' }),
+      el('p.progress-footnote', { text: 'Walking stays in Apple Health until automatic sync is available; this dashboard does not infer absent step readings.' }),
     ])
   }
 

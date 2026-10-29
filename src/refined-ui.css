@@ -340,3 +340,23 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
     max-height:440px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin;
   }
 }
+
+/* Keep the countdown compact on the narrow Duo cover/phone. The headline
+   spans the width and the countdown reads as a horizontal metric rather
+   than a tall, mostly empty card. */
+@media (max-width:600px) {
+  .progress-cut__hero { grid-template-columns:minmax(0,1fr); gap:13px; }
+  .progress-cut__headline { max-width:none; }
+  .progress-cut__countdown {
+    min-width:0; min-height:86px;
+    align-self:start;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 18px;
+  }
+  .progress-cut__countdown span { max-width:110px; text-align:left; }
+  .progress-cut__countdown strong { flex:none; font-size:clamp(42px,10vw,61px); }
+  .progress-cut__countdown small { max-width:85px; text-align:right; }
+}

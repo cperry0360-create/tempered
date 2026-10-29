@@ -305,3 +305,6 @@
   .screen--fuel-r4 .food-v2__topline { gap:7px; }
   .screen--fuel-r4 .food-v2__topline .food-v2__date { display:none; }
 }
+
+/* Water takes the full pane outside a timed cut phase. */
+.food-v2__small-row:not(:has(.food-v2__beach)) { grid-template-columns:minmax(0,1fr); }

@@ -17,7 +17,7 @@ import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js
  * @param {(options: object) => void} deps.onStart
  * @param {() => void} [deps.onProgramBuilder]
  */
-export function createTrainScreen({ workout, storage, clock, onStart, onProgramBuilder }) {
+export function createTrainScreen({ workout, storage, clock, onStart, onProgramBuilder, onProgramLibrary }) {
   const root = el('div.screen.screen--train.screen--train-r4')
   let query = ''
   let libraryOpen = false
@@ -167,7 +167,10 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         dataset: { programDetails: 'toggle' },
         onclick: () => { programDetailsOpen = true; render() },
       }, [el('span', { text: 'Program details' }), chevron()]),
-
+      onProgramLibrary && el('button.train-r4__row', {
+        type: 'button', dataset: { action: 'open-program-library' },
+        onclick: onProgramLibrary,
+      }, [el('span', { text: 'Program library · switch plans' }), chevron()]),
     ])
   }
 

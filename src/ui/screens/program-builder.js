@@ -16,7 +16,18 @@ export function createProgramBuilderScreen({ mount, storage, clock, workout, onC
   let error = ''
 
   function makeDraft(program) {
-    const next = migrateProgramRecord(copy(program ?? {
+    // Seeded templates are read-only: editing starts a distinct user-owned copy.
+    // A saved user program can still be edited as itself.
+    let base = program ? copy(program) : null
+    if (base && base.source !== 'user') {
+      const rootId = 'custom-' + clock.today() + '-' + base.id
+      let id = rootId
+      let suffix = 2
+      while (programs.some((existing) => existing.id === id)) id = rootId + '-' + suffix++
+      base = { ...base, id, name: base.name + ' (custom)', templateId: base.id,
+        currentRevisionId: undefined, revisionNumber: 0, status: 'draft' }
+    }
+    const next = migrateProgramRecord(copy(base ?? {
       id: `custom-${clock.today()}`,
       name: 'My program', weeks: 1, days: [], source: 'user', status: 'draft',
     }), { source: 'user', status: 'draft' })
@@ -36,10 +47,10 @@ export function createProgramBuilderScreen({ mount, storage, clock, workout, onC
     const day = selected()
     replace(root, [
       el('div.program-builder__inner', {}, [
-        el('button.program-builder__back', { type: 'button', onclick: onClose }, ['← Settings']),
+        el('button.program-builder__back', { type: 'button', dataset: { action: 'builder-back' }, onclick: onClose }, ['← Settings']),
         el('p.program-builder__eyebrow', { text: 'Program builder' }),
         el('h1.program-builder__title', { text: 'Make the plan yours.' }),
-        el('p.program-builder__copy', { text: 'Build one useful day at a time, save drafts as you go, and activate when ready.' }),
+        el('p.program-builder__copy', { text: 'Create or edit a custom plan. Built-in programs stay unchanged, and your previous workouts are preserved.' }),
         notice && el('p.notice', { dataset: { builderNotice: '' }, text: notice }),
         error && el('p.notice', { dataset: { builderError: '' }, text: error }),
         el('section.program-builder__card', {}, [

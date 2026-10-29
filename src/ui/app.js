@@ -60,16 +60,22 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   let returnTab = 'train'
   let builder = null
   const openBuilder = async () => show('program-builder')
+  const openProgramLibrary = async () => {
+    await show('settings')
+    const section = body.querySelector('[data-section="program-library"]')
+    section?.scrollIntoView({ behavior: 'auto', block: 'start' })
+  }
 
   const train = createTrainScreen({
     workout, storage, clock,
     onStart: (options) => startSession(options),
     onProgramBuilder: openBuilder,
+    onProgramLibrary: openProgramLibrary,
   })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
   const fuel = createFuelScreen({ storage, daily, clock })
-  builder = createProgramBuilderScreen({ mount, storage, clock, workout, onClose: () => show('settings') })
+  builder = createProgramBuilderScreen({ mount: body, storage, clock, workout, onClose: () => show('settings') })
 
   let battleScreen = null
   let characterScreen = null

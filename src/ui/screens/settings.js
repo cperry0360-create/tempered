@@ -122,9 +122,14 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         onSetup && el('button.button', {
           type: 'button', dataset: { action: 'rerun-setup' }, onclick: () => onSetup(),
         }, ['Rerun setup']),
+        workout && el('button.button.button--primary', {
+          type: 'button', dataset: { action: 'jump-program-library' },
+          onclick: () => root.querySelector('[data-section="program-library"]')
+            ?.scrollIntoView({ behavior: 'auto', block: 'start' }),
+        }, ['Program library · switch plans']),
         onProgramBuilder && el('button.button', {
           type: 'button', dataset: { action: 'program-builder' }, onclick: () => onProgramBuilder(),
-        }, ['Open program builder']),
+        }, ['Create or edit a program']),
       ]),
 
       workout && el('section.card', { dataset: { section: 'program-library' } }, [

@@ -23,9 +23,12 @@
     try {
       const storage = createMemoryStorage()
       const tempered = await bootstrap({ storage, mount: q('#app') })
+      const original = await storage.get('programs', 'november-physique')
       await tempered.app.show('program-builder')
       await settle()
       check('builder opens from the app shell', Boolean(q('.program-builder')))
+      check('builder is mounted within the app body, not over the shell',
+        Boolean(q('#app > .app__body > .program-builder')))
       check('builder exposes program identity', Boolean(q('[aria-label="Program name"]') && q('[aria-label="Program weeks"]')))
       check('builder exposes the existing program day', q('.program-builder__day')?.textContent?.includes('exercises'))
 
@@ -44,6 +47,26 @@
       const state = (await storage.getAll('programState')).find((row) => row.active)
       const active = state ? await storage.get('programs', state.programId) : null
       check('review and activate preserves an active program', Boolean(active?.status === 'active' && active?.days?.length >= 2))
+      const originalAfter = await storage.get('programs', 'november-physique')
+      check('editing a built-in template never replaces the original program',
+        state?.programId !== 'november-physique'
+        && JSON.stringify(originalAfter.days) === JSON.stringify(original.days))
+      q('[data-action="builder-back"]')?.click()
+      await settle()
+      check('back from builder restores working Settings navigation',
+        Boolean(q('#app > .app__body > .screen--settings')))
+      check('saved Beach Cut and original Sprint appear in Program Library',
+        Boolean(q('[data-section="program-library"] [data-library-program="beach-cut-2026"]'))
+        && Boolean(q('[data-section="program-library"] [data-library-program="november-physique"]')))
+      await tempered.app.show('train')
+      await settle()
+      const libraryButton = q('[data-action="open-program-library"]')
+      check('Train offers an obvious Program Library shortcut', Boolean(libraryButton))
+      libraryButton?.click()
+      await settle()
+      check('Program Library shortcut opens Settings and preserves app shell',
+        Boolean(q('#app > .app__body > .screen--settings'))
+        && Boolean(q('[data-section="program-library"]')))
     } catch (error) {
       check('program builder harness threw', false, String(error?.stack ?? error).slice(0, 900))
     }

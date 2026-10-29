@@ -343,7 +343,18 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               exportMessage = 'Preparing training export…'
               await load()
               try {
-                preparedExport = await maintenance.trainingExport()
+                const [sessions, setLogs, exercises, programs] = await Promise.all([
+                  storage.getAll('sessions'), storage.getAll('setLogs'),
+                  storage.getAll('exercises'), storage.getAll('programs'),
+                ])
+                const document = {
+                  app: 'tempered', kind: 'training-export', exportedAt: clock.nowIso(),
+                  data: { sessions, setLogs, exercises, programs },
+                }
+                preparedExport = {
+                  filename: `tempered-training-${clock.today()}.json`,
+                  json: JSON.stringify(document),
+                }
                 exportMessage = 'Ready. Tap Share / save JSON to Files.'
               } catch {
                 exportMessage = 'Training export failed. Your data is unchanged.'

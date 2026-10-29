@@ -312,7 +312,7 @@
 
     async function selectProgressView(tempered, target) {
       await tempered.app.show('history')
-      if (target === 'progress' || target === 'progress-trends') return
+      if (target === 'progress' || target === 'progress-trends' || target === 'progress-cut') return
       if (target === 'progress-score-explain') { mount.querySelector('[data-score-info]')?.click(); await settle(); return }
       if (target.startsWith('progress-score-')) {
         mount.querySelector('[data-score-component="' + target.slice('progress-score-'.length) + '"]')?.click()

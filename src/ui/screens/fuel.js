@@ -270,8 +270,11 @@ export function createFuelScreen({ storage, daily, clock }) {
     if (today > end + 86400000 || today < start - 14 * 86400000) return null
     const days = Math.max(0, Math.ceil((end - today) / 86400000))
     const progress = Math.max(0, Math.min(100, Math.round((today - start) / (end - start) * 100)))
+    const windowStart = new Date(today)
+    windowStart.setUTCDate(windowStart.getUTCDate() - 14)
+    const weightStart = windowStart.toISOString().slice(0, 10)
     const weights = model.days
-      .filter(day => day.date <= clock.today() && day.date >= '2026-10-16'
+      .filter(day => day.date <= clock.today() && day.date >= weightStart
         && Number.isFinite(day.bodyMetrics?.weight) && day.bodyMetrics.weight > 0)
       .sort((left, right) => left.date.localeCompare(right.date))
     let pace = 'Trend pending'

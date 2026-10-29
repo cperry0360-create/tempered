@@ -264,7 +264,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     if (!active?.program?.days?.length) return null
     return el('section.train-r4__card.train-r4__list-card.train-r4__sessions', {}, [
       el('span.train-r4__eyebrow', { text: 'CURRENT PRESCRIPTION' }),
-      el('h2', { text: 'Planned workouts' }),
+      el('h2', { text: 'Planned Sessions' }),
       el('div.train-r4__rows', {}, active.program.days.map((day) =>
         el('button.train-r4__row.train-r4__session-row', {
           type: 'button', dataset: { programday: day.id },

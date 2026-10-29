@@ -280,3 +280,28 @@
   .screen--fuel-r4 .food-v2__macro-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (prefers-reduced-motion:reduce) { .screen--fuel-r4 * {scroll-behavior:auto;} }
+
+/* Quick add is always available, including on the narrow cover display. */
+.food-v2__header-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+.food-v2__header-add {
+  min-height:44px; display:inline-flex; align-items:center; gap:5px;
+  border:0; border-radius:999px; padding:0 12px;
+  background:var(--food-v2-blue); color:var(--food-v2-deep);
+  font:800 12px var(--font-ui); cursor:pointer; white-space:nowrap;
+}
+.food-v2__header-add .icon { width:18px; height:18px; }
+@media (min-width:740px) {
+  html[data-layout="duo"] .food-v2__quick-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+  html[data-layout="duo"] .screen--fuel-r4 .food-v2__action {
+    min-height:83px; align-items:center; justify-content:center;
+    flex-direction:column; text-align:center; padding:9px 4px; gap:5px;
+  }
+  html[data-layout="duo"] .food-v2__action-glyph { width:29px; height:29px; flex-basis:29px; }
+  html[data-layout="duo"] .food-v2__action-text strong { font-size:11px; }
+  html[data-layout="duo"] .food-v2__action-text small { display:none; }
+  html[data-layout="duo"] .food-v2__quick-note { font-size:10px; }
+}
+@media (max-width:460px) {
+  .screen--fuel-r4 .food-v2__topline { gap:7px; }
+  .screen--fuel-r4 .food-v2__topline .food-v2__date { display:none; }
+}

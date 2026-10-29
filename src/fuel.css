@@ -380,7 +380,7 @@ button.fuel-food__copy {
 .fuel-r4__budget-heading .fuel-r4__ring-copy span { font-size:11px; }
 .fuel-r4__budget-track { width:100%; height:9px; overflow:hidden; border-radius:99px; background:var(--surface-3); }
 .fuel-r4__budget-track span { display:block; height:100%; border-radius:inherit;
-  background:linear-gradient(90deg,var(--fuel),#8FE6B9); }
+  background:linear-gradient(90deg,var(--fuel),var(--fuel-ink)); }
 .fuel-r4__finish { min-height:48px; border-radius:13px; border:1px solid var(--fuel-ink); width:100%;
   background:var(--fuel); color:var(--on-accent); font:750 14px var(--font-ui); cursor:pointer; }
 .fuel-r4__finish[data-closed="true"] { color:var(--fuel-ink); background:var(--surface-2); }

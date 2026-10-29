@@ -705,38 +705,123 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       ].filter(Boolean))]
   }
 
+  function cutWeightSparkline() {
+    const today = clock.today()
+    const points = dayLogs
+      .filter((day) => day.date >= addDays(today, -13) && day.date <= today
+        && Number.isFinite(day.bodyMetrics?.weight) && day.bodyMetrics.weight > 0)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    if (points.length < 2) {
+      return el('p.progress-cut__chart-empty', { text: 'Your weight trend will appear here after two weigh-ins.' })
+    }
+    const values = points.map((day) => day.bodyMetrics.weight)
+    const low = Math.min(...values) - 0.5
+    const high = Math.max(...values) + 0.5
+    const width = 420, height = 96, inset = 9
+    const start = Date.parse(points[0].date + 'T12:00:00Z')
+    const end = Date.parse(points.at(-1).date + 'T12:00:00Z')
+    const path = points.map((point, i) => {
+      const x = inset + ((Date.parse(point.date + 'T12:00:00Z') - start) / (end - start || 1)) * (width - inset * 2)
+      const y = height - inset - ((point.bodyMetrics.weight - low) / (high - low)) * (height - inset * 2)
+      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1)
+    }).join(' ')
+    const ns = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(ns, 'svg')
+    svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height)
+    svg.setAttribute('role', 'img')
+    svg.setAttribute('aria-label', 'Weight readings from ' + monthDay(points[0].date) +
+      ' to ' + monthDay(points.at(-1).date) + ', ' + numberText(values[0], 1) +
+      ' to ' + numberText(values.at(-1), 1) + ' lb')
+    svg.setAttribute('class', 'progress-cut__sparkline')
+    const line = document.createElementNS(ns, 'path')
+    line.setAttribute('d', path)
+    line.setAttribute('fill', 'none')
+    line.setAttribute('stroke', 'currentColor')
+    line.setAttribute('stroke-width', '3')
+    line.setAttribute('stroke-linejoin', 'round')
+    line.setAttribute('stroke-linecap', 'round')
+    svg.append(line)
+    const dot = document.createElementNS(ns, 'circle')
+    dot.setAttribute('cx', path.split('L').at(-1).trim().split(' ')[0].replace(/^M/, ''))
+    dot.setAttribute('cy', path.split('L').at(-1).trim().split(' ')[1])
+    dot.setAttribute('r', '4.5')
+    dot.setAttribute('fill', 'currentColor')
+    svg.append(dot)
+    return el('div.progress-cut__chart', {}, [
+      el('div.progress-cut__chart-heading', {}, [
+        el('strong', { text: 'Weight trend' }),
+        el('small', { text: 'Last 14 days · ' + points.length + ' readings' }),
+      ]),
+      svg,
+      el('div.progress-cut__chart-axis', {}, [
+        el('span', { text: monthDay(points[0].date) }),
+        el('span', { text: monthDay(points.at(-1).date) }),
+      ]),
+    ])
+  }
+
   function beachCutDashboard() {
     const state = programStates.find((row) => row.active)
     if (state?.programId !== 'beach-cut-2026') return null
     const today = clock.today()
-    const daysLeft = Math.max(0, Math.ceil(
-      (Date.parse('2026-11-26T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000))
+    const dateMs = (date) => Date.parse(date + 'T12:00:00Z')
+    const daysLeft = Math.max(0, Math.ceil((dateMs('2026-11-26') - dateMs(today)) / 86400000))
+    const daysElapsed = Math.max(0, Math.floor((dateMs(today) - dateMs('2026-11-02')) / 86400000))
+    const phaseProgress = Math.min(100, Math.round(daysElapsed / 24 * 100))
     const last7 = dayLogs.filter((day) => day.date >= addDays(today, -6) && day.date <= today)
     const weighIns = last7.map((day) => day.bodyMetrics?.weight).filter((v) => Number.isFinite(v) && v > 0)
     const calLogs = last7.map((day) => day.calories).filter((v) => Number.isFinite(v) && v > 0)
     const proteinLogs = last7.map((day) => day.proteinGrams).filter((v) => Number.isFinite(v) && v > 0)
-    const latest = dayLogs.filter((day) => day.date <= today && Number.isFinite(day.bodyMetrics?.weight))
-      .sort((a, b) => b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
-    const metric = (name, value, help) => el('div.progress-cut__metric', { style: 'display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:12px;box-shadow:inset 0 0 0 1px currentColor;min-width:0' }, [
-      el('span', { text: name }), el('strong', { text: value }), el('small', { text: help }),
-    ])
+    const latestWaist = dayLogs.filter((day) => day.date <= today
+      && Number.isFinite(day.waistInches) && day.waistInches > 0)
+      .sort((a,b) => b.date.localeCompare(a.date))[0]
+    const priorWaist = dayLogs.filter((day) => day.date < (latestWaist?.date ?? '0000')
+      && Number.isFinite(day.waistInches) && day.waistInches > 0)
+      .sort((a,b) => b.date.localeCompare(a.date))[0]
     const format = (value, unit, digits = 0) =>
-      value === null ? '—' : numberText(value, digits) + unit
-    return el('section.progress-panel.progress-cut', { dataset: { dashboard: 'beach-cut' } }, [
-      el('small.progress-cut__eyebrow', { text: 'BEACH CUT · PHASE 2' }),
-      el('h2.progress-panel__title', { text: daysLeft + ' days to Thanksgiving' }),
-      el('p.progress-footnote', { text: 'Keep strength. Reduce body fat gradually. Unlogged fields are unknown, not proof of poor adherence.' }),
-      el('div.progress-cut__metrics', { style: 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0' }, [
-        metric('7-day weight average', format(average(weighIns), ' lb', 1),
-          weighIns.length + ' / 7 weigh-ins'),
-        metric('Latest weight', Number.isFinite(latest) ? numberText(latest, 1) + ' lb' : '—',
-          'Use the trend, not a single day'),
-        metric('Average logged calories', format(average(calLogs), ' kcal'),
-          calLogs.length + ' / 7 days logged · target ~2,250'),
-        metric('Average logged protein', format(average(proteinLogs), ' g'),
-          proteinLogs.length + ' / 7 days logged · goal 165–180'),
+      Number.isFinite(value) ? numberText(value, digits) + unit : '—'
+    const metric = (title, value, subtitle, featured = false) =>
+      el('div.progress-cut__metric', { dataset: { featured: String(featured) } }, [
+        el('small.progress-cut__metric-title', { text: title }),
+        el('strong.progress-cut__metric-value', { text: value }),
+        el('span.progress-cut__metric-subtitle', { text: subtitle }),
+      ])
+    const waistCadence = schedule.waist_measurement?.cadence
+    return el('section.progress-cut', { dataset: { dashboard: 'beach-cut' } }, [
+      el('div.progress-cut__hero', {}, [
+        el('div.progress-cut__intro', {}, [
+          el('span.progress-cut__eyebrow', { text: 'BEACH CUT / THANKSGIVING 2026' }),
+          el('h2.progress-cut__headline', { text: 'Keep the strength. Lean out.' }),
+          el('p.progress-cut__subhead', { text: 'November 2 — November 26 · A short, deliberate phase.' }),
+          el('div.progress-cut__phase', {}, [
+            el('span', { text: 'Phase progress' }),
+            el('strong', { text: phaseProgress + '%' }),
+          ]),
+          el('div.progress-cut__track', { role: 'progressbar',
+            'aria-label': 'Beach Cut phase progress', 'aria-valuemin': '0',
+            'aria-valuemax': '100', 'aria-valuenow': String(phaseProgress) }, [
+            el('span', { style: 'width:' + phaseProgress + '%' }),
+          ]),
+          el('p.progress-cut__footnote', { text: 'Log calories, protein, and weight. Waist once a week or every two weeks. Empty logs are simply unknown.' }),
+        ]),
+        el('div.progress-cut__countdown', {}, [
+          el('span', { text: 'TO THANKSGIVING' }),
+          el('strong', { text: String(daysLeft) }),
+          el('small', { text: daysLeft === 1 ? 'day remaining' : 'days remaining' }),
+        ]),
       ]),
-      el('p.progress-footnote', { text: 'Walking stays in Apple Health until automatic sync is available; this dashboard does not infer absent step readings.' }),
+      el('div.progress-cut__body', {}, [
+        el('div.progress-cut__stats', {}, [
+          metric('7-DAY WEIGHT', format(average(weighIns), ' lb', 1), weighIns.length + ' of 7 readings', true),
+          metric('CALORIES / LOGGED DAY', format(average(calLogs), ' kcal'), calLogs.length + ' logged days · initial target 2,250'),
+          metric('PROTEIN / LOGGED DAY', format(average(proteinLogs), ' g'), proteinLogs.length + ' logged days · aim 165–180 g'),
+          metric('WAIST', format(latestWaist?.waistInches, ' in', 1),
+            latestWaist ? monthDay(latestWaist.date) +
+              (priorWaist ? ' · ' + deltaValue(latestWaist.waistInches, priorWaist.waistInches, ' in', 1) : ' · first measurement')
+              : waistCadence === 'biweekly' ? 'Every 2 weeks · log on Today' : 'Weekly · log on Today'),
+        ]),
+        cutWeightSparkline(),
+      ]),
     ])
   }
 
@@ -771,14 +856,33 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ].filter(Boolean)
   }
 
+  function waistHabitCard() {
+    const cadence = schedule.waist_measurement?.cadence
+    if (!cadence || cadence === 'off') return null
+    const readings = dayLogs.filter((day) => Number.isFinite(day.waistInches) && day.waistInches > 0)
+      .sort((a,b) => b.date.localeCompare(a.date)).slice(0, 4)
+    return el('section.progress-panel.progress-waist-habit', { dataset: { habit: 'waist_measurement' } }, [
+      el('h2.progress-panel__title', { text: 'Waist measurements' }),
+      el('p.progress-footnote', { text: cadence === 'biweekly'
+        ? 'Every two weeks · optional reminder, not an adherence score.'
+        : 'Once a week · optional reminder, not an adherence score.' }),
+      ...readings.map((day) => el('div.progress-waist-habit__row', {}, [
+        el('span', { text: monthDay(day.date) }),
+        el('strong', { text: numberText(day.waistInches, 1) + ' in' }),
+      ])),
+      readings.length === 0 && el('p.progress-footnote', { text: 'No waist readings logged yet. Open Today to add one.' }),
+    ])
+  }
+
   function habitView() {
+    const waistCard = waistHabitCard()
     const days = selectedDays()
     const activities = dailyActivities()
     if (activities.length === 0) {
-      return [emptyState('No daily habits configured', 'Set activities to daily in Settings to build consistency stats.')]
+      return [waistCard, emptyState('No daily habits configured', 'Set activities to daily in Settings to build consistency stats.')].filter(Boolean)
     }
     if (days.length === 0) {
-      return [emptyState('No habit history yet', 'Daily habit completion will appear here after you log.')]
+      return [waistCard, emptyState('No habit history yet', 'Daily habit completion will appear here after you log.')].filter(Boolean)
     }
     const rows = activities.map((activity) => {
       const values = days.map((day) => completedActivity(activity, day))
@@ -804,7 +908,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const line = days.length < selectedDates().length
       ? el('p.progress-footnote', { text: 'Showing ' + days.length + ' days since tracking began.' })
       : null
-    return [line, ...rows, el('section.progress-panel', {}, [el('h2.progress-panel__title', { text: 'Daily habit completion' }), el('p.progress-footnote', { text: 'One square per day; green means every daily habit is complete.' }), heatmap(days)])].filter(Boolean)
+    return [waistCard, line, ...rows, el('section.progress-panel', {}, [el('h2.progress-panel__title', { text: 'Daily habit completion' }), el('p.progress-footnote', { text: 'One square per day; green means every daily habit is complete.' }), heatmap(days)])].filter(Boolean)
   }
 
   function liftHistory() {

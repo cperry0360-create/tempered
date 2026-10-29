@@ -74,18 +74,18 @@ if (params.has('fixture')) {
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       if (wide) {
-        check(label + ' Fuel details begin beside energy',
-          close(r('.fuel-r4__foods').top, r('.fuel-r4__energy').top))
+        check(label + ' Food actions begin beside calorie hero',
+          close(r('.food-v2__quick').top, r('.fuel-r4__energy').top))
         check(label + ' energy and Water share the left pane',
           q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
           && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))
           && q('.fuel-r4__details')?.contains(q('.fuel-r4__meal-panel'))
-          && r('.fuel-r4__water').right <= r('.fuel-r4__foods').left)
+          && r('.fuel-r4__water').right <= r('.food-v2__quick').left)
         const details = q('.fuel-r4__details')
         details.style.paddingBottom = '1500px'
         q('.app__body').scrollTop = 650
         await settle()
-        check(label + ' left overview stays visible during long meal log scrolling',
+        check(label + ' Food dashboard stays visible during long meal log scrolling',
           r('.fuel-r4__overview').top >= -2 &&
           r('.fuel-r4__overview').top <= top + 44 &&
           r('.fuel-r4__energy').bottom > 0,
@@ -116,9 +116,10 @@ if (params.has('fixture')) {
       d.querySelector('.train-r4__back')?.click(); await settle()
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
-      check(width + ' ordinary phone still puts Water beneath meals',
-        f('.fuel-r4__energy').top < f('.fuel-r4__foods').top
-        && f('.fuel-r4__water').top > f('.fuel-r4__meal-panel').top)
+      check(width + ' ordinary phone stacks hero, macros, water, and food actions',
+        f('.food-v2__energy').top < f('.food-v2__macro-card').top
+        && f('.food-v2__macro-card').top < f('.food-v2__water').top
+        && f('.food-v2__water').top < f('.food-v2__quick').top)
       check(width + ' ordinary phone Fuel does not overflow',
         d.querySelector('.app__body').scrollWidth <= d.querySelector('.app__body').clientWidth + 1)
     }

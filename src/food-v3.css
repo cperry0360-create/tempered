@@ -257,3 +257,17 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+/* Folded Duo: all main cards fill the available content pane consistently. */
+@media (max-width:739px) {
+  .screen--fuel-r4 .food-v2__layout {
+    align-items:stretch;
+  }
+  .screen--fuel-r4 .food-v2__energy,
+  .screen--fuel-r4 .food-v2__macro-card,
+  .screen--fuel-r4 .food-v2__small-row,
+  .screen--fuel-r4 .food-v3__diary,
+  .screen--fuel-r4 .food-v2__details {
+    box-sizing:border-box; width:100%; align-self:stretch;
+  }
+}

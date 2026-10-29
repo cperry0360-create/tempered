@@ -23,6 +23,9 @@
     await t.daily.addNutrition('2026-09-28', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-28T10:00:00.000Z' })
     await t.daily.addNutrition('2026-09-29', { description: 'Protein shake', calories: 160, protein: 30 }, { loggedAt: '2026-09-29T10:00:00.000Z' })
     await t.daily.addNutrition('2026-10-01', { description: 'Morning oats', calories: 300, protein: 12 }, { loggedAt: '2026-10-01T12:00:00.000Z' })
+    await t.daily.setNutritionStatus('2026-09-28', 'complete')
+    const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
+    await storage.put('profile', { ...profile, nutritionReviewStartOn: '2026-09-28' })
     await t.app.show('fuel'); await settle(400)
     check("meals already logged today show the moment Fuel opens", /Morning oats/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''), q('.screen--fuel [data-nutrition-history]')?.textContent || 'empty list')
     await t.app.show('today'); await settle(200); await t.app.show('fuel'); await settle(400)
@@ -36,12 +39,28 @@
       && Boolean(q('.fuel-r4__dashboard').compareDocumentPosition(q('[data-open-nutrition-days]'))
         & Node.DOCUMENT_POSITION_FOLLOWING))
 
+    check('Food search is visible without opening a library',
+      Boolean(q('[data-food-search]')) && Boolean(q('.food-v3__search-input')))
+    check('calendar has explicit review icons and calorie totals',
+      qa('[data-diary-date]').length === 7
+      && qa('[data-diary-date] .food-v3__day-icon').length === 7
+      && qa('[data-diary-date] .food-v3__day-cal').length === 7)
+    check('closed day renders green check and its actual calories',
+      Boolean(q('[data-diary-date="2026-09-28"][data-visual="closed"]'))
+      && q('[data-diary-date="2026-09-28"] .food-v3__day-cal')?.textContent === '160')
+    check('unfinished day has amber half-circle while unlogged day has red X',
+      Boolean(q('[data-diary-date="2026-09-29"][data-visual="partial"]'))
+      && Boolean(q('[data-diary-date="2026-09-30"][data-visual="missed"]')))
+    check('macro guidance clutter is absent',
+      !q('.food-v2__macro-note') && !q('.food-v2__macro-card .food-v2__caption'))
+    check('beach card is only shown close to the Thanksgiving cut, not in September',
+      !q('.food-v3__beach'))
     check('seven-day review calendar is visible before the food form',
       qa('.screen--fuel [data-diary-date]').length === 7)
     check('old logged but unclosed days are retained in the review queue',
       Number(q('[data-open-nutrition-days]')?.dataset.openNutritionDays) === 2)
 
-    check('four useful quick actions are available', qa('[data-food-action]').length >= 4)
+    check('three useful actions without duplicate repeat buttons', qa('[data-food-action]').length === 3)
     check('quick Add meal focuses the existing entry field', (()=>{ q('[data-food-action="add"]')?.click(); return document.activeElement === q('[data-entry="nutrition_description"]') })())
     check('recent meals are reusable without a second form', Boolean(q('[data-recent-food="Protein shake"]')))
     check('calorie, macros, water, diary and meal entry are on the Food screen',
@@ -61,10 +80,16 @@
     check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)
     check('the calorie hero updates on the same screen', /1,040/.test(q('.food-v2__energy')?.textContent ?? ''), q('.food-v2__energy')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
-    check('My foods now includes the new meal', Boolean(q('[data-food="Turkey sandwich"]')))
-
-    q('[data-food-add="Protein shake"]')?.click(); await settle(500)
-    check("a My foods tap appears in today's meals", (q('.screen--fuel [data-nutrition-history]')?.textContent.match(/Protein shake/g) ?? []).length === 1)
+    check('meal timeline groups existing entries by time of day',
+      Boolean(q('[data-meal-group]')) && Boolean(q('.nutrition-timeline__heading'))
+      && Boolean(q('[data-meal-group] .nutrition-entry')))
+    const lookup = q('.food-v3__search-input')
+    type(lookup, 'Turkey sandwich')
+    check('new meals are immediately searchable', Boolean(q('[data-food="Turkey sandwich"]')))
+    type(lookup, '')
+    q('[data-recent-food="Protein shake"]')?.click(); await settle(500)
+    check("Frequent meal taps add directly to today's meals",
+      (q('.screen--fuel [data-nutrition-history]')?.textContent.match(/Protein shake/g) ?? []).length === 1)
 
     q('.screen--fuel .nutrition-entry__delete')?.click(); await settle(400)
     check('delete offers Undo', q('.screen--fuel [data-nutrition-undo]')?.hidden === false)
@@ -72,7 +97,7 @@
     day = await t.daily.dayLog('2026-10-01')
     check('Undo restores the meal', day.calories === 1200, day.calories)
 
-    const search = q('.fuel-food__search'); type(search, 'pizza'); await settle(50)
+    const search = q('.food-v3__search-input'); type(search, 'pizza'); await settle(50)
     q('[data-food-new]')?.click(); await settle(100)
     check('no-match search offers to add it, filling the form', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'pizza' && document.activeElement === q('.screen--fuel [data-entry="nutrition_calories"]'))
 

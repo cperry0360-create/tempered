@@ -389,12 +389,44 @@ export function installCalorieAiRuntime() {
 
     const list = screen.querySelector('[data-nutrition-history]')
     const entries = [...ledger.entries].sort((a, b) => b.loggedAt.localeCompare(a.loggedAt))
-    const rows = entries.map((entry) => historyItem(entry, date))
+    const meals = [
+      { id: 'breakfast', label: 'Breakfast', entries: [] },
+      { id: 'lunch', label: 'Lunch', entries: [] },
+      { id: 'dinner', label: 'Dinner', entries: [] },
+      { id: 'snacks', label: 'Snacks', entries: [] },
+    ]
+    for (const entry of entries) {
+      // Entries already carry their actual logging time; no migration or
+      // inferred meal data is stored. Labels are a visual time-of-day grouping.
+      const hour = new Date(entry.loggedAt).getHours()
+      const group = hour >= 5 && hour < 11 ? meals[0]
+        : hour >= 11 && hour < 16 ? meals[1]
+          : hour >= 16 && hour < 21 ? meals[2] : meals[3]
+      group.entries.push(entry)
+    }
+    const rows = meals.filter(group => group.entries.length > 0).map(group => {
+      const section = document.createElement('section')
+      section.className = 'nutrition-timeline__group'
+      section.dataset.mealGroup = group.id
+      const heading = document.createElement('div')
+      heading.className = 'nutrition-timeline__heading'
+      const name = document.createElement('strong')
+      name.textContent = group.label
+      const calories = document.createElement('span')
+      calories.textContent = Math.round(group.entries.reduce((sum, entry) =>
+        sum + (Number(entry.calories) || 0), 0)).toLocaleString() + ' kcal'
+      heading.append(name, calories)
+      const items = document.createElement('div')
+      items.className = 'nutrition-timeline__items'
+      items.append(...group.entries.map(entry => historyItem(entry, date)))
+      section.append(heading, items)
+      return section
+    })
     if (ledger.hasCarryover) rows.push(carryoverItem(ledger.carryover))
     if (rows.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'nutrition-history__empty'
-      empty.textContent = screen === panelScreen ? 'No meals yet today.' : 'No meals logged yet; add one above to start your history.'
+      empty.textContent = 'No meals logged yet. Add your first one above.'
       rows.push(empty)
     }
     list.replaceChildren(...rows)

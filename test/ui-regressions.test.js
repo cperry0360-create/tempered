@@ -246,8 +246,9 @@ test('REGRESSION: R4 Fuel keeps nutrition and hydration but removes recovery', (
   const fuel = read('src/ui/screens/fuel.js')
   // 0.51.0 moved meal entry inline: Fuel mounts the nutrition panel instead of a Log a meal button.
   assert.match(fuel, /mount-nutrition-panel/)
-  // 0.50.0 replaced the three-item Recent list with a searchable My foods library.
-  assert.match(fuel, /My foods/)
+  // Food V3 retains the search capability without a persistent full library.
+  assert.match(fuel, /Find a previously logged food/)
+  assert.match(fuel, /food-v3__search/)
   assert.match(fuel, /Water/)
   assert.match(fuel, /foodLibrary/)
   assert.match(fuel, /searchFoods/)

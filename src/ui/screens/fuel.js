@@ -95,58 +95,64 @@ export function createFuelScreen({ storage, daily, clock }) {
     const today = clock.today()
     const byDate = new Map(model.days.map((day) => [day.date, day]))
     const start = dateOfWeek(calendarWeeksBack)
-    const previous = document.createElement('button')
-    previous.className = 'fuel-diary__nav'
-    previous.textContent = '‹'
-    previous.type = 'button'
-    previous.setAttribute('aria-label', 'Previous week')
-    previous.onclick = () => { calendarWeeksBack++; render() }
-    const next = document.createElement('button')
-    next.className = 'fuel-diary__nav'
-    next.textContent = '›'
-    next.type = 'button'
-    next.disabled = calendarWeeksBack === 0
-    next.setAttribute('aria-label', 'Next week')
-    next.onclick = () => { calendarWeeksBack = Math.max(0, calendarWeeksBack - 1); render() }
-    const days = Array.from({ length: 7 }, (_, index) => {
+    const previous = el('button.fuel-diary__nav', {
+      type: 'button', 'aria-label': 'Previous week',
+      onclick: () => { calendarWeeksBack++; render() },
+    }, ['‹'])
+    const next = el('button.fuel-diary__nav', {
+      type: 'button', disabled: calendarWeeksBack === 0,
+      'aria-label': 'Next week',
+      onclick: () => { calendarWeeksBack = Math.max(0, calendarWeeksBack - 1); render() },
+    }, ['›'])
+    const week = Array.from({ length: 7 }, (_, index) => {
       const at = new Date(start)
       at.setUTCDate(at.getUTCDate() + index)
       const date = at.toISOString().slice(0, 10)
-      const status = nutritionDayStatus(byDate.get(date), date, model.reviewStart, today)
-      const isToday = date === today
-      return el('button.fuel-diary__day', {
+      const day = byDate.get(date)
+      const status = nutritionDayStatus(day, date, model.reviewStart, today)
+      const todayItem = date === today
+      // Closed is a checked diary, not a day under its calorie target.
+      // Amber means entered but unfinished; red X means the day passed
+      // without entries. Never label a future day as missed.
+      const visual = status === 'closed' ? 'closed'
+        : (status === 'open' || (todayItem && status === 'unlogged')) ? 'partial'
+          : status === 'unlogged' && date < today ? 'missed' : 'neutral'
+      const symbol = visual === 'closed' ? '✓'
+        : visual === 'partial' ? '◐' : visual === 'missed' ? '×' : '·'
+      const amount = Number(day?.calories)
+      const hasCalories = Number.isFinite(amount) &&
+        (day?.caloriesLogged || day?.nutritionLogged || (day?.nutritionEntries?.length ?? 0) > 0)
+      return el('button.fuel-diary__day.food-v3__day', {
         type: 'button', disabled: date > today,
-        dataset: { diaryDate: date, state: status, selected: String(isToday && calendarWeeksBack === 0) },
-        'aria-label': date + ': ' + (isToday ? 'today' : status === 'closed' ? 'complete'
-          : status === 'open' || status === 'unlogged' ? 'not closed' : 'not tracked'),
-        onclick: () => date === today ? null : reviewDate(date),
+        dataset: {
+          diaryDate: date, state: status, visual,
+          selected: String(todayItem && calendarWeeksBack === 0),
+        },
+        'aria-label': date + ': ' + (visual === 'closed' ? 'food diary complete'
+          : visual === 'partial' ? 'food diary still open'
+            : visual === 'missed' ? 'no food entered; needs review' : 'no diary status') +
+          (hasCalories ? ', ' + Math.round(amount) + ' calories' : ''),
+        onclick: () => reviewDate(date),
       }, [
         el('span.fuel-diary__weekday', { text: ['M','T','W','T','F','S','S'][index] }),
         el('strong', { text: String(at.getUTCDate()) }),
-        el('span.fuel-diary__marker', { 'aria-hidden': 'true',
-          text: status === 'closed' ? '✓' : status === 'open' || (status === 'unlogged' && date < today) ? '•' : '·' }),
+        el('span.fuel-diary__marker.food-v3__day-icon', { 'aria-hidden': 'true', text: symbol }),
+        el('small.food-v3__day-cal', { text: hasCalories ? Math.round(amount).toLocaleString() : '—' }),
       ])
     })
     const left = start.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
     const end = new Date(start); end.setUTCDate(end.getUTCDate() + 6)
     const right = end.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
-    return el('section.fuel-diary', { dataset: { diaryCalendar: 'true' } }, [
+    return el('section.fuel-diary.food-v3__diary', { dataset: { diaryCalendar: 'true' } }, [
       el('div.fuel-diary__heading', {}, [
         el('div', {}, [
-          el('span.fuel-diary__eyebrow', { text: 'FOOD LOG' }),
-          el('h2', { text: left === right ? left + ' · ' + start.getUTCFullYear()
-            : left + ' — ' + right + ' · ' + end.getUTCFullYear() }),
+          el('span.fuel-diary__eyebrow', { text: 'DAILY CHECK-IN' }),
+          el('h2', { text: '7-day food diary' }),
         ]),
-        el('div.fuel-diary__legend', {}, [
-          el('span', { text: '✓ Closed' }),
-          el('span', { text: '• Needs review' }),
-          (() => {
-            const count = openNutritionDates(model.days, today, model.reviewStart).length
-            return count > 0 ? el('span.fuel-diary__open-count', { text: count + ' open' }) : null
-          })(),
-        ]),
+        el('span.food-v3__week-label', { text: left === right
+          ? left + ' ' + start.getUTCFullYear() : left + ' – ' + right }),
       ]),
-      el('div.fuel-diary__week', {}, [previous, ...days, next]),
+      el('div.fuel-diary__week', {}, [previous, ...week, next]),
     ])
   }
 
@@ -241,12 +247,7 @@ export function createFuelScreen({ storage, daily, clock }) {
           () => repeat ? quickLog(repeat) : openFoodSearch(), 'repeat'),
         foodActionsOpen && actionButton('calendar', 'Earlier day', 'Correct a past diary',
           () => reviewDate(dayBefore(clock.today())), 'earlier'),
-        foodActionsOpen && actionButton('history', 'Browse foods', 'Saved + recent meals',
-          openFoodSearch, 'search'),
       ]),
-      el('p.food-v2__quick-note', {
-        text: 'Photo estimate opens ChatGPT; import brings the reviewed numbers back. No scanner or food database is connected.',
-      }),
     ])
   }
 
@@ -255,7 +256,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     if (foods.length === 0) return null
     return el('section.food-v2__recents', {}, [
       el('div.food-v2__section-title', {}, [
-        el('h2', { text: 'Frequent foods' }),
+        el('h2', { text: 'Frequent meals' }),
         el('button.food-v2__more-toggle', { type: 'button', onclick: openFoodSearch }, ['See all']),
       ]),
       el('div.food-v2__recent-grid', {}, foods.map((food, index) =>
@@ -264,8 +265,7 @@ export function createFuelScreen({ storage, daily, clock }) {
           'aria-label': 'Log a serving of ' + food.description,
           onclick: () => quickLog(food),
         }, [
-          el('span.food-v2__recent-graphic', { 'aria-hidden': 'true',
-            text: ['◈', '✳', '◉', '❖'][index % 4] }),
+          el('span.food-v2__recent-graphic', { 'aria-hidden': 'true' }, [icon('food')]),
           el('strong', { text: food.description }),
           el('small', { text: Math.round(food.calories ?? 0) + ' kcal · + Log' }),
         ]))),
@@ -329,52 +329,48 @@ export function createFuelScreen({ storage, daily, clock }) {
   }
 
   function foodResults() {
-    const { top, rest, all } = model.foods
-    if (all.length === 0) return [el('p.fuel-r4__empty', { text: 'Foods you log appear here, ready to log again in one tap.' })]
-    if (foodQuery.trim()) {
-      const matches = searchFoods(all, foodQuery)
-      return matches.length
-        ? [el('div.fuel-food__list', {}, matches.slice(0, 30).map(foodRow))]
-        : [el('p.fuel-r4__empty', { text: `No saved food matches "${foodQuery.trim()}".` }),
-            el('button.fuel-food__more', {
-              type: 'button', dataset: { foodNew: foodQuery.trim() },
-              onclick: () => startNewMeal(foodQuery.trim()),
-            }, [`Add "${foodQuery.trim()}" as a new meal`])]
-    }
-    const visible = showAllFoods ? rest : rest.slice(0, 5)
-    return [
-      top.length > 0 && el('h3.fuel-food__heading', { text: 'Most logged' }),
-      top.length > 0 && el('div.fuel-food__list', {}, top.map(foodRow)),
-      rest.length > 0 && el('h3.fuel-food__heading', { text: top.length ? 'All foods' : 'Your foods' }),
-      rest.length > 0 && el('div.fuel-food__list', {}, visible.map(foodRow)),
-      rest.length > visible.length && el('button.fuel-food__more', {
-        type: 'button', onclick: () => { showAllFoods = true; render() },
-      }, [`Show all ${rest.length} foods`]),
+    const all = model.foods.all
+    if (!foodQuery.trim() && !showAllFoods) return []
+    const matches = foodQuery.trim() ? searchFoods(all, foodQuery) : all
+    if (!matches.length) return [
+      el('p.food-v3__search-empty', { text: foodQuery.trim()
+        ? 'No previously logged food found.' : 'Your logged foods will appear here.' }),
+      foodQuery.trim() && el('button.fuel-food__more', {
+        type: 'button', onclick: () => startNewMeal(foodQuery.trim()),
+      }, ['Add "' + foodQuery.trim() + '" as a new food']),
     ].filter(Boolean)
-  }
-
-  function startNewMeal(name) {
-    const description = mealPanel.querySelector('[data-entry="nutrition_description"]')
-    if (!description) return
-    description.value = name
-    description.dispatchEvent(new Event('input', { bubbles: true }))
-    const calories = mealPanel.querySelector('[data-entry="nutrition_calories"]')
-    calories?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    calories?.focus()
+    return [
+      el('div.fuel-food__list.food-v3__search-results', {},
+        matches.slice(0, showAllFoods ? 50 : 8).map(foodRow)),
+      matches.length > (showAllFoods ? 50 : 8) && el('button.fuel-food__more', {
+        type: 'button', onclick: () => { showAllFoods = true; render() },
+      }, ['More matching foods']),
+    ].filter(Boolean)
   }
 
   function foodsCard() {
     const results = el('div.fuel-food__results', {}, foodResults())
-    return el('section.fuel-r4__card.fuel-r4__foods', {}, [
-      el('h2', { text: 'My foods' }),
-      model.foods.all.length > 0 && el('input.fuel-food__search', {
-        type: 'search', placeholder: `Search ${model.foods.all.length} foods`, value: foodQuery,
-        autocomplete: 'off', autocapitalize: 'off', spellcheck: false, enterkeyhint: 'search',
-        'aria-label': 'Search your foods',
-        oninput: (event) => { foodQuery = event.target.value; replace(results, foodResults()) },
-      }),
+    const input = el('input.fuel-food__search.food-v3__search-input', {
+      type: 'search', placeholder: 'Search anything you have logged…',
+      value: foodQuery, autocomplete: 'off', autocapitalize: 'off',
+      spellcheck: false, enterkeyhint: 'search',
+      'aria-label': 'Find a previously logged food',
+      oninput: event => {
+        foodQuery = event.target.value
+        replace(results, foodResults())
+      },
+    })
+    return el('section.food-v3__search', { dataset: { foodSearch: 'true' } }, [
+      el('div.food-v3__search-line', {}, [
+        icon('search'),
+        input,
+        el('button.food-v3__browse', {
+          type: 'button', 'aria-expanded': String(showAllFoods),
+          onclick: () => { showAllFoods = !showAllFoods; render() },
+        }, [showAllFoods ? 'Hide' : 'Browse']),
+      ]),
       results,
-    ].filter(Boolean))
+    ])
   }
 
   function number(value) {
@@ -441,13 +437,11 @@ export function createFuelScreen({ storage, daily, clock }) {
         ]),
         el('strong', { text: Math.round(grams).toLocaleString() + ' g' }),
         el('span', { text: label }),
-        el('small', { text: detail }),
       ])
     const macroCalShare = (grams, factor) =>
       Math.min(100, calorieGoal > 0 ? Math.round(grams * factor / calorieGoal * 100) : 0)
     const top = el('div.food-v2__topline', {}, [
       el('div', {}, [
-        el('span.food-v2__eyebrow', { text: 'TEMPERED / NUTRITION' }),
         el('h1.screen__title', { text: 'Food' }),
       ]),
       el('div.food-v2__header-actions', {}, [
@@ -464,8 +458,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     const energy = el('section.fuel-r4__card.fuel-r4__energy.food-v2__energy', {}, [
       el('div.food-v2__section-title', {}, [
         el('div', {}, [
-          el('small.food-v2__eyebrow', { text: 'TODAY’S CALORIE BUDGET' }),
-          el('h2', { text: 'Calories' }),
+          el('h2', { text: 'Today’s calorie budget' }),
         ]),
         el('span.food-v2__energy-status', { dataset: { closed: String(closed) }, text: dayStatus }),
       ]),
@@ -491,7 +484,6 @@ export function createFuelScreen({ storage, daily, clock }) {
     const macros = el('section.food-v2__macro-card', {}, [
       el('div.food-v2__section-title', {}, [
         el('h2', { text: 'Macros' }),
-        el('span.food-v2__caption', { text: 'From logged food' }),
       ]),
       el('div.food-v2__macro-grid', {}, [
         macroTile('Protein', protein, 'protein', proteinProgress, 'var(--food-v2-protein)',
@@ -503,7 +495,6 @@ export function createFuelScreen({ storage, daily, clock }) {
         macroTile('Fiber', ledger.totals.fiber, 'food',
           Math.min(100, ledger.totals.fiber / 30 * 100), 'var(--food-v2-fiber)', 'grams logged'),
       ]),
-      el('p.food-v2__macro-note', { text: 'Protein ring tracks your goal; other rings are visual guides, not prescribed macro targets.' }),
     ])
     const waterCard = el('section.fuel-r4__card.fuel-r4__water.food-v2__water', {}, [
       el('div.food-v2__section-title', {}, [
@@ -543,11 +534,11 @@ export function createFuelScreen({ storage, daily, clock }) {
           diary,
         ]),
         el('div.fuel-r4__details.food-v2__details', {}, [
-          actions,
-          finish,
-          mealPanel,
-          recents,
           foodsCard(),
+          actions,
+          recents,
+          mealPanel,
+          finish,
           ...openDaysCard(),
         ]),
       ]),

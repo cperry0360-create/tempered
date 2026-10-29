@@ -36,6 +36,16 @@
       && Boolean(q('.fuel-r4__dashboard').compareDocumentPosition(q('[data-open-nutrition-days]'))
         & Node.DOCUMENT_POSITION_FOLLOWING))
 
+    check('Food search is visible without opening a library',
+      Boolean(q('[data-food-search]')) && Boolean(q('.food-v3__search-input')))
+    check('calendar has explicit review icons and calorie totals',
+      qa('[data-diary-date]').length === 7
+      && qa('[data-diary-date] .food-v3__day-icon').length === 7
+      && qa('[data-diary-date] .food-v3__day-cal').length === 7)
+    check('macro guidance clutter is absent',
+      !q('.food-v2__macro-note') && !q('.food-v2__macro-card .food-v2__caption'))
+    check('beach card has a real photo background and pace state',
+      Boolean(q('.food-v3__beach')) && Boolean(q('.food-v3__beach-status')))
     check('seven-day review calendar is visible before the food form',
       qa('.screen--fuel [data-diary-date]').length === 7)
     check('old logged but unclosed days are retained in the review queue',

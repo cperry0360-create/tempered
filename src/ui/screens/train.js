@@ -281,7 +281,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function routinesCard() {
     return el('section.train-r4__card.train-r4__list-card.train-r4__routines', {}, [
-      el('h2', { text: 'Extra routines' }),
+      el('h2', { text: 'Extra Routines' }),
       el('p.train-r4__routines-note', { text: 'Optional standalone workouts · not part of your active program' }),
       el('div.train-r4__rows', {}, routines.map((routine) => {
         const setCount = (routine.exercises ?? []).reduce((sum, exercise) => sum + (exercise.sets ?? 0), 0)

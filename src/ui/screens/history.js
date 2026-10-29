@@ -499,7 +499,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const lines = [
       'Tempered progress · last ' + range + ' days ending ' + shortDate(clock.today()),
       'Training: ' + current.periodSessions.length + ' sessions, ' + current.workingSets + ' working sets.',
-      'Habits: ' + (current.habitRate === null ? 'no configured daily habits' : current.habitRate + '% complete.'),
+      'Habit checkoffs (not adherence): ' + (current.habitRate === null ? 'no configured daily habits' : current.habitRate + '% marked.'),
       'Steps: ' + (current.avgSteps === null ? 'no samples' : numberText(Math.round(current.avgSteps)) + ' per day.')
         + ' Sleep: ' + (current.avgSleep === null ? 'no samples' : numberText(current.avgSleep, 1) + ' hours average.'),
       'Micro cardio: ' + numberText(current.microMinutes) + ' minutes.',
@@ -705,6 +705,41 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       ].filter(Boolean))]
   }
 
+  function beachCutDashboard() {
+    const state = programStates.find((row) => row.active)
+    if (state?.programId !== 'beach-cut-2026') return null
+    const today = clock.today()
+    const daysLeft = Math.max(0, Math.ceil(
+      (Date.parse('2026-11-26T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000))
+    const last7 = dayLogs.filter((day) => day.date >= addDays(today, -6) && day.date <= today)
+    const weighIns = last7.map((day) => day.bodyMetrics?.weight).filter((v) => Number.isFinite(v) && v > 0)
+    const calLogs = last7.map((day) => day.calories).filter((v) => Number.isFinite(v) && v > 0)
+    const proteinLogs = last7.map((day) => day.proteinGrams).filter((v) => Number.isFinite(v) && v > 0)
+    const latest = dayLogs.filter((day) => day.date <= today && Number.isFinite(day.bodyMetrics?.weight))
+      .sort((a, b) => b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
+    const metric = (name, value, help) => el('div.progress-cut__metric', {}, [
+      el('span', { text: name }), el('strong', { text: value }), el('small', { text: help }),
+    ])
+    const format = (value, unit, digits = 0) =>
+      value === null ? '—' : numberText(value, digits) + unit
+    return el('section.progress-panel.progress-cut', { dataset: { dashboard: 'beach-cut' } }, [
+      el('small.progress-cut__eyebrow', { text: 'BEACH CUT · PHASE 2' }),
+      el('h2.progress-panel__title', { text: daysLeft + ' days to Thanksgiving' }),
+      el('p.progress-footnote', { text: 'Keep strength. Reduce body fat gradually. Missing logs are unknown, not failed habits.' }),
+      el('div.progress-cut__metrics', {}, [
+        metric('7-day weight average', format(average(weighIns), ' lb', 1),
+          weighIns.length + ' / 7 weigh-ins'),
+        metric('Latest weight', Number.isFinite(latest) ? numberText(latest, 1) + ' lb' : '—',
+          'Use the trend, not a single day'),
+        metric('Average logged calories', format(average(calLogs), ' kcal'),
+          calLogs.length + ' / 7 days logged · target ~2,250'),
+        metric('Average logged protein', format(average(proteinLogs), ' g'),
+          proteinLogs.length + ' / 7 days logged · goal 165–180'),
+      ]),
+      el('p.progress-footnote', { text: 'Walking stays in Apple Health until automatic sync is available; this dashboard does not guess missing steps.' }),
+    ])
+  }
+
   function overviewView() {
     if (selectedScoreComponent) return trainingScoreDetail()
     const current = summaryForDates(selectedDates())
@@ -712,6 +747,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const comparable = current.fullCoverage && previous.fullCoverage
     const recovery = recoveryCard(current, previous, comparable)
     return [
+      beachCutDashboard(),
       el('div.progress-overview', {}, [
         el('div.progress-overview__training', {}, [
           trainingScoreCard(),

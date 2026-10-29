@@ -209,6 +209,26 @@ export function createWorkoutService({ storage, clock, balance }) {
     return { program, state, week, deload: isDeloadWeek(week, program) }
   }
 
+  /** Switch saved programs without touching training history or their prescriptions. */
+  async function activateStoredProgram(programId) {
+    const selected = await storage.get('programs', programId)
+    if (!selected?.days?.length) throw new Error('Saved program unavailable.')
+    const states = await storage.getAll('programState')
+    if (states.some((row) => row.active && row.programId === programId)) return selected
+    for (const row of states) {
+      if (!row.active) continue
+      await storage.put('programState', { ...row, active: false })
+      const old = await storage.get('programs', row.programId)
+      if (old) await storage.put('programs', { ...old, status: 'paused' })
+    }
+    await storage.put('programs', { ...selected, status: 'active' })
+    await storage.put('programState', {
+      programId, active: true, startedOn: clock.today(),
+      revisionId: selected.currentRevisionId,
+    })
+    return selected
+  }
+
   /**
    * Prepares one program slot: history, PR, and the week's prescription.
    * @param {object} slot
@@ -769,7 +789,7 @@ export function createWorkoutService({ storage, clock, balance }) {
       await storage.put('exercises', exercise)
       return exercise
     },
-    activeProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
+    activeProgram, activateStoredProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
     startSession, logSet, setsFor, finishSession, adjustSessionDuration, settleOpenSessions,

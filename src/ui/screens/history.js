@@ -822,6 +822,10 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
               : waistCadence === 'biweekly' ? 'Every 2 weeks · log on Today' : 'Weekly · log on Today'),
         ]),
         cutWeightSparkline(),
+        el('details.progress-cut__extra', {}, [
+          el('summary', { text: 'All body measurements · waist, chest, hips, arms, thighs' }),
+          measurementTiles(true),
+        ]),
       ]),
     ])
   }
@@ -857,21 +861,60 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ].filter(Boolean)
   }
 
+  function measurementHistory() {
+    const metrics = [
+      ['waist', 'Waist', (day) => day.waistInches],
+      ['chest', 'Chest', (day) => day.bodyMeasurements?.chest],
+      ['hips', 'Hips', (day) => day.bodyMeasurements?.hips],
+      ['arm', 'Upper arm', (day) => day.bodyMeasurements?.arm],
+      ['thigh', 'Thigh', (day) => day.bodyMeasurements?.thigh],
+    ]
+    return metrics.map(([key, label, read]) => {
+      const observations = dayLogs
+        .filter((day) => day.date <= clock.today() && Number.isFinite(read(day)) && read(day) > 0)
+        .sort((a, b) => b.date.localeCompare(a.date))
+      const latest = observations[0], previous = observations[1]
+      return { key, label, value: latest ? read(latest) : null,
+        date: latest?.date ?? null,
+        change: latest && previous ? read(latest) - read(previous) : null }
+    })
+  }
+
+  function measurementTiles(insideCut = false) {
+    const rows = measurementHistory()
+    return el('div', { className: insideCut ? 'progress-cut__measure-grid' : 'progress-measure__grid' },
+      rows.map((row) => el('div.progress-measure__tile', {}, [
+        el('span', { text: row.label }),
+        el('strong', { text: Number.isFinite(row.value) ? numberText(row.value, 1) + ' in' : '—' }),
+        el('small', { text: row.date
+          ? monthDay(row.date) + (row.change === null ? ' · first reading' : ' · ' +
+              deltaValue(row.value, row.value - row.change, ' in', 1))
+          : 'Not logged' }),
+      ])))
+  }
+
   function waistHabitCard() {
     const cadence = schedule.waist_measurement?.cadence
     if (!cadence || cadence === 'off') return null
     const readings = dayLogs.filter((day) => Number.isFinite(day.waistInches) && day.waistInches > 0)
-      .sort((a,b) => b.date.localeCompare(a.date)).slice(0, 4)
+      .sort((a,b) => b.date.localeCompare(a.date)).slice(0, 6)
     return el('section.progress-panel.progress-waist-habit', { dataset: { habit: 'waist_measurement' } }, [
-      el('h2.progress-panel__title', { text: 'Waist measurements' }),
-      el('p.progress-footnote', { text: cadence === 'biweekly'
-        ? 'Every two weeks · optional reminder, not an adherence score.'
-        : 'Once a week · optional reminder, not an adherence score.' }),
-      ...readings.map((day) => el('div.progress-waist-habit__row', {}, [
-        el('span', { text: monthDay(day.date) }),
-        el('strong', { text: numberText(day.waistInches, 1) + ' in' }),
-      ])),
-      readings.length === 0 && el('p.progress-footnote', { text: 'No waist readings logged yet. Open Today to add one.' }),
+      el('div.progress-measure__head', {}, [
+        el('div', {}, [
+          el('span.progress-measure__eyebrow', { text: 'BODY METRICS' }),
+          el('h2.progress-panel__title', { text: 'Measurements' }),
+        ]),
+        el('span.progress-measure__cadence', { text: cadence === 'biweekly' ? 'Every 2 weeks' : 'Weekly' }),
+      ]),
+      el('p.progress-footnote', { text: 'Same measuring points each time. Optional check-in, not an adherence score. Log or edit in Today → Body measurements.' }),
+      measurementTiles(),
+      readings.length > 0 && el('details.progress-measure__history', {}, [
+        el('summary', { text: 'Waist measurement history' }),
+        ...readings.map((day) => el('div.progress-waist-habit__row', {}, [
+          el('span', { text: monthDay(day.date) }),
+          el('strong', { text: numberText(day.waistInches, 1) + ' in' }),
+        ])),
+      ]),
     ])
   }
 

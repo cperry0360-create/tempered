@@ -153,7 +153,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       ? el('section.fuel-diary__reminder', { dataset: { nutritionReminder: 'true' } }, [
         el('div', {}, [
           el('strong', { text: 'Yesterday’s food diary is not closed' }),
-          el('p', { text: 'Finish any missing meals, then mark the day complete. Your totals are not judged against your budget.' }),
+          el('p', { text: 'Add anything you have not logged, then mark the day complete. Your totals are not judged against your budget.' }),
         ]),
         el('div.fuel-diary__reminder-actions', {}, [
           el('button', { type: 'button', dataset: { reviewYesterday: yesterday },

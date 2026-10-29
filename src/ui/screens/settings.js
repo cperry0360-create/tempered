@@ -6,7 +6,7 @@ import { VERSION, BUILD_DATE } from '../../version.js'
 import { RESET_PHRASE } from '../../app/maintenance.js'
 import { DEFAULT_STEP_TARGET } from '../../app/daily.js'
 import { shortDate } from '../format.js'
-import { savePreparedExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
+import { savePreparedExport, downloadExport, readFileAsText } from '../../adapters/storage/file-transfer.js'
 import { getDuoLayoutEnabled, setDuoLayoutEnabled } from '../duo-layout.js'
 
 const WEEKLY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]
@@ -329,7 +329,14 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
               await load()
               try {
                 preparedExport = await maintenance.backup()
-                exportMessage = 'Ready. Tap Share / save JSON to Files.'
+                if (typeof navigator.share !== 'function') {
+                  // Desktop browsers keep the familiar one-click download.
+                  saved = downloadExport(preparedExport.document, clock)
+                  exportMessage = 'Backup download requested.'
+                  preparedExport = null
+                } else {
+                  exportMessage = 'Ready. Tap Share / save JSON to Files.'
+                }
               } catch {
                 exportMessage = 'Could not prepare backup. Your data is unchanged.'
               } finally { exportBusy = false; await load() }
@@ -413,7 +420,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
           })(),
         ]),
         exportMessage && el('p.notice', { role: 'status', text: exportMessage }),
-        saved && el('p.notice', { dataset: { saved: '' }, text: `Prepared ${saved}.` }),
+        saved && el('p.notice', { dataset: { saved: '' }, text: `Saved ${saved}.` }),
         restoreNotice && el('p.notice', { dataset: { restoreError: '' }, text: restoreNotice }),
         restorePlan && el('div.notice', { dataset: { restorePreview: '' } }, [
           el('strong', { text: restoreName || 'Tempered backup' }),

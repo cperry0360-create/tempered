@@ -24,6 +24,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
   let creatingExercise = false
   let rhythmOpen = false
   let programDetailsOpen = false
+  let selectedProgramDay = null
   let selectedRoutine = null
   /** @type {{program: any, week: number, deload: boolean}|null} */ let active = null
   /** @type {any} */ let todayDay = null
@@ -72,6 +73,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         rhythmOpen = false
         selectedRoutine = null
         programDetailsOpen = false
+        selectedProgramDay = null
         query = ''
         render()
       },
@@ -158,10 +160,14 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     const { program, week } = active
     const segments = Array.from({ length: program.weeks ?? 1 }, (_, index) =>
       el('span.train-r4__segment', { dataset: { filled: String(index < week) } }))
-    return el('section.train-r4__card.train-r4__program', { dataset: { program: program.id } }, [
+    const totalSets = program.days.reduce((total, day) =>
+      total + (day.exercises ?? []).reduce((count, slot) => count + (Number(slot.sets) || 0), 0), 0)
+    return el('section.train-r4__card.train-r4__program', { dataset: { program: program.id, activeProgram: 'true' } }, [
+      el('span.train-r4__eyebrow', { text: '● ACTIVE PROGRAM' }),
       el('h2', { text: program.name }),
-      el('p', { text: `Week ${week} of ${program.weeks} · Deload week ${deloadWeek(program)}` }),
+      el('p.train-r4__program-subtitle', { text: `Week ${week} of ${program.weeks} · ${program.days.length} days · ${totalSets} planned sets/week` }),
       el('div.train-r4__segments', { 'aria-label': `Week ${week} of ${program.weeks}` }, segments),
+      el('p.train-r4__program-tip', { text: 'These are the exercises currently in your plan. Tap a day to preview before starting.' }),
       el('button.train-r4__row', {
         type: 'button',
         dataset: { programDetails: 'toggle' },
@@ -183,6 +189,13 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         el('div.train-r4__details', {}, [
           el('p', { text: program.note || 'Your active training plan.' }),
           active.deload && el('p', { text: 'Hold the weight during deload week; recovery is half the process.' }),
+          el('h3.train-r4__section-title', { text: 'Your scheduled exercises' }),
+          ...program.days.map((day) => el('div.train-r4__day-preview', {}, [
+            el('strong', { text: day.name }),
+            ...day.exercises.map((slot) => el('p', {
+              text: `${slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId} · ${slot.sets} × ${slot.repMin}–${slot.repMax}`,
+            })),
+          ])),
           weekView?.hardSets?.length > 0 && el('div.train-r4__hard-sets', {}, [
             el('strong', { text: 'Hard sets this week' }),
             ...weekView.hardSets.map((row) => el('div.train-r4__hard-set-row', {}, [
@@ -217,18 +230,49 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     ])
   }
 
+  function programDayPreview(day, embedded = false) {
+    const movements = day.exercises ?? []
+    const workingSets = movements.reduce((sum, slot) => sum + (Number(slot.sets) || 0), 0)
+    return el('section.train-r4__card.train-r4__plan-preview', { dataset: { programPreview: day.id } }, [
+      el('div.train-r4__preview-heading', {}, [
+        el('div', {}, [
+          el('span.train-r4__eyebrow', { text: 'IN YOUR ACTIVE PROGRAM' }),
+          el('h2', { text: day.name }),
+          el('p', { text: `${movements.length} exercises · ${workingSets} working sets` }),
+        ]),
+        el('button.train-r4__back', {
+          type: 'button', 'aria-label': 'Back to planned sessions',
+          onclick: () => { selectedProgramDay = null; render() },
+        }, [embedded ? '×' : '‹']),
+      ]),
+      el('div.train-r4__preview-exercises', {},
+        movements.map((slot, index) => el('div.train-r4__preview-exercise', {}, [
+          el('span.train-r4__preview-index', { text: String(index + 1).padStart(2, '0') }),
+          el('div', {}, [
+            el('strong', { text: slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId }),
+            el('small', { text: `${slot.sets} sets × ${slot.repMin}–${slot.repMax} reps` }),
+          ]),
+        ]))),
+      el('button.train-r4__secondary.train-r4__start', {
+        type: 'button', dataset: { startPreview: day.id },
+        onclick: () => onStart({ programDay: day }),
+      }, ['Start ' + day.name]),
+    ])
+  }
+
   function sessionsCard() {
     if (!active?.program?.days?.length) return null
     return el('section.train-r4__card.train-r4__list-card.train-r4__sessions', {}, [
-      el('h2', { text: 'Sessions' }),
+      el('span.train-r4__eyebrow', { text: 'CURRENT PRESCRIPTION' }),
+      el('h2', { text: 'Planned workouts' }),
       el('div.train-r4__rows', {}, active.program.days.map((day) =>
         el('button.train-r4__row.train-r4__session-row', {
           type: 'button', dataset: { programday: day.id },
-          onclick: () => onStart({ programDay: day }),
+          onclick: () => { selectedProgramDay = day; render() },
         }, [
           el('span.train-r4__row-copy', {}, [
             el('strong', { text: day.name }),
-            el('small', { text: `${day.exercises?.length ?? 0} exercises · ${lastByProgramDay.has(day.id) ? `Last ${shortDate(lastByProgramDay.get(day.id))}` : 'Not yet worked'}` }),
+            el('small', { text: `${day.exercises?.length ?? 0} exercises · ${(day.exercises ?? []).reduce((n, slot) => n + slot.sets, 0)} sets · preview` }),
           ]),
           chevron(),
         ]))),
@@ -237,7 +281,8 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function routinesCard() {
     return el('section.train-r4__card.train-r4__list-card.train-r4__routines', {}, [
-      el('h2', { text: 'Routines' }),
+      el('h2', { text: 'Extra routines' }),
+      el('p.train-r4__routines-note', { text: 'Optional standalone workouts · not part of your active program' }),
       el('div.train-r4__rows', {}, routines.map((routine) => {
         const setCount = (routine.exercises ?? []).reduce((sum, exercise) => sum + (exercise.sets ?? 0), 0)
         return el('button.train-r4__row', {
@@ -325,6 +370,13 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
 
   function render() {
     if (programDetailsOpen) { renderProgramDetails(); return }
+    if (selectedProgramDay && (typeof window === 'undefined' || window.innerWidth < 740)) {
+      replace(root, [
+        el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Workout preview' })]),
+        programDayPreview(selectedProgramDay),
+      ])
+      return
+    }
     if (libraryOpen) { renderLibrary(); return }
     if (selectedRoutine) { renderRoutine(); return }
     if (rhythmOpen) { renderRhythm(); return }
@@ -337,7 +389,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
           nextSessionCard(),
         ]),
         el('div.train-r4__column--secondary', {}, [
-          sessionsCard(),
+          selectedProgramDay ? programDayPreview(selectedProgramDay, true) : sessionsCard(),
           routinesCard(),
           utilityRows(),
         ]),
@@ -350,6 +402,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
     primary() { return null },
     async refresh() {
       programDetailsOpen = false
+      selectedProgramDay = null
       libraryOpen = false
       creatingExercise = false
       rhythmOpen = false

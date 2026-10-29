@@ -370,7 +370,87 @@ export function createTodayScreen({
     renderMobilityScreen()
   }
 
+  /**
+   * One deliberate weekly/fortnightly body-measurement entry. Waist is the
+   * cadence anchor; other measurements are optional and keep their history
+   * even if a later entry omits them.
+   */
+  function measurementsEditor(activity, weekly) {
+    const existing = dayLogs.find((day) => day.date === selectedDate) ?? {}
+    const old = existing.bodyMeasurements ?? {}
+    const metrics = [
+      ['waist', 'Waist', existing.waistInches],
+      ['chest', 'Chest', old.chest],
+      ['hips', 'Hips', old.hips],
+      ['arm', 'Upper arm', old.arm],
+      ['thigh', 'Thigh', old.thigh],
+    ]
+    const fields = new Map()
+    const status = el('p.today-editor__hint', { role: 'status',
+      text: 'Measure at the same spot and time. Waist anchors the reminder; the rest are optional.' })
+    const cells = metrics.map(([key, name, current]) => {
+      const input = el('input.today-editor__input', {
+        type: 'number', inputmode: 'decimal', min: '1', max: '200', step: '0.1',
+        placeholder: 'in', value: Number.isFinite(current) && current > 0 ? String(current) : '',
+        'aria-label': name + ' circumference in inches',
+        dataset: { measure: key }, disabled: !canLogSelected(),
+      })
+      fields.set(key, input)
+      return el('label.today-measure__field', {}, [
+        el('span', { text: name + (key === 'waist' ? ' *' : '') }), input,
+      ])
+    })
+    let saving = false
+    const save = async () => {
+      if (saving || !canLogSelected()) return
+      const waist = Number(fields.get('waist')?.value)
+      if (!(waist > 0 && waist <= 200)) {
+        status.textContent = 'Enter a waist measurement in inches to save this check-in.'
+        fields.get('waist')?.focus()
+        return
+      }
+      const updated = { ...old }
+      for (const [key] of metrics.slice(1)) {
+        const raw = fields.get(key).value.trim()
+        if (!raw) continue
+        const value = Number(raw)
+        if (!(value > 0 && value <= 200)) {
+          status.textContent = 'Enter a valid positive measurement, or leave optional fields blank.'
+          fields.get(key)?.focus()
+          return
+        }
+        updated[key] = Math.round(value * 10) / 10
+      }
+      saving = true
+      try {
+        // Use the existing unscored waist activity; never award XP for
+        // circumference or disturb unrelated Apple Health/body metrics.
+        await daily.logAt(selectedDate, 'waist_measurement', Math.round(waist * 10) / 10)
+        const day = await storage.get('dayLogs', selectedDate)
+        await storage.put('dayLogs', { ...day, bodyMeasurements: updated })
+        openActivityId = null
+        await reload()
+      } catch {
+        saving = false
+        status.textContent = 'Measurements were not saved. Please try again.'
+      }
+    }
+    return el('div.today-editor.today-measure', { dataset: { editor: activity.id } }, [
+      el('div.today-measure__heading', {}, [
+        el('strong', { text: 'Body measurement check-in' }),
+        el('small', { text: weekly?.cadence === 'biweekly' ? 'Every two weeks' : 'Weekly' }),
+      ]),
+      el('div.today-measure__grid', {}, cells),
+      status,
+      el('button.today-editor__save.today-measure__save', {
+        type: 'button', disabled: !canLogSelected(),
+        dataset: { action: 'log-measurements' }, onclick: save,
+      }, ['Save measurements']),
+    ])
+  }
+
   function editor(activity, weekly = null) {
+    if (activity.id === 'waist_measurement') return measurementsEditor(activity, weekly)
     const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
     const sleep = activity.id === 'sleep'

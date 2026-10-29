@@ -32,7 +32,7 @@
       q('.food-v2__recents').compareDocumentPosition(q('.fuel-r4__meal-panel'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     check('the full library is collapsed until requested', qa('.fuel-food__name').length === 0)
-    const search = q('.fuel-food__search')
+    let search = q('.fuel-food__search')
     check('search box is available directly at top of Food',
       Boolean(search) && /Search anything/.test(search.placeholder))
     q('.food-v3__browse')?.click(); await settle(90)
@@ -40,6 +40,7 @@
     check('saved foods retain calories, protein, and logging frequency',
       /150 kcal · 30 g protein · 4×/.test(q('.fuel-food__results')?.textContent ?? ''))
     q('.food-v3__browse')?.click(); await settle(90)
+    search = q('.fuel-food__search')
     search.focus(); search.value = 'choc prot'; search.dispatchEvent(new Event('input', { bubbles: true })); await settle(50)
     check('search matches every word in any order', qa('.fuel-food__name').map((n) => n.textContent).join('|') === 'fairlife Core Power chocolate protein shake|Protein bar, chocolate peanut', qa('.fuel-food__name').map((n) => n.textContent).join('|'))
     check('typing keeps focus in the search box', document.activeElement === search)

@@ -17,7 +17,6 @@ export function createFuelScreen({ storage, daily, clock }) {
   let calendarWeeksBack = 0
   let backlogExpanded = false
   let dismissedReminderFor = ''
-  let foodActionsOpen = false
   // The add-meal form and today's meals live here, built once by the nutrition
   // runtime and reused across re-renders so half-typed entries survive.
   const mealPanel = el('div.fuel-r4__meal-panel')
@@ -175,11 +174,14 @@ export function createFuelScreen({ storage, daily, clock }) {
       ]) : null
     return [
       notice,
-      open.length > 0 && el('section.fuel-diary__backlog', { dataset: { openNutritionDays: String(open.length) } }, [
+      open.length > 0 && el('section.fuel-diary__backlog.food-v3__backlog', {
+        dataset: { openNutritionDays: String(open.length) },
+      }, [
         el('div.fuel-diary__backlog-head', {}, [
-          el('span', { text: open.length + (open.length === 1 ? ' earlier day needs review' : ' earlier days need review') }),
-          el('button', { type: 'button', onclick: () => { backlogExpanded = !backlogExpanded; render() },
-            'aria-expanded': String(backlogExpanded) }, [backlogExpanded ? 'Hide' : 'Show dates']),
+          el('button.food-v3__review-older', {
+            type: 'button', onclick: () => { backlogExpanded = !backlogExpanded; render() },
+            'aria-expanded': String(backlogExpanded),
+          }, [backlogExpanded ? 'Hide earlier diaries' : 'Review earlier diaries']),
         ]),
         backlogExpanded && el('div.fuel-diary__backlog-days', {}, open.map((row) =>
           el('button', { type: 'button', dataset: { backlogDate: row.date },
@@ -224,29 +226,18 @@ export function createFuelScreen({ storage, daily, clock }) {
   }
 
   function quickActions() {
-    const repeat = model.foods.top[0] ?? model.foods.all[0]
     return el('section.food-v2__quick', { 'aria-label': 'Quick food logging' }, [
       el('div.food-v2__section-title', {}, [
-        el('div', {}, [el('small.food-v2__eyebrow', { text: 'QUICK ENTRY' }),
-          el('h2', { text: 'Log something' })]),
-        el('button.food-v2__more-toggle', {
-          type: 'button', 'aria-expanded': String(foodActionsOpen),
-          onclick: () => { foodActionsOpen = !foodActionsOpen; render() },
-        }, [foodActionsOpen ? 'Less' : 'More']),
+        el('h2', { text: 'Add food' }),
       ]),
       el('div.food-v2__quick-grid', {}, [
-        actionButton('plus', 'Add meal', 'Enter food + macros', focusMealEntry, 'add'),
+        actionButton('plus', 'Add manually', 'Enter food + macros', focusMealEntry, 'add'),
         actionButton('food', 'Meal photo', 'ChatGPT estimate', () => {
           mealPanel.querySelector('[data-calorie-ai="prompt"]')?.click()
         }, 'photo'),
-        actionButton('down', 'Import AI', 'Paste nutrition', () => {
+        actionButton('down', 'Import estimate', 'Paste nutrition', () => {
           mealPanel.querySelector('[data-calorie-ai="paste"]')?.click()
         }, 'import'),
-        actionButton('history', repeat ? 'Repeat meal' : 'My foods',
-          repeat ? repeat.description : 'Find past meals',
-          () => repeat ? quickLog(repeat) : openFoodSearch(), 'repeat'),
-        foodActionsOpen && actionButton('calendar', 'Earlier day', 'Correct a past diary',
-          () => reviewDate(dayBefore(clock.today())), 'earlier'),
       ]),
     ])
   }

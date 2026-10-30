@@ -66,7 +66,7 @@
         // take over the product, but it must keep the workout resumable.
         firstGuard?.destroy()
         const second = await bootstrap({ mount, storage, clock })
-        installSessionGuard(second)
+        const secondGuard = installSessionGuard(second)
         await settle()
         check('relaunch lands on Today', Boolean(mount.querySelector('.screen--today-calm')))
         check('relaunch does not auto-open the workout', mount.querySelector('.screen--session') === null)
@@ -118,6 +118,7 @@
         // Closed/background time is not workout time. The paused state stays
         // explicit across a long interruption (including a PWA relaunch).
         clock.advanceDays(1)
+        secondGuard?.destroy()
         const third = await bootstrap({ mount, storage, clock })
         installSessionGuard(third)
         await settle()

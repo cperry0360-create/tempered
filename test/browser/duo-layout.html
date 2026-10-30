@@ -88,15 +88,29 @@ if (params.has('fixture')) {
           && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))
           && q('.fuel-r4__details')?.contains(q('.fuel-r4__meal-panel'))
           && r('.fuel-r4__water').right <= r('.food-v2__quick').left)
+        const overview = q('.fuel-r4__overview')
         const details = q('.fuel-r4__details')
+        const computed = w.getComputedStyle(overview)
+        check(label + ' Food columns never own separate scroll views',
+          computed.position === 'static' &&
+          computed.overflowY !== 'auto' && computed.overflowY !== 'scroll' &&
+          overview.scrollHeight <= overview.clientHeight + 2 &&
+          w.getComputedStyle(details).overflowY !== 'auto' &&
+          w.getComputedStyle(q('.food-v3__search .fuel-food__results')).overflowY !== 'auto',
+          JSON.stringify({ position: computed.position, overflow: computed.overflowY,
+            content: overview.scrollHeight, height: overview.clientHeight }))
         details.style.paddingBottom = '1500px'
+        const beforeLeft = r('.fuel-r4__energy').top
+        const beforeRight = r('.food-v3__search').top
         q('.app__body').scrollTop = 650
         await settle()
-        check(label + ' Food dashboard stays visible during long meal log scrolling',
-          r('.fuel-r4__overview').top >= -2 &&
-          r('.fuel-r4__overview').top <= top + 44 &&
-          r('.fuel-r4__energy').bottom > 0,
-          JSON.stringify({overview: r('.fuel-r4__overview').top, scroll: q('.app__body').scrollTop}))
+        const leftTravel = beforeLeft - r('.fuel-r4__energy').top
+        const rightTravel = beforeRight - r('.food-v3__search').top
+        check(label + ' one page gesture scrolls left and right together',
+          q('.app__body').scrollTop >= 500 &&
+          Math.abs(leftTravel - rightTravel) <= 3 &&
+          leftTravel > 500,
+          JSON.stringify({leftTravel,rightTravel,scroll:q('.app__body').scrollTop}))
       }
       await w.tempered.app.show('settings'); await settle()
       q('[data-action="program-builder"]')?.click(); await new Promise(resolve => setTimeout(resolve,180)); await settle()

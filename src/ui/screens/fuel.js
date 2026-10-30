@@ -1,7 +1,7 @@
 /**
  * FUEL — nutrition and hydration, optimized for fast logging.
  */
-import { nutritionLedger, foodLibrary, searchFoods } from '../../domain/nutrition.js'
+import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { dayBefore, nutritionDayStatus, openNutritionDates } from '../../domain/nutrition-review.js'
@@ -45,7 +45,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       days,
       reviewStart,
       reminderDismissed: profile?.nutritionReminderDismissedOn === todayKey,
-      foods: foodLibrary(days, 3),
+      foods: foodLibrary(days, 4),
     }
   }
 
@@ -216,11 +216,11 @@ export function createFuelScreen({ storage, daily, clock }) {
   function actionButton(glyph, title, subtitle, callback, data) {
     return el('button.food-v2__action', {
       type: 'button', dataset: { foodAction: data }, onclick: callback,
+      'aria-label': title + '. ' + subtitle,
     }, [
       el('span.food-v2__action-glyph', {}, [icon(glyph)]),
       el('span.food-v2__action-text', {}, [
         el('strong', { text: title }),
-        el('small', { text: subtitle }),
       ]),
     ])
   }
@@ -294,7 +294,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       }
     }
     return el('section.food-v2__beach.food-v3__beach', {
-      'aria-label': 'Thanksgiving Beach Cut — Moon Palace, Cancún inspiration',
+      'aria-label': 'Thanksgiving beach-cut countdown',
     }, [
       el('div.food-v3__beach-content', {}, [
         el('span.food-v3__beach-eyebrow', { text: 'CANCÚN · BEACH CUT' }),
@@ -307,7 +307,6 @@ export function createFuelScreen({ storage, daily, clock }) {
         role: 'progressbar', 'aria-label': 'Beach Cut time elapsed',
         'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(progress),
       }, [el('span', { style: 'width:' + progress + '%' })]),
-      el('span.food-v3__beach-attribution', { text: 'Moon Palace beach photo · Meg von Haartman / Unsplash' }),
     ])
   }
 
@@ -456,21 +455,23 @@ export function createFuelScreen({ storage, daily, clock }) {
     const water = number(day.waterOz)
     const ledger = nutritionLedger(day)
     const energyProgress = percent(calories, calorieGoal)
-    const proteinProgress = percent(protein, proteinGoal)
     const waterProgress = percent(water, waterGoal)
     const closed = day.nutritionStatus === 'complete'
     const remaining = Math.max(0, calorieGoal - calories)
     const dayStatus = closed ? '✓ Day closed' : '● Day open'
-    const macroTile = (label, grams, glyph, progress, tone, detail) =>
-      el('div.food-v2__macro', { dataset: { nutrient: label.toLowerCase() } }, [
-        el('span.food-v2__macro-ring', { style: '--macro-progress:' + progress + '%;--macro-tone:' + tone }, [
+    const macroTargets = nutritionMacroTargets(calorieGoal, proteinGoal)
+    const macroTile = (label, grams, glyph, target, tone) =>
+      el('div.food-v2__macro', {
+        dataset: { nutrient: label.toLowerCase() },
+        'aria-label': label + ': ' + Math.round(grams) + ' of ' + Math.round(target) + ' grams',
+      }, [
+        el('span.food-v2__macro-ring', { style: '--macro-progress:' + percent(grams, target) + '%;--macro-tone:' + tone }, [
           icon(glyph),
         ]),
         el('strong', { text: Math.round(grams).toLocaleString() + ' g' }),
         el('span', { text: label }),
+        el('small', { text: Math.round(target).toLocaleString() + ' g goal' }),
       ])
-    const macroCalShare = (grams, factor) =>
-      Math.min(100, calorieGoal > 0 ? Math.round(grams * factor / calorieGoal * 100) : 0)
     const top = el('div.food-v2__topline', {}, [
       el('div', {}, [
         el('h1.screen__title', { text: 'Food' }),
@@ -507,9 +508,6 @@ export function createFuelScreen({ storage, daily, clock }) {
           'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
           el('span', { style: 'width:' + energyProgress + '%' }),
         ]),
-        el('span', { text: calories > calorieGoal
-          ? Math.round(calories - calorieGoal) + ' kcal over target'
-          : Math.round(remaining) + ' kcal remaining' }),
       ]),
     ])
     const macros = el('section.food-v2__macro-card', {}, [
@@ -517,20 +515,15 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('h2', { text: 'Macros' }),
       ]),
       el('div.food-v2__macro-grid', {}, [
-        macroTile('Protein', protein, 'protein', proteinProgress, 'var(--food-v2-protein)',
-          Math.round(proteinGoal) + ' g goal'),
-        macroTile('Carbs', ledger.totals.carbs, 'food',
-          macroCalShare(ledger.totals.carbs, 4), 'var(--food-v2-carbs)', 'of calories'),
-        macroTile('Fat', ledger.totals.fat, 'food',
-          macroCalShare(ledger.totals.fat, 9), 'var(--food-v2-fat)', 'of calories'),
-        macroTile('Fiber', ledger.totals.fiber, 'food',
-          Math.min(100, ledger.totals.fiber / 30 * 100), 'var(--food-v2-fiber)', 'grams logged'),
+        macroTile('Protein', protein, 'protein', macroTargets.protein, 'var(--food-v2-protein)'),
+        macroTile('Carbs', ledger.totals.carbs, 'food', macroTargets.carbs, 'var(--food-v2-carbs)'),
+        macroTile('Fat', ledger.totals.fat, 'food', macroTargets.fat, 'var(--food-v2-fat)'),
+        macroTile('Fiber', ledger.totals.fiber, 'food', macroTargets.fiber, 'var(--food-v2-fiber)'),
       ]),
     ])
     const waterCard = el('section.fuel-r4__card.fuel-r4__water.food-v2__water', {}, [
       el('div.food-v2__section-title', {}, [
         el('h2', {}, [icon('water'), ' Water']),
-        el('span.food-v2__caption', { text: 'Quick add · oz' }),
       ]),
       el('div.food-v2__water-main', {}, [
         el('strong', { text: Math.round(water).toLocaleString() + ' oz' }),

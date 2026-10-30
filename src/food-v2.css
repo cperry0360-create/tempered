@@ -238,10 +238,9 @@
     gap:clamp(12px,1.5vw,20px);
   }
   html[data-layout="duo"] .screen--fuel-r4 .food-v2__overview {
-    position:sticky;
-    top:calc(var(--duo-inset-top) + 10px);
-    max-height:calc(100dvh - var(--duo-inset-top) - var(--duo-inset-bottom) - 30px);
-    overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin;
+    position:static;
+    max-height:none;
+    overflow:visible;
   }
   html[data-layout="duo"] .screen--fuel-r4 .food-v2__details {
     align-content:start; overflow:visible; gap:12px;

@@ -130,10 +130,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       return
     }
     const elapsed = formatClock(Number(draft.elapsedSec) || 0)
+    const paused = draft.timerPaused === true
     workoutDock.hidden = false
     replace(workoutDock, [el('button.active-workout-dock__button', {
       type: 'button', dataset: { activeWorkout: 'true' },
-      'aria-label': `Resume ${draft.session.title ?? 'workout'}`,
+      'aria-label': `${paused ? 'Open paused' : 'Resume'} ${draft.session.title ?? 'workout'}`,
       onclick: () => {
         const current = loadActiveSessionDraft()
         if (current) resumeSession(current)
@@ -141,9 +142,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       },
     }, [
       el('span.active-workout-dock__copy', {}, [
-        el('strong', { text: `${draft.session.title ?? 'Workout'} · ${elapsed}` }),
+        el('strong', { text: `${draft.session.title ?? 'Workout'} · ${elapsed}${paused ? ' · Paused' : ''}` }),
       ]),
-      el('span.active-workout-dock__resume', { text: 'Resume' }),
+      el('span.active-workout-dock__resume', { text: paused ? 'Open' : 'Resume' }),
     ])])
   }
 

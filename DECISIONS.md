@@ -1,3 +1,23 @@
+## 2026-10-29 — Food dashboard corrections, version 0.63.3 candidate
+
+Per Cory's Food feedback, protein must have an achievable progress loop
+against its existing target, while the other macro targets should meaningfully
+correspond to the chosen calorie budget. Display-only macro targets use
+protein first, fat at 30% of available daily calories (capped by what's left
+after protein), and carbs as residual at 4 kcal/g; fiber is a separate 30 g
+goal, not extra energy. This is a default display allocation and not a new
+prescription or a recalculation of previously logged food values. The 30% fat
+allocation is a practical initial choice to review if Cory prefers a custom
+macro split.
+
+Four frequent foods now use the four existing visual slots. Revert Meal photo
+from the recent share-sheet handoff to a direct external link with clipboard
+copy started in the same tap, honoring Cory's request to open ChatGPT in the
+browser. Retain the share-sheet behavior for Health, which is a separate flow.
+Remove the visible beach photo attribution and redundant helper text, but keep
+the seasonal countdown and logged-trend indicator. Neither local data nor
+saved nutrition is modified. Installed iOS behavior still requires device QA.
+
 ## 2026-10-21 — Opt-in iPhone Duo layout candidate
 
 The later user approval changed activation to a Settings > Appearance checkbox,

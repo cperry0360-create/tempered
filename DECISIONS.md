@@ -1,3 +1,17 @@
+## 2026-10-30 — Explicit workout timer pause
+
+Cory needs to interrupt an active training session for family responsibilities
+without allowing the elapsed clock to continue. The simplest reversible
+solution is a prominent Pause/Resume control beside the header time, keeping
+the workout and sets on screen. Manual pause is distinct from the existing
+automatic stop when hidden/minimized. timerPaused is checkpointed so
+foreground events and cold launch do not restart it; timerPauseUsed tracks
+whether a precise active-clock duration should replace timestamp-inferred
+duration at finish. Both default false for older v1 checkpoints, requiring
+no migration. Rest between sets retains its independent real-time end;
+pausing workout duration does not reset or invent a rest interval.
+No changes to exercise logs, history, routines, or saved measured data.
+
 ## 2026-10-29 — Food dashboard corrections, version 0.63.3 candidate
 
 Per Cory's Food feedback, protein must have an achievable progress loop

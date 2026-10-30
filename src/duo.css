@@ -144,7 +144,7 @@ html[data-layout="duo"] .train-calculator-bar .screen__title { margin: 0; }
    to the wider form instead of the ordinary phone's 430px content column. */
 html[data-layout="duo"] #app:has(.screen--session) .app__body { padding: 0; }
 html[data-layout="duo"] .app__body > .screen--session {
-  padding: calc(76px + var(--duo-inset-top))
+  padding: calc(96px + var(--duo-inset-top))
     max(16px, var(--duo-inset-right))
     calc(104px + var(--duo-inset-bottom))
     max(16px, var(--duo-inset-left));
@@ -260,7 +260,7 @@ html[data-layout="duo"] .app__body > .screen--session[data-half-fold="true"] {
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: calc(76px + env(safe-area-inset-top))
+  padding: calc(96px + env(safe-area-inset-top))
     max(20px, env(safe-area-inset-right)) 20px
     max(20px, env(safe-area-inset-left));
   background: var(--bg);

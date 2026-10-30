@@ -51,6 +51,14 @@ if(params.has('fixture')) {
     check('rest controls remain in the lower half',rest&&rest.top>=controls.top&&rest.bottom<=innerHeight+1)
     clock.set(clock.now()+30000);await settle(550)
     check('rest uses the original absolute end time',q('[data-rest-remaining]')?.textContent==='Rest 1:30',q('[data-rest-remaining]')?.textContent)
+    const timerBeforePause=q('[data-session-elapsed]')?.textContent
+    q('[data-action="toggle-session-timer"]')?.click()
+    clock.set(clock.now()+45000);await settle(550)
+    check('half-fold Pause freezes the workout elapsed timer without losing controls',
+      q('.screen--session')?.dataset.halfFold==='true'
+      && q('[data-session-elapsed]')?.textContent===timerBeforePause
+      && q('[data-action="toggle-session-timer"]')?.textContent==='Resume')
+    q('[data-action="toggle-session-timer"]')?.click()
     q('[aria-label="Next movement"]').click();await settle()
     check('next movement switches the display and logging together',q('.half-fold__select').value==='1'&&q('.half-fold__title').textContent===q('.exercise__name').textContent)
     enter('[data-field="weight"]',35)

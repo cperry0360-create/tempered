@@ -67,6 +67,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let ticker
   let elapsedSec = 0
   let activeSince = null
+  let timerPaused = false
+  let timerPauseUsed = false
   let wakeLock = null
   let hasUnloggedEdits = false
   let confirmingDiscard = false
@@ -113,6 +115,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function activateWorkoutScreen() {
+    if (timerPaused || document.visibilityState === 'hidden') return
     resumeElapsedTimer()
     tellNativeWorkoutActive(true)
     requestWorkoutWakeLock()
@@ -123,6 +126,20 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const held = wakeLock
     wakeLock = null
     held?.release?.().catch?.(() => {})
+  }
+
+  function toggleWorkoutTimer() {
+    if (timerPaused) {
+      timerPaused = false
+      activateWorkoutScreen()
+    } else {
+      pauseElapsedTimer()
+      timerPaused = true
+      timerPauseUsed = true
+      releaseWorkoutWakeLock()
+    }
+    persistDraft()
+    render()
   }
 
   function persistDraft() {
@@ -137,6 +154,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       openPanel,
       hasUnloggedEdits,
       elapsedSec: elapsedSeconds(),
+      timerPaused,
+      timerPauseUsed,
       halfFold,
       halfFoldIndex,
     })
@@ -999,6 +1018,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     if (plan.length === 0 || !duoLayout) halfFold = false
     halfFoldIndex = Math.max(0, Math.min(plan.length - 1, halfFoldIndex))
     root.dataset.halfFold = String(halfFold)
+    root.dataset.timerPaused = String(timerPaused)
     root.dataset.restActive = String(Boolean(rest))
     const selectedEntry = plan[halfFoldIndex]
     replace(root, [
@@ -1010,10 +1030,19 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         }, ['Cancel']),
         el('div.sessionbar__center', {}, [
           el('h1.sessionbar__title', { text: session?.title ?? 'Session' }),
-          el('span.sessionbar__elapsed-value', {
-            dataset: { sessionElapsed: 'true' },
-            text: clock(elapsedSeconds()),
-          }),
+          el('div.sessionbar__timer-row', {}, [
+            el('span.sessionbar__elapsed-value', {
+              dataset: { sessionElapsed: 'true' },
+              text: clock(elapsedSeconds()),
+            }),
+            el('button.sessionbar__timer-toggle', {
+              type: 'button',
+              dataset: { action: 'toggle-session-timer', paused: String(timerPaused) },
+              'aria-label': timerPaused ? 'Resume workout timer' : 'Pause workout timer',
+              'aria-pressed': String(timerPaused),
+              onclick: toggleWorkoutTimer,
+            }, [timerPaused ? 'Resume' : 'Pause']),
+          ]),
         ]),
         el('div.sessionbar__actions', {}, [plateCalculatorButton(), el('button.sessionbar__finish', {
           type: 'button',
@@ -1092,6 +1121,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     clearBodyOverlays()
     const summary = await workout.finishSession(session, {
       isFirstOfDay,
+      // When Pause was used, report the intentionally measured active clock
+      // rather than inferring a continuous sitting across the interruption.
+      ...(timerPauseUsed ? { durationMinutes: Math.max(1, Math.round(elapsedSeconds() / 60)) } : {}),
       // A block settles everything it logged; a single slot settles only itself,
       // because the day's session may already carry earlier slots.
       ...(session.slotMode ? { onlySets: loggedHere } : {}),
@@ -1128,6 +1160,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       halfFoldIndex = 0
       elapsedSec = 0
       activeSince = null
+      timerPaused = false
+      timerPauseUsed = false
       activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       plan = []
@@ -1217,6 +1251,9 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       // elapsedSec is intentionally treated as zero rather than repeating it.
       elapsedSec = Number.isFinite(draft.elapsedSec) ? Math.max(0, draft.elapsedSec) : 0
       activeSince = null
+      // V1 checkpoints without these fields continue running as before.
+      timerPaused = draft.timerPaused === true
+      timerPauseUsed = draft.timerPauseUsed === true || timerPaused
       activateWorkoutScreen()
       library = [...(await workout.exerciseMap()).values()].sort((a, b) => a.name.localeCompare(b.name))
       session = { ...draft.session }

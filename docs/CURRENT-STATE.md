@@ -1,3 +1,24 @@
+## 2026-10-30 — Manual workout timer Pause / Resume, 0.64.0 (98)
+
+- Active session header shows a 44px Pause / Resume control beside the elapsed
+  time on ordinary phones and Duo (including Half-fold). Pause freezes the
+  active workout clock and releases the screen wake lock; Resume picks up from
+  that value without counting the interruption.
+- timerPaused and timerPauseUsed are optional fields in the existing v1
+  localStorage checkpoint. Minimize, cold launch, iOS background/foreground, and
+  reopening preserve a manually paused timer. Older checkpoints resume as
+  before, and checked sets remain authoritative in IndexedDB.
+- A minimized paused workout is labelled Paused; opening it does not
+  automatically start its clock. The separate inter-set rest timer continues
+  to use its established wall-clock deadline.
+- When the explicit pause was used, the finished session's duration is the
+  active elapsed timer rather than a potentially inflated set-timestamp span.
+  Unpaused workouts keep their existing duration inference. History can still
+  be corrected manually; existing saved sessions are unchanged.
+- Regression coverage exercises pause, elapsed exclusion, cold relaunch,
+  resumed timing, duration on finish, and Half-fold behavior. Physical iOS
+  standalone/hinge QA is still needed to confirm placement and wake lock.
+
 ## 2026-10-29 — Food macro targets and meal-photo handoff, 0.63.3 (97) (candidate)
 
 - Food macro rings now use one consistent interpretation: protein completes at

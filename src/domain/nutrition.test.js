@@ -127,3 +127,18 @@ test('portions group with the single-serving food in suggestions', () => {
   const [food] = nutritionSuggestions([one, two])
   assert.equal(food.count, 2); assert.equal(food.calories, 150); assert.equal(food.proteinGrams, 30)
 })
+
+test('macro gram goals reconcile to the daily calorie budget after prioritizing protein', async () => {
+  const { nutritionMacroTargets } = await import('./nutrition.js')
+  const first = nutritionMacroTargets(2100, 135)
+  assert.equal(first.protein, 135)
+  assert.equal(first.fat, 70)
+  assert.equal(first.carbs, 232.5)
+  assert.equal(first.fiber, 30)
+  assert.equal(first.protein * 4 + first.carbs * 4 + first.fat * 9, 2100)
+  const cut = nutritionMacroTargets(1800, 160)
+  assert.equal(cut.protein * 4 + cut.carbs * 4 + cut.fat * 9, 1800)
+  const tight = nutritionMacroTargets(500, 160)
+  assert.equal(tight.carbs, 0)
+  assert.equal(tight.fat, 0)
+})

@@ -20,7 +20,7 @@
       ['2026-09-20', 'fairlife Core Power chocolate protein shake', 150, 30, 4],
       ['2026-09-22', 'Chicken rice bowl', 640, 42, 2],
       ['2026-09-24', 'Greek yogurt + berries', 220, 20, 3],
-      ['2026-09-25', 'Protein bar, chocolate peanut', 210, 20, 1],
+      ['2026-09-25', 'Protein bar, chocolate peanut', 210, 20, 2],
       ['2026-09-26', 'Turkey sandwich', 740, 38, 1],
       ['2026-09-27', 'Whiskey shot', 100, 0, 1],
     ]
@@ -28,7 +28,7 @@
       for (let i = 0; i < n; i += 1) await t.daily.addNutrition(date, { description, calories, protein }, { loggedAt: `${date}T1${i}:00:00.000Z` })
     await t.app.show('fuel'); await settle()
     check('frequent foods appear just below the three quick actions',
-      qa('[data-recent-food]').length === 3 &&
+      qa('[data-recent-food]').length === 4 &&
       q('.food-v2__recents').compareDocumentPosition(q('.fuel-r4__meal-panel'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     check('the full library is collapsed until requested', qa('.fuel-food__name').length === 0)

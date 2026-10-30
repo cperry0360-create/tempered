@@ -83,6 +83,21 @@
         check('resume reopens the same active workout', Boolean(mount.querySelector('.screen--session')))
         check('logged set remains checked after resume', mount.querySelector('[data-log="incline_bench_db:0"]')?.dataset.done === 'true')
 
+        const timerToggle = () => mount.querySelector('[data-action="toggle-session-timer"]')
+        check('active workout shows accessible Pause control', timerToggle()?.textContent === 'Pause'
+          && timerToggle()?.getAttribute('aria-label') === 'Pause workout timer')
+        clock.set(clock.now() + 75000)
+        await new Promise(resolve => setTimeout(resolve, 560))
+        check('running elapsed clock advances', mount.querySelector('[data-session-elapsed]')?.textContent === '1:15')
+        timerToggle()?.click()
+        const pausedTime = mount.querySelector('[data-session-elapsed]')?.textContent
+        check('Pause freezes elapsed clock and checkpoints the choice',
+          pausedTime === '1:15' && timerToggle()?.textContent === 'Resume'
+          && loadActiveSessionDraft()?.timerPaused === true)
+        clock.set(clock.now() + 20 * 60000)
+        await new Promise(resolve => setTimeout(resolve, 560))
+        check('time away while paused is excluded', mount.querySelector('[data-session-elapsed]')?.textContent === pausedTime)
+
         mount.querySelector('[data-action="add-movement"]').click()
         const addChoice = mount.querySelector('[data-add-exercise]')
         const addedId = addChoice?.dataset.addExercise
@@ -97,15 +112,31 @@
         await settle()
         check('minimize returns to the app without finishing', Boolean(mount.querySelector('.screen--today-calm')))
         check('minimized workout remains resumable', Boolean(mount.querySelector('[data-active-workout]')))
+        check('minimized dock identifies the paused timer',
+          /Paused/.test(mount.querySelector('[data-active-workout]')?.textContent ?? ''))
 
-        // Closed/background time is not workout time. This also covers old V1
-        // checkpoints whose absolute start timestamp produced 600+ minutes.
+        // Closed/background time is not workout time. The paused state stays
+        // explicit across a long interruption (including a PWA relaunch).
         clock.advanceDays(1)
+        const third = await bootstrap({ mount, storage, clock })
+        installSessionGuard(third)
+        await settle()
         mount.querySelector('[data-active-workout]').click()
         await settle()
-        check('time minimized or closed is excluded from workout elapsed time',
-          mount.querySelector('[data-session-elapsed]')?.textContent === '0:00',
-          mount.querySelector('[data-session-elapsed]')?.textContent ?? 'missing')
+        check('pausing persists after minimize and cold relaunch',
+          mount.querySelector('[data-session-elapsed]')?.textContent === '1:15'
+          && timerToggle()?.textContent === 'Resume'
+          && loadActiveSessionDraft()?.timerPaused === true)
+        clock.set(clock.now() + 60000)
+        await new Promise(resolve => setTimeout(resolve, 560))
+        check('a paused workout does not restart itself on screen reentry',
+          mount.querySelector('[data-session-elapsed]')?.textContent === '1:15')
+        timerToggle()?.click()
+        clock.set(clock.now() + 30000)
+        await new Promise(resolve => setTimeout(resolve, 560))
+        check('Resume adds only new active time',
+          mount.querySelector('[data-session-elapsed]')?.textContent === '1:45'
+          && loadActiveSessionDraft()?.timerPaused === false)
 
         // Cancel with a checked set asks to finish: closing would leave the set
         // in an open session that history and the score never see.
@@ -117,6 +148,8 @@
         await settle(300)
         check('finishing clears the resumable checkpoint', loadActiveSessionDraft() === null)
         check('finishing removes the active-workout card', !mount.querySelector('[data-active-workout]'))
+        check('completed workout duration excludes a long pause',
+          (await storage.get('sessions', sessionId))?.durationMinutes === 2)
         check('leaving drops unlogged edits and keeps checked canonical sets in a finished session', sessionId
           ? (await second.workout.setsFor(sessionId)).length === 1 && Boolean((await second.storage.get('sessions', sessionId))?.endedAt)
           : false)

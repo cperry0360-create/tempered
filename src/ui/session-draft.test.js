@@ -26,6 +26,15 @@ const draft = {
   openPanel: null,
 }
 
+test('timerPaused checkpoints without migrating older workout drafts', () => {
+  const storage = fakeStorage()
+  saveActiveSessionDraft({ ...draft, elapsedSec: 75, timerPaused: true }, storage)
+  assert.equal(loadActiveSessionDraft(storage)?.timerPaused, true)
+  assert.equal(loadActiveSessionDraft(storage)?.elapsedSec, 75)
+  saveActiveSessionDraft(draft, storage)
+  assert.equal(loadActiveSessionDraft(storage)?.timerPaused, undefined)
+})
+
 test('active workout draft round-trips exactly', () => {
   const storage = fakeStorage()
   assert.equal(saveActiveSessionDraft(draft, storage), true)

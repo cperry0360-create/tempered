@@ -11,6 +11,7 @@ import {
   importHealthSnapshot,
   parseHealthSnapshot,
 } from './health-snapshot.js'
+import { handoffChatGptPrompt } from './chatgpt-handoff.js'
 
 export const CHATGPT_HEALTH_PROMPT = `Use my connected Apple Health information to create today’s Tempered health snapshot.
 
@@ -90,9 +91,9 @@ export function installHealthPasteRuntime(context) {
         </header>
         <div class="health-paste-sheet__content">
         <section class="health-paste-step">
-          <h3><span>1</span> Copy prompt and open ChatGPT</h3>
+          <h3><span>1</span> Share or copy ChatGPT prompt</h3>
           <p class="health-paste-sheet__intro">Copy the prompt into ChatGPT Health; blank fields are skipped.</p>
-          <a class="button" data-health-prompt-copy href="https://chatgpt.com/" target="_blank" rel="noopener">Copy prompt and open ChatGPT</a>
+          <button type="button" class="button" data-health-prompt-copy>Share or copy prompt</button>
         </section>
         <section class="health-paste-step health-paste-step--paste">
           <h3><span>2</span> Paste health data</h3>
@@ -196,11 +197,13 @@ export function installHealthPasteRuntime(context) {
     }
     node.querySelector('[data-health-prompt-copy]').onclick = async (event) => {
       try {
-        await copyText(CHATGPT_HEALTH_PROMPT)
-        event.currentTarget.textContent = 'Prompt copied · opening ChatGPT'
-        status.textContent = 'Paste the copied prompt into ChatGPT Health.'
+        const result = await handoffChatGptPrompt(CHATGPT_HEALTH_PROMPT, { copy: copyText })
+        event.currentTarget.textContent = result === 'shared' ? 'Prompt shared' : 'Prompt copied'
+        status.textContent = result === 'shared'
+          ? 'Send the prompt to ChatGPT Health, then return to Tempered to import the result.'
+          : 'Prompt copied. Open ChatGPT separately, then return to Tempered to import the result.'
       } catch {
-        status.textContent = 'Could not copy the prompt on this device.'
+        status.textContent = 'Could not share or copy the prompt on this device.'
       }
     }
     submit.onclick = async () => {

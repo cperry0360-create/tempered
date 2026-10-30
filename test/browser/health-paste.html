@@ -59,6 +59,20 @@ SPO2=96`
 
       importButton?.click()
       check('Health import opens as a full-screen review view', Boolean(await waitFor('[data-health-paste-overlay]')))
+      check('Health ChatGPT prompt is a safe button instead of a navigation link',
+        q('[data-health-prompt-copy]')?.tagName === 'BUTTON'
+        && !q('[data-health-prompt-copy][href]'))
+      let sharedHealth = null
+      Object.defineProperty(navigator, 'share', {
+        configurable: true, value: async data => { sharedHealth = data },
+      })
+      const beforeUrl = location.href
+      q('[data-health-prompt-copy]')?.click()
+      await settle(90)
+      check('Health handoff shares the prompt while keeping its import dialog open',
+        sharedHealth?.text?.includes('TEMPERED_HEALTH_V1')
+        && location.href === beforeUrl
+        && Boolean(q('[data-health-paste-overlay]')))
       q('[data-health-paste-read]')?.click()
       await settle(80)
       check('clipboard snapshot is shown before import', q('[data-health-paste-input]')?.value === snapshot)

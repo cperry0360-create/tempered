@@ -29,7 +29,7 @@
 }
 .food-v3__search .fuel-food__results:not(:empty) {
   border-top:1px solid var(--food-v2-line); margin-top:10px; padding-top:7px;
-  max-height:min(38vh,290px); overflow-y:auto; overscroll-behavior:contain;
+  max-height:none; overflow:visible;
 }
 .food-v3__search .fuel-food__list { background:transparent; }
 .food-v3__search .fuel-food { border-bottom:1px solid var(--food-v2-line); }
@@ -203,13 +203,8 @@ html[data-layout="duo"] .tabbar__tab[data-active="true"] {
 }
 html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
 
-/* The calorie card stays at the head of the left side even when its own
-   long macro/calendar panel is scrolled, fixing the recording's lead card. */
+/* One page scroll across both Duo panes; no nested sticky calorie panel. */
 @media (min-width:740px) {
-  html[data-layout="duo"] .screen--fuel-r4 .food-v2__energy {
-    position:sticky; top:0; z-index:3;
-    box-shadow:0 10px 20px color-mix(in srgb,var(--food-v2-deep) 65%,transparent);
-  }
   html[data-layout="duo"] .food-v2__small-row {
     grid-template-columns:minmax(0,.86fr) minmax(0,1.35fr);
   }

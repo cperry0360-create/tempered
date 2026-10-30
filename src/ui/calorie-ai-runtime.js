@@ -1,5 +1,6 @@
 import { nutritionLedger, nutritionSuggestions } from '../domain/nutrition.js'
 import { icon } from './icons.js'
+import { handoffChatGptPrompt } from './chatgpt-handoff.js'
 
 export const NUTRITION_PHOTO_PROMPT = `Estimate the total calories and macros in the food and drink visible in the attached meal photo or photos for my Tempered food log.
 
@@ -176,27 +177,41 @@ export function installCalorieAiRuntime() {
   }
 
   function promptButton(className = 'today-item__ai-prompt') {
-    const button = document.createElement('a')
+    const button = document.createElement('button')
+    button.type = 'button'
     button.className = className
-    button.href = 'https://chatgpt.com/'
-    button.target = '_blank'
-    button.rel = 'noopener'
-    button.setAttribute('aria-label', 'Copy meal-photo prompt and open ChatGPT')
+    // An external <a target="_blank"> can strand a standalone iOS PWA inside
+    // an in-app browser without a Back button. Share text or copy it instead.
+    button.setAttribute('aria-label', 'Share or copy ChatGPT meal-photo prompt')
     button.replaceChildren(
       icon('food'),
       Object.assign(document.createElement('span'), { textContent: 'Meal photo' }),
     )
     button.dataset.calorieAi = 'prompt'
     button.onclick = async (event) => {
+      event.preventDefault()
       event.stopPropagation()
-      const copied = await copyText(NUTRITION_PHOTO_PROMPT)
-      button.querySelector('span').textContent = copied ? 'Opening' : 'Failed'
-      button.dataset.copied = String(copied)
-      window.setTimeout(() => {
-        if (!button.isConnected) return
-        button.querySelector('span').textContent = 'Meal photo'
-        delete button.dataset.copied
-      }, 1600)
+      if (button.disabled) return
+      button.disabled = true
+      try {
+        const result = await handoffChatGptPrompt(NUTRITION_PHOTO_PROMPT, { copy: copyText })
+        const shared = result === 'shared'
+        button.querySelector('span').textContent = shared ? 'Shared' : 'Copied'
+        button.dataset.copied = String(!shared)
+        setScreenStatus(shared
+          ? 'Share the prompt with ChatGPT, then return to Tempered and import its estimate.'
+          : 'Prompt copied. Switch to ChatGPT to paste it; Tempered stays open here.', 'ready')
+      } catch {
+        button.querySelector('span').textContent = 'Try again'
+        setScreenStatus('Could not share or copy the prompt. Please try again.', 'error')
+      } finally {
+        button.disabled = false
+        window.setTimeout(() => {
+          if (!button.isConnected) return
+          button.querySelector('span').textContent = 'Meal photo'
+          delete button.dataset.copied
+        }, 2600)
+      }
     }
     return button
   }

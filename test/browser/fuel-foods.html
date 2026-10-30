@@ -31,6 +31,12 @@
       qa('[data-recent-food]').length === 4 &&
       q('.food-v2__recents').compareDocumentPosition(q('.fuel-r4__meal-panel'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
+    const goal = nutrient => Number(q('[data-nutrient="' + nutrient + '"] small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+    const targetKcal = Number(q('.food-v2__energy small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+    const derived = goal('protein') * 4 + goal('carbs') * 4 + goal('fat') * 9
+    check('protein, carb, and fat gram goals approximately reconcile to calorie target',
+      Number.isFinite(derived) && Math.abs(derived - targetKcal) <= 7, derived + ' vs ' + targetKcal)
+    check('fiber has an independent target', goal('fiber') === 30)
     check('the full library is collapsed until requested', qa('.fuel-food__name').length === 0)
     let search = q('.fuel-food__search')
     check('search box is available directly at top of Food',

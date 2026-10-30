@@ -33,19 +33,24 @@
     const form = q('.screen--fuel [data-nutrition-form]')
     check('the add-meal form is on the Fuel tab itself, no extra screen', Boolean(form) && !q('.nutrition-log-overlay'))
     check('Meal photo and Import copied nutrition are on Fuel', Boolean(q('.screen--fuel [data-calorie-ai="prompt"]')) && Boolean(q('.screen--fuel [data-calorie-ai="paste"]')))
-    check('ChatGPT meal-photo action cannot navigate away from the installed web app',
-      q('.screen--fuel [data-calorie-ai="prompt"]')?.tagName === 'BUTTON'
-      && !q('a[href*="chatgpt.com"]'))
-    let sharedPrompt = null
+    const photoLink = q('.screen--fuel [data-calorie-ai="prompt"]')
+    check('Meal photo offers a browser link rather than a share sheet',
+      photoLink?.tagName === 'A' && photoLink?.getAttribute('href') === 'https://chatgpt.com/'
+      && photoLink?.target === '_blank')
+    let sharedPrompt = null, copiedPrompt = null
     Object.defineProperty(navigator, 'share', {
       configurable: true, value: async data => { sharedPrompt = data },
     })
-    const savedUrl = location.href
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true, value: { async writeText(value) { copiedPrompt = value }, async readText() { return '' } },
+    })
+    // Browser harness must not actually leave Tempered. Intercept only the link's
+    // default navigation; the photo action still runs its copy handler.
+    photoLink?.addEventListener('click', event => event.preventDefault(), { once: true })
     q('[data-food-action="photo"]')?.click()
     await settle(100)
-    check('meal-photo quick action shares the prompt and remains in Tempered',
-      sharedPrompt?.text?.includes('TEMPERED_CALORIES=')
-      && location.href === savedUrl
+    check('meal-photo action copies the prompt without using the share sheet',
+      copiedPrompt?.includes('TEMPERED_CALORIES=') && sharedPrompt === null
       && Boolean(q('.screen--fuel [data-nutrition-form]')))
     check('Day status is on Fuel', Boolean(q('.screen--fuel [data-nutrition-day-status]')))
     check('calorie budget and food input appear before open-day reminder backlog',

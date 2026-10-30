@@ -1,7 +1,5 @@
-/* Food feedback pass: clarify statuses, remove visual clutter, preserve data.
-   All color values are theme tokens. The Beach Cut background is an Unsplash
-   photograph taken at Moon Palace, Cancún (Meg von Haartman, Feb 2025).
-   It has a gradient fallback when offline/network-blocked. */
+/* Food: compact nutrition logging, beach countdown, and visual diary.
+    All color values are theme tokens; photo has an offline gradient fallback. */
 
 /* The only new accent needed beyond the Food V2 palette is missed-day red. */
 .food-v3__search {
@@ -139,11 +137,6 @@
 .food-v3__beach-detail { font-size:10px; color:var(--food-v2-text); }
 .food-v3__beach .food-v2__beach-progress {
   position:relative; z-index:1; background:color-mix(in srgb,var(--food-v2-deep) 64%,transparent);
-}
-.food-v3__beach-attribution {
-  position:relative; z-index:1;
-  display:block; font-size:8px; line-height:1.2;
-  color:var(--food-v2-text); opacity:.8;
 }
 
 /* Timeline groups are derived from local meal timestamps; no data migration. */

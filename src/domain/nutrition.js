@@ -243,3 +243,23 @@ export function searchFoods(foods, query) {
     return words.every((word) => text.includes(word))
   })
 }
+
+/**
+ * Derive gram targets from the existing calorie and protein goals.
+ * Protein is the priority; fat gets 30% of planned energy (bounded by the
+ * calories left after protein), and carbs get the remainder. Fiber is
+ * tracked independently and is NOT added as a fourth energy source.
+ * This changes goal display only: no logged food or totals are rewritten.
+ */
+export function nutritionMacroTargets(calorieGoal, proteinGoal) {
+  const calories = Number.isFinite(Number(calorieGoal)) ? Math.max(0, Number(calorieGoal)) : 0
+  const protein = Number.isFinite(Number(proteinGoal)) ? Math.max(0, Number(proteinGoal)) : 0
+  const afterProtein = Math.max(0, calories - 4 * protein)
+  const fatCalories = Math.min(calories * 0.30, afterProtein)
+  return {
+    protein,
+    carbs: (afterProtein - fatCalories) / 4,
+    fat: fatCalories / 9,
+    fiber: 30,
+  }
+}

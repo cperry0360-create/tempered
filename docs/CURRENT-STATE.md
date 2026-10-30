@@ -1,3 +1,19 @@
+## 2026-10-29 — Food macro targets and meal-photo handoff, 0.63.3 (97) (candidate)
+
+- Food macro rings now use one consistent interpretation: protein completes at
+  its configured gram goal; fat targets 30% of calorie budget where feasible;
+  carbohydrates use the rest after protein and fat; fiber is independent.
+  4/4/9 gram-derived targets reconcile to the calorie target. The app does not
+  edit food entries or force historical calorie/macro estimates to reconcile.
+- Each ring labels its actual gram target. Remove duplicated remaining-calorie
+  text, unnecessary quick-action subtitles, and redundant beach image caption.
+- Frequent Meals uses four most-logged items instead of reserving a fourth slot.
+- Meal photo once again copies the prompt and opens ChatGPT as a native external
+  link; Health continues to use its separate safe share/copy pathway. Device
+  validation is needed for iOS standalone browser handoff.
+- Tests cover gram-target reconciliation, four frequent meals, and the external
+  Meal photo affordance. No migrations, backup changes, or entry edits.
+
 ## 2026-10-25 — Duo layout and Half-fold, 0.59.0 (87)
 
 - Duo workouts offer a Half-fold button. The upper half shows the selected

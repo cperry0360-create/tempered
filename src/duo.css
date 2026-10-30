@@ -188,26 +188,20 @@ html[data-layout="duo"] .session-restbar {
     gap: 16px;
     min-width: 0;
   }
-  /* On unfolded Duo the long meal history should never leave an empty
-     left half of the display. The calorie summary and Water remain visible
-     while the right-hand food log scrolls. */
+  /* Food uses one scroll owner: .app__body. Both columns advance together
+     so iOS never fights between a nested panel and the page gesture. */
   html[data-layout="duo"] .fuel-r4__overview {
     display: grid;
     align-content: start;
     align-self: start;
     min-width: 0;
     gap: 16px;
-    position: sticky;
-    top: calc(var(--duo-inset-top) + 12px);
-    max-height: calc(100dvh - var(--duo-inset-top) - var(--duo-inset-bottom) - 40px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
   html[data-layout="duo"] .fuel-r4__dashboard {
-    align-items: stretch;
-  }
-  html[data-layout="duo"] #app:has(.active-workout-dock:not([hidden])) .fuel-r4__overview {
-    max-height: calc(100dvh - var(--duo-inset-top) - var(--duo-inset-bottom) - 92px);
+    align-items: start;
   }
   html[data-layout="duo"] .today-readiness--empty {
     flex-wrap: wrap;

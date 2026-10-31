@@ -130,14 +130,45 @@
         `${before} -> ${after}`)
 
       await tab('train', '.screen--train')
+      await tempered.app.launchQuickCardio()
+      check('cardio opens as a full workout screen rather than a popup',
+        Boolean(q('.app__body > .screen--cardio [data-cardio-session]')) && !q('.quick-cardio-layer'))
+      const startedAt = clock.now()
+      clock.set(startedAt + 245000)
+      await settle(1200)
+      check('cardio Finish & save updates with actual partial progress',
+        (q('.screen--cardio [data-action="save-cardio"]')?.textContent ?? '').includes('4.08 min')
+        && q('.screen--cardio [data-action="save-cardio"]')?.disabled === false)
+      q('.screen--cardio [data-action="save-cardio"]')?.click()
+      await waitFor('.screen--train')
+      await settle(150)
+      const cardioLog = await tempered.daily.dayLog(clock.today())
+      check('stopping at 4m05s logs only 4.08 minutes, never 10',
+        cardioLog.microCardioMinutes === 4.08, cardioLog.microCardioMinutes)
       const programDay = q('[data-programday]')
       thumbSized(programDay, 'Program day')
       await tapCenter(programDay, 'Program day')
+      check('Start action now opens an image-led workout preview',
+        Boolean(q('[data-program-preview] .train-r5__preview-hero')) && !q('.screen--session'))
+      q('[data-start-preview]')?.click()
       const session = await waitFor('.screen--session')
-      check('Program day opens a workout session', Boolean(session))
+      check('Preview starts the real workout session', Boolean(session))
       if (session) {
+        check('workout has a visual stage and subtle progress rail',
+          Boolean(q('.session-r5__stage', session)) && Boolean(q('.session-r5__progress', session)))
         thumbSized(q('.setrow__check:not([disabled])', session), 'Set log check')
         thumbSized(q('.exercise-menu__trigger', session), 'Exercise action')
+        const savedSetRows = qa('.screen--session .setrow__check').length
+        await tempered.app.launchQuickCardio()
+        check('embedded cardio uses the full workout canvas, not an overlay',
+          Boolean(q('.app__body > .screen--cardio [data-cardio-session]')))
+        clock.set(clock.now() + 90000)
+        await settle(1100)
+        q('.screen--cardio [data-action="save-cardio"]')?.click()
+        await waitFor('.screen--session')
+        check('cardio finisher returns to the same strength workout and set rows',
+          Boolean(q('.screen--session .session-r5__stage'))
+          && qa('.screen--session .setrow__check').length === savedSetRows)
       }
       await tempered.app.show('train')
       await settle(60)

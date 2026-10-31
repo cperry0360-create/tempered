@@ -51,6 +51,7 @@
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
         check('a session opened with nothing logged', q('.setrow') !== null)
 
@@ -70,6 +71,7 @@
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
         const weight = q('input.setrow__num[data-field="weight"]')
         weight.value = '95'

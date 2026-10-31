@@ -75,6 +75,7 @@
         check('program days are startable from Train', qa('[data-programday]').length === 5)
 
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
 
         check('R3 sticky header shows the session title and elapsed time',
@@ -114,6 +115,7 @@
           barStyle.backgroundColor)
 
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
         const finish = q('[data-action="finish"]')
         const checkButtons = qa('.setrow__check')

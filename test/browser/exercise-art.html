@@ -46,6 +46,7 @@
         await tempered.app.show('train')
         await waitFor('[data-programday]')
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
 
         const cards = qa('section.exercise[data-exercise]')

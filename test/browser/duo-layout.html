@@ -80,41 +80,41 @@ if (params.has('fixture')) {
       // Food 2.0 retains a right-side Duo rail and uses one composed hero,
       // journal and responsive sheet instead of the former equal-sized cards.
       check(label + ' Food uses the approved composed hero and journal',
-        Boolean(q('.food-next__hero')) && Boolean(q('.food-next__journal'))
-        && q('.food-next__journal').textContent.includes('Today’s meals'))
-      const overview = q('.food-next__overview')
-      const details = q('.food-next__details')
+        Boolean(q('.forge-food__hero')) && Boolean(q('.forge-food__journal'))
+        && q('.forge-food__journal').textContent.includes('Today’s Meals'))
+      const overview = q('.forge-food__main')
+      const details = q('.forge-food__aside')
       const computed = w.getComputedStyle(overview)
       check(label + ' Food columns share the page scroll',
         computed.position === 'static' && computed.overflowY !== 'auto'
         && w.getComputedStyle(details).overflowY !== 'auto')
       if (wide) {
         check(label + ' unfolded Food places the journal beside the daily overview',
-          r('.food-next__journal').left >= r('.food-next__overview').right - 2)
-        const beforeLeft = r('.food-next__hero').top
-        const beforeRight = r('.food-next__journal').top
+          r('.forge-food__journal').left >= r('.forge-food__main').right - 2)
+        const beforeLeft = r('.forge-food__hero').top
+        const beforeRight = r('.forge-food__journal').top
         details.style.paddingBottom = '1500px'
         q('.app__body').scrollTop = 650
         await settle()
-        const leftTravel = beforeLeft - r('.food-next__hero').top
-        const rightTravel = beforeRight - r('.food-next__journal').top
+        const leftTravel = beforeLeft - r('.forge-food__hero').top
+        const rightTravel = beforeRight - r('.forge-food__journal').top
         check(label + ' overview and journal scroll as one canvas',
           q('.app__body').scrollTop >= 500
           && Math.abs(leftTravel - rightTravel) <= 3 && leftTravel > 500,
           JSON.stringify({leftTravel,rightTravel,scroll:q('.app__body').scrollTop}))
       } else {
         check(label + ' cover Food stacks journal below hero',
-          r('.food-next__journal').top >= r('.food-next__hero').bottom - 2)
+          r('.forge-food__journal').top >= r('.forge-food__hero').bottom - 2)
       }
-      q('[data-food-open-log]')?.click()
+      q('.forge-food__nav button:last-child')?.click()
       await settle()
       check(label + ' Log Food sheet stops before the preserved right-side rail',
-        Boolean(q('.food-next__sheet')) &&
-        r('.food-next__sheet').right <= r('.tabbar').left + 1)
+        Boolean(q('.forge-food__sheet')) &&
+        r('.forge-food__sheet').right <= r('.tabbar').left + 1)
       check(label + ' right-side section navigation stays accessible with Log Food open',
         q('.tabbar__tab[aria-current="page"]') !== null
         && r('.tabbar').width <= 48 + right + 1)
-      q('.food-next__sheet-close')?.click(); await settle()
+      q('.forge-food__sheet-close')?.click(); await settle()
       await w.tempered.app.show('settings'); await settle()
       q('[data-action="program-builder"]')?.click(); await new Promise(resolve => setTimeout(resolve,180)); await settle()
       check(label + ' Program Builder exposes independent editing panes',
@@ -141,8 +141,8 @@ if (params.has('fixture')) {
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
       check(width + ' ordinary phone prioritizes nutrition, diary, and meal journal',
-        f('.food-next__hero').top < f('.fuel-diary').top
-        && f('.fuel-diary').top < f('.food-next__journal').top
+        f('.fuel-diary').top < f('.forge-food__hero').top
+        && f('.forge-food__hero').top < f('.forge-food__journal').top
         && d.querySelector('[data-food-log-sheet]')?.hidden
         && Boolean(d.querySelector('[data-food-open-log]')))
       check(width + ' ordinary phone Fuel does not overflow',

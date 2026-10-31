@@ -82,7 +82,7 @@ if (params.has('fixture')) {
         && Math.abs(r('.food-v2__macro-card').width - r('.food-v2__small-row').width) <= 2)
       if (wide) {
         check(label + ' primary meal-entry pane begins beside calorie hero',
-          close(r('.fuel-r4__meal-panel').top, r('.fuel-r4__energy').top))
+          close(r('.food-v3__search').top, r('.fuel-r4__energy').top))
         check(label + ' energy and Water share the left pane',
           q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
           && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))

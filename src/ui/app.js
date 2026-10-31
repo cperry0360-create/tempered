@@ -192,10 +192,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         el('span', { text: 'TEMPERED · CARDIO SESSION' }),
         el('span.cardio-r5__header-time', { text: '10 MIN' }),
       ]),
-      el('div.cardio-r5__segments', { 'aria-label': 'Cardio session progress' },
-        Array.from({ length: 10 }, (_, i) => el('span', {
-          dataset: { complete: String(elapsed >= (i + 1) * 60) },
-        }))),
       el('div.cardio-r5__workspace', {}, [
         el('section.cardio-r5__stage', {}, [
           el('span.cardio-r5__eyebrow', { text: 'TODAY’S FINISHER' }),
@@ -249,7 +245,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
                   if (message) message.textContent = 'Could not save. Your timer is preserved; try again.'
                 } finally { cardioSaving=false; if(cardio)renderCardio() }
               },
-            }, [cardioSaving ? 'Saving…' : complete ? 'Finish · save 10 min' : `Finish · save ${minutes.toFixed(2)} min`]),
+            }, [cardioSaving ? 'Saving…' : 'Finish & log']),
           ]),
           el('p.cardio-r5__status', { dataset: { cardioError: 'true' }, role:'status', text:'' }),
           el('p.cardio-r5__note', { text: 'You can finish early. Actual completed time goes to your Micro cardio log. Your strength workout remains intact.' }),
@@ -287,13 +283,8 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     const save = cardioLayer.querySelector('[data-action="save-cardio"]')
     if (save && !cardioSaving) {
       save.disabled = elapsed < 1
-      save.textContent = elapsed >= CARDIO_SECONDS
-        ? 'Finish · save 10 min'
-        : `Finish · save ${cardioMinutes().toFixed(2)} min`
+      save.textContent = 'Finish & log'
     }
-    cardioLayer.querySelectorAll('.cardio-r5__segments > span').forEach((seg, i) => {
-      seg.dataset.complete = String(elapsed >= (i + 1) * 60)
-    })
     if (elapsed >= CARDIO_SECONDS && !cardio.paused) {
       pauseCardio()
       renderCardio()

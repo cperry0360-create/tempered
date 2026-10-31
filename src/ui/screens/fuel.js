@@ -11,6 +11,7 @@ export function createFuelScreen({ storage, daily, clock }) {
   let model = null
   let logSheetOpen = false
   let logSheetMode = 'quick'
+  let secondaryOpen = false
   let foodQuery = ''
   let showAllFoods = false
   let justAdded = null
@@ -689,7 +690,10 @@ export function createFuelScreen({ storage, daily, clock }) {
       el('div.food-next__layout', {}, [
         el('div.food-next__overview', {}, [
           diary, hero,
-          el('details.food-next__secondary', {}, [
+          el('details.food-next__secondary', {
+            open: secondaryOpen,
+            ontoggle: event => { secondaryOpen = event.target.open },
+          }, [
             el('summary', {}, ['Hydration & beach-cut details', icon('chevron-down')]),
             el('div.food-v2__small-row', {}, [waterCard, beachCutStrip()]),
           ]),
@@ -711,6 +715,6 @@ export function createFuelScreen({ storage, daily, clock }) {
   }
 
   async function refresh() { await load(); render() }
-  function deactivate() {}
+  function deactivate() { logSheetOpen = false }
   return { root, refresh, deactivate }
 }

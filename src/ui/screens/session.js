@@ -28,7 +28,7 @@ import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
 import { methodForExercise, methodsForExercise } from '../../domain/exercise-method.js'
-import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
+import { clearActiveSessionDraft, loadActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
 
 /** Art lives beside the repo root; resolve against this module so the path holds
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
@@ -49,7 +49,7 @@ const isBarbell = (entry) => activeMethod(entry) === 'Barbell' && entry?.exercis
  * @param {(summary: object|null) => void} deps.onFinish  `null` when nothing was logged.
  * @param {() => void} deps.onMinimize Preserve the draft and return to Tempered.
  */
-export function createSessionScreen({ workout, clock: timeSource, onFinish, onMinimize }) {
+export function createSessionScreen({ workout, clock: timeSource, onFinish, onMinimize, onStartCardio }) {
   const root = el('div.screen.screen--session')
 
   /** @type {any} */ let session = null
@@ -712,11 +712,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('button.exercise-menu__item', {
           type: 'button',
           dataset: { action: 'minimize-workout' },
-          onclick: () => {
-            persistDraft()
-            clearBodyOverlays()
-            onMinimize?.()
-          },
+          onclick: minimizeWorkout,
         }, ['Minimize workout']),
         item('Move up', () => move(position, -1), { disabled: position === 0 }),
         item('Move down', () => move(position, 1), { disabled: position === plan.length - 1 }),
@@ -995,6 +991,17 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     document.querySelectorAll('[data-session-overlay]').forEach((node) => node.remove())
   }
 
+  function minimizeWorkout() {
+    // The checkpoint is saved before removing this screen so checked sets,
+    // edited fields and remaining exercise slots survive the detour to Today.
+    pauseElapsedTimer()
+    persistDraft()
+    const checkpoint = loadActiveSessionDraft()
+    if (checkpoint) saveActiveSessionDraft({ ...checkpoint, minimized: true })
+    clearBodyOverlays()
+    onMinimize?.()
+  }
+
   function cancelWorkout() {
     // Checked sets are already saved. Closing without finishing would leave them
     // in an open session that history and the score cannot see, so Cancel with
@@ -1028,6 +1035,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       ]),
       el('p', { text: session.finisher }),
       target?.guidance && el('p.cardio-finisher__guidance', { text: target.guidance }),
+      onStartCardio && el('button.cardio-finisher__launch', {
+        type: 'button', dataset: { action: 'quick-cardio' },
+        onclick: onStartCardio,
+      }, ['Start 10-min cardio']),
     ])
   }
 
@@ -1062,7 +1073,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             }, [timerPaused ? 'Resume' : 'Pause']),
           ]),
         ]),
-        el('div.sessionbar__actions', {}, [plateCalculatorButton(), el('button.sessionbar__finish', {
+        el('div.sessionbar__actions', {}, [
+          plateCalculatorButton(),
+          el('button.sessionbar__minimize', {
+            type: 'button', dataset: { action: 'minimize-workout' },
+            'aria-label': 'Minimize workout and log water or food',
+            onclick: minimizeWorkout,
+          }, ['Minimize']),
+          el('button.sessionbar__finish', {
           type: 'button',
           dataset: { action: 'finish' },
           onclick: () => { confirmingFinish = true; render() },

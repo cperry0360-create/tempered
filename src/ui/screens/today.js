@@ -174,7 +174,7 @@ function compactMetric(value, unit, digits = 0) {
 }
 
 export function createTodayScreen({
-  workout, daily, planner, storage, clock, onStart, onOpenSlot, onSettings, onViewSummary,
+  workout, daily, planner, storage, clock, onStart, onStartCardio, onOpenSlot, onSettings, onViewSummary,
 }) {
   const root = el('div.screen.screen--today.screen--today-calm')
   let realToday = clock.today()
@@ -1239,6 +1239,15 @@ export function createTodayScreen({
       el('div.today-dashboard', {}, [
         el('div.today-dashboard__overview', {}, [
           sessionCard(),
+          onStartCardio && isRealToday() && el('button.today-cardio-shortcut', {
+            type: 'button', dataset: { action: 'quick-cardio' },
+            onclick: onStartCardio,
+          }, [
+            el('strong', { text: 'Start 10-min cardio' }),
+            el('span', { text: todayProgram?.program?.cardioTarget
+              ? `Zone 2 · ${todayProgram.program.cardioTarget.lowBpm}–${todayProgram.program.cardioTarget.highBpm} bpm`
+              : 'Quick timer · logs real minutes' }),
+          ]),
           readinessCard(),
           weekCard(),
           fuelCard(allActivities),

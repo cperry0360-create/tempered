@@ -377,3 +377,56 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
 .cardio-finisher__bpm { font-size:clamp(25px,5vw,35px); font-weight:850; line-height:1.14; }
 .cardio-finisher__zone small, .cardio-finisher__guidance { font-size:12px; line-height:1.4; }
 .train-r4__cardio-zone { font-weight:750; }
+
+
+/* One-tap cardio and a visible minimize action, sized for Duo cover mode. */
+.sessionbar__minimize {
+  min-height:44px; padding:0 10px; border:1px solid var(--hairline);
+  border-radius:12px; background:var(--surface-2); color:var(--text-1);
+  font-size:12px; font-weight:750; white-space:nowrap;
+}
+.cardio-finisher__launch, .train-r4__cardio-shortcut, .today-cardio-shortcut {
+  min-height:44px; width:100%; border:1px solid var(--hairline); border-radius:13px;
+  padding:10px 14px; font:inherit; font-weight:750; cursor:pointer;
+}
+.cardio-finisher__launch { margin-top:12px; color:var(--text-1); background:var(--surface-2); }
+.train-r4__cardio-shortcut, .today-cardio-shortcut {
+  display:flex; flex-direction:column; justify-content:center; align-items:flex-start;
+  gap:2px; text-align:left; color:var(--text-1); background:var(--surface-2);
+}
+.train-r4__cardio-shortcut small, .today-cardio-shortcut span {
+  font-size:12px; font-weight:500; opacity:.78;
+}
+.today-cardio-shortcut { background:var(--surface-1); }
+.quick-cardio-layer:not([hidden]) {
+  position:fixed; inset:0; z-index:10020; display:flex;
+  align-items:center; justify-content:center;
+  padding:calc(16px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right))
+    calc(16px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+  background:rgba(0,0,0,.68);
+}
+.quick-cardio {
+  width:min(100%,420px); max-height:100%; overflow:auto;
+  border:1px solid var(--hairline); border-radius:22px;
+  background:var(--surface-1); color:var(--text-1);
+  box-shadow:0 16px 55px rgba(0,0,0,.2); padding:20px;
+}
+.quick-cardio__top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.quick-cardio__eyebrow { font-size:10px; font-weight:800; letter-spacing:.08em; }
+.quick-cardio__dismiss { width:44px; height:44px; border:0; border-radius:50%; background:var(--surface-2); color:var(--text-1); font-size:24px; }
+.quick-cardio h2 { margin:7px 0 8px; font-size:21px; line-height:1.2; }
+.quick-cardio__countdown { font-size:clamp(49px,13vw,76px); font-variant-numeric:tabular-nums; letter-spacing:-.05em; font-weight:850; line-height:1.15; }
+.quick-cardio__progress { height:8px; background:var(--surface-3); border-radius:30px; overflow:hidden; margin:10px 0 17px; }
+.quick-cardio__progress-fill { background:var(--accent, var(--text-1)); height:100%; }
+.quick-cardio__target { font-size:16px; font-weight:800; }
+.quick-cardio__help, .quick-cardio__foot { font-size:12px; line-height:1.55; }
+.quick-cardio__actions { display:flex; gap:10px; margin-top:14px; }
+.quick-cardio__actions button { flex:1; min-height:48px; border-radius:12px; padding:10px; font:inherit; font-size:13px; font-weight:750; }
+.quick-cardio__pause { background:var(--surface-2); color:var(--text-1); border:1px solid var(--hairline); }
+.quick-cardio__save { background:var(--text-1); color:var(--surface-1); border:0; }
+.quick-cardio__save:disabled { opacity:.45; }
+.quick-cardio__error:not(:empty) { margin-top:8px; color:var(--food-v3-danger); }
+@media (max-width:420px) {
+  .sessionbar__minimize { padding:0 7px; font-size:11px; }
+  .quick-cardio { padding:16px; }
+}

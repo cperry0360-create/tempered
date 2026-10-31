@@ -360,3 +360,20 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
   .progress-cut__countdown strong { flex:none; font-size:clamp(42px,10vw,61px); }
   .progress-cut__countdown small { max-width:85px; text-align:right; }
 }
+
+
+/* Personalized post-lift cardio guide: readable in phone and Duo layouts. */
+.cardio-finisher__zone {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  background:var(--surface-2);
+  padding:12px 14px;
+  margin:10px 0;
+}
+.cardio-finisher__caption { font-size:11px; font-weight:750; letter-spacing:.07em; }
+.cardio-finisher__bpm { font-size:clamp(25px,5vw,35px); font-weight:850; line-height:1.14; }
+.cardio-finisher__zone small, .cardio-finisher__guidance { font-size:12px; line-height:1.4; }
+.train-r4__cardio-zone { font-weight:750; }

@@ -362,3 +362,230 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
   font-weight:750; font-size:13px; cursor:pointer;
 }
 .screen--fuel-r4 .food-v3__close-day[data-closed="true"] { color:var(--food-v2-blue); }
+
+
+/* -------------------------------------------------------------------------
+   Food 2.0 — a new composed interface, not a cosmetic override of Food V2.
+   Uses the canonical Nutrition runtime, data, blue/slate tokens, and Duo rail.
+   ------------------------------------------------------------------------- */
+.screen--fuel-r4 .food-next__header,
+.screen--fuel-r4 .food-next__actions,
+.screen--fuel-r4 .food-next__layout { min-width:0; }
+.food-next__header {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:14px;
+}
+.food-next__brand { display:grid; gap:2px; }
+.food-next__eyebrow {
+  color:var(--food-v2-blue);
+  font-size:10px; font-weight:800; letter-spacing:.12em;
+}
+.screen--fuel-r4 .food-next__brand .screen__title {
+  margin:0; font-size:clamp(28px,3.5vw,38px);
+  line-height:1.06; letter-spacing:-.045em; color:var(--food-v2-text);
+}
+.food-next__actions {
+  display:flex; gap:7px; overflow-x:auto; padding:2px 0 8px;
+  scrollbar-width:none; -webkit-overflow-scrolling:touch;
+}
+.food-next__actions::-webkit-scrollbar { display:none; }
+.food-next__actions button {
+  flex:none; display:flex; align-items:center; gap:6px;
+  border:1px solid var(--food-v2-line); border-radius:999px;
+  min-height:37px; padding:0 12px;
+  font:700 11px var(--font-ui);
+  background:var(--food-v2-panel); color:var(--food-v2-text);
+  cursor:pointer;
+}
+.food-next__actions button .icon { width:14px; height:14px; color:var(--food-v2-blue); }
+.food-next__actions button:active { background:var(--food-v2-panel-2); }
+.food-next__layout { display:grid; gap:16px; align-items:start; }
+.food-next__overview,.food-next__details { min-width:0; display:grid; gap:14px; align-content:start; }
+.food-next__hero,.food-next__journal {
+  background:linear-gradient(155deg,var(--food-v2-panel-2),var(--food-v2-deep));
+  color:var(--food-v2-text);
+  border:1px solid var(--food-v2-line);
+  border-radius:20px; padding:clamp(14px,1.7vw,20px);
+  min-width:0;
+}
+.food-next__hero-heading {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:15px;
+  font-size:10px; letter-spacing:.07em; font-weight:750;
+  color:var(--food-v2-muted);
+}
+.food-next__hero-heading span:last-child { color:var(--food-v2-blue); letter-spacing:0; }
+.food-next__hero-grid {
+  display:grid; grid-template-columns:minmax(104px,.95fr) minmax(118px,1fr) minmax(112px,.9fr);
+  gap:12px; align-items:center; min-width:0;
+}
+.food-next__headline-metrics { display:grid; gap:15px; }
+.food-next__main-stat {
+  display:grid; gap:2px; padding-left:10px;
+  border-left:2px solid var(--food-v2-blue);
+}
+.food-next__main-stat span { font-size:11px; color:var(--food-v2-muted); line-height:1.2; }
+.food-next__main-stat strong {
+  font-size:clamp(27px,3vw,44px); line-height:1.08; letter-spacing:-.055em;
+  font-weight:850; font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.food-next__main-stat small { font-size:10px; color:var(--food-v2-muted); }
+.food-next__ring-wrap { min-width:0; display:grid; place-items:center; }
+.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring {
+  width:min(100%,160px); aspect-ratio:1; height:auto;
+}
+.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-track { stroke:var(--food-v2-line); }
+.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-arc { stroke:var(--food-v2-blue); }
+.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-copy strong {
+  font-size:clamp(19px,2.7vw,31px); font-weight:850;
+}
+.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-copy span { font-size:10px; }
+.food-next__macro-bars { display:grid; gap:13px; min-width:0; }
+.food-next__macro-row { display:grid; gap:5px; min-width:0; }
+.food-next__macro-label {
+  display:flex; flex-wrap:wrap; gap:2px 7px; justify-content:space-between;
+  color:var(--food-v2-text); font-size:11px;
+}
+.food-next__macro-label strong {
+  font-size:10px; font-variant-numeric:tabular-nums; color:var(--food-v2-muted);
+  font-weight:700;
+}
+.food-next__track { height:5px; border-radius:8px; background:var(--food-v2-line); overflow:hidden; }
+.food-next__track i {
+  display:block; height:100%; background:var(--food-v2-blue);
+  border-radius:inherit;
+}
+.food-next__journal-title {
+  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:5px;
+}
+.food-next__journal-title > div { display:grid; gap:3px; }
+.food-next__journal-title h2 {
+  color:var(--food-v2-text); font-size:clamp(20px,2.3vw,25px); margin:0;
+  letter-spacing:-.03em; line-height:1.1;
+}
+.food-next__journal-title button {
+  border:0; padding:8px 0 8px 8px; background:transparent;
+  display:flex; align-items:center; gap:3px; color:var(--food-v2-blue);
+  font-size:12px; font-weight:750; white-space:nowrap; cursor:pointer;
+}
+.food-next__journal-title .icon { width:15px; height:15px; }
+.food-next__meal-group { padding-top:10px; }
+.food-next__meal-group + .food-next__meal-group { border-top:1px solid var(--food-v2-line); margin-top:7px; }
+.food-next__meal-heading {
+  display:flex; align-items:center; justify-content:space-between; gap:9px;
+  margin-bottom:6px;
+}
+.food-next__meal-heading strong { font-size:13px; color:var(--food-v2-text); }
+.food-next__meal-heading span { font-size:11px; color:var(--food-v2-muted); }
+.food-next__meal-row {
+  border:0; border-radius:11px; display:flex; align-items:center;
+  gap:10px; padding:8px; margin:3px 0; min-width:0;
+  width:100%; text-align:left; cursor:pointer;
+  background:var(--food-v2-panel); color:var(--food-v2-text);
+}
+.food-next__meal-row:active { background:var(--food-v2-panel-2); }
+.food-next__meal-mark {
+  flex:none; width:34px; height:34px; display:grid; place-items:center;
+  background:var(--food-v2-panel-2); border-radius:10px;
+  color:var(--food-v2-blue);
+}
+.food-next__meal-mark .icon { width:17px; height:17px; }
+.food-next__meal-copy { flex:1; min-width:0; display:grid; gap:3px; }
+.food-next__meal-copy strong {
+  font-size:12px; font-weight:750; overflow:hidden; text-overflow:ellipsis;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+}
+.food-next__meal-copy small { font-size:10px; color:var(--food-v2-muted); }
+.food-next__meal-kcal { flex:none; font-size:11px; font-weight:750; white-space:nowrap; }
+.food-next__meal-row > .icon:last-child { width:14px; height:14px; color:var(--food-v2-muted); flex:none; }
+.food-next__empty-group {
+  color:var(--food-v2-muted); font-size:11px; padding:7px 8px; margin:0;
+}
+.food-next__legacy-entry {
+  margin-top:10px; border:1px solid var(--food-v2-line);
+  background:var(--food-v2-panel); color:var(--food-v2-muted);
+  border-radius:12px; width:100%; min-height:42px; font-size:12px; cursor:pointer;
+}
+.food-next__log-button {
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  min-height:49px; width:100%; border:0; border-radius:99px;
+  background:var(--food-v2-blue); color:var(--food-v2-deep);
+  font:850 15px var(--font-ui); cursor:pointer;
+}
+.food-next__log-button .icon { width:20px; height:20px; }
+.food-next__secondary {
+  border:1px solid var(--food-v2-line); border-radius:14px;
+  background:var(--food-v2-panel); min-width:0;
+}
+.food-next__secondary summary {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; min-height:47px; padding:0 13px;
+  color:var(--food-v2-text); font-weight:750; font-size:12px; cursor:pointer;
+  list-style:none;
+}
+.food-next__secondary summary::-webkit-details-marker { display:none; }
+.food-next__secondary summary .icon { width:17px; height:17px; color:var(--food-v2-blue); }
+.food-next__secondary[open] summary .icon { transform:rotate(180deg); }
+.food-next__secondary .food-v2__small-row { padding:0 10px 10px; }
+.food-next__secondary .food-v2__small-row > :only-child { grid-column:1 / -1; }
+
+/* Log Food is an actual presentation layer over the retained input runtime.
+   On Duo, its fixed region stops before the existing navigation anchor. */
+.food-next__sheet-shell:not([hidden]) {
+  position:fixed; inset:0; z-index:35; display:flex;
+  align-items:stretch; justify-content:flex-end;
+}
+.food-next__sheet-shade {
+  position:absolute; inset:0; border:0; cursor:pointer;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+}
+.food-next__sheet {
+  position:relative; box-sizing:border-box;
+  width:min(540px,100%); max-height:100%;
+  min-width:0; background:var(--food-v2-deep);
+  border-left:1px solid var(--food-v2-line);
+  display:grid; grid-template-rows:auto minmax(0,1fr);
+  color:var(--food-v2-text);
+}
+.food-next__sheet-heading {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:18px 18px 12px;
+  border-bottom:1px solid var(--food-v2-line);
+}
+.food-next__sheet-heading > div { display:grid; gap:4px; }
+.food-next__sheet-heading h2 { font-size:27px; margin:0; line-height:1.1; letter-spacing:-.04em; }
+.food-next__sheet-close {
+  border:1px solid var(--food-v2-line); border-radius:50%;
+  width:42px; height:42px; flex:none;
+  background:var(--food-v2-panel); color:var(--food-v2-text);
+  display:grid; place-items:center; cursor:pointer;
+}
+.food-next__sheet-content {
+  min-height:0; overflow-y:auto; display:grid; align-content:start;
+  gap:12px; padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));
+  -webkit-overflow-scrolling:touch;
+}
+.food-next__sheet-content .fuel-r4__meal-panel { min-width:0; }
+.food-next__sheet-content .nutrition-panel { min-width:0; }
+.food-next__sheet-content .food-v2__recents { margin-top:10px; }
+html[data-layout="duo"] .food-next__sheet-shell:not([hidden]) {
+  right:var(--duo-rail-width);
+}
+html[data-layout="duo"] .food-next__layout {
+  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+}
+@media (max-width:720px) {
+  .food-next__hero-grid { grid-template-columns:minmax(0,1fr) minmax(118px,.9fr); }
+  .food-next__macro-bars { grid-column:1 / -1; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+  .food-next__main-stat strong { font-size:clamp(27px,7vw,36px); }
+  .food-next__hero-heading { margin-bottom:10px; }
+  html[data-layout="duo"] .food-next__layout { grid-template-columns:minmax(0,1fr); }
+}
+@media (min-width:721px) and (max-width:980px) {
+  .food-next__hero-grid { grid-template-columns:minmax(0,1fr) minmax(105px,1fr); }
+  .food-next__macro-bars { grid-column:1 / -1; grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-height:640px) {
+  .food-next__sheet-heading { padding:10px 16px; }
+  .food-next__sheet-heading h2 { font-size:22px; }
+}

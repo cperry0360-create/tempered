@@ -54,7 +54,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const announcer = liveRegion()
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const workoutDock = el('aside.active-workout-dock', { hidden: true })
-  const cardioLayer = el('div.quick-cardio-layer', { hidden: true })
+  const cardioLayer = el('div.screen.screen--cardio', { hidden: true })
   const tabs = el('div.tabbar__tabs')
 
   let active = 'train'
@@ -126,6 +126,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const CARDIO_SECONDS = 600
   let cardio = null
   let cardioSaving = false
+  let cardioReturnTab = 'train'
   try {
     const saved = JSON.parse(globalThis.localStorage?.getItem(CARDIO_KEY) ?? 'null')
     if (saved && Number.isFinite(saved.elapsedSec)
@@ -160,99 +161,139 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     return formatClock(Math.ceil(left))
   }
 
+  function cardioMinutes() {
+    // Keep real elapsed minutes, including a short session ended early.
+    return Math.min(10, Math.round(cardioElapsed() / 60 * 100) / 100)
+  }
+
+  async function leaveCardio() {
+    cardioLayer.hidden = true
+    if (session?.root) {
+      replace(body, [session.root])
+      tabBar.hidden = true
+      body.scrollTop = 0
+      return
+    }
+    await show(cardioReturnTab)
+  }
+
   function renderCardio() {
-    cardioLayer.hidden = !cardio
     if (!cardio) { replace(cardioLayer, []); return }
     const elapsed = cardioElapsed()
     const complete = elapsed >= CARDIO_SECONDS
-    const minutes = Math.min(10, Math.floor(elapsed / 60))
+    const minutes = cardioMinutes()
     const target = cardio.target
     replace(cardioLayer, [
-      el('section.quick-cardio', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '10-minute cardio timer' }, [
-        el('div.quick-cardio__top', {}, [
-          el('span.quick-cardio__eyebrow', { text: 'QUICK CARDIO' }),
-          el('button.quick-cardio__dismiss', {
-            type: 'button', 'aria-label': 'Cancel cardio session without logging',
-            dataset: { action: 'cancel-cardio' },
-            disabled: cardioSaving,
-            onclick: () => { cardio = null; checkpointCardio(); renderCardio() },
-          }, ['×']),
+      el('header.cardio-r5__header', {}, [
+        el('button.cardio-r5__back', { type: 'button', dataset: { action: 'cancel-cardio' },
+          disabled: cardioSaving, onclick: async () => {
+            cardio = null; checkpointCardio(); await leaveCardio()
+          } }, ['← Back']),
+        el('span', { text: 'TEMPERED · CARDIO SESSION' }),
+        el('span.cardio-r5__header-time', { text: '10 MIN' }),
+      ]),
+      el('div.cardio-r5__segments', { 'aria-label': 'Cardio session progress' },
+        Array.from({ length: 10 }, (_, i) => el('span', {
+          dataset: { complete: String(elapsed >= (i + 1) * 60) },
+        }))),
+      el('div.cardio-r5__workspace', {}, [
+        el('section.cardio-r5__stage', {}, [
+          el('span.cardio-r5__eyebrow', { text: 'TODAY’S FINISHER' }),
+          el('div.cardio-r5__stage-icon', {}, [icon('train')]),
+          el('h1', { text: 'Easy cardio. Strong finish.' }),
+          el('p', { text: 'Incline walking, cycling, or a comfortable stair step. Settle into a pace you can sustain while speaking in full sentences.' }),
+          target && el('div.cardio-r5__target', { dataset: { cardioTarget: 'true' } }, [
+            el('span', { text: 'PERSONAL ESTIMATED ZONE 2' }),
+            el('strong', { text: `${target.lowBpm}–${target.highBpm} bpm` }),
+            el('small', { text: 'Heart rate is a guide; the talk test comes first.' }),
+          ]),
         ]),
-        el('h2', { text: complete ? '10 minutes complete' : '10-minute Zone 2 cardio' }),
-        el('div.quick-cardio__countdown', {
-          dataset: { cardioCountdown: 'true' }, 'aria-live': 'off', text: cardioLabel(),
-        }),
-        el('div.quick-cardio__progress', {}, [
-          el('div.quick-cardio__progress-fill', {
-            dataset: { cardioProgress: 'true' },
-            style: `width: ${Math.round(elapsed / CARDIO_SECONDS * 100)}%`,
+        el('section.cardio-r5__logger', { dataset: { cardioSession: 'true' } }, [
+          el('span.cardio-r5__eyebrow', { text: complete ? 'SESSION COMPLETE' : cardio.paused ? 'TIMER PAUSED' : 'IN PROGRESS' }),
+          el('h2', { text: '10-minute Zone 2' }),
+          el('p.cardio-r5__subtitle', { text: 'Continuous cardio · no lifting sets' }),
+          el('div.cardio-r5__countdown', {
+            dataset: { cardioCountdown: 'true' }, role: 'timer', 'aria-live': 'off', text: cardioLabel(),
           }),
-        ]),
-        target && el('p.quick-cardio__target', {
-          text: `Estimated Zone 2 · ${target.lowBpm}–${target.highBpm} bpm`,
-        }),
-        el('p.quick-cardio__help', {
-          text: 'Incline walk or bike. Keep a comfortable conversational pace; the heart-rate range is a guide, not a requirement.',
-        }),
-        el('div.quick-cardio__actions', {}, [
-          !complete && el('button.quick-cardio__pause', {
-            type: 'button', dataset: { action: 'toggle-cardio-pause' },
-            onclick: () => {
-              if (cardio.paused) { cardio.startedAt = clock.now(); cardio.paused = false; checkpointCardio() }
-              else pauseCardio()
-              renderCardio()
-            },
-          }, [cardio.paused ? 'Resume timer' : 'Pause']),
-          el('button.quick-cardio__save', {
-            type: 'button', dataset: { action: 'save-cardio' },
-            disabled: cardioSaving || minutes < 1,
-            onclick: async () => {
-              if (!cardio || cardioSaving) return
-              pauseCardio()
-              const completedMinutes = Math.min(10, Math.floor(cardioElapsed() / 60))
-              if (completedMinutes < 1) return
-              cardioSaving = true
-              renderCardio()
-              try {
-                await daily.log('micro_cardio', completedMinutes)
-                cardio = null
-                checkpointCardio()
+          el('div.cardio-r5__progress', { role: 'progressbar', 'aria-label': 'Cardio time completed', 'aria-valuemin':'0',
+            'aria-valuemax':'600', 'aria-valuenow':String(Math.floor(elapsed)) }, [
+            el('span', { dataset: { cardioProgress: 'true' }, style: `width:${Math.round(elapsed / CARDIO_SECONDS * 100)}%` }),
+          ]),
+          el('p.cardio-r5__elapsed', { dataset: { cardioElapsed: 'true' },
+            text: `${minutes.toFixed(2)} minutes completed · log any amount` }),
+          el('div.cardio-r5__actions', {}, [
+            !complete && el('button.cardio-r5__pause', { type: 'button', dataset: { action: 'toggle-cardio-pause' },
+              onclick: () => {
+                if (cardio.paused) { cardio.startedAt = clock.now(); cardio.paused = false; checkpointCardio() }
+                else pauseCardio()
                 renderCardio()
-                if (active === 'today' && !session) await show('today')
-                announce(`Logged ${completedMinutes} minutes of cardio`)
-              } catch (error) {
-                console.error('[tempered] cardio log failed', error)
-                const message = cardioLayer.querySelector('[data-cardio-error]')
-                if (message) message.textContent = 'Could not save cardio. Try again.'
-              } finally {
-                cardioSaving = false
+              } }, [cardio.paused ? 'Resume' : 'Pause']),
+            el('button.cardio-r5__save', {
+              type:'button', dataset: { action: 'save-cardio' }, disabled: cardioSaving || elapsed < 1,
+              onclick: async () => {
+                if (!cardio || cardioSaving) return
+                pauseCardio()
+                const actual = cardioMinutes()
+                if (actual <= 0) return
+                cardioSaving = true
                 renderCardio()
-              }
-            },
-          }, [cardioSaving ? 'Saving…' : complete ? 'Log 10 minutes' : `Finish & log ${minutes} min`]),
+                try {
+                  await daily.log('micro_cardio', actual)
+                  cardio = null
+                  checkpointCardio()
+                  await leaveCardio()
+                  announce(`Saved ${actual.toFixed(2)} minutes of cardio`)
+                } catch(error) {
+                  console.error('[tempered] cardio save failed',error)
+                  const message = cardioLayer.querySelector('[data-cardio-error]')
+                  if (message) message.textContent = 'Could not save. Your timer is preserved; try again.'
+                } finally { cardioSaving=false; if(cardio)renderCardio() }
+              },
+            }, [cardioSaving ? 'Saving…' : complete ? 'Finish · save 10 min' : `Finish · save ${minutes.toFixed(2)} min`]),
+          ]),
+          el('p.cardio-r5__status', { dataset: { cardioError: 'true' }, role:'status', text:'' }),
+          el('p.cardio-r5__note', { text: 'You can finish early. Actual completed time goes to your Micro cardio log. Your strength workout remains intact.' }),
         ]),
-        el('p.quick-cardio__error', { dataset: { cardioError: 'true' }, role: 'status', text: '' }),
-        el('p.quick-cardio__foot', { text: 'Only time you complete and save is added to Micro cardio. No lifting sets are recorded.' }),
       ]),
     ])
   }
 
   async function launchQuickCardio() {
-    if (cardio) { renderCardio(); return }
-    const target = (await workout.activeProgram())?.program?.cardioTarget ?? null
-    cardio = { createdAt: clock.now(), startedAt: clock.now(),
-      elapsedSec: 0, paused: false, target }
-    checkpointCardio()
+    cardioReturnTab = active
+    if (!cardio) {
+      const target = (await workout.activeProgram())?.program?.cardioTarget ?? null
+      cardio = { createdAt: clock.now(), startedAt: clock.now(), elapsedSec: 0, paused: false, target }
+      checkpointCardio()
+    }
     renderCardio()
+    cardioLayer.hidden = false
+    replace(body, [cardioLayer])
+    tabBar.hidden = true
+    body.scrollTop = 0
+    announce('Cardio session started')
   }
 
   const cardioTicker = setInterval(() => {
-    if (!cardio) return
+    if (!cardio || !cardioLayer.isConnected) return
     const elapsed = cardioElapsed()
     const remaining = cardioLayer.querySelector('[data-cardio-countdown]')
     if (remaining) remaining.textContent = cardioLabel()
     const fill = cardioLayer.querySelector('[data-cardio-progress]')
     if (fill) fill.style.width = `${Math.round(elapsed / CARDIO_SECONDS * 100)}%`
+    const progress = cardioLayer.querySelector('[role="progressbar"]')
+    progress?.setAttribute('aria-valuenow', String(Math.floor(elapsed)))
+    const elapsedCopy = cardioLayer.querySelector('[data-cardio-elapsed]')
+    if (elapsedCopy) elapsedCopy.textContent = `${cardioMinutes().toFixed(2)} minutes completed · log any amount`
+    const save = cardioLayer.querySelector('[data-action="save-cardio"]')
+    if (save && !cardioSaving) {
+      save.disabled = elapsed < 1
+      save.textContent = elapsed >= CARDIO_SECONDS
+        ? 'Finish · save 10 min'
+        : `Finish · save ${cardioMinutes().toFixed(2)} min`
+    }
+    cardioLayer.querySelectorAll('.cardio-r5__segments > span').forEach((seg, i) => {
+      seg.dataset.complete = String(elapsed >= (i + 1) * 60)
+    })
     if (elapsed >= CARDIO_SECONDS && !cardio.paused) {
       pauseCardio()
       renderCardio()
@@ -484,7 +525,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     announce(`${date} day review`)
   }
 
-  replace(overlays, [cardioLayer])
   replace(mount, [body, announcer, workoutDock, tabBar, overlays])
   return { show, showTodayDate, startSession, resumeSession, launchQuickCardio }
 }

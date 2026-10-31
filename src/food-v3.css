@@ -365,227 +365,474 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
 
 
 /* -------------------------------------------------------------------------
-   Food 2.0 — a new composed interface, not a cosmetic override of Food V2.
-   Uses the canonical Nutrition runtime, data, blue/slate tokens, and Duo rail.
+   Food 2.0 / Forge — new markup and layout, not a reskin of Food V2.
+   Existing local nutrition entry, AI handoff and water components are retained.
    ------------------------------------------------------------------------- */
-.screen--fuel-r4 .food-next__header,
-.screen--fuel-r4 .food-next__actions,
-.screen--fuel-r4 .food-next__layout { min-width:0; }
-.food-next__header {
-  display:flex; justify-content:space-between; align-items:center;
-  gap:14px;
+.screen--fuel-r4 {
+  --forge-blue: var(--food-v2-blue);
+  --forge-ink: var(--food-v2-text);
+  --forge-dim: var(--food-v2-muted);
+  --forge-line: var(--food-v2-line);
+  --forge-panel: var(--food-v2-panel);
+  --forge-panel-up: var(--food-v2-panel-2);
+  gap:12px;
+  padding-bottom:90px;
 }
-.food-next__brand { display:grid; gap:2px; }
-.food-next__eyebrow {
-  color:var(--food-v2-blue);
-  font-size:10px; font-weight:800; letter-spacing:.12em;
+.forge-food__header,
+.forge-food__brand,
+.forge-food__nav,
+.forge-food__section-heading,
+.forge-food__hero-top,
+.forge-food__meal,
+.forge-food__stat-label { display:flex; align-items:center; }
+.forge-food__header { justify-content:space-between; gap:10px; min-width:0; padding:2px 0 0; }
+.forge-food__brand { gap:9px; min-width:0; }
+.forge-food__brandmark {
+  display:grid; place-items:center; border-radius:9px;
+  width:32px; height:32px; background:var(--forge-blue);
+  color:var(--food-v2-deep); font-size:21px; font-weight:900;
+  transform:skew(-9deg);
 }
-.screen--fuel-r4 .food-next__brand .screen__title {
-  margin:0; font-size:clamp(28px,3.5vw,38px);
-  line-height:1.06; letter-spacing:-.045em; color:var(--food-v2-text);
+.forge-food__brand > div { display:grid; gap:1px; }
+.forge-food__brand-label {
+  display:block; font-size:10px; font-weight:850; letter-spacing:.14em;
+  color:var(--forge-blue);
 }
-.food-next__actions {
-  display:flex; gap:7px; overflow-x:auto; padding:2px 0 8px;
-  scrollbar-width:none; -webkit-overflow-scrolling:touch;
+.forge-food__brand h1,
+.forge-food__inner-header h1 {
+  font-size:clamp(27px,4.3vw,37px); line-height:1; font-weight:810;
+  letter-spacing:-.055em; margin:0; color:var(--forge-ink);
 }
-.food-next__actions::-webkit-scrollbar { display:none; }
-.food-next__actions button {
-  flex:none; display:flex; align-items:center; gap:6px;
-  border:1px solid var(--food-v2-line); border-radius:999px;
-  min-height:37px; padding:0 12px;
-  font:700 11px var(--font-ui);
-  background:var(--food-v2-panel); color:var(--food-v2-text);
-  cursor:pointer;
+.forge-food__date {
+  min-height:42px; min-width:0; border:1px solid var(--forge-line);
+  color:var(--forge-ink); background:var(--forge-panel);
+  padding:0 10px; border-radius:999px;
+  display:inline-flex; align-items:center; gap:7px;
+  font:750 11px var(--font-ui); cursor:pointer;
+  white-space:nowrap;
 }
-.food-next__actions button .icon { width:14px; height:14px; color:var(--food-v2-blue); }
-.food-next__actions button:active { background:var(--food-v2-panel-2); }
-.food-next__layout { display:grid; gap:16px; align-items:start; }
-.food-next__overview,.food-next__details { min-width:0; display:grid; gap:14px; align-content:start; }
-.food-next__hero,.food-next__journal {
-  background:linear-gradient(155deg,var(--food-v2-panel-2),var(--food-v2-deep));
-  color:var(--food-v2-text);
-  border:1px solid var(--food-v2-line);
-  border-radius:20px; padding:clamp(14px,1.7vw,20px);
-  min-width:0;
+.forge-food__date .icon { width:16px; height:16px; color:var(--forge-blue); }
+.forge-food__nav {
+  min-width:0; gap:6px; padding:2px 0 4px;
+  overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
 }
-.food-next__hero-heading {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:8px; margin-bottom:15px;
-  font-size:10px; letter-spacing:.07em; font-weight:750;
-  color:var(--food-v2-muted);
+.forge-food__nav::-webkit-scrollbar { display:none; }
+.forge-food__nav button {
+  min-height:39px; border:1px solid var(--forge-line);
+  border-radius:99px; background:var(--forge-panel);
+  flex:none; display:inline-flex; align-items:center; gap:6px;
+  color:var(--forge-ink); font:760 11px var(--font-ui);
+  padding:0 11px; cursor:pointer;
 }
-.food-next__hero-heading span:last-child { color:var(--food-v2-blue); letter-spacing:0; }
-.food-next__hero-grid {
-  display:grid; grid-template-columns:minmax(104px,.95fr) minmax(118px,1fr) minmax(112px,.9fr);
+.forge-food__nav button .icon { color:var(--forge-blue); width:15px; height:15px; }
+.forge-food__overline {
+  font-size:9px; font-weight:860; letter-spacing:.135em;
+  color:var(--forge-blue); text-transform:uppercase;
+}
+/* Week strip: remove the previous oversized Food diary card. Keep all
+   dates, closeout states, calorie labels and week navigation in the DOM. */
+.forge-food__week-rail {
+  width:100%; min-width:0; margin-top:0; padding:2px 0 0;
+}
+.screen--fuel-r4 .forge-food__week-rail .fuel-diary {
+  border:0; padding:0; margin:0; box-shadow:none;
+  border-radius:0; background:transparent;
+  gap:0;
+}
+.forge-food__week-rail .fuel-diary__heading { display:none; }
+.forge-food__week-rail .fuel-diary__week {
+  display:grid; grid-template-columns:20px repeat(7,minmax(0,1fr)) 20px;
+  align-items:stretch; gap:4px; padding:0;
+}
+.forge-food__week-rail .fuel-diary__nav {
+  min-height:64px; background:transparent; border-radius:0;
+  color:var(--forge-blue); font-size:19px;
+}
+.screen--fuel-r4 .forge-food__week-rail .fuel-diary__day.food-v3__day {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:64px; min-width:0; gap:3px; padding:6px 0 4px;
+  border-radius:11px; border:1px solid transparent;
+  background:transparent; box-shadow:none; color:var(--forge-dim);
+}
+.screen--fuel-r4 .forge-food__week-rail .fuel-diary__day.food-v3__day[data-selected="true"] {
+  background:var(--forge-blue); color:var(--food-v2-deep);
+  border-color:var(--forge-blue); box-shadow:none;
+}
+.screen--fuel-r4 .forge-food__week-rail .fuel-diary__day[data-selected="true"] > strong,
+.screen--fuel-r4 .forge-food__week-rail .fuel-diary__day[data-selected="true"] .fuel-diary__weekday {
+  color:var(--food-v2-deep);
+}
+.forge-food__week-rail .fuel-diary__weekday { font-size:9px; font-weight:760; }
+.forge-food__week-rail .fuel-diary__day > strong { font-size:12px; color:var(--forge-ink); line-height:1; }
+.forge-food__week-rail .food-v3__day-icon.fuel-diary__marker {
+  height:8px; width:8px; border-radius:50%; font-size:0;
+  background:var(--forge-line); border:0; box-shadow:none;
+}
+.forge-food__week-rail .food-v3__day[data-visual="closed"] .food-v3__day-icon { background:var(--food-v2-fiber); }
+.forge-food__week-rail .food-v3__day[data-visual="partial"] .food-v3__day-icon { background:var(--food-v2-carbs); }
+.forge-food__week-rail .food-v3__day[data-visual="missed"] .food-v3__day-icon { background:var(--food-v3-danger); }
+.forge-food__week-rail .food-v3__day[data-selected="true"] .food-v3__day-icon { background:var(--food-v2-deep); }
+.forge-food__week-rail .food-v3__day-cal { display:none; }
+/* Primary desktop composition and regular phone stacking. */
+.forge-food__canvas { display:grid; grid-template-columns:minmax(0,1.04fr) minmax(0,1fr); align-items:start; gap:13px; }
+.forge-food__main,.forge-food__aside { min-width:0; display:grid; gap:13px; align-content:start; }
+.forge-food__hero {
+  min-width:0; padding:clamp(12px,1.7vw,18px);
+  background:linear-gradient(150deg,var(--forge-panel-up),var(--food-v2-deep) 85%);
+  border:1px solid var(--forge-line); border-radius:18px;
+  color:var(--forge-ink);
+}
+.forge-food__hero-top { justify-content:space-between; gap:12px; margin-bottom:13px; }
+.forge-food__hero-pct { color:var(--forge-blue); font-size:10px; font-weight:750; }
+.forge-food__hero-grid {
+  display:grid; grid-template-columns:minmax(85px,.86fr) minmax(112px,1fr);
   gap:12px; align-items:center; min-width:0;
 }
-.food-next__headline-metrics { display:grid; gap:15px; }
-.food-next__main-stat {
-  display:grid; gap:2px; padding-left:10px;
-  border-left:2px solid var(--food-v2-blue);
+.forge-food__hero-numbers { display:grid; gap:13px; min-width:0; }
+.forge-food__hero-number {
+  border-left:2px solid var(--forge-blue); padding-left:8px;
+  min-width:0; display:grid; gap:3px;
 }
-.food-next__main-stat span { font-size:11px; color:var(--food-v2-muted); line-height:1.2; }
-.food-next__main-stat strong {
-  font-size:clamp(27px,3vw,44px); line-height:1.08; letter-spacing:-.055em;
-  font-weight:850; font-variant-numeric:tabular-nums; white-space:nowrap;
+.forge-food__hero-number small { font-size:10px; color:var(--forge-dim); line-height:1.2; }
+.forge-food__hero-number strong {
+  font-size:clamp(27px,3.5vw,42px); font-weight:850;
+  color:var(--forge-ink); line-height:1.03; letter-spacing:-.06em;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.food-next__main-stat small { font-size:10px; color:var(--food-v2-muted); }
-.food-next__ring-wrap { min-width:0; display:grid; place-items:center; }
-.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring {
-  width:min(100%,160px); aspect-ratio:1; height:auto;
+.forge-food__hero-number span { font-size:10px; color:var(--forge-dim); white-space:nowrap; }
+.forge-food__hero-ring { min-width:0; display:grid; place-items:center; }
+.screen--fuel-r4 .forge-food__hero-ring .fuel-r4__ring {
+  width:min(100%,154px); height:auto; aspect-ratio:1;
+  border-radius:50%; background:transparent;
 }
-.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-track { stroke:var(--food-v2-line); }
-.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-arc { stroke:var(--food-v2-blue); }
-.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-copy strong {
-  font-size:clamp(19px,2.7vw,31px); font-weight:850;
+.forge-food__hero-ring .fuel-r4__ring-svg { transform:rotate(-90deg); }
+.forge-food__hero-ring .fuel-r4__ring-track { stroke:var(--forge-line); stroke-width:10; }
+.forge-food__hero-ring .fuel-r4__ring-arc { stroke:var(--forge-blue); stroke-width:10; }
+.forge-food__hero-ring .fuel-r4__ring-copy strong {
+  font-size:clamp(22px,3vw,32px); color:var(--forge-ink); font-weight:850;
 }
-.screen--fuel-r4 .food-next__ring-wrap .fuel-r4__ring-copy span { font-size:10px; }
-.food-next__macro-bars { display:grid; gap:13px; min-width:0; }
-.food-next__macro-row { display:grid; gap:5px; min-width:0; }
-.food-next__macro-label {
-  display:flex; flex-wrap:wrap; gap:2px 7px; justify-content:space-between;
-  color:var(--food-v2-text); font-size:11px;
+.forge-food__hero-ring .fuel-r4__ring-copy span { font-size:10px; color:var(--forge-dim); }
+.forge-food__hero-macros { grid-column:1 / -1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; min-width:0; margin-top:5px; }
+.forge-food__macro { min-width:0; display:grid; gap:6px; }
+.forge-food__macro-copy { display:grid; gap:2px; }
+.forge-food__macro-copy span { font-size:10px; font-weight:700; }
+.forge-food__macro-copy strong { font-size:10px; font-weight:600; color:var(--forge-dim); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.forge-food__bar { height:6px; border-radius:99px; background:var(--forge-line); overflow:hidden; }
+.forge-food__bar i { display:block; height:100%; border-radius:inherit; background:var(--forge-blue); }
+.forge-food__stats { min-width:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.forge-food__stat {
+  min-width:0; padding:12px 9px; display:grid; gap:6px;
+  border:1px solid var(--forge-line); border-radius:14px;
+  text-align:left; background:var(--forge-panel-up);
+  color:var(--forge-ink); font:inherit;
 }
-.food-next__macro-label strong {
-  font-size:10px; font-variant-numeric:tabular-nums; color:var(--food-v2-muted);
-  font-weight:700;
+button.forge-food__stat { cursor:pointer; }
+.forge-food__stat-label { gap:5px; font-size:11px; color:var(--forge-ink); font-weight:740; white-space:nowrap; }
+.forge-food__stat-label .icon { width:14px; height:14px; color:var(--forge-blue); }
+.forge-food__stat > strong {
+  font-size:clamp(19px,2.4vw,27px); letter-spacing:-.04em;
+  line-height:1.1; font-weight:820; font-variant-numeric:tabular-nums;
+  white-space:nowrap;
 }
-.food-next__track { height:5px; border-radius:8px; background:var(--food-v2-line); overflow:hidden; }
-.food-next__track i {
-  display:block; height:100%; background:var(--food-v2-blue);
-  border-radius:inherit;
+.forge-food__stat > strong small { font-size:10px; font-weight:650; letter-spacing:0; }
+.forge-food__stat-sub { font-size:9px; color:var(--forge-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.forge-food__journal {
+  border:1px solid var(--forge-line); border-radius:18px;
+  padding:14px; background:linear-gradient(155deg,var(--forge-panel-up),var(--food-v2-deep));
+  min-width:0;
 }
-.food-next__journal-title {
-  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:5px;
+.forge-food__section-heading { justify-content:space-between; gap:8px; margin-bottom:8px; }
+.forge-food__section-heading > div { display:grid; gap:3px; min-width:0; }
+.forge-food__section-heading h2 {
+  margin:0; font-size:clamp(18px,2.4vw,24px); line-height:1.1;
+  letter-spacing:-.04em; font-weight:780; color:var(--forge-ink);
 }
-.food-next__journal-title > div { display:grid; gap:3px; }
-.food-next__journal-title h2 {
-  color:var(--food-v2-text); font-size:clamp(20px,2.3vw,25px); margin:0;
-  letter-spacing:-.03em; line-height:1.1;
+.forge-food__text-action {
+  flex:none; border:0; padding:6px 0 6px 8px; min-height:36px;
+  color:var(--forge-blue); background:transparent;
+  font-size:11px; font-weight:750;
+  display:inline-flex; align-items:center; gap:3px; cursor:pointer;
 }
-.food-next__journal-title button {
-  border:0; padding:8px 0 8px 8px; background:transparent;
-  display:flex; align-items:center; gap:3px; color:var(--food-v2-blue);
-  font-size:12px; font-weight:750; white-space:nowrap; cursor:pointer;
-}
-.food-next__journal-title .icon { width:15px; height:15px; }
-.food-next__meal-group { padding-top:10px; }
-.food-next__meal-group + .food-next__meal-group { border-top:1px solid var(--food-v2-line); margin-top:7px; }
-.food-next__meal-heading {
-  display:flex; align-items:center; justify-content:space-between; gap:9px;
-  margin-bottom:6px;
-}
-.food-next__meal-heading strong { font-size:13px; color:var(--food-v2-text); }
-.food-next__meal-heading span { font-size:11px; color:var(--food-v2-muted); }
-.food-next__meal-row {
-  border:0; border-radius:11px; display:flex; align-items:center;
-  gap:10px; padding:8px; margin:3px 0; min-width:0;
-  width:100%; text-align:left; cursor:pointer;
-  background:var(--food-v2-panel); color:var(--food-v2-text);
-}
-.food-next__meal-row:active { background:var(--food-v2-panel-2); }
-.food-next__meal-mark {
-  flex:none; width:34px; height:34px; display:grid; place-items:center;
-  background:var(--food-v2-panel-2); border-radius:10px;
-  color:var(--food-v2-blue);
-}
-.food-next__meal-mark .icon { width:17px; height:17px; }
-.food-next__meal-copy { flex:1; min-width:0; display:grid; gap:3px; }
-.food-next__meal-copy strong {
-  font-size:12px; font-weight:750; overflow:hidden; text-overflow:ellipsis;
-  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
-}
-.food-next__meal-copy small { font-size:10px; color:var(--food-v2-muted); }
-.food-next__meal-kcal { flex:none; font-size:11px; font-weight:750; white-space:nowrap; }
-.food-next__meal-row > .icon:last-child { width:14px; height:14px; color:var(--food-v2-muted); flex:none; }
-.food-next__empty-group {
-  color:var(--food-v2-muted); font-size:11px; padding:7px 8px; margin:0;
-}
-.food-next__legacy-entry {
-  margin-top:10px; border:1px solid var(--food-v2-line);
-  background:var(--food-v2-panel); color:var(--food-v2-muted);
-  border-radius:12px; width:100%; min-height:42px; font-size:12px; cursor:pointer;
-}
-.food-next__log-button {
-  display:flex; align-items:center; justify-content:center; gap:9px;
-  min-height:49px; width:100%; border:0; border-radius:99px;
-  background:var(--food-v2-blue); color:var(--food-v2-deep);
-  font:850 15px var(--font-ui); cursor:pointer;
-}
-.food-next__log-button .icon { width:20px; height:20px; }
-.food-next__secondary {
-  border:1px solid var(--food-v2-line); border-radius:14px;
-  background:var(--food-v2-panel); min-width:0;
-}
-.food-next__secondary summary {
+.forge-food__text-action .icon { width:13px; height:13px; }
+.forge-food__meal-list { min-width:0; display:grid; gap:3px; }
+.forge-food__meal-header {
   display:flex; align-items:center; justify-content:space-between;
-  gap:8px; min-height:47px; padding:0 13px;
-  color:var(--food-v2-text); font-weight:750; font-size:12px; cursor:pointer;
-  list-style:none;
+  margin:9px 0 3px; font-size:11px; font-weight:800; color:var(--forge-ink);
 }
-.food-next__secondary summary::-webkit-details-marker { display:none; }
-.food-next__secondary summary .icon { width:17px; height:17px; color:var(--food-v2-blue); }
-.food-next__secondary[open] summary .icon { transform:rotate(180deg); }
-.food-next__secondary .food-v2__small-row { padding:0 10px 10px; }
-.food-next__secondary .food-v2__small-row > :only-child { grid-column:1 / -1; }
+.forge-food__meal-header small { color:var(--forge-blue); font-weight:750; font-size:10px; }
+.forge-food__meal {
+  min-width:0; width:100%; padding:7px 5px;
+  display:flex; align-items:center; gap:9px; border:0;
+  border-bottom:1px solid var(--forge-line);
+  background:transparent; color:var(--forge-ink); font:inherit;
+  text-align:left; cursor:pointer;
+}
+.forge-food__meal:active { background:var(--forge-panel); }
+.forge-food__thumb {
+  flex:none; width:43px; height:43px; display:grid; place-items:center;
+  border:1px solid var(--forge-line); border-radius:13px;
+  font-size:24px; background:radial-gradient(circle at 30% 20%,var(--forge-panel-up),var(--food-v2-deep));
+}
+.forge-food__meal-info { flex:1; min-width:0; display:grid; gap:4px; }
+.forge-food__meal-info strong {
+  font-size:12px; font-weight:750; line-height:1.25;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.forge-food__meal-info small { font-size:10px; color:var(--forge-dim); }
+.forge-food__meal-kcal { flex:none; white-space:nowrap; font-size:11px; font-weight:800; }
+.forge-food__meal > .icon { width:12px; height:12px; color:var(--forge-dim); flex:none; }
+.forge-food__empty {
+  display:grid; justify-items:center; text-align:center; gap:6px;
+  padding:26px 12px; color:var(--forge-ink);
+}
+.forge-food__empty strong { font-size:14px; }
+.forge-food__empty span { color:var(--forge-dim); font-size:11px; }
+.forge-food__carryover {
+  width:100%; border:0; display:flex; align-items:center;
+  justify-content:space-between; background:var(--forge-panel);
+  color:var(--forge-dim); font:650 11px var(--font-ui); padding:10px 12px;
+  border-radius:9px; cursor:pointer;
+}
+.forge-food__carryover .icon { width:12px; height:12px; }
+.forge-food__frequent {
+  border:1px solid var(--forge-line); border-radius:18px;
+  padding:13px; min-width:0; background:var(--forge-panel);
+}
+.forge-food__frequent-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.forge-food__frequent-item {
+  min-width:0; position:relative; display:grid; align-content:start; gap:5px;
+  border:1px solid var(--forge-line); background:var(--forge-panel-up);
+  color:var(--forge-ink); border-radius:11px; padding:10px 7px;
+  text-align:left; cursor:pointer;
+}
+.forge-food__frequent-item .forge-food__thumb { width:45px; height:43px; border:0; font-size:25px; }
+.forge-food__frequent-item > strong {
+  font-size:10px; font-weight:750; line-height:1.25; min-height:27px;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+.forge-food__frequent-item > small { font-size:9px; color:var(--forge-dim); line-height:1.3; }
+.forge-food__frequent-add {
+  position:absolute; top:7px; right:6px; width:22px; height:22px;
+  border-radius:50%; background:var(--forge-blue); color:var(--food-v2-deep);
+  display:grid; place-items:center;
+}
+.forge-food__frequent-add .icon { width:13px; height:13px; }
+.forge-food__cta-bar {
+  position:sticky; bottom:calc(69px + env(safe-area-inset-bottom, 0px));
+  z-index:10; width:100%; display:flex; gap:8px;
+  margin-top:3px; padding:7px 0 2px;
+  background:var(--bg);
+}
+.forge-food__primary {
+  min-height:49px; border:0; border-radius:15px;
+  display:flex; justify-content:center; align-items:center; gap:8px;
+  width:100%; padding:0 17px; cursor:pointer;
+  background:var(--forge-blue); color:var(--food-v2-deep);
+  font:850 15px var(--font-ui);
+}
+.forge-food__primary .icon { width:20px; height:20px; }
+.forge-food__primary:disabled { opacity:.55; cursor:default; }
+.forge-food__small-cta {
+  width:49px; flex:none; border:1px solid var(--forge-blue); border-radius:15px;
+  display:grid; place-items:center; color:var(--forge-blue);
+  background:var(--forge-panel-up); cursor:pointer;
+}
+.forge-food__small-cta .icon { width:21px; height:21px; }
+.forge-food__secondary {
+  min-width:0; border:1px solid var(--forge-line); border-radius:13px;
+  background:var(--forge-panel); color:var(--forge-ink);
+}
+.forge-food__secondary summary {
+  min-height:43px; padding:0 12px; cursor:pointer; list-style:none;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  font-size:11px; font-weight:750;
+}
+.forge-food__secondary summary::-webkit-details-marker { display:none; }
+.forge-food__secondary summary .icon { width:15px; height:15px; color:var(--forge-blue); }
+.forge-food__secondary[open] summary .icon { transform:rotate(180deg); }
+.forge-food__secondary-body { padding:0 9px 10px; display:grid; gap:10px; }
+.forge-food__secondary-body .food-v3__beach { min-height:145px; }
+.forge-food__secondary-body .fuel-diary__reminder { margin:0; }
 
-/* Log Food is an actual presentation layer over the retained input runtime.
-   On Duo, its fixed region stops before the existing navigation anchor. */
-.food-next__sheet-shell:not([hidden]) {
-  position:fixed; inset:0; z-index:35; display:flex;
-  align-items:stretch; justify-content:flex-end;
+/* Full Food Library replaces the view content, not the navigation rail. */
+.forge-food__inner-header { display:grid; gap:9px; padding:0 0 4px; }
+.forge-food__back {
+  justify-self:start; min-height:39px; background:transparent; border:0;
+  display:inline-flex; align-items:center; gap:6px; color:var(--forge-blue);
+  font:770 12px var(--font-ui); cursor:pointer; padding:0 4px 0 0;
 }
-.food-next__sheet-shade {
-  position:absolute; inset:0; border:0; cursor:pointer;
-  background:color-mix(in srgb,var(--bg) 82%,transparent);
+.forge-food__back .icon { transform:rotate(180deg); width:15px; height:15px; }
+.forge-food__filters { display:flex; overflow-x:auto; gap:7px; padding:2px 0 3px; }
+.forge-food__filters button {
+  min-width:80px; min-height:39px; border-radius:99px; padding:0 13px;
+  border:1px solid var(--forge-line); background:var(--forge-panel);
+  color:var(--forge-ink); font:750 11px var(--font-ui); cursor:pointer;
 }
-.food-next__sheet {
-  position:relative; box-sizing:border-box;
-  width:min(540px,100%); max-height:100%;
-  min-width:0; background:var(--food-v2-deep);
-  border-left:1px solid var(--food-v2-line);
-  display:grid; grid-template-rows:auto minmax(0,1fr);
-  color:var(--food-v2-text);
+.forge-food__filters button[aria-pressed="true"] {
+  background:var(--forge-ink); color:var(--food-v2-deep); border-color:var(--forge-ink);
 }
-.food-next__sheet-heading {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:18px 18px 12px;
-  border-bottom:1px solid var(--food-v2-line);
+.forge-food__search {
+  min-height:48px; box-sizing:border-box;
+  display:flex; align-items:center; gap:9px; padding:0 12px;
+  border:1px solid var(--forge-line); border-radius:14px;
+  background:var(--forge-panel); color:var(--forge-blue);
 }
-.food-next__sheet-heading > div { display:grid; gap:4px; }
-.food-next__sheet-heading h2 { font-size:27px; margin:0; line-height:1.1; letter-spacing:-.04em; }
-.food-next__sheet-close {
-  border:1px solid var(--food-v2-line); border-radius:50%;
-  width:42px; height:42px; flex:none;
-  background:var(--food-v2-panel); color:var(--food-v2-text);
+.forge-food__search .icon { width:19px; height:19px; flex:none; }
+.forge-food__search input {
+  width:100%; min-width:0; min-height:45px;
+  background:transparent; border:0; outline:0;
+  font:600 13px var(--font-ui); color:var(--forge-ink);
+}
+.forge-food__search input::placeholder { color:var(--forge-dim); }
+.forge-food__library-layout,.forge-food__detail-layout {
+  display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  gap:13px; align-items:start;
+}
+.forge-food__library-col { min-width:0; display:grid; gap:13px; align-content:start; }
+.forge-food__library-list {
+  min-width:0; display:grid; overflow:hidden;
+  border:1px solid var(--forge-line); border-radius:16px; background:var(--forge-panel);
+}
+.forge-food__library-row {
+  display:flex; align-items:center; gap:10px; padding:9px 11px; min-width:0;
+  color:var(--forge-ink);
+}
+.forge-food__library-row + .forge-food__library-row { border-top:1px solid var(--forge-line); }
+.forge-food__library-row .forge-food__thumb { width:47px; height:47px; }
+.forge-food__library-copy { display:grid; gap:4px; flex:1; min-width:0; }
+.forge-food__library-copy strong {
+  font-size:12px; line-height:1.3; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+}
+.forge-food__library-copy span { color:var(--forge-dim); font-size:11px; }
+.forge-food__library-add {
+  flex:none; width:33px; height:33px; border-radius:50%;
   display:grid; place-items:center; cursor:pointer;
+  border:1px solid var(--forge-line); color:var(--forge-blue);
+  background:var(--forge-panel-up);
 }
-.food-next__sheet-content {
-  min-height:0; overflow-y:auto; display:grid; align-content:start;
-  gap:12px; padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));
-  -webkit-overflow-scrolling:touch;
+.forge-food__library-add .icon { width:18px; height:18px; }
+.forge-food__cart {
+  padding:13px; display:grid; gap:10px;
+  background:linear-gradient(150deg,var(--forge-panel-up),var(--forge-panel));
+  border:1px solid var(--forge-line); border-radius:16px; min-width:0;
+  color:var(--forge-ink);
 }
-.food-next__sheet-content .fuel-r4__meal-panel { min-width:0; }
-.food-next__sheet-content .nutrition-panel { min-width:0; }
-.food-next__sheet-content .food-v2__recents { margin-top:10px; }
-html[data-layout="duo"] .food-next__sheet-shell:not([hidden]) {
-  right:var(--duo-rail-width);
+.forge-food__cart-head { display:flex; align-items:center; justify-content:space-between; gap:9px; }
+.forge-food__cart-head h2 {
+  font-size:17px; font-weight:790; margin:0;
+  display:flex; align-items:center; gap:7px;
 }
-html[data-layout="duo"] .food-next__layout {
-  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+.forge-food__cart-head .icon { width:20px; height:20px; color:var(--forge-blue); }
+.forge-food__cart-head > strong { color:var(--forge-blue); font-size:13px; white-space:nowrap; }
+.forge-food__cart-items { display:grid; gap:2px; }
+.forge-food__cart-row {
+  display:flex; align-items:center; gap:8px; border-top:1px solid var(--forge-line);
+  padding:9px 0;
 }
-@media (max-width:720px) {
-  .food-next__hero-grid { grid-template-columns:minmax(0,1fr) minmax(118px,.9fr); }
-  .food-next__macro-bars { grid-column:1 / -1; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-  .food-next__main-stat strong { font-size:clamp(27px,7vw,36px); }
-  .food-next__hero-heading { margin-bottom:10px; }
-  html[data-layout="duo"] .food-next__layout { grid-template-columns:minmax(0,1fr); }
+.forge-food__cart-row .forge-food__thumb { width:37px; height:37px; font-size:21px; border:0; }
+.forge-food__cart-copy { flex:1; min-width:0; display:grid; gap:4px; }
+.forge-food__cart-copy strong { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.forge-food__cart-copy small { font-size:10px; color:var(--forge-dim); }
+.forge-food__cart-quantity { display:flex; align-items:center; gap:6px; }
+.forge-food__cart-quantity button {
+  border:0; border-radius:50%; width:30px; height:30px; display:grid;
+  place-items:center; background:var(--forge-panel); color:var(--forge-ink); cursor:pointer;
 }
-@media (min-width:721px) and (max-width:980px) {
-  .food-next__hero-grid { grid-template-columns:minmax(0,1fr) minmax(105px,1fr); }
-  .food-next__macro-bars { grid-column:1 / -1; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.forge-food__cart-quantity .icon { width:16px; height:16px; }
+.forge-food__cart-quantity span { font-size:12px; font-weight:800; width:16px; text-align:center; }
+.forge-food__cart-error { font-size:11px; color:var(--food-v3-danger); }
+.forge-food__quick-log {
+  border:1px solid var(--forge-line); background:var(--forge-panel);
+  border-radius:16px; padding:12px;
 }
-@media (max-height:640px) {
-  .food-next__sheet-heading { padding:10px 16px; }
-  .food-next__sheet-heading h2 { font-size:22px; }
+.forge-food__quick-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.forge-food__quick-grid button {
+  min-height:70px; display:grid; justify-items:center; align-content:center; gap:6px;
+  font-size:11px; font-weight:740; padding:8px;
+  border:1px solid var(--forge-line); border-radius:13px;
+  color:var(--forge-ink); background:var(--forge-panel-up); cursor:pointer;
+}
+.forge-food__quick-grid .icon { width:22px; height:22px; color:var(--forge-blue); }
+.forge-food__detail-card {
+  border:1px solid var(--forge-line);
+  border-radius:19px; background:linear-gradient(160deg,var(--forge-panel-up),var(--food-v2-deep));
+  padding:17px; display:grid; gap:11px; color:var(--forge-ink);
+  justify-items:center; text-align:center;
+}
+.forge-food__detail-thumb {
+  width:110px; height:110px; border:1px solid var(--forge-line);
+  border-radius:25px; background:var(--forge-panel);
+  display:grid; place-items:center; font-size:62px;
+}
+.forge-food__detail-card h2 { font-size:23px; margin:0; line-height:1.12; }
+.forge-food__detail-calories { display:flex; align-items:baseline; gap:7px; }
+.forge-food__detail-calories strong { font-size:44px; letter-spacing:-.06em; }
+.forge-food__detail-calories span { font-size:15px; }
+.forge-food__detail-macros {
+  width:100%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--forge-line); border-bottom:1px solid var(--forge-line);
+  padding:13px 0; gap:5px;
+}
+.forge-food__detail-macros > div { display:grid; gap:4px; }
+.forge-food__detail-macros strong { font-size:13px; }
+.forge-food__detail-macros span { font-size:10px; color:var(--forge-dim); }
+.forge-food__detail-actions { width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.forge-food__detail-actions button {
+  min-height:49px; border:1px solid var(--forge-line); border-radius:13px;
+  display:flex; justify-content:center; align-items:center; gap:5px;
+  font:700 11px var(--font-ui); color:var(--forge-ink);
+  background:var(--forge-panel); cursor:pointer;
+}
+.forge-food__detail-actions .icon { width:17px; height:17px; color:var(--forge-blue); }
+
+/* The existing data-entry runtime lives inside the purpose-built right-side sheet. */
+.forge-food__sheet-shell:not([hidden]) {
+  position:fixed; inset:0; z-index:35; display:flex; justify-content:flex-end;
+}
+.forge-food__shade { position:absolute; inset:0; border:0; background:color-mix(in srgb,var(--bg) 83%,transparent); cursor:pointer; }
+.forge-food__sheet {
+  position:relative; box-sizing:border-box; width:min(540px,100%);
+  max-height:100%; display:grid; grid-template-rows:auto minmax(0,1fr);
+  border-left:1px solid var(--forge-line); background:var(--food-v2-deep);
+  color:var(--forge-ink); min-width:0;
+}
+.forge-food__sheet-heading {
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--forge-line); gap:10px; padding:15px 15px 11px;
+}
+.forge-food__sheet-heading > div { display:grid; gap:4px; }
+.forge-food__sheet-heading h2 { margin:0; font-size:25px; }
+.forge-food__sheet-close {
+  width:43px; height:43px; display:grid; place-items:center; flex:none;
+  border:1px solid var(--forge-line); border-radius:50%;
+  color:var(--forge-ink); background:var(--forge-panel); cursor:pointer;
+}
+.forge-food__sheet-scroll {
+  min-height:0; overflow-y:auto; padding:12px 13px calc(20px + env(safe-area-inset-bottom, 0px));
+  display:grid; gap:11px; align-content:start; -webkit-overflow-scrolling:touch;
+}
+.forge-food__sheet-scroll .fuel-r4__meal-panel { min-width:0; }
+
+/* Duo rail is always outside the food sheet and retains its own touch targets. */
+html[data-layout="duo"] .forge-food__sheet-shell:not([hidden]) { right:var(--duo-rail-width); }
+html[data-layout="duo"] .forge-food__cta-bar { bottom:10px; }
+@media(max-width:800px) {
+  .forge-food__canvas,.forge-food__library-layout,.forge-food__detail-layout { grid-template-columns:minmax(0,1fr); }
+  .forge-food__frequent-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+@media(max-width:520px) {
+  .forge-food__header { gap:7px; }
+  .forge-food__date { max-width:53%; font-size:10px; }
+  .forge-food__hero-grid { grid-template-columns:minmax(0,.9fr) minmax(0,1fr); }
+  .forge-food__hero-number strong { font-size:clamp(28px,7vw,37px); }
+  .forge-food__hero-ring .fuel-r4__ring-copy strong { font-size:23px; }
+  .forge-food__frequent-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .forge-food__stat { padding:10px 7px; }
+}
+@media(max-width:375px) {
+  .forge-food__hero-number strong { font-size:25px; }
+  .forge-food__date { font-size:9px; }
+  .forge-food__week-rail .fuel-diary__week { gap:2px; }
+  .forge-food__stat-label { font-size:10px; }
 }

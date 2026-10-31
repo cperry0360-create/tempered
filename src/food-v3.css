@@ -279,3 +279,11 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
 }
 .screen--fuel-r4 .nutrition-panel__add,
 .screen--fuel-r4 .nutrition-meal-form { scroll-margin-top:80px; }
+
+
+/* On a phone / folded Duo, the food entry area comes before the seven-day
+   diary review calendar. Keep calorie, macro and Water summaries above both. */
+@media (max-width:739px) {
+  .screen--fuel-r4 .food-v2__details { order:4; }
+  .screen--fuel-r4 .fuel-diary { order:5; }
+}

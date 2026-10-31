@@ -898,6 +898,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       el('div.half-fold__logging', {}, [
         exerciseCard(entry, halfFoldIndex),
         movementPicker(),
+        halfFoldIndex === plan.length - 1 && cardioFinisherCard(),
       ]),
     ])
   }
@@ -1013,6 +1014,23 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     onFinish(null)
   }
 
+  function cardioFinisherCard() {
+    if (!session?.finisher) return null
+    const target = session.cardioTarget
+    return el('section.card.cardio-finisher', { dataset: { cardioFinisher: 'true' } }, [
+      el('h2', { text: 'Optional cardio finisher' }),
+      target && el('div.cardio-finisher__zone', { dataset: { zone2Target: 'true' } }, [
+        el('span.cardio-finisher__caption', { text: 'YOUR ESTIMATED ZONE 2 TARGET' }),
+        el('strong.cardio-finisher__bpm', {
+          text: `${target.lowBpm}–${target.highBpm} bpm`,
+        }),
+        el('small', { text: `Estimated upper guide: ~${target.estimatedUpperBpm} bpm · talk test first` }),
+      ]),
+      el('p', { text: session.finisher }),
+      target?.guidance && el('p.cardio-finisher__guidance', { text: target.guidance }),
+    ])
+  }
+
   function render() {
     const duoLayout = document.documentElement.dataset.layout === 'duo'
     if (plan.length === 0 || !duoLayout) halfFold = false
@@ -1058,10 +1076,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         ]),
         session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
         ...plan.map(exerciseCard),
-        session?.finisher && el('section.card', { dataset: { cardioFinisher: 'true' } }, [
-          el('h2', { text: 'Optional cardio finisher' }),
-          el('p', { text: session.finisher }),
-        ]),
+        cardioFinisherCard(),
         movementPicker(),
       ]),
 
@@ -1215,6 +1230,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         session.weekLabel = active ? `Week ${active.week} of ${active.program.weeks}` : null
         session.deload = active?.deload === true
         session.finisher = programDay.finisher ?? null
+        session.cardioTarget = active?.program?.cardioTarget ?? null
 
         for (const [slotIndex, slot] of programDay.exercises.entries()) {
           const prepared = await workout.prepareSlot(slot, active?.week ?? 1, active?.program ?? { weeks: 1 })

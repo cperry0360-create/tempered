@@ -199,6 +199,10 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
               text: `${slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId} · ${slot.sets} × ${slot.repMin}–${slot.repMax}`,
             })),
             day.finisher && el('p', { dataset: { cardioFinisher: 'true' }, text: day.finisher }),
+            day.finisher && program.cardioTarget && el('p.train-r4__cardio-zone', {
+              dataset: { zone2Target: 'true' },
+              text: `Estimated Zone 2 target: ${program.cardioTarget.lowBpm}–${program.cardioTarget.highBpm} bpm · conversational pace`,
+            }),
           ])),
           weekView?.hardSets?.length > 0 && el('div.train-r4__hard-sets', {}, [
             el('strong', { text: 'Hard sets this week' }),
@@ -261,6 +265,10 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
           ]),
         ]))),
       day.finisher && el('p', { dataset: { cardioFinisher: 'true' }, text: day.finisher }),
+      day.finisher && active?.program?.cardioTarget && el('p.train-r4__cardio-zone', {
+        dataset: { zone2Target: 'true' },
+        text: `Estimated Zone 2 target: ${active.program.cardioTarget.lowBpm}–${active.program.cardioTarget.highBpm} bpm · talk comfortably`,
+      }),
       el('button.train-r4__secondary.train-r4__start', {
         type: 'button', dataset: { startPreview: day.id },
         onclick: () => onStart({ programDay: day }),

@@ -427,7 +427,7 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
 .forge-food__nav button .icon { color:var(--forge-blue); width:15px; height:15px; }
 .forge-food__overline {
   font-size:9px; font-weight:860; letter-spacing:.135em;
-  color:var(--forge-blue); text-transform:uppercase;
+  color:var(--forge-blue);
 }
 /* Week strip: remove the previous oversized Food diary card. Keep all
    dates, closeout states, calorie labels and week navigation in the DOM. */

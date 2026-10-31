@@ -34,7 +34,7 @@ try {
  q('[data-food-open-log]').click(); await settle()
  check('Log Food opens a separate library screen',Boolean(q('.forge-food__library-list')) && q('.forge-food__inner-header').textContent.includes('Food Library'))
  check('library lists previously logged foods with calorie and protein',qa('.forge-food__library-row').length>=3)
- q('.forge-food__library-row .forge-food__library-add').click(); await settle(80)
+ qa('.forge-food__library-row').find(row=>row.textContent.includes('Chicken and rice bowl'))?.querySelector('.forge-food__library-add')?.click(); await settle(80)
  check('added food enters log cart without changing the day total',qa('.forge-food__cart-row').length===1&&(await t.daily.dayLog('2026-10-01')).calories===260)
  q('.forge-food__cart-quantity button:last-child').click();await settle(60)
  check('cart quantity changes without logging',q('.forge-food__cart-quantity span')?.textContent==='2')

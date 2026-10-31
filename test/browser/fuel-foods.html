@@ -29,7 +29,7 @@
     await t.app.show('fuel'); await settle()
     check('frequent foods remain available below the entry form',
       qa('[data-recent-food]').length === 4 &&
-      q('.nutrition-panel__add').compareDocumentPosition(q('.food-v2__recents'))
+      q('.fuel-r4__meal-panel').compareDocumentPosition(q('.food-v2__recents'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     const goal = nutrient => Number(q('[data-nutrient="' + nutrient + '"] small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
     const targetKcal = Number(q('.food-v2__energy small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))

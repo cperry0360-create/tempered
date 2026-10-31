@@ -29,7 +29,7 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
 .journal-box{position:absolute;left:15px;width:648px;background:#1a1a1c;border-radius:16px;color:#f9f9fb;overflow:hidden;padding:0;margin:0;box-shadow:none}
 .journal-box.first{top:146px;height:267px}.journal-box.next{top:426px;height:52px;padding:14px 10px}.journal-box.third{top:492px}
 .journal-label{display:inline-block;font-size:14px;font-weight:500;line-height:22px;height:23px;background:#28372e;color:#49f36f;padding:0 7px;border-radius:3px}
-.journal-section-top{height:54px;padding:14px 9px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.journal-section-top{height:48px;padding:14px 9px 0;display:flex;justify-content:space-between;align-items:flex-start}
 .journal-section-actions{display:flex;gap:7px;padding-right:1px}
 .journal-section-actions button,.section-plus{width:28px;height:28px;border-radius:50%;background:#343438;font-size:21px;font-weight:300;line-height:1}
 .journal-section-actions button:first-child{font-size:23px}
@@ -40,7 +40,7 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
 .journal-entry-copy small{font-size:14px;line-height:19px;color:#a2a1a6}
 .meal-macros{color:#a3a3a7;font-size:13px;letter-spacing:.1px}.meal-macros b{color:white;font-size:14px;font-weight:750}
 .journal-entry .entry-more{width:29px;height:35px;flex:none;color:#bdbdc2;background:transparent;font-size:24px}
-.journal-total{height:39px;display:flex;align-items:center;padding:0 13px;margin:0;gap:39px;color:#43ee66;font-size:14px}
+.journal-total{height:45px;display:flex;align-items:center;padding:6px 13px 0;margin:0;gap:39px;color:#43ee66;font-size:14px}
 .journal-total>strong{font-weight:750}.journal-total span{color:#a8a8ad}.journal-total span b{color:white;font-weight:720}
 .section-plus{position:absolute;right:10px;top:11px;color:#fff}
 .meal-menu{position:absolute;z-index:4;top:229px;left:459px;width:191px;height:223px;border-radius:25px;background:linear-gradient(150deg,#303033,#242426);box-shadow:0 6px 30px #0008;border:1px solid #373739;display:none;flex-direction:column;overflow:hidden;padding:5px 16px}
@@ -73,13 +73,13 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
 /* Exact-frame reference: Food Library / My Favorites, recorded at 25 seconds. */
 .library-page{position:absolute;inset:0;z-index:18;background:#020603;display:none;overflow:hidden;color:#fff}
 .library-page.open{display:block}
-.library-title{position:absolute;left:0;right:0;top:24px;height:25px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15px}
+.library-title{position:absolute;left:0;right:0;top:24px;height:25px;transform:translateX(-26px);display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15px}
 .library-title svg{width:23px;height:23px;stroke:#f3f3f4;stroke-width:2.2;fill:none}
 .library-tabs{position:absolute;left:12px;top:67px;display:flex;gap:5px;height:28px;align-items:center}
 .library-tabs button{min-height:28px;padding:0 13px;border-radius:99px;background:linear-gradient(#2d2d2f,#202022);font-size:10px;font-weight:600;white-space:nowrap}
 .library-tabs button.active{background:#f9f9f9;color:#18181a}
-.library-empty{position:absolute;left:150px;right:140px;top:167px;display:grid;justify-items:center;text-align:center;gap:0}
-.library-empty svg{width:168px;height:113px;margin-bottom:21px}
+.library-empty{position:absolute;left:114px;right:176px;top:167px;display:grid;justify-items:center;text-align:center;gap:0}
+.library-empty svg{width:168px;height:106px;margin-bottom:28px}
 .library-empty h2{margin:0 0 9px;font-size:19px;line-height:1.2;font-weight:740}
 .library-empty p{margin:0;width:340px;font-size:15px;line-height:21px;color:#f5f5f6;font-weight:440}
 .library-empty .heart{color:#33e85b;font-size:18px;vertical-align:-1px}

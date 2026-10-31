@@ -365,7 +365,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   async function startSession(options) {
     // Starting another session must not overwrite a minimized workout draft.
     const existingDraft = loadActiveSessionDraft()
-    if (!session && existingDraft) return resumeSession(existingDraft)
+    if (!session && existingDraft?.minimized === true) return resumeSession(existingDraft)
     returnTab = active === 'settings' ? 'today' : active
     session?.destroy()
     session = makeSessionScreen()

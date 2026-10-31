@@ -315,7 +315,9 @@ export function createWorkoutService({ storage, clock, balance }) {
   async function abortSession(session, onlySets = []) {
     const all = await storage.getAllByIndex('setLogs', 'sessionId', session.id)
     const ids = new Set(onlySets.map(set => set.id).filter(Boolean))
-    const removable = session.slotMode ? all.filter(set => ids.has(set.id)) : all
+    // Only log IDs created by the current screen may be removed. A reused
+    // daily session can hold already-finished work even outside slot mode.
+    const removable = all.filter(set => ids.has(set.id))
     for (const set of removable) await storage.delete('setLogs', set.id)
     const remaining = await storage.getAllByIndex('setLogs', 'sessionId', session.id)
     if (remaining.length === 0) await storage.delete('sessions', session.id)

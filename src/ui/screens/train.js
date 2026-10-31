@@ -17,7 +17,7 @@ import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js
  * @param {(options: object) => void} deps.onStart
  * @param {() => void} [deps.onProgramBuilder]
  */
-export function createTrainScreen({ workout, storage, clock, onStart, onProgramBuilder, onProgramLibrary }) {
+export function createTrainScreen({ workout, storage, clock, onStart, onStartCardio, onProgramBuilder, onProgramLibrary }) {
   const root = el('div.screen.screen--train.screen--train-r4')
   let query = ''
   let libraryOpen = false
@@ -170,6 +170,15 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
         text: 'Active since ' + shortDate(active.state.startedOn),
       }),
       el('div.train-r4__segments', { 'aria-label': `Week ${week} of ${program.weeks}` }, segments),
+      onStartCardio && el('button.train-r4__cardio-shortcut', {
+        type: 'button', dataset: { action: 'quick-cardio' },
+        onclick: onStartCardio,
+      }, [
+        el('strong', { text: '10-min cardio' }),
+        el('small', { text: program.cardioTarget
+          ? `Start timer · ${program.cardioTarget.lowBpm}–${program.cardioTarget.highBpm} bpm`
+          : 'Start a short cardio timer' }),
+      ]),
       el('p.train-r4__program-tip', { text: 'These are the exercises currently in your plan. Tap a day to preview before starting.' }),
       el('button.train-r4__row', {
         type: 'button',

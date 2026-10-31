@@ -92,8 +92,10 @@
       check('sheet explains that this session is discarded and prior history preserved',
         /without saving/i.test(q('.session-sheet')?.textContent ?? ''))
       q('[data-confirm-action="discard"]')?.click(); await wait(260)
+      const afterDiscard = await storage.getAll('setLogs')
       check('confirmed exit removes only this workout’s checked sets',
-        (await storage.getAll('setLogs')).length === previouslySettled)
+        afterDiscard.length === previouslySettled,
+        `before=${previouslySettled}, after=${afterDiscard.length}; ids=${afterDiscard.map(x=>x.id).join(',')}`)
       check('exit returns to Today without a workout summary',
         Boolean(q('.screen--today')) && !q('.screen--summary'))
 

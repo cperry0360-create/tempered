@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tempered — Forged food navigation and cart</title>
+<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/nutrition-today.css"><link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/fuel.css"><link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/food-v2.css"><link rel="stylesheet" href="../../src/food-v3.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const q=s=>document.querySelector(s)
+const qa=s=>[...document.querySelectorAll(s)]
+const settle=ms=>new Promise(r=>setTimeout(r,ms??160))
+const errors=[];addEventListener('error',e=>errors.push(e.message))
+addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try {
+ const storage=createMemoryStorage(), clock=fixedClock(new Date(2026,9,1,12))
+ const t=await bootstrapHarness({storage,clock,mount:q('#app')})
+ installCalorieAiRuntime()
+ await t.daily.addNutrition('2026-09-27',{description:'Chicken and rice bowl',calories:490,protein:37,carbs:54,fat:12},{loggedAt:'2026-09-27T12:30:00.000Z'})
+ await t.daily.addNutrition('2026-09-28',{description:'Protein shake',calories:180,protein:27,carbs:8,fat:4},{loggedAt:'2026-09-28T08:00:00.000Z'})
+ await t.daily.addNutrition('2026-10-01',{description:'Morning oats',calories:260,protein:12,carbs:42,fat:6},{loggedAt:'2026-10-01T08:00:00.000Z'})
+ await t.app.show('fuel'); await settle(300)
+ check('Food starts in a real Fuel dashboard with compact week, hero, stats and journal',
+   Boolean(q('.forge-food__week-rail'))&&Boolean(q('.forge-food__hero'))&&qa('.forge-food__stat').length===3&&Boolean(q('.forge-food__journal')))
+ check('the hero is driven by saved calories',q('.forge-food__hero').textContent.includes('260'))
+ check('entry appears in the journal',q('.forge-food__meal').textContent.includes('Morning oats'))
+ check('original right-side navigation remains mounted',Boolean(q('.tabbar')))
+ q('[data-food-open-log]').click(); await settle()
+ check('Log Food opens a separate library screen',Boolean(q('.forge-food__library-list')) && q('.forge-food__inner-header').textContent.includes('Food Library'))
+ check('library lists previously logged foods with calorie and protein',qa('.forge-food__library-row').length>=3)
+ q('.forge-food__library-row .forge-food__library-add').click(); await settle(80)
+ check('added food enters log cart without changing the day total',qa('.forge-food__cart-row').length===1&&(await t.daily.dayLog('2026-10-01')).calories===260)
+ q('.forge-food__cart-quantity button:last-child').click();await settle(60)
+ check('cart quantity changes without logging',q('.forge-food__cart-quantity span')?.textContent==='2')
+ q('[data-cart-log]').click(); await settle(350)
+ const day=await t.daily.dayLog('2026-10-01')
+ check('logging cart writes canonical nutrition values',day.calories===1240 && day.proteinGrams===86,`${day.calories}/${day.proteinGrams}`)
+ check('logging cart returns to Fuel with updated journal',Boolean(q('.forge-food__journal')) && /Chicken and rice bowl/.test(q('.forge-food__journal').textContent))
+ q('.forge-food__meal').click();await settle(90)
+ check('meal opens distinct detail view with calories and macros',Boolean(q('.forge-food__detail-card')) && Boolean(q('.forge-food__detail-macros')))
+ q('.forge-food__back').click();await settle()
+ check('detail returns to Food without losing navigation',Boolean(q('.forge-food__hero'))&&Boolean(q('.tabbar')))
+ check('no runtime errors',errors.length===0,errors.join(' | '))
+} catch(error) {check('forge food completed',false,error?.stack??error)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'forge-food',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

@@ -65,7 +65,7 @@ function call(method,params={}){
 try{
   await call('Page.enable')
   await call('Emulation.setDeviceMetricsOverride',{width:726,height:512,deviceScaleFactor:1,mobile:false,screenWidth:726,screenHeight:512})
-  for(const view of ['dashboard','journal','quicklog']){
+  for(const view of ['dashboard','journal','quicklog','library']){
     await call('Page.navigate',{url:url+'?view='+view})
     await delay(850)
     const result=await call('Runtime.evaluate',{expression:"JSON.stringify({state:document.querySelector('#journal')?.className,modal:document.querySelector('#modal')?.className,images:document.images.length,ok:document.querySelector('.screen')?.getBoundingClientRect()?.width === 726})",returnByValue:true})

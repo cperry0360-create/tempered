@@ -34,9 +34,9 @@
       q('.fuel-r4__meal-panel').compareDocumentPosition(q('.food-v2__recents'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     const goal = nutrient => nutrient === 'protein'
-      ? Number(q('.forge-food__main-stat--protein small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
-      : Number(q('.forge-food__macro-row[aria-label^="' + nutrient[0].toUpperCase() + nutrient.slice(1) + ':"] [role="progressbar"]')?.getAttribute('aria-valuemax'))
-    const targetKcal = Number(q('.forge-food__main-stat small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+      ? Number(q('.forge-food__hero-number:nth-child(2) span')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+      : Number(q('.forge-food__macro [aria-label="' + nutrient[0].toUpperCase() + nutrient.slice(1) + ' progress"]')?.getAttribute('aria-valuemax'))
+    const targetKcal = Number(q('.forge-food__hero-number:first-child span')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
     const derived = goal('protein') * 4 + goal('carbs') * 4 + goal('fat') * 9
     check('protein, carb, and fat gram goals approximately reconcile to calorie target',
       Number.isFinite(derived) && Math.abs(derived - targetKcal) <= 7, derived + ' vs ' + targetKcal)

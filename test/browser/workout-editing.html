@@ -39,6 +39,7 @@
       await tempered.app.show('train')
       await waitFor('[data-programday="monday"]')
       q('[data-programday="monday"]')?.click()
+        q('[data-start-preview]')?.click()
       await waitFor('.screen--session .setrow__num[data-field="weight"]')
 
       let card = q('.screen--session [data-exercise]')

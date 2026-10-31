@@ -729,7 +729,8 @@ export function installCalorieAiRuntime() {
   const mountPanel = (event) => {
     const slot = event?.detail?.slot, date = event?.detail?.date
     if (!slot || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) return
-    if (!(panelScreen && panelScreen.dataset.date === date && slot.contains(panelScreen))) {
+    const isNewPanel = !(panelScreen && panelScreen.dataset.date === date && slot.contains(panelScreen))
+    if (isNewPanel) {
       panelScreen = buildNutritionScreen(date, null, { embedded: true })
       slot.replaceChildren(panelScreen)
     }
@@ -748,7 +749,9 @@ export function installCalorieAiRuntime() {
         panelScreen.insertBefore(event.detail.recents, meals)
       }
     }
-    refreshPanelWhenShown()
+    // Avoid a refresh loop: renderNutritionData emits tempered:fuel-updated,
+    // which re-renders Fuel and remounts these order-only nodes.
+    if (isNewPanel) refreshPanelWhenShown()
   }
   const refreshPanel = () => {
     if (panelScreen?.isConnected && !nutritionScreen?.isConnected) renderNutritionData().catch(() => {})

@@ -252,6 +252,9 @@ export function createFuelScreen({ storage, daily, clock }) {
         : mode === 'manual' ? '[data-entry="nutrition_description"]'
           : '.food-next__sheet-close'
       root.querySelector(selector)?.focus({ preventScroll: true })
+      if (mode === 'journal') root.querySelector('.food-next__sheet [data-nutrition-history]')?.scrollIntoView({
+        behavior: 'auto', block: 'start',
+      })
     })
   }
 
@@ -689,7 +692,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       actions,
       el('div.food-next__layout', {}, [
         el('div.food-next__overview', {}, [
-          diary, hero,
+          hero, diary,
           el('details.food-next__secondary', {
             open: secondaryOpen,
             ontoggle: event => { secondaryOpen = event.target.open },

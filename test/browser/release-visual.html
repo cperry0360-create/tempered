@@ -512,14 +512,14 @@
       await settle()
       if (view === 'nutrition-meal') document.querySelector('.nutrition-meal-form')?.scrollIntoView({ block: 'start' })
       if (view === 'fuel-entry') {
-        document.querySelector('[data-food-open-log]')?.click()
+        document.querySelector('.forge-food__nav button:last-child')?.click()
         await settle()
-        document.querySelector('.food-next__sheet .nutrition-panel__add')?.scrollIntoView({ block: 'start' })
+        document.querySelector('.forge-food__sheet .nutrition-panel__add')?.scrollIntoView({ block: 'start' })
       }
       if (view === 'fuel-meals') {
-        document.querySelector('.food-next__journal-title button')?.click()
+        document.querySelector('.forge-food__journal-title button')?.click()
         await settle()
-        document.querySelector('.food-next__sheet [data-nutrition-history]')?.scrollIntoView({ block: 'start' })
+        document.querySelector('.forge-food__sheet [data-nutrition-history]')?.scrollIntoView({ block: 'start' })
       }
       if (view === 'progress-trends') document.querySelectorAll('.progress-trends')[0]?.closest('.progress-panel')?.scrollIntoView({ block: 'start' })
       if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })

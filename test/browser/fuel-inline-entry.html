@@ -119,6 +119,26 @@
     type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
     q('.fuel-r4__water-actions button')?.click(); await settle(300)
     check('half-typed meal survives a Fuel refresh (water tap)', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
+    check('Fuel water shows custom amount alongside presets',
+      qa('.fuel-r4__water-actions button').length === 4
+      && Boolean(q('[data-water-custom-toggle]')))
+    q('[data-water-custom-toggle]')?.click()
+    check('custom water entry expands directly within the Water card',
+      Boolean(q('.food-v2__water [data-water-custom-form]'))
+      && document.activeElement === q('[data-water-custom-input]'))
+    type(q('[data-water-custom-input]'), '0')
+    q('[data-water-custom-save]')?.click(); await settle(100)
+    check('invalid water amount is rejected without adding anything',
+      Boolean(q('[data-water-custom-error]')?.textContent)
+      && (await t.daily.dayLog('2026-10-01')).waterOz === 8)
+    type(q('[data-water-custom-input]'), '17.5')
+    q('[data-water-custom-save]')?.click(); await settle(300)
+    const waterDay = await t.daily.dayLog('2026-10-01')
+    check('custom decimal water amount adds exactly once to the day', waterDay.waterOz === 25.5, waterDay.waterOz)
+    check('Water card shows fractional ounces without rounding',
+      (q('.food-v2__water-main strong')?.textContent ?? '').includes('25.5 oz'))
+    check('custom form closes after a successful add and meal draft survives',
+      !q('[data-water-custom-form]') && q('[data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
 
     type(q('.screen--fuel [data-entry="nutrition_calories"]'), '740')
     type(q('.screen--fuel [data-entry="nutrition_protein"]'), '38')

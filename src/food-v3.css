@@ -287,3 +287,67 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
   .screen--fuel-r4 .food-v2__details { order:4; }
   .screen--fuel-r4 .fuel-diary { order:5; }
 }
+
+
+/* Fuel custom hydration: one extra compact action, exact values, no separate
+   logging flow. Four shortcuts stay thumb-sized in folded Duo layouts. */
+.screen--fuel-r4 .food-v2__water .fuel-r4__water-actions {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+.screen--fuel-r4 .food-v2__water .fuel-r4__water-actions button {
+  min-width:0;
+  min-height:44px;
+  padding-inline:4px;
+}
+.screen--fuel-r4 .food-v2__water .fuel-r4__water-custom-toggle {
+  font-size:11px;
+  font-weight:750;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-form {
+  display:grid;
+  gap:6px;
+  margin-top:4px;
+  min-width:0;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-label {
+  color:var(--food-v2-muted);
+  font-size:11px;
+  font-weight:750;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-fields {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(88px,auto);
+  gap:7px;
+  min-width:0;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-input,
+.screen--fuel-r4 .fuel-r4__water-custom-save {
+  min-width:0;
+  min-height:44px;
+  box-sizing:border-box;
+  border-radius:11px;
+  font:inherit;
+  font-size:13px;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-input {
+  width:100%;
+  border:1px solid var(--food-v2-line);
+  background:var(--food-v2-panel-2);
+  color:var(--food-v2-text);
+  padding:0 10px;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-save {
+  border:0;
+  background:var(--food-v2-blue);
+  color:var(--food-v2-deep);
+  padding:0 11px;
+  font-weight:800;
+  cursor:pointer;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-save:disabled { opacity:.6; }
+.screen--fuel-r4 .fuel-r4__water-custom-error {
+  color:var(--food-v2-muted);
+  font-size:11px;
+}
+.screen--fuel-r4 .fuel-r4__water-custom-error:empty { display:none; }

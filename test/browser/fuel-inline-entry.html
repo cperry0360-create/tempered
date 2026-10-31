@@ -27,14 +27,14 @@
     const profile = (await storage.get('profile', 'profile')) ?? { id: 'profile' }
     await storage.put('profile', { ...profile, nutritionReviewStartOn: '2026-09-28' })
     await t.app.show('fuel'); await settle(400)
-    check("meals already logged today show in the new journal", /Morning oats/.test(q('.food-next__journal')?.textContent ?? ''), q('.food-next__journal')?.textContent || 'empty list')
+    check("meals already logged today show in the new journal", /Morning oats/.test(q('.forge-food__journal')?.textContent ?? ''), q('.forge-food__journal')?.textContent || 'empty list')
     await t.app.show('today'); await settle(200); await t.app.show('fuel'); await settle(400)
-    check("meals still show after leaving Fuel and coming back", /Morning oats/.test(q('.food-next__journal')?.textContent ?? ''))
+    check("meals still show after leaving Fuel and coming back", /Morning oats/.test(q('.forge-food__journal')?.textContent ?? ''))
     check('Food logging starts closed with a visible launch action', q('[data-food-log-sheet]')?.hidden === true && Boolean(q('[data-food-open-log]')))
-    q('[data-food-open-log]')?.click(); await settle(80)
-    check('Log food opens the existing runtime in a focused sheet', q('[data-food-log-sheet]')?.hidden === false && Boolean(q('.food-next__sheet [data-nutrition-form]')))
+    q('.forge-food__nav button:last-child')?.click(); await settle(80)
+    check('Log food opens the existing runtime in a focused sheet', q('[data-food-log-sheet]')?.hidden === false && Boolean(q('.forge-food__sheet [data-nutrition-form]')))
     const form = q('.screen--fuel [data-nutrition-form]')
-    check('the existing add-meal form remains in Fuel sheet, no full-screen editor required', Boolean(form) && Boolean(q('.food-next__sheet')) && !q('.nutrition-log-overlay'))
+    check('the existing add-meal form remains in Fuel sheet, no full-screen editor required', Boolean(form) && Boolean(q('.forge-food__sheet')) && !q('.nutrition-log-overlay'))
     check('Meal photo and Import copied nutrition are on Fuel', Boolean(q('.screen--fuel [data-calorie-ai="prompt"]')) && Boolean(q('.screen--fuel [data-calorie-ai="paste"]')))
     const photoLink = q('.screen--fuel [data-calorie-ai="prompt"]')
     check('Meal photo offers a browser link rather than a share sheet',
@@ -57,12 +57,12 @@
       && Boolean(q('.screen--fuel [data-nutrition-form]')))
     check('Day status is on Fuel', Boolean(q('.screen--fuel [data-nutrition-day-status]')))
     check('dashboard and food journal precede earlier-day reminder backlog',
-      Boolean(q('.food-next__layout')) && Boolean(q('[data-open-nutrition-days]'))
-      && Boolean(q('.food-next__journal').compareDocumentPosition(q('[data-open-nutrition-days]'))
+      Boolean(q('.forge-food__canvas')) && Boolean(q('[data-open-nutrition-days]'))
+      && Boolean(q('.forge-food__journal').compareDocumentPosition(q('[data-open-nutrition-days]'))
         & Node.DOCUMENT_POSITION_FOLLOWING))
 
     check('Food search is in the logging sheet',
-      Boolean(q('.food-next__sheet [data-food-search]')) && Boolean(q('.food-v3__search-input')))
+      Boolean(q('.forge-food__sheet [data-food-search]')) && Boolean(q('.food-v3__search-input')))
     check('calendar has explicit review icons and calorie totals',
       qa('[data-diary-date]').length === 7
       && qa('[data-diary-date] .food-v3__day-icon').length === 7
@@ -83,7 +83,7 @@
       Number(q('[data-open-nutrition-days]')?.dataset.openNutritionDays) === 2)
 
     check('redundant action tiles removed', qa('[data-food-action]').length === 0)
-    q('.food-next__actions button:nth-child(4)')?.click(); await settle(80)
+    q('.forge-food__nav button:last-child')?.click(); await settle(80)
     check('Quick log shortcut opens the sheet and focuses the retained form',
       !q('[data-food-log-sheet]')?.hidden && document.activeElement === q('[data-entry="nutrition_description"]'))
     const entryCard = q('.screen--fuel .nutrition-panel__add')
@@ -96,15 +96,15 @@
       && Boolean(entryCard.compareDocumentPosition(favoritesCard) & Node.DOCUMENT_POSITION_FOLLOWING)
       && Boolean(favoritesCard.compareDocumentPosition(mealsCard) & Node.DOCUMENT_POSITION_FOLLOWING))
     check('Close day stays accessible above the dashboard',
-      Boolean(q('.food-next__actions [data-diary-finish-today]')))
+      Boolean(q('.forge-food__hero [data-diary-finish-today]')))
     check('AI tools appear ahead of input fields',
       Boolean(q('.nutrition-meal-form__tools')?.compareDocumentPosition(q('.nutrition-meal-form__fields')) & Node.DOCUMENT_POSITION_FOLLOWING))
     check('recent meals are reusable without a second form', Boolean(q('[data-recent-food="Protein shake"]')))
     check('real calorie, macro, water, diary and meal data remain available',
-      Boolean(q('.food-next__hero')) && qa('.food-next__macro-row').length === 3
+      Boolean(q('.forge-food__hero')) && qa('.forge-food__macro').length === 3
       && Boolean(q('.food-v2__water')) && Boolean(q('[data-diary-calendar]'))
-      && Boolean(q('.food-next__sheet [data-nutrition-form]')))
-    check('only one composed Food dashboard', qa('.food-next__layout').length === 1)
+      && Boolean(q('.forge-food__sheet [data-nutrition-form]')))
+    check('only one composed Food dashboard', qa('.forge-food__canvas').length === 1)
 
     let importScrollCount = 0
     const originalScroll = form.scrollIntoView
@@ -124,7 +124,7 @@
       && importScrollCount === 1)
     form.scrollIntoView = originalScroll
     type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
-    q('.food-next__secondary summary')?.click(); await settle(60)
+    q('.forge-food__secondary summary')?.click(); await settle(60)
     q('.fuel-r4__water-actions button')?.click(); await settle(300)
     check('half-typed meal survives a Fuel refresh (water tap)', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
     check('Fuel water shows custom amount alongside presets',
@@ -159,7 +159,7 @@
     q('.screen--fuel [data-action="nutrition-log"]')?.click(); await settle(500)
     let day = await t.daily.dayLog('2026-10-01')
     check('Add meal preserves three-decimal protein values', day.calories === 1040 && day.proteinGrams === 50.125, `${day.calories}/${day.proteinGrams}`)
-    check('the calorie hero updates on the same screen', /1,040/.test(q('.food-next__hero')?.textContent ?? ''), q('.food-next__hero')?.textContent.slice(0, 100))
+    check('the calorie hero updates on the same screen', /1,040/.test(q('.forge-food__hero')?.textContent ?? ''), q('.forge-food__hero')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
     check('meal timeline groups existing entries by time of day',
       Boolean(q('[data-meal-group]')) && Boolean(q('.nutrition-timeline__heading'))

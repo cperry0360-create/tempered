@@ -158,6 +158,17 @@
           Boolean(q('.session-r5__stage', session)) && Boolean(q('.session-r5__progress', session)))
         thumbSized(q('.setrow__check:not([disabled])', session), 'Set log check')
         thumbSized(q('.exercise-menu__trigger', session), 'Exercise action')
+        const savedSetRows = qa('.screen--session .setrow__check').length
+        await tempered.app.launchQuickCardio()
+        check('embedded cardio uses the full workout canvas, not an overlay',
+          Boolean(q('.app__body > .screen--cardio [data-cardio-session]')))
+        clock.set(clock.now() + 90000)
+        await settle(1100)
+        q('.screen--cardio [data-action="save-cardio"]')?.click()
+        await waitFor('.screen--session')
+        check('cardio finisher returns to the same strength workout and set rows',
+          Boolean(q('.screen--session .session-r5__stage'))
+          && qa('.screen--session .setrow__check').length === savedSetRows)
       }
       await tempered.app.show('train')
       await settle(60)

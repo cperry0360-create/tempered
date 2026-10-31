@@ -70,6 +70,7 @@
 
         await waitFor('[data-programday="monday"]')
         q('[data-programday="monday"]').click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
         for (const button of qa('.setrow__check').slice(0, 6)) {
           const row = button.closest('.setrow')

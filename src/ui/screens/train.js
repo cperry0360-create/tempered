@@ -242,7 +242,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
       active.week === 1 && el('p', { text: 'Start when you have a useful window; record what happened because repeatable work is enough.' }),
       el('button.train-r4__secondary', {
         type: 'button', dataset: { startday: todayDay.id },
-        onclick: () => onStart({ programDay: remainingProgramDay(weekView, programDay) }),
+        onclick: () => { selectedProgramDay=remainingProgramDay(weekView, programDay); render() },
       }, ['Start session']),
     ])
   }
@@ -250,7 +250,23 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
   function programDayPreview(day, embedded = false) {
     const movements = day.exercises ?? []
     const workingSets = movements.reduce((sum, slot) => sum + (Number(slot.sets) || 0), 0)
-    return el('section.train-r4__card.train-r4__plan-preview', { dataset: { programPreview: day.id } }, [
+    const featured = movements.map(slot=>exercises.find(ex=>ex.id===slot.exerciseId)).find(ex=>ex?.art)
+    return el('section.train-r4__card.train-r4__plan-preview.train-r5__plan-preview', { dataset: { programPreview: day.id } }, [
+      el('div.train-r5__preview-hero', {}, [
+        el('div.train-r5__preview-art', {}, [
+          featured?.art
+            ? el('img', {src:new URL(`../../../art/exercises/${featured.art}`, import.meta.url).href, alt:`${featured.name} exercise reference`})
+            : el('div.train-r5__preview-fallback', {}, [icon('train')]),
+        ]),
+        el('div.train-r5__preview-summary', {}, [
+          el('span.train-r4__eyebrow',{text:'YOUR WORKOUT · READY TO TRAIN'}),
+          el('h2',{text:day.name}),
+          el('p',{text:`${movements.length} movements · ${workingSets} sets · approximately ${estimateSessionMinutes(day)} min`}),
+          day.finisher && el('small',{text:'+ optional 10-minute Zone 2 finisher'}),
+        ]),
+      ]),
+      el('div.train-r5__preview-progress',{'aria-label':'Exercise order'},
+        movements.map((_,i)=>el('span',{dataset:{first:String(i===0)}}))),
       el('div.train-r4__preview-heading', {}, [
         el('div', {}, [
           el('span.train-r4__eyebrow', { text: 'IN YOUR ACTIVE PROGRAM' }),
@@ -311,8 +327,8 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
           el('button.train-r4__quick-start', {
             type: 'button', dataset: { programday: day.id },
             'aria-label': 'Start ' + day.name,
-            onclick: () => onStart({ programDay: day }),
-          }, ['Start']),
+            onclick: () => { selectedProgramDay=day; render() },
+          }, ['Preview']),
         ]))),
     ])
   }
@@ -408,7 +424,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
 
   function render() {
     if (programDetailsOpen) { renderProgramDetails(); return }
-    if (selectedProgramDay && (typeof window === 'undefined' || window.innerWidth < 740)) {
+    if (selectedProgramDay) {
       replace(root, [
         el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: 'Workout preview' })]),
         programDayPreview(selectedProgramDay),

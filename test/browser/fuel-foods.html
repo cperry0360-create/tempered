@@ -28,15 +28,15 @@
     for (const [date, description, calories, protein, n] of meals)
       for (let i = 0; i < n; i += 1) await t.daily.addNutrition(date, { description, calories, protein }, { loggedAt: `${date}T1${i}:00:00.000Z` })
     await t.app.show('fuel'); await settle()
-    q('[data-food-open-log]')?.click(); await settle(90)
+    q('.forge-food__nav button:last-child')?.click(); await settle(90)
     check('frequent foods remain available in the logging sheet',
       qa('[data-recent-food]').length === 4 &&
       q('.fuel-r4__meal-panel').compareDocumentPosition(q('.food-v2__recents'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     const goal = nutrient => nutrient === 'protein'
-      ? Number(q('.food-next__main-stat--protein small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
-      : Number(q('.food-next__macro-row[aria-label^="' + nutrient[0].toUpperCase() + nutrient.slice(1) + ':"] [role="progressbar"]')?.getAttribute('aria-valuemax'))
-    const targetKcal = Number(q('.food-next__main-stat small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+      ? Number(q('.forge-food__main-stat--protein small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+      : Number(q('.forge-food__macro-row[aria-label^="' + nutrient[0].toUpperCase() + nutrient.slice(1) + ':"] [role="progressbar"]')?.getAttribute('aria-valuemax'))
+    const targetKcal = Number(q('.forge-food__main-stat small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
     const derived = goal('protein') * 4 + goal('carbs') * 4 + goal('fat') * 9
     check('protein, carb, and fat gram goals approximately reconcile to calorie target',
       Number.isFinite(derived) && Math.abs(derived - targetKcal) <= 7, derived + ' vs ' + targetKcal)

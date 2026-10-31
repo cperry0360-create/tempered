@@ -176,9 +176,12 @@
 
       await tab('fuel', '.screen--fuel')
       check('Fuel screen renders', Boolean(q('.screen--fuel')))
-      // 0.51.0: meal entry is inline on Fuel; its Add meal button is the meal action.
+      // Food 2.0 keeps one generous launch target; the original form lives in its sheet.
       installCalorieAiRuntime(); await tempered.app.show('fuel'); await settle(200)
-      thumbSized(q('.screen--fuel [data-action="nutrition-log"]'), 'Fuel meal action')
+      thumbSized(q('.screen--fuel [data-food-open-log]'), 'Fuel meal action')
+      q('.screen--fuel .forge-food__nav button:last-child')?.click(); await settle(80)
+      check('Quick Calories opens its original meal form', Boolean(q('.forge-food__sheet [data-action="nutrition-log"]')))
+      thumbSized(q('.forge-food__sheet [data-action="nutrition-log"]'), 'Add meal in sheet')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__select')

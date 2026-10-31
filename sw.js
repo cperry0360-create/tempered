@@ -1,4 +1,5 @@
 /** Tempered service worker — offline support with atomic version handoff. */
+// Food 2.0 branch candidate: force SW script re-evaluation for the unique cache identity.
 import { VERSION } from './src/version.js'
 
 const CACHE = `tempered-${VERSION}`

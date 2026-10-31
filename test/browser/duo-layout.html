@@ -77,41 +77,44 @@ if (params.has('fixture')) {
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
-      if (!wide) check(label + ' cover Food cards use the full pane width',
-        Math.abs(r('.fuel-r4__energy').width - r('.food-v2__macro-card').width) <= 2
-        && Math.abs(r('.food-v2__macro-card').width - r('.food-v2__small-row').width) <= 2)
+      // Food 2.0 retains a right-side Duo rail and uses one composed hero,
+      // journal and responsive sheet instead of the former equal-sized cards.
+      check(label + ' Food uses the approved composed hero and journal',
+        Boolean(q('.forge-food__hero')) && Boolean(q('.forge-food__journal'))
+        && q('.forge-food__journal').textContent.includes('Today’s Meals'))
+      const overview = q('.forge-food__main')
+      const details = q('.forge-food__aside')
+      const computed = w.getComputedStyle(overview)
+      check(label + ' Food columns share the page scroll',
+        computed.position === 'static' && computed.overflowY !== 'auto'
+        && w.getComputedStyle(details).overflowY !== 'auto')
       if (wide) {
-        check(label + ' primary meal-entry pane begins beside calorie hero',
-          close(r('.food-v3__search').top, r('.fuel-r4__energy').top))
-        check(label + ' energy and Water share the left pane',
-          q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
-          && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))
-          && q('.fuel-r4__details')?.contains(q('.fuel-r4__meal-panel'))
-          && r('.fuel-r4__water').right <= r('.fuel-r4__meal-panel').left)
-        const overview = q('.fuel-r4__overview')
-        const details = q('.fuel-r4__details')
-        const computed = w.getComputedStyle(overview)
-        check(label + ' Food columns never own separate scroll views',
-          computed.position === 'static' &&
-          computed.overflowY !== 'auto' && computed.overflowY !== 'scroll' &&
-          overview.scrollHeight <= overview.clientHeight + 2 &&
-          w.getComputedStyle(details).overflowY !== 'auto' &&
-          w.getComputedStyle(q('.food-v3__search .fuel-food__results')).overflowY !== 'auto',
-          JSON.stringify({ position: computed.position, overflow: computed.overflowY,
-            content: overview.scrollHeight, height: overview.clientHeight }))
+        check(label + ' unfolded Food places the journal beside the daily overview',
+          r('.forge-food__journal').left >= r('.forge-food__main').right - 2)
+        const beforeLeft = r('.forge-food__hero').top
+        const beforeRight = r('.forge-food__journal').top
         details.style.paddingBottom = '1500px'
-        const beforeLeft = r('.fuel-r4__energy').top
-        const beforeRight = r('.fuel-r4__meal-panel').top
         q('.app__body').scrollTop = 650
         await settle()
-        const leftTravel = beforeLeft - r('.fuel-r4__energy').top
-        const rightTravel = beforeRight - r('.fuel-r4__meal-panel').top
-        check(label + ' one page gesture scrolls left and right together',
-          q('.app__body').scrollTop >= 500 &&
-          Math.abs(leftTravel - rightTravel) <= 3 &&
-          leftTravel > 500,
+        const leftTravel = beforeLeft - r('.forge-food__hero').top
+        const rightTravel = beforeRight - r('.forge-food__journal').top
+        check(label + ' overview and journal scroll as one canvas',
+          q('.app__body').scrollTop >= 500
+          && Math.abs(leftTravel - rightTravel) <= 3 && leftTravel > 500,
           JSON.stringify({leftTravel,rightTravel,scroll:q('.app__body').scrollTop}))
+      } else {
+        check(label + ' cover Food stacks journal below hero',
+          r('.forge-food__journal').top >= r('.forge-food__hero').bottom - 2)
       }
+      q('.forge-food__nav button:last-child')?.click()
+      await settle()
+      check(label + ' Log Food sheet stops before the preserved right-side rail',
+        Boolean(q('.forge-food__sheet')) &&
+        r('.forge-food__sheet').right <= r('.tabbar').left + 1)
+      check(label + ' right-side section navigation stays accessible with Log Food open',
+        q('.tabbar__tab[aria-current="page"]') !== null
+        && r('.tabbar').width <= 48 + right + 1)
+      q('.forge-food__sheet-close')?.click(); await settle()
       await w.tempered.app.show('settings'); await settle()
       q('[data-action="program-builder"]')?.click(); await new Promise(resolve => setTimeout(resolve,180)); await settle()
       check(label + ' Program Builder exposes independent editing panes',
@@ -137,11 +140,11 @@ if (params.has('fixture')) {
       d.querySelector('.train-r4__back')?.click(); await settle()
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
-      check(width + ' ordinary phone puts primary meal entry after Water, before diary',
-        f('.food-v2__energy').top < f('.food-v2__macro-card').top
-        && f('.food-v2__macro-card').top < f('.food-v2__water').top
-        && f('.food-v2__water').top < f('.fuel-r4__meal-panel').top
-        && f('.fuel-r4__meal-panel').top < f('.fuel-diary').top)
+      check(width + ' ordinary phone prioritizes nutrition, diary, and meal journal',
+        f('.fuel-diary').top < f('.forge-food__hero').top
+        && f('.forge-food__hero').top < f('.forge-food__journal').top
+        && d.querySelector('[data-food-log-sheet]')?.hidden
+        && Boolean(d.querySelector('[data-food-open-log]')))
       check(width + ' ordinary phone Fuel does not overflow',
         d.querySelector('.app__body').scrollWidth <= d.querySelector('.app__body').clientWidth + 1)
     }

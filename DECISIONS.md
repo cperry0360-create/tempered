@@ -1,3 +1,26 @@
+## 2026-10-31 — Food 2.0 Forge-inspired visual redesign (branch-only candidate)
+
+Cory approved a substantial Food/Fuel interaction redesign inspired by Forged,
+rather than another palette-only skin. Keep Tempered's own navy/slate and blue
+food accent, existing 4-section navigation, and permanent right-side rail when
+Duo mode is enabled. No splash screen was requested.
+
+The daily Food experience uses a composed calorie/protein/macro hero and a
+canonical saved-meal journal. Food search, frequent meals, manual entry,
+photo-to-ChatGPT prompt, nutrition clipboard import, portion reuse, and the
+existing meal editor/delete/Undo stay in the original local-first runtime,
+revealed through a dedicated logging sheet. Water logging and the seasonal
+beach-cut view remain available in an expandable secondary section.
+Nutrition history, dates, targets, IndexedDB storage, and calculations do not
+change; visual grouping by time-of-day is derived from each entry timestamp.
+
+A custom styled iPhone splash screen, network food database, meal photo
+storage, shopping cart, backend, and new data migrations are outside scope.
+Do not merge PR #69 until visual captures and actual Duo validation meet the
+approved design. Review the inner Duo hero/journal side by side, ordinary
+phone layout, keyboard/open sheet, right-hand anchor, and offline log/reload
+before releasing. Development deploy preview is not authoritative production.
+
 ## 2026-10-30 — Explicit workout timer pause
 
 Cory needs to interrupt an active training session for family responsibilities

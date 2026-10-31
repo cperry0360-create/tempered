@@ -3,6 +3,7 @@
 <title>Tempered — My foods</title>
 <link rel="stylesheet" href="../../src/tokens.css" /><link rel="stylesheet" href="../../src/style.css" />
 <link rel="stylesheet" href="../../src/calm.css" /><link rel="stylesheet" href="../../src/fuel.css" />
+<link rel="stylesheet" href="../../src/food-v2.css" /><link rel="stylesheet" href="../../src/food-v3.css" />
 </head><body><div id="app" class="app"></div>
 <script type="module">
   import { bootstrapHarness } from './harness.js'
@@ -27,19 +28,22 @@
     for (const [date, description, calories, protein, n] of meals)
       for (let i = 0; i < n; i += 1) await t.daily.addNutrition(date, { description, calories, protein }, { loggedAt: `${date}T1${i}:00:00.000Z` })
     await t.app.show('fuel'); await settle()
-    check('frequent foods remain available below the entry form',
+    q('.forge-food__nav button:last-child')?.click(); await settle(90)
+    check('frequent foods remain available in the logging sheet',
       qa('[data-recent-food]').length === 4 &&
       q('.fuel-r4__meal-panel').compareDocumentPosition(q('.food-v2__recents'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
-    const goal = nutrient => Number(q('[data-nutrient="' + nutrient + '"] small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
-    const targetKcal = Number(q('.food-v2__energy small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+    const goal = nutrient => nutrient === 'protein'
+      ? Number(q('.forge-food__hero-number:nth-child(2) span')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
+      : Number(q('.forge-food__macro [aria-label="' + nutrient[0].toUpperCase() + nutrient.slice(1) + ' progress"]')?.getAttribute('aria-valuemax'))
+    const targetKcal = Number(q('.forge-food__hero-number:first-child span')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
     const derived = goal('protein') * 4 + goal('carbs') * 4 + goal('fat') * 9
     check('protein, carb, and fat gram goals approximately reconcile to calorie target',
       Number.isFinite(derived) && Math.abs(derived - targetKcal) <= 7, derived + ' vs ' + targetKcal)
     check('fiber has an independent target', goal('fiber') === 30)
     check('the full library is collapsed until requested', qa('.fuel-food__name').length === 0)
     let search = q('.fuel-food__search')
-    check('search box is available directly at top of Food',
+    check('search box is available in the Log Food sheet',
       Boolean(search) && /Search anything/.test(search.placeholder))
     q('.food-v3__browse')?.click(); await settle(90)
     check('Browse reveals every saved food on demand', qa('.fuel-food__name').length === 6)

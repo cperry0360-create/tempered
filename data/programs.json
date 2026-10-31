@@ -535,7 +535,7 @@
     },
     {
       "id": "beach-cut-2026",
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "name": "Beach Cut · Thanksgiving 2026",
       "weeks": 4,
       "note": "November 2–26: moderate fat loss while maintaining strength. Aim for 1–2 reps in reserve. After lifting, optionally finish with 5–10 minutes of easy Zone 2-style cardio (incline walk or bike, conversational pace). Cardio does not count as working sets. Avoid crash dieting or dehydration. Original November Physique Sprint remains saved.",
@@ -1045,7 +1045,14 @@
         }
       ],
       "goal": "cut",
-      "tripDate": "2026-11-26"
+      "tripDate": "2026-11-26",
+      "cardioTarget": {
+        "lowBpm": 140,
+        "highBpm": 150,
+        "estimatedUpperBpm": 153,
+        "kind": "estimated-zone-2",
+        "guidance": "Easy conversational pace. Full sentences should feel comfortable; slow down if this feels hard. Do not chase the number in a short finisher."
+      }
     }
   ]
 }

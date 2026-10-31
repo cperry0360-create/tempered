@@ -602,8 +602,11 @@ export function createFuelScreen({ storage, daily, clock }) {
           diary,
         ]),
         el('div.fuel-r4__details.food-v2__details', {}, [
-          // Search, entry, favorites and history share the retained panel.
+          // Fallback: Search/Favorites still work without nutrition runtime.
+          // With it, these elements are moved into the retained entry panel.
+          foodSearch,
           mealPanel,
+          recents,
           ...openDaysCard(),
         ]),
       ]),

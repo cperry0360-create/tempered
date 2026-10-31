@@ -198,6 +198,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
             ...day.exercises.map((slot) => el('p', {
               text: `${slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId} · ${slot.sets} × ${slot.repMin}–${slot.repMax}`,
             })),
+            day.finisher && el('p', { dataset: { cardioFinisher: 'true' }, text: day.finisher }),
           ])),
           weekView?.hardSets?.length > 0 && el('div.train-r4__hard-sets', {}, [
             el('strong', { text: 'Hard sets this week' }),
@@ -259,6 +260,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onProgramB
             el('small', { text: `${slot.sets} sets × ${slot.repMin}–${slot.repMax} reps` }),
           ]),
         ]))),
+      day.finisher && el('p', { dataset: { cardioFinisher: 'true' }, text: day.finisher }),
       el('button.train-r4__secondary.train-r4__start', {
         type: 'button', dataset: { startPreview: day.id },
         onclick: () => onStart({ programDay: day }),

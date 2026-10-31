@@ -789,8 +789,8 @@ export function createFuelScreen({ storage, daily, clock }) {
       titleBar,nav,
       el('div.forge-food__week-rail',{},[diaryCalendar()]),
       el('div.forge-food__canvas',{},[
-        el('div.forge-food__main',{},[hero,stats,secondary]),
-        el('div.forge-food__aside',{},[journal,recentFoodCard]),
+        el('div.forge-food__main',{},[hero,stats]),
+        el('div.forge-food__aside',{},[journal,recentFoodCard,secondary]),
       ]),
       heroActions,
     ]

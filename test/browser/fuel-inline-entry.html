@@ -104,7 +104,9 @@
     form.scrollIntoView = () => { importScrollCount++ }
     Object.defineProperty(navigator, 'clipboard', { configurable: true,
       value: { async writeText() {}, async readText() {
-        return 'TEMPERED_DESCRIPTION=Imported lunch\\nTEMPERED_CALORIES=540\\nTEMPERED_PROTEIN=40\\nTEMPERED_CARBS=48\\nTEMPERED_FAT=18\\nTEMPERED_FIBER=8'
+        return ['TEMPERED_DESCRIPTION=Imported lunch', 'TEMPERED_CALORIES=540',
+          'TEMPERED_PROTEIN=40', 'TEMPERED_CARBS=48', 'TEMPERED_FAT=18',
+          'TEMPERED_FIBER=8'].join(String.fromCharCode(10))
       } },
     })
     q('.screen--fuel [data-calorie-ai="paste"]')?.click()

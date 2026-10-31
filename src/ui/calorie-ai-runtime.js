@@ -21,11 +21,11 @@ export const CALORIE_PHOTO_PROMPT = NUTRITION_PHOTO_PROMPT
 
 
 const FIELD_DEFINITIONS = Object.freeze([
-  { key: 'calories', label: 'Calories', short: 'kcal', placeholder: 'kcal', step: '1' },
-  { key: 'protein', label: 'Protein', short: 'protein', placeholder: 'g', step: '0.1' },
-  { key: 'carbs', label: 'Carbs', short: 'carbs', placeholder: 'g', step: '0.1' },
-  { key: 'fat', label: 'Fat', short: 'fat', placeholder: 'g', step: '0.1' },
-  { key: 'fiber', label: 'Fiber', short: 'fiber', placeholder: 'g', step: '0.1' },
+  { key: 'calories', label: 'Calories', short: 'kcal', placeholder: 'kcal', step: 'any' },
+  { key: 'protein', label: 'Protein', short: 'protein', placeholder: 'g', step: 'any' },
+  { key: 'carbs', label: 'Carbs', short: 'carbs', placeholder: 'g', step: 'any' },
+  { key: 'fat', label: 'Fat', short: 'fat', placeholder: 'g', step: 'any' },
+  { key: 'fiber', label: 'Fiber', short: 'fiber', placeholder: 'g', step: 'any' },
 ])
 
 const ENTRY_FIELDS = Object.freeze({
@@ -102,7 +102,7 @@ function activityById(view, id) {
 
 function shownNumber(value) {
   const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 0
-  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1).replace(/\.0$/, '')
+  return Number.isInteger(numeric) ? String(numeric) : Number(numeric.toFixed(4)).toString()
 }
 
 function dateLabel(dateKey) {
@@ -732,6 +732,21 @@ export function installCalorieAiRuntime() {
     if (!(panelScreen && panelScreen.dataset.date === date && slot.contains(panelScreen))) {
       panelScreen = buildNutritionScreen(date, null, { embedded: true })
       slot.replaceChildren(panelScreen)
+    }
+    // DOM order equals visual order. Retained meal fields survive refreshes.
+    const add = panelScreen.querySelector('.nutrition-panel__add')
+    const meals = panelScreen.querySelector('.nutrition-panel__meals')
+    if (add && meals) {
+      panelScreen.querySelector('[data-inline-food-search]')?.remove()
+      panelScreen.querySelector('[data-inline-food-favorites]')?.remove()
+      if (event.detail.foodSearch) {
+        event.detail.foodSearch.dataset.inlineFoodSearch = 'true'
+        panelScreen.insertBefore(event.detail.foodSearch, add)
+      }
+      if (event.detail.recents) {
+        event.detail.recents.dataset.inlineFoodFavorites = 'true'
+        panelScreen.insertBefore(event.detail.recents, meals)
+      }
     }
     refreshPanelWhenShown()
   }

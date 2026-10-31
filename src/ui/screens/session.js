@@ -28,7 +28,7 @@ import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
 import { solvePlates } from '../../domain/plates.js'
 import { methodForExercise, methodsForExercise } from '../../domain/exercise-method.js'
-import { clearActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
+import { clearActiveSessionDraft, loadActiveSessionDraft, saveActiveSessionDraft } from '../session-draft.js'
 
 /** Art lives beside the repo root; resolve against this module so the path holds
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
@@ -996,6 +996,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     // edited fields and remaining exercise slots survive the detour to Today.
     pauseElapsedTimer()
     persistDraft()
+    const checkpoint = loadActiveSessionDraft()
+    if (checkpoint) saveActiveSessionDraft({ ...checkpoint, minimized: true })
     clearBodyOverlays()
     onMinimize?.()
   }

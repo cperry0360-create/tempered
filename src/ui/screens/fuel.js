@@ -555,6 +555,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       ]),
       customWaterOpen && el('form.fuel-r4__water-custom-form', {
         id: 'fuel-water-custom-entry',
+        noValidate: true,
         dataset: { waterCustomForm: 'true' },
         onsubmit: logCustomWater,
       }, [

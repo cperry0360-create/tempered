@@ -480,10 +480,13 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         loggedHere.push(log)
         set.logged = true
         set.logId = log.id
-        focusStageIndex = Math.max(0,plan.indexOf(entry))
-        if(entry.sets.every(s=>s.logged) && focusStageIndex < plan.length-1) focusStageIndex += 1
+        const priorFocus = focusStageIndex
+        focusStageIndex = Math.max(0, plan.indexOf(entry))
+        if (entry.sets.every(s => s.logged) && focusStageIndex < plan.length-1) focusStageIndex += 1
         hasUnloggedEdits = false
         render()
+        if (focusStageIndex !== priorFocus) requestAnimationFrame(() =>
+          root.querySelector('.session-r5__log .exercise[data-focused="true"]')?.scrollIntoView({ behavior:'smooth', block:'start' }))
         startRest(entry)
       },
     }, [icon('check')])

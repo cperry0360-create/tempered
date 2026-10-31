@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'reference/forged-nutrition.html'
+      - 'reference/capture.mjs'
       - '.github/workflows/reference-capture.yml'
   workflow_dispatch:
 permissions:
@@ -13,24 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture at original 726x512 proportions
-        run: |
-          set -euo pipefail
-          mkdir -p reference/visual-evidence
-          CHROME="$(command -v chromium || command -v google-chrome || command -v chromium-browser || true)"
-          if [ -z "$CHROME" ]; then
-            echo 'Chromium not installed' >&2
-            exit 1
-          fi
-          for VIEW in dashboard journal quicklog; do
-            URL="file://$PWD/reference/forged-nutrition.html?view=$VIEW"
-            "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --hide-scrollbars \
-              --no-first-run --no-default-browser-check --virtual-time-budget=900 \
-              --window-size=726,512 --screenshot="reference/visual-evidence/$VIEW.png" "$URL" \
-              >/dev/null 2>"/tmp/chrome-$VIEW.log" || { cat "/tmp/chrome-$VIEW.log"; exit 1; }
-            test -s "reference/visual-evidence/$VIEW.png"
-            file "reference/visual-evidence/$VIEW.png"
-          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Capture dashboard, journal, and quick log with Chromium CDP
+        timeout-minutes: 2
+        run: node reference/capture.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: forged-reference-screenshots

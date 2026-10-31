@@ -53,6 +53,9 @@ export function createFuelScreen({ storage, daily, clock }) {
     if (existing) existing.quantity += 1
     else cart.push({ id: String(food.description), food, quantity: 1 })
     cartError = ''
+    // Home's frequent cards stage foods; immediately reveal the Library
+    // so the cart is visible and nothing looks silently logged.
+    if (screenView === 'home') { screenView = 'library'; libraryFilter = 'frequent' }
     render()
   }
   function changeCartQuantity(id, delta) {
@@ -879,6 +882,14 @@ export function createFuelScreen({ storage, daily, clock }) {
           ]),
         ]),
         cartPanel,
+      ]),
+      cartCount > 0 && el('div.forge-food__cart-dock',{},[
+        el('div',{},[
+          el('strong',{text:cartCount+' item'+(cartCount===1?'':'s')+' in cart'}),
+          el('span',{text:Math.round(cartCalories).toLocaleString()+' kcal'}),
+        ]),
+        el('button',{type:'button',onclick:saveCart,disabled:cartSaving},
+          [cartSaving?'Logging…':'Log cart ',icon('chevron-right')]),
       ]),
     ]
     const detail = selectedEntry

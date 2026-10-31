@@ -1058,6 +1058,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         ]),
         session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
         ...plan.map(exerciseCard),
+        session?.finisher && el('section.card', { dataset: { cardioFinisher: 'true' } }, [
+          el('h2', { text: 'Optional cardio finisher' }),
+          el('p', { text: session.finisher }),
+        ]),
         movementPicker(),
       ]),
 
@@ -1210,6 +1214,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         session.title = programDay.name
         session.weekLabel = active ? `Week ${active.week} of ${active.program.weeks}` : null
         session.deload = active?.deload === true
+        session.finisher = programDay.finisher ?? null
 
         for (const [slotIndex, slot] of programDay.exercises.entries()) {
           const prepared = await workout.prepareSlot(slot, active?.week ?? 1, active?.program ?? { weeks: 1 })

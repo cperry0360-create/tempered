@@ -9,6 +9,8 @@ import { dayBefore, nutritionDayStatus, openNutritionDates } from '../../domain/
 export function createFuelScreen({ storage, daily, clock }) {
   const root = el('div.screen.screen--fuel.screen--fuel-r4')
   let model = null
+  let logSheetOpen = false
+  let logSheetMode = 'quick'
   let foodQuery = ''
   let showAllFoods = false
   let justAdded = null
@@ -238,20 +240,29 @@ export function createFuelScreen({ storage, daily, clock }) {
     })
   }
 
-  function focusMealEntry() {
-    const input = mealPanel.querySelector('[data-entry="nutrition_description"]')
-    if (!input) return
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    input.focus()
+  // The data-entry runtime is retained; only its presentation becomes a sheet.
+  // It stays mounted across refreshes, so unsaved inputs survive updates.
+  function openLogSheet(mode = 'quick') {
+    logSheetOpen = true
+    logSheetMode = mode
+    render()
+    requestAnimationFrame(() => {
+      const selector = mode === 'search' ? '.fuel-food__search'
+        : mode === 'manual' ? '[data-entry="nutrition_description"]'
+          : '.food-next__sheet-close'
+      root.querySelector(selector)?.focus({ preventScroll: true })
+    })
   }
 
-  function openFoodSearch() {
-    const input = root.querySelector('.fuel-food__search')
-    if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      input.focus()
-    } else focusMealEntry()
+  function closeLogSheet() {
+    if (!logSheetOpen) return
+    logSheetOpen = false
+    render()
+    root.querySelector('[data-food-open-log]')?.focus({ preventScroll: true })
   }
+
+  function focusMealEntry() { openLogSheet('manual') }
+  function openFoodSearch() { openLogSheet('search') }
 
   function recentFoodsStrip() {
     const foods = model.foods.top.slice(0, 4)
@@ -483,57 +494,69 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('span', { text: label }),
         el('small', { text: Math.round(target).toLocaleString() + ' g goal' }),
       ])
-    const top = el('div.food-v2__topline', {}, [
-      el('div', {}, [
-        el('h1.screen__title', { text: 'Food' }),
+    // A single composed dashboard replaces the old calorie and macro card stack.
+    // All values come from the canonical nutrition ledger and daily targets.
+    const macroBar = (label, grams, target) =>
+      el('div.food-next__macro-row', {
+        'aria-label': label + ': ' + Math.round(grams) + ' of ' + Math.round(target) + ' grams',
+      }, [
+        el('div.food-next__macro-label', {}, [
+          el('span', { text: label }),
+          el('strong', { text: Math.round(grams).toLocaleString() + ' / ' + Math.round(target).toLocaleString() + ' g' }),
+        ]),
+        el('div.food-next__track', { role: 'progressbar',
+          'aria-label': label, 'aria-valuemin': '0',
+          'aria-valuemax': String(Math.round(target)),
+          'aria-valuenow': String(Math.min(Math.max(0,grams),target)) }, [
+          el('i', { style: 'width:' + percent(grams, target) + '%' }),
+        ]),
+      ])
+    const top = el('header.food-next__header', {}, [
+      el('div.food-next__brand', {}, [
+        el('span.food-next__eyebrow', { text: 'TEMPERED / FUEL' }),
+        el('h1.screen__title', { text: 'Nutrition' }),
       ]),
-      el('div.food-v2__header-actions', {}, [
-        el('button.food-v2__date', {
-          type: 'button', dataset: { foodDate: clock.today() },
-          onclick: () => reviewDate(clock.today()),
-        }, [icon('calendar'), dailyDateLabel()]),
-        el('button.food-v2__header-add', {
-          type: 'button', dataset: { foodHeaderAdd: 'true' },
-          onclick: focusMealEntry,
-        }, [icon('plus'), ' Add food']),
-      ]),
+      el('button.food-v2__date', { type: 'button',
+        dataset: { foodDate: clock.today() },
+        onclick: () => reviewDate(clock.today()),
+      }, [icon('calendar'), dailyDateLabel()]),
     ])
-    const energy = el('section.fuel-r4__card.fuel-r4__energy.food-v2__energy', {}, [
-      el('div.food-v2__section-title', {}, [
-        el('div', {}, [
-          el('h2', { text: 'Today’s calorie budget' }),
-        ]),
-        el('span.food-v2__energy-status', { dataset: { closed: String(closed) }, text: dayStatus }),
-      ]),
-      el('div.fuel-r4__budget-heading.food-v2__budget-heading', {}, [
-        el('div', {}, [
-          el('strong', { text: Math.round(calories).toLocaleString() }),
-          el('span.food-v2__kcal', { text: 'kcal logged' }),
-          el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' kcal target' }),
-        ]),
-        energyRing(energyProgress, remaining),
-      ]),
-      el('div.food-v2__energy-footer', {}, [
-        el('div.fuel-r4__budget-track', { role: 'progressbar',
-          'aria-label': 'Calories logged', 'aria-valuemin': '0',
-          'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
-          el('span', { style: 'width:' + energyProgress + '%' }),
-        ]),
-        el('button.food-v3__close-day', {
-          type:'button', dataset:{diaryFinishToday:'true',closed:String(closed)},
-          onclick:closeToday, 'aria-label': closed ? 'Reopen today’s food diary' : 'Close today’s food diary',
-        }, [closed ? 'Reopen day' : 'Close day']),
-      ]),
+    const actions = el('nav.food-next__actions', { 'aria-label': 'Nutrition shortcuts' }, [
+      el('button', { type:'button', onclick: () => reviewDate(clock.today()) }, [icon('calendar'), ' History']),
+      el('button', { type:'button', onclick: () => openLogSheet('search') }, [icon('search'), ' Food library']),
+      el('button', { type:'button', onclick: () => openLogSheet('quick') }, [icon('food'), ' Frequent meals']),
+      el('button', { type:'button', onclick: () => openLogSheet('manual') }, [icon('plus'), ' Quick log']),
+      el('button', { type:'button', onclick: closeToday,
+        dataset: { diaryFinishToday: 'true', closed: String(closed) },
+        'aria-label': closed ? 'Reopen today’s food diary' : 'Close today’s food diary',
+      }, [closed ? '✓ Day closed' : 'Close day']),
     ])
-    const macros = el('section.food-v2__macro-card', {}, [
-      el('div.food-v2__section-title', {}, [
-        el('h2', { text: 'Macros' }),
+    const hero = el('section.food-next__hero', {
+      'aria-label': 'Daily calories and macros',
+    }, [
+      el('div.food-next__hero-heading', {}, [
+        el('span', { text: 'DAILY NUTRITION' }),
+        el('span', { text: Math.round(energyProgress) + '% of calorie goal' }),
       ]),
-      el('div.food-v2__macro-grid', {}, [
-        macroTile('Protein', protein, 'protein', macroTargets.protein, 'var(--food-v2-protein)'),
-        macroTile('Carbs', ledger.totals.carbs, 'food', macroTargets.carbs, 'var(--food-v2-carbs)'),
-        macroTile('Fat', ledger.totals.fat, 'food', macroTargets.fat, 'var(--food-v2-fat)'),
-        macroTile('Fiber', ledger.totals.fiber, 'food', macroTargets.fiber, 'var(--food-v2-fiber)'),
+      el('div.food-next__hero-grid', {}, [
+        el('div.food-next__headline-metrics', {}, [
+          el('div.food-next__main-stat', {}, [
+            el('span', { text: 'Calories consumed' }),
+            el('strong', { text: Math.round(calories).toLocaleString() }),
+            el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' kcal' }),
+          ]),
+          el('div.food-next__main-stat.food-next__main-stat--protein', {}, [
+            el('span', { text: 'Protein consumed' }),
+            el('strong', { text: Math.round(protein).toLocaleString() + ' g' }),
+            el('small', { text: 'of ' + Math.round(proteinGoal).toLocaleString() + ' g' }),
+          ]),
+        ]),
+        el('div.food-next__ring-wrap', {}, [energyRing(energyProgress, remaining)]),
+        el('div.food-next__macro-bars', {}, [
+          macroBar('Carbs', ledger.totals.carbs, macroTargets.carbs),
+          macroBar('Fat', ledger.totals.fat, macroTargets.fat),
+          macroBar('Fiber', ledger.totals.fiber, macroTargets.fiber),
+        ]),
       ]),
     ])
     const waterCard = el('section.fuel-r4__card.fuel-r4__water.food-v2__water', {}, [
@@ -592,29 +615,98 @@ export function createFuelScreen({ storage, daily, clock }) {
     const diary = diaryCalendar()
     const recents = recentFoodsStrip()
     const foodSearch = foodsCard()
-    replace(root, [
-      top,
-      el('div.fuel-r4__dashboard.food-v2__layout', {}, [
-        el('div.fuel-r4__overview.food-v2__overview', {}, [
-          energy,
-          macros,
-          el('div.food-v2__small-row', {}, [waterCard, beachCutStrip()]),
-          diary,
+    // Meal journal is a real summary of saved entries, not a second data store.
+    // Tapping a row opens the retained full editor, including delete and Undo.
+    const mealGroups = [
+      { name: 'Breakfast', entries: [] },
+      { name: 'Lunch', entries: [] },
+      { name: 'Dinner', entries: [] },
+      { name: 'Snacks', entries: [] },
+    ]
+    for (const entry of ledger.entries) {
+      const hour = new Date(entry.loggedAt).getHours()
+      const index = hour >= 5 && hour < 11 ? 0
+        : hour >= 11 && hour < 16 ? 1 : hour >= 16 && hour < 21 ? 2 : 3
+      mealGroups[index].entries.push(entry)
+    }
+    const journal = el('section.food-next__journal', {}, [
+      el('div.food-next__journal-title', {}, [
+        el('div', {}, [
+          el('span.food-next__eyebrow', { text: 'FOOD JOURNAL' }),
+          el('h2', { text: 'Today’s meals' }),
         ]),
-        el('div.fuel-r4__details.food-v2__details', {}, [
-          // Fallback: Search/Favorites still work without nutrition runtime.
-          // With it, these elements are moved into the retained entry panel.
-          foodSearch,
-          mealPanel,
-          recents,
-          ...openDaysCard(),
+        el('button', { type:'button', onclick: () => openLogSheet('journal') }, ['View all ', icon('chevron-right')]),
+      ]),
+      ...mealGroups.map(group => el('div.food-next__meal-group', {}, [
+        el('div.food-next__meal-heading', {}, [
+          el('strong', { text: group.name }),
+          el('span', { text: Math.round(group.entries.reduce((sum, item) => sum + Number(item.calories || 0),0)).toLocaleString() + ' kcal' }),
+        ]),
+        ...(group.entries.length ? group.entries.map(entry =>
+          el('button.food-next__meal-row', { type:'button',
+            onclick: () => openLogSheet('journal'),
+            'aria-label': 'View ' + (entry.description || 'food entry') + ' details',
+          }, [
+            el('span.food-next__meal-mark', { 'aria-hidden': 'true' }, [icon('food')]),
+            el('span.food-next__meal-copy', {}, [
+              el('strong', { text: entry.description || 'Food entry' }),
+              el('small', { text: Math.round(Number(entry.proteinGrams || 0)) + ' g protein' }),
+            ]),
+            el('span.food-next__meal-kcal', { text: Math.round(Number(entry.calories || 0)).toLocaleString() + ' kcal' }),
+            icon('chevron-right'),
+          ])) : [el('p.food-next__empty-group', { text: 'Nothing logged' })]),
+      ])),
+      ledger.hasCarryover && el('button.food-next__legacy-entry', { type:'button',
+        onclick: () => openLogSheet('journal'),
+      }, ['Earlier totals are included · View all']),
+    ].filter(Boolean))
+    const sheet = el('div.food-next__sheet-shell', {
+      hidden: !logSheetOpen, dataset: { foodLogSheet: String(logSheetOpen) },
+      onkeydown: event => { if (event.key === 'Escape') closeLogSheet() },
+    }, [
+      el('button.food-next__sheet-shade', {
+        type: 'button', 'aria-label': 'Close food logging', onclick: closeLogSheet,
+      }),
+      el('section.food-next__sheet', { role:'dialog', 'aria-modal':'true',
+        'aria-label':'Log food', dataset: { mode: logSheetMode },
+      }, [
+        el('div.food-next__sheet-heading', {}, [
+          el('div', {}, [
+            el('span.food-next__eyebrow', { text: 'QUICK & EASY' }),
+            el('h2', { text: logSheetMode === 'search' ? 'Food library' : 'Log food' }),
+          ]),
+          el('button.food-next__sheet-close', { type:'button', onclick: closeLogSheet,
+            'aria-label':'Close food logging' }, [icon('x')]),
+        ]),
+        el('div.food-next__sheet-content', {}, [
+          foodSearch, mealPanel, recents,
         ]),
       ]),
     ])
-    const today = clock.today()
-    mealPanel.dataset.date = today
+    replace(root, [
+      top,
+      actions,
+      el('div.food-next__layout', {}, [
+        el('div.food-next__overview', {}, [
+          diary, hero,
+          el('details.food-next__secondary', {}, [
+            el('summary', {}, ['Hydration & beach-cut details', icon('chevron-down')]),
+            el('div.food-v2__small-row', {}, [waterCard, beachCutStrip()]),
+          ]),
+        ]),
+        el('div.food-next__details', {}, [
+          journal,
+          el('button.food-next__log-button', {
+            type:'button', dataset: { foodOpenLog:'true' }, onclick: () => openLogSheet('quick'),
+          }, [icon('plus'), ' Log food']),
+          ...openDaysCard(),
+        ]),
+      ]),
+      sheet,
+    ])
+    mealPanel.dataset.date = clock.today()
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel', {
-      detail:{slot:mealPanel,date:today,foodSearch,recents},
+      detail: { slot: mealPanel, date: clock.today(), foodSearch, recents },
     }))
   }
 

@@ -137,7 +137,7 @@
       clock.set(startedAt + 245000)
       await settle(1200)
       check('cardio Finish & save updates with actual partial progress',
-        /4\\.08 min/.test(q('.screen--cardio [data-action="save-cardio"]')?.textContent ?? '')
+        (q('.screen--cardio [data-action="save-cardio"]')?.textContent ?? '').includes('4.08 min')
         && q('.screen--cardio [data-action="save-cardio"]')?.disabled === false)
       q('.screen--cardio [data-action="save-cardio"]')?.click()
       await waitFor('.screen--train')

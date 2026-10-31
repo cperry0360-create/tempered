@@ -836,3 +836,26 @@ html[data-layout="duo"] .forge-food__cta-bar { bottom:10px; }
   .forge-food__week-rail .fuel-diary__week { gap:2px; }
   .forge-food__stat-label { font-size:10px; }
 }
+
+/* Food's selected tab uses the blue visual identity; other tabs retain
+   their own existing domain colors. This also applies on the Duo rail. */
+.tabbar__tab[data-tab="fuel"][data-active="true"] { color:var(--food-v2-blue); }
+html[data-layout="duo"] .tabbar__tab[data-tab="fuel"][data-active="true"] {
+  color:var(--food-v2-blue);
+  background:color-mix(in srgb,var(--food-v2-blue) 13%,var(--bg));
+}
+.forge-food__hero-top { flex-wrap:wrap; }
+.forge-food__close-day {
+  margin-left:auto; min-height:28px;
+  border:1px solid var(--forge-line); border-radius:999px; padding:0 9px;
+  background:var(--forge-panel); color:var(--forge-ink);
+  font:740 10px var(--font-ui); cursor:pointer;
+}
+.forge-food__close-day[data-closed="true"] { color:var(--food-v2-fiber); }
+.forge-food__hero-top .forge-food__hero-pct { margin-left:auto; }
+@media(max-width:520px) {
+  .forge-food__hero { padding:12px; }
+  .forge-food__hero-top { margin-bottom:9px; }
+  .forge-food__hero-numbers { gap:9px; }
+  .screen--fuel-r4 .forge-food__hero-ring .fuel-r4__ring { width:min(100%,137px); }
+}

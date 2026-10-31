@@ -90,6 +90,7 @@
         await waitFor('[data-programday="monday"]')
         check('Train still exposes program days directly', qa('[data-programday]').length >= 3)
         q('[data-programday="monday"]')?.click()
+        q('[data-start-preview]')?.click()
         await waitFor('.setrow__check')
 
         const setTargets = qa('.setrow__check, .exercise-menu__trigger, .addset')

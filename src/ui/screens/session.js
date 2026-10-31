@@ -74,6 +74,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let confirmingDiscard = false
   let halfFold = false
   let halfFoldIndex = 0
+  let focusStageIndex = 0
 
   function syncHalfFoldViewport() {
     if (!halfFold) return
@@ -158,6 +159,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       timerPauseUsed,
       halfFold,
       halfFoldIndex,
+      focusStageIndex,
     })
   }
 
@@ -218,6 +220,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   function tick() {
     const elapsed = root.querySelector('[data-session-elapsed]')
     if (elapsed) elapsed.textContent = clock(elapsedSeconds())
+    const stageClock=root.querySelector('[data-stage-clock]')
+    if(stageClock)stageClock.textContent=clock(elapsedSeconds())
     if (!rest) return
     // The absolute end timestamp is canonical. Do not decrement a counter:
     // sleeping/backgrounding the screen must not pause or drift the timer.
@@ -474,6 +478,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         loggedHere.push(log)
         set.logged = true
         set.logId = log.id
+        focusStageIndex = Math.max(0,plan.indexOf(entry))
+        if(entry.sets.every(s=>s.logged) && focusStageIndex < plan.length-1) focusStageIndex += 1
         hasUnloggedEdits = false
         render()
         startRest(entry)
@@ -828,6 +834,65 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return plan.reduce((total, entry) => total + entry.sets.filter((s) => s.logged).length, 0)
   }
 
+  function progressRail() {
+    const total = plan.reduce((n, entry) => n + entry.sets.length, 0)
+    return el('div.session-r5__progress', { role: 'progressbar',
+      'aria-label':'Workout sets completed', 'aria-valuemin':'0',
+      'aria-valuemax': String(total), 'aria-valuenow':String(loggedCount()) }, [
+      ...plan.map((entry, index) => {
+        const done=entry.sets.filter(s=>s.logged).length
+        return el('button.session-r5__progress-segment', {
+          type:'button', 'aria-label':`${displayName(entry.exercise,entry.slot)}, ${done} of ${entry.sets.length} sets`,
+          dataset: { focused:String(index === focusStageIndex), complete:String(done===entry.sets.length) },
+          onclick: () => focusExercise(index),
+        }, [el('span', { style:`width:${Math.round(done/Math.max(1,entry.sets.length)*100)}%` })])
+      }),
+    ])
+  }
+
+  function focusExercise(index) {
+    focusStageIndex=Math.max(0,Math.min(plan.length-1,index))
+    persistDraft()
+    render()
+    root.querySelector(`[data-exercise="${plan[focusStageIndex]?.exercise.id}"]`)?.scrollIntoView?.({ block:'nearest' })
+  }
+
+  function visualStage() {
+    const entry=plan[focusStageIndex] ?? plan[0]
+    if(!entry)return null
+    const done=entry.sets.filter(set=>set.logged).length
+    const movementName=displayName(entry.exercise,entry.slot)
+    return el('aside.session-r5__stage', { dataset:{stageExercise:entry.exercise.id} }, [
+      el('div.session-r5__visual', {}, [
+        entry.exercise.art
+          ? el('img', { src:artUrl(entry.exercise.art), alt:`${movementName} exercise reference`, loading:'lazy' })
+          : el('div.session-r5__visual-fallback', {}, [icon('train')]),
+        el('div.session-r5__visual-shade'),
+        el('span.session-r5__image-tag', {text:`MOVEMENT ${focusStageIndex+1} / ${plan.length}`}),
+      ]),
+      el('div.session-r5__stage-copy', {}, [
+        el('p.session-r5__eyebrow', { text:'UP NEXT · TRAIN SMART' }),
+        el('h2', { text:movementName }),
+        el('p.session-r5__stage-target', { text:entry.slot
+          ? `${entry.slot.repMin}–${entry.slot.repMax} reps · ${clock(entry.restSec)} rest`
+          : `${entry.sets.length} sets · ${clock(entry.restSec)} rest` }),
+        el('div.session-r5__stage-cue', {}, [
+          el('strong', {text:'FORM FOCUS'}),
+          el('p', {text:entry.slot?.cue || entry.slot?.setup || entry.proposal?.reason || 'Work through the full range of motion. Control every rep.' }),
+        ]),
+        el('div.session-r5__stage-totals', {}, [
+          el('div', {}, [el('strong',{text:`${done} / ${entry.sets.length}`}),el('small',{text:'Movement sets'})]),
+          el('div', {}, [el('strong',{text:`${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)}`}),el('small',{text:'Total sets'})]),
+          el('div', {}, [el('strong',{text:clock(elapsedSeconds()),dataset:{stageClock:'true'}}),el('small',{text:'Elapsed time'})]),
+        ]),
+        el('div.session-r5__stage-nav', {}, [
+          el('button',{type:'button',disabled:focusStageIndex===0,onclick:()=>focusExercise(focusStageIndex-1)},['← Previous']),
+          el('button',{type:'button',disabled:focusStageIndex===plan.length-1,onclick:()=>focusExercise(focusStageIndex+1)},['Next →']),
+        ]),
+      ]),
+    ])
+  }
+
   function setHalfFold(enabled) {
     halfFold = enabled && plan.length > 0
     openPanel = null
@@ -1088,14 +1153,20 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       ]),
 
       ...(halfFold ? [halfFoldStage(selectedEntry), halfFoldControls(selectedEntry)] : [
-        duoLayout && plan.length > 0 && el('div.session-display-tools', {}, [
-          el('span', { text: 'Set the phone down. Keep the controls close.' }),
-          halfFoldToggle(),
+        plan.length > 0 && progressRail(),
+        el('div.session-r5__workspace', {}, [
+          visualStage(),
+          el('div.session-r5__log', {}, [
+            duoLayout && plan.length > 0 && el('div.session-display-tools', {}, [
+              el('span', { text: 'Full workout · exercises and sets' }),
+              halfFoldToggle(),
+            ]),
+            session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
+            ...plan.map(exerciseCard),
+            cardioFinisherCard(),
+            movementPicker(),
+          ]),
         ]),
-        session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
-        ...plan.map(exerciseCard),
-        cardioFinisherCard(),
-        movementPicker(),
       ]),
 
     ])
@@ -1195,6 +1266,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
       halfFold = false
       halfFoldIndex = 0
+      focusStageIndex = 0
       elapsedSec = 0
       activeSince = null
       timerPaused = false
@@ -1299,6 +1371,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       plan = Array.isArray(draft.plan) ? draft.plan : []
       halfFold = draft.halfFold === true
       halfFoldIndex = Number.isInteger(draft.halfFoldIndex) ? draft.halfFoldIndex : 0
+      focusStageIndex = Number.isInteger(draft.focusStageIndex) ? Math.max(0,Math.min(plan.length-1,draft.focusStageIndex)) : 0
       isFirstOfDay = draft.isFirstOfDay !== false
       openPanel = draft.openPanel ?? null
       confirmingFinish = false

@@ -425,7 +425,7 @@ html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns: minmax(0,.9
 .quick-cardio__pause { background:var(--surface-2); color:var(--text-1); border:1px solid var(--hairline); }
 .quick-cardio__save { background:var(--text-1); color:var(--surface-1); border:0; }
 .quick-cardio__save:disabled { opacity:.45; }
-.quick-cardio__error:not(:empty) { margin-top:8px; color:var(--danger, #b33); }
+.quick-cardio__error:not(:empty) { margin-top:8px; color:var(--food-v3-danger); }
 @media (max-width:420px) {
   .sessionbar__minimize { padding:0 7px; font-size:11px; }
   .quick-cardio { padding:16px; }

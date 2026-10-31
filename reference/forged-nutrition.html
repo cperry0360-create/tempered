@@ -69,6 +69,29 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
 .fake-copy .serving{display:inline-block;border:1px solid #464649;background:#303033;border-radius:5px;padding:2px 5px;font-size:9px}
 .modal .entry-add{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#404043;color:white;font-size:24px;font-weight:300;flex:none}
 .modal .entry-add.chosen{background:#49ec66;color:#101010}
+
+/* Exact-frame reference: Food Library / My Favorites, recorded at 25 seconds. */
+.library-page{position:absolute;inset:0;z-index:18;background:#020603;display:none;overflow:hidden;color:#fff}
+.library-page.open{display:block}
+.library-title{position:absolute;left:0;right:0;top:24px;height:25px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15px}
+.library-title svg{width:23px;height:23px;stroke:#f3f3f4;stroke-width:2.2;fill:none}
+.library-tabs{position:absolute;left:12px;top:67px;display:flex;gap:5px;height:28px;align-items:center}
+.library-tabs button{min-height:28px;padding:0 13px;border-radius:99px;background:linear-gradient(#2d2d2f,#202022);font-size:10px;font-weight:600;white-space:nowrap}
+.library-tabs button.active{background:#f9f9f9;color:#18181a}
+.library-empty{position:absolute;left:150px;right:140px;top:167px;display:grid;justify-items:center;text-align:center;gap:0}
+.library-empty svg{width:168px;height:113px;margin-bottom:21px}
+.library-empty h2{margin:0 0 9px;font-size:19px;line-height:1.2;font-weight:740}
+.library-empty p{margin:0;width:340px;font-size:15px;line-height:21px;color:#f5f5f6;font-weight:440}
+.library-empty .heart{color:#33e85b;font-size:18px;vertical-align:-1px}
+.library-rail{position:absolute;right:18px;top:137px;display:grid;gap:9px;z-index:2}
+.library-rail button{background:linear-gradient(#333335,#212123);height:38px;width:38px;border-radius:50%;display:grid;place-items:center;font-size:28px;color:#fff;border:1px solid #38383a;line-height:1}
+.library-rail button:last-child{font-size:20px;font-weight:800}
+.library-search{position:absolute;right:17px;bottom:17px;width:38px;height:38px;border-radius:50%;background:linear-gradient(#323235,#232325);border:1px solid #3b3b3d;display:grid;place-items:center}
+.library-search svg{width:23px;height:23px;stroke:#fafafa;stroke-width:2;fill:none}
+.screen:has(.library-page.open) > .status{z-index:21}
+.screen:has(.library-page.open) > .rail,.screen:has(.library-page.open) > .float-add,.screen:has(.library-page.open) > .toast{visibility:hidden}
+.library-search-input{display:none;position:absolute;left:160px;bottom:17px;height:39px;width:390px;padding:0 13px;color:white;background:#242426;border-radius:24px;border:1px solid #4a4a4b;font:14px system-ui}
+.library-search-input.open{display:block}
 </style></head>
 <body><main class="screen" id="screen">
   <div class="mark"><span class="logo" aria-hidden="true"><i></i></span><strong>Nutrition</strong></div>
@@ -133,6 +156,15 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
       <div class="fake-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAABQYDBAABBwL/xAA2EAACAQMCAwQHBgcAAAAAAAABAgMABBEFIRIxUQYTQWEHMnGBkbHRFCJCUqHwIyQ0Q1Nicv/EABkBAAIDAQAAAAAAAAAAAAAAAAEDAAIEBf/EAB4RAAMAAwEAAwEAAAAAAAAAAAABAgMREiEEEzFB/9oADAMBAAIRAxEAPwBO0rRIEsEnuVDyyrxANuFB5bdayayRfVUY6AUVMg4AvLAwKqSnBo0/PCSt/oKnsw6ngA4vZVBkKHDrgjqKb9K0S/1mUpp9s0hHNzsq88ZJ64NM9v6NiQDqupQxcQ2WJckHzztSu9F3JyV1BHKtBQo3x767Inoy0Rhhr2aRvzDAx7hUcnot0wZMV/KOgMamp9iByce4S+yIWPkK9SWLLA0hI4xvwjliuiaj2B1WxQta9zdIM5WPY/A8/dSjfW8kDSQ3ETwyKCGRxg0Hb/hZSgkZM8yM046J2PVdPk1PXA6jh4oLUHBbzbAJ9w3rPR72eiuHfWdQjDW0BPcK24ZhzbHjj5+yj+r3b3sUsqBoxIMKrbEqKrkvlBiXT0gXpz3mnQBbW6Eh7rg4oolUMOIniO3rb4wNhv1qFLSa7YfbJmffI4iWx8aq/wA1Zjii8sqfxVrT9Qlv7kJCksrKuZFjwO7/AOia5lXdvxm5TGP9RYuLOawk720mdf8AZNiPr7KYuzOuJqam0vAUvYhksOUi9cdeo/YC3tx3dtwMTxnfc7ihVlI9pdR3abMsmB7PH9M0MWRqtMOSFU7OlMpXkeIUG7S6TZanps/2mBJGSJipPrKceB+G1FUlDKreDDNV9T/oLkj/ABN8q6Us57I9V7nRez8VnAcRxpwZ8SFGSfaefvoHacV/pltcgY4owSoOcdKJ9uJOC0twACGLAgjwwM0H0KOezaLTQhKSL3iykgBgT4eQ8RkmkfITY3FXL2R3ts8oDD77DbOP0oYhezdjGAkrrg+fto5qSPA7AxsSviFNL95JO5JEb7bY4Dv+lYVNJm11LRoXHES0jbeJ5k+Qr3HI080caqFBYBVA5UPCzzMAkbs2cEY9X6UT0+M2h7yYhpQTjHID61pxYPdsRkzeaHmKdFVV/KMVl64bT7kg/wBpvlS0moEnnVh78mzuATzib5VsSZk2Ge1EQu9FjuEI+4Q+fDB/Yqv2fvYzZKsgUPB5A4HUUudg+2Wl6losGl6xdRQT28Ig7ub7qygbBgxOCcY26gmpZeOxupBasOLdUcLzHUeVS5JLGS8iXMjzCaWMqxR1OWXI6+JO+OmRS/2l0uS4mimhUSW2yTQGTgGM7OpH4hRKLUAbCEd2f4YQcwMEEDr1FUdRvpVd1VFER6kZH18elL4Rfpo9/ZLawte4tOLu1JwWYsfiaDybyGpmvWkD8SFANl8/hzqPBJyRimyhdPZkYqS4furG5c8liYn4VpeFd2IA6ml/tb2jtINOmsrKaOe4nQoxQ8Sop2OSPHGaZoqf/9k=" alt="Recent food"><div class="fake-copy"><span>Recent</span><strong>Bagel and cream cheese</strong><small><span class="serving">1 serving⌄</span> &nbsp;310 kCal</small></div><button class="entry-add" aria-label="Add recent food">+</button></div>
      </div>
   </div></div>
+
+  <div class="library-page" id="food-library">
+    <header class="library-title"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.1"/><path d="M16.2 16.2 22 22"/></svg><span>Food Library</span></header>
+    <nav class="library-tabs" aria-label="Food categories"><button type="button" data-category="all">Search All</button><button type="button" data-category="favorites" class="active">My Favorites</button><button type="button" data-category="recipes">My Recipes</button><button type="button" data-category="foods">My Foods</button><button type="button" data-category="meals">My Meals</button></nav>
+    <div class="library-empty"><svg viewBox="0 0 169 113" role="img" aria-label="Empty plate with cutlery"><ellipse cx="83" cy="62" rx="76" ry="49" fill="#353538"/><ellipse cx="83" cy="59" rx="64" ry="41" fill="#222225"/><ellipse cx="83" cy="59" rx="59" ry="36" fill="none" stroke="#3d3d3f" stroke-width="5"/><path d="M25 30 121 85" stroke="#4c4c4f" stroke-width="8" stroke-linecap="round"/><path d="M45 9 139 72" stroke="#4f4f51" stroke-width="5" stroke-linecap="round"/><path d="M44 5 79 25M41 9 76 29M38 13 74 33" stroke="#646467" stroke-width="2" stroke-linecap="round"/><path d="M134 39 153 72" stroke="#4b4b4e" stroke-width="5" stroke-linecap="round"/></svg><h2 id="library-empty-title">No Favorites Yet</h2><p id="library-empty-copy">Tap the <span class="heart">♥</span> icon on a food, meal or recipe<br>to keep your favorites organized.</p></div>
+    <aside class="library-rail"><button type="button" id="library-close" aria-label="Close food library">×</button><button type="button" aria-label="Food library options">≡⊕</button></aside>
+    <button class="library-search" id="library-search" type="button" aria-label="Search in Food Library"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7.5"/><path d="M15.5 15.5 22 22"/></svg></button>
+    <input class="library-search-input" id="library-search-input" type="search" placeholder="Search Food Library…" aria-label="Search Food Library" />
+  </div>
 </main>
 
 <script>
@@ -141,14 +173,21 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
  const journal=document.querySelector('#journal');
  const modal=document.querySelector('#modal');
  const menu=document.querySelector('#meal-menu');
+ const library=document.querySelector('#food-library');
  function fit(){const scale=Math.min(innerWidth/726,innerHeight/512);stage.style.transform=`translate(${Math.max(0,(innerWidth-726*scale)/2)}px,${Math.max(0,(innerHeight-512*scale)/2)}px) scale(${scale})`}
  window.addEventListener('resize',fit);fit();
  const openJournal=(menuOpen=false)=>{journal.classList.add('open');menu.classList.toggle('open',menuOpen);modal.classList.remove('open')};
  const closeJournal=()=>{journal.classList.remove('open');menu.classList.remove('open');modal.classList.remove('open')};
+ const openLibrary=()=>{library.classList.add('open');modal.classList.remove('open')};
+ const closeLibrary=()=>{library.classList.remove('open');closeJournal()};
  const openQuick=()=>{openJournal(false);modal.classList.add('open')};
  const closeQuick=()=>modal.classList.remove('open');
  document.querySelector('#history').onclick=()=>openJournal();
- document.querySelector('#library').onclick=()=>openJournal();
+ document.querySelector('#library').onclick=openLibrary;
+ document.querySelector('#journal-library').onclick=openLibrary;
+ document.querySelector('#library-close').onclick=closeLibrary;
+ document.querySelector('#library-search').onclick=()=>{const f=document.querySelector('#library-search-input');f.classList.toggle('open');if(f.classList.contains('open'))f.focus()};
+ document.querySelectorAll('.library-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.library-tabs button').forEach(c=>c.classList.toggle('active',c===b));let names={all:'Search all foods',favorites:'No Favorites Yet',recipes:'No Recipes Yet',foods:'No Foods Yet',meals:'No Meals Yet'};document.querySelector('#library-empty-title').textContent=names[b.dataset.category]});
  document.querySelector('#add').onclick=openQuick;
  document.querySelector('#calories').onclick=openQuick;
  document.querySelector('#open-cart').onclick=openQuick;
@@ -168,6 +207,7 @@ button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{o
  const query=new URLSearchParams(location.search);let view=query.get('view');
  if(view==='journal')openJournal(true);
  if(view==='quicklog')openQuick();
+ if(view==='library')openLibrary();
 })();
 </script>
 </body></html>

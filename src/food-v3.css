@@ -859,3 +859,23 @@ html[data-layout="duo"] .tabbar__tab[data-tab="fuel"][data-active="true"] {
   .forge-food__hero-numbers { gap:9px; }
   .screen--fuel-r4 .forge-food__hero-ring .fuel-r4__ring { width:min(100%,137px); }
 }
+
+/* A selected food must leave a visible action on a narrow library page. */
+.forge-food__cart-dock {
+  position:sticky; bottom:calc(65px + env(safe-area-inset-bottom, 0px)); z-index:12;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:9px 12px; border-radius:14px;
+  border:1px solid var(--forge-blue); background:var(--forge-panel-up);
+  color:var(--forge-ink);
+}
+.forge-food__cart-dock > div { display:grid; gap:4px; min-width:0; }
+.forge-food__cart-dock strong { font-size:12px; }
+.forge-food__cart-dock span { font-size:10px; color:var(--forge-dim); }
+.forge-food__cart-dock button {
+  display:flex; align-items:center; gap:5px; flex:none;
+  min-height:42px; padding:0 13px; border-radius:11px; border:0;
+  background:var(--forge-blue); color:var(--food-v2-deep);
+  font:800 12px var(--font-ui); cursor:pointer;
+}
+.forge-food__cart-dock button .icon { width:15px; height:15px; }
+html[data-layout="duo"] .forge-food__cart-dock { bottom:10px; }

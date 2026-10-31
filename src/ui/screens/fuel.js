@@ -17,6 +17,10 @@ export function createFuelScreen({ storage, daily, clock }) {
   let calendarWeeksBack = 0
   let backlogExpanded = false
   let dismissedReminderFor = ''
+  let customWaterOpen = false
+  let customWaterAmount = ''
+  let customWaterError = ''
+  let customWaterBusy = false
   // The add-meal form and today's meals live here, built once by the nutrition
   // runtime and reused across re-renders so half-typed entries survive.
   const mealPanel = el('div.fuel-r4__meal-panel')
@@ -52,6 +56,42 @@ export function createFuelScreen({ storage, daily, clock }) {
   async function addWater(amount) {
     await daily.logAt(clock.today(), 'water', amount)
     await refresh()
+  }
+
+  function toggleCustomWater() {
+    customWaterOpen = !customWaterOpen
+    customWaterError = ''
+    render()
+    if (customWaterOpen) root.querySelector('[data-water-custom-input]')?.focus()
+  }
+
+  async function logCustomWater(event) {
+    event.preventDefault()
+    if (customWaterBusy) return
+    const amount = Number(customWaterAmount)
+    if (!Number.isFinite(amount) || amount < 0.1 || amount > 200) {
+      customWaterError = 'Enter 0.1–200 oz.'
+      const error = root.querySelector('[data-water-custom-error]')
+      if (error) error.textContent = customWaterError
+      return
+    }
+    customWaterBusy = true
+    const save = root.querySelector('[data-water-custom-save]')
+    if (save) save.disabled = true
+    try {
+      await daily.logAt(clock.today(), 'water', amount)
+      customWaterOpen = false
+      customWaterAmount = ''
+      customWaterError = ''
+      await refresh()
+    } catch (error) {
+      customWaterError = 'Could not save water. Try again.'
+      const status = root.querySelector('[data-water-custom-error]')
+      if (status) status.textContent = customWaterError
+      if (save) save.disabled = false
+    } finally {
+      customWaterBusy = false
+    }
   }
 
   async function quickLog(food, portion = 1) {
@@ -497,14 +537,52 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('h2', {}, [icon('water'), ' Water']),
       ]),
       el('div.food-v2__water-main', {}, [
-        el('strong', { text: Math.round(water).toLocaleString() + ' oz' }),
+        el('strong', { text: Number(water.toFixed(2)).toLocaleString() + ' oz' }),
         el('small', { text: 'of ' + Math.round(waterGoal) + ' oz' }),
       ]),
       el('div.fuel-r4__bar', {}, [el('i', { style: 'width:' + waterProgress + '%' })]),
-      el('div.fuel-r4__water-actions', {}, [8, 12, 25].map(amount =>
-        el('button.fuel-r4__secondary', {
+      el('div.fuel-r4__water-actions', {}, [
+        ...[8, 12, 25].map(amount => el('button.fuel-r4__secondary', {
           type: 'button', onclick: () => addWater(amount),
-        }, ['+' + amount]))),
+        }, ['+' + amount])),
+        el('button.fuel-r4__secondary.fuel-r4__water-custom-toggle', {
+          type: 'button',
+          dataset: { waterCustomToggle: 'true' },
+          'aria-expanded': String(customWaterOpen),
+          'aria-controls': 'fuel-water-custom-entry',
+          onclick: toggleCustomWater,
+        }, [customWaterOpen ? 'Close' : 'Custom']),
+      ]),
+      customWaterOpen && el('form.fuel-r4__water-custom-form', {
+        id: 'fuel-water-custom-entry',
+        dataset: { waterCustomForm: 'true' },
+        onsubmit: logCustomWater,
+      }, [
+        el('label.fuel-r4__water-custom-label', { htmlFor: 'fuel-water-custom-oz', text: 'Add water (oz)' }),
+        el('div.fuel-r4__water-custom-fields', {}, [
+          el('input.fuel-r4__water-custom-input', {
+            id: 'fuel-water-custom-oz',
+            type: 'number', inputMode: 'decimal', min: '0.1', max: '200', step: 'any',
+            value: customWaterAmount, placeholder: 'e.g. 16.9',
+            dataset: { waterCustomInput: 'true' },
+            'aria-label': 'Custom water amount in ounces',
+            oninput: (event) => {
+              customWaterAmount = event.target.value
+              customWaterError = ''
+              const error = root.querySelector('[data-water-custom-error]')
+              if (error) error.textContent = ''
+            },
+          }),
+          el('button.fuel-r4__water-custom-save', {
+            type: 'submit', disabled: customWaterBusy,
+            dataset: { waterCustomSave: 'true' },
+          }, ['Add water']),
+        ]),
+        el('small.fuel-r4__water-custom-error', {
+          dataset: { waterCustomError: 'true' },
+          role: 'status', text: customWaterError,
+        }),
+      ]),
     ])
     const diary = diaryCalendar()
     const recents = recentFoodsStrip()

@@ -29,6 +29,8 @@ jobs:
           cp index.html manifest.webmanifest manifest-duo.webmanifest sw.js _site/
           cp -R src data icons _site/
           cp -R art/exercises art/dist art/battle _site/art/
+          # Isolated visual reference pages; excluded from the Tempered app shell.
+          cp -R reference _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

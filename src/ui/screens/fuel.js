@@ -540,7 +540,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     const day = model.day ?? {}
     const activities = [...(model.todayView?.logged ?? []), ...(model.todayView?.outstanding ?? [])]
     const goal = (id, fallback) => {
-      const value = number(activities.find((item) => item.id === id)?.dailyCap)
+      const value = number(activities.find(item => item.id === id)?.dailyCap)
       return value > 0 ? value : fallback
     }
     const calorieGoal = goal('calories_logged', 2100)
@@ -550,88 +550,176 @@ export function createFuelScreen({ storage, daily, clock }) {
     const protein = number(day.proteinGrams)
     const water = number(day.waterOz)
     const ledger = nutritionLedger(day)
-    const energyProgress = percent(calories, calorieGoal)
-    const waterProgress = percent(water, waterGoal)
-    const closed = day.nutritionStatus === 'complete'
-    const remaining = Math.max(0, calorieGoal - calories)
-    const dayStatus = closed ? '✓ Day closed' : '● Day open'
     const macroTargets = nutritionMacroTargets(calorieGoal, proteinGoal)
-    const macroTile = (label, grams, glyph, target, tone) =>
-      el('div.food-v2__macro', {
-        dataset: { nutrient: label.toLowerCase() },
-        'aria-label': label + ': ' + Math.round(grams) + ' of ' + Math.round(target) + ' grams',
-      }, [
-        el('span.food-v2__macro-ring', { style: '--macro-progress:' + percent(grams, target) + '%;--macro-tone:' + tone }, [
-          icon(glyph),
-        ]),
-        el('strong', { text: Number(grams.toFixed(3)).toLocaleString() + ' g' }),
-        el('span', { text: label }),
-        el('small', { text: Math.round(target).toLocaleString() + ' g goal' }),
-      ])
-    // A single composed dashboard replaces the old calorie and macro card stack.
-    // All values come from the canonical nutrition ledger and daily targets.
-    const macroBar = (label, grams, target) =>
-      el('div.food-next__macro-row', {
-        'aria-label': label + ': ' + Math.round(grams) + ' of ' + Math.round(target) + ' grams',
-      }, [
-        el('div.food-next__macro-label', {}, [
-          el('span', { text: label }),
-          el('strong', { text: Math.round(grams).toLocaleString() + ' / ' + Math.round(target).toLocaleString() + ' g' }),
-        ]),
-        el('div.food-next__track', { role: 'progressbar',
-          'aria-label': label, 'aria-valuemin': '0',
-          'aria-valuemax': String(Math.round(target)),
-          'aria-valuenow': String(Math.min(Math.max(0,grams),target)) }, [
-          el('i', { style: 'width:' + percent(grams, target) + '%' }),
-        ]),
-      ])
-    const top = el('header.food-next__header', {}, [
-      el('div.food-next__brand', {}, [
-        el('span.food-next__eyebrow', { text: 'TEMPERED / FUEL' }),
-        el('h1.screen__title', { text: 'Nutrition' }),
+    const energyProgress = percent(calories, calorieGoal)
+    const closed = day.nutritionStatus === 'complete'
+    const waterProgress = percent(water, waterGoal)
+    const allFoods = model.foods.all
+
+    const emoji = name => el('span.forge-food__thumb', {
+      'aria-hidden': 'true', text: foodIllustration(name),
+    })
+    const shortNumber = value => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })
+    const macroBar = (name, value, target) => el('div.forge-food__macro', {}, [
+      el('div.forge-food__macro-copy', {}, [
+        el('span', { text: name }),
+        el('strong', { text: Math.round(value) + ' / ' + Math.round(target) + 'g' }),
       ]),
-      el('button.food-v2__date', { type: 'button',
-        dataset: { foodDate: clock.today() },
-        onclick: () => reviewDate(clock.today()),
-      }, [icon('calendar'), dailyDateLabel()]),
+      el('div.forge-food__bar', {
+        role:'progressbar', 'aria-label': name + ' progress',
+        'aria-valuemin':'0','aria-valuemax':String(Math.round(target)),
+        'aria-valuenow':String(Math.round(Math.min(value,target))),
+      }, [el('i', { style:'width:' + percent(value,target) + '%' })]),
     ])
-    const actions = el('nav.food-next__actions', { 'aria-label': 'Nutrition shortcuts' }, [
-      el('button', { type:'button', onclick: () => reviewDate(clock.today()) }, [icon('calendar'), ' History']),
-      el('button', { type:'button', onclick: () => openLogSheet('search') }, [icon('search'), ' Food library']),
-      el('button', { type:'button', onclick: () => openLogSheet('quick') }, [icon('food'), ' Frequent meals']),
-      el('button', { type:'button', onclick: () => openLogSheet('manual') }, [icon('plus'), ' Quick log']),
-      el('button', { type:'button', onclick: closeToday,
-        dataset: { diaryFinishToday: 'true', closed: String(closed) },
-        'aria-label': closed ? 'Reopen today’s food diary' : 'Close today’s food diary',
-      }, [closed ? '✓ Day closed' : 'Close day']),
+    const title = (label, description, action = null) => el('div.forge-food__section-heading', {}, [
+      el('div', {}, [
+        el('span.forge-food__overline', { text: label }),
+        el('h2', { text: description }),
+      ]),
+      action,
     ])
-    const hero = el('section.food-next__hero', {
-      'aria-label': 'Daily calories and macros',
-    }, [
-      el('div.food-next__hero-heading', {}, [
-        el('span', { text: 'DAILY NUTRITION' }),
-        el('span', { text: Math.round(energyProgress) + '% of calorie goal' }),
+    const back = (label, fn = showHome) => el('button.forge-food__back', {
+      type:'button', onclick:fn,
+    }, [icon('chevron-right'), label])
+    const localTime = (iso) => {
+      const date = new Date(iso)
+      return Number.isFinite(date.getTime())
+        ? new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(date)
+        : ''
+    }
+    const lastWeight = [...model.days]
+      .filter(item => item.date <= clock.today() && Number(item.bodyMetrics?.weight) > 0)
+      .sort((a,b) => b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
+    const statCard = (label, value, suffix, sub, glyph, action = null) =>
+      el(action ? 'button.forge-food__stat' : 'div.forge-food__stat', action
+        ? {type:'button', onclick:action} : {}, [
+        el('span.forge-food__stat-label', {}, [icon(glyph), ' ', label]),
+        el('strong', {}, [value, el('small', {text:suffix})]),
+        el('span.forge-food__stat-sub', {text:sub}),
+      ])
+    const meat = ledger.entries.slice().sort((a,b) => b.loggedAt.localeCompare(a.loggedAt))
+    const groups = [
+      { label:'Breakfast', id:0, entries:[] },
+      { label:'Lunch', id:1, entries:[] },
+      { label:'Dinner', id:2, entries:[] },
+      { label:'Snacks', id:3, entries:[] },
+    ]
+    for (const entry of meat) {
+      const hour = new Date(entry.loggedAt).getHours()
+      const group = hour >= 5 && hour < 11 ? groups[0]
+        : hour >= 11 && hour < 16 ? groups[1] : hour >= 16 && hour < 21 ? groups[2] : groups[3]
+      group.entries.push(entry)
+    }
+
+    const nav = el('nav.forge-food__nav', {'aria-label':'Food shortcuts'}, [
+      el('button', {type:'button',onclick:()=>reviewDate(clock.today())}, [icon('history'), ' History']),
+      el('button', {type:'button',onclick:()=>showLibrary()}, [icon('search'), ' Food Library']),
+      el('button', {type:'button',onclick:()=>globalThis.tempered?.app?.show?.('settings')}, [icon('gear'), ' Edit Goals']),
+      el('button', {type:'button',onclick:()=>openLogSheet('manual')}, [icon('plus'), ' Quick Calories']),
+    ])
+    const titleBar = el('header.forge-food__header', {}, [
+      el('div.forge-food__brand', {}, [
+        el('span.forge-food__brandmark', {'aria-hidden':'true'}, ['ᛟ']),
+        el('div',{}, [
+          el('span.forge-food__brand-label',{text:'TEMPERED'}),
+          el('h1',{text:'Fuel'}),
+        ]),
       ]),
-      el('div.food-next__hero-grid', {}, [
-        el('div.food-next__headline-metrics', {}, [
-          el('div.food-next__main-stat', {}, [
-            el('span', { text: 'Calories consumed' }),
-            el('strong', { text: Math.round(calories).toLocaleString() }),
-            el('small', { text: 'of ' + Math.round(calorieGoal).toLocaleString() + ' kcal' }),
+      el('button.forge-food__date', {
+        type:'button',dataset:{foodDate:clock.today()},onclick:()=>reviewDate(clock.today()),
+      }, [icon('calendar'),dailyDateLabel()]),
+    ])
+    const hero = el('section.forge-food__hero',{'aria-label':'Daily calories and nutrients'},[
+      el('div.forge-food__hero-top', {}, [
+        el('span.forge-food__overline',{text:'TODAY / NUTRITION'}),
+        el('span.forge-food__hero-pct',{text:Math.round(energyProgress)+'% of goal'}),
+      ]),
+      el('div.forge-food__hero-grid', {}, [
+        el('div.forge-food__hero-numbers',{},[
+          el('div.forge-food__hero-number',{},[
+            el('small',{text:'Calories consumed'}),
+            el('strong',{text:Math.round(calories).toLocaleString()}),
+            el('span',{text:'of '+Math.round(calorieGoal).toLocaleString()+' kcal target'}),
           ]),
-          el('div.food-next__main-stat.food-next__main-stat--protein', {}, [
-            el('span', { text: 'Protein consumed' }),
-            el('strong', { text: Math.round(protein).toLocaleString() + ' g' }),
-            el('small', { text: 'of ' + Math.round(proteinGoal).toLocaleString() + ' g' }),
+          el('div.forge-food__hero-number',{},[
+            el('small',{text:'Protein consumed'}),
+            el('strong',{text:Math.round(protein).toLocaleString()+' g'}),
+            el('span',{text:'of '+Math.round(proteinGoal).toLocaleString()+' g target'}),
           ]),
         ]),
-        el('div.food-next__ring-wrap', {}, [energyRing(energyProgress, remaining)]),
-        el('div.food-next__macro-bars', {}, [
-          macroBar('Carbs', ledger.totals.carbs, macroTargets.carbs),
-          macroBar('Fat', ledger.totals.fat, macroTargets.fat),
-          macroBar('Fiber', ledger.totals.fiber, macroTargets.fiber),
+        el('div.forge-food__hero-ring',{},[energyRing(energyProgress,calories)]),
+        el('div.forge-food__hero-macros',{},[
+          macroBar('Carbs',ledger.totals.carbs,macroTargets.carbs),
+          macroBar('Fat',ledger.totals.fat,macroTargets.fat),
+          macroBar('Fiber',ledger.totals.fiber,macroTargets.fiber),
         ]),
       ]),
+    ])
+    const stats = el('div.forge-food__stats',{'aria-label':'Daily health signals'},[
+      statCard('Weight',Number(lastWeight)>0?shortNumber(lastWeight):'—',
+        Number(lastWeight)>0?' lbs':'','Latest logged', 'body'),
+      statCard('Water',shortNumber(water),' oz',
+        'of '+Math.round(waterGoal)+' oz','water',
+        ()=>{secondaryOpen=true;render();requestAnimationFrame(()=>root.querySelector('.forge-food__secondary')?.scrollIntoView({block:'center',behavior:'smooth'}))}),
+      statCard('Steps',Number.isFinite(day.steps)?Math.round(day.steps).toLocaleString():'—','',
+        Number.isFinite(day.steps)?'Today':'Not logged','steps'),
+    ])
+    const mealRows = groups.filter(group=>group.entries.length).flatMap(group=>[
+      el('div.forge-food__meal-header',{},[
+        el('span',{text:group.label}),
+        el('small',{text:Math.round(group.entries.reduce((n,row)=>n+Number(row.calories||0),0)).toLocaleString()+' kcal'}),
+      ]),
+      ...group.entries.map(entry => el('button.forge-food__meal', {
+        type:'button',onclick:()=>showEntryDetail(entry),
+        'aria-label':'View '+(entry.description||'Food')+' details',
+      },[
+        emoji(entry.description),
+        el('span.forge-food__meal-info',{},[
+          el('strong',{text:entry.description||'Food entry'}),
+          el('small',{text:localTime(entry.loggedAt)+' · '+shortNumber(entry.proteinGrams)+'g protein'}),
+        ]),
+        el('span.forge-food__meal-kcal',{text:Math.round(entry.calories||0).toLocaleString()+' kcal'}),
+        icon('chevron-right'),
+      ])),
+    ])
+    const journal = el('section.forge-food__journal',{},[
+      title('FOOD JOURNAL','Today’s Meals',el('button.forge-food__text-action',{
+        type:'button',onclick:()=>openLogSheet('journal'),
+      },['View all ',icon('chevron-right')])),
+      el('div.forge-food__meal-list',{},[
+        ...mealRows,
+        !meat.length && el('div.forge-food__empty',{},[
+          el('strong',{text:'Your first meal goes here'}),
+          el('span',{text:'Log a meal to start today’s journal.'}),
+        ]),
+        ledger.hasCarryover && el('button.forge-food__carryover',{
+          type:'button',onclick:()=>openLogSheet('journal'),
+        },['Earlier logged totals are included',icon('chevron-right')]),
+      ]),
+    ])
+    const heroActions = el('div.forge-food__cta-bar',{},[
+      el('button.forge-food__primary', {
+        type:'button',dataset:{foodOpenLog:'true'},onclick:()=>showLibrary(),
+      },[icon('plus'),' Log Food']),
+      el('button.forge-food__small-cta',{
+        type:'button',onclick:()=>openLogSheet('manual'),
+        'aria-label':'Manual food entry',
+      },[icon('plus')]),
+    ])
+    const recentFoodCard = el('div.forge-food__frequent',{},[
+      title('ONE-TAP REPEAT','Frequent meals',el('button.forge-food__text-action',{
+        type:'button',onclick:()=>showLibrary('frequent'),
+      },['See all ',icon('chevron-right')])),
+      el('div.forge-food__frequent-grid',{},model.foods.top.slice(0,4).map(food=>
+        el('button.forge-food__frequent-item',{type:'button',
+          onclick:()=>addToCart(food), 'aria-label':'Add '+food.description+' to food cart',
+        },[
+          emoji(food.description),
+          el('strong',{text:food.description}),
+          el('small',{text:Math.round(food.calories||0)+' kcal · '+Math.round(food.proteinGrams||0)+'g protein'}),
+          el('span.forge-food__frequent-add',{'aria-hidden':'true'},[icon('plus')]),
+        ])
+      )),
     ])
     const waterCard = el('section.fuel-r4__card.fuel-r4__water.food-v2__water', {}, [
       el('div.food-v2__section-title', {}, [
@@ -686,104 +774,170 @@ export function createFuelScreen({ storage, daily, clock }) {
         }),
       ]),
     ])
-    const diary = diaryCalendar()
-    const recents = recentFoodsStrip()
-    const foodSearch = foodsCard()
-    // Meal journal is a real summary of saved entries, not a second data store.
-    // Tapping a row opens the retained full editor, including delete and Undo.
-    const mealGroups = [
-      { name: 'Breakfast', entries: [] },
-      { name: 'Lunch', entries: [] },
-      { name: 'Dinner', entries: [] },
-      { name: 'Snacks', entries: [] },
-    ]
-    for (const entry of ledger.entries) {
-      const hour = new Date(entry.loggedAt).getHours()
-      const index = hour >= 5 && hour < 11 ? 0
-        : hour >= 11 && hour < 16 ? 1 : hour >= 16 && hour < 21 ? 2 : 3
-      mealGroups[index].entries.push(entry)
-    }
-    const journal = el('section.food-next__journal', {}, [
-      el('div.food-next__journal-title', {}, [
-        el('div', {}, [
-          el('span.food-next__eyebrow', { text: 'FOOD JOURNAL' }),
-          el('h2', { text: 'Today’s meals' }),
-        ]),
-        el('button', { type:'button', onclick: () => openLogSheet('journal') }, ['View all ', icon('chevron-right')]),
+
+    const secondary = el('details.forge-food__secondary',{
+      open:secondaryOpen,ontoggle:event=>{secondaryOpen=event.target.open},
+    },[
+      el('summary',{},['Water, beach-cut plan & food diary review',icon('chevron-down')]),
+      el('div.forge-food__secondary-body',{},[waterCard,beachCutStrip(),...openDaysCard()]),
+    ])
+    const renderHome = () => [
+      titleBar,nav,
+      el('div.forge-food__week-rail',{},[diaryCalendar()]),
+      el('div.forge-food__canvas',{},[
+        el('div.forge-food__main',{},[hero,stats,secondary]),
+        el('div.forge-food__aside',{},[journal,recentFoodCard]),
       ]),
-      ...mealGroups.map(group => el('div.food-next__meal-group', {}, [
-        el('div.food-next__meal-heading', {}, [
-          el('strong', { text: group.name }),
-          el('span', { text: Math.round(group.entries.reduce((sum, item) => sum + Number(item.calories || 0),0)).toLocaleString() + ' kcal' }),
-        ]),
-        ...(group.entries.length ? group.entries.map(entry =>
-          el('button.food-next__meal-row', { type:'button',
-            onclick: () => openLogSheet('journal'),
-            'aria-label': 'View ' + (entry.description || 'food entry') + ' details',
-          }, [
-            el('span.food-next__meal-mark', { 'aria-hidden': 'true' }, [icon('food')]),
-            el('span.food-next__meal-copy', {}, [
-              el('strong', { text: entry.description || 'Food entry' }),
-              el('small', { text: Math.round(Number(entry.proteinGrams || 0)) + ' g protein' }),
+      heroActions,
+    ]
+
+    const libraryRows = () => {
+      const base = libraryFilter === 'frequent' ? model.foods.top
+        : libraryFilter === 'recent' ? [...allFoods].sort((a,b)=>b.lastLoggedAt.localeCompare(a.lastLoggedAt))
+          : allFoods
+      const matching = searchFoods(base,libraryQuery)
+      return matching.length
+        ? matching.slice(0,100).map(food=>el('div.forge-food__library-row',{},[
+            emoji(food.description),
+            el('div.forge-food__library-copy',{},[
+              el('strong',{text:food.description}),
+              el('span',{text:Math.round(food.calories||0)+' kcal · '+Math.round(food.proteinGrams||0)+'g protein'}),
             ]),
-            el('span.food-next__meal-kcal', { text: Math.round(Number(entry.calories || 0)).toLocaleString() + ' kcal' }),
-            icon('chevron-right'),
-          ])) : [el('p.food-next__empty-group', { text: 'Nothing logged' })]),
-      ])),
-      ledger.hasCarryover && el('button.food-next__legacy-entry', { type:'button',
-        onclick: () => openLogSheet('journal'),
-      }, ['Earlier totals are included · View all']),
-    ].filter(Boolean))
-    const sheet = el('div.food-next__sheet-shell', {
-      hidden: !logSheetOpen, dataset: { foodLogSheet: String(logSheetOpen) },
-      onkeydown: event => { if (event.key === 'Escape') closeLogSheet() },
-    }, [
-      el('button.food-next__sheet-shade', {
-        type: 'button', 'aria-label': 'Close food logging', onclick: closeLogSheet,
-      }),
-      el('section.food-next__sheet', { role:'dialog', 'aria-modal':'true',
-        'aria-label':'Log food', dataset: { mode: logSheetMode },
-      }, [
-        el('div.food-next__sheet-heading', {}, [
-          el('div', {}, [
-            el('span.food-next__eyebrow', { text: 'QUICK & EASY' }),
-            el('h2', { text: logSheetMode === 'search' ? 'Food library' : 'Log food' }),
+            el('button.forge-food__library-add',{type:'button',
+              'aria-label':'Add '+food.description+' to log cart',
+              onclick:()=>addToCart(food),
+            },[icon('plus')]),
+          ]))
+        : [el('div.forge-food__empty',{},[
+          el('strong',{text:libraryQuery?'No matching foods yet':'No saved foods yet'}),
+          el('span',{text:'Foods you log are saved here automatically.'}),
+          el('button.forge-food__text-action',{type:'button',onclick:()=>openLogSheet('manual')},['Add manually']),
+        ])]
+    }
+    const libraryList = el('div.forge-food__library-list',{},libraryRows())
+    const cartItems = el('div.forge-food__cart-items',{},cart.map(item=>
+      el('div.forge-food__cart-row',{},[
+        emoji(item.food.description),
+        el('div.forge-food__cart-copy',{},[
+          el('strong',{text:item.food.description}),
+          el('small',{text:Math.round(item.food.calories||0)*item.quantity+' kcal'}),
+        ]),
+        el('div.forge-food__cart-quantity',{},[
+          el('button',{type:'button',onclick:()=>changeCartQuantity(item.id,-1),'aria-label':'Remove one serving'},[icon('minus')]),
+          el('span',{text:String(item.quantity)}),
+          el('button',{type:'button',onclick:()=>changeCartQuantity(item.id,1),'aria-label':'Add one serving'},[icon('plus')]),
+        ]),
+      ])
+    ))
+    const cartCalories = cart.reduce((sum,item)=>sum+Number(item.food.calories||0)*item.quantity,0)
+    const cartCount = cart.reduce((sum,item)=>sum+item.quantity,0)
+    const cartPanel = el('section.forge-food__cart',{},[
+      el('div.forge-food__cart-head',{},[
+        el('h2',{},[icon('food'),' Log Cart']),
+        el('strong',{text:Math.round(cartCalories).toLocaleString()+' kcal'}),
+      ]),
+      cartItems,
+      cartError && el('p.forge-food__cart-error',{role:'status',text:cartError}),
+      el('button.forge-food__primary',{type:'button',disabled:cartSaving || !cartCount,
+        onclick:saveCart,
+        dataset:{cartLog:'true'},
+      },[cartCount?'Log '+cartCount+' item'+(cartCount===1?'':'s')+' ('+Math.round(cartCalories)+' kcal)':'Choose foods to log']),
+    ])
+    const renderLibrary = () => [
+      el('header.forge-food__inner-header',{},[
+        back('Back to Fuel'),
+        el('span.forge-food__brand-label',{text:'TEMPERED / FOOD'}),
+        el('h1',{text:'Food Library'}),
+      ]),
+      el('nav.forge-food__filters',{'aria-label':'Browse saved foods'},[
+        ...[['all','All Foods'],['frequent','Frequent'],['recent','Recent']].map(([filter,label])=>
+          el('button',{type:'button','aria-pressed':String(libraryFilter===filter),
+            onclick:()=>{libraryFilter=filter;render()},
+          },[label])),
+      ]),
+      el('label.forge-food__search',{},[
+        icon('search'),
+        el('input',{type:'search',value:libraryQuery,
+          placeholder:'Search foods you’ve logged…','aria-label':'Search saved foods',
+          oninput:event=>{libraryQuery=event.target.value;replace(libraryList,libraryRows())},
+        }),
+      ]),
+      el('div.forge-food__library-layout',{},[
+        el('div.forge-food__library-col',{},[
+          libraryList,
+          recentFoodCard,
+          el('section.forge-food__quick-log',{},[
+            title('QUICK LOG','Other ways to log'),
+            el('div.forge-food__quick-grid',{},[
+              el('button',{type:'button',onclick:()=>openLogSheet('manual')},[icon('food'),' Manual entry']),
+              el('button',{type:'button',onclick:()=>openLogSheet('manual')},[icon('plus'),' Meal photo or import']),
+            ]),
           ]),
-          el('button.food-next__sheet-close', { type:'button', onclick: closeLogSheet,
-            'aria-label':'Close food logging' }, [icon('x')]),
         ]),
-        el('div.food-next__sheet-content', {}, [
-          foodSearch, mealPanel, recents,
+        cartPanel,
+      ]),
+    ]
+    const detail = selectedEntry
+    const renderDetail = () => [
+      el('header.forge-food__inner-header',{},[
+        back('Back to Fuel'),
+        el('span.forge-food__brand-label',{text:'TEMPERED / MEAL'}),
+        el('h1',{text:'Meal Details'}),
+      ]),
+      detail && el('div.forge-food__detail-layout',{},[
+        el('section.forge-food__detail-card',{},[
+          el('div.forge-food__detail-thumb',{'aria-hidden':'true',text:foodIllustration(detail.description)}),
+          el('span.forge-food__overline',{text:localTime(detail.loggedAt)+' · Today'}),
+          el('h2',{text:detail.description||'Food entry'}),
+          el('div.forge-food__detail-calories',{},[
+            el('strong',{text:shortNumber(detail.calories)}),
+            el('span',{text:'kcal'}),
+          ]),
+          el('div.forge-food__detail-macros',{},[
+            ...[['Protein',detail.proteinGrams],['Carbs',detail.carbsGrams],['Fat',detail.fatGrams],['Fiber',detail.fiberGrams]].map(([label,value])=>
+              el('div',{},[el('strong',{text:shortNumber(value)+' g'}),el('span',{text:label})])),
+          ]),
+          el('div.forge-food__detail-actions',{},[
+            el('button',{type:'button',onclick:()=>openLogSheet('journal')},[icon('history'),' View saved history']),
+            el('button',{type:'button',onclick:()=>{showLibrary();libraryQuery=detail.description}},[icon('plus'),' Log again']),
+          ]),
         ]),
+        cartPanel,
+      ]),
+    ]
+
+    // Runtime remains mounted even when its parent is not visible. This keeps
+    // typed forms intact across refreshes, and preserves the original AI tools.
+    const foodSearch = foodsCard()
+    const recents = recentFoodsStrip()
+    const sheet = el('div.forge-food__sheet-shell',{
+      hidden:!logSheetOpen,dataset:{foodLogSheet:String(logSheetOpen)},
+      onkeydown:event=>{if(event.key==='Escape')closeLogSheet()},
+    },[
+      el('button.forge-food__shade',{type:'button',onclick:closeLogSheet,
+        'aria-label':'Close food logging'}),
+      el('section.forge-food__sheet',{role:'dialog','aria-modal':'true',
+        'aria-label':'Food entry',dataset:{mode:logSheetMode},
+      },[
+        el('div.forge-food__sheet-heading',{},[
+          el('div',{},[
+            el('span.forge-food__overline',{text:'TEMPERED / QUICK LOG'}),
+            el('h2',{text:logSheetMode==='journal'?'Meal history':'Log Food'}),
+          ]),
+          el('button.forge-food__sheet-close',{type:'button',
+            onclick:closeLogSheet,'aria-label':'Close food entry'},[icon('x')]),
+        ]),
+        el('div.forge-food__sheet-scroll',{},[foodSearch,mealPanel,recents]),
       ]),
     ])
-    replace(root, [
-      top,
-      actions,
-      el('div.food-next__layout', {}, [
-        el('div.food-next__overview', {}, [
-          hero, diary,
-          el('details.food-next__secondary', {
-            open: secondaryOpen,
-            ontoggle: event => { secondaryOpen = event.target.open },
-          }, [
-            el('summary', {}, ['Hydration & beach-cut details', icon('chevron-down')]),
-            el('div.food-v2__small-row', {}, [waterCard, beachCutStrip()]),
-          ]),
-        ]),
-        el('div.food-next__details', {}, [
-          journal,
-          el('button.food-next__log-button', {
-            type:'button', dataset: { foodOpenLog:'true' }, onclick: () => openLogSheet('quick'),
-          }, [icon('plus'), ' Log food']),
-          ...openDaysCard(),
-        ]),
-      ]),
+    replace(root,[
+      ...(screenView==='library'?renderLibrary()
+        :screenView==='detail'?renderDetail():renderHome()),
       sheet,
     ])
     mealPanel.dataset.date = clock.today()
-    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel', {
-      detail: { slot: mealPanel, date: clock.today(), foodSearch, recents },
+    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{
+      detail:{slot:mealPanel,date:clock.today(),foodSearch,recents},
     }))
   }
 

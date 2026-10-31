@@ -633,6 +633,10 @@ export function createFuelScreen({ storage, daily, clock }) {
       el('div.forge-food__hero-top', {}, [
         el('span.forge-food__overline',{text:'TODAY / NUTRITION'}),
         el('span.forge-food__hero-pct',{text:Math.round(energyProgress)+'% of goal'}),
+        el('button.forge-food__close-day',{
+          type:'button',dataset:{diaryFinishToday:'true',closed:String(closed)},
+          onclick:closeToday,'aria-label':closed?'Reopen today’s food diary':'Close today’s food diary',
+        },[closed?'✓ Closed':'Close day']),
       ]),
       el('div.forge-food__hero-grid', {}, [
         el('div.forge-food__hero-numbers',{},[
@@ -899,7 +903,7 @@ export function createFuelScreen({ storage, daily, clock }) {
           ]),
           el('div.forge-food__detail-actions',{},[
             el('button',{type:'button',onclick:()=>openLogSheet('journal')},[icon('history'),' View saved history']),
-            el('button',{type:'button',onclick:()=>{showLibrary();libraryQuery=detail.description}},[icon('plus'),' Log again']),
+            el('button',{type:'button',onclick:()=>{libraryQuery=detail.description;showLibrary()}},[icon('plus'),' Log again']),
           ]),
         ]),
         cartPanel,

@@ -54,6 +54,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const announcer = liveRegion()
   const tabBar = el('nav.tabbar', { 'aria-label': 'Sections' })
   const workoutDock = el('aside.active-workout-dock', { hidden: true })
+  const cardioLayer = el('div.quick-cardio-layer', { hidden: true })
   const tabs = el('div.tabbar__tabs')
 
   let active = 'train'
@@ -69,6 +70,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const train = createTrainScreen({
     workout, storage, clock,
     onStart: (options) => startSession(options),
+    onStartCardio: () => launchQuickCardio(),
     onProgramBuilder: openBuilder,
     onProgramLibrary: openProgramLibrary,
   })
@@ -104,6 +106,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const today = createTodayScreen({
     workout, daily, planner, storage, clock,
     onStart: (options) => startSession(options),
+    onStartCardio: () => launchQuickCardio(),
     onOpenSlot: (slot) => slot?.extra
       ? startSession({ exerciseId: slot.exerciseId })
       : startSession({ slotTask: slot }),
@@ -116,6 +119,146 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     onDone: async () => { await show(returnTab) },
   })
   let session = null
+
+  // Ten-minute cardio is independent of lifting, and only explicit Save logs
+  // minutes to Today. The checkpoint survives tab changes and an iOS reload.
+  const CARDIO_KEY = 'tempered.quickCardio.v1'
+  const CARDIO_SECONDS = 600
+  let cardio = null
+  let cardioSaving = false
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(CARDIO_KEY) ?? 'null')
+    if (saved && Number.isFinite(saved.elapsedSec)
+      && saved.elapsedSec >= 0 && saved.elapsedSec <= CARDIO_SECONDS
+      && typeof saved.startedAt === 'number'
+      && typeof saved.paused === 'boolean'
+      && saved.createdAt > clock.now() - 86400000) cardio = saved
+  } catch { /* No local storage in private mode. Timer still works in memory. */ }
+
+  function cardioElapsed() {
+    if (!cardio) return 0
+    const active = cardio.paused ? 0 : Math.max(0, (clock.now() - cardio.startedAt) / 1000)
+    return Math.min(CARDIO_SECONDS, Math.max(0, cardio.elapsedSec + active))
+  }
+
+  function checkpointCardio() {
+    try {
+      if (cardio) globalThis.localStorage?.setItem(CARDIO_KEY, JSON.stringify(cardio))
+      else globalThis.localStorage?.removeItem(CARDIO_KEY)
+    } catch { /* No persistent storage available. */ }
+  }
+
+  function pauseCardio() {
+    if (!cardio || cardio.paused) return
+    cardio.elapsedSec = cardioElapsed()
+    cardio.paused = true
+    checkpointCardio()
+  }
+
+  function cardioLabel() {
+    const left = Math.max(0, CARDIO_SECONDS - cardioElapsed())
+    return formatClock(Math.ceil(left))
+  }
+
+  function renderCardio() {
+    cardioLayer.hidden = !cardio
+    if (!cardio) { replace(cardioLayer, []); return }
+    const elapsed = cardioElapsed()
+    const complete = elapsed >= CARDIO_SECONDS
+    const minutes = Math.min(10, Math.floor(elapsed / 60))
+    const target = cardio.target
+    replace(cardioLayer, [
+      el('section.quick-cardio', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '10-minute cardio timer' }, [
+        el('div.quick-cardio__top', {}, [
+          el('span.quick-cardio__eyebrow', { text: 'QUICK CARDIO' }),
+          el('button.quick-cardio__dismiss', {
+            type: 'button', 'aria-label': 'Cancel cardio session without logging',
+            dataset: { action: 'cancel-cardio' },
+            disabled: cardioSaving,
+            onclick: () => { cardio = null; checkpointCardio(); renderCardio() },
+          }, ['×']),
+        ]),
+        el('h2', { text: complete ? '10 minutes complete' : '10-minute Zone 2 cardio' }),
+        el('div.quick-cardio__countdown', {
+          dataset: { cardioCountdown: 'true' }, 'aria-live': 'off', text: cardioLabel(),
+        }),
+        el('div.quick-cardio__progress', {}, [
+          el('div.quick-cardio__progress-fill', {
+            dataset: { cardioProgress: 'true' },
+            style: `width: ${Math.round(elapsed / CARDIO_SECONDS * 100)}%`,
+          }),
+        ]),
+        target && el('p.quick-cardio__target', {
+          text: `Estimated Zone 2 · ${target.lowBpm}–${target.highBpm} bpm`,
+        }),
+        el('p.quick-cardio__help', {
+          text: 'Incline walk or bike. Keep a comfortable conversational pace; the heart-rate range is a guide, not a requirement.',
+        }),
+        el('div.quick-cardio__actions', {}, [
+          !complete && el('button.quick-cardio__pause', {
+            type: 'button', dataset: { action: 'toggle-cardio-pause' },
+            onclick: () => {
+              if (cardio.paused) { cardio.startedAt = clock.now(); cardio.paused = false; checkpointCardio() }
+              else pauseCardio()
+              renderCardio()
+            },
+          }, [cardio.paused ? 'Resume timer' : 'Pause']),
+          el('button.quick-cardio__save', {
+            type: 'button', dataset: { action: 'save-cardio' },
+            disabled: cardioSaving || minutes < 1,
+            onclick: async () => {
+              if (!cardio || cardioSaving) return
+              pauseCardio()
+              const completedMinutes = Math.min(10, Math.floor(cardioElapsed() / 60))
+              if (completedMinutes < 1) return
+              cardioSaving = true
+              renderCardio()
+              try {
+                await daily.log('micro_cardio', completedMinutes)
+                cardio = null
+                checkpointCardio()
+                renderCardio()
+                if (active === 'today' && !session) await show('today')
+                announce(`Logged ${completedMinutes} minutes of cardio`)
+              } catch (error) {
+                console.error('[tempered] cardio log failed', error)
+                const message = cardioLayer.querySelector('[data-cardio-error]')
+                if (message) message.textContent = 'Could not save cardio. Try again.'
+              } finally {
+                cardioSaving = false
+                renderCardio()
+              }
+            },
+          }, [cardioSaving ? 'Saving…' : complete ? 'Log 10 minutes' : `Finish & log ${minutes} min`]),
+        ]),
+        el('p.quick-cardio__error', { dataset: { cardioError: 'true' }, role: 'status', text: '' }),
+        el('p.quick-cardio__foot', { text: 'Only time you complete and save is added to Micro cardio. No lifting sets are recorded.' }),
+      ]),
+    ])
+  }
+
+  async function launchQuickCardio() {
+    if (cardio) { renderCardio(); return }
+    const target = (await workout.activeProgram())?.program?.cardioTarget ?? null
+    cardio = { createdAt: clock.now(), startedAt: clock.now(),
+      elapsedSec: 0, paused: false, target }
+    checkpointCardio()
+    renderCardio()
+  }
+
+  const cardioTicker = setInterval(() => {
+    if (!cardio) return
+    const elapsed = cardioElapsed()
+    const remaining = cardioLayer.querySelector('[data-cardio-countdown]')
+    if (remaining) remaining.textContent = cardioLabel()
+    const fill = cardioLayer.querySelector('[data-cardio-progress]')
+    if (fill) fill.style.width = `${Math.round(elapsed / CARDIO_SECONDS * 100)}%`
+    if (elapsed >= CARDIO_SECONDS && !cardio.paused) {
+      pauseCardio()
+      renderCardio()
+    }
+  }, 1000)
+  renderCardio()
 
   function announce(text) {
     announcer.textContent = ''
@@ -198,11 +341,12 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   function makeSessionScreen() {
     return createSessionScreen({
       workout, clock,
+      onStartCardio: () => launchQuickCardio(),
       onMinimize: async () => {
         const open = session
         session = null
         open?.destroy()
-        await show(returnTab)
+        await show('today')
       },
       onFinish: async (result) => {
         session?.destroy()
@@ -219,6 +363,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   async function startSession(options) {
+    // Starting another session must not overwrite a minimized workout draft.
+    const existingDraft = loadActiveSessionDraft()
+    if (!session && existingDraft) return resumeSession(existingDraft)
     returnTab = active === 'settings' ? 'today' : active
     session?.destroy()
     session = makeSessionScreen()
@@ -337,6 +484,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     announce(`${date} day review`)
   }
 
+  replace(overlays, [cardioLayer])
   replace(mount, [body, announcer, workoutDock, tabBar, overlays])
-  return { show, showTodayDate, startSession, resumeSession }
+  return { show, showTodayDate, startSession, resumeSession, launchQuickCardio }
 }

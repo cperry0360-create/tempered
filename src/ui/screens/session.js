@@ -72,6 +72,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let wakeLock = null
   let hasUnloggedEdits = false
   let confirmingDiscard = false
+  let discardingWorkout = false
+  let discardFailure = ''
   let halfFold = false
   let halfFoldIndex = 0
   let focusStageIndex = 0
@@ -739,7 +741,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const fields = fieldsFor(entry.exercise)
 
     return el('section.card.exercise.exercise--r3', {
-      dataset: { exercise: entry.exercise.id, method: activeMethod(entry) ?? '' },
+      dataset: { exercise: entry.exercise.id, method: activeMethod(entry) ?? '', focused: String(position === focusStageIndex) },
     }, [
       el('header.exercise__head', { dataset: { hasArt: String(Boolean(entry.exercise.art)) } }, [
         entry.exercise.art && el('button.exercise__art', {
@@ -854,7 +856,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     focusStageIndex=Math.max(0,Math.min(plan.length-1,index))
     persistDraft()
     render()
-    root.querySelector(`[data-exercise="${plan[focusStageIndex]?.exercise.id}"]`)?.scrollIntoView?.({ block:'nearest' })
+    root.querySelector(`.session-r5__log [data-exercise="${plan[focusStageIndex]?.exercise.id}"]`)?.scrollIntoView?.({ block:'nearest', behavior:'smooth' })
   }
 
   function visualStage() {
@@ -871,7 +873,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('span.session-r5__image-tag', {text:`MOVEMENT ${focusStageIndex+1} / ${plan.length}`}),
       ]),
       el('div.session-r5__stage-copy', {}, [
-        el('p.session-r5__eyebrow', { text:'UP NEXT · TRAIN SMART' }),
+        el('p.session-r5__eyebrow', { text:'CURRENT MOVEMENT' }),
         el('h2', { text:movementName }),
         el('p.session-r5__stage-target', { text:entry.slot
           ? `${entry.slot.repMin}–${entry.slot.repMax} reps · ${clock(entry.restSec)} rest`
@@ -887,7 +889,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         ]),
         el('div.session-r5__stage-nav', {}, [
           el('button',{type:'button',disabled:focusStageIndex===0,onclick:()=>focusExercise(focusStageIndex-1)},['← Previous']),
-          el('button',{type:'button',disabled:focusStageIndex===plan.length-1,onclick:()=>focusExercise(focusStageIndex+1)},['Next →']),
+          el('button',{type:'button',disabled:focusStageIndex===plan.length-1,onclick:()=>focusExercise(focusStageIndex+1)},['Next exercise →']),
         ]),
       ]),
     ])
@@ -1068,22 +1070,29 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function cancelWorkout() {
-    // Checked sets are already saved. Closing without finishing would leave them
-    // in an open session that history and the score cannot see, so Cancel with
-    // logged work asks to finish instead.
-    if (loggedCount() > 0) {
-      confirmingFinish = true
+    // Cancel and Finish must never converge: cancelling only offers discard.
+    confirmingFinish = false
+    confirmingDiscard = true
+    discardFailure = ''
+    render()
+  }
+
+  async function discardWorkout() {
+    if (discardingWorkout || !session) return
+    discardingWorkout = true
+    discardFailure = ''
+    try {
+      await workout.abortSession(session, loggedHere)
+      clearBodyOverlays()
+      clearActiveSessionDraft()
+      releaseWorkoutWakeLock()
+      onFinish(null)
+    } catch (error) {
+      console.error('[tempered] workout discard failed', error)
+      discardFailure = 'Could not discard this session; try again.'
+      discardingWorkout = false
       render()
-      return
     }
-    if (hasUnloggedEdits) {
-      confirmingDiscard = true
-      render()
-      return
-    }
-    clearActiveSessionDraft()
-    releaseWorkoutWakeLock()
-    onFinish(null)
   }
 
   function cardioFinisherCard() {
@@ -1121,7 +1130,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           type: 'button',
           dataset: { action: 'cancel-session' },
           onclick: cancelWorkout,
-        }, ['Cancel']),
+        }, ['Exit']),
         el('div.sessionbar__center', {}, [
           el('h1.sessionbar__title', { text: session?.title ?? 'Session' }),
           el('div.sessionbar__timer-row', {}, [
@@ -1153,12 +1162,17 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       ]),
 
       ...(halfFold ? [halfFoldStage(selectedEntry), halfFoldControls(selectedEntry)] : [
-        plan.length > 0 && progressRail(),
+        plan.length > 0 && el('div.session-r5__progress-wrap', {}, [
+          el('p.session-r5__progress-label', {
+            text:`Exercise ${focusStageIndex+1} of ${plan.length} · ${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)} sets logged`,
+          }),
+          progressRail(),
+        ]),
         el('div.session-r5__workspace', {}, [
           visualStage(),
           el('div.session-r5__log', {}, [
             duoLayout && plan.length > 0 && el('div.session-display-tools', {}, [
-              el('span', { text: 'Full workout · exercises and sets' }),
+              el('span', { text: `Exercise ${focusStageIndex + 1} of ${plan.length} · ${loggedCount()} sets logged` }),
               halfFoldToggle(),
             ]),
             session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
@@ -1203,23 +1217,20 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   function discardSheet() {
     return el('div.session-sheet', { dataset: { sessionOverlay: 'true' } }, [
       el('div.session-sheet__card', {}, [
-        el('p.session-sheet__title', { text: 'Discard unlogged edits?' }),
-        el('p.session-sheet__copy', { text: 'Checked sets stay in your log. Unchecked changes will be discarded.' }),
+        el('p.session-sheet__title', { text: 'Exit without saving this workout?' }),
+        el('p.session-sheet__copy', { text: `Remove ${loggedCount()} logged ${loggedCount() === 1 ? 'set' : 'sets'} from this workout? This cannot be undone. Earlier workouts are unaffected.` }),
+        discardFailure && el('p.session-sheet__error', { role:'alert', text:discardFailure }),
         el('div.session-sheet__actions', {}, [
           el('button', {
             type: 'button',
             onclick: () => { confirmingDiscard = false; render() },
-          }, ['Keep editing']),
+          }, ['Keep workout']),
           el('button', {
             type: 'button',
             dataset: { confirmAction: 'discard' },
-            onclick: () => {
-              clearBodyOverlays()
-              clearActiveSessionDraft()
-              releaseWorkoutWakeLock()
-              onFinish(null)
-            },
-          }, ['Discard']),
+            disabled: discardingWorkout,
+            onclick: discardWorkout,
+          }, [discardingWorkout ? 'Discarding…' : 'Exit without saving']),
         ]),
       ]),
       ])

@@ -311,6 +311,18 @@ export function createWorkoutService({ storage, clock, balance }) {
    * @param {object} session
    * @param {object} set
    */
+  /** Abort without scoring; do not affect earlier sets in a shared day session. */
+  async function abortSession(session, onlySets = []) {
+    const all = await storage.getAllByIndex('setLogs', 'sessionId', session.id)
+    const ids = new Set(onlySets.map(set => set.id).filter(Boolean))
+    // Only log IDs created by the current screen may be removed. A reused
+    // daily session can hold already-finished work even outside slot mode.
+    const removable = all.filter(set => ids.has(set.id))
+    for (const set of removable) await storage.delete('setLogs', set.id)
+    const remaining = await storage.getAllByIndex('setLogs', 'sessionId', session.id)
+    if (remaining.length === 0) await storage.delete('sessions', session.id)
+  }
+
   async function logSet(session, set) {
     const existing = await storage.getAllByIndex('setLogs', 'sessionId', session.id)
     const log = {
@@ -792,7 +804,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     activeProgram, activateStoredProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
-    startSession, logSet, setsFor, finishSession, adjustSessionDuration, settleOpenSessions,
+    startSession, logSet, setsFor, finishSession, abortSession, adjustSessionDuration, settleOpenSessions,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },
     async attributeSummary() {

@@ -79,15 +79,25 @@
       check('confirming during rest reaches the summary', Boolean(q('.screen--summary')))
       check('no rest bar is left behind after finishing', !q('.session-restbar'))
 
-      // Cancel with logged sets must not quietly leave the workout open and unseen.
+      // Exit without saving must discard only this workout, NEVER finish.
+      const previouslySettled = (await storage.getAll('setLogs')).length
       await app.app.show('today'); await wait(80)
       q('.today-workout__start')?.click(); await wait(220)
       qa('.screen--session .setrow__check').find((b) => !b.disabled && b.closest('.setrow')?.dataset.done !== 'true')?.click()
       await wait(60)
+      check('checked set exists before an explicit discard', (await storage.getAll('setLogs')).length > previouslySettled)
       q('[data-action="cancel-session"]')?.click(); await wait()
-      check('Cancel with logged sets asks to finish instead of closing', Boolean(q('[data-action="confirm-finish"]')) && Boolean(q('.screen--session')))
-      check('the sheet says logged sets are kept', /kept/i.test(q('.session-sheet')?.textContent ?? ''), q('.session-sheet')?.textContent)
-      q('[data-action="cancel-finish"]')?.click(); await wait()
+      check('Exit offers an explicit discard, never Finish', Boolean(q('[data-confirm-action="discard"]'))
+        && !q('[data-action="confirm-finish"]') && Boolean(q('.screen--session')))
+      check('sheet explains that this session is discarded and prior history preserved',
+        /without saving/i.test(q('.session-sheet')?.textContent ?? ''))
+      q('[data-confirm-action="discard"]')?.click(); await wait(260)
+      const afterDiscard = await storage.getAll('setLogs')
+      check('confirmed exit removes only this workout’s checked sets',
+        afterDiscard.length === previouslySettled,
+        `before=${previouslySettled}, after=${afterDiscard.length}; ids=${afterDiscard.map(x=>x.id).join(',')}`)
+      check('exit returns to Today without a workout summary',
+        Boolean(q('.screen--today')) && !q('.screen--summary'))
 
       // A workout left open by an older build: sets saved, session never ended.
       const storage2 = createMemoryStorage(); await storage2.open()

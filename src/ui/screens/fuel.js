@@ -479,7 +479,7 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('span.food-v2__macro-ring', { style: '--macro-progress:' + percent(grams, target) + '%;--macro-tone:' + tone }, [
           icon(glyph),
         ]),
-        el('strong', { text: Math.round(grams).toLocaleString() + ' g' }),
+        el('strong', { text: Number(grams.toFixed(3)).toLocaleString() + ' g' }),
         el('span', { text: label }),
         el('small', { text: Math.round(target).toLocaleString() + ' g goal' }),
       ])
@@ -519,6 +519,10 @@ export function createFuelScreen({ storage, daily, clock }) {
           'aria-valuemax': String(calorieGoal), 'aria-valuenow': String(calories) }, [
           el('span', { style: 'width:' + energyProgress + '%' }),
         ]),
+        el('button.food-v3__close-day', {
+          type:'button', dataset:{diaryFinishToday:'true',closed:String(closed)},
+          onclick:closeToday, 'aria-label': closed ? 'Reopen today’s food diary' : 'Close today’s food diary',
+        }, [closed ? 'Reopen day' : 'Close day']),
       ]),
     ])
     const macros = el('section.food-v2__macro-card', {}, [
@@ -587,16 +591,7 @@ export function createFuelScreen({ storage, daily, clock }) {
     ])
     const diary = diaryCalendar()
     const recents = recentFoodsStrip()
-    const finish = el('section.food-v2__day-finish', { dataset: { dayClosed: String(closed) } }, [
-      el('div', {}, [
-        el('strong', { text: closed ? 'Today is complete' : 'Your food diary is open' }),
-        el('small', { text: closed ? 'Reopen to make corrections.' : 'Close it when you’ve recorded everything you ate.' }),
-      ]),
-      el('button.fuel-r4__finish', {
-        type: 'button', dataset: { diaryFinishToday: 'true', closed: String(closed) },
-        onclick: closeToday,
-      }, [closed ? 'Reopen day' : 'Close day']),
-    ])
+    const foodSearch = foodsCard()
     replace(root, [
       top,
       el('div.fuel-r4__dashboard.food-v2__layout', {}, [
@@ -607,20 +602,20 @@ export function createFuelScreen({ storage, daily, clock }) {
           diary,
         ]),
         el('div.fuel-r4__details.food-v2__details', {}, [
-          // The actual entry form is the primary action.
+          // Fallback: Search/Favorites still work without nutrition runtime.
+          // With it, these elements are moved into the retained entry panel.
+          foodSearch,
           mealPanel,
           recents,
-          foodsCard(),
-          finish,
           ...openDaysCard(),
         ]),
       ]),
     ])
     const today = clock.today()
-    if (!mealPanel.firstChild || mealPanel.dataset.date !== today) {
-      mealPanel.dataset.date = today
-      window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel', { detail: { slot: mealPanel, date: today } }))
-    }
+    mealPanel.dataset.date = today
+    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel', {
+      detail:{slot:mealPanel,date:today,foodSearch,recents},
+    }))
   }
 
   async function refresh() { await load(); render() }

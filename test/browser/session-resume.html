@@ -139,13 +139,17 @@
           mount.querySelector('[data-session-elapsed]')?.textContent === '1:45'
           && loadActiveSessionDraft()?.timerPaused === false)
 
-        // Cancel with a checked set asks to finish: closing would leave the set
-        // in an open session that history and the score never see.
+        // Exit offers discard. Keep workout and Finish explicitly to preserve
+        // the normal scored-session path and elapsed-time assertions below.
         mount.querySelector('[data-action="cancel-session"]').click()
         await settle()
-        check('Cancel with a checked set offers Finish, not Discard',
-          Boolean(document.querySelector('[data-action="confirm-finish"]')) && !document.querySelector('[data-confirm-action="discard"]'))
-        document.querySelector('[data-action="confirm-finish"]').click()
+        check('Exit offers Discard, never silently Finish',
+          Boolean(document.querySelector('[data-confirm-action="discard"]')) && !document.querySelector('[data-action="confirm-finish"]'))
+        document.querySelector('[data-confirm-action="discard"]')?.parentElement?.querySelector('button:not([data-confirm-action])')?.click()
+        await settle()
+        mount.querySelector('[data-action="finish"]')?.click()
+        await settle()
+        document.querySelector('[data-action="confirm-finish"]')?.click()
         await settle(300)
         check('finishing clears the resumable checkpoint', loadActiveSessionDraft() === null)
         check('finishing removes the active-workout card', !mount.querySelector('[data-active-workout]'))

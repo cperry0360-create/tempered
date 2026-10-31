@@ -351,3 +351,14 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
   font-size:11px;
 }
 .screen--fuel-r4 .fuel-r4__water-custom-error:empty { display:none; }
+
+
+/* Budget closeout is available immediately beside today's calorie summary,
+   not after every meal, favorite and search result. */
+.screen--fuel-r4 .food-v3__close-day {
+  justify-self:start; min-height:44px; padding:8px 14px;
+  border:1px solid var(--food-v2-line); border-radius:11px;
+  background:var(--food-v2-panel-2); color:var(--food-v2-text);
+  font-weight:750; font-size:13px; cursor:pointer;
+}
+.screen--fuel-r4 .food-v3__close-day[data-closed="true"] { color:var(--food-v2-blue); }

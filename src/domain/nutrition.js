@@ -156,7 +156,7 @@ export function addNutritionEntry(day, values, meta) {
   // A portion stores the eaten amounts, so day totals stay simple sums.
   const portion = cleanPortion(values?.portion)
   const nutrients = portion
-    ? Object.fromEntries(Object.entries(base).map(([key, value]) => [key, Math.round(value * portion * 10) / 10]))
+    ? Object.fromEntries(Object.entries(base).map(([key, value]) => [key, Math.round(value * portion * 10000) / 10000]))
     : base
   const { carryover, entries } = nutritionLedger(day)
   const entry = cleanEntry({

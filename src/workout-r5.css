@@ -196,3 +196,54 @@
 @media (prefers-reduced-motion:reduce) {
   .session-r5__progress-segment span { transition:none; }
 }
+
+
+/* Workout R5.1: guide one movement at a time on the unfolded Duo. The existing
+   exercise cards, editable sets and menus are unchanged, only other movements
+   are temporarily hidden until Next, Previous or a progress-segment tap. */
+.session-r5__progress-wrap { display:grid; gap:6px; min-width:0; }
+.session-r5__progress-label {
+  margin:0; color:var(--text-2); font-size:12px;
+  font-weight:700; font-variant-numeric:tabular-nums;
+}
+.screen--session .session-r5__progress { padding:3px 4px 14px; }
+.screen--session .session-r5__visual { background:var(--surface-2); }
+.screen--session .session-r5__visual > img {
+  object-fit:contain;
+  object-position:center;
+}
+.screen--session .session-r5__visual-shade {
+  background:linear-gradient(to top,color-mix(in srgb,var(--surface-1) 35%,transparent),transparent 35%);
+}
+.screen--session .session-r5__stage-cue p {
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3;
+  overflow:hidden;
+}
+.screen--session .session-r5__stage-totals { margin-top:12px; padding-top:12px; }
+.screen--session .session-r5__stage-copy { padding-block:13px 15px; }
+.screen--session .session-r5__stage-nav button { font-size:13px; }
+.screen--session .session-r5__log .exercise[data-focused="true"] { scroll-margin-top:110px; }
+@media (min-width:740px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log .exercise:not([data-focused="true"]) {
+    display:none;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__visual {
+    height:clamp(280px,49vh,510px);
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage {
+    max-height:calc(100dvh - 118px - var(--duo-inset-top));
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log {
+    padding-bottom:84px;
+  }
+  html[data-layout="duo"] body:has(.screen--session[data-half-fold="false"]) .session-restbar {
+    right:max(16px,7vw); left:auto; bottom:max(8px,env(safe-area-inset-bottom));
+    width:min(48vw,690px); box-sizing:border-box;
+    padding:9px 14px; border-radius:14px;
+  }
+}
+@media (max-width:739px) {
+  .screen--session .session-r5__visual { height:185px; }
+  .screen--session .session-r5__stage-totals { display:none; }
+  .screen--session .session-r5__stage-cue p { -webkit-line-clamp:2; }
+}

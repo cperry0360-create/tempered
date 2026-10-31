@@ -86,10 +86,16 @@
     })())
     const entryCard = q('.screen--fuel .nutrition-panel__add')
     const mealsCard = q('.screen--fuel .nutrition-panel__meals')
-    check('entry card appears before today\'s meal history',
-      Boolean(entryCard && mealsCard && (entryCard.compareDocumentPosition(mealsCard) & Node.DOCUMENT_POSITION_FOLLOWING)))
-    check('frequent meals are secondary to entry',
-      Boolean(q('.fuel-r4__meal-panel')?.compareDocumentPosition(q('.food-v2__recents')) & Node.DOCUMENT_POSITION_FOLLOWING))
+    const searchCard = q('.screen--fuel [data-food-search]')
+    const favoritesCard = q('.screen--fuel .food-v2__recents')
+    check('Food order is Search, Entry, Favorites, Today’s meals (real DOM order)',
+      Boolean(searchCard && entryCard && favoritesCard && mealsCard)
+      && Boolean(searchCard.compareDocumentPosition(entryCard) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && Boolean(entryCard.compareDocumentPosition(favoritesCard) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && Boolean(favoritesCard.compareDocumentPosition(mealsCard) & Node.DOCUMENT_POSITION_FOLLOWING))
+    check('Close day lives in calorie-budget card, not beneath entries',
+      Boolean(q('.food-v2__energy [data-diary-finish-today]'))
+      && !q('.food-v2__details [data-diary-finish-today]'))
     check('AI tools appear ahead of input fields',
       Boolean(q('.nutrition-meal-form__tools')?.compareDocumentPosition(q('.nutrition-meal-form__fields')) & Node.DOCUMENT_POSITION_FOLLOWING))
     check('recent meals are reusable without a second form', Boolean(q('[data-recent-food="Protein shake"]')))
@@ -141,13 +147,16 @@
       !q('[data-water-custom-form]') && q('[data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
 
     type(q('.screen--fuel [data-entry="nutrition_calories"]'), '740')
-    type(q('.screen--fuel [data-entry="nutrition_protein"]'), '38')
+    type(q('.screen--fuel [data-entry="nutrition_protein"]'), '38.125')
+    check('nutrition fields accept more than one decimal place',
+      q('.screen--fuel [data-entry="nutrition_protein"]').step === 'any'
+      && q('.screen--fuel [data-entry="nutrition_protein"]').validity.valid)
     type(q('.screen--fuel [data-entry="nutrition_carbs"]'), '')
     type(q('.screen--fuel [data-entry="nutrition_fat"]'), '')
     type(q('.screen--fuel [data-entry="nutrition_fiber"]'), '')
     q('.screen--fuel [data-action="nutrition-log"]')?.click(); await settle(500)
     let day = await t.daily.dayLog('2026-10-01')
-    check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)
+    check('Add meal preserves three-decimal protein values', day.calories === 1040 && day.proteinGrams === 50.125, `${day.calories}/${day.proteinGrams}`)
     check('the calorie hero updates on the same screen', /1,040/.test(q('.food-v2__energy')?.textContent ?? ''), q('.food-v2__energy')?.textContent.slice(0, 100))
     check("today's meals list shows it", /Turkey sandwich/.test(q('.screen--fuel [data-nutrition-history]')?.textContent ?? ''))
     check('meal timeline groups existing entries by time of day',

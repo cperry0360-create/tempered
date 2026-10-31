@@ -265,8 +265,6 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
           day.finisher && el('small',{text:'+ optional 10-minute Zone 2 finisher'}),
         ]),
       ]),
-      el('div.train-r5__preview-progress',{'aria-label':'Exercise order'},
-        movements.map((_,i)=>el('span',{dataset:{first:String(i===0)}}))),
       el('div.train-r4__preview-heading', {}, [
         el('div', {}, [
           el('span.train-r4__eyebrow', { text: 'IN YOUR ACTIVE PROGRAM' }),

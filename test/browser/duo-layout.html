@@ -81,13 +81,13 @@ if (params.has('fixture')) {
         Math.abs(r('.fuel-r4__energy').width - r('.food-v2__macro-card').width) <= 2
         && Math.abs(r('.food-v2__macro-card').width - r('.food-v2__small-row').width) <= 2)
       if (wide) {
-        check(label + ' Food search begins beside calorie hero',
-          close(r('.food-v3__search').top, r('.fuel-r4__energy').top))
+        check(label + ' primary meal-entry pane begins beside calorie hero',
+          close(r('.fuel-r4__meal-panel').top, r('.fuel-r4__energy').top))
         check(label + ' energy and Water share the left pane',
           q('.fuel-r4__overview')?.contains(q('.fuel-r4__energy'))
           && q('.fuel-r4__overview')?.contains(q('.fuel-r4__water'))
           && q('.fuel-r4__details')?.contains(q('.fuel-r4__meal-panel'))
-          && r('.fuel-r4__water').right <= r('.food-v2__quick').left)
+          && r('.fuel-r4__water').right <= r('.fuel-r4__meal-panel').left)
         const overview = q('.fuel-r4__overview')
         const details = q('.fuel-r4__details')
         const computed = w.getComputedStyle(overview)
@@ -101,11 +101,11 @@ if (params.has('fixture')) {
             content: overview.scrollHeight, height: overview.clientHeight }))
         details.style.paddingBottom = '1500px'
         const beforeLeft = r('.fuel-r4__energy').top
-        const beforeRight = r('.food-v3__search').top
+        const beforeRight = r('.fuel-r4__meal-panel').top
         q('.app__body').scrollTop = 650
         await settle()
         const leftTravel = beforeLeft - r('.fuel-r4__energy').top
-        const rightTravel = beforeRight - r('.food-v3__search').top
+        const rightTravel = beforeRight - r('.fuel-r4__meal-panel').top
         check(label + ' one page gesture scrolls left and right together',
           q('.app__body').scrollTop >= 500 &&
           Math.abs(leftTravel - rightTravel) <= 3 &&
@@ -137,10 +137,11 @@ if (params.has('fixture')) {
       d.querySelector('.train-r4__back')?.click(); await settle()
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
-      check(width + ' ordinary phone stacks hero, macros, water, and food actions',
+      check(width + ' ordinary phone puts primary meal entry after Water, before diary',
         f('.food-v2__energy').top < f('.food-v2__macro-card').top
         && f('.food-v2__macro-card').top < f('.food-v2__water').top
-        && f('.food-v2__water').top < f('.food-v2__quick').top)
+        && f('.food-v2__water').top < f('.fuel-r4__meal-panel').top
+        && f('.fuel-r4__meal-panel').top < f('.fuel-diary').top)
       check(width + ' ordinary phone Fuel does not overflow',
         d.querySelector('.app__body').scrollWidth <= d.querySelector('.app__body').clientWidth + 1)
     }

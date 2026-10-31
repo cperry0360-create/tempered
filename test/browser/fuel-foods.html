@@ -27,9 +27,9 @@
     for (const [date, description, calories, protein, n] of meals)
       for (let i = 0; i < n; i += 1) await t.daily.addNutrition(date, { description, calories, protein }, { loggedAt: `${date}T1${i}:00:00.000Z` })
     await t.app.show('fuel'); await settle()
-    check('frequent foods appear just below the three quick actions',
+    check('frequent foods remain available below the entry form',
       qa('[data-recent-food]').length === 4 &&
-      q('.food-v2__recents').compareDocumentPosition(q('.fuel-r4__meal-panel'))
+      q('.fuel-r4__meal-panel').compareDocumentPosition(q('.food-v2__recents'))
         & Node.DOCUMENT_POSITION_FOLLOWING)
     const goal = nutrient => Number(q('[data-nutrient="' + nutrient + '"] small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))
     const targetKcal = Number(q('.food-v2__energy small')?.textContent.match(/[\d,]+/)?.[0]?.replaceAll(',', ''))

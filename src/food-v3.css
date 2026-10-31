@@ -259,3 +259,31 @@ html[data-layout="duo"] .app__body { width:calc(100% - var(--duo-rail-width)); }
     box-sizing:border-box; width:100%; align-self:stretch;
   }
 }
+
+
+/* Fuel: keep the existing estimate tools adjacent to Add Meal rather
+   than repeating them in another quick-action strip. */
+.screen--fuel-r4 .nutrition-meal-form__tools {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;
+}
+.screen--fuel-r4 .nutrition-meal-form__tools > * {
+  box-sizing:border-box; display:flex; align-items:center; justify-content:center;
+  gap:7px; min-width:0; min-height:46px; padding:9px 7px;
+  border:1px solid var(--food-v2-line); border-radius:12px;
+  font-size:12px; font-weight:750; text-align:center;
+  text-decoration:none; cursor:pointer;
+}
+.screen--fuel-r4 .nutrition-meal-form__tools .nutrition-meal-form__paste,
+.screen--fuel-r4 .nutrition-meal-form__tools .nutrition-meal-form__photo {
+  background:var(--food-v2-panel-2); color:var(--food-v2-text);
+}
+.screen--fuel-r4 .nutrition-panel__add,
+.screen--fuel-r4 .nutrition-meal-form { scroll-margin-top:80px; }
+
+
+/* On a phone / folded Duo, the food entry area comes before the seven-day
+   diary review calendar. Keep calorie, macro and Water summaries above both. */
+@media (max-width:739px) {
+  .screen--fuel-r4 .food-v2__details { order:4; }
+  .screen--fuel-r4 .fuel-diary { order:5; }
+}

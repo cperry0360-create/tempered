@@ -47,7 +47,7 @@
     // Browser harness must not actually leave Tempered. Intercept only the link's
     // default navigation; the photo action still runs its copy handler.
     photoLink?.addEventListener('click', event => event.preventDefault(), { once: true })
-    q('[data-food-action="photo"]')?.click()
+    photoLink?.click()
     await settle(100)
     check('meal-photo action copies the prompt without using the share sheet',
       copiedPrompt?.includes('TEMPERED_CALORIES=') && sharedPrompt === null
@@ -79,8 +79,19 @@
     check('old logged but unclosed days are retained in the review queue',
       Number(q('[data-open-nutrition-days]')?.dataset.openNutritionDays) === 2)
 
-    check('three useful actions without duplicate repeat buttons', qa('[data-food-action]').length === 3)
-    check('quick Add meal focuses the existing entry field', (()=>{ q('[data-food-action="add"]')?.click(); return document.activeElement === q('[data-entry="nutrition_description"]') })())
+    check('redundant action tiles removed', qa('[data-food-action]').length === 0)
+    check('header Add food focuses the primary form', (() => {
+      q('[data-food-header-add]')?.click()
+      return document.activeElement === q('[data-entry="nutrition_description"]')
+    })())
+    const entryCard = q('.screen--fuel .nutrition-panel__add')
+    const mealsCard = q('.screen--fuel .nutrition-panel__meals')
+    check('entry card appears before today\'s meal history',
+      Boolean(entryCard && mealsCard && (entryCard.compareDocumentPosition(mealsCard) & Node.DOCUMENT_POSITION_FOLLOWING)))
+    check('frequent meals are secondary to entry',
+      Boolean(q('.fuel-r4__meal-panel')?.compareDocumentPosition(q('.food-v2__recents')) & Node.DOCUMENT_POSITION_FOLLOWING))
+    check('AI tools appear ahead of input fields',
+      Boolean(q('.nutrition-meal-form__tools')?.compareDocumentPosition(q('.nutrition-meal-form__fields')) & Node.DOCUMENT_POSITION_FOLLOWING))
     check('recent meals are reusable without a second form', Boolean(q('[data-recent-food="Protein shake"]')))
     check('calorie, macros, water, diary and meal entry are on the Food screen',
       Boolean(q('.food-v2__energy')) && Boolean(q('.food-v2__macro-card'))
@@ -88,12 +99,32 @@
       && Boolean(q('.food-v2__details [data-nutrition-form]')))
     check('only one Food dashboard', qa('.food-v2__layout').length === 1)
 
+    let importScrollCount = 0
+    const originalScroll = form.scrollIntoView
+    form.scrollIntoView = () => { importScrollCount++ }
+    Object.defineProperty(navigator, 'clipboard', { configurable: true,
+      value: { async writeText() {}, async readText() {
+        return ['TEMPERED_DESCRIPTION=Imported lunch', 'TEMPERED_CALORIES=540',
+          'TEMPERED_PROTEIN=40', 'TEMPERED_CARBS=48', 'TEMPERED_FAT=18',
+          'TEMPERED_FIBER=8'].join(String.fromCharCode(10))
+      } },
+    })
+    q('.screen--fuel [data-calorie-ai="paste"]')?.click()
+    await settle(130)
+    check('AI import fills and reveals the actual meal-entry form',
+      form.querySelector('[data-entry="nutrition_description"]')?.value === 'Imported lunch'
+      && form.querySelector('[data-entry="nutrition_calories"]')?.value === '540'
+      && importScrollCount === 1)
+    form.scrollIntoView = originalScroll
     type(form.querySelector('[data-entry="nutrition_description"]'), 'Turkey sandwich')
     q('.fuel-r4__water-actions button')?.click(); await settle(300)
     check('half-typed meal survives a Fuel refresh (water tap)', q('.screen--fuel [data-entry="nutrition_description"]')?.value === 'Turkey sandwich')
 
     type(q('.screen--fuel [data-entry="nutrition_calories"]'), '740')
     type(q('.screen--fuel [data-entry="nutrition_protein"]'), '38')
+    type(q('.screen--fuel [data-entry="nutrition_carbs"]'), '')
+    type(q('.screen--fuel [data-entry="nutrition_fat"]'), '')
+    type(q('.screen--fuel [data-entry="nutrition_fiber"]'), '')
     q('.screen--fuel [data-action="nutrition-log"]')?.click(); await settle(500)
     let day = await t.daily.dayLog('2026-10-01')
     check('Add meal logs to today', day.calories === 1040 && day.proteinGrams === 50, `${day.calories}/${day.proteinGrams}`)

@@ -462,6 +462,7 @@ export function installCalorieAiRuntime() {
       if (description && parsed.description) description.value = parsed.description
       form.dataset.source = 'ai'
       setScreenStatus('Nutrition values pasted; review them before adding the meal.', 'ready')
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } catch {
       first.focus()
       setScreenStatus('Clipboard access was blocked; paste or enter the values manually.', 'manual')
@@ -617,17 +618,20 @@ export function installCalorieAiRuntime() {
     status.dataset.nutritionStatus = 'true'
     status.setAttribute('role', 'status')
     status.textContent = 'Enter any details you know; all nutrition fields are optional.'
-    const actions = document.createElement('div')
-    actions.className = 'nutrition-meal-form__actions'
+    const tools = document.createElement('div')
+    tools.className = 'nutrition-meal-form__tools'
     const paste = makeButton('nutrition-meal-form__paste', 'Import copied nutrition', 'Read copied nutrition result for review')
     paste.dataset.calorieAi = 'paste'
     paste.onclick = () => pasteNutrition(form, inputs)
     const add = makeButton('nutrition-meal-form__add', 'Add meal', 'Add meal to Nutrition history')
     add.type = 'submit'
     add.dataset.action = 'nutrition-log'
-    if (embedded) actions.append(promptButton('nutrition-meal-form__photo'))
-    actions.append(paste, add)
-    form.append(formTitle, fields, status, actions)
+    if (embedded) tools.append(promptButton('nutrition-meal-form__photo'))
+    tools.append(paste)
+    const actions = document.createElement('div')
+    actions.className = 'nutrition-meal-form__actions'
+    actions.append(add)
+    form.append(formTitle, tools, fields, status, actions)
     form.onsubmit = async (event) => {
       event.preventDefault()
       const values = {
@@ -683,9 +687,8 @@ export function installCalorieAiRuntime() {
       const mealsCard = document.createElement('section')
       mealsCard.className = 'fuel-r4__card nutrition-panel__meals'
       mealsCard.append(historySection, undo, dayStatus, earlier)
-      // The diary-first right pane shows recent entries before the detailed
-      // input form. Quick entry tiles above can focus the same retained form.
-      panel.append(mealsCard, addCard)
+      // Keep Add Meal above today's history.
+      panel.append(addCard, mealsCard)
       return panel
     }
     screen.append(header, datePicker, totals, dayStatus, suggestionSection, form, historySection, undo)

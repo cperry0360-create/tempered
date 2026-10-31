@@ -213,35 +213,6 @@ export function createFuelScreen({ storage, daily, clock }) {
     } else focusMealEntry()
   }
 
-  function actionButton(glyph, title, subtitle, callback, data) {
-    return el('button.food-v2__action', {
-      type: 'button', dataset: { foodAction: data }, onclick: callback,
-      'aria-label': title + '. ' + subtitle,
-    }, [
-      el('span.food-v2__action-glyph', {}, [icon(glyph)]),
-      el('span.food-v2__action-text', {}, [
-        el('strong', { text: title }),
-      ]),
-    ])
-  }
-
-  function quickActions() {
-    return el('section.food-v2__quick', { 'aria-label': 'Quick food logging' }, [
-      el('div.food-v2__section-title', {}, [
-        el('h2', { text: 'Add food' }),
-      ]),
-      el('div.food-v2__quick-grid', {}, [
-        actionButton('plus', 'Add manually', 'Enter food + macros', focusMealEntry, 'add'),
-        actionButton('food', 'Meal photo', 'ChatGPT estimate', () => {
-          mealPanel.querySelector('[data-calorie-ai="prompt"]')?.click()
-        }, 'photo'),
-        actionButton('down', 'Import estimate', 'Paste nutrition', () => {
-          mealPanel.querySelector('[data-calorie-ai="paste"]')?.click()
-        }, 'import'),
-      ]),
-    ])
-  }
-
   function recentFoodsStrip() {
     const foods = model.foods.top.slice(0, 4)
     if (foods.length === 0) return null
@@ -537,7 +508,6 @@ export function createFuelScreen({ storage, daily, clock }) {
     ])
     const diary = diaryCalendar()
     const recents = recentFoodsStrip()
-    const actions = quickActions()
     const finish = el('section.food-v2__day-finish', { dataset: { dayClosed: String(closed) } }, [
       el('div', {}, [
         el('strong', { text: closed ? 'Today is complete' : 'Your food diary is open' }),
@@ -558,10 +528,10 @@ export function createFuelScreen({ storage, daily, clock }) {
           diary,
         ]),
         el('div.fuel-r4__details.food-v2__details', {}, [
-          foodsCard(),
-          actions,
-          recents,
+          // The actual entry form is the primary action.
           mealPanel,
+          recents,
+          foodsCard(),
           finish,
           ...openDaysCard(),
         ]),

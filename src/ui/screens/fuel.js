@@ -12,6 +12,76 @@ export function createFuelScreen({ storage, daily, clock }) {
   let logSheetOpen = false
   let logSheetMode = 'quick'
   let secondaryOpen = false
+  let screenView = 'home'
+  let selectedEntry = null
+  let libraryQuery = ''
+  let libraryFilter = 'all'
+  let cart = []
+  let cartSaving = false
+  let cartError = ''
+
+  function foodIllustration(label = '') {
+    const name = String(label).toLowerCase()
+    if (/egg/.test(name)) return '🥚'
+    if (/yogurt|oat|granola|cereal/.test(name)) return '🥣'
+    if (/shake|smoothie|milk|coffee/.test(name)) return '🥤'
+    if (/chicken|turkey|steak|beef|pork/.test(name)) return '🍗'
+    if (/salad|vegetable/.test(name)) return '🥗'
+    if (/rice|bowl|pasta|chili/.test(name)) return '🍲'
+    if (/sandwich|wrap|bread/.test(name)) return '🥪'
+    if (/fruit|banana|apple|berry/.test(name)) return '🍎'
+    if (/pizza/.test(name)) return '🍕'
+    return '🍽️'
+  }
+  function showHome() {
+    screenView = 'home'
+    selectedEntry = null
+    render()
+  }
+  function showLibrary(filter = 'all') {
+    screenView = 'library'
+    libraryFilter = filter
+    render()
+  }
+  function showEntryDetail(entry) {
+    selectedEntry = entry
+    screenView = 'detail'
+    render()
+  }
+  function addToCart(food) {
+    const existing = cart.find(item => item.food.description === food.description)
+    if (existing) existing.quantity += 1
+    else cart.push({ id: String(food.description), food, quantity: 1 })
+    cartError = ''
+    render()
+  }
+  function changeCartQuantity(id, delta) {
+    cart = cart.map(item => item.id === id ? {...item, quantity: item.quantity + delta} : item)
+      .filter(item => item.quantity > 0)
+    cartError = ''
+    render()
+  }
+  async function saveCart() {
+    if (cartSaving || !cart.length) return
+    cartSaving = true
+    cartError = ''
+    try {
+      // Each completed write immediately leaves the cart. A later failed
+      // write cannot make the next tap double-log successful items.
+      while (cart.length) {
+        const item = cart[0]
+        const { count, lastLoggedAt, ...values } = item.food
+        await daily.addNutrition(clock.today(), { ...values, portion: item.quantity })
+        cart.shift()
+      }
+      screenView = 'home'
+      await refresh()
+      window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
+    } catch {
+      cartError = 'Some foods could not be logged. Saved foods were removed from this cart.'
+      render()
+    } finally { cartSaving = false }
+  }
   let foodQuery = ''
   let showAllFoods = false
   let justAdded = null
@@ -460,7 +530,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       svg,
       el('div.fuel-r4__ring-copy', {}, [
         el('strong', { text: Math.round(remaining).toLocaleString() }),
-        el('span', { text: 'kcal left' }),
+        el('span', { text: 'kcal consumed' }),
       ]),
     ])
   }
@@ -718,6 +788,6 @@ export function createFuelScreen({ storage, daily, clock }) {
   }
 
   async function refresh() { await load(); render() }
-  function deactivate() { logSheetOpen = false }
+  function deactivate() { logSheetOpen = false; screenView = 'home'; selectedEntry = null }
   return { root, refresh, deactivate }
 }

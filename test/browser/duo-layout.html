@@ -137,10 +137,11 @@ if (params.has('fixture')) {
       d.querySelector('.train-r4__back')?.click(); await settle()
       d.querySelector('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
       const f = selector => rect(d.querySelector(selector))
-      check(width + ' ordinary phone stacks hero, macros, water, and food actions',
+      check(width + ' ordinary phone puts primary meal entry after Water, before diary',
         f('.food-v2__energy').top < f('.food-v2__macro-card').top
         && f('.food-v2__macro-card').top < f('.food-v2__water').top
-        && f('.food-v2__water').top < f('.food-v2__quick').top)
+        && f('.food-v2__water').top < f('.fuel-r4__meal-panel').top
+        && f('.fuel-r4__meal-panel').top < f('.fuel-diary').top)
       check(width + ' ordinary phone Fuel does not overflow',
         d.querySelector('.app__body').scrollWidth <= d.querySelector('.app__body').clientWidth + 1)
     }

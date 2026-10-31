@@ -179,9 +179,9 @@
       // Food 2.0 keeps one generous launch target; the original form lives in its sheet.
       installCalorieAiRuntime(); await tempered.app.show('fuel'); await settle(200)
       thumbSized(q('.screen--fuel [data-food-open-log]'), 'Fuel meal action')
-      q('.screen--fuel [data-food-open-log]')?.click(); await settle(80)
-      check('Fuel logging opens its original meal form', Boolean(q('.food-next__sheet [data-action="nutrition-log"]')))
-      thumbSized(q('.food-next__sheet [data-action="nutrition-log"]'), 'Add meal in sheet')
+      q('.screen--fuel .forge-food__nav button:last-child')?.click(); await settle(80)
+      check('Quick Calories opens its original meal form', Boolean(q('.forge-food__sheet [data-action="nutrition-log"]')))
+      thumbSized(q('.forge-food__sheet [data-action="nutrition-log"]'), 'Add meal in sheet')
 
       await tab('history', '.screen--history')
       const range = q('.progress-range__select')

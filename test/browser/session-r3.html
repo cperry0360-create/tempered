@@ -64,6 +64,7 @@
     await tempered.app.show('train')
     await settle()
     q('[data-programday="tuesday"]')?.click()
+        q('[data-start-preview]')?.click()
     await settle(160)
 
     const card = q('[data-exercise="lat_pulldown"]')

@@ -129,6 +129,7 @@ export async function seedPrograms(storage, catalogue, clock) {
   const stateBefore = await storage.getAll('programState')
   const stateById = new Map(stateBefore.map((state) => [state.programId, state]))
   const fresh = catalogue.programs.filter((p) => !stored.has(p.id))
+  const upgradedSeedPrograms = new Set()
 
   /**
    * Seeded upgrades carry forward only explicit starting weights. Completed
@@ -174,6 +175,7 @@ export async function seedPrograms(storage, catalogue, clock) {
       })
     } else if (previous.source !== 'user'
       && (previous.schemaVersion ?? 1) < (latest.schemaVersion ?? 1)) {
+      upgradedSeedPrograms.add(latest.id)
       const revisionNumber = (Number.isInteger(previous.revisionNumber) && previous.revisionNumber > 0
         ? previous.revisionNumber
         : 1) + 1
@@ -224,7 +226,11 @@ export async function seedPrograms(storage, catalogue, clock) {
   const state = await storage.getAll('programState')
   for (const row of state) {
     const program = stored.get(row.programId)
-    const revisionId = row.revisionId ?? program?.currentRevisionId
+    // Keep the program's start date but use its newly seeded revision for
+    // future sessions. Previous workout logs retain their original revision.
+    const revisionId = upgradedSeedPrograms.has(row.programId)
+      ? program?.currentRevisionId
+      : (row.revisionId ?? program?.currentRevisionId)
     const next = revisionId && row.revisionId !== revisionId
       ? { ...row, revisionId }
       : row

@@ -238,7 +238,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   async function prepareSlot(slot, week, program, selectedMethod = null) {
     const exercises = await exerciseMap()
     const exercise = exercises.get(slot.exerciseId)
-    const method = methodForExercise(exercise, selectedMethod)
+    const method = methodForExercise(exercise, selectedMethod ?? slot.method ?? null)
     const scoped = methodsForExercise(exercise).length > 1 ? method : null
     const last = await lastPerformance(slot.exerciseId, scoped)
     const record = scoped ? await methodRecord(slot.exerciseId, method) : (await recordMap()).get(slot.exerciseId) ?? null

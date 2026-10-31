@@ -535,10 +535,10 @@
     },
     {
       "id": "beach-cut-2026",
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "name": "Beach Cut · Thanksgiving 2026",
       "weeks": 4,
-      "note": "November 2–26: moderate fat loss while keeping strength. Aim 1–2 reps in reserve, easy walking/cardio on rest days. Avoid crash dieting or dehydration. Original November Physique Sprint remains saved.",
+      "note": "November 2–26: moderate fat loss while maintaining strength. Aim for 1–2 reps in reserve. After lifting, optionally finish with 5–10 minutes of easy Zone 2-style cardio (incline walk or bike, conversational pace). Cardio does not count as working sets. Avoid crash dieting or dehydration. Original November Physique Sprint remains saved.",
       "weeklyTargets": {},
       "days": [
         {
@@ -631,7 +631,8 @@
               "setup": "High pulley + rope or bar",
               "cue": "Keep elbows pinned and fully extend the arms."
             }
-          ]
+          ],
+          "finisher": "Optional finisher · 5–10 min easy Zone 2-style cardio after lifting (incline walk or bike; conversational pace). Not a lifting set."
         },
         {
           "id": "tuesday",
@@ -683,7 +684,7 @@
             },
             {
               "exerciseId": "rear_delt_fly_db",
-              "name": "Dumbbell Rear-Delt Fly",
+              "name": "Cable Rear-Delt Fly",
               "sets": 2,
               "repMin": 12,
               "repMax": 20,
@@ -692,8 +693,9 @@
                 60,
                 90
               ],
-              "setup": "Bent-over / chest-supported",
-              "cue": "Open the arms wide without shrugging."
+              "setup": "Dual adjustable cables / crossover",
+              "cue": "With a slight elbow bend, open the arms out and back. Avoid shrugging and control the return.",
+              "method": "Cable"
             },
             {
               "exerciseId": "incline_curl_db",
@@ -723,7 +725,8 @@
               "setup": "Standing or seated",
               "cue": "Use a neutral grip and keep the upper arms quiet."
             }
-          ]
+          ],
+          "finisher": "Optional finisher · 5–10 min easy Zone 2-style cardio after lifting (incline walk or bike; conversational pace). Not a lifting set."
         },
         {
           "id": "wednesday",
@@ -805,7 +808,8 @@
                 }
               ]
             }
-          ]
+          ],
+          "finisher": "Optional finisher · 5–10 min easy Zone 2-style cardio after lifting (incline walk or bike; conversational pace). Not a lifting set."
         },
         {
           "id": "thursday",
@@ -870,8 +874,8 @@
               "cue": "Reach, pull, then squeeze the middle back."
             },
             {
-              "exerciseId": "lateral_raise_db",
-              "name": "Dumbbell Lateral Raise",
+              "exerciseId": "lateral_raise",
+              "name": "Cable Lateral Raise",
               "sets": 3,
               "repMin": 15,
               "repMax": 25,
@@ -880,12 +884,13 @@
                 60,
                 90
               ],
-              "setup": "Standing",
-              "cue": "Smooth reps with tension on the side delts."
+              "setup": "Low cable pulley / single handle",
+              "cue": "Raise the arm out to the side with a slight elbow bend; control the lowering.",
+              "method": "Cable"
             },
             {
               "exerciseId": "rear_delt_fly_db",
-              "name": "Dumbbell Rear-Delt Fly",
+              "name": "Cable Rear-Delt Fly",
               "sets": 2,
               "repMin": 15,
               "repMax": 25,
@@ -894,8 +899,9 @@
                 60,
                 90
               ],
-              "setup": "Bent-over / chest-supported",
-              "cue": "Open wide without shrugging."
+              "setup": "Dual adjustable cables / crossover",
+              "cue": "With a slight elbow bend, open the arms out and back. Avoid shrugging and control the return.",
+              "method": "Cable"
             },
             {
               "exerciseId": "incline_curl_db",
@@ -925,7 +931,8 @@
               "setup": "High pulley + rope or bar",
               "cue": "Lock out hard and control the return."
             }
-          ]
+          ],
+          "finisher": "Optional finisher · 5–10 min easy Zone 2-style cardio after lifting (incline walk or bike; conversational pace). Not a lifting set."
         },
         {
           "id": "saturday",
@@ -934,8 +941,8 @@
           "focus": "No leg work",
           "exercises": [
             {
-              "exerciseId": "lateral_raise_db",
-              "name": "Dumbbell Lateral Raise",
+              "exerciseId": "lateral_raise",
+              "name": "Cable Lateral Raise",
               "sets": 3,
               "repMin": 15,
               "repMax": 25,
@@ -944,12 +951,13 @@
                 60,
                 90
               ],
-              "setup": "Standing",
-              "cue": "Keep the side delts loaded throughout the set."
+              "setup": "Low cable pulley / single handle",
+              "cue": "Raise the arm out to the side with a slight elbow bend; control the lowering.",
+              "method": "Cable"
             },
             {
               "exerciseId": "rear_delt_fly_db",
-              "name": "Dumbbell Rear-Delt Fly",
+              "name": "Cable Rear-Delt Fly",
               "sets": 2,
               "repMin": 15,
               "repMax": 25,
@@ -958,8 +966,9 @@
                 60,
                 90
               ],
-              "setup": "Bent-over / chest-supported",
-              "cue": "Rear delts and upper back. Avoid shrugging."
+              "setup": "Dual adjustable cables / crossover",
+              "cue": "With a slight elbow bend, open the arms out and back. Avoid shrugging and control the return.",
+              "method": "Cable"
             },
             {
               "exerciseId": "incline_curl_db",
@@ -1031,7 +1040,8 @@
               "setup": "Upright bench",
               "cue": "Finish with clean reps and stop before form breaks down."
             }
-          ]
+          ],
+          "finisher": "Optional finisher · 5–10 min easy Zone 2-style cardio after lifting (incline walk or bike; conversational pace). Not a lifting set."
         }
       ],
       "goal": "cut",

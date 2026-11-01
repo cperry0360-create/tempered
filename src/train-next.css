@@ -1,0 +1,184 @@
+/* LFMS Train, same approved visual language as Food 2.0 and Today 2.0.
+   Presentation scoped to .train--fuel-style; existing workflow and data intact. */
+.train--fuel-style {
+  --tr2-bg:var(--food-v2-deep);
+  --tr2-panel:var(--food-v2-panel);
+  --tr2-raised:var(--food-v2-panel-2);
+  --tr2-line:var(--food-v2-line);
+  --tr2-text:var(--food-v2-text);
+  --tr2-blue:var(--food-v2-blue);
+  --tr2-light:var(--food-v2-blue-light);
+  --tr2-muted:var(--food-v2-muted);
+  min-width:0;display:grid;align-content:start;gap:13px;
+  padding:13px 13px max(80px,env(safe-area-inset-bottom,0px));
+  background:radial-gradient(ellipse 66% 200px at 42% -60px,var(--food-v2-beach-base),transparent 95%),var(--tr2-bg);
+  color:var(--tr2-text);
+}
+.train--fuel-style .train2__heading {
+  position:relative;z-index:2;top:auto;
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:43px;background:transparent;border:0;
+  padding:0;gap:12px;min-width:0;
+}
+.train--fuel-style .train2__brand {display:flex;align-items:center;gap:8px;min-width:0}
+.train--fuel-style .train2__logo {width:44px;height:36px;object-fit:contain;flex:none}
+.train--fuel-style .train2__brand>div {display:grid;gap:2px;min-width:0}
+.train--fuel-style .train2__brand h1 {margin:0;color:var(--tr2-text);font-size:25px;line-height:1;letter-spacing:-.04em;font-weight:850}
+.train--fuel-style .train2__brand small {font-size:10px;letter-spacing:.1em;color:var(--tr2-light);font-weight:790}
+.train--fuel-style .plate-calculator-link {
+  border-radius:13px;border:1px solid var(--tr2-line);
+  background:var(--tr2-raised);color:var(--tr2-light);
+  width:44px;height:44px;
+}
+.train--fuel-style .train2__pills {
+  display:flex;gap:7px;align-items:center;
+  min-width:0;overflow-x:auto;scrollbar-width:none;
+  padding:0 0 2px;
+}
+.train--fuel-style .train2__pills::-webkit-scrollbar {display:none}
+.train--fuel-style .train2__pills button {
+  display:inline-flex;align-items:center;gap:7px;
+  min-height:35px;flex:none;white-space:nowrap;
+  border:1px solid var(--tr2-line);border-radius:30px;
+  padding:0 11px;background:linear-gradient(var(--food-v2-beach-base),var(--tr2-raised));
+  color:var(--tr2-text);font-size:11px;font-weight:760;
+}
+.train--fuel-style .train2__pills .icon {width:15px;height:15px;color:var(--tr2-light)}
+.train--fuel-style button:focus-visible {outline:2px solid var(--tr2-light);outline-offset:2px}
+
+/* Live training numbers + pair of radial progress tracks, modeled after Fuel. */
+.train--fuel-style .train2__hero {
+  display:grid;grid-template-columns:minmax(105px,.85fr) minmax(125px,1fr) minmax(176px,1.4fr);
+  align-items:center;gap:13px;min-width:0;
+  padding:9px 5px 12px;
+  border-top:1px solid var(--tr2-line);
+  border-bottom:1px solid var(--tr2-line);
+}
+.train--fuel-style .train2__numbers {display:grid;gap:21px;min-width:0}
+.train--fuel-style .train2__metric {
+  border-left:2px solid var(--tr2-text);padding-left:11px;
+  min-width:0;display:grid;gap:3px;
+}
+.train--fuel-style .train2__metric--blue {border-color:var(--tr2-blue)}
+.train--fuel-style .train2__metric small {font-size:9px;letter-spacing:.075em;color:var(--tr2-muted);font-weight:760}
+.train--fuel-style .train2__metric strong {
+  font-size:clamp(29px,4vw,43px);
+  font-variant-numeric:tabular-nums;line-height:1;
+  font-weight:860;letter-spacing:-.065em;color:var(--tr2-text);
+}
+.train--fuel-style .train2__metric span {font-size:11px;color:var(--tr2-text);line-height:1.3}
+.train--fuel-style .train2__rings {display:grid;justify-items:center;min-width:0;gap:1px}
+.train--fuel-style .train2__rings svg {width:100%;height:auto;max-width:165px;overflow:visible}
+.train--fuel-style .train2__rings>small {font-size:8px;letter-spacing:.065em;color:var(--tr2-muted);font-weight:760;white-space:nowrap}
+.train--fuel-style .train2__circle--days {stroke:var(--tr2-text)}
+.train--fuel-style .train2__circle--sets {stroke:var(--tr2-blue)}
+.train--fuel-style .train2__circle--days.train2__circle--track {stroke:var(--tr2-line)}
+.train--fuel-style .train2__circle--sets.train2__circle--track {stroke:var(--food-v2-beach-base)}
+.train--fuel-style .train2__bars {display:grid;gap:11px;min-width:0}
+.train--fuel-style .train2__barline {
+  display:grid;grid-template-columns:46px minmax(0,1fr) 50px;
+  align-items:center;gap:5px;min-width:0;
+}
+.train--fuel-style .train2__barline>span {font-size:10px;font-weight:780;color:var(--tr2-text)}
+.train--fuel-style .train2__barline>small {text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:10px;color:var(--tr2-muted)}
+.train--fuel-style .train2__bartrack {height:7px;border-radius:50px;overflow:hidden;background:var(--tr2-panel)}
+.train--fuel-style .train2__bartrack i {display:block;height:100%;border-radius:inherit;background:var(--tr2-blue)}
+.train--fuel-style .train2__summary {font-size:10px;line-height:1.4;color:var(--tr2-muted)}
+
+/* Leave current training interactions in place, unify their visual treatment. */
+.train--fuel-style .train-r4__dashboard {min-width:0;gap:12px}
+.train--fuel-style .train-r4__column--primary,
+.train--fuel-style .train-r4__column--secondary {min-width:0;gap:12px}
+.train--fuel-style .train-r4__card {
+  min-width:0;background:linear-gradient(154deg,var(--tr2-raised),var(--tr2-panel));
+  color:var(--tr2-text);border:1px solid var(--tr2-line);border-radius:16px;
+  padding:14px;gap:10px;box-shadow:none;
+}
+.train--fuel-style .train-r4__card h2 {font-size:clamp(17px,2.7vw,23px);color:var(--tr2-text);letter-spacing:-.026em;font-weight:820}
+.train--fuel-style .train-r4__card p {font-size:12px;line-height:1.45;color:var(--tr2-muted)}
+.train--fuel-style .train-r4__eyebrow {font-size:10px;letter-spacing:.095em;color:var(--tr2-light);font-weight:810}
+.train--fuel-style .train-r4__program[data-active-program=true] {
+  border-color:var(--tr2-line);border-radius:18px;padding:16px;
+  background:radial-gradient(ellipse at 92% 4%,var(--food-v2-beach-base),transparent 80%),var(--tr2-raised);
+  box-shadow:none;
+}
+.train--fuel-style .train-r4__program[data-active-program=true] h2 {
+  font-size:clamp(21px,3vw,30px);letter-spacing:-.04em;line-height:1.17;color:var(--tr2-text);
+}
+.train--fuel-style .train-r4__program-subtitle,
+.train--fuel-style .train-r4__program-tip,
+.train--fuel-style .train-r4__active-since {
+  font-size:11px;color:var(--tr2-muted);line-height:1.45;
+}
+.train--fuel-style .train-r4__segments {gap:5px;padding:2px 0}
+.train--fuel-style .train-r4__segment {height:7px;border-radius:99px;background:var(--tr2-line)}
+.train--fuel-style .train-r4__segment[data-filled=true],
+.train--fuel-style .train-r4__program[data-active-program=true] .train-r4__segment[data-filled=true] {background:var(--tr2-blue)}
+.train--fuel-style .train-r4__row {color:var(--tr2-text);font-size:12px;min-height:46px;border-color:var(--tr2-line)}
+.train--fuel-style .train-r4__row-copy strong {font-size:13px;font-weight:800;line-height:1.3;color:var(--tr2-text)}
+.train--fuel-style .train-r4__row-copy small,
+.train--fuel-style .train-r4__session-movements {font-size:10.5px;line-height:1.45;color:var(--tr2-muted)}
+.train--fuel-style .train-r4__chevron {color:var(--tr2-light)}
+.train--fuel-style .train-r4__cardio-shortcut {background:var(--food-v2-beach-base);border:1px solid var(--tr2-line);border-radius:12px;color:var(--tr2-text);min-height:50px}
+.train--fuel-style .train-r4__cardio-shortcut strong {font-size:12px}
+.train--fuel-style .train-r4__cardio-shortcut small {font-size:10px;color:var(--tr2-muted)}
+.train--fuel-style .train-r4__next {border-color:var(--tr2-line)}
+.train--fuel-style .train-r4__next h2 {color:var(--tr2-text)}
+.train--fuel-style .train-r4__secondary,
+.train--fuel-style .train-r4__quick-start,.train--fuel-style .train-r4__start {
+  background:var(--tr2-blue);color:var(--tr2-bg);
+  border-radius:12px;border:0;font-size:12px;font-weight:820;min-height:46px;
+}
+.train--fuel-style .train-r4__quick-start {background:var(--food-v2-beach-base);color:var(--tr2-light);border:1px solid var(--tr2-line);min-width:66px}
+.train--fuel-style .train-r4__rhythm-card {
+  background:linear-gradient(160deg,var(--tr2-raised),var(--tr2-panel));
+}
+.train--fuel-style .train-r4__rhythm-meta {color:var(--tr2-light);font-size:11px;font-weight:760}
+.train--fuel-style .train-r4__weekday {color:var(--tr2-muted);font-size:10px}
+.train--fuel-style .train-r4__day {
+  width:31px;height:31px;border-radius:10px;
+  border:1px solid var(--tr2-line);background:var(--tr2-panel);
+  color:var(--tr2-muted);font-size:11px;font-weight:750;
+}
+.train--fuel-style .train-r4__day[data-trained=true] {border-color:var(--tr2-blue);color:var(--tr2-text)}
+.train--fuel-style .train-r4__day[data-qualified=true] {background:var(--food-v2-recent-base);color:var(--tr2-light);border-color:var(--tr2-blue)}
+.train--fuel-style .train-r4__day[data-today=true] {outline:1px solid var(--tr2-light);outline-offset:1px}
+.train--fuel-style .train-r4__session-entry {border-color:var(--tr2-line);gap:6px}
+.train--fuel-style .train-r4__session-row {min-width:0}
+.train--fuel-style .train-r4__session-row strong {font-size:12.5px;font-weight:800;color:var(--tr2-text)}
+.train--fuel-style .train-r4__session-row small {font-size:10px;color:var(--tr2-muted)}
+.train--fuel-style .train-r4__preview-index {background:var(--food-v2-beach-base);color:var(--tr2-light)}
+.train--fuel-style .train-r4__preview-exercise {border-color:var(--tr2-line)}
+.train--fuel-style .train-r4__last-trained {font-size:10px;color:var(--tr2-light)}
+.train--fuel-style .train-r4__subheader {background:var(--tr2-bg)}
+.train--fuel-style .train-r4__subheader .screen__title {color:var(--tr2-text);font-size:23px}
+.train--fuel-style .train-r4__back {color:var(--tr2-light)}
+.train--fuel-style .libraryrow {background:var(--tr2-raised);color:var(--tr2-text);border-color:var(--tr2-line)}
+.train--fuel-style .search {background:var(--tr2-raised);color:var(--tr2-text);border:1px solid var(--tr2-line)}
+.train--fuel-style .train-r5__preview-hero {background:var(--tr2-raised);border-color:var(--tr2-line)}
+.train--fuel-style .train-r5__preview-summary h2 {color:var(--tr2-text)}
+
+/* The right-hand Duo tab rail belongs to the main app and remains untouched. */
+@media(min-width:740px){
+  html[data-layout=duo] .train--fuel-style .train-r4__dashboard {
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.04fr);gap:13px;align-items:start;
+  }
+}
+@media(max-width:615px){
+  .train--fuel-style .train2__hero {grid-template-columns:minmax(99px,.86fr) minmax(126px,1fr);gap:8px 10px}
+  .train--fuel-style .train2__bars {
+    grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+    border-top:1px solid var(--tr2-line);padding-top:10px;
+  }
+  .train--fuel-style .train2__barline {grid-template-columns:minmax(0,1fr);gap:5px}
+  .train--fuel-style .train2__barline>small {text-align:left}
+  .train--fuel-style .train2__summary {grid-column:1/-1}
+}
+@media(max-width:405px){
+  .train--fuel-style {padding-inline:10px;gap:10px}
+  .train--fuel-style .train2__logo {width:34px;height:30px}
+  .train--fuel-style .train2__metric strong {font-size:32px}
+  .train--fuel-style .train-r4__card {padding:11px}
+  .train--fuel-style .train-r4__calendar {gap:3px}
+  .train--fuel-style .train-r4__day {height:29px;width:29px;font-size:10px}
+}

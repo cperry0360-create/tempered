@@ -376,8 +376,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     try{
       while(cart.size){
         const [id,item]=cart.entries().next().value
-        const {count,lastLoggedAt,loggedAt,id:entryId,source,...values}=item.food
-        await daily.addNutrition(clock.today(),{...values,portion:count})
+        const {lastLoggedAt,loggedAt,id:entryId,source,...values}=item.food
+        await daily.addNutrition(clock.today(),{...values,portion:item.count})
         cart.delete(id)
       }
       sheet='';view='dashboard'

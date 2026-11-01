@@ -276,7 +276,7 @@ html[data-layout="duo"] .tabbar__tab .icon {width:22px;height:22px}
   html[data-layout="duo"] .tabbar__tab::after {transition:none}
 }
 
-/* The legacy Train sticky calculator title used --bg (#1B222C), creating
+/* The legacy Train sticky calculator title used the old gray canvas, creating
    a conspicuous gray stripe even while the rest of the app was navy. */
 html[data-layout="duo"] .train--fuel-style .train-calculator-bar {
   background:rgba(7,27,49,.94);

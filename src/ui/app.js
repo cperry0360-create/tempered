@@ -17,6 +17,7 @@ import { createHistoryScreen } from './screens/history.js'
 import { createTodayScreen } from './screens/today.js'
 import { createSettingsScreen } from './screens/settings.js'
 import { createFuelScreen } from './screens/fuel.js'
+import { createFuelNextScreen } from './screens/fuel-next.js'
 import { createProgramBuilderScreen } from './screens/program-builder.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
@@ -76,7 +77,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
-  const fuel = createFuelScreen({ storage, daily, clock })
+  // Development-only opt-in to approved Food 2.0. The default app is untouched.
+  const food2Enabled = new URLSearchParams(window.location.search).get('food2') === '1'
+  const fuel = food2Enabled
+    ? createFuelNextScreen({ storage, daily, clock })
+    : createFuelScreen({ storage, daily, clock })
   builder = createProgramBuilderScreen({ mount: body, storage, clock, workout, onClose: () => show('settings') })
 
   let battleScreen = null

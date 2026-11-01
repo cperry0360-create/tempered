@@ -143,7 +143,10 @@ try{
  check('Date picker can jump to an earlier day',q('.fn2__history-date input')?.value==='2026-09-29'&&q('.fn2__journal')?.textContent.includes('Greek yogurt'))
  q('.fn2__history-today')?.click();await settle(50)
  check('Today returns to present without an old-style overlay',q('.fn2__history-date input')?.value==='2026-10-01'&&!q('[data-nutrition-screen]'))
- q('.fn2__pills button:nth-child(2)')?.click();await settle(220)
+ q('.fn2__pills button:nth-child(2)')?.click();await settle(80)
+ check('Quick Log starts on the new quick choices instead of legacy menu',
+   q('.fn2__overlay')?.dataset.food2Overlay==='quick' && !!q('.fn2__quick-food'))
+ q('.fn2__sheet .fn2__primary')?.click();await settle(220)
  check('manual food entry mounts unchanged runtime and its paste action',!!q('[data-nutrition-form]')&&!!q('[data-calorie-ai="paste"]'))
  check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')
  q('.fn2__sheet-close')?.click();await settle(30)

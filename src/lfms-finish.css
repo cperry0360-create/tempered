@@ -125,3 +125,8 @@ html[data-layout="duo"] .fn2__portal {right:0;padding-right:var(--duo-rail-width
   html[data-layout="duo"] .tabbar__tab,.fn2__pills button,.fn2__float {background:var(--food-v2-panel-2);-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 @media(max-width:520px) {.fn2__portal .fn2__sheet {height:min(88dvh,720px)}}
+
+/* Prevent iOS overscroll behind a portaled bottom sheet. */
+body[data-food2-modal="true"] {overflow:hidden;touch-action:none}
+body[data-food2-modal="true"] .fn2__portal {touch-action:pan-y}
+body[data-food2-modal="true"] .fn2__portal .fn2__shade {touch-action:none}

@@ -11,6 +11,7 @@ const PRECACHE = [
   './manifest-duo.webmanifest',
   './src/brand.css',
   './src/today-next.css',
+  './src/train-next.css',
   './branding/lfms/logo-full.svg',
   './branding/lfms/logo-mark.svg',
   './branding/lfms/app-icon.svg',

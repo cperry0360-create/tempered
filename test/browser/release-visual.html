@@ -500,9 +500,9 @@
           await tempered.app.show(target)
           if (view.startsWith('food2-')) {
             if (!mount.querySelector('[data-food-two="true"]')) throw new Error('Food 2.0 opt-in failed to mount')
-            if (view === 'food2-library') mount.querySelector('.fn2__pills button:nth-child(2)')?.click()
-            if (view === 'food2-journal') mount.querySelector('.fn2__pills button:nth-child(1)')?.click()
-            if (view === 'food2-quicklog') mount.querySelector('.fn2__pills button:nth-child(3)')?.click()
+            if (view === 'food2-library') mount.querySelector('.fn2__pills button:nth-child(1)')?.click()
+            if (view === 'food2-journal') mount.querySelector('.fn2__pills button:nth-child(3)')?.click()
+            if (view === 'food2-quicklog') mount.querySelector('.fn2__pills button:nth-child(2)')?.click()
           }
           if (view === 'program-custom-exercise') {
             const details = mount.querySelector('.program-builder details')

@@ -237,3 +237,14 @@ html[data-layout="duo"]:has(.app__body>.fn2) .tabbar {
   background:var(--food-v2-blue);color:var(--food-v2-deep);
   box-shadow:0 1px 6px rgba(1,10,21,.45);font-size:15px;font-weight:700;
 }
+
+/* Keep the floating Quick Log above bottom navigation rather than covering
+   the Macro Journal's More control as the journal enters the viewport. */
+.fn2__float {
+  position:fixed;right:calc(16px + env(safe-area-inset-right,0px));
+  bottom:calc(85px + env(safe-area-inset-bottom,0px));margin:0;
+}
+html[data-layout="duo"] .fn2__float {
+  right:calc(var(--duo-rail-width,64px) + 17px);bottom:16px;
+}
+.fn2__macro-journal {padding-bottom:88px}

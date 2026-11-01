@@ -147,7 +147,7 @@ export function createSetupScreen({ mount, storage, clock, activities, onDone, o
     }, [label])
     return [
       el('img.lfms__setup-logo',{src:new URL('../../../branding/lfms/logo-full.svg',import.meta.url).href,alt:'Less Fat More Strong'}),
-      ...heading('Step 1 of 7', 'Less fat. More strong.', 'Train, track nutrition, sleep and recovery in one clear plan.'),
+      ...heading('Step 1 of 7', 'Less fat. More strong.', 'Track training, nutrition, sleep, and recovery in one clear plan.'),
       el('section.setup__card', {}, [
         el('p.setup__copy', { text: 'Follow a plan, record what happened, and build progress through repeatable work and recovery.' }),
         el('p.setup__copy', { text: 'Your data stays on this device, choices can change later, and there is no downside to rest or recovery.' }),

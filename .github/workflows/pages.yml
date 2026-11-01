@@ -33,6 +33,8 @@ jobs:
           cp -R branding/lfms _site/branding/
           # Isolated visual reference pages; excluded from the Tempered app shell.
           cp -R reference _site/
+      - name: Verify staged offline assets and brand files
+        run: node tools/verify-staged-pages.js _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

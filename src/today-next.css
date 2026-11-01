@@ -71,7 +71,7 @@
 }
 .today--fuel-style .today-week h2 {
   margin:0;font-size:11px;line-height:1.3;letter-spacing:.08em;
-  font-weight:820;text-transform:uppercase;color:var(--t2-light);
+  font-weight:820;color:var(--t2-light);
 }
 .today--fuel-style .today-week__meta {
   margin:0;font-size:10px;line-height:1.4;

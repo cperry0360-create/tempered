@@ -359,9 +359,15 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
   function installRailGesture() {
-    // A touch-and-hold expands the label on the left; sliding up/down selects
-    // another icon. The release activates it. Plain taps and keyboard clicks
-    // continue to work normally, including automated .click() tests.
+    // Plain taps use the button's click; hold/swipe gestures use pointerup.
+    // Doing both for one tap refreshed the same screen twice (visible flicker).
+    let suppressGestureClick = false
+    tabs.addEventListener('click',event=>{
+      if(!suppressGestureClick)return
+      suppressGestureClick=false
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    },true)
     const clearPreview = () => {
       clearTimeout(railTimer);railTimer=null
       tabs.removeAttribute('data-holding')
@@ -406,9 +412,16 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     const end=event=>{
       if(!railGesture||event.pointerId!==railGesture.id)return
       const selected=railGesture.selected
+      const gestureWasActive=tabs.dataset.holding==='true'
       const cancelled=event.type==='pointercancel'
       railGesture=null;clearPreview()
-      if(!cancelled)show(selected)
+      if(!cancelled&&gestureWasActive){
+        // A long-press/swipe already selected the destination on release.
+        // Ignore only its subsequent synthetic click, never an ordinary tap.
+        suppressGestureClick=true
+        setTimeout(()=>{suppressGestureClick=false},600)
+        show(selected)
+      }
     }
     tabs.addEventListener('pointerup',end)
     tabs.addEventListener('pointercancel',end)

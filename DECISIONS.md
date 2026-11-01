@@ -1,3 +1,37 @@
+## 2026-11-01 — Food 2.0 approved reference, branch-only integration candidate
+
+Cory approved a precise Forged-geometry translation with Tempered's existing dark
+navy/slate and blue palette, canonical data, and right-side Duo section anchor.
+The prior card-stack redesign was rejected as insufficiently different.
+
+PR #71 is a **draft** and uses `?food2=1` to opt in; ordinary launches continue
+to render the existing Food screen. Food 2.0 does not deploy from this branch.
+The approved reference pages are visual-only prototypes on GitHub Pages.
+
+Live integration reads `dayLogs` via the existing storage adapter, derives
+calories/protein/macros from `nutritionLedger`, obtains numeric targets through
+`daily.forDate`, and uses `foodLibrary` and `searchFoods`. The Journal
+groups logged entries by timestamp; it never fabricates meals, weight or steps.
+Staged cart writes use `daily.addNutrition` only on confirmation; successful
+cart lines are removed before attempting subsequent lines. Delete/Undo use
+`daily.removeNutrition` and `daily.restoreNutrition`. The embedded nutrition
+runtime retains Meal Photo, `TEMPERED_*` paste, manual form and full history
+tools without creating a competing calculation or storage layer.
+
+Saved-food favorites (`profile.food2Favorites`) and optional illustration
+overrides (`profile.food2Photos`) are additive profile fields, not a schema
+migration. Stock image matches are *illustrative only*, not a barcode/food
+database. Unknown and offline thumbnails must show neutral fallbacks.
+The candidate currently loads a few stock thumbnails from external sites.
+**Before production release**, obtain/recheck asset rights and bundle only
+approved optimized files into the offline precache. Avoid bulk stock
+downloads, hidden tracking or fabricated nutrition values.
+
+Release gates: pass real-data browser assertions, inspect 4 real Food screens
+on 390x844 / 430x932 and Duo 466x678 / 890x626 (both themes), verify keyboard
+and native physical fold, and obtain Cory's explicit permission to merge.
+No live app change, data migration, or current PWA replacement is authorized.
+
 ## 2026-10-30 — Explicit workout timer pause
 
 Cory needs to interrupt an active training session for family responsibilities

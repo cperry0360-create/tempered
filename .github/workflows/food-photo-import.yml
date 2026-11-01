@@ -19,14 +19,39 @@ jobs:
           # Explicit branch checkout; PR's synthetic merge commit isn't pushable.
           ref: feature/approved-food-2-working
           persist-credentials: true
+      - name: Check whether the curated images are already bundled
+        id: existing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path('art/food')
+          result=False
+          try:
+            data=json.loads((root/'SOURCES.json').read_text())
+            catalog=json.loads((root/'catalog.json').read_text())['images']
+            reference={v['id']:v['file'] for v in data['entries']}
+            result=(len(reference)==len(catalog) and all(
+              reference.get(x['id'])==x['sourceFile']
+              and (root/(x['id']+'.jpg')).is_file()
+              for x in catalog))
+          except (FileNotFoundError,KeyError,ValueError):
+            pass
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+            out.write('ready='+str(result).lower()+'\\n')
+          print('Offline library already present:',result)
+          PY
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install thumbnail processing
+        if: steps.existing.outputs.ready != 'true'
         run: python -m pip install 'Pillow>=11,<13'
       - name: Fetch and independently verify every CC0 image
+        if: steps.existing.outputs.ready != 'true'
         run: python tools/build-food-photo-library.py
       - name: Validate and commit bundled images to draft branch
+        if: steps.existing.outputs.ready != 'true'
         shell: bash
         run: |
           set -euo pipefail

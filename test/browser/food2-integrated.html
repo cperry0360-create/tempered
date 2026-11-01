@@ -109,6 +109,11 @@ try{
    q('.fn2__overlay')?.dataset.food2Overlay==='serving'
    && qa('.fn2__serving-presets button').length===8
    && q('.fn2__serving-preview')?.textContent.includes('160 kcal'))
+ const servingBounds=q('.fn2__overlay .fn2__sheet')?.getBoundingClientRect()
+ check('serving picker sits wholly in viewport with rounded bottom edge',
+   !!servingBounds && servingBounds.top>=0 && servingBounds.bottom<=innerHeight+1
+   && getComputedStyle(q('.fn2__overlay .fn2__sheet')).borderBottomLeftRadius==='24px')
+
  check('no food data is written when opening serving picker',
    (await t.daily.dayLog('2026-10-01')).calories===before)
  q('.fn2__sheet-close')?.click();await settle(30)

@@ -1,3 +1,7 @@
+## 2026-11-01 — One-screen background trial before wider redesign
+
+The user could not visualize an abstract proposal to replace the old gray app shell with a cohesive LFMS backdrop. Implement exactly one real sample on the Today tab in Duo layout and deploy it for hands-on review, without changing Train, Food or Progress. Prefer a single full-viewport blue/black gradient behind transparent Today content over multiple disconnected gradients in nested containers. Tint the right rail navy with a subtle border and blue selection. Wait for explicit user approval before extending this styling to other tabs. Preserve data and the current build on a backup branch.
+
 ## 2026-11-01 — Consolidate duplicate Food histories and expose targets
 
 The Food header's History shortcut was a legacy full-screen nutrition route, while Meal History used the Food 2.0 journal without browsing prior dates. The user identified both the redundancy and the visual regression. Keep only Meal History in the header and extend the Food-themed journal with date navigation, totals and historical delete/Undo, preserving canonical day logs. Keep advanced nutrient editing via its explicit secondary control without displaying another History shortcut. Show absolute calorie and protein targets next to the large consumed metrics; percentage is supplementary, not a replacement.

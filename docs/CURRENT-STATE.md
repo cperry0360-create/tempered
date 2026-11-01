@@ -1,3 +1,11 @@
+## 2026-11-01 — Today-only Duo continuous background trial, 0.66.7 (113)
+
+- User reported the gray outer canvas below/around the redesigned blue-black Today content made it look disconnected.
+- Trial only on Today when Duo layout is enabled: one LFMS navy/black gradient sits behind the entire app, both columns and center gutter; Today content background is transparent so it no longer appears like a separate rectangle. The right navigation rail blends with a subtle dark translucent navy treatment and blue active state.
+- Other tabs (Train, Food, Progress) retain their existing styling until explicit visual approval. Ordinary phone layout remains unchanged.
+- Scoped CSS uses `html[data-layout="duo"]:has(.app__body > .today--fuel-style)` and does not alter routing, storage, service worker behavior or data. New visual regression checks confirm correct Today activation and removal on other tabs.
+- Backup branch: `backup/lfms-before-today-canvas-2026-11-01`.
+
 ## 2026-11-01 — Single Meal History and visible calorie/protein targets, 0.66.6 (112)
 
 - Removed redundant top-level History shortcut from Food. That shortcut opened the outdated full-screen nutrition UI while Meal History opened a separate new-style journal.

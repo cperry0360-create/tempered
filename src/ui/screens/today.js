@@ -1289,7 +1289,7 @@ export function createTodayScreen({
   function actionPills() {
     return el('nav.today2__pills',{'aria-label':'Today shortcuts'},[
       el('button',{type:'button',onclick:()=>scrollSection('next-session')},[icon('train'),' Workout']),
-      el('button',{type:'button',onclick:()=>scrollSection('readiness')},[icon('heart'),' Recovery']),
+      el('button',{type:'button',onclick:()=>scrollSection('readiness')},[icon('sleep'),' Recovery']),
       el('button',{type:'button',onclick:()=>scrollSection('fuel')},[icon('food'),' Fuel']),
       el('button',{type:'button',onclick:()=>scrollSection('daily')},[icon('check'),' Daily log']),
     ])

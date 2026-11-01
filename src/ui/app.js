@@ -77,8 +77,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   })
   const history = createHistoryScreen({ storage, workout, daily, clock })
   const settings = createSettingsScreen({ storage, daily, workout, maintenance, clock, appearance, onSetup, onProgramBuilder: openBuilder })
-  // Development-only opt-in to approved Food 2.0. The default app is untouched.
-  const food2Enabled = new URLSearchParams(window.location.search).get('food2') === '1'
+  // Approved Food 2.0 is now the default. ?food2=0 restores the original Food screen.
+  // Both versions use the same canonical stores; this does not migrate or overwrite food data.
+  const food2Enabled = new URLSearchParams(window.location.search).get('food2') !== '0'
   const fuel = food2Enabled
     ? createFuelNextScreen({ storage, daily, clock })
     : createFuelScreen({ storage, daily, clock })

@@ -176,7 +176,7 @@ function compactMetric(value, unit, digits = 0) {
 export function createTodayScreen({
   workout, daily, planner, storage, clock, onStart, onStartCardio, onOpenSlot, onSettings, onViewSummary,
 }) {
-  const root = el('div.screen.screen--today.screen--today-calm')
+  const root = el('div.screen.screen--today.screen--today-calm.today--fuel-style')
   let realToday = clock.today()
   let selectedDate = realToday
   let todayProgram = null
@@ -1217,6 +1217,84 @@ export function createTodayScreen({
     ])
   }
 
+
+  function overviewHero(allActivities) {
+    const sessions=weekTraining.reduce((total,x)=>total+(x.stats.sessions||0),0)
+    const sets=weekTraining.reduce((total,x)=>total+(x.stats.workingSets||0),0)
+    const minutes=weekTraining.reduce((total,x)=>total+(x.stats.minutes||0),0)
+    const habits=[
+      ...allActivities.filter(a=>a.cadence==='daily'&&!FUEL_ACTIVITY_IDS.has(a.id)).map(a=>rowComplete(a)),
+      ...(weekActivities?.activities??[]).filter(a=>!FUEL_ACTIVITY_IDS.has(a.id)).map(a=>rowComplete(a,a)),
+    ]
+    const done=habits.filter(Boolean).length
+    const goal=weekProgram?.program?.days?.length??todayProgram?.program?.days?.length??0
+    const sessionPercent=goal>0?percent(sessions,goal):0
+    const habitPercent=habits.length?percent(done,habits.length):0
+    const calorieGoal=goalFor(allActivities,'calories_logged',2100)
+    const calories=number(day?.day?.calories)
+    const sleep=number(day?.day?.sleepHours,NaN)
+    const ns='http://www.w3.org/2000/svg'
+    const rings=document.createElementNS(ns,'svg')
+    rings.setAttribute('viewBox','0 0 160 160')
+    rings.setAttribute('role','img')
+    rings.setAttribute('aria-label','Daily habits '+done+' of '+habits.length+(goal>0?', sessions '+sessions+' of '+goal:''))
+    for(const [r,kind,rate] of [[68,'habits',habitPercent],[47,'sessions',sessionPercent]]) {
+      for(const track of [true,false]) {
+        const circle=document.createElementNS(ns,'circle')
+        const length=2*Math.PI*r
+        const attrs={cx:80,cy:80,r,fill:'none','stroke-width':r===68?9:12,
+          class:'today2__circle today2__circle--'+kind+(track?' today2__circle--track':''),
+          transform:'rotate(-90 80 80)'}
+        if(!track){attrs['stroke-dasharray']=length;attrs['stroke-dashoffset']=length*(1-rate/100)}
+        for(const [key,val] of Object.entries(attrs))circle.setAttribute(key,String(val))
+        rings.append(circle)
+      }
+    }
+    const bar=(name,current,target) => el('div.today2__barline',{},[
+      el('span',{text:name}),
+      el('div.today2__bartrack',{role:'progressbar','aria-label':name,
+        'aria-valuemin':'0','aria-valuemax':String(target),
+        'aria-valuenow':String(current)},[
+        el('i',{style:'width:'+percent(current,target)+'%'})]),
+      el('small',{text:target>0?(Math.round(current)+' / '+Math.round(target)):(Math.round(current)+' logged')}),
+    ])
+    return el('section.today2__hero',{'aria-label':'Your week at a glance'},[
+      el('div.today2__metrics',{},[
+        el('div.today2__metric',{},[
+          el('small',{text:'THIS WEEK'}),
+          el('strong',{text:String(sessions)}),
+          el('span',{text:'Sessions logged'}),
+        ]),
+        el('div.today2__metric.today2__metric--blue',{},[
+          el('small',{text:'THIS WEEK'}),
+          el('strong',{text:String(sets)}),
+          el('span',{text:'Working sets'}),
+        ]),
+      ]),
+      el('div.today2__rings',{},[rings,el('span.today2__rings-caption',{text:'HABITS  /  TRAINING'})]),
+      el('div.today2__bars',{},[
+        bar('Sessions',sessions,goal),
+        bar('Habits',done,habits.length),
+        bar('Calories',calories,calorieGoal),
+        el('div.today2__subline',{text:minutes+' min trained this week · Sleep '+(Number.isFinite(sleep)?sleep.toFixed(1)+'h':'—')}),
+      ]),
+    ])
+  }
+
+  function scrollSection(section) {
+    const node=root.querySelector('[data-section="'+section+'"]')
+    node?.scrollIntoView({behavior:'smooth',block:'start'})
+  }
+
+  function actionPills() {
+    return el('nav.today2__pills',{'aria-label':'Today shortcuts'},[
+      el('button',{type:'button',onclick:()=>scrollSection('next-session')},[icon('train'),' Workout']),
+      el('button',{type:'button',onclick:()=>scrollSection('readiness')},[icon('heart'),' Recovery']),
+      el('button',{type:'button',onclick:()=>scrollSection('fuel')},[icon('food'),' Fuel']),
+      el('button',{type:'button',onclick:()=>scrollSection('daily')},[icon('check'),' Daily log']),
+    ])
+  }
+
   function render() {
     root.dataset.date = selectedDate
     if (dayDetailsOpen) { renderDayDetails(); return }
@@ -1234,8 +1312,11 @@ export function createTodayScreen({
           }, [icon('gear')]),
         ]),
         el('p.today-heading__date', { text: dateLabel(selectedDate) }),
+        actionPills(),
       ]),
       yesterdayNutritionReminder(),
+      weekCard(),
+      overviewHero(allActivities),
       el('div.today-dashboard', {}, [
         el('div.today-dashboard__overview', {}, [
           sessionCard(),
@@ -1249,7 +1330,6 @@ export function createTodayScreen({
               : 'Quick timer · logs real minutes' }),
           ]),
           readinessCard(),
-          weekCard(),
           fuelCard(allActivities),
         ]),
         dailyLogCard(allActivities),

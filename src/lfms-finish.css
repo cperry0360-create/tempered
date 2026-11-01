@@ -139,3 +139,17 @@ html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
   border-left:1px solid rgba(178,218,253,.29);
   box-shadow:inset 1px 0 0 rgba(222,243,255,.13),-6px 0 30px rgba(0,0,0,.19);
 }
+
+/* Content-sized small sheets; only the manual nutrition form and full
+   illustration library require the traditional tall scrollable panel. */
+.fn2__portal[data-food2-overlay="quick"] .fn2__sheet,
+.fn2__portal[data-food2-overlay="cart"] .fn2__sheet,
+.fn2__portal[data-food2-overlay="actions"] .fn2__sheet,
+.fn2__portal[data-food2-overlay="attach-photo"] .fn2__sheet {
+  height:auto;max-height:min(84dvh,670px);
+  grid-template-rows:auto minmax(0,auto);
+}
+.fn2__portal[data-food2-overlay="quick"] .fn2__sheet-body,
+.fn2__portal[data-food2-overlay="cart"] .fn2__sheet-body {
+  max-height:min(65dvh,530px);overflow-y:auto;
+}

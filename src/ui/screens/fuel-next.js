@@ -72,7 +72,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function go(which){view=which;sheet='';picked=null;render()}
   function heading(){
     return el('div.fn2__heading',{},[
-      el('div.fn2__brand',{},[el('b',{text:'TEMPERED'}),el('small',{text:' / FUEL'})]),
+      el('div.fn2__brand',{},[el('img.lfms__fuel-mark',{src:'./branding/lfms/logo-mark.svg',alt:'',loading:'eager'}),el('b',{text:'LFMS'}),el('small',{text:' / FUEL'})]),
       el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
         el('button',{type:'button',onclick:()=>go('journal')},[icon('history'),' History']),
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),

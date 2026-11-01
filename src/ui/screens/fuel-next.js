@@ -6,15 +6,9 @@
 import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
+import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
 
-const PHOTOS = [
-  { id:'chicken', name:'Chicken and rice', pattern:/chicken.*rice|rice.*chicken/i, url:'https://images.unsplash.com/photo-1636479649370-fa89fbe0a1ec?auto=format&fit=crop&w=200&q=72' },
-  { id:'yogurt', name:'Yogurt', pattern:/yogurt/i, url:'https://images.pexels.com/photos/10421049/pexels-photo-10421049.jpeg?auto=compress&cs=tinysrgb&w=200' },
-  { id:'toast', name:'Avocado toast', pattern:/avocado.*toast|egg.*toast/i, url:'https://images.unsplash.com/photo-1683234193414-197f37970905?auto=format&fit=crop&w=200&q=72' },
-  { id:'salmon', name:'Salmon', pattern:/salmon/i, url:'https://images.pexels.com/photos/8696472/pexels-photo-8696472.jpeg?auto=compress&cs=tinysrgb&w=200' },
-  { id:'oats', name:'Oatmeal', pattern:/oatmeal|oats/i, url:'https://images.pexels.com/photos/7992683/pexels-photo-7992683.jpeg?auto=compress&cs=tinysrgb&w=200' },
-  { id:'salad', name:'Salad', pattern:/salad/i, url:'https://images.pexels.com/photos/27969809/pexels-photo-27969809.jpeg?auto=compress&cs=tinysrgb&w=200' },
-]
+const PHOTOS = FOOD_PHOTOS
 const n = x => Number.isFinite(Number(x)) ? Math.max(0,Number(x)) : 0
 const fmt = x => Math.round(n(x)).toLocaleString()
 const pct = (x,y) => y>0 ? Math.min(100,100*n(x)/y) : 0
@@ -47,13 +41,13 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function photoOf(food) {
     const id=prefs.food2Photos?.[foodKey(food)]
     if(id==='none')return null
-    return PHOTOS.find(x=>x.id===id)||PHOTOS.find(x=>x.pattern.test(food.description??''))||null
+    return PHOTOS.find(x=>x.id===id)||matchingFoodPhoto(food.description)||null
   }
   function thumbnail(food) {
     const node=el('span.fn2__thumb')
     const img=photoOf(food)
     if(img) {
-      const tag=el('img',{src:img.url,alt:img.name+' (illustrative stock photograph)',loading:'lazy'})
+      const tag=el('img',{src:img.url,alt:img.label+' (illustrative public-domain food photo)',loading:'lazy'})
       tag.onerror=()=>{tag.remove();node.classList.add('fn2__thumb--empty')}
       node.append(tag)
     } else node.classList.add('fn2__thumb--empty')
@@ -347,7 +341,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       el('p.fn2__caption',{text:'Images are optional illustrations and never determine nutrition. Unknown foods use an offline placeholder.'}),
       el('div.fn2__photo-picker',{},[
         ...PHOTOS.map(p=>el('button',{type:'button',onclick:()=>assignPhoto(p.id)},[
-          el('img',{src:p.url,alt:p.name}),el('small',{text:p.name}),
+          el('img',{src:p.url,alt:p.name}),el('small',{text:p.label}),
         ])),
         el('button',{type:'button',onclick:()=>assignPhoto('none')},[icon('food'),' No image']),
       ]),

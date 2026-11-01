@@ -65,8 +65,11 @@ function call(method,params={}){
 try{
   await call('Page.enable')
   await call('Emulation.setDeviceMetricsOverride',{width:726,height:512,deviceScaleFactor:1,mobile:false,screenWidth:726,screenHeight:512})
-  for(const view of ['dashboard','journal','quicklog','library','tempered-fuel']){
-    const target=view==='tempered-fuel' ? pathToFileURL(resolve('reference/tempered-fuel-study.html')).href : url+'?view='+view
+  for(const view of ['dashboard','journal','quicklog','library','tempered-fuel','tempered-journal','tempered-journal-menu']){
+    const target=view==='tempered-fuel' ? pathToFileURL(resolve('reference/tempered-fuel-study.html')).href
+      : view==='tempered-journal' ? pathToFileURL(resolve('reference/tempered-journal-study.html')).href
+      : view==='tempered-journal-menu' ? pathToFileURL(resolve('reference/tempered-journal-study.html')).href+'?view=menu'
+      : url+'?view='+view
     await call('Page.navigate',{url:target})
     await delay(850)
     const result=await call('Runtime.evaluate',{expression:"JSON.stringify({state:document.querySelector('#journal')?.className,modal:document.querySelector('#modal')?.className,images:document.images.length,ok:document.querySelector('.screen')?.getBoundingClientRect()?.width === 726})",returnByValue:true})
@@ -77,6 +80,13 @@ try{
       console.log('Tempered fidelity assertion',state)
       if(!state.brand?.includes('TEMPERED')||state.rail!==4||state.selected!=='food'||!state.hero||state.macros!==3||state.stats!==3)
         throw new Error('Tempered visual design geometry is incomplete: '+JSON.stringify(state))
+    }
+    if(view.startsWith('tempered-journal')){
+      const check=await call('Runtime.evaluate',{expression:"JSON.stringify({title:document.querySelector('.journal-title h2')?.textContent,rail:document.querySelectorAll('.rail button').length,active:document.querySelector('.rail [aria-current=page]')?.getAttribute('data-section'),entries:document.querySelectorAll('.journal-entry').length,menu:document.querySelector('#meal-menu')?.classList.contains('open')})",returnByValue:true})
+      const state=JSON.parse(check.result.value)
+      console.log('Tempered journal fidelity assertion',state)
+      if(state.title!=='Food Journal'||state.rail!==4||state.active!=='food'||state.entries<2||(view==='tempered-journal-menu' && !state.menu))
+        throw new Error('Tempered journal visual study incomplete '+JSON.stringify(state))
     }
     const snap=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})
     const bytes=Buffer.from(snap.data,'base64')

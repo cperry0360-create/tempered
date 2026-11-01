@@ -1,0 +1,43 @@
+name: Render LFMS icons and retain Tempered originals
+on:
+  pull_request:
+    paths:
+      - 'branding/lfms/app-icon.svg'
+      - 'tools/render-lfms-icons.py'
+      - '.github/workflows/lfms-icons.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/approved-food-2-working')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/approved-food-2-working
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'cairosvg>=2.7,<3' 'Pillow>=11,<13'
+      - run: python tools/render-lfms-icons.py
+      - name: Publish icon assets to rollout branch
+        run: |
+          set -euo pipefail
+          git add icons/icon-180.png icons/icon-512.png icons/icon-1024.png branding/tempered-legacy/
+          if git diff --cached --quiet; then
+            echo 'Icons already match LFMS SVG'
+          else
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'LFMS: ship custom app icons and preserve legacy icon set'
+            git push origin HEAD:feature/approved-food-2-working
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lfms-icon-assets
+          path: |
+            icons/icon-180.png
+            icons/icon-512.png
+            icons/icon-1024.png
+          retention-days: 10

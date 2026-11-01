@@ -16,15 +16,15 @@ let splashDismissed = false
 function dismissSplash() {
   if (splashDismissed) return
   splashDismissed = true
-  const remaining = Math.max(0, 1900 - (performance.now() - splashStarted))
+  const remaining = Math.max(0, 2600 - (performance.now() - splashStarted))
   setTimeout(() => {
     if (!launch) return
     launch.dataset.closing = 'true'
-    setTimeout(() => launch.remove(), 370)
+    setTimeout(() => launch.remove(), 520)
   }, remaining)
 }
 // Never leave a loading overlay covering a stalled or partially loaded app.
-setTimeout(dismissSplash, 7000)
+setTimeout(dismissSplash, 8000)
 
 registerServiceWorker()
 installMobileInteractions()

@@ -1,0 +1,46 @@
+/* LFMS four-tab finishing pass: small touch and keyboard affordances.
+   Scoped to approved views; no data, routing or navigation changes. */
+.today--fuel-style .today2__pills button,
+.train--fuel-style .train2__pills button,
+.fn2__pills button,
+.progress--fuel-style .progress-views .segmented__option {
+  min-height:44px;
+}
+.fn2__filters button,.fn2__title button,.fn2__inline-actions button {
+  min-height:44px;
+}
+.fn2__meal-group-title button,.fn2__meal-row>button,
+.fn2__fav,.fn2__add {
+  min-width:44px;min-height:44px;width:44px;height:44px;
+}
+.fn2__search:focus-within {
+  border-color:var(--fn-blue-light);
+  box-shadow:0 0 0 1px var(--fn-blue-light);
+}
+.today--fuel-style .today2__pills,
+.train--fuel-style .train2__pills,
+.fn2__pills,
+.progress--fuel-style .progress-views.segmented {
+  scroll-padding-inline:10px;
+  overscroll-behavior-inline:contain;
+}
+.fn2__meal-info,.fn2__food-info,
+.today--fuel-style .today2__metric,
+.train--fuel-style .train2__metric,
+.progress--fuel-style .progress2__metric {
+  min-width:0;
+}
+@media(prefers-reduced-motion:no-preference) {
+  .today--fuel-style .today2__pills button,
+  .train--fuel-style .train2__pills button,
+  .fn2__pills button,
+  .progress--fuel-style .progress-views .segmented__option {
+    transition:transform 140ms ease,border-color 140ms ease,background-color 140ms ease;
+  }
+  .today--fuel-style .today2__pills button:active,
+  .train--fuel-style .train2__pills button:active,
+  .fn2__pills button:active,
+  .progress--fuel-style .progress-views .segmented__option:active {
+    transform:translateY(1px);
+  }
+}

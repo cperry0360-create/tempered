@@ -13,29 +13,88 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* Intentional launch splash: stays visible at least 1.9 seconds even on fast
-   devices, fades only when the app is ready, and never blocks touch input. */
+/* Animated LFMS brand reveal. The supplied symbol and lettering are separate
+   transparent vectors: neither image can cover the text below it. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
-  display:grid;place-content:center;justify-items:center;gap:0;
-  padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
-  pointer-events:none;user-select:none;
-  background:radial-gradient(ellipse 90% 55% at 50% 44%,var(--lfms-launch-mid) 0%,var(--lfms-launch-deep) 88%);
+  display:grid;place-items:center;
+  padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));
+  overflow:hidden;isolation:isolate;
+  background:radial-gradient(ellipse 95% 60% at 50% 42%,var(--lfms-launch-mid) 0%,var(--lfms-launch-deep) 88%);
   color:var(--lfms-launch-text);
+  pointer-events:none;user-select:none;
   opacity:1;visibility:visible;
-  transition:opacity 340ms ease,visibility 0s 340ms;
+  transition:opacity 480ms ease,visibility 0s linear 480ms;
 }
-.lfms-launch img {
-  display:block;width:min(640px,94vw);max-height:min(49vh,370px);
-  height:auto;object-fit:contain;
-  filter:drop-shadow(0 3px 15px rgba(0,0,0,.33));
+.lfms-launch__glow {
+  position:absolute;inset:12% -18%;z-index:-1;
+  background:radial-gradient(ellipse 43% 31% at 50% 44%,var(--lfms-launch-mid),transparent 100%);
+  opacity:.75;
+  animation:lfms-glow 2600ms ease-in-out both;
 }
-.lfms-launch__caption {
-  margin-top:-7px;color:var(--lfms-launch-red);
-  letter-spacing:.24em;font-size:clamp(9px,1.5vw,11px);
-  font-weight:800;text-align:center;
+.lfms-launch__identity {
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;min-width:0;
+  width:min(100%,540px);transform:translateY(-1vh);
+}
+.lfms-launch__mark {
+  display:block;width:clamp(172px,46vw,300px);height:auto;
+  max-height:min(25vh,180px);object-fit:contain;
+  filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
+  animation:lfms-mark-enter 850ms cubic-bezier(.16,1,.3,1) both;
+}
+.lfms-launch__rule {
+  display:block;width:min(172px,47vw);height:2px;
+  flex:none;margin:8px 0 18px;
+  border-radius:99px;
+  background:linear-gradient(90deg,transparent,var(--lfms-launch-red),transparent);
+  transform-origin:50% 50%;
+  animation:lfms-rule-enter 650ms ease-out 480ms both;
+}
+.lfms-launch__wordmark {
+  display:block;width:min(88vw,520px);height:auto;
+  max-height:min(18vh,112px);object-fit:contain;
+  animation:lfms-wordmark-enter 750ms cubic-bezier(.2,.85,.25,1) 570ms both;
+}
+.lfms-launch__tagline {
+  margin:21px 0 0;padding:0;
+  color:var(--lfms-launch-text);opacity:.82;
+  font-size:clamp(10px,2.5vw,12px);font-weight:650;
+  line-height:1.45;letter-spacing:.2em;
+  text-align:center;white-space:nowrap;
+  animation:lfms-tagline-enter 600ms ease-out 1130ms both;
 }
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
-@media(prefers-reduced-motion:reduce){
+@keyframes lfms-mark-enter {
+  0% {opacity:0;transform:translateY(24px) scale(.8);filter:blur(8px)}
+  65% {opacity:1}
+  100% {opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
+}
+@keyframes lfms-rule-enter {
+  from {opacity:0;transform:scaleX(0)}
+  to {opacity:1;transform:scaleX(1)}
+}
+@keyframes lfms-wordmark-enter {
+  from {opacity:0;transform:translateY(17px);filter:blur(4px)}
+  to {opacity:1;transform:translateY(0);filter:blur(0)}
+}
+@keyframes lfms-tagline-enter {
+  from {opacity:0;transform:translateY(10px)}
+  to {opacity:.82;transform:translateY(0)}
+}
+@keyframes lfms-glow {
+  0% {opacity:.2;transform:scale(.8)}
+  65% {opacity:.85;transform:scale(1.12)}
+  100% {opacity:.65;transform:scale(1)}
+}
+@media(max-height:580px) {
+  .lfms-launch__mark {width:min(31vw,170px);max-height:26vh}
+  .lfms-launch__rule {margin:5px 0 9px}
+  .lfms-launch__wordmark {max-height:17vh}
+  .lfms-launch__tagline {margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}
+  .lfms-launch__glow,.lfms-launch__mark,.lfms-launch__rule,
+  .lfms-launch__wordmark,.lfms-launch__tagline {animation:none}
 }

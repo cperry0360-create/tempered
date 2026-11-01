@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS real launch composition visual acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/brand.css">
+</head><body>
+<script type="module">
+const checks=[],errors=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+window.addEventListener('error',e=>errors.push(e.message))
+window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try {
+  const html=await fetch('/index.html').then(r=>r.text())
+  const parsed=new DOMParser().parseFromString(html,'text/html')
+  const original=parsed.querySelector('[data-lfms-launch]')
+  check('real app has launch overlay',Boolean(original))
+  const launch=document.importNode(original,true)
+  for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
+  document.body.append(launch)
+  const mark=launch.querySelector('.lfms-launch__mark')
+  const word=launch.querySelector('.lfms-launch__wordmark')
+  const rule=launch.querySelector('.lfms-launch__rule')
+  const tagline=launch.querySelector('.lfms-launch__tagline')
+  await Promise.all([mark,word].map(x=>x.decode()))
+  check('symbol and wordmark assets load',mark.naturalWidth>0&&word.naturalWidth>0)
+  check('separate wordmark and tagline without repeated overlay copy',Boolean(rule)&&Boolean(tagline)&&!launch.querySelector('.lfms-launch__caption'))
+  check('entrance animation is present on the real markup',getComputedStyle(mark).animationName.includes('lfms-mark-enter')&&getComputedStyle(word).animationName.includes('lfms-wordmark-enter'))
+  await new Promise(resolve=>setTimeout(resolve,1850))
+  const m=mark.getBoundingClientRect(),w=word.getBoundingClientRect(),t=tagline.getBoundingClientRect()
+  check('symbol stays strictly above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
+  check('tagline stays strictly below lettering',w.bottom+8<t.top,JSON.stringify({wordBottom:w.bottom,taglineTop:t.top}))
+  check('logo sits inside screen',m.top>=0&&t.bottom<=innerHeight,JSON.stringify({top:m.top,bottom:t.bottom,height:innerHeight}))
+  check('staggered animation ends fully legible',getComputedStyle(mark).opacity==='1'&&getComputedStyle(word).opacity==='1')
+  const svg=await fetch(word.src).then(r=>r.text())
+  check('wordmark vector does not paint opaque rectangle',!svg.includes('<rect'))
+  check('no browser errors',errors.length===0,errors.join(' | '))
+}catch(error){check('launch test finishes',false,error.stack??String(error))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

@@ -1,3 +1,11 @@
+## 2026-11-01 — LFMS splash animation and four-tab finish, 0.66.4 (110)
+
+- Replaced the old static, duplicated splash caption with two independent transparent vectors derived from the user-approved LFMS logo: original mark and cropped wordmark. The wordmark no longer sits under the opaque full-logo image.
+- Staggered mark, accent rule, wordmark and tagline entrances; holds the fully loaded composition on screen for a 2.6-second minimum, then fades over 480ms after bootstrap. A stalled bootstrap still releases the overlay by eight seconds. Motion-reduction preferences skip entrances.
+- Applied a narrow finishing pass to all four redesigned tabs: 44px primary chip/food action touch targets, visible Food search keyboard focus, horizontally scrollable chip rails, gentle press feedback, and constrained narrow-layout text.
+- No changes to IndexedDB, measurements, nutrition, sessions, navigation, timer or backups. Offline precache includes the two new presentation files. Backup: `backup/lfms-before-splash-polish-2026-11-01`.
+- Added regression checks for splash composition, animation, geometry, and offline assets; release remains gated on browser, visual, native and GitHub Pages checks.
+
 ## 2026-10-30 — Manual workout timer Pause / Resume, 0.64.0 (98)
 
 - Active session header shows a 44px Pause / Resume control beside the elapsed

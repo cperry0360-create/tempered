@@ -1,3 +1,7 @@
+## 2026-11-01 — Approved LFMS splash and polish correction
+
+Cory reported no entrance animation and text sitting under the logo artwork. The shipped full-logo SVG contains a black background and both lines of lettering, so placing another caption immediately below that image did not yield a clean separate text layer. Use the existing transparent symbol and a cropped transparent wordmark derived from the supplied logo instead of introducing a new logo. Stage the entrance (mark, rule, wordmark, tagline) and reserve vertical space for each. Set the minimum display interval to 2.6s to make the animation perceptible; still dismiss after bootstrap or a safe timeout. Respect reduced-motion settings. Keep all four redesigned tabs, the right-side Duo anchor, legacy backup and canonical data untouched. Finishing CSS is a scoped interaction/tap-target pass, not an information-architecture rewrite.
+
 ## 2026-11-01 — Food 2.0 approved reference, branch-only integration candidate
 
 Cory approved a precise Forged-geometry translation with Tempered's existing dark

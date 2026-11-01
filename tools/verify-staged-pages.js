@@ -13,7 +13,7 @@ if(missing.length) {
   console.error('Missing staged PWA files:',missing.join(', '))
   process.exit(1)
 }
-for(const asset of ['branding/lfms/logo-full.svg','branding/lfms/logo-mark.svg','art/food/chicken.jpg','icons/icon-512.png']){
+for(const asset of ['branding/lfms/logo-full.svg','branding/lfms/logo-mark.svg','branding/lfms/logo-wordmark.svg','art/food/chicken.jpg','icons/icon-512.png']){
   if(!existsSync(resolve(root,asset)))throw new Error('Missing release asset '+asset)
 }
 console.log('Verified '+paths.length+' offline assets in GitHub Pages stage')

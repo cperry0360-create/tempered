@@ -348,7 +348,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('button',{type:'button',onclick:()=>assignPhoto('none')},[icon('food'),' No image']),
       ]),
     ]:sheet==='actions'?[
-      el('button.fn2__secondary',{type:'button',onclick:event=>{picked=null;closeSheet();openFullHistory(event.currentTarget)},['View / edit in full meal history']),
+      el('button.fn2__secondary',{type:'button',onclick:event=>{picked=null;closeSheet();openFullHistory(event.currentTarget)}},['View / edit in full meal history']),
       el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;sheet='';view='library';stage(x)}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]

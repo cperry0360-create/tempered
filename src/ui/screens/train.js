@@ -18,7 +18,7 @@ import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js
  * @param {() => void} [deps.onProgramBuilder]
  */
 export function createTrainScreen({ workout, storage, clock, onStart, onStartCardio, onProgramBuilder, onProgramLibrary }) {
-  const root = el('div.screen.screen--train.screen--train-r4')
+  const root = el('div.screen.screen--train.screen--train-r4.train--fuel-style')
   let query = ''
   let libraryOpen = false
   let creatingExercise = false
@@ -420,6 +420,88 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     ])
   }
 
+
+  // Food/Today-style training overview. All values derive from real workout
+  // services and existing session + set-log records; no new storage schema.
+  function trainingOverview() {
+    const now=clock.today()
+    const dow=new Date(now+'T12:00:00Z').getUTCDay()
+    const monday=addUtcDays(now,-((dow+6)%7))
+    const goal=Math.max(0,Number(rhythm?.weeklyDays)||0)
+    const days=Math.max(0,Number(rhythm?.currentWeekDays)||0)
+    const streak=Math.max(0,Number(rhythm?.streakWeeks)||0)
+    const plan=active?.program
+    const plannedSets=(plan?.days??[]).reduce((total,day)=>
+      total+(day.exercises??[]).reduce((sum,slot)=>sum+(Number(slot.sets)||0),0),0)
+    const validSessionIds=new Set(sessions.filter(s=>s.date>=monday&&s.date<=now).map(s=>s.id))
+    const workingSets=setLogs.filter(log=>validSessionIds.has(log.sessionId)&&!log.isWarmup).length
+    const dayPct=goal>0?Math.min(100,(days/goal)*100):0
+    const setPct=plannedSets>0?Math.min(100,(workingSets/plannedSets)*100):0
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
+    svg.setAttribute('viewBox','0 0 160 160')
+    svg.setAttribute('role','img')
+    svg.setAttribute('aria-label','Training days '+days+' of '+goal+', working sets '+workingSets+' of '+plannedSets)
+    for(const [radius,type,value] of [[69,'days',dayPct],[47,'sets',setPct]]){
+      for(const track of [true,false]){
+        const ring=document.createElementNS('http://www.w3.org/2000/svg','circle')
+        const perimeter=2*Math.PI*radius
+        const attrs={cx:80,cy:80,r:radius,fill:'none',
+          'stroke-width':radius===69?9:12,
+          class:'train2__circle train2__circle--'+type+(track?' train2__circle--track':''),
+          transform:'rotate(-90 80 80)'}
+        if(!track){attrs['stroke-dasharray']=perimeter;attrs['stroke-dashoffset']=perimeter*(1-value/100)}
+        for(const [name,amount] of Object.entries(attrs))ring.setAttribute(name,String(amount))
+        svg.append(ring)
+      }
+    }
+    const bar=(name,amount,target)=>{
+      const percent=target>0?Math.min(100,100*amount/target):0
+      return el('div.train2__barline',{},[
+        el('span',{text:name}),
+        el('div.train2__bartrack',{role:'progressbar','aria-label':name+' this week',
+          'aria-valuemin':'0','aria-valuenow':String(amount),'aria-valuemax':String(target)},[
+          el('i',{style:'width:'+percent+'%'})]),
+        el('small',{text:target>0?amount+' / '+target:String(amount)}),
+      ])
+    }
+    const keepers=Math.max(0,Number(rhythm?.keepers)||0)
+    const keeperProgress=Math.max(0,Number(rhythm?.keeperProgress)||0)
+    const keeperEvery=Math.max(0,Number(rhythm?.keeperEvery)||0)
+    return el('section.train2__hero',{'aria-label':'Weekly training overview'},[
+      el('div.train2__numbers',{},[
+        el('div.train2__metric',{},[
+          el('small',{text:'THIS WEEK'}),
+          el('strong',{text:String(days)}),
+          el('span',{text:'Training days'}),
+        ]),
+        el('div.train2__metric.train2__metric--blue',{},[
+          el('small',{text:'THIS WEEK'}),
+          el('strong',{text:String(workingSets)}),
+          el('span',{text:'Working sets'}),
+        ]),
+      ]),
+      el('div.train2__rings',{},[svg,el('small',{text:'DAYS / WORKING SETS'})]),
+      el('div.train2__bars',{},[
+        bar('Days',days,goal),
+        bar('Sets',workingSets,plannedSets),
+        bar('Keeper',keeperProgress,keeperEvery),
+        el('small.train2__summary',{text:streak+'-week rhythm · '+keepers+' keepers earned'}),
+      ]),
+    ])
+  }
+
+  function trainShortcuts() {
+    return el('nav.train2__pills',{'aria-label':'Training shortcuts'},[
+      el('button',{type:'button',onclick:()=>{
+        if(todayDay){selectedProgramDay=todayDay;render()}
+        else root.querySelector('.train-r4__sessions')?.scrollIntoView({behavior:'smooth',block:'start'})
+      }},[icon('train'),' Today’s plan']),
+      el('button',{type:'button',onclick:()=>{rhythmOpen=true;render()}},[icon('calendar'),' Rhythm']),
+      el('button',{type:'button',onclick:()=>{libraryOpen=true;query='';render()}},[icon('search'),' Exercises']),
+      onProgramBuilder&&el('button',{type:'button',onclick:onProgramBuilder},[icon('plus'),' Program Builder']),
+    ])
+  }
+
   function render() {
     if (programDetailsOpen) { renderProgramDetails(); return }
     if (selectedProgramDay) {
@@ -433,7 +515,16 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     if (selectedRoutine) { renderRoutine(); return }
     if (rhythmOpen) { renderRhythm(); return }
     replace(root, [
-      el('header.train-calculator-bar', {}, [el('h1.screen__title', { text: 'Train' }), plateCalculatorButton()]),
+      el('header.train-calculator-bar.train2__heading', {}, [
+        el('div.train2__brand',{},[
+          el('img',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,
+            alt:'',class:'train2__logo',loading:'eager'}),
+          el('div',{},[el('h1.screen__title',{text:'Train'}),el('small',{text:'LFMS / TRAINING'})]),
+        ]),
+        plateCalculatorButton(),
+      ]),
+      trainShortcuts(),
+      trainingOverview(),
       el('div.train-r4__dashboard', {}, [
         el('div.train-r4__column--primary', {}, [
           programHeaderCard(),

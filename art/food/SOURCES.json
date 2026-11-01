@@ -1,0 +1,150 @@
+{
+  "source": "Wikimedia Commons",
+  "rule": "Only assets whose Commons imageinfo metadata explicitly reports CC0 or a public-domain dedication may be downloaded. No CC-BY or CC-BY-SA content is permitted in this collection.",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "transformation": "Center-cropped to 192 x 192 pixels and compressed as JPEG quality 78 (thumbnail only). No logos/brands.",
+  "entries": [
+    {
+      "id": "chicken",
+      "file": "File:Grilled chicken meat.jpg",
+      "label": "Grilled chicken",
+      "keywords": [
+        "chicken",
+        "grilled chicken"
+      ]
+    },
+    {
+      "id": "yogurt-berries",
+      "file": "File:Strawberries & Yogurt.jpg",
+      "label": "Yogurt with strawberries",
+      "keywords": [
+        "yogurt berries",
+        "greek yogurt berries",
+        "strawberry yogurt"
+      ]
+    },
+    {
+      "id": "yogurt",
+      "file": "File:Plain Yogurt.jpg",
+      "label": "Plain yogurt",
+      "keywords": [
+        "yogurt",
+        "greek yogurt"
+      ]
+    },
+    {
+      "id": "salmon",
+      "file": "File:Salmon meal.jpg",
+      "label": "Salmon meal",
+      "keywords": [
+        "salmon"
+      ]
+    },
+    {
+      "id": "salad",
+      "file": "File:Salad bowl, Kiedrich.jpg",
+      "label": "Vegetable salad",
+      "keywords": [
+        "salad"
+      ]
+    },
+    {
+      "id": "apple",
+      "file": "File:Apples fruit.jpg",
+      "label": "Apples",
+      "keywords": [
+        "apple",
+        "apples"
+      ]
+    },
+    {
+      "id": "banana",
+      "file": "File:Ripe-bananas.jpg",
+      "label": "Bananas",
+      "keywords": [
+        "banana",
+        "bananas"
+      ]
+    },
+    {
+      "id": "eggs",
+      "file": "File:Scrambled egg on toast - Loro's Cafe 2025-08-13.jpg",
+      "label": "Egg on toast",
+      "keywords": [
+        "scrambled egg",
+        "eggs",
+        "egg"
+      ]
+    },
+    {
+      "id": "pizza",
+      "file": "File:Pizza 26.jpg",
+      "label": "Cheese pizza",
+      "keywords": [
+        "pizza"
+      ]
+    },
+    {
+      "id": "burger",
+      "file": "File:Food burger 005 homemade with cheddar and bacon.jpg",
+      "label": "Hamburger",
+      "keywords": [
+        "hamburger",
+        "burger"
+      ]
+    },
+    {
+      "id": "sandwich",
+      "file": "File:Breakfast Sandwich.jpg",
+      "label": "Breakfast sandwich",
+      "keywords": [
+        "sandwich"
+      ]
+    },
+    {
+      "id": "fruit",
+      "file": "File:Fruit Salad Bowl.jpg",
+      "label": "Fruit salad",
+      "keywords": [
+        "fruit salad",
+        "fruit bowl"
+      ]
+    },
+    {
+      "id": "strawberries",
+      "file": "File:Strawberries-1.jpg",
+      "label": "Strawberries",
+      "keywords": [
+        "strawberries",
+        "strawberry"
+      ]
+    },
+    {
+      "id": "pasta",
+      "file": "File:Pasta picture.jpg",
+      "label": "Pasta",
+      "keywords": [
+        "pasta",
+        "spaghetti",
+        "noodles"
+      ]
+    },
+    {
+      "id": "steak",
+      "file": "File:Restaurant Steak.jpg",
+      "label": "Steak",
+      "keywords": [
+        "steak",
+        "beef steak"
+      ]
+    },
+    {
+      "id": "sushi",
+      "file": "File:Assorted sushi.png",
+      "label": "Sushi",
+      "keywords": [
+        "sushi"
+      ]
+    }
+  ]
+}

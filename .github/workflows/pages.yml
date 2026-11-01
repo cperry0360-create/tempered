@@ -29,6 +29,7 @@ jobs:
           cp index.html manifest.webmanifest manifest-duo.webmanifest sw.js _site/
           cp -R src data icons _site/
           cp -R art/exercises art/dist art/battle art/food _site/art/
+          mkdir -p _site/branding
           cp -R branding/lfms _site/branding/
           # Isolated visual reference pages; excluded from the Tempered app shell.
           cp -R reference _site/

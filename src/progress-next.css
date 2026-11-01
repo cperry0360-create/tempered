@@ -1,0 +1,248 @@
+/* LFMS Progress 2.0 — same dark navy/blue grammar as Food, Today, Train.
+ * All charts, reports, habit calculations and stored data remain original.
+ */
+.progress--fuel-style {
+  --pr2-bg:var(--food-v2-deep);
+  --pr2-panel:var(--food-v2-panel);
+  --pr2-raised:var(--food-v2-panel-2);
+  --pr2-line:var(--food-v2-line);
+  --pr2-text:var(--food-v2-text);
+  --pr2-blue:var(--food-v2-blue);
+  --pr2-light:var(--food-v2-blue-light);
+  --pr2-muted:var(--food-v2-muted);
+  display:grid;align-content:start;gap:13px;min-width:0;
+  padding:13px 13px max(85px,env(safe-area-inset-bottom,0px));
+  background:radial-gradient(ellipse 66% 220px at 44% -70px,var(--food-v2-beach-base),transparent 95%),var(--pr2-bg);
+  color:var(--pr2-text);
+}
+.progress--fuel-style button:focus-visible,
+.progress--fuel-style select:focus-visible {outline:2px solid var(--pr2-light);outline-offset:2px}
+.progress--fuel-style .progress-header {min-height:47px;gap:12px}
+.progress--fuel-style .progress2__brand {display:flex;align-items:center;gap:8px;min-width:0}
+.progress--fuel-style .progress2__mark {width:44px;height:36px;object-fit:contain;flex:none}
+.progress--fuel-style .progress2__heading-copy {display:grid;gap:2px;min-width:0}
+.progress--fuel-style .progress-header .screen__title {
+  margin:0;color:var(--pr2-text);
+  font-size:clamp(22px,3vw,27px);
+  letter-spacing:-.04em;line-height:1;
+  font-weight:850;
+}
+.progress--fuel-style .progress2__heading-copy>small {
+  font-size:10px;letter-spacing:.09em;
+  color:var(--pr2-light);font-weight:770;
+}
+.progress--fuel-style .progress-range {
+  flex:none;min-width:90px;min-height:44px;
+  background:var(--pr2-raised);color:var(--pr2-text);
+  border:1px solid var(--pr2-line);border-radius:12px;
+}
+.progress--fuel-style .progress-range::after {color:var(--pr2-light);top:9px}
+.progress--fuel-style .progress-range__select {min-height:42px;font-size:12px;color:var(--pr2-text);font-weight:820}
+.progress--fuel-style .progress-range__select option {background:var(--pr2-raised);color:var(--pr2-text)}
+.progress--fuel-style .progress-views.segmented {
+  min-width:0;display:flex;overflow-x:auto;scrollbar-width:none;
+  justify-content:flex-start;gap:7px;
+  padding:0 0 3px;border:0;border-radius:0;background:transparent;
+}
+.progress--fuel-style .progress-views.segmented::-webkit-scrollbar {display:none}
+.progress--fuel-style .progress-views .segmented__option {
+  flex:1 0 72px;min-height:38px;max-width:160px;
+  background:linear-gradient(var(--food-v2-beach-base),var(--pr2-raised));
+  border:1px solid var(--pr2-line);border-radius:99px;
+  font-size:12px;font-weight:750;color:var(--pr2-text);
+}
+.progress--fuel-style .progress-views .segmented__option[data-active=true] {
+  background:var(--pr2-blue);color:var(--pr2-bg);
+  border-color:var(--pr2-blue);font-weight:860;
+  box-shadow:none;
+}
+
+/* Summary hero uses the existing range summary and training score. */
+.progress--fuel-style .progress2__hero {
+  display:grid;grid-template-columns:minmax(105px,.85fr) minmax(128px,.95fr) minmax(172px,1.35fr);
+  align-items:center;gap:13px;min-width:0;
+  padding:10px 5px 14px;
+  border-top:1px solid var(--pr2-line);
+  border-bottom:1px solid var(--pr2-line);
+}
+.progress--fuel-style .progress2__metrics {display:grid;gap:21px;min-width:0}
+.progress--fuel-style .progress2__metric {
+  min-width:0;display:grid;gap:3px;
+  border-left:2px solid var(--pr2-text);padding-left:11px;
+}
+.progress--fuel-style .progress2__metric--blue {border-color:var(--pr2-blue)}
+.progress--fuel-style .progress2__metric small {
+  font-size:9px;letter-spacing:.075em;font-weight:780;color:var(--pr2-muted);
+}
+.progress--fuel-style .progress2__metric strong {
+  font-size:clamp(29px,4vw,43px);
+  line-height:1;letter-spacing:-.06em;
+  font-weight:870;font-variant-numeric:tabular-nums;color:var(--pr2-text);
+}
+.progress--fuel-style .progress2__metric span {font-size:11px;line-height:1.3;color:var(--pr2-text)}
+.progress--fuel-style .progress2__rings {min-width:0;display:grid;place-items:center;gap:2px}
+.progress--fuel-style .progress2__rings svg {width:100%;height:auto;max-width:165px;overflow:visible}
+.progress--fuel-style .progress2__rings>small {
+  font-size:8px;letter-spacing:.06em;font-weight:780;
+  color:var(--pr2-muted);white-space:nowrap;
+}
+.progress--fuel-style .progress2__circle--habits {stroke:var(--pr2-text)}
+.progress--fuel-style .progress2__circle--score {stroke:var(--pr2-blue)}
+.progress--fuel-style .progress2__circle--habits.progress2__circle--track {stroke:var(--pr2-line)}
+.progress--fuel-style .progress2__circle--score.progress2__circle--track {stroke:var(--food-v2-beach-base)}
+.progress--fuel-style .progress2__bars {display:grid;gap:11px;min-width:0}
+.progress--fuel-style .progress2__barline {
+  display:grid;grid-template-columns:58px minmax(0,1fr) 38px;
+  gap:5px;align-items:center;min-width:0;
+}
+.progress--fuel-style .progress2__barline>span {font-size:10px;font-weight:760;color:var(--pr2-text)}
+.progress--fuel-style .progress2__barline>small {font-size:10px;text-align:right;white-space:nowrap;color:var(--pr2-muted);font-variant-numeric:tabular-nums}
+.progress--fuel-style .progress2__bartrack {height:7px;overflow:hidden;border-radius:99px;background:var(--pr2-panel)}
+.progress--fuel-style .progress2__bartrack i {display:block;height:100%;border-radius:inherit;background:var(--pr2-blue)}
+.progress--fuel-style .progress2__summary {font-size:10px;line-height:1.4;color:var(--pr2-muted)}
+
+/* Existing analytics stay functional; unify editorial spacing and colors. */
+.progress--fuel-style .progress-content {display:grid;gap:13px;min-width:0}
+.progress--fuel-style .progress-overview {min-width:0;gap:12px}
+.progress--fuel-style .progress-overview__training,
+.progress--fuel-style .progress-overview__health {min-width:0;gap:12px}
+.progress--fuel-style .progress-panel,
+.progress--fuel-style .progress-habit,
+.progress--fuel-style .progress-lift,
+.progress--fuel-style .progress-log-row {
+  min-width:0;gap:10px;padding:14px;
+  border-radius:16px;border:1px solid var(--pr2-line);
+  background:linear-gradient(154deg,var(--pr2-raised),var(--pr2-panel));
+  color:var(--pr2-text);box-shadow:none;
+}
+.progress--fuel-style .progress-panel__title {color:var(--pr2-text);font-size:17px;line-height:1.25;font-weight:830;letter-spacing:-.025em}
+.progress--fuel-style .progress-panel__empty,
+.progress--fuel-style .progress-footnote,
+.progress--fuel-style .progress-habit__meta,
+.progress--fuel-style .progress-habit__streak,
+.progress--fuel-style .progress-trend__label,
+.progress--fuel-style .progress-trend__samples,
+.progress--fuel-style .progress-trend__delta,
+.progress--fuel-style .progress-lift__delta,
+.progress--fuel-style .progress-lift-detail__stat span,
+.progress--fuel-style .progress-log-row__meta,
+.progress--fuel-style .progress-log-row__date {color:var(--pr2-muted);font-size:11px}
+.progress--fuel-style .progress-score__number {
+  color:var(--pr2-text);font-size:clamp(30px,4vw,42px);font-weight:860;letter-spacing:-.065em;
+}
+.progress--fuel-style .progress-score__change {font-size:11px;color:var(--pr2-light)}
+.progress--fuel-style .progress-score__week {font-size:11px;color:var(--pr2-muted)}
+.progress--fuel-style .progress-score__week[data-status='on track'],
+.progress--fuel-style .progress-score__week[data-status='ahead'] {color:var(--pr2-light)}
+.progress--fuel-style .progress-score__trend {color:var(--pr2-blue);height:83px}
+.progress--fuel-style .progress-score__bar {height:6px;background:var(--pr2-panel);border-radius:99px}
+.progress--fuel-style .progress-score__bar span {background:var(--pr2-blue);border-radius:inherit}
+.progress--fuel-style .progress-score__component {
+  border-top:1px solid var(--pr2-line);
+  color:var(--pr2-text);padding:11px 0;gap:6px;
+}
+.progress--fuel-style .progress-score__component .progress-score__head>span {font-size:10px;color:var(--pr2-light)}
+.progress--fuel-style .progress-score__reason {font-size:11px;line-height:1.45;color:var(--pr2-muted)}
+.progress--fuel-style .progress-score__info {color:var(--pr2-light);width:44px;height:44px}
+.progress--fuel-style .progress-score__axis {font-size:10px;color:var(--pr2-muted)}
+.progress--fuel-style .progress-weekly__bars {border-color:var(--pr2-line)}
+.progress--fuel-style .progress-weekly__bar {background:var(--food-v2-beach-base);border-radius:6px 6px 0 0}
+.progress--fuel-style .progress-weekly__bar[data-current=true] {background:var(--pr2-blue)}
+.progress--fuel-style .progress-weekly__value {color:var(--pr2-text);font-size:12px;font-weight:820}
+.progress--fuel-style .progress-weekly__axis {color:var(--pr2-muted);font-size:11px}
+.progress--fuel-style .progress-prs__row,
+.progress--fuel-style .progress-lift-detail__stat,
+.progress--fuel-style .progress-score-detail__row {
+  background:var(--pr2-panel);border:1px solid var(--pr2-line);color:var(--pr2-text);border-radius:10px;
+}
+.progress--fuel-style .progress-trend {border-color:var(--pr2-line)}
+.progress--fuel-style .progress-trend__value {color:var(--pr2-text);font-size:15px;font-weight:790}
+.progress--fuel-style .progress-trend .trend-chart,
+.progress--fuel-style .progress-lift .trend-chart,
+.progress--fuel-style .progress-score__trend {color:var(--pr2-blue)}
+.progress--fuel-style .progress-trend__delta[data-good=true],
+.progress--fuel-style .progress-lift__delta[data-good=true] {color:var(--pr2-light)}
+.progress--fuel-style .progress-habit__name,
+.progress--fuel-style .progress-lift__name,
+.progress--fuel-style .progress-log-row__name {color:var(--pr2-text);font-weight:800}
+.progress--fuel-style .progress-habit__bar {height:7px;background:var(--pr2-panel)}
+.progress--fuel-style .progress-habit__bar span {background:var(--pr2-blue)}
+.progress--fuel-style .progress-heatmap__day {background:var(--pr2-panel);border-radius:4px}
+.progress--fuel-style .progress-heatmap__day[data-level='2'],
+.progress--fuel-style .progress-heatmap__day[data-level='3'] {background:var(--food-v2-recent-base)}
+.progress--fuel-style .progress-heatmap__day[data-level='4'] {background:var(--pr2-blue)}
+.progress--fuel-style .progress-lift__e1rm {color:var(--pr2-text)}
+.progress--fuel-style .progress-lift .spark,
+.progress--fuel-style .progress-trend .spark {color:var(--pr2-blue)}
+.progress--fuel-style .progress-report {display:grid;gap:8px}
+.progress--fuel-style .progress-report__button {
+  min-height:44px;padding:0 13px;border:1px solid var(--pr2-line);border-radius:12px;
+  background:var(--food-v2-beach-base);color:var(--pr2-light);font-size:12px;font-weight:780;
+}
+.progress--fuel-style .progress-report__status {font-size:11px;color:var(--pr2-muted)}
+.progress--fuel-style .progress-action,
+.progress--fuel-style .progress-back {color:var(--pr2-light);font-size:13px;font-weight:790;min-height:44px}
+.progress--fuel-style .progress-lift-detail__stat strong {color:var(--pr2-light)}
+.progress--fuel-style .progress-log-row__head>strong {font-size:13px;color:var(--pr2-text)}
+.progress--fuel-style .progress-session-detail__summary {color:var(--pr2-light)}
+.progress--fuel-style .progress-session-detail__set {border-color:var(--pr2-line)}
+.progress--fuel-style .progress-session-detail__set strong {color:var(--pr2-text)}
+.progress--fuel-style .progress-duration__input {background:var(--pr2-panel);border:1px solid var(--pr2-line);color:var(--pr2-text)}
+
+/* Beach Cut uses its original day-level metrics, with the same surfaces and
+   blue accent as the rest of LFMS. Never alter missing-data behavior. */
+.progress--fuel-style .progress-cut {
+  border:1px solid var(--pr2-line);border-radius:18px;
+  background:var(--pr2-raised);color:var(--pr2-text);box-shadow:none;
+}
+.progress--fuel-style .progress-cut__hero {
+  background:radial-gradient(ellipse at 92% 5%,var(--food-v2-beach-base),transparent 77%),var(--pr2-raised);
+}
+.progress--fuel-style .progress-cut__eyebrow {color:var(--pr2-light)}
+.progress--fuel-style .progress-cut__headline {color:var(--pr2-text);font-weight:840}
+.progress--fuel-style .progress-cut__subhead,
+.progress--fuel-style .progress-cut__footnote {color:var(--pr2-muted)}
+.progress--fuel-style .progress-cut__track {background:var(--pr2-panel)}
+.progress--fuel-style .progress-cut__track>span {background:var(--pr2-blue)}
+.progress--fuel-style .progress-cut__metric {background:var(--pr2-panel);border-color:var(--pr2-line)}
+.progress--fuel-style .progress-cut__metric-title {color:var(--pr2-muted)}
+.progress--fuel-style .progress-cut__metric-value {color:var(--pr2-text)}
+.progress--fuel-style .progress-cut__metric-subtitle {color:var(--pr2-muted)}
+.progress--fuel-style .progress-cut__chart {border-color:var(--pr2-line);background:var(--pr2-panel)}
+.progress--fuel-style .progress-cut__sparkline {color:var(--pr2-blue)}
+.progress--fuel-style .progress-cut__countdown strong {color:var(--pr2-text)}
+.progress--fuel-style .progress-cut__extra {border-color:var(--pr2-line)}
+.progress--fuel-style .progress-cut__extra>summary {color:var(--pr2-light)}
+.progress--fuel-style .progress-measure__tile {background:var(--pr2-panel);color:var(--pr2-text);border-color:var(--pr2-line)}
+
+/* Preserve the existing score-explanation bottom sheet behavior. */
+.progress--fuel-style .score-explain__sheet {background:var(--pr2-raised);color:var(--pr2-text)}
+.progress--fuel-style .score-explain__sheet h3 {color:var(--pr2-muted)}
+@media(min-width:740px) {
+  html[data-layout=duo] .progress--fuel-style .progress-overview {
+    display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:13px;align-items:start;
+  }
+}
+@media(max-width:615px) {
+  .progress--fuel-style .progress2__hero {grid-template-columns:minmax(105px,.86fr) minmax(125px,1fr);gap:8px 10px}
+  .progress--fuel-style .progress2__bars {
+    grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+    border-top:1px solid var(--pr2-line);padding-top:10px;
+  }
+  .progress--fuel-style .progress2__barline {grid-template-columns:minmax(0,1fr);gap:5px}
+  .progress--fuel-style .progress2__barline>small {text-align:left}
+  .progress--fuel-style .progress2__summary {grid-column:1/-1}
+}
+@media(max-width:405px) {
+  .progress--fuel-style {padding-inline:10px;gap:10px}
+  .progress--fuel-style .progress2__mark {width:35px;height:30px}
+  .progress--fuel-style .progress2__metric strong {font-size:31px}
+  .progress--fuel-style .progress-panel,
+  .progress--fuel-style .progress-habit,
+  .progress--fuel-style .progress-lift,
+  .progress--fuel-style .progress-log-row {padding:11px}
+  .progress--fuel-style .progress2__bars {gap:6px}
+  .progress--fuel-style .progress2__barline>span,
+  .progress--fuel-style .progress2__barline>small {font-size:9px}
+  .progress--fuel-style .progress-heatmap {gap:3px}
+}

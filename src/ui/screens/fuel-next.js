@@ -434,7 +434,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ]:sheet==='attach-photo'?[
       el('p.fn2__caption',{text:'Add a real photo to this meal. It stays on this device and is included in LFMS exports. Photos do not change nutrition totals.'}),
       el('label.fn2__upload-photo',{},[
-        icon('image'),el('span',{text:'Take or choose a photo'}),
+        icon('plus'),el('span',{text:'Take or choose a photo'}),
         el('input',{type:'file',accept:'image/*,.heic,.heif',
           'aria-label':'Choose photo for meal',onchange:event=>attachMealPhoto(event.target.files?.[0])}),
       ]),

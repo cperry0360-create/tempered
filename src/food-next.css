@@ -228,3 +228,12 @@ html[data-layout="duo"]:has(.app__body>.fn2) .tabbar {
   html[data-layout="duo"]:has(.app__body>.fn2) .tabbar {background:var(--food-v2-deep);-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 @media(prefers-reduced-motion:reduce) {.fn2__pills button,.fn2__float {transition:none}}
+
+/* Small photo affordance on journal thumbnails, without reducing tap size. */
+.fn2__meal-row>.fn2__meal-photo {position:relative}
+.fn2__meal-row>.fn2__meal-photo::after {
+  content:'+';position:absolute;right:2px;bottom:2px;display:grid;place-items:center;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--food-v2-blue);color:var(--food-v2-deep);
+  box-shadow:0 1px 6px rgba(1,10,21,.45);font-size:15px;font-weight:700;
+}

@@ -1,3 +1,10 @@
+## 2026-11-01 — Single Meal History and visible calorie/protein targets, 0.66.6 (112)
+
+- Removed redundant top-level History shortcut from Food. That shortcut opened the outdated full-screen nutrition UI while Meal History opened a separate new-style journal.
+- Meal History is now the canonical Food-styled timeline with previous/next-day controls and a date picker. It shows day totals, logged meals grouped by meal type, empty states, and accurate historical deletion/Undo using the selected date. The advanced nutrient editing path remains reachable from 'Track other nutrients'.
+- Added explicit calorie and protein goal labels to the two hero metrics alongside the existing percentages, using the saved target calculations, not fixed figures.
+- No changes to nutrition storage or session metrics. Preserve right-side Duo tab rail and existing backup, with a new pre-update branch: `backup/lfms-before-fuel-goals-2026-11-01`.
+
 ## 2026-11-01 — Health paste and Food navigation correction, 0.66.5 (111)
 
 - Accept the exact `TEMPERED_HEALTH_V1` snapshot as either nine separate lines or a single whitespace-flattened line, matching iOS Duo clipboard behavior. Bound individual fields before extracting numbers; blank Steps and Sleep stay absent and never overwrite existing logs. Preview and import remain explicit, local-first and date-aware.

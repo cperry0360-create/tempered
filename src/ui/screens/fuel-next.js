@@ -21,7 +21,7 @@ const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':
 
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
-  let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null
+  let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
   let working=false, undo=null, cart=new Map(), status=''
   const runtime=el('div.fn2__legacy-runtime')
 
@@ -76,7 +76,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     return el('div.fn2__heading',{},[
       el('div.fn2__brand',{},[el('img.lfms__fuel-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('b',{text:'LFMS'}),el('small',{text:' / FUEL'})]),
       el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
-        el('button',{type:'button',onclick:event=>openFullHistory(event.currentTarget)},[icon('history'),' History']),
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
         el('button',{type:'button',onclick:()=>openSheet('manual')},[icon('plus'),' Quick Log']),
         el('button',{type:'button',onclick:()=>go('journal')},[icon('journal'),' Meal History']),
@@ -99,11 +98,12 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }
     return el('div.fn2__rings',{},[svg])
   }
-  function metric(label,amount,goal,extra='') {
+  function metric(label,amount,goal,unit,extra='') {
     return el('div.fn2__metric'+extra,{},[
       el('small',{text:Math.round(pct(amount,goal))+'% of target'}),
       el('strong',{text:fmt(amount)}),
       el('span',{text:label}),
+      el('small.fn2__metric-goal',{text:'Target: '+fmt(goal)+' '+unit}),
     ])
   }
   function macro(name,amount,goal) {
@@ -139,8 +139,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       heading(),week(),
       el('section.fn2__hero',{'aria-label':'Live nutrition totals'},[
         el('div.fn2__metrics',{},[
-          metric('Calories Consumed',calories,calGoal),
-          metric('Protein Consumed',protein,proGoal,' fn2__metric--protein'),
+          metric('Calories Consumed',calories,calGoal,'kcal'),
+          metric('Protein Consumed',protein,proGoal,'g',' fn2__metric--protein'),
         ]),
         ring(pct(calories,calGoal),pct(protein,proGoal)),
         el('div.fn2__macros',{},[
@@ -177,9 +177,9 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       el('button.fn2__float',{type:'button',dataset:{food2Add:'true'},onclick:()=>openSheet('quick'),'aria-label':'Log food'},['+']),
     ]
   }
-  function grouped() {
+  function grouped(day) {
     const a=new Map(['Breakfast','Lunch','Dinner','Snacks'].map(x=>[x,[]]))
-    for(const entry of nutritionLedger(data.day).entries){
+    for(const entry of nutritionLedger(day).entries){
       const hour=new Date(entry.loggedAt).getHours()
       a.get(mealType(hour)).push(entry)
     }
@@ -200,8 +200,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(!picked||working)return
     working=true
     try{
-      const r=await daily.removeNutrition(clock.today(),picked.id)
-      undo=r.removed?{entry:r.removed,index:r.index}:null
+      const r=await daily.removeNutrition(journalDate,picked.id)
+      undo=r.removed?{entry:r.removed,index:r.index,date:journalDate}:null
       sheet='';picked=null
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
@@ -211,25 +211,55 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   async function restore() {
     if(!undo)return
     const saved=undo;undo=null
-    await daily.restoreNutrition(clock.today(),saved.entry,saved.index)
+    await daily.restoreNutrition(saved.date,saved.entry,saved.index)
     await refresh()
     window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
   }
+  function setJournalDate(date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > clock.today()) return
+    journalDate=date
+    sheet='';picked=null
+    render()
+  }
+  function shiftJournalDate(days) {
+    const date=new Date(journalDate+'T12:00:00Z')
+    date.setUTCDate(date.getUTCDate()+days)
+    setJournalDate(date.toISOString().slice(0,10))
+  }
   function journal() {
-    const ledger=nutritionLedger(data.day)
+    const day=data.days.find(row=>row.date===journalDate)??{date:journalDate}
+    const ledger=nutritionLedger(day)
+    const entries=[...grouped(day)].filter(([,rows])=>rows.length>0)
+    const isToday=journalDate===clock.today()
     return [
       heading(),
-      el('div.fn2__title',{},[el('h1',{text:'Food Journal'}),el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel'])]),
+      el('div.fn2__title',{},[el('h1',{text:'Meal History'}),el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel'])]),
+      el('nav.fn2__history-nav',{'aria-label':'Browse meal history by date'},[
+        el('button.fn2__history-arrow',{type:'button','aria-label':'Previous day',onclick:()=>shiftJournalDate(-1)},['‹']),
+        el('label.fn2__history-date',{},[
+          el('span',{text:'Viewing date'}),
+          el('input',{type:'date',value:journalDate,max:clock.today(),'aria-label':'Meal history date',
+            onchange:event=>setJournalDate(event.target.value)}),
+        ]),
+        el('button.fn2__history-arrow',{type:'button','aria-label':'Next day',disabled:isToday,onclick:()=>shiftJournalDate(1)},['›']),
+        el('button.fn2__history-today',{type:'button',disabled:isToday,onclick:()=>setJournalDate(clock.today())},['Today']),
+      ]),
+      el('div.fn2__history-summary',{},[
+        el('strong',{text:fmt(ledger.totals.calories)+' kcal · '+fmt(ledger.totals.protein)+'g protein'}),
+        el('span',{text:ledger.entries.length+' meal'+(ledger.entries.length===1?'':'s')+' logged'}),
+      ]),
       el('div.fn2__journal',{},[
-        ...[...grouped()].map(([name,entries])=>el('section.fn2__meal-group',{},[
+        !entries.length&&el('p.fn2__history-empty',{text:'No individual meals logged for this date.'}),
+        ...entries.map(([name,rows])=>el('section.fn2__meal-group',{},[
           el('div.fn2__meal-group-title',{},[
-            el('strong',{text:name}),el('button',{type:'button','aria-label':'Log '+name,onclick:()=>openSheet('quick')},['+']),
+            el('strong',{text:name}),
+            isToday&&el('button',{type:'button','aria-label':'Log '+name,onclick:()=>openSheet('quick')},['+']),
           ]),
-          ...entries.map(mealRow),
-          el('div.fn2__group-total',{text:'Total: '+fmt(entries.reduce((s,e)=>s+n(e.calories),0))+' cal · '+fmt(entries.reduce((s,e)=>s+n(e.proteinGrams),0))+'g protein'}),
+          ...rows.map(mealRow),
+          el('div.fn2__group-total',{text:'Total: '+fmt(rows.reduce((s,e)=>s+n(e.calories),0))+' cal · '+fmt(rows.reduce((s,e)=>s+n(e.proteinGrams),0))+'g protein'}),
         ])),
         ledger.hasCarryover&&el('small.fn2__carryover',{text:'Older aggregate totals remain counted even when no individual meal records exist.'}),
-        undo&&el('button.fn2__undo',{type:'button',onclick:restore},['Undo deleted meal']),
+        undo?.date===journalDate&&el('button.fn2__undo',{type:'button',onclick:restore},['Undo deleted meal']),
       ]),
     ]
   }
@@ -348,7 +378,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('button',{type:'button',onclick:()=>assignPhoto('none')},[icon('food'),' No image']),
       ]),
     ]:sheet==='actions'?[
-      el('button.fn2__secondary',{type:'button',onclick:event=>{picked=null;closeSheet();openFullHistory(event.currentTarget)}},['View / edit in full meal history']),
+      el('button.fn2__secondary',{type:'button',onclick:closeSheet},['Back to Meal History']),
       el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;sheet='';view='library';stage(x)}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]

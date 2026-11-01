@@ -1,3 +1,7 @@
+## 2026-11-01 — Consolidate duplicate Food histories and expose targets
+
+The Food header's History shortcut was a legacy full-screen nutrition route, while Meal History used the Food 2.0 journal without browsing prior dates. The user identified both the redundancy and the visual regression. Keep only Meal History in the header and extend the Food-themed journal with date navigation, totals and historical delete/Undo, preserving canonical day logs. Keep advanced nutrient editing via its explicit secondary control without displaying another History shortcut. Show absolute calorie and protein targets next to the large consumed metrics; percentage is supplementary, not a replacement.
+
 ## 2026-11-01 — Flattened ChatGPT Health snapshot and redundant Food shortcuts
 
 The user's iPhone Duo pasted the Health contract in a single line, including `STEPS=` and `SLEEP=` without values. The old line-only parser silently rejected it, making Review and import disabled. Tokenize recognized `KEY=` boundaries following the exact Tempered header, retaining numeric and date constraints; no blank field can borrow the next field's value. Treat Health changes as replace-mode only for supplied fields.

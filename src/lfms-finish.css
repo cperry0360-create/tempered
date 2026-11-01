@@ -300,12 +300,14 @@ html[data-layout="duo"] #app.app .tabbar,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar,
 html[data-layout="duo"]:has(.app__body>.fn2) .tabbar {
   background:none;box-shadow:none;border:0;
+  padding-left:0;padding-right:var(--duo-inset-right);
+  align-items:center;
   -webkit-backdrop-filter:none;backdrop-filter:none;
 }
 html[data-layout="duo"] .tabbar__tabs,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tabs {
   box-sizing:border-box;
-  width:54px;gap:4px;padding:6px 4px;
+  width:48px;gap:4px;padding:6px 1px;
   border-radius:35px;
   border:1px solid rgba(245,251,255,.18);
   background:linear-gradient(115deg,rgba(35,41,49,.88),rgba(17,22,30,.91));

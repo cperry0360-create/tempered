@@ -103,6 +103,39 @@ try{
     const dest=join(outdir,view+'.png')
     await writeFile(dest,bytes)
     console.log('Saved',dest,bytes.length)
+    if(view==='tempered-food-library'){
+      const smoke=await call('Runtime.evaluate',{expression:`(()=>{
+        const read=()=>({
+          count:document.querySelectorAll('#results .food-row').length,
+          kcal:document.querySelector('#cart-calories')?.textContent,
+          favoriteCount:document.querySelectorAll('#results .heart.on').length,
+          sheet:document.querySelector('#sheet-title')?.textContent,
+          open:document.querySelector('#scrim')?.classList.contains('open'),
+          fallback:document.querySelectorAll('#results .food-photo.missing').length
+        });
+        const initial=read();
+        document.querySelector('#results .food-action')?.click();
+        const staged=read();
+        document.querySelector('#results .heart')?.click();
+        const favorites=read();
+        document.querySelector('#results .food-photo')?.click();
+        const picker=read();
+        document.querySelector('#close-sheet')?.click();
+        document.querySelector('#to-manual')?.click();
+        const form=document.querySelector('#sheet-content form');
+        for(const [key,value] of Object.entries({name:'Test Bowl',kcal:'220',p:'15',c:'30',f:'4'})){
+          form.elements.namedItem(key).value=value;
+        }
+        form.requestSubmit();
+        const custom=read();
+        return JSON.stringify({initial,staged,favorites,picker,custom});
+      })()`,returnByValue:true})
+      const data=JSON.parse(smoke.result.value)
+      console.log('Food workflow interaction smoke',data)
+      if(data.initial.count!==8||data.initial.fallback<2||data.staged.kcal!=='485 kcal'||data.favorites.favoriteCount!==1||data.picker.sheet!=='Choose Stock Photo'||data.custom.count!==9||data.custom.sheet!=='Choose Stock Photo'||!data.custom.open)
+        throw new Error('Food Library staging, favorite, photo or manual flow did not work: '+JSON.stringify(data))
+    }
+
   }
 }finally{
   ws.close()

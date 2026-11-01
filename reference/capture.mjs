@@ -65,10 +65,13 @@ function call(method,params={}){
 try{
   await call('Page.enable')
   await call('Emulation.setDeviceMetricsOverride',{width:726,height:512,deviceScaleFactor:1,mobile:false,screenWidth:726,screenHeight:512})
-  for(const view of ['dashboard','journal','quicklog','library','tempered-fuel','tempered-journal','tempered-journal-menu']){
+  for(const view of ['dashboard','journal','quicklog','library','tempered-fuel','tempered-journal','tempered-journal-menu','tempered-food-library','tempered-quicklog','tempered-photo']){
     const target=view==='tempered-fuel' ? pathToFileURL(resolve('reference/tempered-fuel-study.html')).href
       : view==='tempered-journal' ? pathToFileURL(resolve('reference/tempered-journal-study.html')).href
       : view==='tempered-journal-menu' ? pathToFileURL(resolve('reference/tempered-journal-study.html')).href+'?view=menu'
+      : view==='tempered-food-library' ? pathToFileURL(resolve('reference/tempered-food-workflow-study.html')).href
+      : view==='tempered-quicklog' ? pathToFileURL(resolve('reference/tempered-food-workflow-study.html')).href+'?view=quicklog'
+      : view==='tempered-photo' ? pathToFileURL(resolve('reference/tempered-food-workflow-study.html')).href+'?view=photo'
       : url+'?view='+view
     await call('Page.navigate',{url:target})
     await delay(850)
@@ -87,6 +90,13 @@ try{
       console.log('Tempered journal fidelity assertion',state)
       if(state.title!=='Food Journal'||state.rail!==4||state.active!=='food'||state.entries<2||(view==='tempered-journal-menu' && !state.menu))
         throw new Error('Tempered journal visual study incomplete '+JSON.stringify(state))
+    }
+    if(view.startsWith('tempered-food-library') || view==='tempered-quicklog'||view==='tempered-photo'){
+      const result=await call('Runtime.evaluate',{expression:"JSON.stringify({title:document.title,rail:document.querySelectorAll('.rail button').length,active:document.querySelector('.rail [aria-current=page]')?.getAttribute('data-section'),foods:document.querySelectorAll('#results .food-row').length,images:document.querySelectorAll('#results img').length,photos:document.querySelectorAll('#results img[src]').length,sheet:document.querySelector('#scrim')?.classList.contains('open'),sheetTitle:document.querySelector('#sheet-title')?.textContent})",returnByValue:true})
+      const state=JSON.parse(result.result.value)
+      console.log(view, state)
+      if(!state.title?.includes('Tempered Fuel')||state.rail!==4||state.active!=='food'||state.foods!==8||state.photos<5||(view!=='tempered-food-library' && !state.sheet)||(view==='tempered-quicklog'&&state.sheetTitle!=='Quick Log')||(view==='tempered-photo'&&state.sheetTitle!=='Choose Stock Photo'))
+        throw new Error('Library or Quick Log prototype check failed: '+JSON.stringify(state))
     }
     const snap=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})
     const bytes=Buffer.from(snap.data,'base64')

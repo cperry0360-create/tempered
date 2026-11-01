@@ -41,6 +41,13 @@ export async function bypassSetup({ storage, clock } = {}) {
  * that test another screen immediately call app.show(...) themselves.
  */
 export async function bootstrapHarness(options = {}) {
+  // Existing acceptance pages assert the legacy Food UI. Preserve their old
+  // expectations unless a test explicitly opts in to new Food 2.0.
+  const url = new URL(location.href)
+  if (!url.searchParams.has('food2')) {
+    url.searchParams.set('food2','0')
+    history.replaceState(null,'',url)
+  }
   const prepared = await bypassSetup(options)
   const tempered = await bootstrapApp({ ...options, ...prepared })
   await tempered.app.show(options.initialTab ?? 'train')

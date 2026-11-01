@@ -22,10 +22,18 @@ Saved-food favorites (`profile.food2Favorites`) and optional illustration
 overrides (`profile.food2Photos`) are additive profile fields, not a schema
 migration. Stock image matches are *illustrative only*, not a barcode/food
 database. Unknown and offline thumbnails must show neutral fallbacks.
-The candidate currently loads a few stock thumbnails from external sites.
-**Before production release**, obtain/recheck asset rights and bundle only
-approved optimized files into the offline precache. Avoid bulk stock
-downloads, hidden tracking or fabricated nutrition values.
+The candidate now bundles **16 individually license-verified CC0/public
+domain food photos from Wikimedia Commons**. Each photo is optimized to a
+192×192 JPEG; combined compressed size is approximately 139 KB. Import sources
+and verified author/license/source-page metadata are in
+`art/food/SOURCES.json` and `art/food/catalog.json`. The reproducible importer
+is `tools/build-food-photo-library.py`; it refuses content not marked CC0 or
+public domain. `src/ui/food-photos.js` uses local paths with a neutral fallback;
+every file is included in the PWA precache. The Food UI itself never requests
+images from a stock-photo API or hosting service, including when offline.
+The actual Food Library and nutrition ledger remain independent from photos.
+Adding more images requires review and a source entry, not broad automatic
+image crawling. The draft still requires on-device QA before release.
 
 Release gates: pass real-data browser assertions, inspect 4 real Food screens
 on 390x844 / 430x932 and Duo 466x678 / 890x626 (both themes), verify keyboard

@@ -38,7 +38,7 @@ jobs:
           except (FileNotFoundError,KeyError,ValueError):
             pass
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
-            out.write('ready='+str(result).lower()+'\\n')
+            out.write('ready='+str(result).lower()+'\n')
           print('Offline library already present:',result)
           PY
       - uses: actions/setup-python@v5

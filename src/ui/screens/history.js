@@ -497,7 +497,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
 
   function buildProgressReport(current, previous, comparable) {
     const lines = [
-      'Tempered progress · last ' + range + ' days ending ' + shortDate(clock.today()),
+      'Less Fat More Strong progress · last ' + range + ' days ending ' + shortDate(clock.today()),
       'Training: ' + current.periodSessions.length + ' sessions, ' + current.workingSets + ' working sets.',
       'Habit checkoffs (not adherence): ' + (current.habitRate === null ? 'no configured daily habits' : current.habitRate + '% marked.'),
       'Steps: ' + (current.avgSteps === null ? 'no samples' : numberText(Math.round(current.avgSteps)) + ' per day.')

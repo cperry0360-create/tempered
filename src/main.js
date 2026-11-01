@@ -8,6 +8,24 @@ import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 
+// Keep the supplied LFMS launch artwork visible on fast devices, too.
+// This overlay lives outside #app so bootstrap cannot instantly erase it.
+const launch = document.querySelector('[data-lfms-launch]')
+const splashStarted = performance.now()
+let splashDismissed = false
+function dismissSplash() {
+  if (splashDismissed) return
+  splashDismissed = true
+  const remaining = Math.max(0, 1900 - (performance.now() - splashStarted))
+  setTimeout(() => {
+    if (!launch) return
+    launch.dataset.closing = 'true'
+    setTimeout(() => launch.remove(), 370)
+  }, remaining)
+}
+// Never leave a loading overlay covering a stalled or partially loaded app.
+setTimeout(dismissSplash, 7000)
+
 registerServiceWorker()
 installMobileInteractions()
 installCalorieAiRuntime()
@@ -27,8 +45,10 @@ bootstrap()
       // never turn a working tracker into a startup failure.
       console.error('[tempered] cable machine setup failed', error)
     }
+    dismissSplash()
   })
   .catch((error) => {
+    dismissSplash()
     console.error('[tempered] failed to start', error)
     const app = document.getElementById('app')
     if (!app) return

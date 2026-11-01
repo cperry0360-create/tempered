@@ -51,7 +51,7 @@
 
         check('Today has no persistent global FAB competing with the tracker', q('.fab') === null)
         check('Today follows the approved dashboard order',
-          qa('.screen--today .today-card[data-section]').map((node) => node.dataset.section).join('|') === 'next-session|readiness|week|fuel|daily')
+          qa('.screen--today .today-card[data-section]').map((node) => node.dataset.section).join('|') === 'week|next-session|readiness|fuel|daily')
         check('Today has no legacy summary, calendar, planner, or workout-control section',
           !q('[data-summary="daily"]') && !q('.today-calendar') && !q('[data-section="planner"]') && !q('[data-section="training"]'))
         check('Today exposes Settings from its title row',

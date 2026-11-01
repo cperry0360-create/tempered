@@ -39,7 +39,7 @@
       const structure=[...screen.querySelectorAll('.today-heading, .today-card[data-section]')].map((node)=>node.dataset.section||(
         node.classList.contains('today-heading')?'heading':node.className))
       check('Today order matches the approved R2 stack',
-        structure.slice(0,6).join('|')==='heading|next-session|readiness|week|fuel|daily',
+        structure.slice(0,6).join('|')==='heading|week|next-session|readiness|fuel|daily',
         structure.slice(0,6).join(' | '))
       check('Today starts with its title row, date, and Settings gear',
         Boolean(q('.today-heading__title-row .screen__title',screen))
@@ -54,7 +54,7 @@
 
       const cards=qa('.today-card',screen)
       check('the five dashboard cards render in the approved order',
-        cards.map((card)=>card.dataset.section).join('|')==='next-session|readiness|week|fuel|daily',
+        cards.map((card)=>card.dataset.section).join('|')==='week|next-session|readiness|fuel|daily',
         cards.map((card)=>card.dataset.section).join(' | '))
       check('cards use opaque themed fills with 16px corners',
         cards.every((card)=>{

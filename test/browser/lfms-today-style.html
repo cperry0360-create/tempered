@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LFMS Today visual and interaction acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/nutrition-today.css">
+<link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/refined-ui.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import {bootstrapHarness} from './harness.js'
+import {createMemoryStorage} from '../../src/adapters/storage/memory-storage.js'
+import {fixedClock} from '../../src/adapters/clock/clock.js'
+const checks=[],errors=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const q=s=>document.querySelector(s)
+const qa=s=>[...document.querySelectorAll(s)]
+window.addEventListener('error',e=>errors.push(e.message))
+window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try{
+ const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,9,1,12))
+ const t=await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'today'})
+ await t.app.show('today')
+ check('Today opens with the approved Food visual theme',!!q('.today--fuel-style'))
+ check('One compact calendar strip, not duplicate week cards',qa('[data-section=week]').length===1&&qa('.today-week__day').length===7)
+ check('Hero uses canonical actual daily values, not sample placeholders',!!q('.today2__hero')&&q('.today2__hero')?.textContent.includes('Sessions logged')&&q('.today2__hero')?.textContent.includes('Working sets'))
+ check('Dual concentric rings encode habits and training',qa('.today2__rings circle').length===4&&q('.today2__rings svg')?.getAttribute('aria-label')?.includes('Daily habits'))
+ check('Three Food-style progress bars remain real values',qa('.today2__barline [role=progressbar]').length===3)
+ check('Brand mark is loaded from existing LFMS artwork',q('.lfms__today-mark')?.src.includes('/branding/lfms/logo-mark.svg'))
+ check('Four action pills include working section destinations',qa('.today2__pills button').length===4)
+ check('Original workout, week, Fuel, and daily-log sections remain intact',
+  !!q('[data-section=next-session]')&&!!q('[data-section=week]')&&!!q('[data-section=fuel]')&&!!q('[data-section=daily]'))
+ check('Recovery card retains import/recovery behavior',!!q('[data-section=readiness]'))
+ for(const b of qa('.today2__pills button')){b.click()}
+ check('Shortcuts do not throw or leave Today',!!q('.today--fuel-style'))
+ const prev=await t.daily.dayLog('2026-10-01')
+ await t.daily.addNutrition('2026-10-01',{description:'Test chicken bowl',calories:375,protein:35,carbs:39,fat:9})
+ await t.app.show('today')
+ const next=await t.daily.dayLog('2026-10-01')
+ check('Canonical calories update dashboard hero after logging',next.calories===(prev?.calories??0)+375&&q('.today2__hero')?.textContent.includes('375'))
+ check('Canonical food stats update existing Fuel card',q('[data-section=fuel]')?.textContent.includes('375'))
+ check('No runtime errors or unhandled rejections',errors.length===0,errors.join(' | '))
+}catch(e){check('Today Food-style test completes',false,e.stack)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-today-style',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

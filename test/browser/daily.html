@@ -67,7 +67,7 @@
       const ordered = [...document.querySelectorAll('.screen--today .today-card[data-section], .screen--today > .today-heading')]
         .map((node) => node.dataset.section || 'heading')
       check('R2 Today uses the approved top-to-bottom dashboard order',
-        ordered.join('|') === 'heading|next-session|readiness|week|fuel|daily', ordered.join(' | '))
+        ordered.join('|') === 'heading|week|next-session|readiness|fuel|daily', ordered.join(' | '))
       check('removed Today surfaces are absent',
         !q('.today-calendar') && !q('[data-summary="daily"]') && !q('[data-section="planner"]')
         && !q('[data-section="training"]') && !q('[data-daily-recap]'))

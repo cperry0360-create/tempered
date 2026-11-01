@@ -42,9 +42,10 @@
     if (new URLSearchParams(location.search).get('layout') === 'duo') document.documentElement.dataset.layout = 'duo'
     const view = new URL(location.href).searchParams.get('view') ?? 'today'
     // Visual evidence for the opt-in Food 2.0 candidate, not the live app.
-    if (view.startsWith('food2-')) {
+    {
       const url = new URL(location.href)
-      url.searchParams.set('food2', '1')
+      // Preserve original release baseline screenshots for older Fuel pages.
+      url.searchParams.set('food2', view.startsWith('food2-') ? '1' : '0')
       history.replaceState(null, '', url)
     }
     const theme = new URL(location.href).searchParams.get('theme') ?? 'dark'

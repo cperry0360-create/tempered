@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Tempered Fuel · Library and Quick Log visual study</title>
+<style>
+:root{--bg:#061424;--deeper:#04101e;--panel:#102a43;--raised:#193a56;--line:#294966;--blue:#359df3;--light:#76c3ff;--text:#f5f9ff;--muted:#a5bdd0;--danger:#ff8796}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit}button{cursor:pointer;color:inherit;border:0;background:transparent}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--light);outline-offset:1px}
+.stage{width:726px;height:512px;position:absolute;left:0;top:0;overflow:hidden;transform-origin:top left;background:radial-gradient(ellipse 480px 180px at 45% -65px,#16344d,transparent),var(--bg)}
+.brand{position:absolute;left:16px;top:19px;display:flex;align-items:center;gap:8px;height:31px}
+.mark{width:19px;height:23px;background:var(--light);clip-path:polygon(0 0,31% 0,44% 53%,63% 0,100% 0,67% 100%,32% 100%)}
+.brand strong{font-size:17px;font-weight:820;letter-spacing:-.5px}
+.brand span{color:#638daf;font-size:12px}.brand em{font-style:normal;font-size:12px;color:var(--light);font-weight:760}
+.eyebrow{font-size:9px;font-weight:820;letter-spacing:1.2px;color:var(--light)}
+.utility{position:absolute;right:19px;top:16px;display:grid;justify-items:center;gap:5px;width:35px;z-index:5}.utility .record{width:31px;height:31px;border:1px solid #753b40;border-radius:50%;display:grid;place-items:center}.utility .record:before{content:'';background:#e04f61;border-radius:50%;height:10px;width:10px}.utility .time{font-size:11px;font-weight:780}.utility .wifi{width:31px;height:31px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--text);font-size:16px}
+.nav{position:absolute;left:15px;top:58px;display:flex;gap:7px;align-items:center;max-width:650px;overflow:hidden;white-space:nowrap}
+.nav button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:29px;padding:0 11px;background:linear-gradient(#173751,#0f2941);border:1px solid var(--line);border-radius:19px;font-size:10px;font-weight:700;white-space:nowrap}.nav button.active{border-color:#537fa4;background:#204768}
+.nav .glyph{font-size:12px;color:var(--light)}
+.rail{position:absolute;z-index:10;right:18px;top:311px;width:37px;height:183px;border-radius:21px;background:linear-gradient(#183a54,#0c2339);border:1px solid #2e526c;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:5px 0}
+.rail button{position:relative;display:grid;place-items:center;width:31px;height:34px;color:#a3bdd3}
+.rail button.active{color:var(--light);background:#255278;border-radius:13px}.rail svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}.rail .dot{position:absolute;right:1px;top:3px;width:6px;height:6px;border-radius:50%;background:var(--light)}
+.float{position:absolute;right:78px;bottom:17px;z-index:11;width:47px;height:47px;background:linear-gradient(#2b5b7d,#153d59);border:1px solid #4d84ad;border-radius:50%;font-size:26px;line-height:42px;box-shadow:0 8px 22px #0007}
+.content{position:absolute;left:15px;top:101px;width:641px;bottom:9px;overflow:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px}
+.head h1{margin:2px 0 0;font-size:23px;font-weight:840;letter-spacing:-.75px}
+.head .aside{font-size:10px;color:var(--muted)}
+.tabs{display:flex;align-items:center;gap:7px;height:35px;margin-bottom:8px}
+.tabs button{height:29px;padding:0 12px;background:#102a42;border:1px solid var(--line);border-radius:18px;font-size:10px;font-weight:750}
+.tabs button[aria-pressed=true]{background:var(--blue);color:#061424;border-color:var(--blue)}
+.search-wrap{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.search{display:flex;align-items:center;gap:7px;flex:1;min-width:0;height:37px;background:#112e47;border:1px solid #315574;border-radius:11px;padding:0 11px;color:var(--light)}
+.search svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none}
+.search input{background:transparent;color:var(--text);border:0;outline:0;flex:1;min-width:0;font-size:12px;font-weight:600}
+.search input::placeholder{color:#87a4bd}
+.search-wrap .catalog{height:37px;padding:0 12px;border:1px solid #3e6d91;background:#1c4260;border-radius:11px;color:var(--text);font-size:10px;font-weight:770}
+.library-body{display:grid;grid-template-columns:1.1fr .86fr;gap:10px;height:calc(100% - 128px);min-width:0}
+.pane{border-radius:13px;border:1px solid #2c4a66;background:linear-gradient(155deg,#102b43,#0b2035);overflow:hidden;min-width:0}
+.pane-head{height:34px;border-bottom:1px solid #25445f;padding:0 11px;display:flex;justify-content:space-between;align-items:center}.pane-head strong{font-size:11px}.pane-head small{font-size:9px;color:var(--muted)}
+.rows{height:calc(100% - 34px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#416486 transparent}
+.food-row{width:100%;min-height:63px;border-bottom:1px solid #284562;display:flex;align-items:center;gap:9px;padding:6px 8px;color:var(--text);text-align:left;position:relative}
+.food-row:hover{background:#173a55}
+.food-photo{position:relative;width:53px;height:49px;flex:none;background:linear-gradient(140deg,#294960,#122940);border-radius:9px;border:1px solid #375670;overflow:hidden;display:grid;place-items:center}
+.food-photo img{width:100%;height:100%;object-fit:cover;display:block}.food-photo .fallback{font-size:24px;position:absolute;inset:0;display:none;place-items:center}
+.food-photo.missing img{display:none}.food-photo.missing .fallback{display:grid}
+.food-details{flex:1;min-width:0;display:grid;gap:5px}.food-details strong{font-size:11.7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.food-details small{font-size:9.5px;color:var(--muted);white-space:nowrap}
+.food-details small b{color:var(--text);font-weight:760}
+.food-action{width:25px;height:25px;display:grid;place-items:center;background:#285474;color:var(--light);border-radius:50%;font-size:19px;flex:none}
+.heart{font-size:18px;color:#789ab4;margin-right:3px}.heart.on{color:#fb87b1}
+.side{display:grid;grid-template-rows:auto 1fr;gap:9px;min-width:0}
+.side .section{padding:11px 12px}
+.side .section>strong{font-size:12px}.side .section>p{color:var(--muted);font-size:9.5px;line-height:1.45;margin:5px 0 7px}
+.quick-buttons{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.quick-buttons button{height:32px;font-size:9px;font-weight:770;border:1px solid #355979;border-radius:9px;background:#1b3b55;color:var(--text)}
+.queue{min-height:0;display:flex;flex-direction:column}.queue-list{overflow-y:auto;min-height:0;flex:1;padding:7px 8px}
+.empty-queue{display:grid;justify-items:center;gap:6px;text-align:center;color:#819eb6;font-size:10px;padding:18px 8px}.empty-queue .icon{font-size:25px}
+.cart-row{display:flex;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid #2c4964}
+.cart-row .food-photo{width:35px;height:35px}.cart-row strong{flex:1;font-size:10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart-row button{background:#254663;border-radius:50%;height:23px;width:23px;font-size:14px}.cart-row small{font-size:9px;font-weight:800}
+.queue-foot{border-top:1px solid var(--line);padding:8px 9px}.queue-foot .sum{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:6px}.queue-foot .sum strong{font-size:13px;color:var(--text)}
+.primary{height:35px;width:100%;background:var(--blue);color:#04101e;font-size:11px;font-weight:840;border-radius:10px}
+.primary:disabled{background:#366080;color:#a6b5c5;cursor:default}
+.footnote{position:absolute;left:3px;bottom:1px;color:#7293ae;font-size:8px}
+.empty-results{padding:17px;display:grid;gap:9px;text-align:center;justify-items:center}.empty-results strong{font-size:13px}.empty-results small{font-size:10px;color:var(--muted)}
+.empty-results button{padding:7px 12px;border:1px solid var(--line);border-radius:9px;color:var(--light);font-size:11px}
+.hidden{display:none!important}
+/* Quick log follows the tall Forged bottom-sheet composition. */
+.scrim{position:absolute;z-index:20;inset:0;background:rgba(0,7,13,.76);display:none;align-items:flex-end;justify-content:center}
+.scrim.open{display:flex}.sheet{position:relative;width:508px;height:446px;max-height:calc(100% - 48px);border-radius:26px 26px 0 0;background:#11263d;box-shadow:0 -8px 45px #0008;border:1px solid #35546d;border-bottom:0;overflow:hidden;display:flex;flex-direction:column}
+.handle{position:absolute;left:226px;top:6px;width:56px;height:4px;border-radius:99px;background:#5c7b95}
+.sheet-top{height:57px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 5px}
+.sheet-top strong{font-size:16px;letter-spacing:-.25px}.close{height:30px;width:30px;border-radius:50%;background:#2b4c67;font-size:20px;line-height:25px}
+.sheet-top .right{color:var(--light);font-size:12px;font-weight:790}
+.sheet-tags{height:34px;display:flex;gap:7px;padding:0 15px 8px;flex:none}
+.sheet-tags button{padding:0 13px;border-radius:99px;background:#24415c;border:1px solid #385c7b;font-size:10px;font-weight:700}
+.sheet-tags button[aria-pressed=true]{background:var(--blue);color:#061424;border-color:var(--blue)}
+.sheet-content{padding:0 15px 8px;overflow:auto;scrollbar-width:thin;flex:1}
+.sheet-section-title{color:var(--light);font-weight:790;font-size:10px;margin:8px 0}
+.sheet-food{display:flex;align-items:center;gap:10px;min-height:62px;border-bottom:1px solid #31506a}
+.sheet-food .food-photo{height:48px;width:49px}
+.sheet-food .food-details{gap:4px}
+.sheet-food .food-details strong{font-size:12px}
+.sheet-food button.add{width:30px;height:30px;border-radius:50%;background:#2a5678;font-size:20px}
+.sheet-food button.add.selected{background:var(--blue);color:#061424}
+.sheet-bottom{flex:none;border-top:1px solid #31506d;padding:8px 15px 13px;display:flex;align-items:center;gap:9px;background:#10273e}
+.sheet-bottom .total{flex:1;font-size:11px;font-weight:770}.sheet-bottom .total span{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.sheet-bottom button{background:var(--blue);color:#061424;border-radius:12px;min-height:37px;padding:0 20px;font-weight:850;font-size:11px}
+.sheet-tools{display:flex;gap:8px;margin:8px 0}
+.sheet-tools button{border:1px solid #355978;background:#1b3a54;border-radius:9px;padding:9px;font-size:10px;flex:1}
+.form{display:grid;gap:7px;padding:8px 0 0}
+.form label{display:grid;gap:3px;color:#a8bed0;font-size:10px}.form input,.form textarea{background:#0b2136;border:1px solid #355875;border-radius:9px;color:#fff;min-height:34px;padding:7px 9px;font-size:12px;resize:vertical}
+.form .macros{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.form .macros label{min-width:0}.form .macros input{width:100%;min-width:0}
+.form button{margin-top:5px}
+.catalog-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.catalog-item{border:1px solid #30536e;border-radius:12px;overflow:hidden;background:#1b3951;text-align:left;display:grid;gap:3px;padding-bottom:7px;min-width:0}
+.catalog-item img{width:100%;height:84px;object-fit:cover;background:#29455e}
+.catalog-item strong{font-size:10px;padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catalog-item small{font-size:8px;padding:0 7px;color:var(--muted)}
+.catalog-item.active{border:2px solid var(--blue)}
+.photo-help{color:var(--muted);font-size:10px;line-height:1.5}
+.toast{position:absolute;z-index:19;left:199px;bottom:20px;display:none;border:1px solid #39678c;background:#173954;padding:10px 14px;border-radius:99px;font-size:11px;font-weight:750;box-shadow:0 6px 15px #0005}.toast.show{display:block}
+</style></head>
+<body><main class="stage" id="stage" aria-label="Tempered food prototype">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><strong>TEMPERED</strong><span>/</span><em>FUEL</em></div>
+  <div class="utility" aria-hidden="true"><span class="record"></span><span class="time">1:20</span><span class="wifi">◉</span></div>
+  <nav class="nav" aria-label="Food shortcuts">
+    <button id="to-journal"><span class="glyph">▦</span>History</button>
+    <button class="active" id="to-library"><span class="glyph">▣</span>Food Library</button>
+    <button id="to-quick"><span class="glyph">⊕</span>Quick Log</button>
+    <button id="to-photo"><span class="glyph">▧</span>Photo Library</button>
+    <button id="to-manual"><span class="glyph">+</span>New Food</button>
+  </nav>
+  <section class="content" aria-label="Food Library">
+    <div class="head"><div><span class="eyebrow">YOUR SAVED FOODS</span><h1>Food Library</h1></div><span class="aside">Stock images are illustrative · Sample nutrition</span></div>
+    <div class="tabs" id="filters" aria-label="Food categories">
+      <button data-filter="all" aria-pressed="true">All Foods</button>
+      <button data-filter="frequent" aria-pressed="false">Frequent</button>
+      <button data-filter="recent" aria-pressed="false">Recent</button>
+      <button data-filter="favorites" aria-pressed="false">Favorites</button>
+      <button data-filter="mine" aria-pressed="false">My Foods</button>
+    </div>
+    <div class="search-wrap"><label class="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M15 15L22 22"/></svg><input id="search" type="search" placeholder="Search saved foods, meals and recipes…" aria-label="Search saved foods"></label><button class="catalog" id="catalog" type="button">Photo Catalog ↗</button></div>
+    <div class="library-body">
+      <div class="pane"><div class="pane-head"><strong id="results-title">Your foods</strong><small id="results-count">8 saved</small></div><div class="rows" id="results"></div></div>
+      <aside class="side">
+        <section class="pane section"><strong>QUICK LOG</strong><p>One tap to repeat a food or add a new one. Nothing is saved to Tempered in this visual prototype.</p><div class="quick-buttons"><button id="repeat">Repeat frequent</button><button id="manual">+ Manual entry</button></div></section>
+        <section class="pane queue"><div class="pane-head"><strong>Log cart</strong><small id="cart-badge">0 items</small></div><div class="queue-list" id="cart-rows"></div><div class="queue-foot"><div class="sum"><span>Sample total</span><strong id="cart-calories">0 kcal</strong></div><button class="primary" id="review-cart" disabled>Review Log</button></div></section>
+      </aside>
+    </div>
+    <div class="footnote">Photos: curated Unsplash / Pexels examples. No barcode database or automatic macro lookup.</div>
+  </section>
+  <button class="float" id="float-add" aria-label="Quick log">+</button>
+  <nav class="rail" aria-label="Tempered sections">
+    <button type="button" data-section="calendar" aria-label="Calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h3"/></svg></button>
+    <button type="button" data-section="training" aria-label="Training"><svg viewBox="0 0 24 24"><path d="M3 9v6m3-9v12m12-12v12m3-9v6M6 12h12"/></svg></button>
+    <button type="button" data-section="food" class="active" aria-current="page" aria-label="Food"><svg viewBox="0 0 24 24"><path d="M4 3v7c0 2 1 3 3 3s3-1 3-3V3M7 3v18M16 21V3c-3 2-4 7-4 11h4v7"/></svg><span class="dot"></span></button>
+    <button type="button" data-section="progress" aria-label="Progress"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 16l5-5 4 3 6-9"/></svg></button>
+  </nav>
+  <div class="toast" id="toast" role="status"></div>
+  <div class="scrim" id="scrim"><section class="sheet" role="dialog" aria-label="Quick Log" aria-modal="true">
+    <span class="handle" aria-hidden="true"></span>
+    <div class="sheet-top"><button class="close" id="close-sheet" aria-label="Close Quick Log">×</button><strong id="sheet-title">Quick Log</strong><button class="right" id="sheet-right">•••</button></div>
+    <div class="sheet-tags" id="meal-types"><button aria-pressed="true">Breakfast</button><button aria-pressed="false">Lunch</button><button aria-pressed="false">Dinner</button><button aria-pressed="false">Snack</button></div>
+    <div class="sheet-content" id="sheet-content"></div>
+    <div class="sheet-bottom"><div class="total" id="sheet-totals">0 kcal<span>No foods selected</span></div><button id="sheet-action">Close</button></div>
+  </section></div>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const photos=[
+{id:'chicken',label:'Chicken & rice',url:'https://images.unsplash.com/photo-1636479649370-fa89fbe0a1ec?auto=format&fit=crop&w=280&q=76',source:'https://unsplash.com/photos/una-ciotola-piena-di-riso-e-verdure-in-cima-a-un-tavolo-GHDs-GG81SA',license:'Unsplash'},
+{id:'yogurt',label:'Greek yogurt',url:'https://images.pexels.com/photos/10421049/pexels-photo-10421049.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop',source:'https://www.pexels.com/photo/spoon-in-a-bowl-with-yogurt-and-berries-10421049/',license:'Pexels'},
+{id:'toast',label:'Egg & avocado toast',url:'https://images.unsplash.com/photo-1683234193414-197f37970905?auto=format&fit=crop&w=280&q=76',source:'https://unsplash.com/photos/Y27lpzzTEd0',license:'Unsplash'},
+{id:'salmon',label:'Salmon',url:'https://images.pexels.com/photos/8696472/pexels-photo-8696472.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop',source:'https://www.pexels.com/photo/salmon-and-salad-on-a-ceramic-plate-8696472/',license:'Pexels'},
+{id:'oats',label:'Oatmeal',url:'https://images.pexels.com/photos/7992683/pexels-photo-7992683.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop',source:'https://www.pexels.com/photo/food-healthy-summer-sun-7992683/',license:'Pexels'},
+{id:'salad',label:'Salad bowl',url:'https://images.unsplash.com/photo-1636479649370-fa89fbe0a1ec?auto=format&fit=crop&w=280&q=76',source:'https://unsplash.com/photos/GHDs-GG81SA',license:'Unsplash'}];
+const foods=[
+{id:'chicken',name:'Chicken & rice bowl',calories:485,p:38,c:51,f:13,photo:'chicken',times:12,group:'Lunch'},
+{id:'yogurt',name:'Greek yogurt with berries',calories:165,p:20,c:17,f:2,photo:'yogurt',times:11,group:'Breakfast'},
+{id:'toast',name:'Egg & avocado toast',calories:315,p:17,c:23,f:18,photo:'toast',times:8,group:'Breakfast'},
+{id:'oats',name:'Overnight oats',calories:290,p:14,c:42,f:7,photo:'oats',times:7,group:'Breakfast'},
+{id:'salmon',name:'Salmon and vegetables',calories:390,p:38,c:9,f:22,photo:'salmon',times:4,group:'Dinner'},
+{id:'bagel',name:'Plain bagel',calories:270,p:11,c:53,f:2,photo:null,times:5,group:'Breakfast'},
+{id:'shake',name:'Chocolate protein shake',calories:230,p:42,c:9,f:4,photo:null,times:15,group:'Snack'},
+{id:'salad',name:'Chicken salad',calories:330,p:27,c:24,f:14,photo:'salad',times:3,group:'Lunch'}];
+const favorites=new Set(['chicken','yogurt']);const cart=new Map();let filter='all',query='',meal='Breakfast',mode='quick',activeAssign=null;
+function fit(){const v=Math.min(innerWidth/726,innerHeight/512);$('stage').style.transform='translate('+Math.max(0,(innerWidth-726*v)/2)+'px,'+Math.max(0,(innerHeight-512*v)/2)+'px) scale('+v+')'}
+window.addEventListener('resize',fit);fit();
+function elem(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function byId(id){return foods.find(x=>x.id===id)}
+function photoFor(food){return photos.find(p=>p.id===food.photo)}
+function photoNode(food){const div=elem('span','food-photo');const p=photoFor(food);const img=elem('img');img.alt='Illustrative stock photo';img.loading='lazy';if(p)img.src=p.url;else div.classList.add('missing');img.onerror=()=>div.classList.add('missing');const fb=elem('span','fallback',food.photo?'◈':'🍽');div.append(img,fb);return div}
+function format(n){return Math.round(n).toLocaleString('en-US')}
+function sum(){let n=0,p=0,c=0,f=0,q=0;for(const [id,count] of cart){const item=byId(id);if(!item)continue;q+=count;n+=item.calories*count;p+=item.p*count;c+=item.c*count;f+=item.f*count}return {n,p,c,f,q}}
+function toast(txt){const n=$('toast');n.textContent=txt;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2300)}
+function add(id,n=1){cart.set(id,Math.max(0,(cart.get(id)||0)+n));if(!cart.get(id))cart.delete(id);renderCart();if($('scrim').classList.contains('open'))renderSheet()}
+function favorite(id){favorites.has(id)?favorites.delete(id):favorites.add(id);renderList()}
+function listed(){let a=[...foods];if(filter==='frequent')a=a.filter(x=>x.times>=7).sort((a,b)=>b.times-a.times);if(filter==='recent')a=a.reverse();if(filter==='favorites')a=a.filter(x=>favorites.has(x.id));if(filter==='mine')a=a.filter(x=>x.times===0);if(query.trim())a=a.filter(x=>x.name.toLowerCase().includes(query.toLowerCase().trim()));return a}
+function renderList(){const results=$('results');results.replaceChildren();const rows=listed();$('results-count').textContent=rows.length+' foods';$('results-title').textContent=filter==='favorites'?'Your favorites':filter==='frequent'?'Most repeated':filter==='recent'?'Recently logged':'Your foods';
+if(!rows.length){const e=elem('div','empty-results');e.append(elem('strong','',query?'No matching food':'Nothing saved here yet'),elem('small','','Add a food manually, or choose a different category.'));const b=elem('button','','+ New food');b.onclick=()=>openSheet('manual');e.append(b);results.append(e);return}
+for(const item of rows){const row=elem('div','food-row');row.append(photoNode(item));const info=elem('div','food-details');info.append(elem('strong','',item.name));const stats=elem('small');stats.innerHTML='<b>'+item.calories+' kcal</b> · '+item.p+'g P · '+item.c+'g C · '+item.f+'g F · '+item.times+'×';info.append(stats);row.append(info);const heart=elem('button','heart'+(favorites.has(item.id)?' on':''),'♥');heart.type='button';heart.setAttribute('aria-label','Favorite '+item.name);heart.onclick=()=>favorite(item.id);row.append(heart);const addBtn=elem('button','food-action','+');addBtn.type='button';addBtn.setAttribute('aria-label','Add '+item.name+' to log cart');addBtn.onclick=()=>add(item.id);row.append(addBtn);results.append(row)}}
+function renderCart(){const t=sum();$('cart-badge').textContent=t.q+' items';$('cart-calories').textContent=format(t.n)+' kcal';$('review-cart').disabled=t.q===0;$('review-cart').textContent=t.q?'Review '+t.q+' items':'Review Log';$('cart-rows').replaceChildren();
+if(!t.q){const e=elem('div','empty-queue');e.append(elem('span','icon','⊕'),elem('span','','Add foods to review their totals.'));$('cart-rows').append(e);return}
+for(const [id,count] of cart){const food=byId(id);if(!food)continue;const row=elem('div','cart-row');row.append(photoNode(food));row.append(elem('strong','',food.name));const minus=elem('button','','−');minus.onclick=()=>add(id,-1);row.append(minus,elem('small','',String(count)));const plus=elem('button','','+');plus.onclick=()=>add(id,1);row.append(plus);$('cart-rows').append(row)}}
+function header(s){return elem('div','sheet-section-title',s)}
+function makeSheetRow(item){const row=elem('div','sheet-food');row.append(photoNode(item));const info=elem('div','food-details');info.append(elem('strong','',item.name),elem('small','',item.calories+' kcal · '+item.p+'g protein · '+item.times+'× logged'));row.append(info);const b=elem('button','add'+(cart.has(item.id)?' selected':''),cart.has(item.id)?'✓':'+');b.type='button';b.setAttribute('aria-label','Add '+item.name);b.onclick=()=>add(item.id);row.append(b);return row}
+function renderSheet(){const area=$('sheet-content');area.replaceChildren();$('sheet-title').textContent=mode==='quick'?'Quick Log':mode==='manual'?'New Food':mode==='import'?'Import Nutrition':mode==='photo'?'Choose Stock Photo':'Review Log Cart';
+$('meal-types').classList.toggle('hidden',mode!=='quick');$('sheet-right').textContent=mode==='quick'?'•••':'Back';$('sheet-right').onclick=()=>openSheet('quick');
+const t=sum();$('sheet-totals').innerHTML=format(t.n)+' kcal<span>'+t.p+'g protein · '+t.c+'g carbs · '+t.f+'g fat</span>';$('sheet-action').textContent=mode==='quick'?'Review '+(t.q?t.q+' foods':'log'):mode==='manual'?'Add food':mode==='import'?'Review import':mode==='photo'?'Done':'Close';
+if(mode==='quick'){
+const actions=elem('div','sheet-tools');for(const [name,target] of [['+ New food','manual'],['Paste nutrition','import'],['Stock photos','photo']]){const b=elem('button','',name);b.onclick=()=>openSheet(target);actions.append(b)}area.append(actions,header('FREQUENT FOODS'));
+[...foods].sort((a,b)=>b.times-a.times).slice(0,5).forEach(item=>area.append(makeSheetRow(item)));
+area.append(header('OTHER RECENT FOODS'));foods.filter(x=>x.times<7).forEach(item=>area.append(makeSheetRow(item)));
+}else if(mode==='manual'){
+const form=elem('form','form');form.innerHTML='<label>Food name<input name="name" required placeholder="e.g. Grilled chicken and rice" maxlength="100"></label><div class="macros"><label>Calories<input name="kcal" type="number" min="0" step="1" required placeholder="kcal"></label><label>Protein (g)<input name="p" type="number" min="0" step="1" required placeholder="g"></label><label>Carbs (g)<input name="c" type="number" min="0" step="1" required placeholder="g"></label><label>Fat (g)<input name="f" type="number" min="0" step="1" required placeholder="g"></label></div><button class="primary" type="submit">Add to prototype library</button>';form.onsubmit=e=>{e.preventDefault();const v=new FormData(form);const name=String(v.get('name')||'').trim();if(!name)return;const id='custom'+foods.length;foods.unshift({id,name,calories:+v.get('kcal'),p:+v.get('p'),c:+v.get('c'),f:+v.get('f'),photo:null,times:0,group:meal});add(id);filter='all';query='';$('search').value='';renderList();openSheet('photo');activeAssign=id;toast('Food added · Choose an optional stock photo')};area.append(form);
+}else if(mode==='import'){
+area.append(elem('p','photo-help','Paste the six-line TEMPERED_* nutrition result. Parsing is local to this visual demo; it does not change your actual logs.'));
+const form=elem('form','form');const label=elem('label','','Nutrition text');const box=elem('textarea');box.rows=7;box.placeholder='TEMPERED_DESCRIPTION=Chicken bowl\nTEMPERED_CALORIES=485\nTEMPERED_PROTEIN=38\nTEMPERED_CARBS=51\nTEMPERED_FAT=13\nTEMPERED_FIBER=4';label.append(box);const submit=elem('button','primary','Preview and add');submit.type='submit';form.append(label,submit);form.onsubmit=e=>{e.preventDefault();const vals={};for(const line of box.value.split(/\r?\n/)){const k=line.indexOf('=');if(k>0)vals[line.slice(0,k).trim()]=line.slice(k+1).trim()}if(!vals.TEMPERED_DESCRIPTION||!/^\d+(\.\d+)?$/.test(vals.TEMPERED_CALORIES||'')){toast('Description and calories are required');return}const num=k=>Math.max(0,Number(vals[k]||0));const id='custom'+foods.length;foods.unshift({id,name:vals.TEMPERED_DESCRIPTION,calories:num('TEMPERED_CALORIES'),p:num('TEMPERED_PROTEIN'),c:num('TEMPERED_CARBS'),f:num('TEMPERED_FAT'),photo:null,times:0,group:meal});add(id);renderList();openSheet('quick');toast('Nutrition imported into prototype cart')};area.append(form);
+}else if(mode==='photo'){
+area.append(elem('p','photo-help','Optional illustrative photos only. Pick a visual match for a food, or keep the neutral fallback. Images do not supply nutrition values.'));
+const grid=elem('div','catalog-grid');for(const p of photos){const btn=elem('button','catalog-item'+(activeAssign&&byId(activeAssign)?.photo===p.id?' active':''));btn.type='button';const img=elem('img');img.src=p.url;img.alt=p.label;img.onerror=()=>img.style.opacity='.12';btn.append(img,elem('strong','',p.label),elem('small','',p.license));btn.onclick=()=>{if(activeAssign){byId(activeAssign).photo=p.id;renderList();renderCart();toast('Illustration assigned')}else toast('Open a saved food to assign an image');openSheet('quick')};grid.append(btn)}area.append(grid);area.append(elem('p','photo-help','For the final offline/local-first app, these selected photos should be bundled as thumbnail assets with their licensing metadata.'));
+}else{
+area.append(header('LOG CART · VISUAL PREVIEW'));for(const [id,n] of cart){const food=byId(id);if(!food)continue;const row=makeSheetRow(food);area.append(row)}area.append(elem('p','photo-help','This screen is a visual prototype. Nothing is written to your Tempered nutrition history.'))}
+}
+function openSheet(next){mode=next;$('scrim').classList.add('open');renderSheet()}
+function closeSheet(){$('scrim').classList.remove('open')}
+$('scrim').addEventListener('click',e=>{if(e.target===$('scrim'))closeSheet()});$('close-sheet').onclick=closeSheet;
+$('sheet-action').onclick=()=>{if(mode==='quick'){if(sum().q)openSheet('cart');else closeSheet()}else if(mode==='cart'){toast('Demo only — not saved to Tempered');closeSheet()}else if(mode==='photo')closeSheet()};
+$('filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$('filters').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderList()});
+$('search').oninput=e=>{query=e.target.value;renderList()};
+$('review-cart').onclick=()=>openSheet('cart');$('to-journal').onclick=()=>location.href='./tempered-journal-study.html';$('to-library').onclick=closeSheet;
+$('to-quick').onclick=()=>openSheet('quick');$('to-photo').onclick=()=>{activeAssign=null;openSheet('photo')};$('to-manual').onclick=()=>openSheet('manual');
+$('manual').onclick=()=>openSheet('manual');$('repeat').onclick=()=>{filter='frequent';$('filters').querySelector('[data-filter=frequent]').click()};$('catalog').onclick=()=>{activeAssign=null;openSheet('photo')};
+$('float-add').onclick=()=>openSheet('quick');
+$('meal-types').querySelectorAll('button').forEach(b=>b.onclick=()=>{meal=b.textContent;$('meal-types').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))});
+document.querySelectorAll('.rail button').forEach(b=>b.onclick=()=>{if(b.dataset.section==='food')location.href='./tempered-fuel-study.html';else toast('Other sections remain in live Tempered')});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+renderList();renderCart();const desired=new URLSearchParams(location.search).get('view');if(['quicklog','manual','photo','import','cart'].includes(desired)){if(desired==='quicklog')openSheet('quick');else openSheet(desired)};
+})();
+</script></body></html>

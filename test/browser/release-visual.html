@@ -64,7 +64,7 @@
       'weekly-recap': 'today', 'weekly-recap-details': 'today', 'weekly-recap-daily': 'today', 'weekly-recap-away': 'today', 'weekly-recap-quiet': 'today',
       today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', 'train-custom-exercise': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
-        'food2-dashboard':'fuel', 'food2-journal':'fuel', 'food2-library':'fuel', 'food2-quicklog':'fuel',
+        'food2-dashboard':'fuel', 'food2-journal':'fuel', 'food2-library':'fuel', 'food2-serving':'fuel', 'food2-quicklog':'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-cut': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
       settings: 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
@@ -502,6 +502,12 @@
           if (view.startsWith('food2-')) {
             if (!mount.querySelector('[data-food-two="true"]')) throw new Error('Food 2.0 opt-in failed to mount')
             if (view === 'food2-library') mount.querySelector('.fn2__pills button:nth-child(1)')?.click()
+            if (view === 'food2-serving') {
+              mount.querySelector('.fn2__pills button:nth-child(1)')?.click()
+              mount.querySelector('.fn2__food-row .fn2__add')?.click()
+              if (!document.querySelector('[data-food2-overlay="serving"]'))
+                throw new Error('Direct serving picker did not open')
+            }
             if (view === 'food2-journal') mount.querySelector('.fn2__pills button:nth-child(3)')?.click()
             if (view === 'food2-quicklog') mount.querySelector('.fn2__pills button:nth-child(2)')?.click()
           }

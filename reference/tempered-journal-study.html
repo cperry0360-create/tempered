@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><title>Tempered Fuel — Food Journal visual study</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020703;color:#f9f9fa;font-family:-apple-system,BlinkMacSystemFont,"Arial",sans-serif;-webkit-font-smoothing:antialiased}.screen{position:absolute;top:0;left:0;width:726px;height:512px;overflow:hidden;background:radial-gradient(ellipse 460px 230px at 45% -90px,#121816 0%,transparent 95%),#020603;transform-origin:top left}
+button{font:inherit;cursor:pointer;color:inherit;border:0}button:focus-visible{outline:2px solid #fff;outline-offset:2px}svg{display:block}.mark{position:absolute;left:16px;top:26px;display:flex;align-items:center;gap:9px;height:23px}.logo{position:relative;width:20px;height:22px;transform:skew(-10deg)}.logo:before,.logo:after{content:"";position:absolute;background:#fff;height:20px;width:6px;top:1px}.logo:before{left:1px}.logo:after{right:1px}.logo i{position:absolute;z-index:1;left:4px;right:4px;top:9px;height:5px;background:#fff}.mark strong{font-size:18px;font-weight:780;letter-spacing:-.5px}
+.nav{position:absolute;left:15px;top:63px;display:flex;align-items:center;gap:7px;height:28px;white-space:nowrap}.pill{height:28px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;min-width:0;border-radius:22px;background:linear-gradient(#242426,#1c1c1d);border:1px solid #29292b;box-shadow:inset 0 1px rgba(255,255,255,.035);font-size:10px;font-weight:610}.pill:nth-child(1){width:81px}.pill:nth-child(2){width:108px}.pill:nth-child(3){width:94px}.pill:nth-child(4){width:98px}.pill:nth-child(5){width:101px}.pill:nth-child(6){width:86px}.pill svg{width:12px;height:12px;stroke:#f4f4f5;stroke-width:2;fill:none;flex:none}
+.week{position:absolute;left:15px;width:665px;top:103px;height:20px;display:grid;grid-template-columns:repeat(7,1fr);font-size:9.5px;color:#555b57;letter-spacing:.15px}.day{display:flex;align-items:center;gap:11px;padding-left:16px}.day:nth-child(2){padding-left:12px}.day:nth-child(3){padding-left:8px}.day:nth-child(4){padding-left:4px}.day:nth-child(5){padding-left:2px}.day:nth-child(6){padding-left:3px}.day:nth-child(7){padding-left:11px}.day.active{color:#f1f1f2;font-weight:750}.day em{font-style:normal;opacity:.8}.check{width:15px;height:15px;display:inline-grid;place-items:center;background:#3ce963;color:#111;border-radius:50%;font-size:11px;font-weight:900;margin-left:0}
+.kpi{position:absolute;left:15px;width:156px;display:flex;align-items:flex-start;border-left:2px solid #eee;padding-left:11px;color:#fff}.kpi.calories{top:151px;height:68px}.kpi.protein{top:239px;height:65px;border-color:#2cef58}.pct{font-size:12px;color:#a1a4a1;display:flex;align-items:center;gap:6px;height:17px}.cross{display:inline-grid;place-items:center;position:relative;width:15px;height:15px;font-size:16px;font-weight:400;line-height:1;color:#8d928e}.cross:before{content:"";position:absolute;border:1px solid currentColor;border-radius:50%;width:9px;height:9px;top:2px;left:2px}.kpi .value{font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:950;line-height:.98;letter-spacing:-2px;transform:scaleX(1.31);transform-origin:left center;text-shadow:.2px 0 currentColor,-.2px 0 currentColor}.kpi .label{margin-top:4px;font-size:12px;letter-spacing:0;color:#e0e0df}
+.donut{position:absolute;left:176px;top:147px;width:160px;height:159px}.donut svg{width:160px;height:160px}.donut .ticks{stroke:#252825;stroke-width:5;stroke-dasharray:2 3}.donut .outertrack{stroke:#242425;stroke-width:9;fill:none}.donut .outerprogress{stroke:#f3f3f1;stroke-width:10;fill:none;stroke-linecap:butt;transform-origin:80px 80px;transform:rotate(-90deg)}.donut .innertrack{stroke:#14301e;stroke-width:14;fill:none}.donut .innerprogress{stroke:#34eb59;stroke-width:14;fill:none;transform-origin:80px 80px;transform:rotate(-90deg)}.donut .needle{stroke:#3cf366;stroke-width:3;stroke-linecap:round}
+.macro-list{position:absolute;left:349px;top:153px;width:313px;display:grid;gap:0}.macro{height:46px;display:flex;align-items:center;gap:9px;font-size:12px}.macro .cross{color:#31e863;font-size:18px;width:15px;flex:none}.macro:nth-child(3) .cross{color:#8f9890}.macro .name{width:42px;font-weight:650}.macro .bar{height:6px;background:#10291a;width:156px;border-radius:20px;position:relative;flex:none}.macro .bar:before{content:"";display:block;width:10px;height:6px;border-radius:20px;background:#35ed65}.macro:nth-child(3) .bar:after{content:"";position:absolute;top:-2px;left:117px;height:10px;width:1px;background:#7f877e;opacity:.65}.macro .amount{color:#7e837e;font-size:13px;white-space:nowrap;margin-left:auto}
+.track-other{position:absolute;top:320px;left:284px;font-size:9px;font-weight:650;color:#56f56b;text-shadow:0 0 8px #123619;background:transparent;padding:0}.track-other:after{content:' ›';font-size:14px;vertical-align:-.5px}
+.stat-grid{position:absolute;left:15px;top:356px;display:grid;grid-template-columns:205px 205px 205px;gap:5px;height:138px}.stat{position:relative;overflow:hidden;background:linear-gradient(150deg,#1a1a1c,#151517);border-radius:18px;padding:13px 11px;color:#f3f3f4}.stat .stat-head{display:flex;align-items:center;gap:5px;font-weight:760;font-size:12px;height:17px}.stat .stat-head svg{width:14px;height:14px;stroke:#fff;stroke-width:1.9;fill:none}.stat .plus{position:absolute;right:8px;top:10px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#39393c;color:#f7f7f7;font-size:17px;font-weight:300}.stat .stat-value{margin-top:9px;font-size:22px;letter-spacing:-.8px;font-weight:890;line-height:1}.stat.weight .stat-value{transform:scaleX(1.28);transform-origin:left center}.stat .stat-value small{font-size:10px;letter-spacing:-.3px}.stat .stat-extra{color:#52f663;font-size:9px;margin-top:4px}.sparkwrap{position:absolute;bottom:13px;left:10px;right:10px;height:21px;opacity:.9}.spark{width:100%;height:100%;stroke:#21cf42;fill:none;stroke-width:1.3;filter:drop-shadow(0 0 3px rgba(25,223,65,.38))}.ruler{position:absolute;top:14px;right:10px;width:22px;height:116px;border-left:1px solid #343435}.ruler:before{content:'';position:absolute;left:7px;top:0;width:15px;height:100%;background:repeating-linear-gradient(to bottom,#343434 0px,#343434 1px,transparent 1px,transparent 6px)}.ruler:after{content:'';position:absolute;bottom:20px;left:7px;width:15px;height:32px;background:repeating-linear-gradient(to bottom,#31dd55 0px,#31dd55 1px,transparent 1px,transparent 5px)}.ruler span{position:absolute;left:-3px;top:-6px;font-size:6px;color:#909090}.ruler b{position:absolute;left:-4px;bottom:37px;font-size:6px;color:#909090;font-weight:400}.stat.water .stat-value,.stat.steps .stat-value{font-size:28px}
+.toast{position:absolute;left:131px;top:429px;width:402px;height:47px;display:flex;align-items:center;gap:10px;z-index:6;background:linear-gradient(130deg,rgba(56,56,59,.94),rgba(45,45,48,.95));border:1px solid #6c6c6e;border-radius:29px;box-shadow:0 2px 22px rgba(0,0,0,.3);padding:4px 9px 4px 5px}.toast .cart{width:37px;height:37px;display:grid;place-items:center;color:#050608;background:#fff;border-radius:50%;font-size:20px;flex:none}.toast .message{font-weight:740;font-size:11px;flex:1}.toast button{border-radius:18px;border:1px solid #f2f2f2;background:transparent;color:#fff;font-size:11px;padding:5px 8px;line-height:1}
+.float-add{position:absolute;z-index:8;right:79px;bottom:16px;width:46px;height:46px;border-radius:50%;border:1px solid #555;background:linear-gradient(#424244,#2b2b2d);font-size:24px;font-weight:300;box-shadow:0 8px 16px rgba(0,0,0,.5)}.rail{position:absolute;right:18px;top:332px;width:37px;height:162px;border-radius:21px;background:linear-gradient(#2b2b2d,#19191b);border:1px solid #3a3a3b;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:5px 0}.rail button{width:30px;height:31px;background:transparent;position:relative;display:grid;place-items:center}.rail button.active{color:white}.rail button .dot{position:absolute;width:6px;height:6px;background:#dcf330;right:2px;top:5px;border-radius:50%}.rail svg{width:22px;height:22px;stroke:#f4f4f3;stroke-width:1.9;fill:none}.rail button:nth-child(2) svg{fill:#f4f4f3;stroke:none}.rail button:nth-child(3) svg{fill:#f4f4f3;stroke:none}.rail button:nth-child(4) svg{fill:#f4f4f3;stroke:none}.status{position:absolute;right:16px;top:17px;width:36px;height:124px;display:grid;justify-items:center;align-content:start}.record{width:34px;height:34px;border:1px solid #5a1d1b;border-radius:50%;display:grid;place-items:center}.record:after{content:'';width:11px;height:11px;border-radius:50%;background:#d52425}.person{margin-top:6px;font-size:14px}.time{font-size:12px;font-weight:780;line-height:16px;margin-top:1px}.wifi{width:33px;height:33px;border:1px solid #d8d8d9;border-radius:50%;margin-top:1px;position:relative;display:grid;place-items:center;font-size:19px;line-height:1}
+.modal-shade{position:absolute;inset:0;background:rgba(0,0,0,.63);z-index:25;display:none;align-items:center;justify-content:center}.modal-shade.open{display:flex}.modal{width:500px;height:450px;background:#18181a;border:1px solid #242426;border-radius:25px;padding:21px;position:relative;text-align:center}.modal h2{margin:0;font-size:16px;font-weight:700}.modal .sub{font-size:11px;color:#aaa}.modal .close{position:absolute;left:15px;top:13px;width:34px;height:34px;border-radius:50%;background:#3a3a3c;font-size:22px}.modal .chip-row{margin-top:26px;display:flex;gap:8px}.modal .chip-row button{background:#343437;border-radius:16px;padding:8px 13px;font-size:11px}.modal .chip-row button.selected{background:#eee;color:#131313}.modal .fake-entry{height:52px;display:flex;align-items:center;text-align:left;gap:12px;border-bottom:1px solid #29292c}.modal .fake-entry .thumb{width:39px;height:40px;border-radius:6px;background:#e4e0d9;display:grid;place-items:center;font-size:22px}.modal .fake-entry strong{display:block;font-size:12px}.modal .fake-entry small{display:block;font-size:9px;color:#aaa}.modal .fake-entry button{margin-left:auto;background:#414143;border-radius:50%;height:29px;width:29px;font-size:21px}.modal .action{position:absolute;bottom:16px;left:20px;right:20px;height:42px;border-radius:21px;background:#3bec5e;color:#090909;font-size:12px;font-weight:780}.journal-page{position:absolute;inset:0;background:#030703;z-index:14;display:none;padding:56px 70px 0 15px}.journal-page.open{display:block}.journal-page .nav{top:18px;left:15px}.journal-page h2{font-size:17px;margin:0 0 9px}.journal-box{background:#181819;border-radius:14px;padding:12px 9px;margin-bottom:10px}.journal-label{color:#52ee74;background:#21352a;font-size:12px;font-weight:730;padding:3px 5px;border-radius:3px;display:inline-block}.journal-entry{display:flex;align-items:center;gap:10px;border-bottom:1px solid #323232;padding:10px 0}.journal-entry .thumb{width:44px;height:44px;background:#dad6cd;color:#222;display:grid;place-items:center;font-size:25px;border-radius:5px}.journal-entry strong{font-size:13px}.journal-entry small{display:block;color:#aaa;font-size:11px;margin-top:3px}.journal-entry .dots{margin-left:auto}.journal-total{color:#4bef6c;font-size:11px;margin:10px 0 0}.journal-total span{color:#eee;margin-left:15px}.journal-page .exit{position:absolute;right:23px;top:80px;width:38px;height:38px;border-radius:50%;background:#29292b;font-size:22px}.reference-tag{position:absolute;left:15px;bottom:2px;color:#777;display:none}
+
+/* Faithful second frame: journal occupies the same 726 × 512 video viewport. */
+.journal-page{position:absolute;inset:0;display:none;z-index:12;overflow:hidden;background:#020603;padding:0;color:#f5f5f7}
+.journal-page.open{display:block}
+.journal-page .nav{top:18px;left:15px;z-index:2}
+.journal-underlays{position:absolute;top:14px;left:15px;height:69px;width:646px;display:flex;gap:7px;opacity:.67}
+.journal-underlays>div{position:relative;border:1px solid #202222;border-radius:13px;background:#171719;height:69px;overflow:hidden}
+.small-graph{width:205px}.small-graph svg{position:absolute;top:16px;left:8px;width:190px;height:45px}
+.small-week{width:204px;display:flex;justify-content:space-around;align-items:end;padding:0 8px 16px;color:#777;font-size:8px}
+.small-distance{width:220px}.small-distance span{position:absolute;top:36px;left:9px;font-size:7px;color:#456a50;line-height:1.3}.small-distance .tiny-gauge{position:absolute;right:5px;top:5px;width:10px;height:45px;border-right:3px dotted #348f4e;color:#838883;font-size:7px}
+.journal-title{position:absolute;left:15px;top:114px;width:648px;display:flex;align-items:center;justify-content:space-between;height:25px}
+.journal-title h2{margin:0;font-size:20px;line-height:1;font-weight:740;letter-spacing:-.35px}
+.journal-more{font-size:14px;color:#46e76a;background:transparent;padding:4px 1px}
+.journal-box{position:absolute;left:15px;width:648px;background:#1a1a1c;border-radius:16px;color:#f9f9fb;overflow:hidden;padding:0;margin:0;box-shadow:none}
+.journal-box.first{top:146px;height:267px}.journal-box.next{top:426px;height:52px;padding:14px 10px}.journal-box.third{top:492px}
+.journal-label{display:inline-block;font-size:14px;font-weight:500;line-height:22px;height:23px;background:#28372e;color:#49f36f;padding:0 7px;border-radius:3px}
+.journal-section-top{height:54px;padding:14px 9px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.journal-section-actions{display:flex;gap:7px;padding-right:1px}
+.journal-section-actions button,.section-plus{width:28px;height:28px;border-radius:50%;background:#343438;font-size:21px;font-weight:300;line-height:1}
+.journal-section-actions button:first-child{font-size:23px}
+.journal-entry{height:87px;position:relative;display:flex;align-items:center;gap:12px;padding:0 13px;border-bottom:1px solid #343436}
+.journal-entry .thumb{height:60px;width:60px;object-fit:cover;flex:none;border-radius:9px;background:#ddd}
+.journal-entry-copy{display:grid;gap:2px;min-width:0;flex:1;padding-left:0}
+.journal-entry-copy strong{font-size:15px;line-height:18px;font-weight:720;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.journal-entry-copy small{font-size:14px;line-height:19px;color:#a2a1a6}
+.meal-macros{color:#a3a3a7;font-size:13px;letter-spacing:.1px}.meal-macros b{color:white;font-size:14px;font-weight:750}
+.journal-entry .entry-more{width:29px;height:35px;flex:none;color:#bdbdc2;background:transparent;font-size:24px}
+.journal-total{height:39px;display:flex;align-items:center;padding:0 13px;margin:0;gap:39px;color:#43ee66;font-size:14px}
+.journal-total>strong{font-weight:750}.journal-total span{color:#a8a8ad}.journal-total span b{color:white;font-weight:720}
+.section-plus{position:absolute;right:10px;top:11px;color:#fff}
+.meal-menu{position:absolute;z-index:4;top:229px;left:459px;width:191px;height:223px;border-radius:25px;background:linear-gradient(150deg,#303033,#242426);box-shadow:0 6px 30px #0008;border:1px solid #373739;display:none;flex-direction:column;overflow:hidden;padding:5px 16px}
+.meal-menu.open{display:flex}.menu-option{display:flex;align-items:center;gap:12px;min-height:45px;background:transparent;color:#f8f8fa;font-size:16px;text-align:left;padding:0 3px;line-height:20px}
+.meal-menu .menu-option:first-child{height:62px;min-height:62px}.meal-menu .menu-option:nth-child(3){min-height:47px}.meal-menu .menu-option.danger{margin-top:5px;border-top:1px solid #39393d;color:#fa4555;min-height:48px}
+.menu-icon{font-size:21px;font-weight:600;width:25px;text-align:center;flex:none;color:#f6f6f7}.menu-option.danger .menu-icon{color:#fa4555}.menu-next{margin-left:auto;font-size:27px}
+.screen:has(.journal-page.open)>.rail,.screen:has(.journal-page.open)>.status,.screen:has(.journal-page.open)>.float-add,.screen:has(.journal-page.open)>.toast{z-index:14}
+.screen:has(.journal-page.open)>.toast{left:129px;top:429px;width:480px;opacity:.96}.screen:has(.journal-page.open)>.toast #open-cart{display:none}
+.screen:has(.journal-page.open)>.toast .message{font-size:11px}.screen:has(.journal-page.open)>.rail{right:18px}
+/* Faithful third frame: a tall bottom sheet over the journal, not a centered dialog. */
+.modal-shade{position:absolute;inset:0;z-index:30;display:none;background:#0009;align-items:unset;justify-content:unset}
+.modal-shade.open{display:block}
+.modal{position:absolute;left:114px;top:212px;width:498px;height:470px;border:1px solid #202023;border-radius:31px 31px 0 0;background:#19191b;box-shadow:0 0 40px #0009;padding:0;overflow:hidden;text-align:left}
+.sheet-handle{position:absolute;top:3px;left:225px;width:46px;height:3px;border-radius:3px;background:#676769}
+.modal h2{position:absolute;top:18px;left:0;width:100%;text-align:center;font-size:16px;font-weight:680;line-height:26px;margin:0}
+.modal .close{position:absolute;top:12px;left:12px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#414145;font-size:25px;font-weight:300;line-height:1}
+.modal-log{position:absolute;right:12px;top:11px;width:51px;height:37px;border-radius:22px;background:#3b3b3f;font-size:14px;font-weight:640}
+.modal-more{position:absolute;right:-35px;top:12px;background:transparent;color:#c3c3c3;font-size:22px}
+.modal .chip-row{position:absolute;top:64px;left:11px;display:flex;gap:7px;margin:0}
+.modal .chip-row button{min-height:29px;border-radius:18px;padding:0 13px;background:#37373b;color:#f8f8f9;font-size:11px;font-weight:620;border:1px solid #48484a}
+.modal .chip-row button.selected{background:#f9f9fa;color:#121214;border-color:#f9f9fa}
+.modal-items{position:absolute;top:108px;left:11px;right:11px;bottom:0;overflow-y:auto;scrollbar-width:none}
+.modal .fake-entry{height:70px;padding:0 1px;display:flex;align-items:center;gap:11px;border-bottom:1px solid #242428}
+.modal .fake-entry .thumb{width:44px;height:44px;border-radius:9px;object-fit:cover;flex:none;background:#fff}
+.fake-copy{min-width:0;flex:1;display:grid;gap:2px;line-height:1.18}.fake-copy>span{color:#8a8a8c;font-size:10px}.fake-copy strong{color:#fff;font-size:11px;font-weight:630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fake-copy small{color:#f0f0f2;font-size:10px}
+.fake-copy .serving{display:inline-block;border:1px solid #464649;background:#303033;border-radius:5px;padding:2px 5px;font-size:9px}
+.modal .entry-add{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#404043;color:white;font-size:24px;font-weight:300;flex:none}
+.modal .entry-add.chosen{background:#49ec66;color:#101010}
+
+/* Exact-frame reference: Food Library / My Favorites, recorded at 25 seconds. */
+.library-page{position:absolute;inset:0;z-index:18;background:#020603;display:none;overflow:hidden;color:#fff}
+.library-page.open{display:block}
+.library-title{position:absolute;left:0;right:0;top:24px;height:25px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15px}
+.library-title svg{width:23px;height:23px;stroke:#f3f3f4;stroke-width:2.2;fill:none}
+.library-tabs{position:absolute;left:12px;top:67px;display:flex;gap:5px;height:28px;align-items:center}
+.library-tabs button{min-height:28px;padding:0 13px;border-radius:99px;background:linear-gradient(#2d2d2f,#202022);font-size:10px;font-weight:600;white-space:nowrap}
+.library-tabs button.active{background:#f9f9f9;color:#18181a}
+.library-empty{position:absolute;left:150px;right:140px;top:167px;display:grid;justify-items:center;text-align:center;gap:0}
+.library-empty svg{width:168px;height:113px;margin-bottom:21px}
+.library-empty h2{margin:0 0 9px;font-size:19px;line-height:1.2;font-weight:740}
+.library-empty p{margin:0;width:340px;font-size:15px;line-height:21px;color:#f5f5f6;font-weight:440}
+.library-empty .heart{color:#33e85b;font-size:18px;vertical-align:-1px}
+.library-rail{position:absolute;right:18px;top:137px;display:grid;gap:9px;z-index:2}
+.library-rail button{background:linear-gradient(#333335,#212123);height:38px;width:38px;border-radius:50%;display:grid;place-items:center;font-size:28px;color:#fff;border:1px solid #38383a;line-height:1}
+.library-rail button:last-child{font-size:20px;font-weight:800}
+.library-search{position:absolute;right:17px;bottom:17px;width:38px;height:38px;border-radius:50%;background:linear-gradient(#323235,#232325);border:1px solid #3b3b3d;display:grid;place-items:center}
+.library-search svg{width:23px;height:23px;stroke:#fafafa;stroke-width:2;fill:none}
+.screen:has(.library-page.open) > .status{z-index:21}
+.screen:has(.library-page.open) > .rail,.screen:has(.library-page.open) > .float-add,.screen:has(.library-page.open) > .toast{visibility:hidden}
+.library-search-input{display:none;position:absolute;left:160px;bottom:17px;height:39px;width:390px;padding:0 13px;color:white;background:#242426;border-radius:24px;border:1px solid #4a4a4b;font:14px system-ui}
+.library-search-input.open{display:block}
+
+/* TEMPERED palette study — exact Forged screen geometry retained.
+   Only product identity, blue/slate styling and four-section navigation change.
+   Visual prototype; sample data, no IndexedDB or live food logging. */
+:root{
+  --t-deep:#061424;--t-deeper:#04101E;--t-panel:#102A43;
+  --t-raised:#183752;--t-rail:#0D253C;--t-line:#294966;
+  --t-blue:#359DF3;--t-blue2:#76C3FF;--t-text:#F5F9FF;--t-muted:#A5BDD0;
+}
+html,body{background:var(--t-deep);color:var(--t-text)}
+.screen{background:radial-gradient(ellipse 460px 230px at 45% -90px,#183753 0%,transparent 95%),var(--t-deep)}
+.mark strong{font-size:14px;letter-spacing:-.15px}.mark .slash{color:#537D9F}.mark .blue-text{color:var(--t-blue2)}
+.nav .pill{background:linear-gradient(#193650,#102840);border:1px solid var(--t-line);color:var(--t-text);font-size:10px;box-shadow:none}
+.nav .pill svg{stroke:var(--t-text)}
+.journal-page{background:var(--t-deep);color:var(--t-text)}
+.journal-page .journal-title h2{color:var(--t-text);font-size:20px}
+.journal-more{color:var(--t-blue2)}
+.journal-underlays>div{background:var(--t-panel);border-color:var(--t-line)}
+.journal-underlays .small-graph svg path{stroke:var(--t-blue)}
+.journal-underlays .small-distance i{background:var(--t-blue)}
+.journal-box{background:linear-gradient(145deg,#112B43,#0F253B);color:var(--t-text);border:1px solid #244764}
+.journal-box.next,.journal-box.third{background:#102A43}
+.journal-label{background:#214563;color:var(--t-blue2);font-weight:680}
+.journal-section-actions button,.section-plus{background:#24455F;color:var(--t-text)}
+.journal-entry{border-color:var(--t-line)}
+.journal-entry-copy strong{color:var(--t-text)}
+.journal-entry-copy small,.meal-macros{color:var(--t-muted)}
+.meal-macros b{color:var(--t-text)}
+.journal-total{color:var(--t-blue2)}.journal-total span{color:var(--t-muted)}.journal-total span b{color:var(--t-text)}
+.journal-entry .entry-more{color:var(--t-muted)}
+.meal-menu{background:linear-gradient(145deg,#1D3C56,#102940);border-color:#335976;box-shadow:0 12px 38px #020914a8}
+.menu-option{color:var(--t-text)}
+.menu-icon{color:var(--t-text)}
+.meal-menu .menu-option.danger{border-top-color:var(--t-line);color:#FC8190}
+.menu-option.danger .menu-icon{color:#FC8190}
+.toast{background:linear-gradient(130deg,#1D3852F7,#122A43F7);border:1px solid #4C718D;color:var(--t-text);box-shadow:0 2px 22px #0006}
+.toast .cart{background:var(--t-text);color:var(--t-deep)}
+.toast button{border-color:var(--t-blue2);color:var(--t-blue2)}
+.float-add{background:linear-gradient(#265475,#163955);border:1px solid #48769B;color:var(--t-text)}
+.rail{right:18px;top:315px;height:179px;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:5px 0;background:linear-gradient(#17344D,#0A2036);border:1px solid #2B506D;border-radius:21px}
+.rail button{width:30px;height:39px;display:grid;place-items:center;position:relative;border:0;background:transparent;color:var(--t-muted);padding:0}
+.rail svg,.rail button:nth-child(2) svg,.rail button:nth-child(3) svg,.rail button:nth-child(4) svg{width:20px;height:20px;fill:none;stroke:#B4CBDD;stroke-width:1.75}
+.rail button.active{background:#183D5B;border-radius:13px}
+.rail button.active svg{stroke:var(--t-blue2)}
+.rail button .dot{width:5px;height:5px;background:var(--t-blue);position:absolute;right:2px;top:3px;border-radius:50%}
+.screen:has(.journal-page.open)>.rail{z-index:22;right:18px;visibility:visible}
+.screen:has(.journal-page.open)>.float-add{z-index:22}
+.screen>.status{display:none}
+.screen:has(.journal-page.open)>.toast{left:129px;top:429px;width:480px;opacity:.96}
+.modal-shade{background:#010A16A8}
+.modal{background:var(--t-panel);border-color:var(--t-line)}
+.modal .close,.modal-log{background:var(--t-raised);color:var(--t-text)}
+.modal .chip-row button{background:var(--t-raised);border-color:var(--t-line);color:var(--t-text)}
+.modal .chip-row button.selected{background:var(--t-text);color:var(--t-deep);border-color:var(--t-text)}
+.modal .fake-entry{border-bottom-color:var(--t-line)}
+.modal .entry-add{background:var(--t-raised)}
+.modal .entry-add.chosen{background:var(--t-blue);color:var(--t-deep)}
+.library-page{background:var(--t-deep)}
+.library-tabs button{background:var(--t-panel);color:var(--t-muted);border-color:var(--t-line)}
+.library-tabs button.active{background:var(--t-raised);color:var(--t-blue2);border-color:var(--t-blue)}
+.library-title{color:var(--t-text)}
+.library-empty h2{color:var(--t-text)}
+.library-empty p{color:var(--t-muted)}
+.library-empty .heart{color:var(--t-blue)}
+.library-rail{background:var(--t-rail)}
+.library-search{background:var(--t-panel);border-color:var(--t-line);color:var(--t-text)}
+/* Keep all four right-rail section controls present and give each a truthful action. */
+.preview-indicator{position:absolute;left:15px;bottom:5px;z-index:2;color:var(--t-muted);font-size:9px;letter-spacing:.02em;opacity:.6;pointer-events:none}
+
+</style></head>
+<body><main class="screen" id="screen">
+  <div class="mark"><span class="logo" aria-hidden="true"><i></i></span><strong>TEMPERED <span class="slash">/</span> <span class="blue-text">FUEL</span></strong></div>
+  <nav class="nav" aria-label="Fuel navigation">
+    <button class="pill" id="history"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 4v4M16 4v4"/></svg>History</button>
+    <button class="pill" id="library"><svg viewBox="0 0 24 24"><path d="M3 6h7v13H3zM13 6h8v13h-8z"/></svg>Food Library</button>
+    <button class="pill" id="goals"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6-5"/></svg>Edit Goals</button>
+    <button class="pill" id="calories"><svg viewBox="0 0 24 24"><path d="M2 9h7l3 8h9M5 9l2 6h10"/><circle cx="17" cy="8" r="2"/></svg>Quick Log</button>
+    <button class="pill" id="times"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 5v7h6"/></svg>Meal Times</button>
+    <button class="pill" id="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</button>
+  </nav>
+  <div class="week"><div class="day">Mon <em>26</em></div><div class="day">Tue <em>27</em></div><div class="day">Wed <em>28</em></div><div class="day">Thu <em>29</em></div><div class="day">Fri <em>30</em></div><div class="day active">Sat <span class="check">✓</span></div><div class="day">Sun <em>1</em></div></div>
+  <div class="kpi calories"><div><div class="pct"><span class="cross">+</span>15%</div><div class="value">230</div><div class="label">Calories Consumed</div></div></div>
+  <div class="kpi protein"><div><div class="pct"><span class="cross">+</span>28%</div><div class="value">42</div><div class="label">Protein Consumed</div></div></div>
+  <div class="donut" role="img" aria-label="Circular progress chart, calories 15%, protein 28%"><svg viewBox="0 0 160 160"><defs><linearGradient id="arc"><stop stop-color="#36ed5a"/><stop offset="1" stop-color="#39e75c"/></linearGradient></defs><circle cx="80" cy="80" r="69" class="outertrack"/><circle cx="80" cy="80" r="69" class="outerprogress" stroke-dasharray="79 434"/><circle cx="80" cy="80" r="47" class="innertrack"/><circle cx="80" cy="80" r="47" class="innerprogress" stroke-dasharray="64 296"/><circle cx="80" cy="80" r="30" fill="#030b05"/><path d="M80 11l-10 0" stroke="#0c100e" stroke-width="9" stroke-dasharray="1 3"/><path d="M132 105l-21 -3" class="needle"/><path d="M80 11a69 69 0 0 1 66 61" fill="none" stroke="#fcfcfc" stroke-width="1" opacity=".4"/></svg></div>
+  <div class="macro-list"><div class="macro"><span class="cross">+</span><span class="name">Carbs</span><div class="bar"></div><span class="amount">9g / 112g</span></div><div class="macro"><span class="cross">+</span><span class="name">Fat</span><div class="bar"></div><span class="amount">4g / 50g</span></div><div class="macro"><span class="cross">+</span><span class="name">Fiber</span><div class="bar"></div><span class="amount">2g / 21g</span></div></div>
+  <button class="track-other" id="nutrients">Track Other Nutrients</button>
+  <div class="stat-grid"><section class="stat weight"><div class="stat-head"><svg viewBox="0 0 24 24"><path d="M4 9h16v12H4zM8 9V5h8v4M10 13h4M12 13v4"/></svg>Weight</div><button class="plus" aria-label="Add weight">+</button><div class="stat-value">165.3<small>lbs</small></div><div class="stat-extra">↘ 4.1 lbs · 31% Goal</div><div class="sparkwrap"><svg class="spark" viewBox="0 0 190 25" preserveAspectRatio="none"><polyline points="0,7 3,16 6,11 9,18 12,13 15,16 19,14 24,18 28,15 35,17 40,16 45,20 49,18 56,21 62,16 68,23 73,18 78,22 83,20 89,18 95,20 103,16 110,18 116,14 122,12 130,10 136,15 142,9 147,11 156,10 160,8 169,13 174,11 181,15 190,11"/></svg></div></section>
+    <section class="stat water"><div class="stat-head"><svg viewBox="0 0 24 24"><path d="M12 2C5 11 5 13 5 16a7 7 0 0 0 14 0c0-3-2-7-7-14Z"/></svg>Water</div><button class="plus" aria-label="Add water">+</button><div class="stat-value">67<small> oz left</small></div><div class="stat-extra">26% of goal</div><div class="sparkwrap"><svg class="spark" viewBox="0 0 190 25" preserveAspectRatio="none"><polyline points="0,20 12,19 25,20 34,17 46,18 52,15 65,16 77,16 87,13 101,13 113,13 121,11 132,12 144,9 156,10 169,10 183,8 190,7"/></svg></div></section>
+    <section class="stat steps"><div class="stat-head"><svg viewBox="0 0 24 24"><ellipse cx="8" cy="7" rx="3" ry="5"/><ellipse cx="16" cy="16" rx="3" ry="5"/></svg>Steps</div><div class="stat-value">5,039</div><div class="stat-extra">↗ 2,138</div><div class="ruler"><span>10K</span><b>6K</b></div></section></div>
+  <div class="toast"><div class="cart">🛒</div><span class="message">2 foods in your log cart</span><button id="open-cart">Open</button></div>
+  <button class="float-add" id="add" aria-label="Quick log">+</button>
+  <nav class="rail" aria-label="Tempered sections">
+    <button type="button" data-section="calendar" aria-label="Calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h3"/></svg></button>
+    <button type="button" data-section="training" aria-label="Training"><svg viewBox="0 0 24 24"><path d="M3 9v6m3-9v12m12-12v12m3-9v6M6 12h12" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-section="food" class="active" aria-current="page" aria-label="Food"><svg viewBox="0 0 24 24"><path d="M4 3v7c0 2 1 3 3 3s3-1 3-3V3M7 3v18M16 21V3c-3 2-4 7-4 11h4v7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dot"></span></button>
+    <button type="button" data-section="progress" aria-label="Progress"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 16l5-5 4 3 6-9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </nav>
+  <div class="status"><span class="record"></span><span class="person">♟</span><span class="time">1:20</span><span class="wifi">◉</span></div>
+  <div class="journal-page" id="journal">
+    <div class="journal-underlays" aria-hidden="true">
+      <div class="small-graph"><svg viewBox="0 0 190 50" preserveAspectRatio="none"><path d="M0 34 4 31 6 41 9 25 14 36 18 29 21 38 26 31 29 35 34 30 39 37 42 30 46 34 52 27 56 32 60 25 65 31 70 24 74 35 78 27 81 36 85 33 90 43 93 33 96 35 100 30 105 40 109 29 115 32 120 30 125 34 129 30 134 31 139 25 145 34 150 25 155 29 161 29 166 24 174 28 179 24 184 29 190 25" stroke="#25eb60" stroke-width="1.4" fill="none"/></svg></div>
+      <div class="small-week"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+      <div class="small-distance"><i></i><span>2.1 mi<br>Distance</span><div class="tiny-gauge">0</div></div>
+    </div>
+    <nav class="nav" aria-label="Journal navigation">
+    <button class="pill" id="journal-history"><svg viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 4v4M16 4v4"/></svg>History</button>
+    <button class="pill" id="journal-library"><svg viewBox="0 0 24 24"><path d="M3 6h7v13H3zM13 6h8v13h-8z"/></svg>Food Library</button>
+    <button class="pill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6-5"/></svg>Edit Goals</button>
+    <button class="pill" id="journal-calories"><svg viewBox="0 0 24 24"><path d="M2 9h7l3 8h9M5 9l2 6h10"/><circle cx="17" cy="8" r="2"/></svg>Quick Log</button>
+    <button class="pill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 5v7h6"/></svg>Meal Times</button>
+    <button class="pill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</button>
+  </nav>
+    <div class="journal-title"><h2>Food Journal</h2><button class="journal-more" id="journal-more">More</button></div>
+    <section class="journal-box first" aria-label="Breakfast logged foods">
+      <div class="journal-section-top"><span class="journal-label">Breakfast</span><div class="journal-section-actions"><button aria-label="Breakfast time" id="meal-time">◴</button><button aria-label="Add breakfast food" id="meal-add">+</button></div></div>
+      <div class="journal-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAABQYDBAABBwL/xAA2EAACAQMCAwQHBgcAAAAAAAABAgMABBEFIRIxUQYTQWEHMnGBkbHRFCJCUqHwIyQ0Q1Nicv/EABkBAAIDAQAAAAAAAAAAAAAAAAEDAAIEBf/EAB4RAAMAAwEAAwEAAAAAAAAAAAABAgMREiEEEzFB/9oADAMBAAIRAxEAPwBO0rRIEsEnuVDyyrxANuFB5bdayayRfVUY6AUVMg4AvLAwKqSnBo0/PCSt/oKnsw6ngA4vZVBkKHDrgjqKb9K0S/1mUpp9s0hHNzsq88ZJ64NM9v6NiQDqupQxcQ2WJckHzztSu9F3JyV1BHKtBQo3x767Inoy0Rhhr2aRvzDAx7hUcnot0wZMV/KOgMamp9iByce4S+yIWPkK9SWLLA0hI4xvwjliuiaj2B1WxQta9zdIM5WPY/A8/dSjfW8kDSQ3ETwyKCGRxg0Hb/hZSgkZM8yM046J2PVdPk1PXA6jh4oLUHBbzbAJ9w3rPR72eiuHfWdQjDW0BPcK24ZhzbHjj5+yj+r3b3sUsqBoxIMKrbEqKrkvlBiXT0gXpz3mnQBbW6Eh7rg4oolUMOIniO3rb4wNhv1qFLSa7YfbJmffI4iWx8aq/wA1Zjii8sqfxVrT9Qlv7kJCksrKuZFjwO7/AOia5lXdvxm5TGP9RYuLOawk720mdf8AZNiPr7KYuzOuJqam0vAUvYhksOUi9cdeo/YC3tx3dtwMTxnfc7ihVlI9pdR3abMsmB7PH9M0MWRqtMOSFU7OlMpXkeIUG7S6TZanps/2mBJGSJipPrKceB+G1FUlDKreDDNV9T/oLkj/ABN8q6Us57I9V7nRez8VnAcRxpwZ8SFGSfaefvoHacV/pltcgY4owSoOcdKJ9uJOC0twACGLAgjwwM0H0KOezaLTQhKSL3iykgBgT4eQ8RkmkfITY3FXL2R3ts8oDD77DbOP0oYhezdjGAkrrg+fto5qSPA7AxsSviFNL95JO5JEb7bY4Dv+lYVNJm11LRoXHES0jbeJ5k+Qr3HI080caqFBYBVA5UPCzzMAkbs2cEY9X6UT0+M2h7yYhpQTjHID61pxYPdsRkzeaHmKdFVV/KMVl64bT7kg/wBpvlS0moEnnVh78mzuATzib5VsSZk2Ge1EQu9FjuEI+4Q+fDB/Yqv2fvYzZKsgUPB5A4HUUudg+2Wl6losGl6xdRQT28Ig7ub7qygbBgxOCcY26gmpZeOxupBasOLdUcLzHUeVS5JLGS8iXMjzCaWMqxR1OWXI6+JO+OmRS/2l0uS4mimhUSW2yTQGTgGM7OpH4hRKLUAbCEd2f4YQcwMEEDr1FUdRvpVd1VFER6kZH18elL4Rfpo9/ZLawte4tOLu1JwWYsfiaDybyGpmvWkD8SFANl8/hzqPBJyRimyhdPZkYqS4furG5c8liYn4VpeFd2IA6ml/tb2jtINOmsrKaOe4nQoxQ8Sop2OSPHGaZoqf/9k=" alt="Plain bagel"><div class="journal-entry-copy"><strong>Plain bagel</strong><small>1 regular</small><div class="meal-macros"><b>270</b> cal&nbsp;&nbsp; <b>11</b> p&nbsp;&nbsp; <b>53</b> c&nbsp;&nbsp; <b>2</b> f</div></div><button class="entry-more" aria-label="Bagel actions">⋮</button></div>
+      <div class="journal-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAABAYABQcDAQL/xAAyEAABAwMBAwoGAwEAAAAAAAABAAIDBAURMQcSIRUzNUFRVGFxc7ETIjJyk9EUI4GR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGBEBAAMBAAAAAAAAAAAAAAAAAAECETH/2gAMAwEAAhEDEQA/AL3Zfs3tcNlprve6WGtq6uISxxzN3o4mOGW/KeBdjBORw0HjokVmtcLQ2G20bGjQNgaB7IqmibDTxRNADWMDQB1ABdEAvJtB3Kn/ABN/SnJtB3Kn/E39IpUNzuUlNPKzM4Lfp3GEjCC05NoO5U/4m/pTk2g7lTfib+ktWe9VdXeYaf4krmOzvB7MDACb0AM1mtU7S2a20cjTqHwNI9lm+1PZxbHWaovNipo6OppGGSWGJu7HLGOLvlHAEDJ4a6dmNWQF+ibPY7jC8ZbJTSNI8C0oDxoooNFEHj3brS7sGUv1Lg8PlkJLndSvpeaf9pVBKwOgJykRpqkdUfxatlRAN2Rh4ePgnxp3mg9oykGtiDTkE6p9i5tvkFZjEh9IW7dF1noP9iikLdui6z0H+xUUUNFFBoog+Zeaf9pVC4/0/wClXsvNP+0pffI0R4JwVqvUsp6/X/QnmPgxvkkase1zhg54hPTPpHklupV6hbt0XWeg/wBiikLdui6z0H+xWWnankE0EcjTlr2hwPmF0Wb7LtoFqr7DR2u51cVJcKSNsAEzt0TNaMNLSdTjGRrnPUtHa5rhlrgR4IPJASxwGpBwlmopagNJMMv/ABNCiBEkt9a92Y6ad3HqCc43VBA3mBvBEKIOYEnXhCXyQQ2W4SvIDWU0jifJpRznNYMuIA7Ssz2qbQLZS2KrtFqq4auuq4zC/wCE7fbEx3B2SOGcZGNeOUH/2Q==" alt="Core Power Elite chocolate protein shake"><div class="journal-entry-copy"><strong>Core Power Elite Chocolate Protein Shake</strong><small>1 serving</small><div class="meal-macros"><b>230</b> cal&nbsp;&nbsp; <b>42</b> p&nbsp;&nbsp; <b>9</b> c&nbsp;&nbsp; <b>4</b> f</div></div><button class="entry-more" aria-label="Protein shake actions">⋮</button></div>
+      <div class="journal-total"><strong>Total:</strong><span><b>500</b> cal&nbsp;&nbsp; <b>53</b> p&nbsp;&nbsp; <b>62</b> c&nbsp;&nbsp; <b>5</b> f</span></div>
+    </section>
+    <section class="journal-box next"><span class="journal-label">Lunch</span><button class="section-plus" aria-label="Add lunch food" id="lunch-add">+</button></section>
+    <section class="journal-box next third"><span class="journal-label">Dinner</span><button class="section-plus" aria-label="Add dinner food">+</button></section>
+    <div class="meal-menu" id="meal-menu">
+      <button class="menu-option" type="button"><span class="menu-icon">◕</span><span>Change<br>Meal Type</span><span class="menu-next">›</span></button>
+      <button class="menu-option" type="button"><span class="menu-icon">⊕</span><span>Create Meal</span></button>
+      <button class="menu-option" type="button"><span class="menu-icon">▣</span><span>Duplicate</span></button>
+      <button class="menu-option danger" type="button"><span class="menu-icon">▥</span><span>Delete</span></button>
+    </div>
+  </div>
+  <div class="modal-shade" id="modal"><div class="modal" role="dialog" aria-modal="true" aria-label="Quick Log"><span class="sheet-handle" aria-hidden="true"></span>
+     <button class="close" id="close-modal" aria-label="Close quick log">×</button><h2>Quick Log</h2><button class="modal-log" id="log-close">Log</button><button class="modal-more" aria-label="More quick log options">⋮</button>
+     <div class="chip-row"><button class="selected" type="button">Breakfast</button><button type="button">Lunch</button><button type="button">Dinner</button><button type="button">Snack</button></div>
+     <div class="modal-items">
+      <div class="fake-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAABQYDBAABBwL/xAA2EAACAQMCAwQHBgcAAAAAAAABAgMABBEFIRIxUQYTQWEHMnGBkbHRFCJCUqHwIyQ0Q1Nicv/EABkBAAIDAQAAAAAAAAAAAAAAAAEDAAIEBf/EAB4RAAMAAwEAAwEAAAAAAAAAAAABAgMREiEEEzFB/9oADAMBAAIRAxEAPwBO0rRIEsEnuVDyyrxANuFB5bdayayRfVUY6AUVMg4AvLAwKqSnBo0/PCSt/oKnsw6ngA4vZVBkKHDrgjqKb9K0S/1mUpp9s0hHNzsq88ZJ64NM9v6NiQDqupQxcQ2WJckHzztSu9F3JyV1BHKtBQo3x767Inoy0Rhhr2aRvzDAx7hUcnot0wZMV/KOgMamp9iByce4S+yIWPkK9SWLLA0hI4xvwjliuiaj2B1WxQta9zdIM5WPY/A8/dSjfW8kDSQ3ETwyKCGRxg0Hb/hZSgkZM8yM046J2PVdPk1PXA6jh4oLUHBbzbAJ9w3rPR72eiuHfWdQjDW0BPcK24ZhzbHjj5+yj+r3b3sUsqBoxIMKrbEqKrkvlBiXT0gXpz3mnQBbW6Eh7rg4oolUMOIniO3rb4wNhv1qFLSa7YfbJmffI4iWx8aq/wA1Zjii8sqfxVrT9Qlv7kJCksrKuZFjwO7/AOia5lXdvxm5TGP9RYuLOawk720mdf8AZNiPr7KYuzOuJqam0vAUvYhksOUi9cdeo/YC3tx3dtwMTxnfc7ihVlI9pdR3abMsmB7PH9M0MWRqtMOSFU7OlMpXkeIUG7S6TZanps/2mBJGSJipPrKceB+G1FUlDKreDDNV9T/oLkj/ABN8q6Us57I9V7nRez8VnAcRxpwZ8SFGSfaefvoHacV/pltcgY4owSoOcdKJ9uJOC0twACGLAgjwwM0H0KOezaLTQhKSL3iykgBgT4eQ8RkmkfITY3FXL2R3ts8oDD77DbOP0oYhezdjGAkrrg+fto5qSPA7AxsSviFNL95JO5JEb7bY4Dv+lYVNJm11LRoXHES0jbeJ5k+Qr3HI080caqFBYBVA5UPCzzMAkbs2cEY9X6UT0+M2h7yYhpQTjHID61pxYPdsRkzeaHmKdFVV/KMVl64bT7kg/wBpvlS0moEnnVh78mzuATzib5VsSZk2Ge1EQu9FjuEI+4Q+fDB/Yqv2fvYzZKsgUPB5A4HUUudg+2Wl6losGl6xdRQT28Ig7ub7qygbBgxOCcY26gmpZeOxupBasOLdUcLzHUeVS5JLGS8iXMjzCaWMqxR1OWXI6+JO+OmRS/2l0uS4mimhUSW2yTQGTgGM7OpH4hRKLUAbCEd2f4YQcwMEEDr1FUdRvpVd1VFER6kZH18elL4Rfpo9/ZLawte4tOLu1JwWYsfiaDybyGpmvWkD8SFANl8/hzqPBJyRimyhdPZkYqS4furG5c8liYn4VpeFd2IA6ml/tb2jtINOmsrKaOe4nQoxQ8Sop2OSPHGaZoqf/9k=" alt="Plain bagel"><div class="fake-copy"><span>Generic</span><strong>Plain bagel</strong><small><span class="serving">1 regular⌄</span> &nbsp;270 kCal</small></div><button class="entry-add" aria-label="Add plain bagel">+</button></div>
+      <div class="fake-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAABAYABQcDAQL/xAAyEAABAwMBAwoGAwEAAAAAAAABAAIDBAURMQcSIRUzNUFRVGFxc7ETIjJyk9EUI4GR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGBEBAAMBAAAAAAAAAAAAAAAAAAECETH/2gAMAwEAAhEDEQA/AL3Zfs3tcNlprve6WGtq6uISxxzN3o4mOGW/KeBdjBORw0HjokVmtcLQ2G20bGjQNgaB7IqmibDTxRNADWMDQB1ABdEAvJtB3Kn/ABN/SnJtB3Kn/E39IpUNzuUlNPKzM4Lfp3GEjCC05NoO5U/4m/pTk2g7lTfib+ktWe9VdXeYaf4krmOzvB7MDACb0AM1mtU7S2a20cjTqHwNI9lm+1PZxbHWaovNipo6OppGGSWGJu7HLGOLvlHAEDJ4a6dmNWQF+ibPY7jC8ZbJTSNI8C0oDxoooNFEHj3brS7sGUv1Lg8PlkJLndSvpeaf9pVBKwOgJykRpqkdUfxatlRAN2Rh4ePgnxp3mg9oykGtiDTkE6p9i5tvkFZjEh9IW7dF1noP9iikLdui6z0H+xUUUNFFBoog+Zeaf9pVC4/0/wClXsvNP+0pffI0R4JwVqvUsp6/X/QnmPgxvkkase1zhg54hPTPpHklupV6hbt0XWeg/wBiikLdui6z0H+xWWnankE0EcjTlr2hwPmF0Wb7LtoFqr7DR2u51cVJcKSNsAEzt0TNaMNLSdTjGRrnPUtHa5rhlrgR4IPJASxwGpBwlmopagNJMMv/ABNCiBEkt9a92Y6ad3HqCc43VBA3mBvBEKIOYEnXhCXyQQ2W4SvIDWU0jifJpRznNYMuIA7Ssz2qbQLZS2KrtFqq4auuq4zC/wCE7fbEx3B2SOGcZGNeOUH/2Q==" alt="Protein shake"><div class="fake-copy"><span>Fairlife</span><strong>Core Power Elite Chocolate Protein Shake</strong><small><span class="serving">1 serving⌄</span> &nbsp;230 kCal</small></div><button class="entry-add" aria-label="Add protein shake">+</button></div>
+      <div class="fake-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAABAYABQcDAQL/xAAyEAABAwMBAwoGAwEAAAAAAAABAAIDBAURMQcSIRUzNUFRVGFxc7ETIjJyk9EUI4GR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGBEBAAMBAAAAAAAAAAAAAAAAAAECETH/2gAMAwEAAhEDEQA/AL3Zfs3tcNlprve6WGtq6uISxxzN3o4mOGW/KeBdjBORw0HjokVmtcLQ2G20bGjQNgaB7IqmibDTxRNADWMDQB1ABdEAvJtB3Kn/ABN/SnJtB3Kn/E39IpUNzuUlNPKzM4Lfp3GEjCC05NoO5U/4m/pTk2g7lTfib+ktWe9VdXeYaf4krmOzvB7MDACb0AM1mtU7S2a20cjTqHwNI9lm+1PZxbHWaovNipo6OppGGSWGJu7HLGOLvlHAEDJ4a6dmNWQF+ibPY7jC8ZbJTSNI8C0oDxoooNFEHj3brS7sGUv1Lg8PlkJLndSvpeaf9pVBKwOgJykRpqkdUfxatlRAN2Rh4ePgnxp3mg9oykGtiDTkE6p9i5tvkFZjEh9IW7dF1noP9iikLdui6z0H+xUUUNFFBoog+Zeaf9pVC4/0/wClXsvNP+0pffI0R4JwVqvUsp6/X/QnmPgxvkkase1zhg54hPTPpHklupV6hbt0XWeg/wBiikLdui6z0H+xWWnankE0EcjTlr2hwPmF0Wb7LtoFqr7DR2u51cVJcKSNsAEzt0TNaMNLSdTjGRrnPUtHa5rhlrgR4IPJASxwGpBwlmopagNJMMv/ABNCiBEkt9a92Y6ad3HqCc43VBA3mBvBEKIOYEnXhCXyQQ2W4SvIDWU0jifJpRznNYMuIA7Ssz2qbQLZS2KrtFqq4auuq4zC/wCE7fbEx3B2SOGcZGNeOUH/2Q==" alt="Sparkling wild berry"><div class="fake-copy"><span>Celsius</span><strong>Sparkling Wild Berry</strong><small><span class="serving">1 can⌄</span> &nbsp;10 kCal</small></div><button class="entry-add" aria-label="Add sparkling water">+</button></div>
+      <div class="fake-entry"><img class="thumb" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAABQYDBAABBwL/xAA2EAACAQMCAwQHBgcAAAAAAAABAgMABBEFIRIxUQYTQWEHMnGBkbHRFCJCUqHwIyQ0Q1Nicv/EABkBAAIDAQAAAAAAAAAAAAAAAAEDAAIEBf/EAB4RAAMAAwEAAwEAAAAAAAAAAAABAgMREiEEEzFB/9oADAMBAAIRAxEAPwBO0rRIEsEnuVDyyrxANuFB5bdayayRfVUY6AUVMg4AvLAwKqSnBo0/PCSt/oKnsw6ngA4vZVBkKHDrgjqKb9K0S/1mUpp9s0hHNzsq88ZJ64NM9v6NiQDqupQxcQ2WJckHzztSu9F3JyV1BHKtBQo3x767Inoy0Rhhr2aRvzDAx7hUcnot0wZMV/KOgMamp9iByce4S+yIWPkK9SWLLA0hI4xvwjliuiaj2B1WxQta9zdIM5WPY/A8/dSjfW8kDSQ3ETwyKCGRxg0Hb/hZSgkZM8yM046J2PVdPk1PXA6jh4oLUHBbzbAJ9w3rPR72eiuHfWdQjDW0BPcK24ZhzbHjj5+yj+r3b3sUsqBoxIMKrbEqKrkvlBiXT0gXpz3mnQBbW6Eh7rg4oolUMOIniO3rb4wNhv1qFLSa7YfbJmffI4iWx8aq/wA1Zjii8sqfxVrT9Qlv7kJCksrKuZFjwO7/AOia5lXdvxm5TGP9RYuLOawk720mdf8AZNiPr7KYuzOuJqam0vAUvYhksOUi9cdeo/YC3tx3dtwMTxnfc7ihVlI9pdR3abMsmB7PH9M0MWRqtMOSFU7OlMpXkeIUG7S6TZanps/2mBJGSJipPrKceB+G1FUlDKreDDNV9T/oLkj/ABN8q6Us57I9V7nRez8VnAcRxpwZ8SFGSfaefvoHacV/pltcgY4owSoOcdKJ9uJOC0twACGLAgjwwM0H0KOezaLTQhKSL3iykgBgT4eQ8RkmkfITY3FXL2R3ts8oDD77DbOP0oYhezdjGAkrrg+fto5qSPA7AxsSviFNL95JO5JEb7bY4Dv+lYVNJm11LRoXHES0jbeJ5k+Qr3HI080caqFBYBVA5UPCzzMAkbs2cEY9X6UT0+M2h7yYhpQTjHID61pxYPdsRkzeaHmKdFVV/KMVl64bT7kg/wBpvlS0moEnnVh78mzuATzib5VsSZk2Ge1EQu9FjuEI+4Q+fDB/Yqv2fvYzZKsgUPB5A4HUUudg+2Wl6losGl6xdRQT28Ig7ub7qygbBgxOCcY26gmpZeOxupBasOLdUcLzHUeVS5JLGS8iXMjzCaWMqxR1OWXI6+JO+OmRS/2l0uS4mimhUSW2yTQGTgGM7OpH4hRKLUAbCEd2f4YQcwMEEDr1FUdRvpVd1VFER6kZH18elL4Rfpo9/ZLawte4tOLu1JwWYsfiaDybyGpmvWkD8SFANl8/hzqPBJyRimyhdPZkYqS4furG5c8liYn4VpeFd2IA6ml/tb2jtINOmsrKaOe4nQoxQ8Sop2OSPHGaZoqf/9k=" alt="Recent food"><div class="fake-copy"><span>Recent</span><strong>Bagel and cream cheese</strong><small><span class="serving">1 serving⌄</span> &nbsp;310 kCal</small></div><button class="entry-add" aria-label="Add recent food">+</button></div>
+     </div>
+  </div></div>
+
+  <div class="library-page" id="food-library">
+    <header class="library-title"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.1"/><path d="M16.2 16.2 22 22"/></svg><span>Food Library</span></header>
+    <nav class="library-tabs" aria-label="Food categories"><button type="button" data-category="all">Search All</button><button type="button" data-category="favorites" class="active">My Favorites</button><button type="button" data-category="recipes">My Recipes</button><button type="button" data-category="foods">My Foods</button><button type="button" data-category="meals">My Meals</button></nav>
+    <div class="library-empty"><svg viewBox="0 0 169 113" role="img" aria-label="Empty plate with cutlery"><ellipse cx="83" cy="62" rx="76" ry="49" fill="#353538"/><ellipse cx="83" cy="59" rx="64" ry="41" fill="#222225"/><ellipse cx="83" cy="59" rx="59" ry="36" fill="none" stroke="#3d3d3f" stroke-width="5"/><path d="M25 30 121 85" stroke="#4c4c4f" stroke-width="8" stroke-linecap="round"/><path d="M45 9 139 72" stroke="#4f4f51" stroke-width="5" stroke-linecap="round"/><path d="M44 5 79 25M41 9 76 29M38 13 74 33" stroke="#646467" stroke-width="2" stroke-linecap="round"/><path d="M134 39 153 72" stroke="#4b4b4e" stroke-width="5" stroke-linecap="round"/></svg><h2 id="library-empty-title">No Favorites Yet</h2><p id="library-empty-copy">Tap the <span class="heart">♥</span> icon on a food, meal or recipe<br>to keep your favorites organized.</p></div>
+    <aside class="library-rail"><button type="button" id="library-close" aria-label="Close food library">×</button><button type="button" aria-label="Food library options">≡⊕</button></aside>
+    <button class="library-search" id="library-search" type="button" aria-label="Search in Food Library"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7.5"/><path d="M15.5 15.5 22 22"/></svg></button>
+    <input class="library-search-input" id="library-search-input" type="search" placeholder="Search Food Library…" aria-label="Search Food Library" />
+  </div>
+</main>
+
+<script>
+(()=>{
+ const stage=document.querySelector('#screen');
+ const journal=document.querySelector('#journal');
+ const modal=document.querySelector('#modal');
+ const menu=document.querySelector('#meal-menu');
+ const library=document.querySelector('#food-library');
+ function fit(){const scale=Math.min(innerWidth/726,innerHeight/512);stage.style.transform=`translate(${Math.max(0,(innerWidth-726*scale)/2)}px,${Math.max(0,(innerHeight-512*scale)/2)}px) scale(${scale})`}
+ window.addEventListener('resize',fit);fit();
+ const openJournal=(menuOpen=false)=>{journal.classList.add('open');menu.classList.toggle('open',menuOpen);modal.classList.remove('open')};
+ const closeJournal=()=>{journal.classList.remove('open');menu.classList.remove('open');modal.classList.remove('open')};
+ const openLibrary=()=>{library.classList.add('open');modal.classList.remove('open')};
+ const closeLibrary=()=>{library.classList.remove('open');closeJournal()};
+ const openQuick=()=>{openJournal(false);modal.classList.add('open')};
+ const closeQuick=()=>modal.classList.remove('open');
+ document.querySelector('#history').onclick=()=>openJournal();
+ document.querySelector('#library').onclick=openLibrary;
+ document.querySelector('#journal-library').onclick=openLibrary;
+ document.querySelector('#library-close').onclick=closeLibrary;
+ document.querySelector('#library-search').onclick=()=>{const f=document.querySelector('#library-search-input');f.classList.toggle('open');if(f.classList.contains('open'))f.focus()};
+ document.querySelectorAll('.library-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.library-tabs button').forEach(c=>c.classList.toggle('active',c===b));let names={all:'Search all foods',favorites:'No Favorites Yet',recipes:'No Recipes Yet',foods:'No Foods Yet',meals:'No Meals Yet'};document.querySelector('#library-empty-title').textContent=names[b.dataset.category]});
+ document.querySelector('#add').onclick=openQuick;
+ document.querySelector('#calories').onclick=openQuick;
+ document.querySelector('#open-cart').onclick=openQuick;
+ document.querySelector('#close-modal').onclick=closeQuick;
+ document.querySelector('#log-close').onclick=closeQuick;
+ document.querySelector('#journal-calories').onclick=openQuick;
+ document.querySelector('#meal-add').onclick=openQuick;
+ document.querySelector('#lunch-add').onclick=openQuick;
+ document.querySelector('#journal-history').onclick=()=>{location.href='./tempered-fuel-study.html'};
+ document.querySelector('#journal-more').onclick=()=>menu.classList.toggle('open');
+ document.querySelectorAll('.journal-entry .entry-more').forEach(b=>b.onclick=()=>menu.classList.toggle('open'));
+ document.querySelectorAll('.menu-option').forEach(b=>b.onclick=()=>menu.classList.remove('open'));
+ document.querySelectorAll('.modal .chip-row button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.modal .chip-row button').forEach(c=>c.classList.toggle('selected',c===b))});
+ document.querySelectorAll('.entry-add').forEach(b=>b.onclick=()=>{b.classList.toggle('chosen');b.textContent=b.classList.contains('chosen')?'✓':'+'});
+ document.querySelector('#modal').addEventListener('click',event=>{if(event.target===modal)closeQuick()});
+ window.addEventListener('keydown',event=>{if(event.key==='Escape'){if(modal.classList.contains('open'))closeQuick();else if(menu.classList.contains('open'))menu.classList.remove('open');else if(journal.classList.contains('open'))menu.classList.remove('open')}});
+ const query=new URLSearchParams(location.search);let view=query.get('view');
+ if(!view||view==='journal')openJournal(false);
+ if(view==='menu')openJournal(true);
+ if(view==='quicklog')openQuick();
+ if(view==='library')openLibrary();
+ document.querySelectorAll('.rail button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.section==='food')location.href='./tempered-fuel-study.html';else{b.setAttribute('title','Visual prototype — '+b.getAttribute('aria-label'))}}));
+})();
+</script>
+</body></html>

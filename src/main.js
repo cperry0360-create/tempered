@@ -35,7 +35,7 @@ bootstrap()
 
     app.className = 'shell'
     app.replaceChildren(errorState({
-      title: 'Tempered could not start',
+      title: 'Less Fat More Strong could not start',
       detail: 'Your saved data has not been changed. Reload the app and try again.',
       onRetry: () => window.location.reload(),
     }))

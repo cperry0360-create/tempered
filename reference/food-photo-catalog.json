@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "purpose": "Illustrative stock-photo candidates for Tempered's visual prototype. Not a nutrition database and not a photo-redistribution product.",
+  "prototypeOnly": true,
+  "shippingPlan": "After approval, bundle selected optimized thumbnails with the app's offline asset precache. Keep provenance, license URL, alt text, user overrides, and neutral fallback. Do not download/host an entire stock-photo marketplace catalog.",
+  "rules": [
+    "Photos illustrate a food category; they do not authenticate meal identity or calculate nutrients.",
+    "Unknown foods use a neutral placeholder until the user chooses a photo.",
+    "User-selected photos override automatic keyword matching.",
+    "A saved food's macros come from the user's saved record, not this manifest.",
+    "Avoid recognizable people, trademarks, branded packaging and misleading product association."
+  ],
+  "assets": [
+    {
+      "id": "chicken",
+      "category": "chicken rice bowl",
+      "src": "https://images.unsplash.com/photo-1636479649370-fa89fbe0a1ec?auto=format&fit=crop&w=280&q=76",
+      "photoPage": "https://unsplash.com/photos/GHDs-GG81SA",
+      "license": "https://unsplash.com/license",
+      "alt": "Illustrative chicken and rice bowl"
+    },
+    {
+      "id": "yogurt",
+      "category": "yogurt and berries",
+      "src": "https://images.pexels.com/photos/10421049/pexels-photo-10421049.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop",
+      "photoPage": "https://www.pexels.com/photo/spoon-in-a-bowl-with-yogurt-and-berries-10421049/",
+      "license": "https://www.pexels.com/license/",
+      "alt": "Illustrative yogurt and berries"
+    },
+    {
+      "id": "toast",
+      "category": "egg avocado toast",
+      "src": "https://images.unsplash.com/photo-1683234193414-197f37970905?auto=format&fit=crop&w=280&q=76",
+      "photoPage": "https://unsplash.com/photos/Y27lpzzTEd0",
+      "license": "https://unsplash.com/license",
+      "alt": "Illustrative avocado and egg toast"
+    },
+    {
+      "id": "salmon",
+      "category": "grilled salmon",
+      "src": "https://images.pexels.com/photos/8696472/pexels-photo-8696472.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop",
+      "photoPage": "https://www.pexels.com/photo/salmon-and-salad-on-a-ceramic-plate-8696472/",
+      "license": "https://www.pexels.com/license/",
+      "alt": "Illustrative grilled salmon"
+    },
+    {
+      "id": "oats",
+      "category": "oatmeal with fruit",
+      "src": "https://images.pexels.com/photos/7992683/pexels-photo-7992683.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop",
+      "photoPage": "https://www.pexels.com/photo/food-healthy-summer-sun-7992683/",
+      "license": "https://www.pexels.com/license/",
+      "alt": "Illustrative breakfast bowl"
+    },
+    {
+      "id": "salad",
+      "category": "chicken salad",
+      "src": "https://images.pexels.com/photos/27969809/pexels-photo-27969809.jpeg?auto=compress&cs=tinysrgb&w=280&h=280&fit=crop",
+      "photoPage": "https://www.pexels.com/photo/a-bowl-of-salad-with-chicken-vegetables-and-dressing-27969809/",
+      "license": "https://www.pexels.com/license/",
+      "alt": "Illustrative chicken salad"
+    }
+  ]
+}

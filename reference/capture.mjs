@@ -65,11 +65,19 @@ function call(method,params={}){
 try{
   await call('Page.enable')
   await call('Emulation.setDeviceMetricsOverride',{width:726,height:512,deviceScaleFactor:1,mobile:false,screenWidth:726,screenHeight:512})
-  for(const view of ['dashboard','journal','quicklog','library']){
-    await call('Page.navigate',{url:url+'?view='+view})
+  for(const view of ['dashboard','journal','quicklog','library','tempered-fuel']){
+    const target=view==='tempered-fuel' ? pathToFileURL(resolve('reference/tempered-fuel-study.html')).href : url+'?view='+view
+    await call('Page.navigate',{url:target})
     await delay(850)
     const result=await call('Runtime.evaluate',{expression:"JSON.stringify({state:document.querySelector('#journal')?.className,modal:document.querySelector('#modal')?.className,images:document.images.length,ok:document.querySelector('.screen')?.getBoundingClientRect()?.width === 726})",returnByValue:true})
     console.log(view,result?.result?.value)
+    if(view==='tempered-fuel'){
+      const check=await call('Runtime.evaluate',{expression:"JSON.stringify({brand:document.querySelector('.mark')?.textContent,rail:document.querySelectorAll('.rail button').length,selected:document.querySelector('.rail [aria-current=page]')?.getAttribute('data-section'),hero:!!document.querySelector('.donut'),macros:document.querySelectorAll('.macro').length,stats:document.querySelectorAll('.stat').length})",returnByValue:true})
+      const state=JSON.parse(check.result.value)
+      console.log('Tempered fidelity assertion',state)
+      if(!state.brand?.includes('TEMPERED')||state.rail!==4||state.selected!=='food'||!state.hero||state.macros!==3||state.stats!==3)
+        throw new Error('Tempered visual design geometry is incomplete: '+JSON.stringify(state))
+    }
     const snap=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})
     const bytes=Buffer.from(snap.data,'base64')
     const dest=join(outdir,view+'.png')

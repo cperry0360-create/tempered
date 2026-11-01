@@ -77,7 +77,9 @@ try{
  check('Duo floating rail has only a frosted capsule, no solid backdrop',
    getComputedStyle(rail).backgroundColor==='rgba(0, 0, 0, 0)'
    && getComputedStyle(rail).backgroundImage==='none'
-   && getComputedStyle(rail.querySelector('.tabbar__tabs')).backgroundImage.includes('linear-gradient'))
+   && getComputedStyle(rail.querySelector('.tabbar__tabs')).backgroundImage.includes('linear-gradient'),
+   JSON.stringify({bg:getComputedStyle(rail).backgroundColor,backdrop:getComputedStyle(rail).backgroundImage,
+     pill:getComputedStyle(rail.querySelector('.tabbar__tabs')).backgroundImage}))
  check('Duo rail has four circular icons, all with accessible names',
    qa('.tabbar__tab').length===4
    && qa('.tabbar__tab').every(x=>x.getAttribute('aria-label') && x.getBoundingClientRect().height>=44))
@@ -90,7 +92,9 @@ try{
    await t.app.show(tab)
    check(tab+' uses continuous navy canvas with transparent screen',
      getComputedStyle(app).backgroundImage===initialCanvas
-     && getComputedStyle(q('.app__body > .screen')).backgroundColor==='rgba(0, 0, 0, 0)')
+     && getComputedStyle(q('.app__body > .screen')).backgroundColor==='rgba(0, 0, 0, 0)',
+     JSON.stringify({tab,canvas:getComputedStyle(app).backgroundImage,
+       initialCanvas,screen:getComputedStyle(q('.app__body > .screen')).backgroundColor}))
    check(tab+' preserves original rail button DOM nodes',
      qa('.tabbar__tab').every((button,i)=>button===originalTabs[i]))
  }
@@ -100,7 +104,9 @@ try{
  check('Long press lifts a glass icon and reveals label styling',
    q('.tabbar__tabs')?.dataset.holding==='true'
    && topButton.dataset.peek==='true'
-   && getComputedStyle(topButton,'::after').content.includes('Today'))
+   && getComputedStyle(topButton,'::after').content.includes('Today'),
+   JSON.stringify({holding:q('.tabbar__tabs')?.dataset.holding,peek:topButton.dataset.peek,
+     content:getComputedStyle(topButton,'::after').content}))
  topButton.dispatchEvent(new PointerEvent('pointercancel',{pointerId:91,bubbles:true}))
  check('Cancelling press restores capsule state',!q('.tabbar__tabs')?.dataset.holding)
  await Promise.all([t.app.show('train'),t.app.show('fuel'),t.app.show('today')])

@@ -1,3 +1,6 @@
+## 2026-11-01 — Screenshot follow-up to 0.66.11
+- Visual QA caught a Train-only legacy gray sticky header, now moved to a navy frosted surface matching the continuous canvas. Pointer-capture is reserved for real trusted touch/pointer events; synthetic regression tests exercise preview without throwing an invalid-pointer exception.
+
 ## 2026-11-01 — LFMS 0.66.11 (117): unified Duo canvas, floating liquid-style navigation, low-flicker switching
 
 - Compared user recordings with LFMS. Current video showed gray/navy exterior changing between Today, Train, Food and Progress; initial navigation used a shaded full-height rail, and iOS-style reference used a compact centered vertical pill with circular selection and label reveal.

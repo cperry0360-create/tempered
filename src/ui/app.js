@@ -385,7 +385,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
       if(!button||event.button>0)return
       clearPreview()
       railGesture={id:event.pointerId,tab:button.dataset.tab,startY:event.clientY,selected:button.dataset.tab}
-      tabs.setPointerCapture?.(event.pointerId)
+      // Synthetic regression events are not live pointers; capturing them
+      // throws in Chromium and prevents the long-press timer from starting.
+      if(event.isTrusted)tabs.setPointerCapture?.(event.pointerId)
       railTimer=setTimeout(()=>{
         if(!railGesture)return
         tabs.dataset.holding='true'

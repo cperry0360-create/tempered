@@ -380,6 +380,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(sheet==='manual'||sheet==='history')mountRuntime()
   }
   async function refresh(){await load();render()}
-  function deactivate(){sheet='';picked=null}
+  function deactivate(){sheet='';picked=null;view='dashboard'}
   return {root,refresh,deactivate}
 }

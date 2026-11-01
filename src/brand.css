@@ -28,7 +28,7 @@
 .lfms-launch img {
   display:block;width:min(640px,94vw);max-height:min(49vh,370px);
   height:auto;object-fit:contain;
-  filter:drop-shadow(0 3px 15px #0005);
+  filter:drop-shadow(0 3px 15px rgba(0,0,0,.33));
 }
 .lfms-launch__caption {
   margin-top:-7px;color:var(--lfms-launch-red);

@@ -15,9 +15,9 @@
   color:var(--tr2-text);
 }
 .train--fuel-style .train2__heading {
-  position:relative;z-index:2;top:auto;
+  position:sticky;z-index:31;top:0;
   display:flex;align-items:center;justify-content:space-between;
-  min-height:43px;background:transparent;border:0;
+  min-height:43px;background:var(--tr2-bg);border:0;
   padding:0;gap:12px;min-width:0;
 }
 .train--fuel-style .train2__brand {display:flex;align-items:center;gap:8px;min-width:0}

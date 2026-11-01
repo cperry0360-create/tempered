@@ -92,7 +92,7 @@ try{
  const historicalDelete=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Delete'))
  historicalDelete?.click();await settle(120)
  check('Deleting historical meal changes selected date, not today',
-   (await t.daily.dayLog('2026-09-30')).calories===0
+   ((await t.daily.dayLog('2026-09-30')).calories??0)===0
    && (await t.daily.dayLog('2026-10-01')).calories===640)
  q('.fn2__undo')?.click();await settle(120)
  check('Historical Undo restores selected day without touching today',

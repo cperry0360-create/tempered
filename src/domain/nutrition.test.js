@@ -119,6 +119,18 @@ test('a portion scales the saved food and is remembered on the entry', () => {
   assert.equal('portion' in nutritionLedger(plain).entries[0], false)
 })
 
+test('custom fractional servings retain six decimals without becoming a rounded 0.42 serving', () => {
+  const amount = 0.4166667
+  const day = addNutritionEntry({ date:'2026-11-01' }, {
+    description:'Greek yogurt', calories:240, protein:24, portion:amount,
+  }, { id:'precision', loggedAt:'2026-11-01T11:00:00.000Z', source:'manual' })
+  const [entry] = nutritionLedger(day).entries
+  assert.equal(entry.portion,0.416667)
+  assert.ok(Math.abs(entry.calories-100.0001)<0.001)
+  assert.ok(Math.abs(entry.proteinGrams-10.0000)<0.001)
+  assert.notEqual(entry.portion,0.42)
+})
+
 test('portions group with the single-serving food in suggestions', () => {
   const one = addNutritionEntry({ date: '2026-10-01' }, { description: 'Protein shake', calories: 150, protein: 30 },
     { id: 'a', loggedAt: '2026-10-01T10:00:00.000Z', source: 'manual' })

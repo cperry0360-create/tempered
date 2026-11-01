@@ -1,3 +1,9 @@
+## 2026-11-01 — Glass rail single-navigation correction, 0.66.12 (118)
+- Verified deployed 0.66.11 screenshot evidence shows unified Today, Train, Food and Progress gradients and compact floating glass selector.
+- Found and corrected double dispatch: iOS pointerup and click were both initiating `show()` for one ordinary touch. Standard taps now use click only; press-and-hold/drag gestures use pointerup and consume the following click.
+- Added browser regression with synthetic pointer+click sequences for both tap and hold, asserting exactly one screen-shown event per gesture. No canonical data changes, no altered routes or visual geometry.
+- Backup for the broader changes: `backup/lfms-before-unified-canvas-glass-nav-2026-11-01`.
+
 ## 2026-11-01 — Screenshot follow-up to 0.66.11
 - Visual QA caught a Train-only legacy gray sticky header, now moved to a navy frosted surface matching the continuous canvas. Pointer-capture is reserved for real trusted touch/pointer events; synthetic regression tests exercise preview without throwing an invalid-pointer exception.
 

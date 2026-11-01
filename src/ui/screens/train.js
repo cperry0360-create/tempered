@@ -433,7 +433,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     const plan=active?.program
     const plannedSets=(plan?.days??[]).reduce((total,day)=>
       total+(day.exercises??[]).reduce((sum,slot)=>sum+(Number(slot.sets)||0),0),0)
-    const validSessionIds=new Set(sessions.filter(s=>s.date>=monday&&s.date<=now&&s.endedAt).map(s=>s.id))
+    const validSessionIds=new Set(sessions.filter(s=>s.date>=monday&&s.date<=now).map(s=>s.id))
     const workingSets=setLogs.filter(log=>validSessionIds.has(log.sessionId)&&!log.isWarmup).length
     const dayPct=goal>0?Math.min(100,(days/goal)*100):0
     const setPct=plannedSets>0?Math.min(100,(workingSets/plannedSets)*100):0

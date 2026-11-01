@@ -44,3 +44,84 @@
     transform:translateY(1px);
   }
 }
+
+/* iOS-like frosted material needs a real bright edge, layered translucent
+   highlights and depth. Blur alone on a flat navy surface is nearly invisible.
+   UI only: no opaque food data cards are affected. */
+html[data-layout="duo"] .tabbar {
+  background:linear-gradient(170deg,rgba(16,48,81,.64),rgba(3,15,29,.68));
+  border-left:1px solid rgba(178,218,253,.29);
+  box-shadow:inset 1px 0 0 rgba(222,243,255,.13),-6px 0 30px rgba(0,0,0,.19);
+}
+html[data-layout="duo"] .tabbar__tabs {padding-inline:7px 3px;box-sizing:border-box;gap:13px}
+html[data-layout="duo"] .tabbar__tab {
+  position:relative;isolation:isolate;overflow:hidden;
+  border:1px solid rgba(206,235,255,.18);
+  background:linear-gradient(150deg,rgba(219,240,255,.21),rgba(89,149,198,.11) 44%,rgba(11,35,63,.34));
+  box-shadow:inset 0 1px 0 rgba(248,251,255,.27),inset 0 -1px 0 rgba(12,42,70,.26),0 8px 22px rgba(0,0,0,.19);
+  color:var(--food-v2-text);
+}
+html[data-layout="duo"] .tabbar__tab[data-active="true"] {
+  background:linear-gradient(140deg,rgba(114,201,255,.47),rgba(44,125,197,.27) 53%,rgba(18,52,89,.4));
+  border-color:rgba(166,225,255,.54);
+  color:var(--food-v2-text);
+  box-shadow:inset 0 2px 0 rgba(246,252,255,.47),0 0 20px rgba(53,157,243,.20);
+}
+html[data-layout="duo"] .tabbar__tab::before {
+  content:'';position:absolute;inset:1px 2px auto;height:32%;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(255,255,255,.15),transparent);
+  pointer-events:none;
+}
+html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tab,
+html[data-layout="duo"]:has(.app__body>.fn2) .tabbar__tab {
+  border:1px solid rgba(206,235,255,.18);
+  background:linear-gradient(150deg,rgba(219,240,255,.21),rgba(89,149,198,.11) 44%,rgba(11,35,63,.34));
+  box-shadow:inset 0 1px 0 rgba(248,251,255,.27),0 8px 22px rgba(0,0,0,.19);
+}
+html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tab[data-active="true"],
+html[data-layout="duo"]:has(.app__body>.fn2) .tabbar__tab[data-active="true"] {
+  background:linear-gradient(140deg,rgba(114,201,255,.47),rgba(44,125,197,.27) 53%,rgba(18,52,89,.4));
+  box-shadow:inset 0 2px 0 rgba(246,252,255,.47),0 0 20px rgba(53,157,243,.20);
+}
+.fn2__pills button,.fn2__macro-journal-head button,.fn2__float,.fn2__sheet-close {
+  border:1px solid rgba(198,231,255,.39);
+  background:linear-gradient(145deg,rgba(199,232,255,.36),rgba(83,156,213,.18) 45%,rgba(10,34,63,.35));
+  box-shadow:inset 0 1.5px 0 rgba(253,255,255,.47),0 9px 24px rgba(0,0,0,.22);
+}
+.fn2__sheet {background:linear-gradient(150deg,rgba(33,70,105,.93),rgba(11,32,57,.97))}
+.fn2__portal {
+  --fn-bg:var(--food-v2-deep);--fn-ink:var(--food-v2-text);
+  --fn-blue:var(--food-v2-blue);--fn-blue-light:var(--food-v2-blue-light);
+  --fn-muted:var(--food-v2-muted);--fn-line:var(--food-v2-line);
+  color:var(--fn-ink);
+  z-index:1100;
+}
+.fn2__portal .fn2__sheet {max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px)}
+.fn2__portal .fn2__sheet-body {min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+body[data-food2-modal="true"] {overscroll-behavior:none}
+body[data-food2-modal="true"] .app__body {overflow:hidden;overscroll-behavior:none}
+body[data-food2-modal="true"] .tabbar {pointer-events:none}
+html[data-layout="duo"] .fn2__portal {right:0;padding-right:var(--duo-rail-width)}
+.fn2__servings {display:grid;gap:4px;min-width:95px;font-size:10px;color:var(--fn-muted)}
+.fn2__servings select {
+  width:100%;min-height:44px;min-width:80px;border-radius:12px;
+  border:1px solid rgba(179,224,255,.41);padding:6px 9px;
+  color:var(--fn-ink);background:var(--food-v2-panel-2);
+  font-size:15px;font-weight:730;font-variant-numeric:tabular-nums;
+}
+.fn2__cart-row {align-items:center;flex-wrap:wrap}
+.fn2__cart-row strong {min-width:58px;text-align:right}
+.fn2__cart-row button {min-width:44px;min-height:44px}
+.fn2__cart-total {display:block;margin-block:8px}
+@supports(backdrop-filter:blur(24px)) {
+  html[data-layout="duo"] .tabbar,html[data-layout="duo"] .tabbar__tab,
+  .fn2__pills button,.fn2__macro-journal-head button,.fn2__float,.fn2__sheet-close {
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    backdrop-filter:blur(24px) saturate(160%);
+  }
+  .fn2__portal .fn2__sheet {-webkit-backdrop-filter:blur(38px) saturate(145%);backdrop-filter:blur(38px) saturate(145%)}
+}
+@media(prefers-reduced-transparency:reduce) {
+  html[data-layout="duo"] .tabbar__tab,.fn2__pills button,.fn2__float {background:var(--food-v2-panel-2);-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media(max-width:520px) {.fn2__portal .fn2__sheet {height:min(88dvh,720px)}}

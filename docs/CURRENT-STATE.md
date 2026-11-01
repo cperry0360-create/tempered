@@ -1,3 +1,9 @@
+## 2026-11-01 — Video bug sweep: glass, splash edges, overlay scrolling, fractional servings — 0.66.10 (116)
+- Reproduced user Duo 76s screen recording. Splash had gray edge, right rail and control pills were visually opaque, legacy nutrition panel appeared in Quick Log, sheet interactions could scroll underlying app, and repeating previous portioned meals could double scale calories.
+- Scoped release: full-viewport splash background through safe edges, tangible translucent glass highlights on Duo rail icons and Food floating actions; portaled Food sheets to document.body (outside scroll container), freeze underlying app while a modal is up, preserve internal sheet scroll. Browser fallback remains readable with reduced transparency.
+- Cart now offers explicit quarter-serving selections from 0.25–5, shows scaled totals BEFORE save, and keeps canonical ledger via daily.addNutrition. Historical repeat divides already-consumed values by logged portion before staging, preventing double multiplication. Quick Log goes to portion review rather than surprising jump to library. No existing nutrition data rewritten.
+- Pre-change backup branch: `backup/before-ui-sweep-2026-11-01`.
+
 ## 2026-11-01 — Food Macro Journal + optional user meal photos + glass controls, 0.66.9 (115)
 - Implemented first video-inspired Food pass only: Macro Journal below live Fuel totals, with Breakfast/Lunch/Dinner/Snacks groups, user-saved meal rows, photos, per-meal quick-log actions, and a More link to existing date-aware Meal History. All values come from canonical dayLogs.
 - Added real local photo attachment/replacement/removal on each already-logged meal. Photos are resized and JPEG compressed to a hard size cap and saved in the same canonical dayLog under `mealPhotos[entry.id]`, so they stay available offline and travel with existing backup exports; no server upload or AI nutrition inference. Existing public-domain thumbnails remain illustration fallback.

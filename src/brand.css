@@ -98,3 +98,15 @@
   .lfms-launch__glow,.lfms-launch__mark,.lfms-launch__rule,
   .lfms-launch__wordmark,.lfms-launch__tagline {animation:none}
 }
+
+/* On the Duo the dark launch canvas must cover both safe edges before
+   the first app paint, including the former gray left-side band. */
+html:has(.lfms-launch:not([data-closing="true"])) ,
+html:has(.lfms-launch:not([data-closing="true"])) body {
+  background:var(--lfms-launch-deep);
+}
+.lfms-launch {
+  left:0;right:0;top:0;bottom:0;
+  width:100vw;min-width:100%;height:100dvh;min-height:100%;
+  background:radial-gradient(ellipse 100% 75% at 50% 43%,var(--lfms-launch-mid),var(--lfms-launch-deep) 87%);
+}

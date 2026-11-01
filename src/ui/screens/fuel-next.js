@@ -24,6 +24,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
   let working=false, undo=null, cart=new Map(), status='', pickedDate=null
+  let activeOverlay=null
   const runtime=el('div.fn2__legacy-runtime')
 
   const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
@@ -317,16 +318,57 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ]),
     ]
   }
+  // A historical entry already contains eaten (possibly fractional) amounts.
+  // Convert it back to one-serving values before repeating; otherwise a
+  // half-serving meal gets multiplied twice.
+  function repeatableFood(entry) {
+    const portion=Number(entry?.portion)>0?Number(entry.portion):1
+    const per={description:entry.description}
+    for(const key of ['calories','proteinGrams','carbsGrams','fatGrams','fiberGrams']) {
+      if(Number.isFinite(Number(entry?.[key]))) per[key]=Math.round(Number(entry[key])/portion*10000)/10000
+    }
+    return per
+  }
+  const servingChoices=Array.from({length:20},(_,i)=>(i+1)/4)
+  const portionLabel=value=>Number(value).toLocaleString(undefined,{maximumFractionDigits:2})
   function cartTotals() {
     let servings=0,kcal=0,protein=0
     for(const {food,count} of cart.values()){servings+=count;kcal+=n(food.calories)*count;protein+=n(food.proteinGrams)*count}
-    return {servings,kcal,protein}
+    return {servings:Math.round(servings*100)/100,kcal,protein}
   }
   function stage(food,delta=1) {
-    const id=foodKey(food),old=cart.get(id),count=(old?.count??0)+delta
-    if(count<=0)cart.delete(id)
-    else cart.set(id,{food,count})
+    const clean=repeatableFood(food)
+    const id=foodKey(clean),old=cart.get(id)
+    const count=Math.max(0,Math.min(5,Math.round(((old?.count??0)+delta)*4)/4))
+    if(count===0)cart.delete(id)
+    else cart.set(id,{food:clean,count})
     render()
+  }
+  function setCartPortion(id,count) {
+    const row=cart.get(id),value=Number(count)
+    if(!row||!servingChoices.includes(value))return
+    cart.set(id,{...row,count:value})
+    render()
+  }
+  function cartContents() {
+    const totals=cartTotals()
+    return [
+      ...[...cart.entries()].map(([id,{food,count}])=>el('div.fn2__cart-row',{},[
+        el('span',{text:food.description}),
+        el('label.fn2__servings',{},[
+          el('span',{text:'Servings'}),
+          el('select',{'aria-label':'Portion for '+food.description,value:String(count),
+            onchange:event=>setCartPortion(id,event.target.value)},
+            servingChoices.map(value=>el('option',{value:String(value),text:portionLabel(value)}))),
+        ]),
+        el('strong',{text:fmt(n(food.calories)*count)+' kcal'}),
+        el('button',{type:'button','aria-label':'Remove '+food.description,onclick:()=>{cart.delete(id);render()}},['×']),
+      ])),
+      !cart.size&&el('p',{text:'Choose foods to add. Nothing is logged yet.'}),
+      el('strong.fn2__cart-total',{text:fmt(totals.kcal)+' kcal · '+fmt(totals.protein)+'g protein'}),
+      el('button.fn2__primary',{type:'button',disabled:!totals.servings||working,onclick:commitCart},
+        ['Log '+portionLabel(totals.servings)+' serving'+(totals.servings===1?'':'s')]),
+    ]
   }
   async function commitCart(){
     if(working||!cart.size)return
@@ -335,7 +377,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       while(cart.size){
         const [id,item]=cart.entries().next().value
         const {count,lastLoggedAt,loggedAt,id:entryId,source,...values}=item.food
-        await daily.addNutrition(clock.today(),{...values,portion:item.count})
+        await daily.addNutrition(clock.today(),{...values,portion:count})
         cart.delete(id)
       }
       sheet='';view='dashboard'
@@ -378,7 +420,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     prefs={...profile,food2Photos:photos};closeSheet()
   }
   function library() {
-    const results=el('div.fn2__food-results',{},libraryRows()),totals=cartTotals()
+    const results=el('div.fn2__food-results',{},libraryRows())
     return [
       heading(),
       el('div.fn2__title',{},[el('h1',{text:'Food Library'}),el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel'])]),
@@ -395,15 +437,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('section.fn2__library-list',{},[results]),
         el('aside.fn2__cart',{},[
           el('h2',{text:'Log Cart'}),
-          ...[...cart.values()].map(({food,count})=>el('div.fn2__cart-row',{},[
-            el('span',{text:food.description}),
-            el('button',{type:'button',onclick:()=>stage(food,-1)},['−']),
-            el('strong',{text:String(count)}),
-            el('button',{type:'button',onclick:()=>stage(food,1)},['+']),
-          ])),
-          !cart.size&&el('p',{text:'Select foods to review before logging.'}),
-          el('strong',{text:fmt(totals.kcal)+' kcal · '+fmt(totals.protein)+'g protein'}),
-          el('button.fn2__primary',{type:'button',disabled:!totals.servings||working,onclick:commitCart},['Log '+totals.servings+' servings']),
+          ...cartContents(),
           el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('manual')},['Manual entry, photo or import']),
           el('small',{text:'Photos are illustrative. Values come only from saved foods.'}),
         ]),
@@ -415,14 +449,18 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
   }
   function overlay(){
-    const title={quick:'Quick Log',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
+    const title={quick:'Quick Log',cart:'Review servings',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
     const content=sheet==='quick'?[
       el('p.fn2__caption',{text:'Tap a previously logged food, then confirm the cart.'}),
-      ...data.foods.top.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{sheet='';view='library';stage(food)}},[
+      ...data.foods.top.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{stage(food);openSheet('cart')}},[
         thumbnail(food),el('span',{text:food.description}),el('strong',{text:fmt(food.calories)+' kcal'}),icon('plus'),
       ])),
       el('button.fn2__secondary',{type:'button',onclick:()=>go('library')},['Browse all saved foods']),
       el('button.fn2__primary',{type:'button',onclick:()=>openSheet('manual')},['Manual entry · Meal photo · Import nutrition']),
+    ]:sheet==='cart'?[
+      el('p.fn2__caption',{text:'Choose how much you ate. Totals update before you log.'}),
+      ...cartContents(),
+      el('button.fn2__secondary',{type:'button',onclick:()=>go('library')},['Browse Food Library']),
     ]:sheet==='photo'?[
       el('p.fn2__caption',{text:'Images are optional illustrations and never determine nutrition. Unknown foods use an offline placeholder.'}),
       el('div.fn2__photo-picker',{},[
@@ -443,10 +481,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ]:sheet==='actions'?[
       el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('attach-photo')},['Add or replace meal photo']),
       el('button.fn2__secondary',{type:'button',onclick:closeSheet},['Back to Meal History']),
-      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;sheet='';view='library';stage(x)}},['Log this meal again']),
+      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=repeatableFood(picked);picked=null;stage(x);openSheet('cart')}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]
-    return el('div.fn2__overlay',{dataset:{food2Overlay:sheet},onkeydown:e=>{if(e.key==='Escape')closeSheet()}},[
+    return el('div.fn2__overlay.fn2__portal',{dataset:{food2Overlay:sheet},onkeydown:e=>{if(e.key==='Escape')closeSheet()}},[
       el('button.fn2__shade',{type:'button',onclick:closeSheet,'aria-label':'Close logging'}),
       el('section.fn2__sheet',{role:'dialog','aria-modal':'true','aria-label':title},[
         el('header.fn2__sheet-head',{},[el('h2',{text:title}),el('button.fn2__sheet-close',{type:'button',onclick:closeSheet,'aria-label':'Close'},['×'])]),
@@ -456,20 +494,32 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   function openSheet(name) {
     sheet=name;render()
-    if(name==='manual')requestAnimationFrame(()=>root.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
+    if(name==='manual')requestAnimationFrame(()=>activeOverlay?.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
   }
   function closeSheet() {sheet='';picked=null;pickedDate=null;render()}
   function go(name){view=name;sheet='';picked=null;pickedDate=null;render()}
   function render() {
     if(!data)return
+    // Portaling out of the scrollable app body prevents fixed sheets from
+    // moving/clipping on iOS. The content behind the sheet stays frozen.
+    activeOverlay?.remove()
+    activeOverlay=null
     replace(root,[
       ...(view==='library'?library():view==='journal'?journal():dashboard()),
-      sheet&&overlay(),
       el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
     ])
+    if(sheet) {
+      activeOverlay=overlay()
+      document.body.append(activeOverlay)
+      document.body.dataset.food2Modal='true'
+    } else delete document.body.dataset.food2Modal
     if(sheet==='manual')mountRuntime()
   }
   async function refresh(){await load();render()}
-  function deactivate(){sheet='';picked=null;pickedDate=null;view='dashboard'}
+  function deactivate(){
+    sheet='';picked=null;pickedDate=null;view='dashboard'
+    activeOverlay?.remove();activeOverlay=null
+    delete document.body.dataset.food2Modal
+  }
   return {root,refresh,deactivate}
 }

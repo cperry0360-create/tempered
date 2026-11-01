@@ -97,5 +97,7 @@ try{
 }finally{
   ws.close()
   proc.kill('SIGTERM')
-  await rm(profile,{recursive:true,force:true})
+  // Chromium may still be releasing profile files after SIGTERM.
+  // Cleanup failure must not invalidate fully verified captures.
+  await rm(profile,{recursive:true,force:true,maxRetries:8,retryDelay:150}).catch(error => console.warn('Non-fatal Chromium profile cleanup:',error.code))
 }

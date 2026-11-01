@@ -130,3 +130,12 @@ html[data-layout="duo"] .fn2__portal {right:0;padding-right:var(--duo-rail-width
 body[data-food2-modal="true"] {overflow:hidden}
 body[data-food2-modal="true"] .fn2__portal {overscroll-behavior:contain}
 body[data-food2-modal="true"] .fn2__portal .fn2__shade {touch-action:none}
+
+/* Higher-specificity rail paint for the Today and Food canvases, which
+   previously overrode the glass backdrop with a flat opaque panel. */
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar,
+html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
+  background:linear-gradient(170deg,rgba(16,48,81,.64),rgba(3,15,29,.68));
+  border-left:1px solid rgba(178,218,253,.29);
+  box-shadow:inset 1px 0 0 rgba(222,243,255,.13),-6px 0 30px rgba(0,0,0,.19);
+}

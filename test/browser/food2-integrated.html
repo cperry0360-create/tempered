@@ -153,6 +153,9 @@ try{
  q('.fn2__pills button:nth-child(2)')?.click();await settle(80)
  check('Quick Log starts on the new quick choices instead of legacy menu',
    q('.fn2__overlay')?.dataset.food2Overlay==='quick' && !!q('.fn2__quick-food'))
+ check('Quick Log choices have LFMS borders, not white system default buttons',
+   Number.parseFloat(getComputedStyle(q('.fn2__quick-food')).borderTopWidth)===1
+   && getComputedStyle(q('.fn2__quick-food')).backgroundImage.includes('linear-gradient'))
  q('.fn2__sheet .fn2__primary')?.click();await settle(220)
  check('manual food entry mounts unchanged runtime and its paste action',!!q('[data-nutrition-form]')&&!!q('[data-calorie-ai="paste"]'))
  check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')

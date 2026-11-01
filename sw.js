@@ -128,6 +128,7 @@ const PRECACHE = [
   './src/ui/screens/fuel.js',
   './src/ui/screens/fuel-next.js',
   './src/ui/food-photos.js',
+  './src/ui/meal-photo.js',
   './art/food/catalog.json',
   './art/food/chicken.jpg',
   './art/food/yogurt-berries.jpg',

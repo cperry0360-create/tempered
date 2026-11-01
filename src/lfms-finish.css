@@ -352,3 +352,22 @@ html[data-layout="duo"] .tabbar__tab .icon {width:25px;height:25px;stroke-width:
 @media(prefers-reduced-transparency:reduce) {
   html[data-layout="duo"] .tabbar__tabs {background:var(--food-v2-panel-2)}
 }
+
+/* The one-meal picker is a compact, complete floating sheet — never a
+   clipped bottom drawer. Keep its rounded bottom and action in view on Duo. */
+.fn2__portal[data-food2-overlay="serving"] {
+  align-items:center;
+  box-sizing:border-box;
+  padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));
+}
+.fn2__portal[data-food2-overlay="serving"] .fn2__sheet {
+  height:auto;
+  max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  grid-template-rows:auto minmax(0,auto);
+  border:1px solid var(--fn-line);
+  border-radius:24px;
+}
+.fn2__portal[data-food2-overlay="serving"] .fn2__sheet-body {
+  max-height:calc(100dvh - 114px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  overflow-y:auto;
+}

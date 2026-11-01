@@ -111,9 +111,9 @@
 .fn2__primary {background:var(--fn-blue);color:var(--food-v2-deep);border:0}
 .fn2__secondary {background:var(--food-v2-beach-base);color:var(--fn-ink);border:1px solid var(--food-v2-line)}
 .fn2__primary:disabled {opacity:.48}
-.fn2__overlay {position:fixed;inset:0;z-index:45;display:flex;justify-content:flex-end}
+.fn2__overlay {position:fixed;inset:0;z-index:45;display:flex;justify-content:center;align-items:flex-end}
 .fn2__shade {position:absolute;inset:0;background:rgba(0,10,20,.77);border:0}
-.fn2__sheet {position:relative;display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;width:min(540px,100%);background:var(--food-v2-panel-2);border-left:1px solid var(--food-v2-line);color:var(--fn-ink);min-width:0}
+.fn2__sheet {position:relative;display:grid;grid-template-rows:auto minmax(0,1fr);height:min(84dvh,650px);width:min(640px,100%);background:var(--food-v2-panel-2);border:1px solid var(--food-v2-line);border-bottom:0;border-radius:25px 25px 0 0;box-shadow:0 -10px 45px rgba(0,0,0,.45);color:var(--fn-ink);min-width:0;overflow:hidden}
 .fn2__sheet-head {display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--fn-line);gap:11px}
 .fn2__sheet-head h2 {font-size:21px;margin:0;letter-spacing:-.025em}
 .fn2__sheet-close {height:42px;width:42px;flex:none;border-radius:50%;border:1px solid var(--fn-line);background:var(--food-v2-beach-base);color:var(--fn-ink);font-size:24px}
@@ -156,4 +156,12 @@ html[data-layout="duo"] .fn2__float {bottom:10px}
 @media(max-height:680px){
   .fn2__sheet-head {padding:10px 14px}
   .fn2__sheet-head h2 {font-size:18px}
+}
+
+/* Approved Forged-style tall bottom sheet, not the rejected side drawer. */
+.fn2__sheet:before {content:'';position:absolute;left:calc(50% - 24px);top:6px;width:48px;height:4px;border-radius:99px;background:var(--fn-muted);opacity:.62}
+.fn2__sheet-head {padding-top:19px}
+html[data-layout="duo"] .fn2__sheet {max-height:calc(100dvh - 20px)}
+@media(max-width:520px) {
+  .fn2__sheet {height:min(91dvh,790px);border-radius:21px 21px 0 0}
 }

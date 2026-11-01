@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Tempered — Approved Food 2.0 canonical integration</title>
+<link rel="stylesheet" href="../../src/tokens.css"/><link rel="stylesheet" href="../../src/style.css"/>
+<link rel="stylesheet" href="../../src/nutrition-today.css"/><link rel="stylesheet" href="../../src/calm.css"/>
+<link rel="stylesheet" href="../../src/fuel.css"/><link rel="stylesheet" href="../../src/duo.css"/>
+<link rel="stylesheet" href="../../src/food-v2.css"/><link rel="stylesheet" href="../../src/food-v3.css"/>
+<link rel="stylesheet" href="../../src/food-next.css"/>
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import {bootstrapHarness} from './harness.js'
+import {createMemoryStorage} from '../../src/adapters/storage/memory-storage.js'
+import {fixedClock} from '../../src/adapters/clock/clock.js'
+import {installCalorieAiRuntime} from '../../src/ui/calorie-ai-runtime.js'
+import {nutritionLedger} from '../../src/domain/nutrition.js'
+const checks=[],errors=[]
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)]
+const settle=ms=>new Promise(r=>setTimeout(r,ms??140))
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try{
+ history.replaceState(null,'',location.pathname+'?food2=1')
+ const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,9,1,13))
+ const t=await bootstrapHarness({storage,clock,mount:q('#app')})
+ installCalorieAiRuntime()
+ await t.daily.addNutrition('2026-09-29',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-29T08:40:00.000Z'})
+ await t.daily.addNutrition('2026-09-30',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-30T08:40:00.000Z'})
+ await t.daily.addNutrition('2026-10-01',{description:'Chicken and rice bowl',calories:480,protein:39,carbs:52,fat:12},{loggedAt:'2026-10-01T12:30:00.000Z'})
+ await t.daily.logAt('2026-10-01','water',16)
+ await t.app.show('fuel');await settle(260)
+ check('Food 2.0 gated view boots without old card stack',!!q('[data-food-two="true"]')&&!q('.food-v2__energy'))
+ check('calorie and protein values are canonical',q('.fn2__metrics')?.textContent.includes('480')&&q('.fn2__metrics')?.textContent.includes('39'))
+ check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
+ check('radii are actual progress rings',qa('.fn2__rings circle').length===4)
+ check('seven date links and three macro bars',qa('.fn2__week button').length===7&&qa('.fn2__macro').length===3)
+ check('water is canonical data, not sample data',q('.fn2__stat:nth-child(2)')?.textContent.includes('16 oz'))
+ check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
+ q('.fn2__pills button:nth-child(2)')?.click();await settle(60)
+ check('saved food library reads prior logged foods',qa('.fn2__food-row').length===2&&q('.fn2__food-results')?.textContent.includes('Greek yogurt'))
+ check('one previously logged food can be staged without saving',!!q('.fn2__food-row .fn2__add'))
+ const before=(await t.daily.dayLog('2026-10-01')).calories
+ const yogurt=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))
+ yogurt?.querySelector('.fn2__add')?.click();await settle(50)
+ check('staging the food does not write the day log', (await t.daily.dayLog('2026-10-01')).calories===before)
+ check('cart shows correctly computed item total',q('.fn2__cart')?.textContent.includes('160 kcal'))
+ q('.fn2__cart .fn2__primary')?.click();await settle(220)
+ const day=await t.daily.dayLog('2026-10-01')
+ check('cart writes through canonical nutrition service',day.calories===640&&day.proteinGrams===59,JSON.stringify({calories:day.calories,protein:day.proteinGrams}))
+ check('newly logged food appears in actual history on reload',nutritionLedger(day).entries.length===2)
+ q('.fn2__pills button:nth-child(1)')?.click();await settle(70)
+ check('Journal shows actual saved descriptions',q('.fn2__journal')?.textContent.includes('Chicken and rice bowl'))
+ const row=qa('.fn2__meal-row').find(x=>x.textContent.includes('Chicken and rice'))
+ row?.querySelector('button')?.click();await settle(35)
+ check('Journal offers canonical delete with undo',q('.fn2__overlay')?.dataset.food2Overlay==='actions')
+ const deleteBtn=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Delete'))
+ deleteBtn?.click();await settle(160)
+ const deleted=await t.daily.dayLog('2026-10-01')
+ check('deletion updates canonical totals',deleted.calories===160&&deleted.proteinGrams===20)
+ check('undo action appears on journal',!!q('.fn2__undo'))
+ q('.fn2__undo')?.click();await settle(150)
+ const restored=await t.daily.dayLog('2026-10-01')
+ check('undo restores exact canonical meal entry',restored.calories===640&&nutritionLedger(restored).entries.length===2)
+ q('.fn2__pills button:nth-child(3)')?.click();await settle(220)
+ check('manual food entry mounts unchanged runtime and its paste action',!!q('[data-nutrition-form]')&&!!q('[data-calorie-ai="paste"]'))
+ check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')
+ q('.fn2__sheet-close')?.click();await settle(30)
+ await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
+ check('switching tabs does not replace stored food data',q('.fn2__metrics')?.textContent.includes('640'))
+ check('no browser runtime errors',errors.length===0,errors.join(' | '))
+}catch(error){check('Food 2.0 completed',false,error?.stack??error)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'food2-integrated',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

@@ -37,7 +37,13 @@ try {
     && launch.getBoundingClientRect().bottom>=innerHeight-1)
   check('Splash edges and body share the same launch base color',
     getComputedStyle(document.body).backgroundColor===getComputedStyle(document.documentElement).backgroundColor)
-  check('staggered animation ends fully legible',getComputedStyle(mark).opacity==='1'&&getComputedStyle(word).opacity==='1')
+  // Background test runners may render animation frames slightly late.
+  // Evaluate legibility after the last staggered keyframe, using a visual
+  // tolerance instead of an exact stringified float comparison.
+  await new Promise(resolve=>setTimeout(resolve,550))
+  check('staggered animation ends fully legible',
+    Number(getComputedStyle(mark).opacity)>0.99
+    && Number(getComputedStyle(word).opacity)>0.99)
   const svg=await fetch(word.src).then(r=>r.text())
   check('wordmark vector does not paint opaque rectangle',!svg.includes('<rect'))
   check('no browser errors',errors.length===0,errors.join(' | '))

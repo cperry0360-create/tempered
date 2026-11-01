@@ -457,14 +457,19 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
         ]),
       ]),
 
+      el('section.card', { dataset: { section: 'brand' } }, [
+        el('img.lfms__settings-logo',{src:'./branding/lfms/logo-full.svg',alt:'Less Fat More Strong'}),
+        el('p.block__hint',{text:'Less Fat More Strong · Strength, nutrition and recovery. Your existing Tempered data stays on this device.'}),
+      ]),
       el('section.card', { dataset: { section: 'credits' } }, [
         el('h2.block__title', { text: 'Credits' }),
         el('p.block__hint', {
           text: 'Movement images from free-exercise-db and upstream Everkinetic are attributed under Creative Commons Attribution-ShareAlike 4.0, with provenance in the exercise image source file.',
         }),
         el('p.block__hint', {
-          text: 'Third-party exercise art has licences separate from Tempered source code and first-party art.',
+          text: 'Third-party exercise art has licences separate from the app’s source code and first-party art.',
         }),
+        el('p.block__hint',{text:'Food illustrations: 16 locally bundled Wikimedia Commons CC0 photographs. Sources and licenses are recorded in art/food/catalog.json.'}),
         el('p.setting', {}, [
           el('a', {
             href: 'https://github.com/yuhonas/free-exercise-db',

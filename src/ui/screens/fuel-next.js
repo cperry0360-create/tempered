@@ -450,9 +450,13 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   function overlay(){
     const title={quick:'Quick Log',cart:'Review servings',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
+    // A new user has zero frequent foods; several distinct foods may also
+    // have no repeat count yet. Quick Log must not become an empty giant sheet.
+    const quickFoods=data.foods.top.length?data.foods.top:data.foods.all.slice(0,5)
     const content=sheet==='quick'?[
       el('p.fn2__caption',{text:'Tap a previously logged food, then confirm the cart.'}),
-      ...data.foods.top.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{stage(food);openSheet('cart')}},[
+      !quickFoods.length&&el('p.fn2__empty',{text:'No saved meals yet. Enter your first meal below.'}),
+      ...quickFoods.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{stage(food);openSheet('cart')}},[
         thumbnail(food),el('span',{text:food.description}),el('strong',{text:fmt(food.calories)+' kcal'}),icon('plus'),
       ])),
       el('button.fn2__secondary',{type:'button',onclick:()=>go('library')},['Browse all saved foods']),

@@ -313,3 +313,26 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tab[data-a
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) .status-bar-cover {
   background:var(--lfms-today-status);
 }
+
+/* Today's recovery readout uses the same LFMS navy + blue system as the
+   rest of the tab. Readiness labels and reasoning stay untouched; the color
+   no longer jumps back to the original orange/gray theme. */
+.today--fuel-style .today-readiness__summary {
+  --tone:var(--t2-blue);
+  --tone-ink:var(--t2-light);
+}
+.today--fuel-style .today-readiness__dial {
+  background:
+    radial-gradient(closest-side,var(--t2-panel) 78%,transparent 80%),
+    conic-gradient(var(--t2-blue) calc(var(--readiness) * 1%),var(--t2-line) 0);
+}
+.today--fuel-style .today-readiness__metric[data-tone='low'] small {
+  color:var(--t2-light);
+  font-weight:750;
+}
+/* Duo Today: move icon centers 5px away from the left-hand divider.
+   Rail width, hit target size, selected-tab indicator and other tabs stay put. */
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tabs {
+  box-sizing:border-box;
+  padding-inline-start:10px;
+}

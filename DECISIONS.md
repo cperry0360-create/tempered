@@ -1,3 +1,7 @@
+## 2026-11-01 — Today-only readiness color and rail spacing polish
+
+After seeing the navy canvas live on Duo, user flagged old orange Recover colors and sidebar icons too close to the rail divider. Keep the one-tab trial: override legacy readiness tone, ring fill/background, and low-status caption only within LFMS Today to use brand blue/navy. Preserve all readiness interpretation and user data. Shift the Today-only Duo navigation button stack right approximately 5px via 10px internal left padding; do not move or widen the rail itself. All other tabs remain as before pending visual approval.
+
 ## 2026-11-01 — One-screen background trial before wider redesign
 
 The user could not visualize an abstract proposal to replace the old gray app shell with a cohesive LFMS backdrop. Implement exactly one real sample on the Today tab in Duo layout and deploy it for hands-on review, without changing Train, Food or Progress. Prefer a single full-viewport blue/black gradient behind transparent Today content over multiple disconnected gradients in nested containers. Tint the right rail navy with a subtle border and blue selection. Wait for explicit user approval before extending this styling to other tabs. Preserve data and the current build on a backup branch.

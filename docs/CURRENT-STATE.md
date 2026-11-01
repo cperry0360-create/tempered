@@ -1,3 +1,10 @@
+## 2026-11-01 — LFMS Today Recover color + rail spacing refinement, 0.66.8 (114)
+
+- User validated the overall Today-only navy canvas and identified two residual mismatches in a real Duo screenshot: the orange Recover score ring and the navigation icons hugging the rail divider.
+- Today Readiness now uses the approved blue progress ring with a navy center and track, blue headline and blue low-signal status. Numerical score, Recover classification, explanations, and imported Health values are unchanged.
+- In Duo Today only, add 10px left padding to the navigation button stack, moving its center approximately 5px away from the left divider. Preserve existing rail width, page geometry and >=44px tap targets, and leave Train, Food and Progress alone.
+- Browser acceptance seeds real Health history to render a Recover state, validates new computed colors, and checks the icon-to-divider distance. Backup: `backup/lfms-before-readiness-rail-polish-2026-11-01`.
+
 ## 2026-11-01 — Today-only Duo continuous background trial, 0.66.7 (113)
 
 - User reported the gray outer canvas below/around the redesigned blue-black Today content made it look disconnected.

@@ -35,6 +35,28 @@ try{
  check('Original workout, week, Fuel, and daily-log sections remain intact',
   !!q('[data-section=next-session]')&&!!q('[data-section=week]')&&!!q('[data-section=fuel]')&&!!q('[data-section=daily]'))
  check('Recovery card retains import/recovery behavior',!!q('[data-section=readiness]'))
+ // Two prior readings plus today's lower HRV produce a real Recover state.
+ // Check computed colors, not just the presence of the new CSS selectors.
+ for(const date of ['2026-09-29','2026-09-30']) {
+   await storage.put('dayLogs',{...await t.daily.dayLog(date),
+     healthMetrics:{hrvMs:40,restingHr:62}})
+ }
+ await storage.put('dayLogs',{...await t.daily.dayLog('2026-10-01'),
+   healthMetrics:{hrvMs:27,restingHr:64}})
+ await t.app.show('today')
+ const recover=q('.today-readiness__summary[data-readiness-label="recover"]')
+ const recoveryDial=recover?.querySelector('.today-readiness__dial')
+ const lowStatus=q('.today-readiness__metric[data-tone="low"] small')
+ check('Readiness still labels a low score Recover from real logged health data',
+   !!recover&&!!recoveryDial&&!!lowStatus)
+ check('Recover uses LFMS blue and navy instead of the legacy orange ring',
+   !!recoveryDial
+   && getComputedStyle(recoveryDial).backgroundImage.includes('conic-gradient')
+   && !getComputedStyle(recoveryDial).backgroundImage.includes('232, 131, 58')
+   && getComputedStyle(recover.querySelector('.today-readiness__verdict strong')).color
+      ===getComputedStyle(q('.today-readiness__import')).color
+   && getComputedStyle(lowStatus).color===getComputedStyle(q('.today-readiness__import')).color)
+
  for(const b of qa('.today2__pills button')){b.click()}
  check('Shortcuts do not throw or leave Today',!!q('.today--fuel-style'))
  const prev=await t.daily.dayLog('2026-10-01')
@@ -55,6 +77,11 @@ try{
    && getComputedStyle(q('.app__body')).backgroundColor==='rgba(0, 0, 0, 0)')
  check('Duo Today rail is dark navy rather than gray',
    getComputedStyle(rail).backgroundColor==='rgba(4, 17, 30, 0.89)')
+ check('Duo Today icon buttons have deliberate space from the divider',
+   getComputedStyle(rail.querySelector('.tabbar__tabs')).paddingLeft==='10px'
+   && rail.querySelector('.tabbar__tab[aria-current="page"]').getBoundingClientRect().left
+       - rail.getBoundingClientRect().left>=12)
+
  await t.app.show('fuel')
  check('Food retains its original app background until trial is approved',
    !q('.app__body > .today--fuel-style')

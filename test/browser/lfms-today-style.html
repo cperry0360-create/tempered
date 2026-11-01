@@ -65,8 +65,7 @@ try{
  const next=await t.daily.dayLog('2026-10-01')
  check('Canonical calories update dashboard hero after logging',next.calories===(prev?.calories??0)+375&&q('.today2__hero')?.textContent.includes('375'))
  check('Canonical food stats update existing Fuel card',q('[data-section=fuel]')?.textContent.includes('375'))
- // Today-only trial: check the background when the Duo layout is enabled,
- // then navigate to Food and confirm its old shell has not been restyled.
+ // The approved continuous canvas now applies to all four main Duo tabs.
  document.documentElement.dataset.layout='duo'
  const app=q('#app'),today=q('.today--fuel-style'),rail=q('.tabbar')
  check('Duo Today background is one continuous blue-black gradient',
@@ -75,23 +74,40 @@ try{
  check('Duo Today content and outer gutter share the same canvas',
    getComputedStyle(today).backgroundColor==='rgba(0, 0, 0, 0)'
    && getComputedStyle(q('.app__body')).backgroundColor==='rgba(0, 0, 0, 0)')
- check('Duo Today rail is dark navy rather than gray',
-   getComputedStyle(rail).backgroundColor==='rgba(4, 17, 30, 0.89)')
- check('Duo Today icon buttons have deliberate space from the divider',
-   getComputedStyle(rail.querySelector('.tabbar__tabs')).paddingLeft==='10px'
-   && rail.querySelector('.tabbar__tab[aria-current="page"]').getBoundingClientRect().left
-       - rail.getBoundingClientRect().left>=12)
+ check('Duo floating rail has only a frosted capsule, no solid backdrop',
+   getComputedStyle(rail).backgroundColor==='rgba(0, 0, 0, 0)'
+   && getComputedStyle(rail).backgroundImage==='none'
+   && getComputedStyle(rail.querySelector('.tabbar__tabs')).backgroundImage.includes('linear-gradient'))
+ check('Duo rail has four circular icons, all with accessible names',
+   qa('.tabbar__tab').length===4
+   && qa('.tabbar__tab').every(x=>x.getAttribute('aria-label') && x.getBoundingClientRect().height>=44))
+ const originalTabs=qa('.tabbar__tab')
+ check('Duo nav labels are prepared for press-and-hold',
+   originalTabs.every(x=>x.dataset.label?.length))
 
- await t.app.show('fuel')
- check('Food retains its original app background until trial is approved',
-   !q('.app__body > .today--fuel-style')
-   && getComputedStyle(app).backgroundImage==='none'
-   && getComputedStyle(rail).backgroundColor!=='rgba(4, 17, 30, 0.89)',
-   JSON.stringify({appImage:getComputedStyle(app).backgroundImage,rail:getComputedStyle(rail).backgroundColor,
-     todayPresent:Boolean(q('.app__body > .today--fuel-style')),fuelPresent:Boolean(q('.app__body > .screen--fuel'))}))
- await t.app.show('today')
- check('Returning to Today restores the trial without changing tabs',
-   getComputedStyle(app).backgroundImage.includes('radial-gradient'))
+ const initialCanvas=getComputedStyle(app).backgroundImage
+ for(const tab of ['train','fuel','history','today']) {
+   await t.app.show(tab)
+   check(tab+' uses continuous navy canvas with transparent screen',
+     getComputedStyle(app).backgroundImage===initialCanvas
+     && getComputedStyle(q('.app__body > .screen')).backgroundColor==='rgba(0, 0, 0, 0)')
+   check(tab+' preserves original rail button DOM nodes',
+     qa('.tabbar__tab').every((button,i)=>button===originalTabs[i]))
+ }
+ const topButton=qa('.tabbar__tab')[0]
+ topButton.dispatchEvent(new PointerEvent('pointerdown',{pointerId:91,button:0,bubbles:true,clientY:topButton.getBoundingClientRect().top+22}))
+ await new Promise(resolve=>setTimeout(resolve,350))
+ check('Long press lifts a glass icon and reveals label styling',
+   q('.tabbar__tabs')?.dataset.holding==='true'
+   && topButton.dataset.peek==='true'
+   && getComputedStyle(topButton,'::after').content.includes('Today'))
+ topButton.dispatchEvent(new PointerEvent('pointercancel',{pointerId:91,bubbles:true}))
+ check('Cancelling press restores capsule state',!q('.tabbar__tabs')?.dataset.holding)
+ await Promise.all([t.app.show('train'),t.app.show('fuel'),t.app.show('today')])
+ check('Rapid tab changes settle on the latest requested screen',
+   !!q('.app__body > .today--fuel-style')
+   && q('[data-tab="today"]')?.dataset.active==='true'
+   && qa('.tabbar__tab').every((button,i)=>button===originalTabs[i]))
  check('No runtime errors or unhandled rejections',errors.length===0,errors.join(' | '))
 }catch(e){check('Today Food-style test completes',false,e.stack)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-today-style',passed:checks.every(c=>c.ok),checks})})

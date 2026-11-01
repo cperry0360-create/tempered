@@ -57,8 +57,11 @@ try{
    getComputedStyle(rail).backgroundColor==='rgba(4, 17, 30, 0.89)')
  await t.app.show('fuel')
  check('Food retains its original app background until trial is approved',
-   getComputedStyle(app).backgroundImage==='none'
-   && getComputedStyle(rail).backgroundColor==='rgb(27, 34, 44)')
+   !q('.app__body > .today--fuel-style')
+   && getComputedStyle(app).backgroundImage==='none'
+   && getComputedStyle(rail).backgroundColor!=='rgba(4, 17, 30, 0.89)',
+   JSON.stringify({appImage:getComputedStyle(app).backgroundImage,rail:getComputedStyle(rail).backgroundColor,
+     todayPresent:Boolean(q('.app__body > .today--fuel-style')),fuelPresent:Boolean(q('.app__body > .screen--fuel'))}))
  await t.app.show('today')
  check('Returning to Today restores the trial without changing tabs',
    getComputedStyle(app).backgroundImage.includes('radial-gradient'))

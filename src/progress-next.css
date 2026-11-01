@@ -216,8 +216,16 @@
 .progress--fuel-style .progress-measure__tile {background:var(--pr2-panel);color:var(--pr2-text);border-color:var(--pr2-line)}
 
 /* Preserve the existing score-explanation bottom sheet behavior. */
-.progress--fuel-style .score-explain__sheet {background:var(--pr2-raised);color:var(--pr2-text)}
-.progress--fuel-style .score-explain__sheet h3 {color:var(--pr2-muted)}
+/* Score explain is intentionally portaled to <body>, outside the Progress root. */
+html:has(.progress--fuel-style) .score-explain__sheet {
+  background:var(--food-v2-panel-2);color:var(--food-v2-text);
+  border-top:1px solid var(--food-v2-line);
+}
+html:has(.progress--fuel-style) .score-explain__sheet h3 {color:var(--food-v2-muted)}
+html:has(.progress--fuel-style) .score-explain__done {
+  background:var(--food-v2-blue);color:var(--food-v2-deep);border-radius:12px;
+}
+
 @media(min-width:740px) {
   html[data-layout=duo] .progress--fuel-style .progress-overview {
     display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:13px;align-items:start;

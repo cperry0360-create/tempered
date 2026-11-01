@@ -5,6 +5,7 @@ on:
     paths:
       - 'reference/forged-nutrition.html'
       - 'reference/tempered-fuel-study.html'
+      - 'reference/tempered-journal-study.html'
       - 'reference/capture.mjs'
       - '.github/workflows/reference-capture.yml'
   workflow_dispatch:
@@ -18,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Capture dashboard, journal, and quick log with Chromium CDP
+      - name: Capture Forged + Tempered Fuel and Journal frames with Chromium CDP
         timeout-minutes: 2
         run: |
           # Chromium occasionally stalls during a cold start on the hosted runner.

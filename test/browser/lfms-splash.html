@@ -30,6 +30,11 @@ try {
   check('symbol stays strictly above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
   check('tagline stays strictly below lettering',w.bottom+8<t.top,JSON.stringify({wordBottom:w.bottom,taglineTop:t.top}))
   check('logo sits inside screen',m.top>=0&&t.bottom<=innerHeight,JSON.stringify({top:m.top,bottom:t.bottom,height:innerHeight}))
+  check('Splash covers the full viewport without exposed gray safe edges',
+    Math.abs(launch.getBoundingClientRect().left)<=1
+    && launch.getBoundingClientRect().right>=innerWidth-1
+    && Math.abs(launch.getBoundingClientRect().top)<=1
+    && launch.getBoundingClientRect().bottom>=innerHeight-1)
   check('staggered animation ends fully legible',getComputedStyle(mark).opacity==='1'&&getComputedStyle(word).opacity==='1')
   const svg=await fetch(word.src).then(r=>r.text())
   check('wordmark vector does not paint opaque rectangle',!svg.includes('<rect'))

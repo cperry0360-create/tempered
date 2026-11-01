@@ -148,8 +148,46 @@ try{
  check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')
  q('.fn2__sheet-close')?.click();await settle(30)
  check('Closing Quick Log returns to Meal History without data changes',!!q('.fn2__journal')&&!q('.fn2__overlay'))
+ check('A Food modal is mounted above the scrollable page, not inside it',!document.body.dataset.food2Modal)
+ // User regression: while Quick Log is open, taps and scroll gestures must
+ // not scroll the page behind it; closing restores normal scrolling.
+ const scrolling=q('.app__body')
+ q('.fn2__pills button:nth-child(2)')?.click();await settle(85)
+ check('Food sheets portal outside the scrollable pane',q('.fn2__overlay')?.parentElement===document.body)
+ check('Food sheet freezes underlying page scrolling',document.body.dataset.food2Modal==='true'
+   && getComputedStyle(scrolling).overflowY==='hidden'
+   && getComputedStyle(q('.fn2__sheet-body')).overflowY==='auto')
+ q('.fn2__sheet-close')?.click();await settle(40)
+ check('Closing a sheet restores page scrolling',!document.body.dataset.food2Modal
+   && getComputedStyle(scrolling).overflowY!=='hidden')
  await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
  check('switching tabs does not replace stored food data',q('.fn2__metrics')?.textContent.includes('640'))
+ // The user logged only HALF of a 200-kcal meal. Repeat must work from its
+ // original 200-kcal serving, never re-multiply the already eaten 100 kcal.
+ await t.daily.addNutrition('2026-10-01',{description:'Half-serving granola',calories:200,protein:16,carbs:25,fat:5,portion:.5})
+ await t.app.show('today');await t.app.show('fuel');await settle(100)
+ q('.fn2__pills button:nth-child(3)')?.click();await settle(60)
+ const halfRow=qa('.fn2__meal-row').find(x=>x.textContent.includes('Half-serving granola'))
+ halfRow?.querySelector('.fn2__meal-menu')?.click();await settle(25)
+ const repeatBtn=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Log this meal again'))
+ repeatBtn?.click();await settle(60)
+ check('Repeat from historical half-serving opens a single portion review',q('.fn2__overlay')?.dataset.food2Overlay==='cart'
+   && qa('.fn2__servings select').length===1)
+ const selector=q('.fn2__servings select')
+ check('Portion picker starts at one serving (not an accidental quarter)',selector?.value==='1')
+ selector.value='0.75'
+ selector.dispatchEvent(new Event('change',{bubbles:true}));await settle(35)
+ check('Historical meal restores unit value then scales to three quarters',
+   q('.fn2__cart-total')?.textContent.includes('150 kcal')
+   && q('.fn2__primary')?.textContent.includes('0.75 serving'))
+ const beforeRepeat=(await t.daily.dayLog('2026-10-01')).calories
+ q('.fn2__sheet .fn2__primary')?.click();await settle(210)
+ const afterRepeat=await t.daily.dayLog('2026-10-01')
+ check('Historical repeat saves exactly 150 kcal and 12g protein',
+   afterRepeat.calories-beforeRepeat===150
+   && nutritionLedger(afterRepeat).entries.at(-1)?.proteinGrams===12)
+ check('Portaled sheet closes after logging and restores scrolling',!q('.fn2__overlay')
+   && !document.body.dataset.food2Modal)
  check('no browser runtime errors',errors.length===0,errors.join(' | '))
 }catch(error){check('Food 2.0 completed',false,error?.stack??error)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'food2-integrated',passed:checks.every(x=>x.ok),checks})})

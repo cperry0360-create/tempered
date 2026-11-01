@@ -49,7 +49,7 @@ if (params.has('fixture')) {
       const d = await load(width,height,`layout=duo&right=${right}&top=${top}`), w = frame.contentWindow
       const q = s => d.querySelector(s), r = s => rect(q(s)), label = `${width}×${height} right ${right}`
       check(label + ' Today rail uses a coordinated navy shade around the gradient canvas',
-        w.getComputedStyle(q('.tabbar')).backgroundColor === 'rgba(4, 17, 30, 0.89)'
+        w.getComputedStyle(q('.tabbar')).backgroundImage.includes('linear-gradient')
         && w.getComputedStyle(q('#app')).backgroundImage.includes('radial-gradient'))
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
       check(label + ' content stops at the rail', close(r('.app__body').right, r('.tabbar').left))

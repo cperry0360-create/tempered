@@ -357,9 +357,9 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('span',{text:food.description}),
         el('label.fn2__servings',{},[
           el('span',{text:'Servings'}),
-          el('select',{'aria-label':'Portion for '+food.description,value:String(count),
+          el('select',{'aria-label':'Portion for '+food.description,
             onchange:event=>setCartPortion(id,event.target.value)},
-            servingChoices.map(value=>el('option',{value:String(value),text:portionLabel(value)}))),
+            servingChoices.map(value=>el('option',{value:String(value),selected:value===count,text:portionLabel(value)}))),
         ]),
         el('strong',{text:fmt(n(food.calories)*count)+' kcal'}),
         el('button',{type:'button','aria-label':'Remove '+food.description,onclick:()=>{cart.delete(id);render()}},['×']),

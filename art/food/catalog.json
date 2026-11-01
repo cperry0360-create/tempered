@@ -1,0 +1,278 @@
+{
+  "purpose": "Optional illustrations for saved foods. Does NOT contain nutrition facts.",
+  "source": "Wikimedia Commons; licenses checked per file on import.",
+  "licensePolicy": "CC0 / public domain only",
+  "transformation": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+  "images": [
+    {
+      "id": "chicken",
+      "file": "./chicken.jpg",
+      "label": "Grilled chicken",
+      "keywords": [
+        "chicken",
+        "grilled chicken"
+      ],
+      "sourceFile": "File:Grilled chicken meat.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Grilled_chicken_meat.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Fatimah Bello",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "a1df9fda22ba5565c15927e28ef7ca8d3042945f45d49bee089b36d2b676b3f3",
+      "bytes": 10538
+    },
+    {
+      "id": "yogurt-berries",
+      "file": "./yogurt-berries.jpg",
+      "label": "Yogurt with strawberries",
+      "keywords": [
+        "yogurt berries",
+        "greek yogurt berries",
+        "strawberry yogurt"
+      ],
+      "sourceFile": "File:Strawberries & Yogurt.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Strawberries_%26_Yogurt.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Youmna9115",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "16bc9e339cc0b1c2430c2368a02f1e666b2a8896349284ae786e4b4a9d308f9d",
+      "bytes": 9087
+    },
+    {
+      "id": "yogurt",
+      "file": "./yogurt.jpg",
+      "label": "Plain yogurt",
+      "keywords": [
+        "yogurt",
+        "greek yogurt"
+      ],
+      "sourceFile": "File:Plain Yogurt.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Plain_Yogurt.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Alabama Extension",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "076cb3d4bbf135fd97d6ff1b1fcf5dedfc38d08a7cb971dffd5bb37d72a80a3f",
+      "bytes": 4844
+    },
+    {
+      "id": "salmon",
+      "file": "./salmon.jpg",
+      "label": "Salmon meal",
+      "keywords": [
+        "salmon"
+      ],
+      "sourceFile": "File:Salmon meal.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Salmon_meal.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Zuxra.bmr",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "f240f7b4a0acffe3262c65a9c1197becb2571d529936a070f22a24ab41aa5008",
+      "bytes": 9387
+    },
+    {
+      "id": "salad",
+      "file": "./salad.jpg",
+      "label": "Vegetable salad",
+      "keywords": [
+        "salad"
+      ],
+      "sourceFile": "File:Salad bowl, Kiedrich.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Salad_bowl,_Kiedrich.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Gerda Arendt",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "90bfe3fbb785e90916fbc31aee71ddd3e59fb3d5ce9dd9204d969af06c62f7bc",
+      "bytes": 9552
+    },
+    {
+      "id": "apple",
+      "file": "./apple.jpg",
+      "label": "Apples",
+      "keywords": [
+        "apple",
+        "apples"
+      ],
+      "sourceFile": "File:Apples fruit.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Apples_fruit.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "safaritravelplus",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "4e3c94480c67430dc736d0d73d1fa12a188e49d0ab127d0bbfaa487b6dc4dad3",
+      "bytes": 6774
+    },
+    {
+      "id": "banana",
+      "file": "./banana.jpg",
+      "label": "Bananas",
+      "keywords": [
+        "banana",
+        "bananas"
+      ],
+      "sourceFile": "File:Ripe-bananas.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ripe-bananas.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "MartinThoma",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "29a061c5fd8afa7fb7b4be1aee56ef03d2e2479a82b75c1437b7b6d7889e9053",
+      "bytes": 8521
+    },
+    {
+      "id": "eggs",
+      "file": "./eggs.jpg",
+      "label": "Egg on toast",
+      "keywords": [
+        "scrambled egg",
+        "eggs",
+        "egg"
+      ],
+      "sourceFile": "File:Scrambled egg on toast - Loro's Cafe 2025-08-13.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Scrambled_egg_on_toast_-_Loro%27s_Cafe_2025-08-13.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Andy Li",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "03558a0eeb4cb2bb650fe6802381f99861c7ad92721a1bc0706a9f70368b01e3",
+      "bytes": 9828
+    },
+    {
+      "id": "pizza",
+      "file": "./pizza.jpg",
+      "label": "Cheese pizza",
+      "keywords": [
+        "pizza"
+      ],
+      "sourceFile": "File:Pizza 26.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Pizza_26.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Kurt Kaiser",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "02370b96d925c692ad76a784b8bb6f2fb4cdc9724bdf6172245b051e72b1f1b7",
+      "bytes": 12192
+    },
+    {
+      "id": "burger",
+      "file": "./burger.jpg",
+      "label": "Hamburger",
+      "keywords": [
+        "hamburger",
+        "burger"
+      ],
+      "sourceFile": "File:Food burger 005 homemade with cheddar and bacon.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Food_burger_005_homemade_with_cheddar_and_bacon.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Jan Helebrant",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "9eb3ea38d8adf75964e573d7bf861fa4afb5fe755098ca23aee270be510b3cfb",
+      "bytes": 9308
+    },
+    {
+      "id": "sandwich",
+      "file": "./sandwich.jpg",
+      "label": "Breakfast sandwich",
+      "keywords": [
+        "sandwich"
+      ],
+      "sourceFile": "File:Breakfast Sandwich.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Breakfast_Sandwich.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Anthonykenneth25",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "db0d1e72cf4ec71c345ecca8a88c98f7f13e64ba17d197a4744e0594385000b6",
+      "bytes": 9824
+    },
+    {
+      "id": "fruit",
+      "file": "./fruit.jpg",
+      "label": "Fruit salad",
+      "keywords": [
+        "fruit salad",
+        "fruit bowl"
+      ],
+      "sourceFile": "File:Fruit Salad Bowl.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Fruit_Salad_Bowl.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Barkathnisa Ashaqilahi",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "b80efc17a5a21e476729826e6a23ec8adbd1ce7c3cbdfba0e8990754c3d5b995",
+      "bytes": 7438
+    },
+    {
+      "id": "strawberries",
+      "file": "./strawberries.jpg",
+      "label": "Strawberries",
+      "keywords": [
+        "strawberries",
+        "strawberry"
+      ],
+      "sourceFile": "File:Strawberries-1.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Strawberries-1.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "MartinThoma",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "30dbad6b9f0b0a1cf4552e3d1b9f6e09b3124925310a502fddf70d3936fb8da8",
+      "bytes": 8525
+    },
+    {
+      "id": "pasta",
+      "file": "./pasta.jpg",
+      "label": "Spaghetti in a bowl",
+      "keywords": [
+        "pasta",
+        "spaghetti",
+        "noodles"
+      ],
+      "sourceFile": "File:Spaghetti in a Bowl.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Spaghetti_in_a_Bowl.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Msyuinara",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "6c561be2a9154fe70dc5dd9f3605e7f7eb31774dd7821f4fcab8aaa56b46e73c",
+      "bytes": 6194
+    },
+    {
+      "id": "steak",
+      "file": "./steak.jpg",
+      "label": "Steak",
+      "keywords": [
+        "steak",
+        "beef steak"
+      ],
+      "sourceFile": "File:Restaurant Steak.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Restaurant_Steak.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Brianbesley",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "7054c8e3ec91aa84143d0b89b1864e20f46669e2a85142e4d8a7a4cdd820f31a",
+      "bytes": 9767
+    },
+    {
+      "id": "sushi",
+      "file": "./sushi.jpg",
+      "label": "Sushi",
+      "keywords": [
+        "sushi"
+      ],
+      "sourceFile": "File:Assorted sushi.png",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Assorted_sushi.png",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Dbarak",
+      "modifications": "Resized, center cropped to 192x192 JPEG thumbnail, quality 78.",
+      "sha256": "2b8ff6ab5591ebc8e2b6cae31db2f3194129f14f21181c9f3e5c7969676dca4d",
+      "bytes": 6858
+    }
+  ]
+}

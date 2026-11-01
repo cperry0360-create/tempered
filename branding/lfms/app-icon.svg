@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Less Fat More Strong mark"><defs>
+<linearGradient id="metal" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="0.55" stop-color="#f9f9f9"/><stop offset="1" stop-color="#d6d6d6"/></linearGradient>
+<linearGradient id="red" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#fa2a1b"/><stop offset="1" stop-color="#e92b1b"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="#050505"/><g transform="translate(-495 43) scale(1.3)"><path fill="url(#metal)" fill-rule="evenodd" d="M812,467 L917,494 L930,496 L983,509 L942,468 L822,468Z M945,334 L838,192 L835,190 L807,223 L667,397 L622,450 L621,448 L697,334 L695,335 L694,334 L617,334 L615,335 L543,431 L490,499 L467,531 L533,514 L537,514 L704,466 L768,386 L832,309 L839,316 L880,371 L900,392 L904,389Z"/><path fill="url(#red)" fill-rule="evenodd" d="M961,359 L920,410 L919,414 L931,430 L1018,517 L1082,531Z"/>
+</g></svg>

@@ -1,0 +1,34 @@
+name: Food 2.0 candidate visual evidence
+on:
+  pull_request:
+    paths:
+      - 'src/ui/screens/fuel-next.js'
+      - 'src/food-next.css'
+      - 'src/ui/app.js'
+      - 'test/browser/food2-integrated.html'
+      - 'test/browser/release-visual.html'
+      - 'tools/capture-release-screens.js'
+      - '.github/workflows/food2-visual.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Capture 4 screens on ordinary phone
+        run: node tools/capture-release-screens.js --views food2-dashboard,food2-journal,food2-library,food2-quicklog --output artifacts/food2-phone
+      - name: Capture 4 screens on Duo cover and inner
+        run: node tools/capture-release-screens.js --duo --views food2-dashboard,food2-journal,food2-library,food2-quicklog --output artifacts/food2-duo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tempered-food2-visual-evidence
+          path: |
+            artifacts/food2-phone
+            artifacts/food2-duo
+          retention-days: 14

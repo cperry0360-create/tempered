@@ -1228,7 +1228,7 @@ export function createTodayScreen({
     replace(root, [
       el('header.today-heading', {}, [
         el('div.today-heading__title-row', {}, [
-          el('h1.screen__title', { text: isRealToday() ? 'Today' : 'Day review' }),
+          el('div.lfms__today-brand',{},[el('img.lfms__today-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('h1.screen__title', { text: isRealToday() ? 'Today' : 'Day review' })]),
           el('button.today-settings', {
             type: 'button', 'aria-label': 'Settings', title: 'Settings', onclick: onSettings,
           }, [icon('gear')]),

@@ -28,9 +28,13 @@ jobs:
           mkdir -p _site/art
           cp index.html manifest.webmanifest manifest-duo.webmanifest sw.js _site/
           cp -R src data icons _site/
-          cp -R art/exercises art/dist art/battle _site/art/
+          cp -R art/exercises art/dist art/battle art/food _site/art/
+          mkdir -p _site/branding
+          cp -R branding/lfms _site/branding/
           # Isolated visual reference pages; excluded from the Tempered app shell.
           cp -R reference _site/
+      - name: Verify staged offline assets and brand files
+        run: node tools/verify-staged-pages.js _site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

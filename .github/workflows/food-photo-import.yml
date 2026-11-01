@@ -1,0 +1,86 @@
+name: Food CC0 photo library importer
+on:
+  pull_request:
+    paths:
+      - 'art/food/SOURCES.json'
+      - 'tools/build-food-photo-library.py'
+      - '.github/workflows/food-photo-import.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/approved-food-2-working')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Explicit branch checkout; PR's synthetic merge commit isn't pushable.
+          ref: feature/approved-food-2-working
+          persist-credentials: true
+      - name: Check whether the curated images are already bundled
+        id: existing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path('art/food')
+          result=False
+          try:
+            data=json.loads((root/'SOURCES.json').read_text())
+            catalog=json.loads((root/'catalog.json').read_text())['images']
+            reference={v['id']:v['file'] for v in data['entries']}
+            result=(len(reference)==len(catalog) and all(
+              reference.get(x['id'])==x['sourceFile']
+              and (root/(x['id']+'.jpg')).is_file()
+              for x in catalog))
+          except (FileNotFoundError,KeyError,ValueError):
+            pass
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+            out.write('ready='+str(result).lower()+'\n')
+          print('Offline library already present:',result)
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install thumbnail processing
+        if: steps.existing.outputs.ready != 'true'
+        run: python -m pip install 'Pillow>=11,<13'
+      - name: Fetch and independently verify every CC0 image
+        if: steps.existing.outputs.ready != 'true'
+        run: python tools/build-food-photo-library.py
+      - name: Validate and commit bundled images to draft branch
+        if: steps.existing.outputs.ready != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, hashlib
+          root=pathlib.Path('art/food')
+          sources=json.loads((root/'SOURCES.json').read_text())
+          catalog=json.loads((root/'catalog.json').read_text())
+          assert len(sources['entries']) == len(catalog['images']) == 16, 'Incomplete CC0 library'
+          for x in catalog['images']:
+            data=(root/x['file']).read_bytes()
+            assert len(data)>3000 and len(data)<200000, x['id']
+            assert hashlib.sha256(data).hexdigest()==x['sha256'], x['id']
+            assert x['license'].lower() in ('cc0','cc0 1.0','public domain','public domain mark 1.0')
+            assert x['sourcePage'].startswith('https://commons.wikimedia.org/')
+          print('Verified',len(catalog['images']),'CC0/public-domain local thumbnails')
+          PY
+          git add art/food/catalog.json art/food/*.jpg
+          if git diff --cached --quiet; then
+            echo 'All food photos already up to date'
+            exit 0
+          fi
+          git -c user.name='tempered-art-bot' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Food 2.0: bundle 16 verified CC0 Wikimedia thumbnails for offline use'
+          git push origin HEAD:feature/approved-food-2-working
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tempered-food-cc0-import
+          path: |
+            art/food/catalog.json
+            art/food/*.jpg
+          retention-days: 14

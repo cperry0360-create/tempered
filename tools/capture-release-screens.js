@@ -22,6 +22,7 @@ const TYPES = {
 }
 const VIEWS = [
   'setup-welcome', 'setup-rhythm', 'setup-plan',
+  'food2-dashboard', 'food2-journal', 'food2-library', 'food2-quicklog',
   'today', 'train', 'session', 'plate-calculator-weight', 'plate-calculator-build', 'weekly-recap', 'weekly-recap-details', 'weekly-recap-daily', 'weekly-recap-away', 'weekly-recap-quiet', 'fuel', 'fuel-entry', 'fuel-meals',
   'progress-trends', 'progress-score-explain', 'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
   'progress', 'progress-cut', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',

@@ -38,7 +38,7 @@
 }
 .today--fuel-style .today-settings {
   color:var(--t2-light);
-  width:44px;height:44px;
+  width:46px;height:46px;min-width:46px;min-height:46px;flex:none;
   background:var(--food-v2-panel-2);
   border:1px solid var(--t2-line);
 }

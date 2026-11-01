@@ -63,8 +63,10 @@
 
 .today-settings {
   appearance: none;
-  width: 44px;
-  height: 44px;
+  min-width: 46px;
+  min-height: 46px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
   padding: 0;

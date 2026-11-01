@@ -23,7 +23,7 @@ try{
  q('#app').append(screen.root);await screen.refresh()
  for(const theme of ['light','dark']){
   document.documentElement.dataset.theme=theme
-  check(theme+' headline is the last completed week, with this week shown as progress and four reasons',q('.progress-content section')?.matches('.progress-score')&&q('.progress-score__number')?.textContent==='100 · A'&&/Week of Sep 14/.test(q('.progress-score')?.textContent)&&/This week: \d+ of \d+ sets due so far/.test(q('.progress-score__week')?.textContent)&&!/so far:/.test(q('.progress-score__number')?.textContent)&&qa('[data-score-component]').length===5&&qa('.progress-score__reason').every(n=>n.textContent.length>10),q('.progress-score')?.textContent)
+  check(theme+' headline is the last completed week, with this week shown as progress and four reasons',!!q('.progress-content .progress-score')&&q('.progress-score__number')?.textContent==='100 · A'&&/Week of Sep 14/.test(q('.progress-score')?.textContent)&&/This week: \d+ of \d+ sets due so far/.test(q('.progress-score__week')?.textContent)&&!/so far:/.test(q('.progress-score__number')?.textContent)&&qa('[data-score-component]').length===5&&qa('.progress-score__reason').every(n=>n.textContent.length>10),q('.progress-score')?.textContent)
   check(theme+' trend has 12 completed weekly points and leaves out the unfinished week',qa('.progress-score__trend circle').length===12&&q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-14: 100')&&!q('.progress-score__trend')?.getAttribute('aria-label').includes('2026-09-21'))
   for(const id of ['progression','adherence','consistency','volume']){
    q(`[data-score-component="${id}"]`)?.click()

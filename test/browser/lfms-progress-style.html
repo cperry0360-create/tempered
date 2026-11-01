@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS Progress 2.0 canonical analytics acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/progress.css">
+<link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/refined-ui.css">
+<link rel="stylesheet" href="../../src/food-v2.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+<link rel="stylesheet" href="../../src/train-next.css">
+<link rel="stylesheet" href="../../src/progress-next.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import {bootstrapHarness} from './harness.js'
+import {createMemoryStorage} from '../../src/adapters/storage/memory-storage.js'
+import {fixedClock} from '../../src/adapters/clock/clock.js'
+const checks=[],errors=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)]
+const settle=ms=>new Promise(resolve=>setTimeout(resolve,ms??70))
+addEventListener('error',e=>errors.push(e.message))
+addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try{
+ const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,8,9,12))
+ const t=await bootstrapHarness({storage,clock,mount:q('#app')})
+ await t.app.show('history')
+ check('Progress opens in the new LFMS dark navy visual system',!!q('.progress--fuel-style'))
+ check('LFMS mark resolves to a local SVG',q('.progress2__mark')?.src.endsWith('/branding/lfms/logo-mark.svg'))
+ check('Existing 7, 30, 90-day range selector is preserved',qa('.progress-range__select option').map(x=>x.value).join('|')==='7|30|90')
+ check('Four functional view tabs still present',qa('.progress-views [data-view]').map(x=>x.dataset.view).join('|')==='overview|lifts|habits|log')
+ check('Overview hero contains two real-data metrics',qa('.progress2__metric').length===2)
+ check('Dual rings represent habit rate and training score',qa('.progress2__rings circle').length===4&&q('.progress2__rings svg')?.getAttribute('aria-label')?.includes('Habit completion'))
+ check('Three range-aware bars retain unknown-data semantics',qa('.progress2__barline [role=progressbar]').length===3)
+ check('History starts without fabricated session counts',q('.progress2__metric strong')?.textContent==='0')
+ check('Canonical training score, weekly bars and trends remain',!!q('.progress-score')&&qa('.progress-weekly__bar').length===8&&!!q('.progress-trends'))
+ check('Original report copy action remains',!!q('.progress-report__button'))
+ const date='2026-09-09'
+ await storage.put('sessions',{id:'progress2-session',date,startedAt:date+'T13:00:00Z',endedAt:date+'T13:38:00Z',durationMinutes:38})
+ await storage.put('setLogs',{id:'progress2-set',sessionId:'progress2-session',exerciseId:'curl_db',weight:25,reps:10,completedAt:date+'T13:20:00Z',setIndex:0})
+ await t.app.show('history');await settle()
+ check('New session appears in canonical summary',qa('.progress2__metric strong')[0]?.textContent==='1')
+ check('New working set appears in canonical summary',qa('.progress2__metric strong')[1]?.textContent==='1')
+ check('Weekly working-set histogram updates from same logs',qa('.progress-weekly__bar[data-sets="1"]').length>0)
+ const selector=q('.progress-range__select');selector.value='7';selector.dispatchEvent(new Event('change',{bubbles:true}));await settle()
+ check('Range selection updates metric labels without resetting saved data',q('.progress2__metric small')?.textContent.includes('7 DAYS')&&qa('.progress2__metric strong')[0]?.textContent==='1')
+ q('[data-view=lifts]')?.click();await settle()
+ check('Lifts view stays accessible',q('[data-view=lifts]')?.getAttribute('aria-pressed')==='true')
+ q('[data-view=habits]')?.click();await settle()
+ check('Habits and measurement views remain accessible',q('[data-view=habits]')?.getAttribute('aria-pressed')==='true')
+ q('[data-view=log]')?.click();await settle()
+ check('Log view still displays canonical workout session',!!q('[data-session=progress2-session]'))
+ q('[data-session=progress2-session]')?.click();await settle()
+ check('Existing session detail remains functional',!!q('.progress-session-detail'))
+ check('Viewing progress never changes saved session count',(await storage.getAll('sessions')).length===1)
+ check('No runtime errors',errors.length===0,errors.join(' | '))
+}catch(e){check('Progress 2.0 integration finishes',false,e.stack)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-progress-style',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

@@ -224,7 +224,7 @@ function bestSetLabel(best) {
 }
 
 export function createHistoryScreen({ storage, workout, daily, clock }) {
-  const root = el('div.screen.screen--history.screen--progress')
+  const root = el('div.screen.screen--history.screen--progress.progress--fuel-style')
   let view = 'overview'
   let range = 30
   let sessions = []
@@ -830,6 +830,67 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     ])
   }
 
+
+  // Shared Fuel/Today/Train visual grammar, using existing canonical summary
+  // and training-score calculations. Missing data remains visibly unknown.
+  function progressOverviewHero(summary) {
+    const score=scoreData()
+    const latest=score.headline
+    const scoreValue=Number.isFinite(latest?.score)?latest.score:null
+    const habitRate=Number.isFinite(summary.habitRate)?summary.habitRate:null
+    const activeDayRate=summary.trackedDays>0
+      ? Math.round(100*summary.trainingDays/summary.trackedDays):null
+    const percent=n=>Number.isFinite(n)?Math.max(0,Math.min(100,n)):0
+    const ring=document.createElementNS('http://www.w3.org/2000/svg','svg')
+    ring.setAttribute('viewBox','0 0 160 160')
+    ring.setAttribute('role','img')
+    ring.setAttribute('aria-label',
+      'Habit completion '+(habitRate===null?'unknown':habitRate+' percent')+
+      ', weekly training score '+(scoreValue===null?'unknown':scoreValue+' of 100'))
+    for(const [radius,kind,value] of [[69,'habits',habitRate],[47,'score',scoreValue]]) {
+      for(const track of [true,false]) {
+        const c=document.createElementNS('http://www.w3.org/2000/svg','circle')
+        const len=2*Math.PI*radius
+        const attrs={cx:80,cy:80,r:radius,fill:'none','stroke-width':radius===69?9:12,
+          class:'progress2__circle progress2__circle--'+kind+(track?' progress2__circle--track':''),
+          transform:'rotate(-90 80 80)'}
+        if(!track){attrs['stroke-dasharray']=len;attrs['stroke-dashoffset']=len*(1-percent(value)/100)}
+        for(const [k,v] of Object.entries(attrs))c.setAttribute(k,String(v))
+        ring.append(c)
+      }
+    }
+    const bar=(name,value,detail)=>el('div.progress2__barline',{},[
+      el('span',{text:name}),
+      el('div.progress2__bartrack',{
+        role:'progressbar','aria-label':name+' for selected range',
+        'aria-valuemin':'0','aria-valuemax':'100',
+        'aria-valuenow':value===null?undefined:String(percent(value)),
+        'aria-valuetext':value===null?'No data':detail,
+      },[el('i',{style:'width:'+percent(value)+'%'})]),
+      el('small',{text:value===null?'—':Math.round(value)+'%'}),
+    ])
+    const valueCard=(label,value,caption,blue=false)=>el(
+      'div.progress2__metric'+(blue?'.progress2__metric--blue':''),
+      {},[el('small',{text:label}),el('strong',{text:String(value)}),el('span',{text:caption})])
+    return el('section.progress2__hero',{'aria-label':'Progress at a glance'},[
+      el('div.progress2__metrics',{},[
+        valueCard('LAST '+range+' DAYS',summary.periodSessions.length,'Sessions logged'),
+        valueCard('LAST '+range+' DAYS',summary.workingSets,'Working sets',true),
+      ]),
+      el('div.progress2__rings',{},[
+        ring,el('small',{text:'HABITS / TRAINING SCORE'}),
+      ]),
+      el('div.progress2__bars',{},[
+        bar('Habits',habitRate,habitRate===null?'No recorded habits':habitRate+' percent completed'),
+        bar('Score',scoreValue,scoreValue===null?'No graded week':scoreValue+' out of 100'),
+        bar('Active days',activeDayRate,activeDayRate===null?'No tracked days':summary.trainingDays+' of '+summary.trackedDays+' observed days'),
+        el('small.progress2__summary',{text:summary.fullCoverage
+          ? summary.trainingDays+' training days · '+range+'-day window'
+          : summary.trackedDays+' of '+summary.requestedDays+' days with tracking history'}),
+      ]),
+    ])
+  }
+
   function overviewView() {
     if (selectedScoreComponent) return trainingScoreDetail()
     const current = summaryForDates(selectedDates())
@@ -837,6 +898,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const comparable = current.fullCoverage && previous.fullCoverage
     const recovery = recoveryCard(current, previous, comparable)
     return [
+      progressOverviewHero(current),
       beachCutDashboard(),
       el('div.progress-overview', {}, [
         el('div.progress-overview__training', {}, [
@@ -1201,7 +1263,15 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
 
     replace(root, [
       el('header.progress-header', {}, [
-        el('h1.screen__title', { text: 'Progress' }),
+        el('div.progress2__brand',{},[
+          el('img.progress2__mark',{
+            src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,
+            alt:'',loading:'eager'}),
+          el('div.progress2__heading-copy',{},[
+            el('h1.screen__title',{text:'Progress'}),
+            el('small',{text:'LFMS / YOUR RESULTS'}),
+          ]),
+        ]),
         el('label.progress-range', {}, [
           el('span.progress-range__label', { text: 'Range' }),
           el('select.progress-range__select', {

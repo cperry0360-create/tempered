@@ -38,3 +38,29 @@ test('preview identifies a future date that the importer will safely coerce to t
   assert.equal(preview.dateMatchesToday, false)
   assert.equal(preview.dateIsFuture, true)
 })
+
+test('flattened one-line Health paste accepts blank fields and keeps numeric boundaries', () => {
+  const snapshot = 'TEMPERED_HEALTH_V1 DATE=2026-11-01 STEPS= SLEEP= WEIGHT_LB=168.6 RESTING_HR=62 HRV_MS=34.7 RESP_RATE=16 SPO2=96'
+  const preview = healthSnapshotPreview(snapshot, '2026-11-01')
+  assert.ok(preview, 'the exact snapshot pasted on the Duo should be recognized')
+  assert.equal(preview.parsed.date, '2026-11-01')
+  assert.deepEqual(preview.metrics.map(({ key }) => key), [
+    'weightLb', 'restingHr', 'hrvMs', 'respiratoryRate', 'spo2',
+  ])
+  assert.equal(preview.parsed.weightLb, 168.6)
+  assert.equal(preview.parsed.restingHr, 62)
+  assert.equal(preview.parsed.hrvMs, 34.7)
+  assert.equal(preview.parsed.respiratoryRate, 16)
+  assert.equal(preview.parsed.spo2, 96)
+  assert.ok(!('steps' in preview.parsed) && !('sleepHours' in preview.parsed))
+})
+
+test('flattened fields do not allow unrelated text or a date-only import', () => {
+  for (const bad of [
+    'Not Tempered DATE=2026-11-01 WEIGHT_LB=168.6',
+    'TEMPERED_HEALTH_V1FAKE DATE=2026-11-01 WEIGHT_LB=168.6',
+    'TEMPERED_HEALTH_V1 DATE=2026-11-01 STEPS= SLEEP=',
+  ]) {
+    assert.equal(healthSnapshotPreview(bad, '2026-11-01'), null)
+  }
+})

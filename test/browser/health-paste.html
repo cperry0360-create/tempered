@@ -102,6 +102,34 @@ SPO2=96`
       q('[data-health-paste-close]')?.click(); await settle(80)
       again?.click()
       check('the Import action on a filled Readiness card opens the import view', Boolean(await waitFor('[data-health-paste-overlay]')))
+
+      // Actual iPhone Duo paste format: ChatGPT response flattened to one line.
+      // Blank steps and sleep must not reset previously logged values.
+      const flattened = 'TEMPERED_HEALTH_V1 DATE=2026-09-13 STEPS= SLEEP= WEIGHT_LB=168.6 RESTING_HR=62 HRV_MS=34.7 RESP_RATE=16 SPO2=96'
+      const flatInput = q('[data-health-paste-input]')
+      flatInput.value = flattened
+      flatInput.dispatchEvent(new Event('input', { bubbles: true }))
+      await settle(30)
+      check('Duo one-line paste enables Review and import',
+        q('[data-health-paste-submit]')?.disabled === false
+        && q('[data-health-paste-count]')?.textContent === '5 fields ready')
+      check('blank steps/sleep are excluded from flattened preview',
+        !q('[data-health-paste-metrics]')?.textContent.includes('Steps')
+        && !q('[data-health-paste-metrics]')?.textContent.includes('Sleep'))
+      q('[data-health-paste-submit]')?.click()
+      await settle(180)
+      const flatDay = await context.daily.dayLog('2026-09-13')
+      check('Duo flattened snapshot imports all five numeric measurements',
+        flatDay.bodyMetrics?.weight === 168.6
+        && flatDay.healthMetrics?.restingHr === 62
+        && flatDay.healthMetrics?.hrvMs === 34.7
+        && flatDay.healthMetrics?.respiratoryRate === 16
+        && flatDay.healthMetrics?.spo2 === 96,
+        JSON.stringify(flatDay.healthMetrics))
+      check('blank flattened fields preserve original steps and sleep',
+        flatDay.steps === 701 && flatDay.sleepHours === 7.5,
+        `steps=${flatDay.steps} sleep=${flatDay.sleepHours}`)
+
       check('No runtime error or rejection', errors.length === 0, errors.join(' | ') || 'none')
       stop()
     } catch (error) {

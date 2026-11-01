@@ -81,7 +81,7 @@ def commons_info(filename):
     if not source_url or not source_url.startswith("https://commons.wikimedia.org/"):
         raise RuntimeError(f"Missing Commons source URL: {filename}")
     thumbnail = image.get("thumburl") or image.get("url")
-    if not thumbnail or not thumbnail.startswith("https://upload.wikimedia.org/"):
+    if not thumbnail or not thumbnail.startswith(("https://upload.wikimedia.org/", "https://thumb.wikimedia.org/")):
         raise RuntimeError(f"Unexpected thumbnail host: {filename}: {thumbnail}")
     mime = image.get("thumbmime") or image.get("mime", "")
     if mime and mime not in ("image/jpeg","image/png","image/webp","image/tiff"):

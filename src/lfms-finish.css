@@ -299,8 +299,8 @@ html[data-layout="duo"] #app.app .app__body {
 html[data-layout="duo"] #app.app .tabbar,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar,
 html[data-layout="duo"]:has(.app__body>.fn2) .tabbar {
-  background:none!important;box-shadow:none;border:0;
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  background:none;box-shadow:none;border:0;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
 }
 html[data-layout="duo"] .tabbar__tabs,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tabs {
@@ -320,21 +320,21 @@ html[data-layout="duo"] .tabbar__tab,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tab,
 html[data-layout="duo"]:has(.app__body>.fn2) .tabbar__tab {
   width:44px;height:54px;min-height:54px;flex:0 0 54px;
-  padding:0;border:0!important;border-radius:26px;
-  background:transparent!important;box-shadow:none!important;
+  padding:0;border:0;border-radius:26px;
+  background:transparent;box-shadow:none;
   transform:scale(1);color:var(--food-v2-text);
 }
 html[data-layout="duo"] .tabbar__tab[data-active="true"],
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar__tab[data-active="true"],
 html[data-layout="duo"]:has(.app__body>.fn2) .tabbar__tab[data-active="true"] {
-  background:radial-gradient(circle at 36% 22%,rgba(232,246,255,.27),rgba(123,188,232,.16) 44%,rgba(5,16,31,.65) 86%)!important;
-  box-shadow:inset 0 2px 2px rgba(255,255,255,.2),0 9px 16px rgba(0,0,0,.2)!important;
+  background:radial-gradient(circle at 36% 22%,rgba(232,246,255,.27),rgba(123,188,232,.16) 44%,rgba(5,16,31,.65) 86%);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.2),0 9px 16px rgba(0,0,0,.2);
   transform:scale(1.06);
 }
 html[data-layout="duo"] .tabbar__tab[data-peek="true"] {
   transform:scale(1.23) translateX(-5px);
-  background:radial-gradient(circle,rgba(221,239,255,.35),rgba(20,31,47,.54))!important;
-  box-shadow:inset 0 2px 2px rgba(255,255,255,.5),0 12px 22px rgba(0,0,0,.4)!important;
+  background:radial-gradient(circle,rgba(221,239,255,.35),rgba(20,31,47,.54));
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.5),0 12px 22px rgba(0,0,0,.4);
 }
 html[data-layout="duo"] .tabbar__tab::before {display:none}
 html[data-layout="duo"] .tabbar__tab .icon {width:25px;height:25px;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

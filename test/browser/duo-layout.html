@@ -53,11 +53,20 @@ if (params.has('fixture')) {
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
         && w.getComputedStyle(q('#app')).backgroundImage.includes('radial-gradient'))
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
-      check(label + ' content stops at the rail', close(r('.app__body').right, r('.tabbar').left))
-      check(label + ' navigation uses compact, accessible icons',
+      check(label + ' main canvas remains full width with no tinted rail stripe',
+  close(r('.app__body').right, r('#app').right)
+  && w.getComputedStyle(q('.tabbar')).backgroundImage==='none'
+  && w.getComputedStyle(q('.tabbar')).backdropFilter==='none')
+check(label + ' content is padded clear of the floating icons',
+  r('.app__body').right - parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
+    <= r('.tabbar').left - 6)
+      check(label + ' navigation uses matching, borderless custom SVG icons',
         q('.tabbar__tab[aria-current="page"]') !== null
         && r('.tabbar').width <= 48 + right + 1
-        && w.getComputedStyle(q('.tabbar__tab span')).clipPath === 'inset(50%)')
+        && w.getComputedStyle(q('.tabbar__tab span')).clipPath === 'inset(50%)'
+        && [...d.querySelectorAll('.tabbar__tab')].every(node=>
+          w.getComputedStyle(node).borderTopWidth==='0px'
+          && node.querySelector('svg')?.getAttribute('viewBox')==='0 0 24 24'))
       check(label + ' no horizontal overflow', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       const wide = width >= 740
       check(label + ' daily log uses its own column only when expanded', wide ? close(r('.today-daily-log').top, r('.today-session-card').top) && r('.today-daily-log').left > r('.today-session-card').right : r('.today-daily-log').top > r('.today-fuel-card').top)

@@ -100,15 +100,26 @@ try{
  await Promise.all(savedFoodThumbs.map(img=>img.complete ? Promise.resolve() : new Promise(done=>{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true});setTimeout(done,1200)})))
  check('actual image files decode in the browser',savedFoodThumbs.length===2 && savedFoodThumbs.every(img=>img.naturalWidth>=100))
 
- check('one previously logged food can be staged without saving',!!q('.fn2__food-row .fn2__add'))
+ check('Food Library has no persistent cart and uses its full width',
+   !q('.fn2__cart') && !!q('.fn2__library-list') && !!q('.fn2__food-results'))
  const before=(await t.daily.dayLog('2026-10-01')).calories
  const yogurt=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))
  yogurt?.querySelector('.fn2__add')?.click();await settle(50)
- check('staging the food does not write the day log', (await t.daily.dayLog('2026-10-01')).calories===before)
- check('cart shows correctly computed item total',q('.fn2__cart')?.textContent.includes('160 kcal'))
- q('.fn2__cart .fn2__primary')?.click();await settle(220)
+ check('tapping + opens one compact serving picker',
+   q('.fn2__overlay')?.dataset.food2Overlay==='serving'
+   && qa('.fn2__serving-presets button').length===8
+   && q('.fn2__serving-preview')?.textContent.includes('160 kcal'))
+ check('no food data is written when opening serving picker',
+   (await t.daily.dayLog('2026-10-01')).calories===before)
+ q('.fn2__sheet-close')?.click();await settle(30)
+ check('cancel leaves food log unchanged',
+   !q('.fn2__overlay')&&(await t.daily.dayLog('2026-10-01')).calories===before)
+ const yogurtAgain=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))
+ yogurtAgain?.querySelector('.fn2__add')?.click();await settle(40)
+ q('[data-serving-submit]')?.click();await settle(220)
  const day=await t.daily.dayLog('2026-10-01')
- check('cart writes through canonical nutrition service',day.calories===640&&day.proteinGrams===59,JSON.stringify({calories:day.calories,protein:day.proteinGrams}))
+ check('direct serving picker writes through canonical nutrition service',day.calories===640&&day.proteinGrams===59,JSON.stringify({calories:day.calories,protein:day.proteinGrams}))
+ check('confirm closes picker but keeps the Food Library open',!q('.fn2__overlay')&&!!q('.fn2__library-list'))
  check('newly logged food appears in actual history on reload',nutritionLedger(day).entries.length===2)
  q('.fn2__pills button:nth-child(3)')?.click();await settle(70)
  check('Meal History opens the dated new-style journal, not the old nutrition screen',
@@ -184,23 +195,40 @@ try{
  halfRow?.querySelector('.fn2__meal-menu')?.click();await settle(25)
  const repeatBtn=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Log this meal again'))
  repeatBtn?.click();await settle(60)
- check('Repeat from historical half-serving opens a single portion review',q('.fn2__overlay')?.dataset.food2Overlay==='cart'
-   && qa('.fn2__servings select').length===1)
- const selector=q('.fn2__servings select')
- check('Portion picker starts at one serving (not an accidental quarter)',selector?.value==='1')
+ check('Repeat from historical half-serving opens a one-meal serving picker',q('.fn2__overlay')?.dataset.food2Overlay==='serving'
+   && qa('.fn2__serving-presets button').length===8)
+ const selector=q('.fn2__serving-custom input')
+ check('Serving picker starts at one serving (not an accidental quarter)',selector?.value==='1')
  selector.value='0.75'
- selector.dispatchEvent(new Event('change',{bubbles:true}));await settle(35)
+ selector.dispatchEvent(new Event('input',{bubbles:true}));await settle(35)
  check('Historical meal restores unit value then scales to three quarters',
-   q('.fn2__cart-total')?.textContent.includes('150 kcal')
-   && q('.fn2__primary')?.textContent.includes('0.75 serving'))
+   q('.fn2__serving-preview')?.textContent.includes('150 kcal')
+   && q('[data-serving-submit]')?.textContent.includes('0.75 serving'))
  const beforeRepeat=(await t.daily.dayLog('2026-10-01')).calories
- q('.fn2__sheet .fn2__primary')?.click();await settle(210)
+ q('[data-serving-submit]')?.click();await settle(210)
  const afterRepeat=await t.daily.dayLog('2026-10-01')
  check('Historical repeat saves exactly 150 kcal and 12g protein',
    afterRepeat.calories-beforeRepeat===150
    && nutritionLedger(afterRepeat).entries.at(-1)?.proteinGrams===12)
  check('Portaled sheet closes after logging and restores scrolling',!q('.fn2__overlay')
    && !document.body.dataset.food2Modal)
+ // Precision matters for recipes logged as a fraction of a cup/scoop.
+ q('.fn2__pills button:nth-child(1)')?.click();await settle(45)
+ const repeatCustom=qa('.fn2__food-row').find(x=>x.textContent.includes('Half-serving granola'))
+ repeatCustom?.querySelector('.fn2__add')?.click();await settle(40)
+ const input=q('.fn2__serving-custom input')
+ if(input) {
+   input.value='0.4166667'
+   input.dispatchEvent(new Event('input',{bubbles:true}))
+ }
+ check('custom decimal serving is accepted without arbitrary quarter steps',
+   !!q('[data-serving-submit]') && !q('[data-serving-submit]').disabled
+   && q('[data-serving-submit]').textContent.includes('0.416667'))
+ const beforeCustom=(await t.daily.dayLog('2026-10-01')).calories
+ q('[data-serving-submit]')?.click();await settle(190)
+ check('custom portion saves only after confirmation',
+   (await t.daily.dayLog('2026-10-01')).calories>beforeCustom
+   && !q('.fn2__overlay'))
  check('no browser runtime errors',errors.length===0,errors.join(' | '))
 }catch(error){check('Food 2.0 completed',false,error?.stack??error)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'food2-integrated',passed:checks.every(x=>x.ok),checks})})

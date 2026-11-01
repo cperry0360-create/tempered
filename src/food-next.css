@@ -255,8 +255,8 @@ html[data-layout="duo"] .fn2__float {
 .fn2__food-results {max-height:none;overflow:visible}
 .fn2__food-row {min-height:70px}
 .fn2__food-info strong {font-size:clamp(12px,1.3vw,15px)}
-.fn2__add,.fn2__fav {border:0!important;box-shadow:none!important;background:transparent!important}
-.fn2__add {color:var(--fn-blue-light)!important}
+.fn2__add,.fn2__fav {border:0;box-shadow:none;background:transparent}
+.fn2__add {color:var(--fn-blue-light)}
 .fn2__serving-food {display:flex;align-items:center;gap:12px;min-width:0}
 .fn2__serving-food .fn2__thumb {flex:none}
 .fn2__serving-food>div {display:grid;gap:4px;min-width:0}

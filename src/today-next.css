@@ -175,7 +175,7 @@
 }
 .today--fuel-style .today-workout__next-label {
   color:var(--t2-light);font-size:10px;letter-spacing:.07em;
-  text-transform:uppercase;font-weight:800;
+  font-weight:800;
 }
 .today--fuel-style .today-workout__movement {
   border-radius:10px;border-color:var(--t2-line);

@@ -24,6 +24,12 @@ try{
  const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,9,1,13))
  const t=await bootstrapHarness({storage,clock,mount:q('#app')})
  installCalorieAiRuntime()
+ await t.app.show('fuel');await settle(110)
+ q('.fn2__pills button:nth-child(2)')?.click();await settle(55)
+ check('Quick Log new-user state is actionable and content-sized',
+   q('.fn2__sheet-body')?.textContent.includes('No saved meals yet')
+   && q('.fn2__sheet')?.getBoundingClientRect().height<window.innerHeight*0.65)
+ q('.fn2__sheet-close')?.click();await settle(20)
  await t.daily.addNutrition('2026-09-29',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-29T08:40:00.000Z'})
  await t.daily.addNutrition('2026-09-30',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-30T08:40:00.000Z'})
  await t.daily.addNutrition('2026-10-01',{description:'Chicken and rice bowl',calories:480,protein:39,carbs:52,fat:12},{loggedAt:'2026-10-01T12:30:00.000Z'})

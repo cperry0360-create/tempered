@@ -21,7 +21,7 @@
   padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
   pointer-events:none;user-select:none;
   background:radial-gradient(ellipse 90% 55% at 50% 44%,var(--lfms-launch-mid) 0%,var(--lfms-launch-deep) 88%);
-  color:#f7f7f7;
+  color:var(--lfms-launch-text);
   opacity:1;visibility:visible;
   transition:opacity 340ms ease,visibility 0s 340ms;
 }

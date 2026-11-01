@@ -30,12 +30,22 @@ try{
  await t.app.show('fuel');await settle(260)
  check('Food 2.0 gated view boots without old card stack',!!q('[data-food-two="true"]')&&!q('.food-v2__energy'))
  check('calorie and protein values are canonical',q('.fn2__metrics')?.textContent.includes('480')&&q('.fn2__metrics')?.textContent.includes('39'))
+ const todayView=await t.daily.forDate(clock.today())
+ const goals=[...(todayView.logged??[]),...(todayView.outstanding??[])]
+ const goal=(id,fallback)=>Number(goals.find(x=>x.id===id)?.dailyCap)||fallback
+ check('calorie and protein targets appear as absolute values beside percentages',
+   qa('.fn2__metric-goal').length===2
+   && qa('.fn2__metric-goal')[0]?.textContent==='Target: '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
+   && qa('.fn2__metric-goal')[1]?.textContent==='Target: '+Math.round(goal('protein_target',135)).toLocaleString()+' g')
+ check('only Food Library, Quick Log and Meal History shortcuts remain',
+   qa('.fn2__pills button').length===3
+   && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Quick Log|Meal History')
  check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
  check('radii are actual progress rings',qa('.fn2__rings circle').length===4)
  check('seven date links and three macro bars',qa('.fn2__week button').length===7&&qa('.fn2__macro').length===3)
  check('water is canonical data, not sample data',q('.fn2__stat:nth-child(2)')?.textContent.includes('16 oz'))
  check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
- q('.fn2__pills button:nth-child(2)')?.click();await settle(60)
+ q('.fn2__pills button:nth-child(1)')?.click();await settle(60)
  check('saved food library reads prior logged foods',qa('.fn2__food-row').length===2&&q('.fn2__food-results')?.textContent.includes('Greek yogurt'))
  const savedFoodThumbs=qa('.fn2__food-row img')
  check('saved-food thumbnails resolve to the local offline CC0 library',
@@ -55,9 +65,10 @@ try{
  const day=await t.daily.dayLog('2026-10-01')
  check('cart writes through canonical nutrition service',day.calories===640&&day.proteinGrams===59,JSON.stringify({calories:day.calories,protein:day.proteinGrams}))
  check('newly logged food appears in actual history on reload',nutritionLedger(day).entries.length===2)
- q('.fn2__pills button:nth-child(4)')?.click();await settle(70)
- check('Meal History opens the journal, not the Quick Log entry sheet',
-   !!q('.fn2__journal') && !!q('.fn2__title h1')?.textContent.includes('Food Journal')
+ q('.fn2__pills button:nth-child(3)')?.click();await settle(70)
+ check('Meal History opens the dated new-style journal, not the old nutrition screen',
+   !!q('.fn2__journal') && !!q('.fn2__title h1')?.textContent.includes('Meal History')
+   && !!q('.fn2__history-nav') && !!q('.fn2__history-summary') && !q('[data-nutrition-screen]')
    && !q('.fn2__overlay') && !q('[data-nutrition-form]'))
  check('Journal shows actual saved descriptions',q('.fn2__journal')?.textContent.includes('Chicken and rice bowl'))
  const row=qa('.fn2__meal-row').find(x=>x.textContent.includes('Chicken and rice'))
@@ -71,17 +82,34 @@ try{
  q('.fn2__undo')?.click();await settle(150)
  const restored=await t.daily.dayLog('2026-10-01')
  check('undo restores exact canonical meal entry',restored.calories===640&&nutritionLedger(restored).entries.length===2)
- q('.fn2__pills button:nth-child(3)')?.click();await settle(220)
+ q('.fn2__history-arrow[aria-label="Previous day"]')?.click();await settle(60)
+ check('Previous-day Meal History stays in new Food UI and loads prior meals',
+   q('.fn2__history-date input')?.value==='2026-09-30'
+   && q('.fn2__journal')?.textContent.includes('Greek yogurt and berries')
+   && !q('[data-nutrition-screen]'))
+ const historical=qa('.fn2__meal-row').find(x=>x.textContent.includes('Greek yogurt'))
+ historical?.querySelector('button')?.click();await settle(35)
+ const historicalDelete=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Delete'))
+ historicalDelete?.click();await settle(120)
+ check('Deleting historical meal changes selected date, not today',
+   (await t.daily.dayLog('2026-09-30')).calories===0
+   && (await t.daily.dayLog('2026-10-01')).calories===640)
+ q('.fn2__undo')?.click();await settle(120)
+ check('Historical Undo restores selected day without touching today',
+   (await t.daily.dayLog('2026-09-30')).calories===160
+   && (await t.daily.dayLog('2026-10-01')).calories===640)
+ const dateInput=q('.fn2__history-date input')
+ dateInput.value='2026-09-29'
+ dateInput.dispatchEvent(new Event('change',{bubbles:true}))
+ await settle(50)
+ check('Date picker can jump to an earlier day',q('.fn2__history-date input')?.value==='2026-09-29'&&q('.fn2__journal')?.textContent.includes('Greek yogurt'))
+ q('.fn2__history-today')?.click();await settle(50)
+ check('Today returns to present without an old-style overlay',q('.fn2__history-date input')?.value==='2026-10-01'&&!q('[data-nutrition-screen]'))
+ q('.fn2__pills button:nth-child(2)')?.click();await settle(220)
  check('manual food entry mounts unchanged runtime and its paste action',!!q('[data-nutrition-form]')&&!!q('[data-calorie-ai="paste"]'))
  check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')
  q('.fn2__sheet-close')?.click();await settle(30)
- q('.fn2__pills button:nth-child(1)')?.click();await settle(270)
- check('History opens a full-screen dated nutrition timeline, distinct from Quick Log',
-   !!q('[data-nutrition-screen]') && !!q('[data-nutrition-date]') && !!q('[data-nutrition-history]')
-   && !q('.fn2__overlay'))
- check('Full History reads canonical logged meals',q('[data-nutrition-history]')?.textContent.includes('Chicken and rice bowl'))
- q('.nutrition-log-header__back')?.click();await settle(40)
- check('Closing full history returns to Fuel without deleting food',!q('[data-nutrition-screen]'))
+ check('Closing Quick Log returns to Meal History without data changes',!!q('.fn2__journal')&&!q('.fn2__overlay'))
  await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
  check('switching tabs does not replace stored food data',q('.fn2__metrics')?.textContent.includes('640'))
  check('no browser runtime errors',errors.length===0,errors.join(' | '))

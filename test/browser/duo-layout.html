@@ -53,6 +53,10 @@ if (params.has('fixture')) {
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
         && w.getComputedStyle(q('#app')).backgroundImage.includes('radial-gradient'))
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
+      check(label + ' glass capsule stays fully on screen at the right safe edge',
+        r('.tabbar__tabs').right <= width-right+2
+        && r('.tabbar__tabs').left >= 0
+        && close(r('.tabbar__tabs').width,48))
       check(label + ' main canvas remains full width with no tinted rail stripe',
   close(r('.app__body').right, r('#app').right)
   && w.getComputedStyle(q('.tabbar')).backgroundImage==='none'

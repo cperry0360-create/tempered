@@ -45,6 +45,39 @@ try{
  check('seven date links and three macro bars',qa('.fn2__week button').length===7&&qa('.fn2__macro').length===3)
  check('water is canonical data, not sample data',q('.fn2__stat:nth-child(2)')?.textContent.includes('16 oz'))
  check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
+ check('Macro Journal is on the main Food dashboard, below the summaries',
+   !!q('.fn2__macro-journal') && !!q('.fn2__stats')
+   && q('.fn2__macro-journal').compareDocumentPosition(q('.fn2__stats')) & Node.DOCUMENT_POSITION_PRECEDING)
+ check('Daily Macro Journal includes four sections and the real logged meal',
+   qa('.fn2__macro-journal .fn2__meal-group').length===4
+   && ['Breakfast','Lunch','Dinner','Snacks'].every(name=>q('.fn2__macro-journal')?.textContent.includes(name))
+   && q('.fn2__macro-journal')?.textContent.includes('Chicken and rice bowl'))
+ check('Glass controls are scoped to Food and preserve tappable Quick Log',
+   getComputedStyle(q('.fn2__pills button')).backgroundImage.includes('linear-gradient')
+   && getComputedStyle(q('.fn2__float')).minHeight!=='0px'
+   && !!q('.fn2__macro-journal-head button'))
+ const todayRow=qa('.fn2__macro-journal .fn2__meal-row').find(r=>r.textContent.includes('Chicken and rice bowl'))
+ todayRow?.querySelector('.fn2__meal-photo')?.click();await settle(60)
+ check('Tapping meal thumbnail opens an actual photo picker',!!q('[data-food2-overlay="attach-photo"] input[type=file]'))
+ const photoCanvas=document.createElement('canvas');photoCanvas.width=400;photoCanvas.height=300
+ photoCanvas.getContext('2d').fillRect(0,0,400,300)
+ const photoBlob=await new Promise(resolve=>photoCanvas.toBlob(resolve,'image/png'))
+ const photoFile=new File([photoBlob],'meal.png',{type:'image/png'})
+ const fileInput=q('[data-food2-overlay="attach-photo"] input[type=file]')
+ const transfer=new DataTransfer();transfer.items.add(photoFile);fileInput.files=transfer.files
+ fileInput.dispatchEvent(new Event('change',{bubbles:true}));await settle(300)
+ const withPhoto=await t.daily.dayLog('2026-10-01')
+ const entry=nutritionLedger(withPhoto).entries.find(e=>e.description==='Chicken and rice bowl')
+ const attachment=withPhoto.mealPhotos?.[entry?.id]
+ check('Image is compacted and stored only with the actual logged entry',
+   typeof attachment==='string'&&attachment.startsWith('data:image/jpeg;base64,')
+   && attachment.length<180000&&withPhoto.calories===480)
+ check('Real personal photo appears on daily journal in place of illustration',
+   q('.fn2__macro-journal .fn2__meal-row .fn2__thumb img')?.getAttribute('src')===attachment)
+ await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
+ check('Meal photo persists after navigating away and reopening Food',
+   q('.fn2__macro-journal .fn2__meal-row .fn2__thumb img')?.getAttribute('src')===attachment)
+
  q('.fn2__pills button:nth-child(1)')?.click();await settle(60)
  check('saved food library reads prior logged foods',qa('.fn2__food-row').length===2&&q('.fn2__food-results')?.textContent.includes('Greek yogurt'))
  const savedFoodThumbs=qa('.fn2__food-row img')
@@ -72,7 +105,7 @@ try{
    && !q('.fn2__overlay') && !q('[data-nutrition-form]'))
  check('Journal shows actual saved descriptions',q('.fn2__journal')?.textContent.includes('Chicken and rice bowl'))
  const row=qa('.fn2__meal-row').find(x=>x.textContent.includes('Chicken and rice'))
- row?.querySelector('button')?.click();await settle(35)
+ row?.querySelector('.fn2__meal-menu')?.click();await settle(35)
  check('Journal offers canonical delete with undo',q('.fn2__overlay')?.dataset.food2Overlay==='actions')
  const deleteBtn=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Delete'))
  deleteBtn?.click();await settle(160)
@@ -88,7 +121,7 @@ try{
    && q('.fn2__journal')?.textContent.includes('Greek yogurt and berries')
    && !q('[data-nutrition-screen]'))
  const historical=qa('.fn2__meal-row').find(x=>x.textContent.includes('Greek yogurt'))
- historical?.querySelector('button')?.click();await settle(35)
+ historical?.querySelector('.fn2__meal-menu')?.click();await settle(35)
  const historicalDelete=qa('.fn2__sheet .fn2__secondary').find(x=>x.textContent.includes('Delete'))
  historicalDelete?.click();await settle(120)
  check('Deleting historical meal changes selected date, not today',

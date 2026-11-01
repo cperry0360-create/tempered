@@ -206,7 +206,7 @@ html[data-layout="duo"] .fn2__sheet {max-height:calc(100dvh - 20px)}
 .fn2__macro-journal-sub {font-size:11px;color:var(--fn-muted);margin:0}
 .fn2__meal-group--inline {padding:8px 11px;background:linear-gradient(145deg,var(--food-v2-panel-2),var(--food-v2-panel))}
 .fn2__meal-empty {display:block;color:var(--fn-muted);font-size:11px;padding:8px 3px}
-.fn2__meal-photo {display:block;border:0!important;background:transparent!important;box-shadow:none!important;padding:0;flex:none;width:56px;height:56px;border-radius:12px;overflow:hidden}
+.fn2__meal-photo {display:block;border:0;background:transparent;box-shadow:none;padding:0;flex:none;width:56px;height:56px;border-radius:12px;overflow:hidden}
 .fn2__meal-photo:focus-visible {outline:2px solid var(--fn-blue-light);outline-offset:2px}
 .fn2__meal-photo .fn2__thumb {pointer-events:none}
 .fn2__meal-menu {flex:none;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--fn-blue-light);font-size:23px}

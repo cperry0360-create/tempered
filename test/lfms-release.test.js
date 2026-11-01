@@ -45,5 +45,5 @@ test('Pages includes new asset families, service worker caches every runtime pat
  assert.match(sw,/'\.\/src\/brand\.css'/)
  assert.match(sw,/'\.\/branding\/lfms\/logo-full\.svg'/)
  for(const size of [180,512,1024]) assert.match(sw,new RegExp("'\\./icons/icon-"+size+"\\.png'"))
- assert.match(read('src/version.js'),/0\.66\.0/)
+ assert.match(read('src/version.js'),/0\.66\.1/)
 })

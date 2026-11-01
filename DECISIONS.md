@@ -1,3 +1,6 @@
+## 2026-11-01 — Match uploaded nutrition videos in the Food tab
+Two short user reference videos show glassy capsule actions/FAB and a Macro Journal with Breakfast, Lunch, Dinner and Snack meal rows, plus photo thumbnails. Implement this on Food rather than Today. Photo means a real user-uploaded image attached to an existing meal, not an AI-generated approximation. Compress inside browser and store per-entry data URLs in dayLogs so the local-first backup/export continues to work without adding schema migration. Group by existing loggedAt time and keep the full historical editor behind Meal History. Only use simulated translucent glass on floating controls; keep content cards opaque as Apple recommends. Do not roll across other tabs without explicit approval.
+
 ## 2026-11-01 — Today-only readiness color and rail spacing polish
 
 After seeing the navy canvas live on Duo, user flagged old orange Recover colors and sidebar icons too close to the rail divider. Keep the one-tab trial: override legacy readiness tone, ring fill/background, and low-status caption only within LFMS Today to use brand blue/navy. Preserve all readiness interpretation and user data. Shift the Today-only Duo navigation button stack right approximately 5px via 10px internal left padding; do not move or widen the rail itself. All other tabs remain as before pending visual approval.

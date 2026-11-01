@@ -7,6 +7,7 @@ import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
+import { compressMealPhoto } from '../meal-photo.js'
 
 const PHOTOS = FOOD_PHOTOS
 const n = x => Number.isFinite(Number(x)) ? Math.max(0,Number(x)) : 0
@@ -22,7 +23,7 @@ const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
-  let working=false, undo=null, cart=new Map(), status=''
+  let working=false, undo=null, cart=new Map(), status='', pickedDate=null
   const runtime=el('div.fn2__legacy-runtime')
 
   const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
@@ -43,11 +44,14 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(id==='none')return null
     return PHOTOS.find(x=>x.id===id)||matchingFoodPhoto(food.description)||null
   }
-  function thumbnail(food) {
+  function thumbnail(food,date=null) {
     const node=el('span.fn2__thumb')
-    const img=photoOf(food)
-    if(img) {
-      const tag=el('img',{src:img.url,alt:img.label+' (illustrative public-domain food photo)',loading:'lazy'})
+    const day=date&&data?.days.find(row=>row.date===date)
+    const personalPhoto=food.id&&day?.mealPhotos?.[food.id]
+    const illustration=personalPhoto?null:photoOf(food)
+    if(personalPhoto||illustration) {
+      const tag=el('img',{src:personalPhoto||illustration.url,
+        alt:personalPhoto?'Your saved meal photo':illustration.label+' (illustrative public-domain food photo)',loading:'lazy'})
       tag.onerror=()=>{tag.remove();node.classList.add('fn2__thumb--empty')}
       node.append(tag)
     } else node.classList.add('fn2__thumb--empty')
@@ -174,6 +178,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
           el('small',{text:Number.isFinite(day.steps)?'Today':'Not logged'}),
         ]),
       ]),
+      macroJournal(day),
       el('button.fn2__float',{type:'button',dataset:{food2Add:'true'},onclick:()=>openSheet('quick'),'aria-label':'Log food'},['+']),
     ]
   }
@@ -185,24 +190,81 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }
     return a
   }
-  function mealRow(food) {
+  function mealRow(food,date) {
     return el('div.fn2__meal-row',{},[
-      thumbnail(food),
+      el('button.fn2__meal-photo',{type:'button',
+        'aria-label':'Add or change photo for '+(food.description||'meal'),
+        onclick:()=>{picked=food;pickedDate=date;openSheet('attach-photo')}},[thumbnail(food,date)]),
       el('span.fn2__meal-info',{},[
         el('strong',{text:food.description||'Food entry'}),
         el('small',{text:labelTime(food.loggedAt)+' · '+(food.portion??1)+' serving'}),
         el('span',{text:fmt(food.calories)+' cal · '+fmt(food.proteinGrams)+'p · '+fmt(food.carbsGrams)+'c · '+fmt(food.fatGrams)+'f'}),
       ]),
-      el('button',{type:'button','aria-label':'Meal actions for '+food.description,onclick:()=>{picked=food;openSheet('actions')}},['⋮']),
+      el('button.fn2__meal-menu',{type:'button','aria-label':'Meal actions for '+food.description,
+        onclick:()=>{picked=food;pickedDate=date;openSheet('actions')}},['⋮']),
     ])
+  }
+  function mealSections(day,{inline=false}={}) {
+    return [...grouped(day)].map(([name,entries])=>el('section.fn2__meal-group'+(inline?' fn2__meal-group--inline':''),{},[
+      el('div.fn2__meal-group-title',{},[
+        el('strong',{text:name}),
+        el('button',{type:'button','aria-label':'Quick log food for '+name,
+          onclick:()=>openSheet('quick')},['+']),
+      ]),
+      ...entries.map(food=>mealRow(food,day.date)),
+      entries.length===0&&el('small.fn2__meal-empty',{text:'No meals logged'}),
+      entries.length>0&&el('div.fn2__group-total',{text:'Total: '+fmt(entries.reduce((s,e)=>s+n(e.calories),0))+' cal · '+fmt(entries.reduce((s,e)=>s+n(e.proteinGrams),0))+'g protein'}),
+    ]))
+  }
+  function macroJournal(day) {
+    const ledger=nutritionLedger(day)
+    return el('section.fn2__macro-journal',{'aria-label':'Daily macro journal'},[
+      el('div.fn2__macro-journal-head',{},[
+        el('h2',{text:'Macro Journal'}),
+        el('button',{type:'button',onclick:()=>{journalDate=clock.today();go('journal')}},['More ', '›']),
+      ]),
+      el('p.fn2__macro-journal-sub',{text:fmt(ledger.totals.calories)+' kcal · '+fmt(ledger.totals.protein)+'g protein · '+ledger.entries.length+' meals'}),
+      el('div.fn2__journal',{},mealSections(day,{inline:true})),
+    ])
+  }
+  async function attachMealPhoto(file) {
+    if(!file||!picked?.id||!pickedDate||working)return
+    working=true
+    try {
+      const image=await compressMealPhoto(file)
+      const day=await daily.dayLog(pickedDate)
+      if(!nutritionLedger(day).entries.some(e=>e.id===picked.id))throw new Error('This meal is no longer available.')
+      await storage.put('dayLogs',{...day,mealPhotos:{...(day.mealPhotos??{}),[picked.id]:image}})
+      sheet='';picked=null;pickedDate=null
+      await refresh()
+      notify('Meal photo saved locally. It will be included in your backup.')
+    } catch(error) {
+      const message=error instanceof Error?error.message:'Could not read that photo'
+      notify(message)
+    } finally { working=false }
+  }
+  async function removeMealPhoto() {
+    if(!picked?.id||!pickedDate||working)return
+    working=true
+    try {
+      const day=await daily.dayLog(pickedDate)
+      const photos={...(day.mealPhotos??{})}
+      delete photos[picked.id]
+      await storage.put('dayLogs',{...day,mealPhotos:photos})
+      sheet='';picked=null;pickedDate=null
+      await refresh()
+      notify('Photo removed from this meal.')
+    } catch { notify('Could not remove photo') }
+    finally { working=false }
   }
   async function deletePicked() {
     if(!picked||working)return
     working=true
     try{
-      const r=await daily.removeNutrition(journalDate,picked.id)
-      undo=r.removed?{entry:r.removed,index:r.index,date:journalDate}:null
-      sheet='';picked=null
+      const date=pickedDate??journalDate
+      const r=await daily.removeNutrition(date,picked.id)
+      undo=r.removed?{entry:r.removed,index:r.index,date}:null
+      sheet='';picked=null;pickedDate=null
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
       notify('Meal deleted; Undo is available.')
@@ -218,7 +280,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function setJournalDate(date) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > clock.today()) return
     journalDate=date
-    sheet='';picked=null
+    sheet='';picked=null;pickedDate=null
     render()
   }
   function shiftJournalDate(days) {
@@ -229,7 +291,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function journal() {
     const day=data.days.find(row=>row.date===journalDate)??{date:journalDate}
     const ledger=nutritionLedger(day)
-    const entries=[...grouped(day)].filter(([,rows])=>rows.length>0)
     const isToday=journalDate===clock.today()
     return [
       heading(),
@@ -249,15 +310,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('span',{text:ledger.entries.length+' meal'+(ledger.entries.length===1?'':'s')+' logged'}),
       ]),
       el('div.fn2__journal',{},[
-        !entries.length&&el('p.fn2__history-empty',{text:'No individual meals logged for this date.'}),
-        ...entries.map(([name,rows])=>el('section.fn2__meal-group',{},[
-          el('div.fn2__meal-group-title',{},[
-            el('strong',{text:name}),
-            isToday&&el('button',{type:'button','aria-label':'Log '+name,onclick:()=>openSheet('quick')},['+']),
-          ]),
-          ...rows.map(mealRow),
-          el('div.fn2__group-total',{text:'Total: '+fmt(rows.reduce((s,e)=>s+n(e.calories),0))+' cal · '+fmt(rows.reduce((s,e)=>s+n(e.proteinGrams),0))+'g protein'}),
-        ])),
+        !ledger.entries.length&&el('p.fn2__history-empty',{text:'No individual meals logged for this date.'}),
+        ...mealSections(day),
         ledger.hasCarryover&&el('small.fn2__carryover',{text:'Older aggregate totals remain counted even when no individual meal records exist.'}),
         undo?.date===journalDate&&el('button.fn2__undo',{type:'button',onclick:restore},['Undo deleted meal']),
       ]),
@@ -361,7 +415,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
   }
   function overlay(){
-    const title={quick:'Quick Log',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions'}[sheet]
+    const title={quick:'Quick Log',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
     const content=sheet==='quick'?[
       el('p.fn2__caption',{text:'Tap a previously logged food, then confirm the cart.'}),
       ...data.foods.top.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{sheet='';view='library';stage(food)}},[
@@ -377,7 +431,17 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ])),
         el('button',{type:'button',onclick:()=>assignPhoto('none')},[icon('food'),' No image']),
       ]),
+    ]:sheet==='attach-photo'?[
+      el('p.fn2__caption',{text:'Add a real photo to this meal. It stays on this device and is included in LFMS exports. Photos do not change nutrition totals.'}),
+      el('label.fn2__upload-photo',{},[
+        icon('image'),el('span',{text:'Take or choose a photo'}),
+        el('input',{type:'file',accept:'image/*,.heic,.heif',
+          'aria-label':'Choose photo for meal',onchange:event=>attachMealPhoto(event.target.files?.[0])}),
+      ]),
+      pickedDate&&picked&&data.days.find(row=>row.date===pickedDate)?.mealPhotos?.[picked.id]
+        &&el('button.fn2__secondary',{type:'button',onclick:removeMealPhoto},['Remove this meal photo']),
     ]:sheet==='actions'?[
+      el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('attach-photo')},['Add or replace meal photo']),
       el('button.fn2__secondary',{type:'button',onclick:closeSheet},['Back to Meal History']),
       el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;sheet='';view='library';stage(x)}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
@@ -394,8 +458,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     sheet=name;render()
     if(name==='manual')requestAnimationFrame(()=>root.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
   }
-  function closeSheet() {sheet='';picked=null;render()}
-  function go(name){view=name;sheet='';picked=null;render()}
+  function closeSheet() {sheet='';picked=null;pickedDate=null;render()}
+  function go(name){view=name;sheet='';picked=null;pickedDate=null;render()}
   function render() {
     if(!data)return
     replace(root,[
@@ -406,6 +470,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(sheet==='manual')mountRuntime()
   }
   async function refresh(){await load();render()}
-  function deactivate(){sheet='';picked=null;view='dashboard'}
+  function deactivate(){sheet='';picked=null;pickedDate=null;view='dashboard'}
   return {root,refresh,deactivate}
 }

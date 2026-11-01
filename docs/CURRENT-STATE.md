@@ -1,3 +1,9 @@
+## 2026-11-01 — Food Macro Journal + optional user meal photos + glass controls, 0.66.9 (115)
+- Implemented first video-inspired Food pass only: Macro Journal below live Fuel totals, with Breakfast/Lunch/Dinner/Snacks groups, user-saved meal rows, photos, per-meal quick-log actions, and a More link to existing date-aware Meal History. All values come from canonical dayLogs.
+- Added real local photo attachment/replacement/removal on each already-logged meal. Photos are resized and JPEG compressed to a hard size cap and saved in the same canonical dayLog under `mealPhotos[entry.id]`, so they stay available offline and travel with existing backup exports; no server upload or AI nutrition inference. Existing public-domain thumbnails remain illustration fallback.
+- Applied glass-like translucency, blur and reflective edges to Food's navigation pills, floating Quick Log, bottom sheet, and section actions, retaining opaque data cards for legibility. Respects reduced transparency/motion. Food-only Duo navigation rail uses a subtle matching material.
+- Today/Train/Progress and app data models unchanged. Pre-release backup branch: `backup/lfms-before-food-glass-journal-2026-11-01`.
+
 ## 2026-11-01 — LFMS Today Recover color + rail spacing refinement, 0.66.8 (114)
 
 - User validated the overall Today-only navy canvas and identified two residual mismatches in a real Duo screenshot: the orange Recover score ring and the navigation icons hugging the rail divider.

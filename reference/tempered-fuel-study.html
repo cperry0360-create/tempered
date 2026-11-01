@@ -182,6 +182,7 @@ window.addEventListener('resize',fit);fit();
 const hint=document.getElementById('preview-hint');let timer;
 // Visual reference workflow: History opens the approved Food Journal translation.
 document.getElementById('history')?.addEventListener('click',e=>{e.stopImmediatePropagation();location.href='./tempered-journal-study.html';},{capture:true});
+for(const id of ['library','calories','add','open-cart'])document.getElementById(id)?.addEventListener('click',event=>{event.stopImmediatePropagation();location.href='./tempered-food-workflow-study.html'+(id==='library'?'':'?view=quicklog');},{capture:true});
 function notify(msg){hint.textContent=msg;hint.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>hint.classList.remove('show'),1900);}
 document.querySelectorAll('button').forEach(button=>{
  button.addEventListener('click',()=>{

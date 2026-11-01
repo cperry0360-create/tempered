@@ -54,8 +54,13 @@ try{
    && q('.fn2__macro-journal')?.textContent.includes('Chicken and rice bowl'))
  check('Glass controls are scoped to Food and preserve tappable Quick Log',
    getComputedStyle(q('.fn2__pills button')).backgroundImage.includes('linear-gradient')
-   && getComputedStyle(q('.fn2__float')).minHeight!=='0px'
+   && q('.fn2__float').getBoundingClientRect().height>=44
+   && q('.fn2__float').getBoundingClientRect().width>=44
    && !!q('.fn2__macro-journal-head button'))
+ const floatBox=q('.fn2__float').getBoundingClientRect(),moreBox=q('.fn2__macro-journal-head button').getBoundingClientRect()
+ check('Floating log button does not cover Macro Journal More action',
+   floatBox.left>=moreBox.right||floatBox.right<=moreBox.left
+     ||floatBox.top>=moreBox.bottom||floatBox.bottom<=moreBox.top)
  const todayRow=qa('.fn2__macro-journal .fn2__meal-row').find(r=>r.textContent.includes('Chicken and rice bowl'))
  todayRow?.querySelector('.fn2__meal-photo')?.click();await settle(60)
  check('Tapping meal thumbnail opens an actual photo picker',!!q('[data-food2-overlay="attach-photo"] input[type=file]'))

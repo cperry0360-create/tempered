@@ -6,6 +6,8 @@ on:
       - 'reference/forged-nutrition.html'
       - 'reference/tempered-fuel-study.html'
       - 'reference/tempered-journal-study.html'
+      - 'reference/tempered-food-workflow-study.html'
+      - 'reference/food-photo-catalog.json'
       - 'reference/capture.mjs'
       - '.github/workflows/reference-capture.yml'
   workflow_dispatch:

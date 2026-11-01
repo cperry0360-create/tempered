@@ -40,7 +40,7 @@ try{
  const savedFoodThumbs=qa('.fn2__food-row img')
  check('saved-food thumbnails resolve to the local offline CC0 library',
    savedFoodThumbs.length===2 && savedFoodThumbs.every(img=>new URL(img.src).pathname.includes('/art/food/'))
-     && savedFoodThumbs.some(img=>img.src.endsWith('/yogurt.jpg'))
+     && savedFoodThumbs.some(img=>img.src.endsWith('/yogurt-berries.jpg'))
      && savedFoodThumbs.some(img=>img.src.endsWith('/chicken.jpg')))
  await Promise.all(savedFoodThumbs.map(img=>img.complete ? Promise.resolve() : new Promise(done=>{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true});setTimeout(done,1200)})))
  check('actual image files decode in the browser',savedFoodThumbs.length===2 && savedFoodThumbs.every(img=>img.naturalWidth>=100))

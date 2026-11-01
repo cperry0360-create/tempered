@@ -22,10 +22,10 @@ import { createProgramBuilderScreen } from './screens/program-builder.js'
 import { clearActiveSessionDraft, loadActiveSessionDraft } from './session-draft.js'
 
 const TABS = [
-  { id: 'today', label: 'Today', icon: 'calendar' },
-  { id: 'train', label: 'Train', icon: 'train' },
-  { id: 'fuel', label: 'Fuel', icon: 'food' },
-  { id: 'history', label: 'Progress', icon: 'chart' },
+  { id: 'today', label: 'Today', icon: 'nav-today' },
+  { id: 'train', label: 'Train', icon: 'nav-train' },
+  { id: 'fuel', label: 'Fuel', icon: 'nav-fuel' },
+  { id: 'history', label: 'Progress', icon: 'nav-progress' },
 ]
 
 const tabLabel = (id) => {

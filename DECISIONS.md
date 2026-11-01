@@ -1,3 +1,6 @@
+## 2026-11-01 — Direct serving picker and minimal glass sidebar
+Cory identified the Log Cart as an unnecessary persistent panel that gets clipped beside the Duo rail, and requested an immediate serving question when tapping +. Use one locally backed meal picker, validate before logging, and preserve manual entry and photo features. Prefer a full-width Food Library, with no cart concept in UI or state. For the reference-inspired glass navigation, use a single dark vessel with borderless and optically equal icons, one active lens, and original editable inline SVG glyphs. Avoid pretending CSS translucency reproduces Apple's proprietary native glass compositor. Fix stripe by allowing the app's gradient to continue behind the transparent rail rather than painting a distinct right column.
+
 ## 2026-11-01 — Suppress doubled glass navigation
 After visual review of the unified floating glass capsule, discovered ordinary tab taps triggered navigation twice: pointerup manually called show() and the button's click handler called it again. Preserve keyboard, accessibility and programmatic clicks; only use pointerup for an actual hold or slide, with a one-shot click suppression after that gesture. Test both sequences against the real Duo interface.
 

@@ -1,6 +1,12 @@
 const NS = 'http://www.w3.org/2000/svg'
 
 const SHAPES = {
+  // Matching source-vector navigation glyphs: shared 24px canvas and 1.8px
+  // round stroke. They remain crisp at any screen scale; no bitmap artwork.
+  'nav-today': [['p','M6.2 4.3h11.6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2ZM7.9 2.5v3.6M16.1 2.5v3.6M4.2 9.1h15.6']],
+  'nav-train': [['p','M3.1 9.1v5.8M6.1 6.7v10.6M17.9 6.7v10.6M20.9 9.1v5.8M6.1 12h11.8']],
+  'nav-fuel': [['p','M4.3 3.2v7a3.4 3.4 0 0 0 6.8 0v-7M7.7 3.2v18M18.7 3.2c-2.5 1.8-4 5.3-4 9.4h4v8.6']],
+  'nav-progress': [['p','M4.4 19.5v-6.6M9.5 19.5V9M14.5 19.5V4.5M19.6 19.5v-8.4']],
   calculator: [['p', 'M5 3h14v18H5zM8 6h8M8 10h1M12 10h1M16 10h.1M8 14h1M12 14h1M16 14h.1M8 18h1M12 18h1M16 18h.1']],
   calendar: [['p', 'M5 4.5h14v15H5zM8 2.8v3.4M16 2.8v3.4M5 8.5h14']],
   search: [['c', 10.5, 10.5, 6.5], ['p', 'M15.5 15.5 21 21']],

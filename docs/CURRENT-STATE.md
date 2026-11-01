@@ -1,3 +1,11 @@
+## 2026-11-01 — Food one-tap serving + clean glass rail, 0.66.13 (119)
+
+- Removed the permanent Food Library Log Cart; library takes available full width. + immediately opens a compact, scroll-locked one-meal serving picker with 0.25/0.5/0.75/1/1.5/2/3/4 presets and numeric custom 0.05–20. Calories and protein preview update before explicit save, which uses the existing canonical daily.addNutrition; no writes on cancel. Previously partially logged meals normalize back to per-serving values before repeating.
+- Quick Log's recent food choices and Meal History's repeat action use the same serving picker, not a side cart. Manual nutrition form and user meal photos remain.
+- Duo rail now has a single subdued dark capsule and borderless 44px icon buttons, with one selected liquid lens. Eliminated remaining rail backdrop/filter stripe; app body fills full canvas with safe internal right padding, avoiding an isolated painted rail column.
+- Added four original editable vector glyphs on a common 24px grid; no raster or third-party asset dependency. Original hold/slide label interaction remains in place.
+- Backed up previous live main at `backup/lfms-before-serving-glass-icons-2026-11-01`. No changes to user food/workout data schema.
+
 ## 2026-11-01 — Glass rail single-navigation correction, 0.66.12 (118)
 - Verified deployed 0.66.11 screenshot evidence shows unified Today, Train, Food and Progress gradients and compact floating glass selector.
 - Found and corrected double dispatch: iOS pointerup and click were both initiating `show()` for one ordinary touch. Standard taps now use click only; press-and-hold/drag gestures use pointerup and consume the following click.

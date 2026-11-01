@@ -23,7 +23,7 @@ const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
-  let working=false, undo=null, cart=new Map(), status='', pickedDate=null
+  let working=false, undo=null, status='', pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
   const runtime=el('div.fn2__legacy-runtime')
 
@@ -329,63 +329,81 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }
     return per
   }
-  const servingChoices=Array.from({length:20},(_,i)=>(i+1)/4)
-  const portionLabel=value=>Number(value).toLocaleString(undefined,{maximumFractionDigits:2})
-  function cartTotals() {
-    let servings=0,kcal=0,protein=0
-    for(const {food,count} of cart.values()){servings+=count;kcal+=n(food.calories)*count;protein+=n(food.proteinGrams)*count}
-    return {servings:Math.round(servings*100)/100,kcal,protein}
-  }
-  function stage(food,delta=1) {
-    const clean=repeatableFood(food)
-    const id=foodKey(clean),old=cart.get(id)
-    const count=Math.max(0,Math.min(5,Math.round(((old?.count??0)+delta)*4)/4))
-    if(count===0)cart.delete(id)
-    else cart.set(id,{food:clean,count})
+  const servingChoices=[0.25,0.5,0.75,1,1.5,2,3,4]
+  const portionLabel=value=>Number(value).toLocaleString(undefined,{maximumFractionDigits:6})
+  function servingValid(value) {return Number.isFinite(value)&&value>=0.05&&value<=20}
+  function openServing(food) {
+    servingFood=repeatableFood(food)
+    servingAmount=1
+    servingOrigin=view
+    sheet='serving'
     render()
   }
-  function setCartPortion(id,count) {
-    const row=cart.get(id),value=Number(count)
-    if(!row||!servingChoices.includes(value))return
-    cart.set(id,{...row,count:value})
-    render()
+  function updateServingAmount(value,{refresh=false}={}) {
+    const numeric=Number(value)
+    servingAmount=String(value).trim()!==''&&servingValid(numeric)?numeric:null
+    if(refresh){render();return}
+    const preview=activeOverlay?.querySelector('[data-serving-preview]')
+    if(preview)preview.textContent=servingAmount===null
+      ?'Enter an amount between 0.05 and 20 servings.'
+      :fmt(n(servingFood?.calories)*servingAmount)+' kcal · '+fmt(n(servingFood?.proteinGrams)*servingAmount)+'g protein'
+    const submit=activeOverlay?.querySelector('[data-serving-submit]')
+    if(submit) {
+      submit.disabled=servingAmount===null
+      submit.textContent=servingAmount===null?'Choose a serving':'Log '+portionLabel(servingAmount)+' serving'+(servingAmount===1?'':'s')
+    }
+    for(const button of activeOverlay?.querySelectorAll('[data-serving-preset]')??[]) {
+      button.setAttribute('aria-pressed',String(Number(button.dataset.servingPreset)===servingAmount))
+    }
   }
-  function cartContents() {
-    const totals=cartTotals()
+  function servingPicker() {
+    const food=servingFood??{}
     return [
-      ...[...cart.entries()].map(([id,{food,count}])=>el('div.fn2__cart-row',{},[
-        el('span',{text:food.description}),
-        el('label.fn2__servings',{},[
-          el('span',{text:'Servings'}),
-          el('select',{'aria-label':'Portion for '+food.description,
-            onchange:event=>setCartPortion(id,event.target.value)},
-            servingChoices.map(value=>el('option',{value:String(value),selected:value===count,text:portionLabel(value)}))),
+      el('div.fn2__serving-food',{},[
+        thumbnail(food),
+        el('div',{},[
+          el('strong',{text:food.description||'Saved food'}),
+          el('small',{text:fmt(food.calories)+' kcal · '+fmt(food.proteinGrams)+'g protein per serving'}),
         ]),
-        el('strong',{text:fmt(n(food.calories)*count)+' kcal'}),
-        el('button',{type:'button','aria-label':'Remove '+food.description,onclick:()=>{cart.delete(id);render()}},['×']),
-      ])),
-      !cart.size&&el('p',{text:'Choose foods to add. Nothing is logged yet.'}),
-      el('strong.fn2__cart-total',{text:fmt(totals.kcal)+' kcal · '+fmt(totals.protein)+'g protein'}),
-      el('button.fn2__primary',{type:'button',disabled:!totals.servings||working,onclick:commitCart},
-        ['Log '+portionLabel(totals.servings)+' serving'+(totals.servings===1?'':'s')]),
+      ]),
+      el('p.fn2__caption',{text:'How much did you have? Nothing is logged until you confirm.'}),
+      el('div.fn2__serving-presets',{'aria-label':'Quick serving amounts'},
+        servingChoices.map(amount=>el('button',{type:'button',dataset:{servingPreset:String(amount)},
+          'aria-pressed':String(servingAmount===amount),onclick:()=>updateServingAmount(amount,{refresh:true})},
+          [portionLabel(amount)+'×']))),
+      el('label.fn2__serving-custom',{},[
+        el('span',{text:'Custom servings'}),
+        el('input',{type:'number',min:'0.05',max:'20',step:'any',inputMode:'decimal',
+          value:String(servingAmount??''),'aria-label':'Custom serving amount',
+          oninput:event=>updateServingAmount(event.target.value)}),
+      ]),
+      el('strong.fn2__serving-preview',{dataset:{servingPreview:'true'},
+        text:servingAmount===null?'Enter an amount between 0.05 and 20 servings.':
+          fmt(n(food.calories)*servingAmount)+' kcal · '+fmt(n(food.proteinGrams)*servingAmount)+'g protein'}),
+      el('div.fn2__serving-error',{dataset:{servingError:'true'},role:'alert'}),
+      el('button.fn2__primary',{type:'button',dataset:{servingSubmit:'true'},
+        disabled:servingAmount===null||working,onclick:logServing},
+        ['Log '+portionLabel(servingAmount??1)+' serving'+(servingAmount===1?'':'s')]),
     ]
   }
-  async function commitCart(){
-    if(working||!cart.size)return
+  async function logServing() {
+    if(working||!servingFood||!servingValid(servingAmount))return
     working=true
-    try{
-      while(cart.size){
-        const [id,item]=cart.entries().next().value
-        const {lastLoggedAt,loggedAt,id:entryId,source,...values}=item.food
-        await daily.addNutrition(clock.today(),{...values,portion:item.count})
-        cart.delete(id)
-      }
-      sheet='';view='dashboard'
+    const food=servingFood,amount=servingAmount,origin=servingOrigin
+    const submit=activeOverlay?.querySelector('[data-serving-submit]')
+    if(submit)submit.disabled=true
+    try {
+      const {lastLoggedAt,loggedAt,id:entryId,source,count,...values}=food
+      await daily.addNutrition(clock.today(),{...values,portion:amount})
+      servingFood=null;servingAmount=1;sheet='';view=origin
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
-      notify('Logged saved foods.')
-    }catch{render();notify('One or more foods were not saved. Remaining items are still in the cart.')}
-    finally{working=false}
+      notify('Logged '+portionLabel(amount)+' serving'+(amount===1?'':'s')+'.')
+    }catch(error){
+      const warning=activeOverlay?.querySelector('[data-serving-error]')
+      if(warning)warning.textContent='Could not log this meal. Please try again.'
+      if(submit)submit.disabled=false
+    }finally{working=false}
   }
   function libraryRows(){
     let foods=[...data.foods.all]
@@ -401,7 +419,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('small',{text:fmt(food.calories)+' kcal · '+fmt(food.proteinGrams)+'g P · '+food.count+'×'}),
       ]),
       el('button.fn2__fav',{type:'button','aria-label':'Toggle favorite '+food.description,onclick:()=>favorite(food)},[(prefs.food2Favorites??[]).includes(foodKey(food))?'♥':'♡']),
-      el('button.fn2__add',{type:'button','aria-label':'Stage '+food.description,onclick:()=>stage(food)},['+']),
+      el('button.fn2__add',{type:'button','aria-label':'Add '+food.description,onclick:()=>openServing(food)},['+']),
     ]))
   }
   async function favorite(food) {
@@ -435,13 +453,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       })]),
       el('div.fn2__library',{},[
         el('section.fn2__library-list',{},[results]),
-        el('aside.fn2__cart',{},[
-          el('h2',{text:'Log Cart'}),
-          ...cartContents(),
-          el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('manual')},['Manual entry, photo or import']),
-          el('small',{text:'Photos are illustrative. Values come only from saved foods.'}),
-        ]),
       ]),
+      el('p.fn2__caption',{text:'Tap + to choose servings and log a saved food. Photos are illustrative.'}),
     ]
   }
   function mountRuntime(){
@@ -449,23 +462,19 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
   }
   function overlay(){
-    const title={quick:'Quick Log',cart:'Review servings',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
+    const title={quick:'Quick Log',serving:'Log meal',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
     // A new user has zero frequent foods; several distinct foods may also
     // have no repeat count yet. Quick Log must not become an empty giant sheet.
     const quickFoods=data.foods.top.length?data.foods.top:data.foods.all.slice(0,5)
     const content=sheet==='quick'?[
-      el('p.fn2__caption',{text:'Tap a previously logged food, then confirm the cart.'}),
+      el('p.fn2__caption',{text:'Choose a recent meal, then enter your serving amount.'}),
       !quickFoods.length&&el('p.fn2__empty',{text:'No saved meals yet. Enter your first meal below.'}),
-      ...quickFoods.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{stage(food);openSheet('cart')}},[
+      ...quickFoods.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>openServing(food)},[
         thumbnail(food),el('span',{text:food.description}),el('strong',{text:fmt(food.calories)+' kcal'}),icon('plus'),
       ])),
       el('button.fn2__secondary',{type:'button',onclick:()=>go('library')},['Browse all saved foods']),
       el('button.fn2__primary',{type:'button',onclick:()=>openSheet('manual')},['Manual entry · Meal photo · Import nutrition']),
-    ]:sheet==='cart'?[
-      el('p.fn2__caption',{text:'Choose how much you ate. Totals update before you log.'}),
-      ...cartContents(),
-      el('button.fn2__secondary',{type:'button',onclick:()=>go('library')},['Browse Food Library']),
-    ]:sheet==='photo'?[
+    ]:sheet==='serving'?servingPicker():sheet==='photo'?[
       el('p.fn2__caption',{text:'Images are optional illustrations and never determine nutrition. Unknown foods use an offline placeholder.'}),
       el('div.fn2__photo-picker',{},[
         ...PHOTOS.map(p=>el('button',{type:'button',onclick:()=>assignPhoto(p.id)},[
@@ -485,7 +494,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ]:sheet==='actions'?[
       el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('attach-photo')},['Add or replace meal photo']),
       el('button.fn2__secondary',{type:'button',onclick:closeSheet},['Back to Meal History']),
-      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=repeatableFood(picked);picked=null;stage(x);openSheet('cart')}},['Log this meal again']),
+      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;openServing(x)}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]
     return el('div.fn2__overlay.fn2__portal',{dataset:{food2Overlay:sheet},onkeydown:e=>{if(e.key==='Escape')closeSheet()}},[
@@ -500,8 +509,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     sheet=name;render()
     if(name==='manual')requestAnimationFrame(()=>activeOverlay?.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
   }
-  function closeSheet() {sheet='';picked=null;pickedDate=null;render()}
-  function go(name){view=name;sheet='';picked=null;pickedDate=null;render()}
+  function closeSheet() {sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
+  function go(name){view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
   function render() {
     if(!data)return
     // Portaling out of the scrollable app body prevents fixed sheets from
@@ -521,7 +530,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   async function refresh(){await load();render()}
   function deactivate(){
-    sheet='';picked=null;pickedDate=null;view='dashboard'
+    sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;view='dashboard'
     activeOverlay?.remove();activeOverlay=null
     delete document.body.dataset.food2Modal
   }

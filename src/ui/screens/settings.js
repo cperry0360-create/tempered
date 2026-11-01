@@ -458,7 +458,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
       ]),
 
       el('section.card', { dataset: { section: 'brand' } }, [
-        el('img.lfms__settings-logo',{src:'./branding/lfms/logo-full.svg',alt:'Less Fat More Strong'}),
+        el('img.lfms__settings-logo',{src:new URL('../../../branding/lfms/logo-full.svg',import.meta.url).href,alt:'Less Fat More Strong'}),
         el('p.block__hint',{text:'Less Fat More Strong · Strength, nutrition and recovery. Your existing Tempered data stays on this device.'}),
       ]),
       el('section.card', { dataset: { section: 'credits' } }, [

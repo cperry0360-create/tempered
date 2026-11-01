@@ -1,9 +1,10 @@
-name: Forged visual fidelity frames
+name: Nutrition visual fidelity frames
 on:
   push:
     branches: [main]
     paths:
       - 'reference/forged-nutrition.html'
+      - 'reference/tempered-fuel-study.html'
       - 'reference/capture.mjs'
       - '.github/workflows/reference-capture.yml'
   workflow_dispatch:
@@ -25,6 +26,6 @@ jobs:
           node reference/capture.mjs || node reference/capture.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: forged-reference-screenshots
+          name: nutrition-fidelity-screenshots
           path: reference/visual-evidence/*.png
           retention-days: 14

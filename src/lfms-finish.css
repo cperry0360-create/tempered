@@ -153,3 +153,14 @@ html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
 .fn2__portal[data-food2-overlay="cart"] .fn2__sheet-body {
   max-height:min(65dvh,530px);overflow-y:auto;
 }
+
+/* Portaled saved-food choices need an explicit button reset. Without it,
+   WebKit renders bright system outset borders in the floating sheet. */
+.fn2__portal .fn2__quick-food {
+  border:1px solid rgba(171,216,248,.22);border-radius:13px;
+  padding:9px 11px;margin-bottom:6px;
+  background:linear-gradient(145deg,rgba(122,183,232,.15),rgba(14,43,70,.24));
+  color:var(--fn-ink);font-family:var(--font-ui);text-align:left;
+}
+.fn2__portal .fn2__quick-food:last-of-type {margin-bottom:0}
+.fn2__portal .fn2__quick-food:active {background:rgba(100,174,234,.24)}

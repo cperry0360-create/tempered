@@ -37,6 +37,14 @@ try{
  check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
  q('.fn2__pills button:nth-child(2)')?.click();await settle(60)
  check('saved food library reads prior logged foods',qa('.fn2__food-row').length===2&&q('.fn2__food-results')?.textContent.includes('Greek yogurt'))
+ const savedFoodThumbs=qa('.fn2__food-row img')
+ check('saved-food thumbnails resolve to the local offline CC0 library',
+   savedFoodThumbs.length===2 && savedFoodThumbs.every(img=>new URL(img.src).pathname.includes('/art/food/'))
+     && savedFoodThumbs.some(img=>img.src.endsWith('/yogurt.jpg'))
+     && savedFoodThumbs.some(img=>img.src.endsWith('/chicken.jpg')))
+ await Promise.all(savedFoodThumbs.map(img=>img.complete ? Promise.resolve() : new Promise(done=>{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true});setTimeout(done,1200)})))
+ check('actual image files decode in the browser',savedFoodThumbs.length===2 && savedFoodThumbs.every(img=>img.naturalWidth>=100))
+
  check('one previously logged food can be staged without saving',!!q('.fn2__food-row .fn2__add'))
  const before=(await t.daily.dayLog('2026-10-01')).calories
  const yogurt=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))

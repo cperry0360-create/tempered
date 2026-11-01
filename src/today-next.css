@@ -295,7 +295,7 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
   min-height:100dvh;
   background:
     radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
-    linear-gradient(155deg,#0B2540 0%,#061424 55%,#04101E 100%);
+    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
 }
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) .app__body,
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) .app__body > .today--fuel-style {
@@ -311,5 +311,5 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tab[data-a
   color:var(--food-v2-text);
 }
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) .status-bar-cover {
-  background:#102C49;
+  background:var(--lfms-today-status);
 }

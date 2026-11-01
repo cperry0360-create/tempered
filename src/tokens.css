@@ -40,6 +40,10 @@
   --food-v2-action-base: #1266AF;
   --food-v2-action-bright: #338EE2;
   --food-v2-blue-light: #76C3FF;
+  /* Today-only Duo canvas preview; not used on other tabs. */
+  --lfms-today-canvas-start: #0B2540;
+  --lfms-today-canvas-end: #04101E;
+  --lfms-today-status: #102C49;
   --lfms-launch-deep: #050505;
   --lfms-launch-mid: #101820;
   --lfms-launch-text: #F7F7F7;

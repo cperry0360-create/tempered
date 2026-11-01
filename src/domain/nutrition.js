@@ -81,7 +81,7 @@ function cleanCarryover(day) {
 /** A logged portion of a saved food: ½, 1½, 2, 3 … (1 is never stored). */
 function cleanPortion(value) {
   const n = Number(value)
-  return Number.isFinite(n) && n > 0 && n <= 20 && n !== 1 ? Math.round(n * 100) / 100 : null
+  return Number.isFinite(n) && n > 0 && n <= 20 && n !== 1 ? Math.round(n * 1000000) / 1000000 : null
 }
 
 function cleanEntry(entry) {

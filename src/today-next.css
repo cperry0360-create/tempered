@@ -67,6 +67,7 @@
   align-items:center;column-gap:14px;row-gap:7px;
   min-height:0;border-radius:11px;
   background:linear-gradient(165deg,var(--t2-raised),var(--t2-panel));
+  background-color:var(--t2-panel);
   border:1px solid var(--t2-line);
 }
 .today--fuel-style .today-week h2 {
@@ -160,6 +161,7 @@
   border:1px solid var(--t2-line);
   border-radius:16px;
   background:linear-gradient(152deg,var(--t2-raised),var(--t2-panel));
+  background-color:var(--t2-panel);
   box-shadow:none;
 }
 .today--fuel-style .today-card h2 {
@@ -198,7 +200,7 @@
   color:var(--t2-light);border:1px solid var(--t2-line);
   border-radius:11px;
 }
-.today--fuel-style .today-readiness {border-color:var(--t2-line);background:linear-gradient(150deg,var(--t2-raised),var(--t2-panel))}
+.today--fuel-style .today-readiness {border-color:var(--t2-line);background:linear-gradient(150deg,var(--t2-raised),var(--t2-panel));background-color:var(--t2-panel)}
 .today--fuel-style .today-readiness__metric {border-color:var(--t2-line)}
 .today--fuel-style .today-readiness__metric strong {font-weight:820;color:var(--t2-white)}
 .today--fuel-style .today-readiness__metric span {color:var(--t2-muted)}

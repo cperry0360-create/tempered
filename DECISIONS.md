@@ -1,3 +1,6 @@
+## 2026-11-01 — Suppress doubled glass navigation
+After visual review of the unified floating glass capsule, discovered ordinary tab taps triggered navigation twice: pointerup manually called show() and the button's click handler called it again. Preserve keyboard, accessibility and programmatic clicks; only use pointerup for an actual hold or slide, with a one-shot click suppression after that gesture. Test both sequences against the real Duo interface.
+
 ## 2026-11-01 — Floating right-side glass selector and consistent canvas
 
 Reference video shows a narrow centered vertical capsule, circular icons, selected-item lift, hold-to-show label and sliding selection; user explicitly prefers it over the full-height sidebar. Implement the web-native approximation with CSS blur, highlights, radial glow and Pointer Events. Keep normal click/keyboard activation and accessible labels. Do not pretend to invoke Apple's private native Liquid Glass shader or iOS system haptics.

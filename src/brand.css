@@ -12,3 +12,30 @@
  .lfms__setup-logo {max-height:170px}
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
+
+/* Intentional launch splash: stays visible at least 1.9 seconds even on fast
+   devices, fades only when the app is ready, and never blocks touch input. */
+.lfms-launch {
+  position:fixed;inset:0;z-index:9999;
+  display:grid;place-content:center;justify-items:center;gap:0;
+  padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+  pointer-events:none;user-select:none;
+  background:radial-gradient(ellipse 90% 55% at 50% 44%,#101820 0%,#050505 88%);
+  color:#f7f7f7;
+  opacity:1;visibility:visible;
+  transition:opacity 340ms ease,visibility 0s 340ms;
+}
+.lfms-launch img {
+  display:block;width:min(640px,94vw);max-height:min(49vh,370px);
+  height:auto;object-fit:contain;
+  filter:drop-shadow(0 3px 15px #0005);
+}
+.lfms-launch__caption {
+  margin-top:-7px;color:#f03725;
+  letter-spacing:.24em;font-size:clamp(9px,1.5vw,11px);
+  font-weight:800;text-align:center;
+}
+.lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
+@media(prefers-reduced-motion:reduce){
+  .lfms-launch {transition:none}
+}

@@ -1,3 +1,9 @@
+## 2026-11-01 — Flattened ChatGPT Health snapshot and redundant Food shortcuts
+
+The user's iPhone Duo pasted the Health contract in a single line, including `STEPS=` and `SLEEP=` without values. The old line-only parser silently rejected it, making Review and import disabled. Tokenize recognized `KEY=` boundaries following the exact Tempered header, retaining numeric and date constraints; no blank field can borrow the next field's value. Treat Health changes as replace-mode only for supplied fields.
+
+Food 2.0 had two visually different sheet headings but both routed to the identical embedded nutrition panel (`manual` and `history`). Keep Quick Log as the editable sheet, send Meal History to the native current-day Food Journal, and make History open the existing full dated nutrition timeline. This distinguishes destinations without inventing another storage layer or discarding prior tools.
+
 ## 2026-11-01 — Approved LFMS splash and polish correction
 
 Cory reported no entrance animation and text sitting under the logo artwork. The shipped full-logo SVG contains a black background and both lines of lettering, so placing another caption immediately below that image did not yield a clean separate text layer. Use the existing transparent symbol and a cropped transparent wordmark derived from the supplied logo instead of introducing a new logo. Stage the entrance (mark, rule, wordmark, tagline) and reserve vertical space for each. Set the minimum display interval to 2.6s to make the animation perceptible; still dismiss after bootstrap or a safe timeout. Respect reduced-motion settings. Keep all four redesigned tabs, the right-side Duo anchor, legacy backup and canonical data untouched. Finishing CSS is a scoped interaction/tap-target pass, not an information-architecture rewrite.

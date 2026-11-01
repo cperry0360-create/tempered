@@ -20,18 +20,25 @@ export function healthNumberValue(raw) {
 
 export function parseHealthSnapshot(text) {
   const raw = String(text ?? '').trim()
-  if (raw.split(/\r?\n/, 1)[0] !== HEALTH_SNAPSHOT_PREFIX) return null
+  // iOS/ChatGPT can collapse the intended nine lines into spaces.
+  // Match field boundaries rather than assuming a newline between keys.
+  if (!raw.startsWith(HEALTH_SNAPSHOT_PREFIX)
+    || !/^\s*$/.test(raw.slice(HEALTH_SNAPSHOT_PREFIX.length, HEALTH_SNAPSHOT_PREFIX.length + 1))) return null
+  const body = raw.slice(HEALTH_SNAPSHOT_PREFIX.length).trim()
+  const boundaries = [...body.matchAll(/(?:^|\s)([A-Z][A-Z0-9_]*)\s*=/g)]
   const result = {}
-  for (const line of raw.split(/\r?\n/)) {
-    const match = line.match(/^([A-Z0-9_]+)\s*=\s*(.*?)\s*$/)
-    if (!match) continue
-    const [, tag, value] = match
+  for (const [index, match] of boundaries.entries()) {
+    const tag = match[1]
     const key = TAGS[tag]
     if (!key) continue
+    const start = match.index + match[0].length
+    const end = boundaries[index + 1]?.index ?? body.length
+    const value = body.slice(start, end).trim()
     if (tag === 'DATE') {
       if (/^\d{4}-\d{2}-\d{2}$/.test(value)) result.date = value
       continue
     }
+    // Blank fields never absorb the numeric value of the following key.
     const parsed = /^-?\d/.test(value) ? healthNumberValue(value) : null
     if (parsed !== null) result[key] = parsed
   }

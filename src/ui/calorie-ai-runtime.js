@@ -697,7 +697,7 @@ export function installCalorieAiRuntime() {
     return overlay
   }
 
-  function openNutritionScreen(trigger, dateOverride = null) {
+  function openNutritionScreen(trigger, dateOverride = null, focus = null) {
     if (nutritionScreen?.isConnected) return
     const date = dateOverride ?? selectedDate()
     if (!date) return
@@ -705,8 +705,14 @@ export function installCalorieAiRuntime() {
     document.body.append(nutritionScreen)
     document.body.dataset.nutritionOpen = 'true'
     document.addEventListener('keydown', nutritionKeydown)
-    renderNutritionData().catch(() => setScreenStatus('Nutrition history could not load; try again.', 'error'))
-    requestAnimationFrame(() => nutritionScreen?.querySelector('.nutrition-log-header__back')?.focus())
+    renderNutritionData()
+      .then(() => {
+        if (focus === 'history' && nutritionScreen?.isConnected) {
+          nutritionScreen.querySelector('.nutrition-history')?.scrollIntoView({block:'start',behavior:'instant'})
+        }
+      })
+      .catch(() => setScreenStatus('Nutrition history could not load; try again.', 'error'))
+    if (focus !== 'history') requestAnimationFrame(() => nutritionScreen?.querySelector('.nutrition-log-header__back')?.focus())
   }
 
   function nutritionKeydown(event) {
@@ -772,6 +778,7 @@ export function installCalorieAiRuntime() {
   const nutritionRequested = (event) => openNutritionScreen(
     event?.detail?.trigger ?? null,
     event?.detail?.date ?? null,
+    event?.detail?.focus ?? null,
   )
   window.addEventListener('tempered:screen-shown', screenShown)
   window.addEventListener('tempered:open-nutrition', nutritionRequested)

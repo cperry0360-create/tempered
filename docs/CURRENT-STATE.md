@@ -1,3 +1,11 @@
+## 2026-11-01 — Health paste and Food navigation correction, 0.66.5 (111)
+
+- Accept the exact `TEMPERED_HEALTH_V1` snapshot as either nine separate lines or a single whitespace-flattened line, matching iOS Duo clipboard behavior. Bound individual fields before extracting numbers; blank Steps and Sleep stay absent and never overwrite existing logs. Preview and import remain explicit, local-first and date-aware.
+- Fix Food 2.0 shortcut routing: Quick Log opens the editable entry sheet, Meal History opens the current-day Food Journal, and History opens the full dated nutrition timeline. The previous Quick Log and Meal History both embedded the same form under different headings.
+- History opens on saved meals, with previous-day navigation and original edit/delete/undo functionality. Preserve the Food Journal's canonical deletion/undo and existing photo and library routes.
+- Regression tests reproduce the screenshot's one-line snapshot and verify blank preservation, Health preview/enabled submit, and distinct Food history vs logging destinations. No migrations or canonical data restructuring.
+- Backup branch: `backup/lfms-before-health-paste-fix-2026-11-01`.
+
 ## 2026-11-01 — LFMS splash animation and four-tab finish, 0.66.4 (110)
 
 - Replaced the old static, duplicated splash caption with two independent transparent vectors derived from the user-approved LFMS logo: original mark and cropped wordmark. The wordmark no longer sits under the opaque full-logo image.

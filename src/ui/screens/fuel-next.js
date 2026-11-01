@@ -67,17 +67,19 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     await savePrefs({food2Favorites:[...favoriteSet]})
     render()
   }
-  function openSheet(which){sheet=which;render();if(which==='manual')requestAnimationFrame(()=>root.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))}
-  function closeSheet(){sheet='';picked=null;render()}
-  function go(which){view=which;sheet='';picked=null;render()}
+  function openFullHistory(trigger) {
+    window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
+      detail:{ trigger, date:clock.today(), focus:'history' },
+    }))
+  }
   function heading(){
     return el('div.fn2__heading',{},[
       el('div.fn2__brand',{},[el('img.lfms__fuel-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('b',{text:'LFMS'}),el('small',{text:' / FUEL'})]),
       el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
-        el('button',{type:'button',onclick:()=>go('journal')},[icon('history'),' History']),
+        el('button',{type:'button',onclick:event=>openFullHistory(event.currentTarget)},[icon('history'),' History']),
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
         el('button',{type:'button',onclick:()=>openSheet('manual')},[icon('plus'),' Quick Log']),
-        el('button',{type:'button',onclick:()=>openSheet('history')},[icon('journal'),' Meal History']),
+        el('button',{type:'button',onclick:()=>go('journal')},[icon('journal'),' Meal History']),
       ]),
     ])
   }
@@ -148,7 +150,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ]),
       ]),
       el('div.fn2__inline-actions',{},[
-        el('button',{type:'button',onclick:()=>openSheet('history')},['Track other nutrients ›']),
+        el('button',{type:'button',onclick:event=>openFullHistory(event.currentTarget)},['Track other nutrients ›']),
         el('button',{type:'button',dataset:{diaryFinishToday:'true'},onclick:async()=>{
           await daily.setNutritionStatus(clock.today(),day.nutritionStatus==='complete'?'partial':'complete')
           await refresh()
@@ -329,7 +331,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
   }
   function overlay(){
-    const title={quick:'Quick Log',manual:'Log food or import',history:'Meal History',photo:'Choose illustration',actions:'Meal actions'}[sheet]
+    const title={quick:'Quick Log',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions'}[sheet]
     const content=sheet==='quick'?[
       el('p.fn2__caption',{text:'Tap a previously logged food, then confirm the cart.'}),
       ...data.foods.top.map(food=>el('button.fn2__quick-food',{type:'button',onclick:()=>{sheet='';view='library';stage(food)}},[
@@ -346,7 +348,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('button',{type:'button',onclick:()=>assignPhoto('none')},[icon('food'),' No image']),
       ]),
     ]:sheet==='actions'?[
-      el('button.fn2__secondary',{type:'button',onclick:()=>{picked=null;openSheet('history')}},['View / edit in original meal history']),
+      el('button.fn2__secondary',{type:'button',onclick:event=>{picked=null;closeSheet();openFullHistory(event.currentTarget)},['View / edit in full meal history']),
       el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;sheet='';view='library';stage(x)}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]
@@ -371,7 +373,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       sheet&&overlay(),
       el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
     ])
-    if(sheet==='manual'||sheet==='history')mountRuntime()
+    if(sheet==='manual')mountRuntime()
   }
   async function refresh(){await load();render()}
   function deactivate(){sheet='';picked=null;view='dashboard'}

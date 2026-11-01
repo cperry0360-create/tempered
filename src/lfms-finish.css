@@ -164,3 +164,114 @@ html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
 }
 .fn2__portal .fn2__quick-food:last-of-type {margin-bottom:0}
 .fn2__portal .fn2__quick-food:active {background:rgba(100,174,234,.24)}
+
+/* Single, permanently mounted LFMS canvas: no paint swap between tabs.
+   Train/Food/Progress no longer expose the retired gray backdrop. */
+html[data-layout="duo"],html[data-layout="duo"] body {
+  background:var(--food-v2-deep);
+}
+html[data-layout="duo"] #app.app,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
+  min-height:100dvh;
+  background:
+    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
+    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
+}
+html[data-layout="duo"] .app__body {background:transparent}
+html[data-layout="duo"] .app__body > .today--fuel-style,
+html[data-layout="duo"] .app__body > .train--fuel-style,
+html[data-layout="duo"] .app__body > .fn2,
+html[data-layout="duo"] .app__body > .progress--fuel-style {
+  background:transparent;
+}
+html[data-layout="duo"] .status-bar-cover {background:var(--lfms-today-status)}
+/* No gray/navy sidebar slab: only a floating capsule with four circles. */
+html[data-layout="duo"] .tabbar,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar,
+html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
+  background:transparent;border:0;box-shadow:none;
+  padding:calc(var(--duo-inset-top) + 8px) calc(var(--duo-inset-right) + 5px)
+    calc(var(--duo-inset-bottom) + 8px) 5px;
+}
+html[data-layout="duo"] .tabbar__tabs,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tabs {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;flex:0 0 auto;gap:8px;padding:9px 4px;
+  border:1px solid rgba(221,242,255,.33);border-radius:999px;
+  background:linear-gradient(140deg,rgba(233,247,255,.17),rgba(52,101,140,.20) 43%,rgba(4,21,38,.28));
+  box-shadow:inset 1px 2px 0 rgba(255,255,255,.34),
+    inset -2px -3px 9px rgba(1,14,27,.18),0 10px 36px rgba(0,0,0,.32);
+  isolation:isolate;position:relative;overflow:visible;
+  touch-action:none;
+}
+html[data-layout="duo"] .tabbar__tabs::before {
+  content:'';position:absolute;inset:2px;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(248,254,255,.12),transparent 42%);
+  pointer-events:none;
+}
+html[data-layout="duo"] .tabbar__tab,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tab,
+html[data-layout="duo"]:has(.app__body > .fn2) .tabbar__tab {
+  width:44px;height:48px;min-height:48px;flex:0 0 auto;
+  border:1px solid rgba(219,241,255,.18);
+  border-radius:999px;padding:0;
+  color:var(--food-v2-text);
+  background:linear-gradient(145deg,rgba(243,251,255,.16),rgba(115,181,226,.06) 46%,rgba(20,58,95,.07));
+  box-shadow:inset 0 1px 0 rgba(245,253,255,.2),0 2px 9px rgba(0,0,0,.1);
+  transform:scale(1);transition:transform 180ms cubic-bezier(.17,1.4,.36,1),
+    border-color 180ms ease,background 180ms ease,box-shadow 180ms ease;
+  overflow:visible;isolation:auto;position:relative;
+}
+html[data-layout="duo"] .tabbar__tab::before {display:none}
+html[data-layout="duo"] .tabbar__tab[data-active="true"],
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tab[data-active="true"],
+html[data-layout="duo"]:has(.app__body > .fn2) .tabbar__tab[data-active="true"] {
+  background:radial-gradient(circle at 35% 20%,rgba(211,243,255,.57),transparent 72%),
+    linear-gradient(140deg,rgba(104,198,255,.44),rgba(37,106,174,.26));
+  border-color:rgba(189,237,255,.72);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.56),0 0 21px rgba(53,157,243,.32);
+  transform:scale(1.09);
+}
+html[data-layout="duo"] .tabbar__tab[data-peek="true"] {
+  transform:scale(1.22) translateX(-4px);
+  border-color:rgba(240,250,255,.93);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.57),0 0 26px rgba(94,195,255,.53);
+  z-index:3;
+}
+html[data-layout="duo"] .tabbar__tab::after {
+  content:attr(data-label);
+  position:absolute;right:calc(100% + 14px);top:50%;
+  min-width:75px;padding:8px 14px;border-radius:999px;
+  background:linear-gradient(120deg,rgba(85,143,187,.68),rgba(14,39,65,.87));
+  border:1px solid rgba(231,249,255,.52);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 8px 24px rgba(0,0,0,.32);
+  color:var(--food-v2-text);font-size:12px;font-weight:760;letter-spacing:.01em;
+  text-align:center;white-space:nowrap;opacity:0;pointer-events:none;
+  transform:translate(9px,-50%) scale(.87);
+  transition:opacity 170ms ease,transform 230ms cubic-bezier(.17,1.4,.36,1);
+}
+html[data-layout="duo"] .tabbar__tabs[data-holding="true"] .tabbar__tab[data-peek="true"]::after,
+html[data-layout="duo"] .tabbar__tab:focus-visible::after {
+  opacity:1;transform:translate(0,-50%) scale(1);
+}
+html[data-layout="duo"] .tabbar__tab > span {
+  position:absolute!important;clip-path:inset(50%)!important;
+  width:1px!important;height:1px!important;overflow:hidden;
+}
+html[data-layout="duo"] .tabbar__tab .icon {width:22px;height:22px}
+@supports(backdrop-filter:blur(18px)) {
+  html[data-layout="duo"] .tabbar__tabs,
+  html[data-layout="duo"] .tabbar__tab,
+  html[data-layout="duo"] .tabbar__tab::after {
+    -webkit-backdrop-filter:blur(21px) saturate(170%);
+    backdrop-filter:blur(21px) saturate(170%);
+  }
+}
+@media(prefers-reduced-transparency:reduce) {
+  html[data-layout="duo"] .tabbar__tabs {background:var(--food-v2-panel-2)}
+  html[data-layout="duo"] .tabbar__tab {background:var(--food-v2-panel)}
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] .tabbar__tab {transition:none}
+  html[data-layout="duo"] .tabbar__tab::after {transition:none}
+}

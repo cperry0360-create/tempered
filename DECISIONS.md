@@ -1,3 +1,9 @@
+## 2026-11-01 — Floating right-side glass selector and consistent canvas
+
+Reference video shows a narrow centered vertical capsule, circular icons, selected-item lift, hold-to-show label and sliding selection; user explicitly prefers it over the full-height sidebar. Implement the web-native approximation with CSS blur, highlights, radial glow and Pointer Events. Keep normal click/keyboard activation and accessible labels. Do not pretend to invoke Apple's private native Liquid Glass shader or iOS system haptics.
+
+User observed severe flicker on sidebar transitions. Keep navigation DOM stable and reject outdated asynchronous screen refresh mounts. Use one canvas behind all four tabs, preventing background switches during navigation. Preserve the existing four destinations and their data. Splash mismatch: blend canvas to same edge/background tone; iOS-controlled status overlays may remain outside the web application's painting area.
+
 ## 2026-11-01 — Corrective visual sweep from user video
 User requested actual Liquid Glass-like visual treatment, not merely blur with almost-opaque navy fill. Web/PWA cannot invoke Apple's private native material; create an intentionally visible frosted approximation with translucent highlights, blur and a bright rim. Reuse on Duo sidebar controls as well as Food menus.
 A modal sheet must be a top-level document overlay outside the scrollable app body and freeze scrolling behind; menu taps must be reachable and accessible. Use explicit quarter-serving selection for cart quantities (0.25–5) and never multiply a historical already-portioned entry twice when logging it again. Fix splash edge by full viewport coverage and matching html/body backdrop. All previous data/backup export formats unchanged.

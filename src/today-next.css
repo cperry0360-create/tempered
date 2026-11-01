@@ -281,7 +281,7 @@
   .today--fuel-style .today-daily-log__more {width:calc(100% + 22px);margin-inline:-11px}
 }
 
-/* LFMS Today-only background trial, deliberately NOT rolled out to other tabs.
+/* LFMS background: now shared across all four Duo sections.
    The outer gray app shell, blank canvas below shorter content, and Duo rail
    are all one continuous blue-black surface while Today is displayed. The
    desktop/phone layouts and all other tabs retain their existing styling. */

@@ -60,6 +60,9 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   let active = 'train'
   let returnTab = 'train'
+  let navigationToken = 0
+  let railGesture = null
+  let railTimer = null
   let builder = null
   const openBuilder = async () => show('program-builder')
   const openProgramLibrary = async () => {
@@ -334,16 +337,79 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
 
+  // Keep navigation nodes stable. Rebuilding four expensive blurred surfaces
+  // twice per navigation caused the white flash seen in Duo recordings.
   function renderTabs(tab) {
-    replace(tabs, TABS.map((entry) => el('button.tabbar__tab', {
-      type: 'button',
-      dataset: { tab: entry.id, active: String(tab === entry.id) },
-      'aria-current': tab === entry.id ? 'page' : null,
-      'aria-label': `${entry.label.toLowerCase()} section`,
-      onclick: () => show(entry.id),
-    }, [icon(entry.icon), el('span', { text: entry.label })])))
+    if (!tabs.childElementCount) {
+      replace(tabs, TABS.map((entry) => el('button.tabbar__tab', {
+        type: 'button',
+        dataset: { tab: entry.id, active: 'false', label: entry.label },
+        'aria-label': `${entry.label.toLowerCase()} section`,
+        onclick: () => show(entry.id),
+      }, [icon(entry.icon), el('span', { text: entry.label })])))
+      replace(tabBar, [tabs])
+      installRailGesture()
+    }
+    for (const button of tabs.querySelectorAll('.tabbar__tab')) {
+      const selected = button.dataset.tab === tab
+      button.dataset.active = String(selected)
+      if (selected) button.setAttribute('aria-current', 'page')
+      else button.removeAttribute('aria-current')
+    }
+  }
 
-    replace(tabBar, [tabs])
+  function installRailGesture() {
+    // A touch-and-hold expands the label on the left; sliding up/down selects
+    // another icon. The release activates it. Plain taps and keyboard clicks
+    // continue to work normally, including automated .click() tests.
+    const clearPreview = () => {
+      clearTimeout(railTimer);railTimer=null
+      tabs.removeAttribute('data-holding')
+      for(const button of tabs.children)button.removeAttribute('data-peek')
+    }
+    const choose = y => {
+      let nearest=null, distance=Infinity
+      for(const button of tabs.querySelectorAll('.tabbar__tab')){
+        const r=button.getBoundingClientRect()
+        const d=Math.abs(y-(r.top+r.height/2))
+        if(d<distance){nearest=button;distance=d}
+      }
+      for(const button of tabs.children) {
+        if(button===nearest)button.dataset.peek='true'
+        else button.removeAttribute('data-peek')
+      }
+      return nearest
+    }
+    tabs.addEventListener('pointerdown',event=>{
+      const button=event.target.closest?.('.tabbar__tab')
+      if(!button||event.button>0)return
+      clearPreview()
+      railGesture={id:event.pointerId,tab:button.dataset.tab,startY:event.clientY,selected:button.dataset.tab}
+      tabs.setPointerCapture?.(event.pointerId)
+      railTimer=setTimeout(()=>{
+        if(!railGesture)return
+        tabs.dataset.holding='true'
+        choose(railGesture.startY)
+      },270)
+    })
+    tabs.addEventListener('pointermove',event=>{
+      if(!railGesture||event.pointerId!==railGesture.id)return
+      if(Math.abs(event.clientY-railGesture.startY)>8){
+        clearTimeout(railTimer)
+        tabs.dataset.holding='true'
+        const chosen=choose(event.clientY)
+        if(chosen)railGesture.selected=chosen.dataset.tab
+      }
+    })
+    const end=event=>{
+      if(!railGesture||event.pointerId!==railGesture.id)return
+      const selected=railGesture.selected
+      const cancelled=event.type==='pointercancel'
+      railGesture=null;clearPreview()
+      if(!cancelled)show(selected)
+    }
+    tabs.addEventListener('pointerup',end)
+    tabs.addEventListener('pointercancel',end)
   }
 
   function showFailure({ title, detail, retry, back }) {
@@ -463,16 +529,16 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     }
   }
 
-  async function refreshScreen(tab) {
-    if (tab === 'train') { await train.refresh(); replace(body, [train.root]); return }
-    if (tab === 'history') { await history.refresh(); replace(body, [history.root]); return }
-    if (tab === 'today') { await today.refresh(); replace(body, [today.root]); return }
-    if (tab === 'fuel') { await fuel.refresh(); replace(body, [fuel.root]); return }
-    if (tab === 'settings') { await settings.refresh(); replace(body, [settings.root]); return }
+  async function refreshScreen(tab,isCurrent=()=>true) {
+    if (tab === 'train') { await train.refresh(); if(isCurrent())replace(body, [train.root]); return }
+    if (tab === 'history') { await history.refresh(); if(isCurrent())replace(body, [history.root]); return }
+    if (tab === 'today') { await today.refresh(); if(isCurrent())replace(body, [today.root]); return }
+    if (tab === 'fuel') { await fuel.refresh(); if(isCurrent())replace(body, [fuel.root]); return }
+    if (tab === 'settings') { await settings.refresh(); if(isCurrent())replace(body, [settings.root]); return }
     if (tab === 'program-builder') { await builder.start(); return }
     await ensureLegacy()
     await characterScreen.refresh()
-    replace(body, [characterScreen.root])
+    if(isCurrent())replace(body, [characterScreen.root])
   }
 
   async function show(tab) {
@@ -480,6 +546,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     const visible = TABS.some((entry) => entry.id === requested)
     const target = requested === 'settings' || requested === 'character'
       || requested === 'program-builder' || visible ? requested : 'today'
+    const token = ++navigationToken
     if (target !== 'fuel') fuel.deactivate()
     if (target !== 'today') today.deactivate?.()
     active = target
@@ -492,8 +559,8 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
     body.setAttribute('aria-busy', 'true')
     try {
-      await refreshScreen(target)
-      renderTabs(target)
+      await refreshScreen(target,()=>token===navigationToken)
+      if(token!==navigationToken)return
       renderWorkoutDock()
       body.scrollTop = 0
       announce(`${tabLabel(target).toLowerCase()} screen`)
@@ -503,6 +570,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         detail: { tab: target },
       }))
     } catch (error) {
+      if(token!==navigationToken)return
       console.error(`[tempered] ${target} failed to load`, error)
       showFailure({
         title: `${tabLabel(target)} could not load`,

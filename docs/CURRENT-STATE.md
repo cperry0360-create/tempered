@@ -1,3 +1,11 @@
+## 2026-11-01 — LFMS 0.66.11 (117): unified Duo canvas, floating liquid-style navigation, low-flicker switching
+
+- Compared user recordings with LFMS. Current video showed gray/navy exterior changing between Today, Train, Food and Progress; initial navigation used a shaded full-height rail, and iOS-style reference used a compact centered vertical pill with circular selection and label reveal.
+- All four primary tabs now share a stable blue-black full-viewport gradient behind their transparent screen backgrounds. The old gray exterior is removed. The navigation rail becomes transparent; just a centered frosted capsule with four circles floats at right, with selected-icon glow and press/hold/drag label preview. Full native Apple Liquid Glass rendering is unavailable to PWAs; CSS approximates its visual/motion behavior.
+- Tab button nodes persist across navigation instead of being torn down twice. Screens are replaced after asynchronous refresh only if the navigation request is still current, preventing stale refreshes overwriting newer tabs. This specifically targets flicker while tapping fast between tabs.
+- Splash safe-edge background and full-viewport painted edge are aligned to the same launch background color; branded mark reveal preserved. The iOS status indicator area is OS-owned.
+- No storage/schema changes. Safety backup at `backup/lfms-before-unified-canvas-glass-nav-2026-11-01`.
+
 ## 2026-11-01 — Video bug sweep: glass, splash edges, overlay scrolling, fractional servings — 0.66.10 (116)
 - Reproduced user Duo 76s screen recording. Splash had gray edge, right rail and control pills were visually opaque, legacy nutrition panel appeared in Quick Log, sheet interactions could scroll underlying app, and repeating previous portioned meals could double scale calories.
 - Scoped release: full-viewport splash background through safe edges, tangible translucent glass highlights on Duo rail icons and Food floating actions; portaled Food sheets to document.body (outside scroll container), freeze underlying app while a modal is up, preserve internal sheet scroll. Browser fallback remains readable with reduced transparency.

@@ -110,3 +110,20 @@ html:has(.lfms-launch:not([data-closing="true"])) body {
   width:100vw;min-width:100%;height:100dvh;min-height:100%;
   background:radial-gradient(ellipse 100% 75% at 50% 43%,var(--lfms-launch-mid),var(--lfms-launch-deep) 87%);
 }
+
+/* The Duo screen has a native status/control strip at its right edge. Match
+   the launch's outer edge to the same solid tone instead of revealing a seam. */
+html:has(.lfms-launch:not([data-closing="true"])),
+html:has(.lfms-launch:not([data-closing="true"])) body {
+  background:var(--lfms-launch-deep);
+}
+html:has(.lfms-launch:not([data-closing="true"])) .status-bar-cover {
+  background:var(--lfms-launch-deep);
+}
+.lfms-launch {
+  inset:-2px;width:auto;height:auto;min-width:calc(100% + 4px);
+  background:
+    linear-gradient(90deg,var(--lfms-launch-deep) 0%,transparent 16%,transparent 84%,var(--lfms-launch-deep) 100%),
+    radial-gradient(ellipse 80% 60% at 50% 42%,var(--lfms-launch-mid),var(--lfms-launch-deep) 90%);
+  box-shadow:0 0 0 3px var(--lfms-launch-deep);
+}

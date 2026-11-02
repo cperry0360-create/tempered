@@ -53,6 +53,9 @@ try{
    qa('.fn2__neo-perimeter-live').length===4
    && qa('.fn2__neo-perimeter-track').length===1
    && qa('.fn2__neo-perimeter-live').every(n=>n.getAttribute('d')===q('.fn2__neo-perimeter-track').getAttribute('d'))
+   && q('.fn2__neo-perimeter-track').getAttribute('d').startsWith('M58 13')
+   && qa('.fn2__neo-perimeter-live').map(n=>n.dataset.meal).join('|')==='breakfast|lunch|dinner|snack'
+   && qa('.fn2__neo-perimeter-live').every(n=>n.getAttribute('pathLength')==='100')
    && qa('.fn2__neo-perimeter-live').every(n=>Number.isFinite(Number(n.dataset.segmentStart)))
    && qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)>0
    && Math.abs(qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)

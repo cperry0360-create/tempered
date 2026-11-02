@@ -49,7 +49,14 @@ try{
    qa('.fn2__pills button').length===3
    && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Quick Log|Meal History')
  check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
- check('neon calorie frame draws four rounded progress segments',qa('.fn2__neo-perimeter-live').length===4)
+ check('calorie perimeter is one clockwise outline with four real meal arcs',
+   qa('.fn2__neo-perimeter-live').length===4
+   && qa('.fn2__neo-perimeter-track').length===1
+   && qa('.fn2__neo-perimeter-live').every(n=>n.getAttribute('d')===q('.fn2__neo-perimeter-track').getAttribute('d'))
+   && qa('.fn2__neo-perimeter-live').every(n=>Number.isFinite(Number(n.dataset.segmentStart)))
+   && qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)>0
+   && Math.abs(qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)
+      -100*480/goal('calories_logged',2100))<.9)
  check('neon meal allocation uses real timestamped entries, not invented shares',
    qa('.fn2__neo-meal').length===4
    && qa('.fn2__neo-meal').filter(x=>x.querySelector('.fn2__neo-meal-copy small')?.textContent==='480 kcal'&&x.querySelector('.fn2__neo-meal-pct')?.textContent==='100%').length===1

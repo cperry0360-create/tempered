@@ -571,7 +571,7 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"]::before {
 }
 html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"] .icon,
 html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .icon {
-  color:#ffffff;
+  color:rgb(255,255,255);
   filter:drop-shadow(0 1px 3px rgba(6,25,57,.76));
 }
 

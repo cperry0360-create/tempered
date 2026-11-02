@@ -53,6 +53,9 @@ try{
    qa('.fn2__neo-perimeter-live').length===4
    && qa('.fn2__neo-perimeter-track').length===1
    && qa('.fn2__neo-perimeter-live').every(n=>n.getAttribute('d')===q('.fn2__neo-perimeter-track').getAttribute('d'))
+   && q('.fn2__neo-perimeter-track').getAttribute('d').startsWith('M58 13')
+   && qa('.fn2__neo-perimeter-live').map(n=>n.dataset.meal).join('|')==='breakfast|lunch|dinner|snack'
+   && qa('.fn2__neo-perimeter-live').every(n=>n.getAttribute('pathLength')==='100')
    && qa('.fn2__neo-perimeter-live').every(n=>Number.isFinite(Number(n.dataset.segmentStart)))
    && qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)>0
    && Math.abs(qa('.fn2__neo-perimeter-live').reduce((sum,n)=>sum+Number(n.dataset.segmentLength),0)
@@ -90,15 +93,14 @@ try{
    qa('.fn2__macro-journal .fn2__meal-group').length===4
    && ['Breakfast','Lunch','Dinner','Snacks'].every(name=>q('.fn2__macro-journal')?.textContent.includes(name))
    && q('.fn2__macro-journal')?.textContent.includes('Chicken and rice bowl'))
- check('Glass controls are scoped to Food and preserve tappable Quick Log',
+ check('Glass controls retain the top Quick Log without a redundant floating overlay',
    getComputedStyle(q('.fn2__pills button')).backgroundImage.includes('linear-gradient')
-   && q('.fn2__float').getBoundingClientRect().height>=44
-   && q('.fn2__float').getBoundingClientRect().width>=44
+   && qa('.fn2__pills button').length===3
+   && q('.fn2__pills button:nth-child(2)').textContent.includes('Quick Log')
+   && q('.fn2__pills button:nth-child(2)').getBoundingClientRect().height>=36
+   && !q('.fn2__float')
    && !!q('.fn2__macro-journal-head button'))
- const floatBox=q('.fn2__float').getBoundingClientRect(),moreBox=q('.fn2__macro-journal-head button').getBoundingClientRect()
- check('Floating log button does not cover Macro Journal More action',
-   floatBox.left>=moreBox.right||floatBox.right<=moreBox.left
-     ||floatBox.top>=moreBox.bottom||floatBox.bottom<=moreBox.top)
+ check('Quick Log remains directly actionable',!!q('.fn2__pills button:nth-child(2)'))
  const todayRow=qa('.fn2__macro-journal .fn2__meal-row').find(r=>r.textContent.includes('Chicken and rice bowl'))
  todayRow?.querySelector('.fn2__meal-photo')?.click();await settle(60)
  check('Tapping meal thumbnail opens an actual photo picker',!!q('[data-food2-overlay="attach-photo"] input[type=file]'))

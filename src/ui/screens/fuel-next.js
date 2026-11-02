@@ -137,7 +137,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ]),
       ]),
       macroJournal(day),
-      el('button.fn2__float',{type:'button',dataset:{food2Add:'true'},onclick:()=>openSheet('quick'),'aria-label':'Log food'},['+']),
     ]
   }
   function grouped(day) {

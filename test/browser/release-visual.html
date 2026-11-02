@@ -581,6 +581,15 @@
         const rect=neo.getBoundingClientRect()
         if(rect.left < -1 || rect.right > window.innerWidth+1)
           throw new Error('Neon Fuel widget overflows the visual viewport')
+        if(mount.querySelector('.fn2__float'))
+          throw new Error('Floating Quick Log overlaps the neon card')
+        if(window.innerWidth<=540){
+          const shortcuts=[...mount.querySelectorAll('.fn2__pills button')]
+          if(shortcuts.length!==3 || shortcuts.some(n=>{
+            const b=n.getBoundingClientRect()
+            return b.left<0 || b.right>window.innerWidth+1
+          }))throw new Error('Food shortcut pill is clipped on phone/Duo cover')
+        }
         const track=neo.querySelector('.fn2__neo-perimeter-track')
         if(!track || [...neo.querySelectorAll('.fn2__neo-perimeter-live')].some(n=>n.getAttribute('d')!==track.getAttribute('d')))
           throw new Error('Calorie meal segments are not on the same rounded perimeter')
@@ -596,13 +605,25 @@
           if(node.getBoundingClientRect().width<44 || node.getBoundingClientRect().height<44)
             throw new Error('Neon Fuel action is below 44px accessibility target')
         }
-        if(window.innerWidth>740 && window.innerWidth<=980){
+        if(window.innerWidth>=811 && window.innerWidth<=1100) {
+          const cells=[...neo.querySelector('.fn2__neo-body').children].map(n=>n.getBoundingClientRect())
+          const tops=cells.map(box=>box.top)
+          const frame=neo.querySelector('.fn2__neo-calorie').getBoundingClientRect()
           const footer=neo.querySelector('.fn2__neo-footer').getBoundingClientRect()
-          const nutrients=neo.querySelector('.fn2__neo-nutrients').getBoundingClientRect()
-          if(rect.height>430 || footer.bottom>window.innerHeight-10)
-            throw new Error('Duo inner Fuel card is too tall: bottom of footer offscreen')
-          if(nutrients.height>155)
-            throw new Error('Duo inner vertical nutrient bars make the widget too tall')
+          const widget=neo.getBoundingClientRect()
+          if(Math.max(...tops)-Math.min(...tops)>4)
+            throw new Error('Duo inner Fuel columns are not in one row')
+          if(widget.height>285 || footer.bottom>window.innerHeight-10)
+            throw new Error('Duo inner Fuel widget does not match compact reference proportions')
+          if(neo.scrollWidth>neo.clientWidth+2)
+            throw new Error('Duo inner Fuel widget has horizontal overflow')
+          if(frame.width<125||frame.height<170)
+            throw new Error('Duo inner calorie frame became too small')
+        }
+        if(window.innerWidth>740 && window.innerWidth<811){
+          const footer=neo.querySelector('.fn2__neo-footer').getBoundingClientRect()
+          if(footer.bottom>window.innerHeight-10)
+            throw new Error('Intermediate Fuel layout clips the footer')
         }
         if(window.innerWidth<=540){
           const frame=neo.querySelector('.fn2__neo-outline').getBoundingClientRect()

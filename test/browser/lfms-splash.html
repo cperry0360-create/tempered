@@ -18,11 +18,15 @@ try {
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
-  const word=launch.querySelector('.lfms-launch__wordmark')
+  const word=launch.querySelector('.lfms-launch__wordmark--less')
+  const strong=launch.querySelector('.lfms-launch__wordmark--strong')
+  const cracks=launch.querySelector('.lfms-launch__cracks')
+  const shock=launch.querySelector('.lfms-launch__shockwave')
   const rule=launch.querySelector('.lfms-launch__rule')
   const tagline=launch.querySelector('.lfms-launch__tagline')
   await Promise.all([mark,word].map(x=>x.decode()))
-  check('symbol and wordmark assets load',mark.naturalWidth>0&&word.naturalWidth>0)
+  check('mark and both branded wordmark halves load',mark.naturalWidth>0&&word.naturalWidth>0&&strong.naturalWidth>0)
+  check('left/right flights and impact shards are mounted',Boolean(cracks&&shock)&&getComputedStyle(word).animationName.includes('lfms-wordmark-enter-left')&&getComputedStyle(strong).animationName.includes('lfms-wordmark-enter-right')&&getComputedStyle(cracks).animationName.includes('lfms-crack-flash'))
   check('separate wordmark and tagline without repeated overlay copy',Boolean(rule)&&Boolean(tagline)&&!launch.querySelector('.lfms-launch__caption'))
   check('entrance animation is present on the real markup',getComputedStyle(mark).animationName.includes('lfms-mark-enter')&&getComputedStyle(word).animationName.includes('lfms-wordmark-enter'))
   await new Promise(resolve=>setTimeout(resolve,1850))
@@ -41,9 +45,10 @@ try {
   // Evaluate legibility after the last staggered keyframe, using a visual
   // tolerance instead of an exact stringified float comparison.
   await new Promise(resolve=>setTimeout(resolve,550))
-  check('staggered animation ends fully legible',
+  check('staggered logo and both wordmark halves remain fully legible',
     Number(getComputedStyle(mark).opacity)>0.99
-    && Number(getComputedStyle(word).opacity)>0.99)
+    && Number(getComputedStyle(word).opacity)>0.99
+    && Number(getComputedStyle(strong).opacity)>0.99)
   const svg=await fetch(word.src).then(r=>r.text())
   check('wordmark vector does not paint opaque rectangle',!svg.includes('<rect'))
   check('no browser errors',errors.length===0,errors.join(' | '))

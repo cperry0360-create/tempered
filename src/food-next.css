@@ -294,7 +294,7 @@ html[data-layout="duo"] .fn2__float {
 .fn2__stat-form input {box-sizing:border-box;width:100%;min-width:0;height:38px;padding:0 9px;border:1px solid var(--fn-line);border-radius:10px;background:var(--food-v2-deep);color:var(--fn-ink);font-size:14px}
 .fn2__stat-form input:focus-visible {outline:2px solid var(--fn-blue-light);outline-offset:1px}
 .fn2__stat-form button {min-height:38px;padding:0 13px;border-radius:10px;border:1px solid var(--fn-blue);background:var(--food-v2-beach-base);color:var(--fn-ink);font-size:12px;font-weight:780}
-.fn2__stat-form .fn2__stat-error {flex-basis:100%;font-size:11px;color:#FF7F91}
+.fn2__stat-form .fn2__stat-error {flex-basis:100%;font-size:11px;color:var(--food-v3-danger)}
 @media(max-width:400px) {
   .fn2__stats--two {gap:8px}
   .fn2__stats--two .fn2__stat {padding:12px 9px;min-height:138px}

@@ -34,5 +34,5 @@ test('Visual water meter has percent and accessibility without changing logging 
   assert.match(source,/daily\.logAt\(clock\.today\(\),'water',Math\.round\(amount\*10\)\/10\)/)
   assert.match(css,/var\(--food-v2-blue-light\)/)
   assert.match(css,/@container water-card \(max-width:300px\)/)
-  assert.match(read('src/version.js'),/0\.66\.27 \(133\)/)
+  assert.match(read('src/version.js'),/export const VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)
 })

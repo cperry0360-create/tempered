@@ -151,7 +151,7 @@
   .fn2__neo-body {grid-template-columns:minmax(195px,1.05fr) minmax(195px,1fr) minmax(155px,.7fr);row-gap:17px}
   .fn2__neo-calorie {min-height:255px}
   .fn2__neo-meals {padding:0 14px}
-  .fn2__neo-target {border-right:0!important}
+  .fn2__neo-body > .fn2__neo-target {border-right:0}
   .fn2__neo-nutrients {grid-column:1 / span 2;padding:8px 20px 0 0;border-top:1px solid rgba(161,215,255,.25);border-right:1px solid rgba(161,215,255,.25)}
   .fn2__neo-finish {grid-column:3;min-height:210px;padding:0 6px}
   .fn2__neo-close {max-width:200px;min-height:115px}
@@ -160,7 +160,7 @@
 @media(max-width:740px){
   .fn2__neo {padding:14px 12px 0;border-radius:27px;box-shadow:0 0 9px rgba(48,171,255,.53),0 0 12px rgba(255,41,70,.17)}
   .fn2__neo-body {grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;align-items:start}
-  .fn2__neo-body > * {border-right:0!important}
+  .fn2__neo-body > :not(:last-child) {border-right:0}
   .fn2__neo-calorie {min-height:245px;padding:0;grid-column:1}
   .fn2__neo-outline {inset:0}
   .fn2__neo-calorie-content {width:80%}

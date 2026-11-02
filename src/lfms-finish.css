@@ -700,3 +700,23 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
   html[data-layout="duo"] #app.app .tabbar__glyph::before {transition:none}
   html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::after {animation:none}
 }
+
+
+/* One full-viewport Duo canvas: the right rail uses the exact same painted
+   background as the content rather than exposing a separately colored slab.
+   Keep the floating glass capsule and its active/hold animations intact. */
+html[data-layout="duo"] body {
+  background:
+    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
+    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
+  background-attachment:fixed,fixed;
+}
+html[data-layout="duo"] #app.app,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
+  background:transparent;
+}
+html[data-layout="duo"] #app.app .tabbar {
+  background:transparent;
+  border:0;
+  box-shadow:none;
+}

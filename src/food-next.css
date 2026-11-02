@@ -281,3 +281,23 @@ html[data-layout="duo"] .fn2__float {
 }
 .fn2__serving-preview {display:block;text-align:center;font-size:18px;font-variant-numeric:tabular-nums;color:var(--fn-ink)}
 .fn2__serving-error:not(:empty) {color:var(--fn-blue-light);font-size:12px}
+
+
+/* Fuel dashboard: two balanced cards, weight-to-goal comparison and custom water. */
+.fn2__stats--two {grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.fn2__stats--two .fn2__stat {min-height:144px;gap:9px}
+.fn2__weight-comparison {line-height:1.35}
+.fn2__stat-link {justify-self:start;min-height:34px;padding:0 10px;border:1px solid var(--fn-line);border-radius:99px;background:rgba(53,157,243,.12);color:var(--fn-blue-light);font-size:11px;font-weight:780}
+.fn2__water-actions .fn2__water-custom-toggle {color:var(--fn-blue-light);font-weight:780;border-color:rgba(91,172,240,.45)}
+.fn2__stat-form {display:flex;align-items:end;flex-wrap:wrap;gap:7px;padding-top:3px}
+.fn2__stat-form label {display:grid;gap:4px;min-width:0;flex:1 1 95px;color:var(--fn-muted);font-size:10px;font-weight:700}
+.fn2__stat-form input {box-sizing:border-box;width:100%;min-width:0;height:38px;padding:0 9px;border:1px solid var(--fn-line);border-radius:10px;background:var(--food-v2-deep);color:var(--fn-ink);font-size:14px}
+.fn2__stat-form input:focus-visible {outline:2px solid var(--fn-blue-light);outline-offset:1px}
+.fn2__stat-form button {min-height:38px;padding:0 13px;border-radius:10px;border:1px solid var(--fn-blue);background:var(--food-v2-beach-base);color:var(--fn-ink);font-size:12px;font-weight:780}
+.fn2__stat-form .fn2__stat-error {flex-basis:100%;font-size:11px;color:var(--food-v3-danger)}
+@media(max-width:400px) {
+  .fn2__stats--two {gap:8px}
+  .fn2__stats--two .fn2__stat {padding:12px 9px;min-height:138px}
+  .fn2__stats--two .fn2__stat>strong {font-size:23px}
+  .fn2__water-actions button {min-width:36px;min-height:32px;padding:0 7px}
+}

@@ -569,6 +569,31 @@
       document.activeElement?.blur()
       await settle()
       if (!mount.firstElementChild) throw new Error('App did not render a surface')
+      // Regression gate for the formerly gray/orange drill-down surfaces.
+      // Compare computed palette tokens, not screenshots or hardcoded hex.
+      const deepScreens = {
+        settings: '.screen--settings',
+        'program-builder': '.program-builder',
+        mobility: '.mobility-screen',
+        summary: '.screen--summary',
+      }
+      if (Object.prototype.hasOwnProperty.call(deepScreens,view)) {
+        const scope = document.querySelector(deepScreens[view])
+        const actual = scope && getComputedStyle(scope).getPropertyValue('--surface-1').trim()
+        const expected = getComputedStyle(document.documentElement).getPropertyValue('--food-v2-panel').trim()
+        if (!scope || actual !== expected)
+          throw new Error(`LFMS sub-screen palette missing on ${view}: ${actual} (expected ${expected})`)
+      }
+      if (view === 'settings') {
+        const title = mount.querySelector('.screen--settings > .screen__title')
+        if (!title || getComputedStyle(title,'::after').content === 'none')
+          throw new Error('Settings lost its LFMS red title accent')
+      }
+      if (view === 'progress-cut') {
+        const eyebrow=mount.querySelector('.progress-cut__eyebrow')
+        if (!eyebrow || !getComputedStyle(eyebrow).color)
+          throw new Error('Progress cut accent not present')
+      }
       await report(true)
     } catch (error) {
       mount.innerHTML = `<main style="padding:24px;color:white"><h1>Visual QA failed</h1><pre></pre></main>`

@@ -45,18 +45,9 @@ try {
     &&!!q('[data-action="check-updates"]'))
   check('Settings keeps 44px appearance and action controls',
     [...document.querySelectorAll('.screen--settings .appearance__choice')].every(x=>x.getBoundingClientRect().height>=44))
-  const program=q('[data-action="program-builder"]')
-  program?.click();await settle(150)
-  check('Program Builder is a two-pane navy editor, not gray setup boxes',
-    !!q('.program-builder__workspace')&&!!q('.program-builder__card')
-    &&isNavy(q('.program-builder__card')))
-  check('Program Builder retains editable title and days',
-    !!q('.program-builder__input')&&!!q('.program-builder__day'))
-  check('Program Builder red eyebrow',!!q('.program-builder__eyebrow')&&
-    getComputedStyle(q('.program-builder__eyebrow')).color!=='rgb(232, 131, 58)')
-  q('.program-builder__back')?.click();await settle()
-  check('Return from editor restores Settings',!!q('.screen--settings'))
-  // Run overlays and summary before rerunning setup, because setup replaces
+  // Exercise overlays with the original app shell before entering Builder,
+  // whose close callback can replace the harness' app instance.
+  // Setup also replaces
   // the normal app shell by design and cannot be used as a navigation return.
   await tempered.app.show('today')
   q('[data-other="toggle"]')?.click()
@@ -75,6 +66,17 @@ try {
     !!q('.screen--summary')&&!!q('.summary-recap .stat')
     &&getComputedStyle(q('.summary-recap .stat')).borderTopWidth!=='0px')
   await tempered.app.show('settings')
+  const program=q('[data-action="program-builder"]')
+  program?.click();await settle(150)
+  check('Program Builder is a two-pane navy editor, not gray setup boxes',
+    !!q('.program-builder__workspace')&&!!q('.program-builder__card')
+    &&isNavy(q('.program-builder__card')))
+  check('Program Builder retains editable title and days',
+    !!q('.program-builder__input')&&!!q('.program-builder__day'))
+  check('Program Builder red eyebrow',!!q('.program-builder__eyebrow')&&
+    getComputedStyle(q('.program-builder__eyebrow')).color!=='rgb(232, 131, 58)')
+  q('.program-builder__back')?.click();await settle()
+  check('Return from editor restores Settings',!!q('.screen--settings'))
   q('[data-action="rerun-setup"]')?.click();await settle()
   check('Rerun setup uses blue/navy card grammar',
     !!q('.setup__card')&&

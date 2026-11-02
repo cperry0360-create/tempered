@@ -1,3 +1,8 @@
+## 2026-11-02 — Today unified week tracking, LFMS 0.66.27
+- **Approved direction:** A single Today card combines the calendar and weekly summary, but it does not reproduce Food's calorie-gauge UI. Reuse the actual shipped nav-train lifter SVG, not a redrawn person, on dates with a completed workout session.
+- **Progress targets:** Show only weekly sessions and habit counts as goal bars. Show working sets and training minutes as actual weekly totals, and sleep as an average over valid logged nights (with an explicit count); remove duplicate session and calories indicators from this training card.
+- **Data safety:** Pure display change; retain local records, program targets, calendar selection, and other Today sections. Future-day icons never imply a workout happened. No goal is invented for sleep.
+
 ## 2026-11-01 — Direct serving picker and minimal glass sidebar
 Cory identified the Log Cart as an unnecessary persistent panel that gets clipped beside the Duo rail, and requested an immediate serving question when tapping +. Use one locally backed meal picker, validate before logging, and preserve manual entry and photo features. Prefer a full-width Food Library, with no cart concept in UI or state. For the reference-inspired glass navigation, use a single dark vessel with borderless and optically equal icons, one active lens, and original editable inline SVG glyphs. Avoid pretending CSS translucency reproduces Apple's proprietary native glass compositor. Fix stripe by allowing the app's gradient to continue behind the transparent rail rather than painting a distinct right column.
 

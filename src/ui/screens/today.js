@@ -103,6 +103,19 @@ function dailyGoalLabel(activity) {
   return `${value} / ${activity.dailyCap}${unit ? ` ${unit}` : ''}`
 }
 
+/** Only actual recorded nights in the chosen calendar week count toward the average. */
+export function averageSleepForWeek(dayLogs, dates) {
+  const week = new Set(dates)
+  const hours = (dayLogs ?? [])
+    .filter((entry) => week.has(entry?.date))
+    .map((entry) => entry.sleepHours)
+    .filter((value) => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 24)
+  return {
+    average: hours.length ? hours.reduce((total, value) => total + value, 0) / hours.length : null,
+    nights: hours.length,
+  }
+}
+
 export function staysEditableAfterComplete(activity) {
   return activity?.id === 'sleep'
     || (activity?.spec?.entry === 'number' && activity?.spec?.mode === 'add')
@@ -850,29 +863,93 @@ export function createTodayScreen({
     ])
   }
 
-  function weekCard() {
+  function weekCard(allActivities) {
     const totals = weekTraining.reduce((sum, item) => ({
-      sessions: sum.sessions + item.stats.sessions,
-      sets: sum.sets + item.stats.workingSets,
-      minutes: sum.minutes + item.stats.minutes,
+      sessions: sum.sessions + number(item.stats.sessions),
+      sets: sum.sets + number(item.stats.workingSets),
+      minutes: sum.minutes + number(item.stats.minutes),
     }), { sessions: 0, sets: 0, minutes: 0 })
-    return el('section.today-card.today-week', { dataset: { section: 'week' } }, [
-      el('h2', { text: 'This week' }),
-      el('p.today-week__meta', { text: `${totals.sessions} sessions · ${totals.sets} sets · ${totals.minutes} min` }),
-      el('div.today-week__days', { 'aria-label': 'Training this calendar week' }, weekTraining.map((item) => {
-        const date = parseDate(item.date)
-        const trained = item.stats.workingSets > 0 || item.stats.sessions > 0
-        const today = item.date === realToday
-        const future = item.date > realToday
-        return el('div.today-week__day', {
-          dataset: { trained: String(trained), today: String(today), future: String(future) },
-        }, [
-          el('span.today-week__dot', { 'aria-hidden': 'true' }),
-          el('span.today-week__dow', {
-            text: new Intl.DateTimeFormat(undefined, { weekday: 'narrow' }).format(date),
-          }),
-        ])
-      })),
+    const habits = [
+      ...allActivities.filter((a) => a.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(a.id)).map((a) => rowComplete(a)),
+      ...(weekActivities?.activities ?? []).filter((a) => !FUEL_ACTIVITY_IDS.has(a.id)).map((a) => rowComplete(a, a)),
+    ]
+    const habitDone = habits.filter(Boolean).length
+    const sessionGoal = weekProgram?.program?.days?.length ?? todayProgram?.program?.days?.length ?? 0
+    const sleep = averageSleepForWeek(dayLogs, weekTraining.map((item) => item.date))
+    const first = parseDate(weekTraining[0]?.date ?? weekStart(selectedDate))
+    const last = parseDate(weekTraining[6]?.date ?? addDays(weekStart(selectedDate), 6))
+    const month = (date) => new Intl.DateTimeFormat(undefined, { month: 'short' }).format(date)
+    const range = month(first) === month(last)
+      ? `${month(first)} ${first.getDate()}–${last.getDate()}`
+      : `${month(first)} ${first.getDate()} – ${month(last)} ${last.getDate()}`
+
+    const goalBar = (label, current, target, tone) => el('div.week-dashboard__goal', {}, [
+      el('div.week-dashboard__goal-label', {}, [
+        el('span', { text: label }),
+        el('strong', { text: target > 0 ? `${current} / ${target}` : `${current} logged` }),
+      ]),
+      el('div.week-dashboard__goal-track', {
+        role: 'progressbar', 'aria-label': label,
+        'aria-valuemin': '0', 'aria-valuemax': String(Math.max(target, 1)),
+        'aria-valuenow': String(Math.min(current, Math.max(target, 1))),
+      }, [el('span', { className: 'week-dashboard__goal-fill', dataset: { tone },
+        style: `width:${target > 0 ? percent(current, target) : 0}%` })]),
+    ])
+    const snapshot = (value, label, caption) => el('div.week-dashboard__stat', {}, [
+      el('strong', { text: value }),
+      el('span', { text: label }),
+      el('small', { text: caption }),
+    ])
+
+    return el('section.today-card.today-week.today-week--unified', {
+      dataset: { section: 'week' }, 'aria-label': 'Weekly training and wellness overview',
+    }, [
+      el('div.week-dashboard__heading', {}, [
+        el('div', {}, [
+          el('span.week-dashboard__eyebrow', { text: 'THIS WEEK' }),
+          el('h2.week-dashboard__title', { text: range }),
+        ]),
+        el('small', { text: 'Select a day to review' }),
+      ]),
+      el('div.today-week__days', { 'aria-label': 'Completed workouts this week' },
+        weekTraining.map((item) => {
+          const date = parseDate(item.date)
+          const trained = number(item.stats.sessions) > 0
+          const isToday = item.date === realToday
+          const selected = item.date === selectedDate
+          const future = item.date > realToday
+          return el('button.today-week__day', {
+            type: 'button',
+            dataset: { trained: String(trained), today: String(isToday),
+              selected: String(selected), future: String(future) },
+            'aria-pressed': String(selected),
+            'aria-label': `${dateLabel(item.date)}: ${trained ? 'workout completed' : 'no completed workout recorded'}`,
+            onclick: () => selectDate(item.date),
+          }, [
+            el('span.today-week__dow', {
+              text: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date),
+            }),
+            el('strong.today-week__num', { text: String(date.getDate()) }),
+            el('span.today-week__workout-icon', { 'aria-hidden': 'true' },
+              trained ? [icon('nav-train')] : []),
+          ])
+        })),
+      el('div.week-dashboard__content', {}, [
+        el('section.week-dashboard__goals', { 'aria-label': 'Goal tracking' }, [
+          el('h3', { text: 'GOAL TRACKING' }),
+          goalBar('Sessions', totals.sessions, sessionGoal, 'sessions'),
+          goalBar('Habits', habitDone, habits.length, 'habits'),
+        ]),
+        el('section.week-dashboard__summary', { 'aria-label': 'Weekly totals and averages' }, [
+          el('h3', { text: 'WEEKLY TOTALS & AVERAGES' }),
+          el('div.week-dashboard__stats', {}, [
+            snapshot(String(totals.sets), 'Working sets', 'Total logged'),
+            snapshot(`${Math.round(totals.minutes)} min`, 'Training time', 'Total logged'),
+            snapshot(sleep.average === null ? '—' : `${sleep.average.toFixed(1)} h`,
+              'Average sleep', sleep.nights ? `${sleep.nights} night${sleep.nights === 1 ? '' : 's'} logged` : 'No nights logged'),
+          ]),
+        ]),
+      ]),
     ])
   }
 
@@ -1226,69 +1303,6 @@ export function createTodayScreen({
   }
 
 
-  function overviewHero(allActivities) {
-    const sessions=weekTraining.reduce((total,x)=>total+(x.stats.sessions||0),0)
-    const sets=weekTraining.reduce((total,x)=>total+(x.stats.workingSets||0),0)
-    const minutes=weekTraining.reduce((total,x)=>total+(x.stats.minutes||0),0)
-    const habits=[
-      ...allActivities.filter(a=>a.cadence==='daily'&&!FUEL_ACTIVITY_IDS.has(a.id)).map(a=>rowComplete(a)),
-      ...(weekActivities?.activities??[]).filter(a=>!FUEL_ACTIVITY_IDS.has(a.id)).map(a=>rowComplete(a,a)),
-    ]
-    const done=habits.filter(Boolean).length
-    const goal=weekProgram?.program?.days?.length??todayProgram?.program?.days?.length??0
-    const sessionPercent=goal>0?percent(sessions,goal):0
-    const habitPercent=habits.length?percent(done,habits.length):0
-    const calorieGoal=goalFor(allActivities,'calories_logged',2100)
-    const calories=number(day?.day?.calories)
-    const sleep=number(day?.day?.sleepHours,NaN)
-    const ns='http://www.w3.org/2000/svg'
-    const rings=document.createElementNS(ns,'svg')
-    rings.setAttribute('viewBox','0 0 160 160')
-    rings.setAttribute('role','img')
-    rings.setAttribute('aria-label','Daily habits '+done+' of '+habits.length+(goal>0?', sessions '+sessions+' of '+goal:''))
-    for(const [r,kind,rate] of [[68,'habits',habitPercent],[47,'sessions',sessionPercent]]) {
-      for(const track of [true,false]) {
-        const circle=document.createElementNS(ns,'circle')
-        const length=2*Math.PI*r
-        const attrs={cx:80,cy:80,r,fill:'none','stroke-width':r===68?9:12,
-          class:'today2__circle today2__circle--'+kind+(track?' today2__circle--track':''),
-          transform:'rotate(-90 80 80)'}
-        if(!track){attrs['stroke-dasharray']=length;attrs['stroke-dashoffset']=length*(1-rate/100)}
-        for(const [key,val] of Object.entries(attrs))circle.setAttribute(key,String(val))
-        rings.append(circle)
-      }
-    }
-    const bar=(name,current,target) => el('div.today2__barline',{},[
-      el('span',{text:name}),
-      el('div.today2__bartrack',{role:'progressbar','aria-label':name,
-        'aria-valuemin':'0','aria-valuemax':String(target),
-        'aria-valuenow':String(current)},[
-        el('i',{style:'width:'+percent(current,target)+'%'})]),
-      el('small',{text:target>0?(Math.round(current)+' / '+Math.round(target)):(Math.round(current)+' logged')}),
-    ])
-    return el('section.today2__hero',{'aria-label':'Your week at a glance'},[
-      el('div.today2__metrics',{},[
-        el('div.today2__metric',{},[
-          el('small',{text:'THIS WEEK'}),
-          el('strong',{text:String(sessions)}),
-          el('span',{text:'Sessions logged'}),
-        ]),
-        el('div.today2__metric.today2__metric--blue',{},[
-          el('small',{text:'THIS WEEK'}),
-          el('strong',{text:String(sets)}),
-          el('span',{text:'Working sets'}),
-        ]),
-      ]),
-      el('div.today2__rings',{},[rings,el('span.today2__rings-caption',{text:'HABITS  /  TRAINING'})]),
-      el('div.today2__bars',{},[
-        bar('Sessions',sessions,goal),
-        bar('Habits',done,habits.length),
-        bar('Calories',calories,calorieGoal),
-        el('div.today2__subline',{text:minutes+' min trained this week · Sleep '+(Number.isFinite(sleep)?sleep.toFixed(1)+'h':'—')}),
-      ]),
-    ])
-  }
-
   function scrollSection(section) {
     const node=root.querySelector('[data-section="'+section+'"]')
     node?.scrollIntoView({behavior:'smooth',block:'start'})
@@ -1323,8 +1337,7 @@ export function createTodayScreen({
         actionPills(),
       ]),
       yesterdayNutritionReminder(),
-      weekCard(),
-      overviewHero(allActivities),
+      weekCard(allActivities),
       el('div.today-dashboard', {}, [
         el('div.today-dashboard__overview', {}, [
           sessionCard(),

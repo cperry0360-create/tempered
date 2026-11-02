@@ -336,3 +336,82 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tabs {
   box-sizing:border-box;
   padding-inline-start:10px;
 }
+
+
+/* Today unified week: completed-workout rail glyph + goals without duplicate KPI counts. */
+.today--fuel-style .today-week--unified {
+  position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);
+  gap:15px;padding:16px 18px;overflow:hidden;
+  border:1px solid rgba(97,168,229,.40);border-radius:20px;
+  background:linear-gradient(132deg,rgba(22,52,79,.96),rgba(5,25,46,.98) 64%,rgba(21,42,66,.96));
+  box-shadow:0 8px 34px rgba(0,0,0,.12),inset 0 1px 0 rgba(180,223,255,.08);
+}
+.today--fuel-style .today-week--unified::before {
+  content:"";position:absolute;inset:0 0 auto;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,#ef4054 0%,#329ff0 16%,#308fd4 80%,transparent 100%);
+}
+.today--fuel-style .week-dashboard__heading {display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.today--fuel-style .week-dashboard__heading>div {display:grid;gap:2px}
+.today--fuel-style .week-dashboard__eyebrow,
+.today--fuel-style .week-dashboard__content h3 {font-size:10px;font-weight:800;letter-spacing:.14em;color:#99bbd8}
+.today--fuel-style .week-dashboard__heading h2.week-dashboard__title {font-size:22px;line-height:1.1;letter-spacing:-.02em;color:#f5faff;font-weight:850}
+.today--fuel-style .week-dashboard__heading>small {color:#9eb9cd;font-size:11px;text-align:right}
+.today--fuel-style .today-week--unified .today-week__days {grid-column:auto;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.today--fuel-style .today-week--unified .today-week__day {
+  appearance:none;border:1px solid rgba(104,169,219,.23);border-radius:13px;
+  background:rgba(8,35,60,.56);color:#f2f8ff;cursor:pointer;
+  display:grid;grid-template-rows:auto auto 23px;justify-items:center;align-content:center;
+  gap:3px;min-width:0;min-height:77px;padding:8px 2px;position:relative;
+}
+.today--fuel-style .today-week--unified .today-week__day[data-selected='true'] {
+  border-color:#35b8fc;background:linear-gradient(160deg,rgba(26,107,164,.7),rgba(7,56,97,.9));
+  box-shadow:0 0 13px rgba(47,161,245,.20),inset 0 0 9px rgba(31,134,232,.12);
+}
+.today--fuel-style .today-week--unified .today-week__day[data-today='true']::before {
+  content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:4px;background:#ef4054;
+}
+.today--fuel-style .today-week--unified .today-week__dow {font-size:10px;font-weight:770;color:#bdd3e4;text-transform:uppercase}
+.today--fuel-style .today-week--unified .today-week__num {font-size:22px;line-height:1.05;font-weight:820;color:#fff;font-variant-numeric:tabular-nums}
+.today--fuel-style .today-week--unified .today-week__workout-icon {display:grid;place-items:center;height:23px;width:100%}
+.today--fuel-style .today-week--unified .today-week__workout-icon .icon {
+  width:21px;height:21px;color:#f5faff;stroke:none;filter:drop-shadow(0 0 3px rgba(51,177,255,.62));
+}
+.today--fuel-style .today-week--unified .today-week__day[data-future='true'] {opacity:.62}
+.today--fuel-style .week-dashboard__content {
+  display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:21px;
+  border-top:1px solid rgba(114,181,226,.25);padding-top:16px;min-width:0;
+}
+.today--fuel-style .week-dashboard__content h3 {margin:0 0 15px;line-height:1.2}
+.today--fuel-style .week-dashboard__goals {display:grid;align-content:start;gap:16px;min-width:0}
+.today--fuel-style .week-dashboard__goals h3 {margin:0 0 -2px}
+.today--fuel-style .week-dashboard__goal {display:grid;gap:9px;min-width:0}
+.today--fuel-style .week-dashboard__goal-label {display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:#f5faff;font-weight:750}
+.today--fuel-style .week-dashboard__goal-label strong {font-size:14px;color:#f5faff;font-weight:800;font-variant-numeric:tabular-nums}
+.today--fuel-style .week-dashboard__goal-track {height:9px;border-radius:99px;background:#173954;overflow:hidden}
+.today--fuel-style .week-dashboard__goal-fill {display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#209dea,#5dc6ff)}
+.today--fuel-style .week-dashboard__goal-fill[data-tone='habits'] {background:linear-gradient(90deg,#2b80c6,#8cbfed)}
+.today--fuel-style .week-dashboard__summary {min-width:0;padding-left:19px;border-left:1px solid rgba(114,181,226,.25)}
+.today--fuel-style .week-dashboard__stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.today--fuel-style .week-dashboard__stat {min-width:0;display:grid;align-content:start;gap:5px;padding:10px 11px;border:1px solid rgba(111,172,218,.27);border-radius:13px;background:rgba(19,58,86,.55)}
+.today--fuel-style .week-dashboard__stat::before {content:"";width:24px;height:3px;background:#43b4f6;border-radius:9px;margin-bottom:4px}
+.today--fuel-style .week-dashboard__stat:last-child::before {background:#f04453}
+.today--fuel-style .week-dashboard__stat strong {font-size:clamp(19px,2.6vw,29px);line-height:1.1;color:#fff;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.03em}
+.today--fuel-style .week-dashboard__stat span {font-size:11px;font-weight:720;color:#ecf6ff}
+.today--fuel-style .week-dashboard__stat small {font-size:10px;line-height:1.35;color:#9fbad0}
+@media(max-width:690px){
+  .today--fuel-style .today-week--unified {padding:12px;gap:13px}
+  .today--fuel-style .today-week--unified .today-week__days {gap:4px}
+  .today--fuel-style .today-week--unified .today-week__day {min-height:68px;padding:5px 1px;border-radius:10px}
+  .today--fuel-style .today-week--unified .today-week__num {font-size:18px}
+  .today--fuel-style .today-week--unified .today-week__workout-icon .icon {width:19px;height:19px}
+  .today--fuel-style .week-dashboard__content {grid-template-columns:minmax(0,1fr);gap:16px}
+  .today--fuel-style .week-dashboard__summary {padding:15px 0 0;border-left:0;border-top:1px solid rgba(114,181,226,.25)}
+  .today--fuel-style .week-dashboard__stats {gap:6px}
+  .today--fuel-style .week-dashboard__stat {padding:9px 7px}
+  .today--fuel-style .week-dashboard__stat strong {font-size:clamp(19px,5vw,24px)}
+  .today--fuel-style .week-dashboard__stat span {font-size:10px}
+  .today--fuel-style .week-dashboard__stat small {font-size:9px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .today--fuel-style .today-week--unified .today-week__day {transition:background .18s ease,border-color .18s ease}
+}

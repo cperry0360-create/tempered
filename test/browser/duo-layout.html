@@ -88,11 +88,11 @@ check(label + ' content is padded clear of the floating icons',
         await new Promise(resolve => setTimeout(resolve,150));await settle()
         check(label+' ordinary tap navigates once despite pointerup plus click',shown===1,'events='+shown)
         w.removeEventListener('tempered:screen-shown',listener)
-        const progress=q('[data-tab="history"]'),rect=progress.getBoundingClientRect()
+        const progress=q('[data-tab="history"]'),progressRect=progress.getBoundingClientRect()
         let progressShown=0
         const watch=e=>{if(e.detail?.tab==='history')progressShown++}
         w.addEventListener('tempered:screen-shown',watch)
-        progress.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:111,button:0,clientY:rect.top+rect.height/2}))
+        progress.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
         await new Promise(resolve=>setTimeout(resolve,720))
         const expandedRail=q('.tabbar__tabs'), expandedBounds=rect(expandedRail)
         check(label+' long press grows the glass vessel LEFT without clipping',
@@ -110,7 +110,7 @@ check(label + ' content is padded clear of the floating icons',
               && ['Today','Train','Fuel','Progress'].includes(caption.textContent.trim())
           })
           && w.getComputedStyle(q('[data-tab="history"]')).transform!=='none')
-        progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:rect.top+rect.height/2}))
+        progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
         progress.click()
         await new Promise(resolve=>setTimeout(resolve,140));await settle()
         check(label+' held glass icon navigates once and consumes follow-up click',progressShown===1,'events='+progressShown)

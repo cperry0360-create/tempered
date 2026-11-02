@@ -25,7 +25,7 @@ const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
-  let working=false, undo=null, status='', pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
+  let working=false, undo=null, errorMessage='', errorTimer=null, pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
   let weightGoalOpen=false,weightGoalValue='',weightGoalError=''
   let customWaterOpen=false,customWaterValue='',customWaterError='',customWaterSaving=false
@@ -67,7 +67,27 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     node.append(el('span.fn2__thumb-icon',{},[icon('food')]))
     return node
   }
-  function notify(text){status=text;const node=root.querySelector('[data-food2-notice]');if(node)node.textContent=text}
+  // Successful saves are already apparent in the new totals. Reserve the
+  // notification strip for unexpected errors, which disappear automatically.
+  function clearError() {
+    if(errorTimer)clearTimeout(errorTimer)
+    errorTimer=null
+    errorMessage=''
+    const node=root.querySelector('[data-food2-status]')
+    if(node)node.textContent=''
+  }
+  function showError(text) {
+    clearError()
+    errorMessage=text
+    const node=root.querySelector('[data-food2-status]')
+    if(node)node.textContent=text
+    errorTimer=setTimeout(()=>{
+      errorTimer=null
+      errorMessage=''
+      const current=root.querySelector('[data-food2-status]')
+      if(current)current.textContent=''
+    },4500)
+  }
   async function savePrefs(values) {
     const profile=(await storage.get('profile','profile'))??{id:'profile'}
     await storage.put('profile',{...profile,...values})
@@ -335,10 +355,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       await storage.put('dayLogs',{...day,mealPhotos:{...(day.mealPhotos??{}),[picked.id]:image}})
       sheet='';picked=null;pickedDate=null
       await refresh()
-      notify('Meal photo saved locally. It will be included in your backup.')
+      clearError()
     } catch(error) {
       const message=error instanceof Error?error.message:'Could not read that photo'
-      notify(message)
+      showError(message)
     } finally { working=false }
   }
   async function removeMealPhoto() {
@@ -351,8 +371,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       await storage.put('dayLogs',{...day,mealPhotos:photos})
       sheet='';picked=null;pickedDate=null
       await refresh()
-      notify('Photo removed from this meal.')
-    } catch { notify('Could not remove photo') }
+      clearError()
+    } catch { showError('Could not remove photo') }
     finally { working=false }
   }
   async function deletePicked() {
@@ -365,8 +385,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       sheet='';picked=null;pickedDate=null
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
-      notify('Meal deleted; Undo is available.')
-    }catch{notify('Could not delete meal')}finally{working=false}
+      clearError()
+    }catch{showError('Could not delete meal')}finally{working=false}
   }
   async function restore() {
     if(!undo)return
@@ -510,7 +530,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       servingFood=null;servingAmount=1;sheet='';view=origin
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
-      notify('Logged '+portionLabel(amount)+' serving'+(amount===1?'':'s')+'.')
+      clearError()
     }catch(error){
       const warning=activeOverlay?.querySelector('[data-serving-error]')
       if(warning)warning.textContent='Could not log this meal. Please try again.'
@@ -662,7 +682,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(name==='manual')requestAnimationFrame(()=>activeOverlay?.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
   }
   function closeSheet() {sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
-  function go(name){view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
+  function go(name){clearError();view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
   function render() {
     if(!data)return
     // Cancel the prior frame before replacing its SVG; the most recently
@@ -675,7 +695,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     activeOverlay=null
     replace(root,[
       ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():dashboard()),
-      el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
+      el('div.fn2__status',{role:'alert',dataset:{food2Status:'true'},text:errorMessage}),
     ])
     // Animate SVG-native wave geometry INSIDE the actual lifter paths.
     // Water updates immediately; only the paint moves over two seconds.
@@ -711,6 +731,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   async function refresh(){await load();render()}
   function deactivate(){
+    clearError()
     if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)
     waterWaveFrame=0
     sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;view='dashboard'

@@ -11,6 +11,8 @@ export async function installWeeklyRecapRuntime(context) {
   let destroyed = false
   let checkedReset = null
   const safe = manual => Boolean(context.app) && !context.setup && document.visibilityState !== 'hidden'
+    // Do not interrupt either the splash hold OR its closing animation.
+    && !document.querySelector('[data-lfms-launch]')
     && !document.querySelector('dialog[open], .session-sheet, .screen--session')
     && !document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')
     && (manual || !loadActiveSessionDraft())
@@ -37,6 +39,7 @@ export async function installWeeklyRecapRuntime(context) {
   document.addEventListener('visibilitychange', onForeground)
   window.addEventListener('tempered:native-foreground', onForeground)
   window.addEventListener('tempered:screen-shown', onForeground)
+  window.addEventListener('tempered:splash-finished', onForeground)
   window.addEventListener('tempered:open-weekly-recap', onManual)
   await check()
   return {
@@ -46,6 +49,7 @@ export async function installWeeklyRecapRuntime(context) {
       document.removeEventListener('visibilitychange', onForeground)
       window.removeEventListener('tempered:native-foreground', onForeground)
       window.removeEventListener('tempered:screen-shown', onForeground)
+      window.removeEventListener('tempered:splash-finished', onForeground)
       window.removeEventListener('tempered:open-weekly-recap', onManual)
       dialog?.close()
     },

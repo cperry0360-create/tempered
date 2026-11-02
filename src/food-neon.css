@@ -341,3 +341,75 @@
   .fn2__neo-other {font-size:13px;gap:8px}
   .fn2__neo-other .fn2__neo-symbol {width:20px;height:20px}
 }
+
+
+/* LFMS 0.66.22: Duo inner is 890 CSS pixels, not a desktop 1536px.
+   Use the five-column composition there too. The older 3-column breakpoint
+   made a 400px-tall card that obscured the rest of the food dashboard. */
+@media (min-width:811px) and (max-width:1100px) {
+  .fn2__neo {
+    padding:12px 11px 0;
+    border-radius:30px;
+    box-shadow:0 0 9px rgba(39,172,255,.48),-2px 0 12px rgba(255,47,79,.28);
+  }
+  .fn2__neo-body {
+    display:grid;
+    grid-template-columns:minmax(0,1.26fr) minmax(0,1.19fr) minmax(0,.72fr) minmax(0,1.59fr) minmax(0,.79fr);
+    grid-template-rows:minmax(0,200px);
+    align-items:center;
+    gap:0;
+    padding-bottom:8px;
+  }
+  .fn2__neo-body > :not(:last-child) {border-right:1px solid rgba(161,215,255,.28)}
+  .fn2__neo-body > .fn2__neo-target {border-right:1px solid rgba(161,215,255,.28)}
+  .fn2__neo-calorie {grid-column:1;grid-row:1;min-height:0;height:200px;padding:0 5px 0 0}
+  .fn2__neo-outline {width:100%;height:100%}
+  .fn2__neo-calorie-content {width:85%;gap:1px;padding:3px 0}
+  .fn2__neo-calorie-label {font-size:12px;gap:4px}
+  .fn2__neo-calorie-label svg {width:18px;height:18px}
+  .fn2__neo-calorie-value {font-size:clamp(29px,3.8vw,36px);line-height:1.05}
+  .fn2__neo-calorie-goal {font-size:10px}
+  .fn2__neo-calorie-rule {margin:4px auto}
+  .fn2__neo-calorie-stats strong {font-size:17px}
+  .fn2__neo-calorie-stats small {font-size:8px}
+  .fn2__neo-meals {grid-column:2;grid-row:1;display:grid;grid-template-columns:1fr;gap:5px;padding:0 6px}
+  .fn2__neo-meal {min-height:41px;grid-template-columns:18px minmax(0,1fr) auto;gap:4px;padding:3px 5px;border-radius:10px}
+  .fn2__neo-meal-icon {width:18px;height:20px}
+  .fn2__neo-meal-icon svg {width:18px;height:18px}
+  .fn2__neo-meal-copy strong {font-size:10px}
+  .fn2__neo-meal-copy small {font-size:9px}
+  .fn2__neo-meal-pct {font-size:10px;padding-left:3px}
+  .fn2__neo-target {grid-column:3;grid-row:1;display:grid;min-height:0;height:200px;padding:8px 5px;gap:10px;border-top:0}
+  .fn2__neo-target-top,.fn2__neo-target-bottom {gap:6px}
+  .fn2__neo-target span {font-size:9px;letter-spacing:0}
+  .fn2__neo-target-top strong {font-size:12px}
+  .fn2__neo-target-line {width:95%;height:1px}
+  .fn2__neo-target-bottom strong {font-size:11px;padding:5px;border-radius:9px}
+  .fn2__neo-nutrients {
+    grid-column:4;grid-row:1;
+    display:grid;align-content:center;gap:8px;
+    height:200px;min-height:0;padding:0 7px;
+    border-top:0;border-right:1px solid rgba(161,215,255,.28);
+  }
+  .fn2__neo-nutrient {gap:4px}
+  .fn2__neo-nutrient-head {gap:3px;flex-wrap:wrap;line-height:1.1}
+  .fn2__neo-nutrient-head strong {font-size:11px}
+  .fn2__neo-nutrient-count,.fn2__neo-nutrient-delta {font-size:9px}
+  .fn2__neo-meter {height:12px;gap:2px}
+  .fn2__neo-finish {
+    grid-column:5;grid-row:1;display:grid;place-items:center;
+    height:200px;min-height:0;padding:0 0 0 6px;border-top:0;
+  }
+  .fn2__neo-close {width:100%;max-width:100px;min-height:95px;gap:6px;padding:8px 4px;border-radius:15px}
+  .fn2__neo-check {width:30px;height:30px;border-width:2px}
+  .fn2__neo-check svg {width:20px;height:20px}
+  .fn2__neo-close strong {font-size:11px}
+  .fn2__neo-footer {min-height:43px}
+  .fn2__neo-other {font-size:12px;gap:6px}
+  .fn2__neo-other .fn2__neo-symbol {width:19px;height:19px}
+}
+/* Keep the extra Quick Log shortcut accessible via the top pill without its
+   redundant floating copy covering the red/blue reference card on Duo inner. */
+@media (min-width:811px) and (max-width:1100px) {
+  .fn2:has(.fn2__neo) > .fn2__float {display:none}
+}

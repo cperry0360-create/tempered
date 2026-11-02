@@ -1,0 +1,168 @@
+/* LFMS 0.66.23 — branded weekly recap.
+   The existing report and acknowledgments remain canonical and unchanged. */
+.weekly-recap {
+  --recap-bg:var(--food-v2-deep);
+  --recap-panel:var(--food-v2-panel);
+  --recap-raised:var(--food-v2-panel-2);
+  --recap-line:var(--food-v2-line);
+  --recap-ink:var(--food-v2-text);
+  --recap-muted:var(--food-v2-muted);
+  --recap-blue:var(--food-v2-blue);
+  --recap-sky:var(--food-v2-blue-light);
+  --recap-red:var(--lfms-launch-red);
+  display:block;
+  box-sizing:border-box;
+  width:min(612px,calc(100vw - 48px));
+  max-width:calc(100vw - 28px);
+  max-height:calc(100dvh - 42px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  margin:auto;
+  padding:0;
+  border:1px solid rgba(116,179,234,.42);
+  border-radius:24px;
+  color:var(--recap-ink);
+  color-scheme:dark;
+  background:
+    radial-gradient(ellipse 80% 170px at 22% -15%,rgba(34,121,197,.22),transparent),
+    var(--recap-bg);
+  box-shadow:0 30px 95px rgba(0,8,20,.72),0 0 23px rgba(30,134,224,.13);
+  overscroll-behavior:contain;
+  overflow-x:hidden;overflow-y:auto;
+  font-variant-numeric:tabular-nums;
+}
+.weekly-recap::backdrop {
+  background:rgba(1,11,25,.84);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+}
+.weekly-recap__header {
+  position:sticky;top:0;z-index:2;
+  box-sizing:border-box;min-width:0;
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:18px 22px 16px;
+  background:linear-gradient(180deg,var(--recap-bg),color-mix(in srgb,var(--recap-bg) 94%,transparent));
+  border-bottom:1px solid var(--recap-line);
+}
+.weekly-recap__header::before {
+  content:'';position:absolute;top:0;left:22px;right:22px;height:2px;
+  border-radius:0 0 8px 8px;
+  background:linear-gradient(90deg,var(--recap-red),var(--recap-blue) 56%,transparent);
+}
+.weekly-recap__brand {display:flex;align-items:center;gap:12px;min-width:0;}
+.weekly-recap__mark {width:36px;height:36px;object-fit:contain;flex:none;}
+.weekly-recap__heading {min-width:0;}
+.weekly-recap__eyebrow {
+  margin:0 0 5px;color:var(--recap-red);
+  font-weight:830;font-size:10px;letter-spacing:.15em;
+}
+.weekly-recap__header h1 {
+  margin:0;font-size:clamp(19px,3.5vw,26px);line-height:1.1;
+  letter-spacing:-.04em;color:var(--recap-ink);font-weight:850;
+}
+.weekly-recap .weekly-recap__done {
+  display:grid;place-items:center;flex:none;
+  min-height:44px;padding:0 18px;border-radius:100px;
+  border:1px solid rgba(121,197,255,.68);
+  color:var(--recap-ink);font-weight:780;font-size:13px;
+  background:linear-gradient(145deg,rgba(63,151,222,.28),rgba(10,47,86,.54));
+  box-shadow:inset 0 1px rgba(227,248,255,.16);
+}
+.weekly-recap__body {display:grid;gap:13px;padding:16px 20px 22px;min-width:0;}
+.weekly-recap__card {
+  position:relative;box-sizing:border-box;min-width:0;padding:17px 19px;
+  border:1px solid var(--recap-line);border-radius:18px;
+  background:linear-gradient(145deg,var(--recap-raised),var(--recap-panel));
+  box-shadow:inset 0 1px rgba(177,224,255,.07);
+}
+.weekly-recap__card--score {
+  border-color:color-mix(in srgb,var(--recap-blue) 55%,var(--recap-line));
+  background:radial-gradient(ellipse 65% 110% at 100% 0%,rgba(32,135,220,.17),transparent),var(--recap-panel);
+}
+.weekly-recap__kicker {
+  margin:0 0 6px;font-size:9px;letter-spacing:.14em;font-weight:870;
+  color:var(--recap-red);text-transform:uppercase;
+}
+.weekly-recap__card h2 {
+  margin:0 0 9px;color:var(--recap-ink);
+  font-size:clamp(16px,2.5vw,19px);font-weight:780;letter-spacing:-.025em;
+}
+.weekly-recap__card p {font-size:13px;line-height:1.5;margin:9px 0;color:var(--recap-ink);}
+.weekly-recap__scoreline {display:flex;align-items:baseline;flex-wrap:wrap;gap:11px;margin:4px 0 10px;}
+.weekly-recap__score {
+  color:var(--recap-sky);font-weight:890;
+  font-size:clamp(43px,7vw,59px);letter-spacing:-.055em;line-height:1;
+}
+.weekly-recap__grade {font-size:clamp(17px,3vw,22px);font-weight:810;color:var(--recap-ink);}
+.weekly-recap__score-track {
+  height:8px;overflow:hidden;border-radius:99px;
+  border:1px solid color-mix(in srgb,var(--recap-line) 85%,transparent);
+  background:color-mix(in srgb,var(--recap-bg) 77%,var(--recap-panel));
+}
+.weekly-recap__score-track span {
+  display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--recap-blue),var(--recap-sky));
+  box-shadow:0 0 9px rgba(61,166,255,.36);
+}
+.weekly-recap__card .weekly-recap__delta {
+  margin-top:9px;font-size:12px;color:var(--recap-muted);
+}
+.weekly-recap .weekly-recap__muted {color:var(--recap-muted);font-size:12px;}
+.weekly-recap__breakdown {margin-top:10px;border-top:1px solid var(--recap-line);}
+.weekly-recap__breakdown summary {
+  cursor:pointer;min-height:44px;display:flex;align-items:center;
+  padding:9px 0;font-size:12px;font-weight:780;
+  color:var(--recap-sky);
+}
+.weekly-recap__breakdown[open] summary {border-bottom:1px solid var(--recap-line);}
+.weekly-recap__component {margin:9px 0;border-bottom:1px solid var(--recap-line);padding-bottom:8px;}
+.weekly-recap__component-label {display:flex;justify-content:space-between;gap:10px;font-size:12px;}
+.weekly-recap__component-label strong {color:var(--recap-ink);}
+.weekly-recap__component-label span {color:var(--recap-sky);}
+.weekly-recap__stats {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
+.weekly-recap__stats > div {
+  display:grid;align-content:center;gap:4px;min-width:0;
+  border:1px solid var(--recap-line);
+  border-radius:13px;background:color-mix(in srgb,var(--recap-bg) 70%,var(--recap-panel));
+  padding:13px 9px;
+}
+.weekly-recap__stats strong {font-size:clamp(23px,3vw,32px);line-height:1;color:var(--recap-ink);font-weight:860;letter-spacing:-.04em;}
+.weekly-recap__stats span {font-size:11px;line-height:1.28;color:var(--recap-muted);}
+.weekly-recap__row {display:flex;align-items:center;justify-content:space-between;gap:11px;padding:10px 0;border-bottom:1px solid var(--recap-line);font-size:13px;}
+.weekly-recap__row:last-of-type {border-bottom:0;}
+.weekly-recap__row > span {color:var(--recap-ink);font-weight:680;}
+.weekly-recap__row div {text-align:right;}
+.weekly-recap__row strong {display:block;color:var(--recap-ink);font-size:13px;}
+.weekly-recap__row small {display:block;color:var(--recap-muted);font-size:10px;}
+.weekly-recap .weekly-recap__progress {
+  display:flex;align-items:center;justify-content:center;
+  width:100%;min-height:50px;padding:11px 15px;
+  border-radius:14px;border:1px solid var(--recap-blue);
+  background:linear-gradient(145deg,var(--recap-blue),color-mix(in srgb,var(--recap-blue) 73%,var(--recap-panel)));
+  color:var(--recap-bg);font-size:14px;font-weight:830;
+  box-shadow:0 5px 18px rgba(30,139,229,.23);
+}
+.weekly-recap button:focus-visible,.weekly-recap summary:focus-visible {
+  outline:2px solid var(--recap-sky);outline-offset:3px;
+}
+html[data-theme="light"] .weekly-recap {
+  --recap-bg:var(--bg);--recap-panel:var(--surface-1);
+  --recap-raised:var(--surface-2);--recap-line:var(--hairline);
+  --recap-ink:var(--text-1);--recap-muted:var(--text-2);
+  --recap-blue:var(--recovery-ink);--recap-sky:var(--recovery-ink);
+  --recap-red:color-mix(in srgb,var(--lfms-launch-red) 80%,black);
+  color-scheme:light;
+}
+@media(max-width:540px) {
+  .weekly-recap {width:calc(100vw - 24px);max-height:calc(100dvh - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border-radius:19px;}
+  .weekly-recap__header {padding:15px 14px 13px;gap:8px;}
+  .weekly-recap__header::before {left:14px;right:14px;}
+  .weekly-recap__brand {gap:7px;}
+  .weekly-recap__mark {width:29px;height:29px;}
+  .weekly-recap__eyebrow {font-size:9px;}
+  .weekly-recap__header h1 {font-size:20px;}
+  .weekly-recap .weekly-recap__done {padding:0 11px;min-height:44px;}
+  .weekly-recap__body {padding:12px 12px 16px;gap:10px;}
+  .weekly-recap__card {padding:14px 13px;border-radius:16px;}
+  .weekly-recap__stats {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .weekly-recap__stats > div {padding:11px;}
+}
+@media(prefers-reduced-motion:reduce) {.weekly-recap {scroll-behavior:auto;}}

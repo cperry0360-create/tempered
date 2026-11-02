@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="../../src/progress-next.css" />
   <link rel="stylesheet" href="../../src/lfms-finish.css" />
   <link rel="stylesheet" href="../../src/lfms-subscreen.css" />
+  <link rel="stylesheet" href="../../src/food-neon.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -570,6 +571,21 @@
       if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })
       document.activeElement?.blur()
       await settle()
+      if (view === 'food2-dashboard') {
+        const neo=mount.querySelector('[data-food-neon="true"]')
+        if(!neo || !neo.querySelector('.fn2__neo-close') ||
+            neo.querySelectorAll('.fn2__neo-meal').length!==4 ||
+            neo.querySelectorAll('.fn2__neo-nutrient').length!==4 ||
+            neo.querySelectorAll('.fn2__neo-perimeter-live').length!==4)
+          throw new Error('Neon Fuel reference is missing meal, ring, meter, or close-day pieces')
+        const rect=neo.getBoundingClientRect()
+        if(rect.left < -1 || rect.right > window.innerWidth+1)
+          throw new Error('Neon Fuel widget overflows the visual viewport')
+        for(const node of neo.querySelectorAll('.fn2__neo-close,.fn2__neo-other')) {
+          if(node.getBoundingClientRect().width<44 || node.getBoundingClientRect().height<44)
+            throw new Error('Neon Fuel action is below 44px accessibility target')
+        }
+      }
       if (!mount.firstElementChild) throw new Error('App did not render a surface')
       // Regression gate for the formerly gray/orange drill-down surfaces.
       // Compare computed palette tokens, not screenshots or hardcoded hex.

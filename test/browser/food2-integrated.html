@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="../../src/food-v2.css"/><link rel="stylesheet" href="../../src/food-v3.css"/>
 <link rel="stylesheet" href="../../src/food-next.css"/>
 <link rel="stylesheet" href="../../src/lfms-finish.css"/>
+<link rel="stylesheet" href="../../src/food-neon.css"/>
 </head><body><div id="app" class="app"></div>
 <script type="module">
 import {bootstrapHarness} from './harness.js'
@@ -36,20 +37,44 @@ try{
  await t.daily.logAt('2026-10-01','water',16)
  await t.app.show('fuel');await settle(260)
  check('Food 2.0 gated view boots without old card stack',!!q('[data-food-two="true"]')&&!q('.food-v2__energy'))
- check('calorie and protein values are canonical',q('.fn2__metrics')?.textContent.includes('480')&&q('.fn2__metrics')?.textContent.includes('39'))
+ check('calorie and protein values are canonical',q('.fn2__neo-calorie-value')?.textContent==='480'&&q('[data-macro="protein"]')?.textContent.includes('39 g'))
  const todayView=await t.daily.forDate(clock.today())
  const goals=[...(todayView.logged??[]),...(todayView.outstanding??[])]
  const goal=(id,fallback)=>Number(goals.find(x=>x.id===id)?.dailyCap)||fallback
- check('calorie and protein targets appear as absolute values beside percentages',
-   qa('.fn2__metric-goal').length===2
-   && qa('.fn2__metric-goal')[0]?.textContent==='Target: '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
-   && qa('.fn2__metric-goal')[1]?.textContent==='Target: '+Math.round(goal('protein_target',135)).toLocaleString()+' g')
+ check('Neon Fuel reads live calorie, protein targets and remaining amount',
+   q('.fn2__neo-calorie-goal')?.textContent==='of '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
+   && q('[data-macro="protein"]')?.textContent.includes(String(Math.round(goal('protein_target',135))))
+   && q('.fn2__neo-target-bottom')?.textContent.includes(String(Math.round(goal('calories_logged',2100)-480))))
  check('only Food Library, Quick Log and Meal History shortcuts remain',
    qa('.fn2__pills button').length===3
    && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Quick Log|Meal History')
  check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
- check('radii are actual progress rings',qa('.fn2__rings circle').length===4)
- check('seven date links and three macro bars',qa('.fn2__week button').length===7&&qa('.fn2__macro').length===3)
+ check('neon calorie frame draws four rounded progress segments',qa('.fn2__neo-perimeter-live').length===4)
+ check('neon meal allocation uses real timestamped entries, not invented shares',
+   qa('.fn2__neo-meal').length===4
+   && qa('.fn2__neo-meal')[1]?.textContent.includes('480 kcal')
+   && qa('.fn2__neo-meal')[1]?.textContent.includes('100%')
+   && qa('.fn2__neo-meal').filter(x=>x.textContent.includes('0 kcal')).length===3)
+ check('Close Day is inside the neon card, one real button, and Track Other remains present',
+   !!q('.fn2__neo [data-diary-finish-today]')
+   && qa('[data-diary-finish-today]').length===1
+   && !!q('.fn2__neo-other')&&!q('.fn2__inline-actions'))
+ const sheetRect=q('.fn2__neo').getBoundingClientRect()
+ check('neon panel fits app horizontal viewport and keeps primary actions accessible',
+   sheetRect.width>250 && sheetRect.left>=-1 && sheetRect.right<=innerWidth+1
+   && q('.fn2__neo-close').getBoundingClientRect().width>=44)
+
+ check('seven date links and four five-part macro bars',qa('.fn2__week button').length===7&&qa('.fn2__neo-nutrient').length===4&&qa('.fn2__neo-meter-segment').length===20)
+ const initialStatus=(await t.daily.dayLog('2026-10-01')).nutritionStatus
+ q('.fn2__neo-close').click();await settle(110)
+ check('red Close Day is canonical and toggles day status',
+   (await t.daily.dayLog('2026-10-01')).nutritionStatus==='complete'
+   && q('.fn2__neo-close')?.textContent.includes('Reopen Day'))
+ q('.fn2__neo-close').click();await settle(110)
+ check('reopening is reversible and does not alter calories',
+   (await t.daily.dayLog('2026-10-01')).nutritionStatus!=='complete'
+   && (await t.daily.dayLog('2026-10-01')).calories===480)
+
  check('water is canonical data, not sample data',q('.fn2__stat:nth-child(2)')?.textContent.includes('16 oz'))
  check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
  check('Macro Journal is on the main Food dashboard, below the summaries',

@@ -28,7 +28,7 @@ try {
     await new Promise((resolve,reject)=>{link.onload=resolve;link.onerror=()=>reject(new Error('stylesheet missing: '+path))})
   }
   check('Production loads the new deep-screen design layer last',
-    stylesheet.at(-2)==='./src/lfms-subscreen.css' && stylesheet.at(-1)==='./src/food-neon.css' &&
+    stylesheet.at(-3)==='./src/lfms-subscreen.css' && stylesheet.at(-2)==='./src/food-neon.css' && stylesheet.at(-1)==='./src/weekly-recap-next.css' &&
     getComputedStyle(document.documentElement).getPropertyValue('--lfms-accent-red').trim()!=='')
   const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,1,12))
   await storage.open()

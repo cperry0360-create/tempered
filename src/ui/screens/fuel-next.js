@@ -28,6 +28,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   let activeOverlay=null
   let weightGoalOpen=false,weightGoalValue='',weightGoalError=''
   let customWaterOpen=false,customWaterValue='',customWaterError='',customWaterSaving=false
+  // Keep the prior painted fill across dashboard re-renders, so additions rise smoothly.
+  let paintedWaterPercent=0
   const runtime=el('div.fn2__legacy-runtime')
 
   const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
@@ -162,6 +164,27 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ])
     }))
   }
+  function waterGoalFigure(amount, goal) {
+    const progress=pct(amount,goal)
+    const percent=Math.round(progress)
+    const from=Math.max(0,Math.min(100,paintedWaterPercent))
+    return el('div.fn2__water-figure',{
+      role:'meter',
+      'aria-label':'Water goal completion',
+      'aria-valuemin':'0','aria-valuemax':'100','aria-valuenow':String(percent),
+      'aria-valuetext':fmt(amount)+' of '+fmt(goal)+' oz logged, '+percent+'% of goal',
+      dataset:{waterGoalFigure:'true',waterPercent:String(percent)},
+    },[
+      el('div.fn2__water-figure-art',{'aria-hidden':'true'},[
+        el('span.fn2__water-figure-empty',{},[icon('nav-train')]),
+        el('span.fn2__water-figure-fill',{
+          dataset:{waterFigureFill:'true'},
+          style:'clip-path:inset('+(100-from)+'% 0 0 0)',
+        },[icon('nav-train')]),
+      ]),
+      el('span.fn2__water-figure-percent',{text:percent+'%'}),
+    ])
+  }
   function dashboard() {
     const day=data.day,ledger=nutritionLedger(day)
     const calories=n(day.calories),protein=n(day.proteinGrams),calGoal=target('calories_logged',2100),proGoal=target('protein_target',135)
@@ -209,8 +232,13 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ]),
         el('section.fn2__stat.fn2__stat--water',{},[
           el('h2',{},[icon('water'),' Water']),
-          el('strong',{text:fmt(day.waterOz)+' oz'}),
-          el('small',{text:'of '+fmt(target('water',120))+' oz goal'}),
+          el('div.fn2__water-top',{},[
+            el('div.fn2__water-readout',{},[
+              el('strong',{text:fmt(day.waterOz)+' oz'}),
+              el('small',{text:'of '+fmt(target('water',120))+' oz goal'}),
+            ]),
+            waterGoalFigure(n(day.waterOz),target('water',120)),
+          ]),
           el('div.fn2__water-actions',{},[
             ...[8,12,25].map(a=>el('button',{type:'button',onclick:()=>logWater(a)},['+'+a])),
             el('button.fn2__water-custom-toggle',{type:'button',
@@ -627,6 +655,19 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():dashboard()),
       el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
     ])
+    // Animate only the blue silhouette; actual water values update immediately.
+    // The previous percent stays as the starting position after any re-render.
+    const figure=root.querySelector('[data-water-goal-figure="true"]')
+    if(figure){
+      const fill=figure.querySelector('[data-water-figure-fill="true"]')
+      const percent=Number(figure.dataset.waterPercent)||0
+      paintedWaterPercent=percent
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          if(fill?.isConnected)fill.style.clipPath='inset('+(100-percent)+'% 0 0 0)'
+        })
+      })
+    }
     if(sheet) {
       activeOverlay=overlay()
       document.body.append(activeOverlay)

@@ -607,7 +607,7 @@
         if(a.width<90 || Math.abs(a.left-b.left)>2 || Math.abs(a.right-b.right)>2 ||
            a.right>innerWidth+1 || a.left<0 || (prev&&prev.right>a.left+1) ||
            (next&&next.left<a.right-1))
-          throw new Error('Meal History calendar picker overlaps arrows or escapes viewport')
+          throw new Error('Meal History calendar picker geometry: '+JSON.stringify({picker:[a.left,a.right,a.width],input:[b.left,b.right,b.width],prev:prev&&[prev.left,prev.right],next:next&&[next.left,next.right],viewport:innerWidth}))
         for(const row of mount.querySelectorAll('.fn2__meal-row')) {
           const a=row.querySelector('.fn2__meal-info')?.getBoundingClientRect()
           const b=row.querySelector('.fn2__meal-menu')?.getBoundingClientRect()

@@ -70,6 +70,14 @@ for (const page of pages) {
 // The interaction smoke test is specifically about phone hit-testing. Run it
 // again at the larger current-iPhone viewport because fixed bars/overlays can
 // be fine at one height and cover controls at another.
+// Check the unfolded Duo at a realistic landscape viewport: a single
+// movement's sets and rest controls must fit without whole-page scrolling.
+run('duo-session-cockpit.html @ 1120x650', process.execPath, [
+  'tools/verify-logging-speed.js',
+  '--page', 'test/browser/duo-session-cockpit.html',
+  '--window', '1120,650',
+])
+
 run('mobile-ui-smoke.html @ 430x932', process.execPath, [
   'tools/verify-logging-speed.js',
   '--page', 'test/browser/mobile-ui-smoke.html',

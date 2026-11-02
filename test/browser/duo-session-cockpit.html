@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" data-layout="duo">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover"/>
+  <title>LFMS Duo active workout cockpit acceptance</title>
+  <link rel="stylesheet" href="../../src/tokens.css"/>
+  <link rel="stylesheet" href="../../src/style.css"/>
+  <link rel="stylesheet" href="../../src/polish.css"/>
+  <link rel="stylesheet" href="../../src/mobile-fixes.css"/>
+  <link rel="stylesheet" href="../../src/calm.css"/>
+  <link rel="stylesheet" href="../../src/duo.css"/>
+  <link rel="stylesheet" href="../../src/workout-r5.css"/>
+  <link rel="stylesheet" href="../../src/lfms-subscreen.css"/>
+  <link rel="stylesheet" href="../../src/lfms-session-duo.css"/>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+import {bootstrapHarness} from './harness.js'
+import {createMemoryStorage} from '../../src/adapters/storage/memory-storage.js'
+import {fixedClock} from '../../src/adapters/clock/clock.js'
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+const q=s=>document.querySelector(s)
+try{
+  localStorage.clear()
+  const storage=createMemoryStorage()
+  await storage.open()
+  await storage.put('profile',{id:'profile',name:'Duo cockpit',setupComplete:true})
+  const clock=fixedClock(new Date(2026,10,2,18,0,0))
+  const app=await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'today'})
+  await wait(140)
+  const start=q('.today-workout__start')
+  check('Today offers workout launch',Boolean(start))
+  start?.click()
+  await wait(250)
+  const root=q('.screen--session')
+  check('active session rendered',Boolean(root))
+  check('no cardio finisher or optional HR zone card inside lifting session',!q('.screen--session .cardio-finisher'))
+  check('Duo session retains add movement and half-fold controls',
+    Boolean(q('.session-r5__add-movement')&&q('.session-layout-toggle')))
+  check('set inputs and completion buttons remain interactive',
+    Boolean(q('.screen--session .setrow__check')&&q('.screen--session input.setrow__num')))
+  const isWide=innerWidth>=740&&innerWidth>innerHeight
+  if(isWide&&root){
+    const stage=q('.session-r5__stage')?.getBoundingClientRect()
+    const log=q('.session-r5__log')?.getBoundingClientRect()
+    check('side-by-side exercise pages fit visible viewport',
+      Boolean(stage&&log&&stage.left<log.left&&stage.bottom<=innerHeight+2&&log.bottom<=innerHeight+2),
+      JSON.stringify({stage:stage&&[stage.top,stage.bottom],log:log&&[log.top,log.bottom],height:innerHeight}))
+    const sets=q('.session-r5__log .exercise[data-focused="true"]')
+    check('all default set rows visible without scrolling focused exercise',Boolean(sets&&sets.scrollHeight<=sets.clientHeight+3),
+      JSON.stringify({scrollHeight:sets?.scrollHeight,clientHeight:sets?.clientHeight}))
+  }
+  q('.screen--session .setrow__check')?.click()
+  await wait(120)
+  const rest=q('.session-restbar')
+  check('set completion opens rest timer with adjustment and skip',Boolean(rest&&rest.querySelectorAll('button').length===3))
+  if(isWide&&rest){
+    const log=q('.session-r5__log')?.getBoundingClientRect(),rect=rest.getBoundingClientRect()
+    check('rest dock aligned with the right exercise pane',Boolean(log&&Math.abs(rect.left-log.left)<=3&&Math.abs(rect.width-log.width)<=3),JSON.stringify({dock:[rect.left,rect.width],log:log&&[log.left,log.width]}))
+    check('rest dock stays inside the visual viewport',rect.bottom<=innerHeight+2&&rect.top>0)
+    check('rest timer uses LFMS panel styling',getComputedStyle(rest).backgroundImage.includes('gradient'))
+  }
+  rest?.querySelector('button:last-child')?.click()
+  await wait(90)
+  check('Skip still dismisses rest safely',!q('.session-restbar'))
+}catch(error){check('Duo cockpit harness',false,error?.stack??String(error))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'duo-session-cockpit',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

@@ -18,7 +18,7 @@ function dismissSplash() {
   // Resolve only AFTER the exit transition and DOM removal. A modal shown
   // during this interval can otherwise cover the LFMS splash artwork.
   splashDone = new Promise(resolve => {
-    const remaining = Math.max(0, 2600 - (performance.now() - splashStarted))
+    const remaining = Math.max(0, 3800 - (performance.now() - splashStarted))
     setTimeout(() => {
       if (!launch) { resolve(); return }
       launch.dataset.closing = 'true'

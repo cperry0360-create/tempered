@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="../../src/food-next.css"/>
 <link rel="stylesheet" href="../../src/lfms-finish.css"/>
 <link rel="stylesheet" href="../../src/food-neon.css"/>
+<link rel="stylesheet" href="../../src/food-log-polish.css"/>
 </head><body><div id="app" class="app"></div>
 <script type="module">
 import {bootstrapHarness} from './harness.js'
@@ -27,10 +28,13 @@ try{
  installCalorieAiRuntime()
  await t.app.show('fuel');await settle(110)
  q('.fn2__pills button:nth-child(2)')?.click();await settle(55)
- check('Quick Log new-user state is actionable and content-sized',
-   q('.fn2__sheet-body')?.textContent.includes('No saved meals yet')
-   && q('.fn2__sheet')?.getBoundingClientRect().height<window.innerHeight*0.65)
- q('.fn2__sheet-close')?.click();await settle(20)
+ check('Log opens the real meal-entry form rather than a recent-food popup',
+   !!q('.fn2__log-entry [data-nutrition-form]')
+   && !!q('.fn2__log-entry [data-entry="nutrition_description"]') && !q('.fn2__overlay'))
+ check('Favorites appears directly below the form even with no saved meals',
+   q('.fn2__log-favorites')?.textContent.includes('No favorites yet')
+   && Boolean(q('.fn2__log-entry')?.compareDocumentPosition(q('.fn2__log-favorites')) & Node.DOCUMENT_POSITION_FOLLOWING))
+ q('.fn2__title button')?.click();await settle(30)
  await t.daily.addNutrition('2026-09-29',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-29T08:40:00.000Z'})
  await t.daily.addNutrition('2026-09-30',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-30T08:40:00.000Z'})
  await t.daily.addNutrition('2026-10-01',{description:'Chicken and rice bowl',calories:480,protein:39,carbs:52,fat:12},{loggedAt:'2026-10-01T12:30:00.000Z'})
@@ -45,9 +49,9 @@ try{
    q('.fn2__neo-calorie-goal')?.textContent==='of '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
    && q('[data-macro="protein"]')?.textContent.includes(String(Math.round(goal('protein_target',135))))
    && q('.fn2__neo-target-bottom')?.textContent.includes(Math.round(goal('calories_logged',2100)-480).toLocaleString()))
- check('only Food Library, Quick Log and Meal History shortcuts remain',
+ check('Food Library, Log and Meal History shortcuts remain',
    qa('.fn2__pills button').length===3
-   && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Quick Log|Meal History')
+   && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Log|Meal History')
  check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
  check('calorie perimeter is one clockwise outline with four real meal arcs',
    qa('.fn2__neo-perimeter-live').length===4
@@ -93,14 +97,14 @@ try{
    qa('.fn2__macro-journal .fn2__meal-group').length===4
    && ['Breakfast','Lunch','Dinner','Snacks'].every(name=>q('.fn2__macro-journal')?.textContent.includes(name))
    && q('.fn2__macro-journal')?.textContent.includes('Chicken and rice bowl'))
- check('Glass controls retain the top Quick Log without a redundant floating overlay',
+ check('Glass controls retain top Log without a redundant floating overlay',
    getComputedStyle(q('.fn2__pills button')).backgroundImage.includes('linear-gradient')
    && qa('.fn2__pills button').length===3
-   && q('.fn2__pills button:nth-child(2)').textContent.includes('Quick Log')
+   && q('.fn2__pills button:nth-child(2)').textContent.trim()==='Log'
    && q('.fn2__pills button:nth-child(2)').getBoundingClientRect().height>=36
    && !q('.fn2__float')
    && !!q('.fn2__macro-journal-head button'))
- check('Quick Log remains directly actionable',!!q('.fn2__pills button:nth-child(2)'))
+ check('Log remains directly actionable',!!q('.fn2__pills button:nth-child(2)'))
  const todayRow=qa('.fn2__macro-journal .fn2__meal-row').find(r=>r.textContent.includes('Chicken and rice bowl'))
  todayRow?.querySelector('.fn2__meal-photo')?.click();await settle(60)
  check('Tapping meal thumbnail opens an actual photo picker',!!q('[data-food2-overlay="attach-photo"] input[type=file]'))
@@ -135,6 +139,9 @@ try{
 
  check('Food Library has no persistent cart and uses its full width',
    !q('.fn2__cart') && !!q('.fn2__library-list') && !!q('.fn2__food-results'))
+ const chosenFavorite=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))
+ chosenFavorite?.querySelector('.fn2__fav')?.click();await settle(45)
+ check('Favorites persist using existing profile preferences', (await storage.get('profile','profile')).food2Favorites?.length===1)
  const before=(await t.daily.dayLog('2026-10-01')).calories
  const yogurt=qa('.fn2__food-row').find(r=>r.textContent.includes('Greek yogurt'))
  yogurt?.querySelector('.fn2__add')?.click();await settle(50)
@@ -200,28 +207,23 @@ try{
  q('.fn2__history-today')?.click();await settle(50)
  check('Today returns to present without an old-style overlay',q('.fn2__history-date input')?.value==='2026-10-01'&&!q('[data-nutrition-screen]'))
  q('.fn2__pills button:nth-child(2)')?.click();await settle(80)
- check('Quick Log starts on the new quick choices instead of legacy menu',
-   q('.fn2__overlay')?.dataset.food2Overlay==='quick' && !!q('.fn2__quick-food'))
- check('Quick Log choices have LFMS borders, not white system default buttons',
-   Number.parseFloat(getComputedStyle(q('.fn2__quick-food')).borderTopWidth)===1
-   && getComputedStyle(q('.fn2__quick-food')).backgroundImage.includes('linear-gradient'))
- q('.fn2__sheet .fn2__primary')?.click();await settle(220)
- check('manual food entry mounts unchanged runtime and its paste action',!!q('[data-nutrition-form]')&&!!q('[data-calorie-ai="paste"]'))
- check('meal-photo link stays in the original runtime',q('[data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/')
- q('.fn2__sheet-close')?.click();await settle(30)
- check('Closing Quick Log returns to Meal History without data changes',!!q('.fn2__journal')&&!q('.fn2__overlay'))
- check('A Food modal is mounted above the scrollable page, not inside it',!document.body.dataset.food2Modal)
- // User regression: while Quick Log is open, taps and scroll gestures must
- // not scroll the page behind it; closing restores normal scrolling.
- const scrolling=q('.app__body')
- q('.fn2__pills button:nth-child(2)')?.click();await settle(85)
- check('Food sheets portal outside the scrollable pane',q('.fn2__overlay')?.parentElement===document.body)
- check('Food sheet freezes underlying page scrolling',document.body.dataset.food2Modal==='true'
-   && getComputedStyle(scrolling).overflowY==='hidden'
-   && getComputedStyle(q('.fn2__sheet-body')).overflowY==='auto')
+ check('Log opens the original meal form and import/photo actions without a popup',
+   !!q('.fn2__log-entry [data-nutrition-form]')
+   && !!q('.fn2__log-entry [data-calorie-ai="paste"]')
+   && q('.fn2__log-entry [data-calorie-ai="prompt"]')?.getAttribute('href')==='https://chatgpt.com/'
+   && !q('.fn2__overlay'))
+ check('Favorite Greek yogurt appears below Log form',
+   q('.fn2__log-favorite')?.textContent.includes('Greek yogurt')
+   && Boolean(q('.fn2__log-entry')?.compareDocumentPosition(q('.fn2__log-favorites')) & Node.DOCUMENT_POSITION_FOLLOWING))
+ check('Log is a scrollable page instead of a modal',
+   !document.body.dataset.food2Modal && getComputedStyle(q('.app__body')).overflowY!=='hidden')
+ q('.fn2__log-favorite')?.click();await settle(65)
+ check('Favorite opens the same canonical serving picker',q('.fn2__overlay')?.dataset.food2Overlay==='serving' && !!q('[data-serving-submit]'))
  q('.fn2__sheet-close')?.click();await settle(40)
- check('Closing a sheet restores page scrolling',!document.body.dataset.food2Modal
-   && getComputedStyle(scrolling).overflowY!=='hidden')
+ check('Cancelling keeps Log visible without changing totals',
+   !!q('.fn2__log-entry')&&!q('.fn2__overlay') && (await t.daily.dayLog('2026-10-01')).calories===640)
+ q('.fn2__title button')?.click();await settle(35)
+ check('Back to Fuel returns to dashboard',!!q('.fn2__neo')&&!q('.fn2__overlay'))
  await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
  check('switching tabs does not replace stored food data',q('.fn2__neo-calorie-value')?.textContent==='640')
  // The user logged only HALF of a 200-kcal meal. Repeat must work from its

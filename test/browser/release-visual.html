@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="../../src/lfms-subscreen.css" />
   <link rel="stylesheet" href="../../src/food-neon.css" />
   <link rel="stylesheet" href="../../src/weekly-recap-next.css" />
+  <link rel="stylesheet" href="../../src/food-log-polish.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -584,6 +585,29 @@
           throw new Error('Weekly recap overflows viewport or safe region')
         if(document.querySelector('[data-lfms-launch]'))
           throw new Error('Weekly recap opens while LFMS splash exists')
+      }
+      if (view === 'food2-quicklog') {
+        const log=mount.querySelector('.fn2__log-entry')
+        const favorites=mount.querySelector('.fn2__log-favorites')
+        if(!log || !log.querySelector('[data-nutrition-form]') || !favorites ||
+           mount.querySelector('.fn2__overlay'))
+          throw new Error('Log must be a direct page with form first and Favorites beneath')
+        const a=log.getBoundingClientRect(),b=favorites.getBoundingClientRect()
+        if(b.top<a.bottom-2 || a.left<0 || a.right>innerWidth+1)
+          throw new Error('Log form and Favorites overlap or overflow')
+      }
+      if (view === 'food2-journal') {
+        const label=mount.querySelector('.fn2__history-date > span')
+        const input=mount.querySelector('.fn2__history-date input')
+        if(!label||!input)throw new Error('Meal History date selector missing')
+        const a=label.getBoundingClientRect(),b=input.getBoundingClientRect()
+        if(a.bottom+3>b.top || b.right>innerWidth+1 || b.left<0)
+          throw new Error('Meal History date caption overlaps the calendar input')
+        for(const row of mount.querySelectorAll('.fn2__meal-row')) {
+          const a=row.querySelector('.fn2__meal-info')?.getBoundingClientRect()
+          const b=row.querySelector('.fn2__meal-menu')?.getBoundingClientRect()
+          if(a&&b&&a.right>b.left+1)throw new Error('History food title collides with meal menu')
+        }
       }
       if (view === 'food2-dashboard') {
         const neo=mount.querySelector('[data-food-neon="true"]')

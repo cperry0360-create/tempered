@@ -67,10 +67,13 @@ check(label + ' content is padded clear of the floating icons',
       check(label + ' navigation uses matching, borderless custom SVG icons',
         q('.tabbar__tab[aria-current="page"]') !== null
         && r('.tabbar').width <= 48 + right + 1
-        && w.getComputedStyle(q('.tabbar__tab span')).clipPath === 'inset(50%)'
+        && w.getComputedStyle(q('.tabbar__tab span')).opacity === '0'
+        && [...d.querySelectorAll('.tabbar__tab')].length===4
         && [...d.querySelectorAll('.tabbar__tab')].every(node=>
           w.getComputedStyle(node).borderTopWidth==='0px'
-          && node.querySelector('svg')?.getAttribute('viewBox')==='0 0 24 24'))
+          && node.querySelector('svg')?.getAttribute('viewBox')==='0 0 24 24'
+          && node.querySelector('svg')?.dataset.customRailGlyph==='nav-'+(node.dataset.tab==='history'?'progress':node.dataset.tab))
+        && !q('[data-tab="history"] svg path')?.getAttribute('d')?.includes('M4.4 19.5v-6.6'))
       check(label + ' no horizontal overflow', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       const wide = width >= 740
       check(label + ' daily log uses its own column only when expanded', wide ? close(r('.today-daily-log').top, r('.today-session-card').top) && r('.today-daily-log').left > r('.today-session-card').right : r('.today-daily-log').top > r('.today-fuel-card').top)
@@ -85,16 +88,37 @@ check(label + ' content is padded clear of the floating icons',
         await new Promise(resolve => setTimeout(resolve,150));await settle()
         check(label+' ordinary tap navigates once despite pointerup plus click',shown===1,'events='+shown)
         w.removeEventListener('tempered:screen-shown',listener)
-        const progress=q('[data-tab="history"]'),rect=progress.getBoundingClientRect()
+        const progress=q('[data-tab="history"]'),progressRect=progress.getBoundingClientRect()
         let progressShown=0
         const watch=e=>{if(e.detail?.tab==='history')progressShown++}
         w.addEventListener('tempered:screen-shown',watch)
-        progress.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:111,button:0,clientY:rect.top+rect.height/2}))
-        await new Promise(resolve=>setTimeout(resolve,325))
-        progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:rect.top+rect.height/2}))
+        progress.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
+        await new Promise(resolve=>setTimeout(resolve,720))
+        const expandedRail=q('.tabbar__tabs'), expandedBounds=rect(expandedRail)
+        check(label+' long press grows the glass vessel LEFT without clipping',
+          expandedRail.dataset.holding==='true'
+          && expandedBounds.width>=107
+          && expandedBounds.right<=width+1
+          && expandedBounds.left>=0)
+        check(label+' long press reveals all four captions UNDER their custom art',
+          [...expandedRail.querySelectorAll('.tabbar__tab')].length===4
+          && [...expandedRail.querySelectorAll('.tabbar__tab')].every(tab=>{
+            const art=rect(tab.querySelector('svg')), caption=tab.querySelector('span'), cap=rect(caption)
+            return cap.top>=art.bottom-1
+              && w.getComputedStyle(caption).opacity==='1'
+              && w.getComputedStyle(caption).visibility==='visible'
+              && ['Today','Train','Fuel','Progress'].includes(caption.textContent.trim())
+          })
+          && w.getComputedStyle(q('[data-tab="history"]')).transform!=='none')
+        progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
         progress.click()
         await new Promise(resolve=>setTimeout(resolve,140));await settle()
         check(label+' held glass icon navigates once and consumes follow-up click',progressShown===1,'events='+progressShown)
+        await new Promise(resolve=>setTimeout(resolve,420))
+        check(label+' capsule animates back to icon-only compact size after release',
+          rect(q('.tabbar__tabs')).width<=50
+          && q('.tabbar__tabs').dataset.holding!=='true'
+          && w.getComputedStyle(q('.tabbar__tab span')).opacity==='0')
         w.removeEventListener('tempered:screen-shown',watch)
         q('[data-tab="train"]').click();await settle()
       }else{

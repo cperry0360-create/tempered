@@ -75,6 +75,24 @@ check(label + ' content is padded clear of the floating icons',
           && node.querySelector('svg')?.dataset.customRailGlyph==='nav-'+(node.dataset.tab==='history'?'progress':node.dataset.tab))
         && !q('[data-tab="history"] svg path')?.getAttribute('d')?.includes('M4.4 19.5v-6.6'))
       check(label + ' no horizontal overflow', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
+      const compactPadding=Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
+      const todayButton=q('[data-tab="today"]')
+      const todayBounds=todayButton.getBoundingClientRect()
+      todayButton.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:751,button:0,clientY:todayBounds.top+todayBounds.height/2}))
+      await new Promise(resolve=>setTimeout(resolve,730))
+      const holdingRect=r('.tabbar__tabs')
+      const contentEdge=r('.app__body').right - Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
+      check(label+' expanded rail reserves real space before Today cards, including safe insets',
+        q('.tabbar__tabs').dataset.holding==='true'
+        && contentEdge<=holdingRect.left-10
+        && r('.today-session-card').right<=holdingRect.left-8,
+        JSON.stringify({contentEdge,capsuleLeft:holdingRect.left,cardRight:r('.today-session-card').right}))
+      todayButton.dispatchEvent(new w.PointerEvent('pointercancel',{bubbles:true,pointerId:751}))
+      await new Promise(resolve=>setTimeout(resolve,430))
+      check(label+' cancellation returns reserved space without changing Today',
+        q('.tabbar__tabs').dataset.holding!=='true'
+        && q('[data-tab="today"]').dataset.active==='true'
+        && Math.abs(Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)-compactPadding)<2)
       const wide = width >= 740
       check(label + ' daily log uses its own column only when expanded', wide ? close(r('.today-daily-log').top, r('.today-session-card').top) && r('.today-daily-log').left > r('.today-session-card').right : r('.today-daily-log').top > r('.today-fuel-card').top)
       if(width===932 && right===0) {
@@ -87,6 +105,18 @@ check(label + ' content is padded clear of the floating icons',
         tapped.click()
         await new Promise(resolve => setTimeout(resolve,150));await settle()
         check(label+' ordinary tap navigates once despite pointerup plus click',shown===1,'events='+shown)
+        const trainDOM=q('.app__body > .screen'),trainScroll=q('.app__body').scrollTop
+        tapped.click();tapped.click()
+        await new Promise(resolve => setTimeout(resolve,120))
+        check(label+' tapping active Train twice never rebuilds cards or fires navigation',
+          shown===1 && trainDOM===q('.app__body > .screen')
+          && trainScroll===q('.app__body').scrollTop
+          && tapped.dataset.tap==='true',
+          JSON.stringify({shown,tab:tapped.dataset.tab,pulse:tapped.dataset.tap}))
+        check(label+' each tap provides liquid lens animation inside the capsule',
+          w.getComputedStyle(tapped,'::after').animationName.includes('lfms-rail-ripple')
+          && w.getComputedStyle(tapped,'::before').opacity==='1'
+          && Number.parseFloat(w.getComputedStyle(tapped,'::before').left)>=7)
         w.removeEventListener('tempered:screen-shown',listener)
         const progress=q('[data-tab="history"]'),progressRect=progress.getBoundingClientRect()
         let progressShown=0
@@ -99,7 +129,13 @@ check(label + ' content is padded clear of the floating icons',
           expandedRail.dataset.holding==='true'
           && expandedBounds.width>=107
           && expandedBounds.right<=width+1
-          && expandedBounds.left>=0)
+          && expandedBounds.left>=0
+          && r('.app__body').right-Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
+            <=expandedBounds.left-10)
+        check(label+' chosen Progress lens stays inset and brighter than unselected buttons',
+          w.getComputedStyle(progress,'::before').opacity==='1'
+          && Number.parseFloat(w.getComputedStyle(progress,'::before').left)>=7
+          && w.getComputedStyle(progress,'::before').boxShadow!=='none')
         check(label+' long press reveals all four captions UNDER their custom art',
           [...expandedRail.querySelectorAll('.tabbar__tab')].length===4
           && [...expandedRail.querySelectorAll('.tabbar__tab')].every(tab=>{

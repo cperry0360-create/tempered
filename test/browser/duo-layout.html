@@ -71,9 +71,24 @@ check(label + ' content is padded clear of the floating icons',
         && [...d.querySelectorAll('.tabbar__tab')].length===4
         && [...d.querySelectorAll('.tabbar__tab')].every(node=>
           w.getComputedStyle(node).borderTopWidth==='0px'
+          && node.querySelector('.tabbar__glyph')?.contains(node.querySelector('svg'))
+          && node.querySelector(':scope > span')?.textContent===node.dataset.label
           && node.querySelector('svg')?.getAttribute('viewBox')==='0 0 24 24'
           && node.querySelector('svg')?.dataset.customRailGlyph==='nav-'+(node.dataset.tab==='history'?'progress':node.dataset.tab))
         && !q('[data-tab="history"] svg path')?.getAttribute('d')?.includes('M4.4 19.5v-6.6'))
+      const activeTab=q('.tabbar__tab[aria-current="page"]')
+      const activeGlyph=activeTab?.querySelector('.tabbar__glyph')
+      const glyphArt=activeGlyph?.querySelector('svg')
+      const glyphRect=rect(activeGlyph), artRect=rect(glyphArt), tabRect=rect(activeTab)
+      check(label+' active circular lens is centered BEHIND the icon, not below it',
+        !!glyphRect && !!artRect && !!tabRect
+        && Math.abs((glyphRect.top+glyphRect.height/2)-(artRect.top+artRect.height/2))<2
+        && Math.abs((glyphRect.left+glyphRect.width/2)-(artRect.left+artRect.width/2))<2
+        && Math.abs((tabRect.left+tabRect.width/2)-(glyphRect.left+glyphRect.width/2))<2
+        && glyphRect.height>=36 && glyphRect.height<=40
+        && w.getComputedStyle(activeGlyph,'::before').opacity==='1'
+        && w.getComputedStyle(activeGlyph,'::before').top==='0px'
+        && w.getComputedStyle(activeTab,'::before').content==='none')
       check(label + ' no horizontal overflow', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       const compactPadding=Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
       const todayButton=q('[data-tab="today"]')
@@ -114,9 +129,9 @@ check(label + ' content is padded clear of the floating icons',
           && tapped.dataset.tap==='true',
           JSON.stringify({shown,tab:tapped.dataset.tab,pulse:tapped.dataset.tap}))
         check(label+' each tap provides liquid lens animation inside the capsule',
-          w.getComputedStyle(tapped,'::after').animationName.includes('lfms-rail-ripple')
-          && w.getComputedStyle(tapped,'::before').opacity==='1'
-          && Number.parseFloat(w.getComputedStyle(tapped,'::before').left)>=7)
+          w.getComputedStyle(tapped.querySelector('.tabbar__glyph'),'::after').animationName.includes('lfms-rail-ripple')
+          && w.getComputedStyle(tapped.querySelector('.tabbar__glyph'),'::before').opacity==='1'
+          && rect(tapped.querySelector('.tabbar__glyph')).width<rect(tapped).width)
         w.removeEventListener('tempered:screen-shown',listener)
         const progress=q('[data-tab="history"]'),progressRect=progress.getBoundingClientRect()
         let progressShown=0
@@ -133,9 +148,10 @@ check(label + ' content is padded clear of the floating icons',
           && r('.app__body').right-Number.parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
             <=expandedBounds.left-10)
         check(label+' chosen Progress lens stays inset and brighter than unselected buttons',
-          w.getComputedStyle(progress,'::before').opacity==='1'
-          && Number.parseFloat(w.getComputedStyle(progress,'::before').left)>=7
-          && w.getComputedStyle(progress,'::before').boxShadow!=='none')
+          w.getComputedStyle(progress.querySelector('.tabbar__glyph'),'::before').opacity==='1'
+          && rect(progress.querySelector('.tabbar__glyph')).width<=40
+          && rect(progress.querySelector('.tabbar__glyph')).width<rect(progress).width
+          && w.getComputedStyle(progress.querySelector('.tabbar__glyph'),'::before').boxShadow!=='none')
         check(label+' long press reveals all four captions UNDER their custom art',
           [...expandedRail.querySelectorAll('.tabbar__tab')].length===4
           && [...expandedRail.querySelectorAll('.tabbar__tab')].every(tab=>{
@@ -144,8 +160,9 @@ check(label + ' content is padded clear of the floating icons',
               && w.getComputedStyle(caption).opacity==='1'
               && w.getComputedStyle(caption).visibility==='visible'
               && ['Today','Train','Fuel','Progress'].includes(caption.textContent.trim())
+              && w.getComputedStyle(tab.querySelector('.tabbar__glyph')).height==='38px'
           })
-          && w.getComputedStyle(q('[data-tab="history"]'),'::before').opacity==='1')
+          && w.getComputedStyle(q('[data-tab="history"] .tabbar__glyph'),'::before').opacity==='1')
         progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
         progress.click()
         await new Promise(resolve=>setTimeout(resolve,140));await settle()

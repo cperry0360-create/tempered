@@ -1,0 +1,360 @@
+/* LFMS sub-screen semantic tokens keep the real Light/Auto/Dark preference.
+   Main LFMS dashboards deliberately retain their existing theme identity. */
+:root {
+  --lfms-sub-bg:var(--food-v2-deep);
+  --lfms-sub-panel:var(--food-v2-panel);
+  --lfms-sub-raised:var(--food-v2-panel-2);
+  --lfms-sub-line:var(--food-v2-line);
+  --lfms-sub-text:var(--food-v2-text);
+  --lfms-sub-muted:var(--food-v2-muted);
+  --lfms-sub-blue:var(--food-v2-blue);
+  --lfms-sub-blue-light:var(--food-v2-blue-light);
+  --lfms-sub-glow:var(--food-v2-beach-base);
+}
+:root[data-theme="light"] {
+  --lfms-sub-bg:var(--bg);
+  --lfms-sub-panel:var(--surface-1);
+  --lfms-sub-raised:var(--surface-2);
+  --lfms-sub-line:var(--hairline);
+  --lfms-sub-text:var(--text-1);
+  --lfms-sub-muted:var(--text-2);
+  --lfms-sub-blue:var(--recovery-ink);
+  --lfms-sub-blue-light:var(--recovery-ink);
+  --lfms-sub-glow:color-mix(in srgb,var(--recovery-ink) 13%,var(--surface-1));
+}
+:root[data-theme="light"] :is(
+  .screen--settings,.program-builder,.setup,.screen--summary,.screen--session,
+  .mobility-screen,.weekly-recap,.plate-calculator,.score-explain__sheet,
+  .quick-cardio,.health-paste-overlay,.nutrition-log-overlay
+) {
+  color-scheme:light;
+  --lfms-accent-red-soft:color-mix(in srgb,var(--lfms-launch-red) 78%,black);
+}
+
+/* LFMS 0.66.19 — shared deep-screen design system.
+ * This layer is deliberately visual. No storage, session, or form logic changes.
+ * Navy is the canvas; brand red is a punctuation mark, never the default CTA.
+ */
+:root {
+  --lfms-accent-red:var(--lfms-launch-red);
+  --lfms-accent-red-soft:color-mix(in srgb,var(--lfms-accent-red) 77%,white);
+  --lfms-accent-red-wash:color-mix(in srgb,var(--lfms-accent-red) 13%,transparent);
+  --lfms-panel-raised:color-mix(in srgb,var(--lfms-sub-raised) 90%,var(--lfms-sub-glow));
+}
+/* Override the legacy charcoal/orange design *only* for its older workflows.
+   New Today, Train, Fuel, Progress main screens keep their existing LFMS look. */
+:is(
+  .screen--settings,.program-builder,.setup,
+  .screen--summary,.screen--session,.mobility-screen,
+  .weekly-recap,.plate-calculator,.score-explain__sheet,
+  .quick-cardio,.health-paste-overlay,.nutrition-log-overlay
+) {
+  --bg:var(--lfms-sub-bg);
+  --surface-1:var(--lfms-sub-panel);
+  --surface-2:var(--lfms-sub-raised);
+  --surface-3:var(--lfms-sub-glow);
+  --hairline:var(--lfms-sub-line);
+  --text-1:var(--lfms-sub-text);
+  --text-2:var(--lfms-sub-muted);
+  --text-3:var(--lfms-sub-muted);
+  --text:var(--lfms-sub-text);
+  --train:var(--lfms-sub-blue);
+  --train-ink:var(--lfms-sub-blue-light);
+  --acid:var(--lfms-sub-blue);
+  --accent:var(--lfms-sub-blue);
+  --on-accent:var(--lfms-sub-bg);
+  --raised:var(--lfms-sub-raised);
+  --well:var(--lfms-sub-raised);
+  --edge:var(--lfms-sub-line);
+  --stone:var(--lfms-sub-line);
+  color-scheme:dark;
+  color:var(--lfms-sub-text);
+}
+.app__body:has(> :is(.screen--settings,.program-builder,.screen--summary,.screen--session,.setup)) {
+  background:var(--lfms-sub-bg);
+}
+:is(.screen--settings,.program-builder,.screen--summary,.setup) {
+  background:radial-gradient(ellipse 80% 250px at 45% -120px,var(--lfms-sub-glow),transparent 94%),var(--lfms-sub-bg);
+  color:var(--lfms-sub-text);
+  min-width:0;
+}
+:is(.screen--settings,.program-builder,.screen--summary,.setup) :is(h1,h2,h3,strong) {
+  color:var(--lfms-sub-text);
+}
+/* Settings: real sections instead of the old stack of charcoal rectangles. */
+.screen--settings {gap:14px;padding:clamp(13px,2vw,21px) clamp(12px,2vw,22px) max(70px,env(safe-area-inset-bottom));}
+.screen--settings > .screen__title {font-size:clamp(27px,3.5vw,39px);font-weight:850;letter-spacing:-.045em;display:flex;align-items:center;gap:10px;}
+.screen--settings > .screen__title::after {content:'';width:7px;height:7px;border-radius:50%;background:var(--lfms-accent-red);box-shadow:0 0 13px var(--lfms-accent-red-wash);}
+.screen--settings > .card {
+  min-width:0;padding:clamp(15px,2vw,22px);
+  border:1px solid var(--lfms-sub-line);
+  border-radius:21px;
+  background:linear-gradient(153deg,var(--lfms-panel-raised),var(--lfms-sub-panel));
+  box-shadow:0 7px 24px color-mix(in srgb,var(--lfms-sub-bg) 35%,transparent);
+}
+.screen--settings .block__title {display:flex;align-items:center;gap:9px;color:var(--lfms-sub-text);font-size:clamp(17px,2vw,22px);letter-spacing:-.025em;}
+.screen--settings .block__title::before {content:'';width:3px;height:16px;border-radius:3px;background:var(--lfms-accent-red);flex:none;}
+.screen--settings .block__hint {color:var(--lfms-sub-muted);line-height:1.55;}
+.screen--settings .setting {min-width:0;flex-wrap:wrap;gap:5px 12px;}
+.screen--settings .setting__label {color:var(--lfms-sub-muted);}
+.screen--settings .setting__value {color:var(--lfms-sub-text);}
+.screen--settings :is(.entry__value,.setup__weeklyselect) {
+  background:var(--lfms-sub-bg);border:1px solid var(--lfms-sub-line);
+  border-radius:12px;color:var(--lfms-sub-text);min-height:44px;
+}
+.screen--settings :is(.button,.setup__cadence) {
+  border:1px solid var(--lfms-sub-line);border-radius:13px;
+  background:var(--lfms-sub-raised);color:var(--lfms-sub-text);font-weight:720;
+  min-height:44px;
+}
+.screen--settings .button--primary {
+  background:var(--lfms-sub-blue);border-color:var(--lfms-sub-blue);
+  color:var(--lfms-sub-bg);
+}
+.screen--settings .button--danger {
+  background:var(--lfms-accent-red-wash);
+  color:var(--lfms-accent-red-soft);
+  border-color:color-mix(in srgb,var(--lfms-accent-red) 45%,var(--lfms-sub-line));
+}
+.screen--settings .appearance__choices {border:1px solid var(--lfms-sub-line);border-radius:13px;background:var(--lfms-sub-bg);}
+.screen--settings .appearance__choice {color:var(--lfms-sub-muted);border-radius:11px;}
+.screen--settings .appearance__choice:has(input:checked) {
+  color:var(--lfms-sub-text);
+  background:var(--lfms-sub-glow);
+  box-shadow:inset 0 -2px 0 var(--lfms-accent-red);
+}
+.screen--settings .duo-layout-setting {border-color:var(--lfms-sub-line);}
+.screen--settings .duo-layout-setting__toggle {accent-color:var(--lfms-sub-blue);}
+.screen--settings .notice {background:var(--lfms-sub-raised);border:1px solid var(--lfms-sub-line);color:var(--lfms-sub-text);}
+.screen--settings :is(a,.duo-layout-setting__help a) {color:var(--lfms-sub-blue-light);}
+
+/* Program Builder: preserve its two-pane editor, replace old gray widgets. */
+.program-builder {gap:15px;}
+.program-builder__eyebrow {color:var(--lfms-accent-red-soft);font-weight:800;letter-spacing:.1em;}
+.program-builder__title {font-weight:850;letter-spacing:-.05em;}
+.program-builder__copy,.program-builder__label {color:var(--lfms-sub-muted);}
+.program-builder__card {
+  min-width:0;border:1px solid var(--lfms-sub-line);
+  border-radius:20px;background:linear-gradient(150deg,var(--lfms-panel-raised),var(--lfms-sub-panel));
+  box-shadow:none;
+}
+.program-builder__back {color:var(--lfms-sub-blue-light);}
+.program-builder :is(.program-builder__input,.program-builder__small,select,input:not([type='checkbox'])) {
+  background:var(--lfms-sub-bg);color:var(--lfms-sub-text);
+  border:1px solid var(--lfms-sub-line);border-radius:11px;
+}
+.program-builder__day,.program-builder__exercise {
+  background:var(--lfms-sub-raised);border:1px solid var(--lfms-sub-line);
+  border-radius:13px;color:var(--lfms-sub-text);
+}
+.program-builder__day[data-selected='true'] {
+  background:color-mix(in srgb,var(--lfms-sub-blue) 17%,var(--lfms-sub-raised));
+  color:var(--lfms-sub-text);
+  border-color:var(--lfms-sub-blue);
+  box-shadow:inset 3px 0 0 var(--lfms-accent-red);
+}
+.program-builder .button {min-height:44px;border-radius:12px;border:1px solid var(--lfms-sub-line);background:var(--lfms-sub-raised);color:var(--lfms-sub-text);}
+.program-builder .button--primary {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);border-color:var(--lfms-sub-blue);}
+
+/* Mobility overlay: native-feeling blue cards, clear focus and a restrained red mark. */
+.mobility-screen-overlay {
+  background:var(--lfms-sub-bg);
+  color:var(--lfms-sub-text);
+}
+.mobility-screen {
+  background:radial-gradient(ellipse 90% 225px at 45% -90px,var(--lfms-sub-glow),transparent 92%),var(--lfms-sub-bg);
+}
+.mobility-screen__head span {color:var(--lfms-accent-red-soft);}
+.mobility-screen__back {background:var(--lfms-sub-raised);border:1px solid var(--lfms-sub-line);color:var(--lfms-sub-text);}
+.mobility-screen__hero,.mobility-flow,.mobility-screen__routine {
+  background:var(--lfms-sub-panel);
+  border:1px solid var(--lfms-sub-line);
+  border-radius:18px;color:var(--lfms-sub-text);
+}
+.mobility-screen__hero {background:linear-gradient(135deg,var(--lfms-panel-raised),var(--lfms-sub-panel));}
+.mobility-screen__hero-art {background:radial-gradient(circle at 30% 25%,var(--lfms-sub-glow),var(--lfms-sub-raised));border:1px solid var(--lfms-sub-line);}
+.mobility-screen__routine[data-selected='true'] {
+  background:color-mix(in srgb,var(--lfms-sub-blue) 15%,var(--lfms-sub-panel));
+  border-color:var(--lfms-sub-blue);
+  box-shadow:inset 3px 0 0 var(--lfms-accent-red);
+}
+.mobility-screen__routine-mark {color:var(--lfms-sub-blue-light);}
+.mobility-flow__steps li {border-color:var(--lfms-sub-line);}
+.mobility-flow__clock {color:var(--lfms-sub-blue-light);}
+.mobility-flow__timer {background:var(--lfms-sub-raised);color:var(--lfms-sub-text);border:1px solid var(--lfms-sub-line);}
+.mobility-flow__complete {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.mobility-screen :is(button,input,select):focus-visible {
+  outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px;
+}
+
+/* Workout completion, session details, setup and builder share the same vocabulary. */
+.screen--summary .summary-hero__eyebrow,.screen--summary .summary-records__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.screen--summary .summary-recap .stat,
+.screen--summary .summary-records {
+  background:var(--lfms-sub-panel);
+  border:1px solid var(--lfms-sub-line);
+  border-radius:19px;
+}
+.screen--summary .summary-actions {background:var(--lfms-sub-bg);border:1px solid var(--lfms-sub-line);}
+.screen--summary .summary-actions .button {
+  background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);border-radius:999px;
+}
+.screen--summary .summary-records .badge {color:var(--lfms-accent-red-soft);}
+.screen--session {background:var(--lfms-sub-bg);color:var(--lfms-sub-text);}
+.screen--session .session-r5__stage {
+  background:var(--lfms-sub-panel);border-color:var(--lfms-sub-line);
+}
+.screen--session .session-r5__progress-segment>span {background:var(--lfms-sub-blue);}
+.screen--session .session-r5__progress-segment[data-focused='true'] {outline-color:var(--lfms-accent-red);}
+.setup__kicker {color:var(--lfms-accent-red-soft);}
+.setup__card,.setup__program,.setup__cadencerow {
+  background:var(--lfms-sub-panel);border:1px solid var(--lfms-sub-line);
+  border-radius:18px;
+}
+.setup :is(.setup__input,.setup__weightinput,.setup__weeklyselect) {
+  background:var(--lfms-sub-raised);border:1px solid var(--lfms-sub-line);
+}
+.setup__choice,.setup__number,.setup__cadence {background:var(--lfms-sub-raised);color:var(--lfms-sub-muted);border:1px solid var(--lfms-sub-line);}
+.setup__choice[data-selected='true'],.setup__cadence[data-selected='true'],
+.setup__program[data-selected='true'] {border-color:var(--lfms-sub-blue);color:var(--lfms-sub-text);}
+.setup__number[data-selected='true'] {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.setup__next {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.setup__footer {background:var(--lfms-sub-bg);}
+
+/* Nested popovers: prevent any return to the old flat-gray panels. */
+.score-explain__sheet,.weekly-recap,.plate-calculator,.quick-cardio {
+  background:var(--lfms-sub-bg);color:var(--lfms-sub-text);
+}
+.score-explain__sheet :is(p,small),.weekly-recap__muted {color:var(--lfms-sub-muted);}
+.weekly-recap__header,.plate-calculator__header {background:var(--lfms-sub-bg);border-bottom:1px solid var(--lfms-sub-line);}
+.weekly-recap__eyebrow {color:var(--lfms-accent-red-soft);}
+.weekly-recap__card,.plate-calculator__modes,.quick-cardio {
+  background:var(--lfms-sub-panel);border:1px solid var(--lfms-sub-line);
+}
+.weekly-recap__score {color:var(--lfms-sub-blue-light);}
+.plate-calculator__modes button {color:var(--lfms-sub-muted);}
+.plate-calculator__modes button[aria-selected='true'] {background:var(--lfms-sub-glow);color:var(--lfms-sub-text);}
+.quick-cardio__eyebrow {color:var(--lfms-accent-red-soft);}
+.quick-cardio__progress-fill {background:var(--lfms-sub-blue);}
+.quick-cardio__save,.quick-cardio__pause {border-radius:13px;min-height:44px;}
+.quick-cardio__save {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.health-paste-overlay,.nutrition-log-overlay {background:var(--lfms-sub-bg);color:var(--lfms-sub-text);}
+.health-paste-overlay :is(input,textarea,select) {background:var(--lfms-sub-raised);color:var(--lfms-sub-text);border-color:var(--lfms-sub-line);}
+
+/* Red punctuation in the four existing modern tabs. Blue remains the action ink. */
+.today--fuel-style .today2__pills button:first-child .icon,
+.train--fuel-style .train-r4__eyebrow,
+.progress--fuel-style .progress-cut__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.progress--fuel-style .progress-cut__phase [data-progress='true'] {background:var(--lfms-accent-red);}
+:where(.screen--settings,.program-builder,.mobility-screen,.screen--summary,.setup)
+:is(button,input,select,textarea):focus-visible {
+  outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(.screen--settings,.program-builder,.mobility-screen,.screen--summary) * {scroll-behavior:auto;}
+}
+
+
+/* Remaining drill-ins: Training details, exercise selection and Progress logs.
+   These selectors are scoped to their modern parent so history/chart rules stay
+   intact while nested panels inherit the same blue-black material. */
+.train--fuel-style :is(
+  .train-r4__details,.train-r4__day-preview,.train-r4__rhythm-week,
+  .train-r4__routine-detail,.train-r4__exercise-preview,.libraryrow
+) {
+  background:var(--lfms-sub-panel);border-color:var(--lfms-sub-line);
+  color:var(--lfms-sub-text);
+}
+.train--fuel-style .train-r4__subheader {
+  background:var(--lfms-sub-bg);border-bottom:1px solid var(--lfms-sub-line);
+}
+.train--fuel-style .train-r4__program[data-active-program="true"] .train-r4__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.progress--fuel-style :is(
+  .progress-score-detail__row,.progress-session-detail,
+  .progress-log-row,.progress-lift,.progress-back
+) {
+  border-color:var(--lfms-sub-line);
+}
+.progress--fuel-style :is(.progress-score-detail__row,.progress-session-detail) {
+  background:var(--lfms-sub-panel);color:var(--lfms-sub-text);
+}
+.progress--fuel-style :is(.progress-log-row,.progress-lift) {
+  background:var(--lfms-sub-panel);
+}
+.progress--fuel-style .progress-cut__eyebrow {color:var(--lfms-accent-red-soft)}
+.progress--fuel-style .progress-back {color:var(--lfms-sub-blue-light)}
+
+/* Full-screen tools and their nested interactive rows. */
+.plate-calculator__plate-row button {
+  background:var(--lfms-sub-raised);color:var(--lfms-sub-text);
+  border:1px solid var(--lfms-sub-line);
+}
+.plate-calculator__modes button:focus-visible,
+.weekly-recap button:focus-visible,
+.quick-cardio button:focus-visible,
+.score-explain__sheet button:focus-visible {
+  outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px;
+}
+.score-explain__done {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg)}
+.setup :is(button,input,select):focus-visible,
+.screen--session :is(button,input,select):focus-visible {
+  outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px;
+}
+.screen--session .session-r5__eyebrow {color:var(--lfms-accent-red-soft)}
+/* Pure decoration: preserve actual training/calorie statuses and all form data. */
+
+
+/* Final drill-down exceptions caught by screenshot review: the old Train
+   prescription cards used global gray, and Lift Detail inherited orange ink. */
+.train--fuel-style .train-r4__day-preview {
+  background:var(--tr2-panel);
+  border:1px solid var(--tr2-line);
+  border-radius:14px;
+  color:var(--tr2-text);
+}
+.train--fuel-style .train-r4__day-preview :is(strong,h3) {color:var(--tr2-text);}
+.train--fuel-style .train-r4__day-preview :is(p,small) {color:var(--tr2-muted);}
+.train--fuel-style .train-r4__details {border-color:var(--tr2-line);}
+.progress--fuel-style .progress-lift-detail__chart .trend-chart {
+  color:var(--pr2-blue);
+}
+
+
+/* Confirmation, discard and custom-entry sheets are also drill-down UI.
+   Keep destructive choices unmistakable and the safe exit in primary blue. */
+.confirm-overlay {
+  background:color-mix(in srgb,var(--lfms-sub-bg) 84%,transparent);
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+}
+.confirm-sheet {
+  --surface-1:var(--lfms-sub-panel);
+  --surface-2:var(--lfms-sub-raised);
+  --text-1:var(--lfms-sub-text);
+  --text-2:var(--lfms-sub-muted);
+  --text-3:var(--lfms-sub-muted);
+  width:min(100%,520px);
+  padding:20px;border:1px solid var(--lfms-sub-line);
+  border-radius:22px 22px 18px 18px;
+  background:linear-gradient(150deg,var(--lfms-sub-raised),var(--lfms-sub-panel));
+  box-shadow:0 14px 36px color-mix(in srgb,var(--lfms-sub-bg) 38%,transparent);
+  color:var(--lfms-sub-text);
+}
+.confirm-sheet__title {font-weight:840;letter-spacing:-.035em;color:var(--lfms-sub-text);}
+.confirm-sheet__eyebrow {color:var(--lfms-accent-red-soft);font-weight:790;}
+.confirm-sheet__copy {color:var(--lfms-sub-muted);font-size:14px;line-height:1.5;}
+.confirm-sheet__actions .button {
+  min-height:48px;border-radius:13px;font-weight:780;
+}
+.confirm-sheet__keep {background:var(--lfms-sub-blue);border-color:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.confirm-sheet__discard {
+  background:var(--lfms-accent-red-wash);
+  border:1px solid var(--lfms-accent-red);
+  color:var(--lfms-accent-red-soft);
+}

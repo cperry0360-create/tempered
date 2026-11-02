@@ -80,7 +80,7 @@ jobs:
       - name: Capture required release surfaces
         run: node tools/capture-release-screens.js
       - name: Capture opt-in Duo cover and inner layouts
-        run: node tools/capture-release-screens.js --duo --views today,rail-expanded,train,food2-dashboard,food2-library,food2-serving,food2-journal,food2-quicklog,fuel,progress,progress-cut,settings,session,session-half-fold,session-half-fold-rest,program-builder,summary --output artifacts/duo-visuals
+        run: node tools/capture-release-screens.js --duo --views today,rail-expanded,train,train-program-details,train-library,food2-dashboard,food2-library,food2-serving,food2-journal,food2-quicklog,fuel,progress,progress-cut,progress-lift-detail,progress-score-explain,settings,settings-data,settings-reset,mobility,session,session-half-fold,session-half-fold-rest,program-builder,summary,health-review,train-routine,train-custom-exercise,program-custom-exercise,progress-log-detail,today-day-details,nutrition-meal,health-import,weekly-recap,plate-calculator-weight --output artifacts/duo-visuals
       - name: Preserve visual QA evidence
         uses: actions/upload-artifact@v4
         with:

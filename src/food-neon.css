@@ -47,6 +47,12 @@
 .fn2__neo-perimeter-separator {fill:none;stroke:rgb(4,21,41);stroke-width:15;stroke-linecap:butt;}
 .fn2__neo-perimeter-unassigned {fill:none;stroke:var(--neo-cyan);stroke-width:13;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(32,192,255,.78));}
 .fn2__neo-perimeter-live {stroke:var(--neo-cyan);filter:drop-shadow(0 0 5px rgba(32,192,255,.78));}
+/* Distinguish actual meal boundaries using only the approved LFMS blues. */
+.fn2__neo-perimeter-live[data-meal="breakfast"] {stroke:rgb(35,205,255)}
+.fn2__neo-perimeter-live[data-meal="lunch"] {stroke:rgb(25,161,248)}
+.fn2__neo-perimeter-live[data-meal="dinner"] {stroke:rgb(40,186,245)}
+.fn2__neo-perimeter-live[data-meal="snack"] {stroke:rgb(123,214,255)}
+
 .fn2__neo-calorie-content {
   position:relative;z-index:1;width:78%;display:grid;justify-items:center;
   align-content:center;gap:2px;padding:6px 0;white-space:nowrap;

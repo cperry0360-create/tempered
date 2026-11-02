@@ -419,3 +419,11 @@
 @media (min-width:811px) and (max-width:1100px) {
   .fn2:has(.fn2__neo) > .fn2__float {display:none}
 }
+
+
+/* Phone/Duo cover: all three logging shortcuts remain visible without
+   clipping a right-hand pill behind the viewport edge. */
+@media (max-width:540px) {
+  .fn2__pills {flex-wrap:wrap;overflow-x:visible;gap:7px}
+  .fn2__pills button {min-height:40px;height:40px;max-width:100%}
+}

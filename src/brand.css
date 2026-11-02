@@ -13,8 +13,9 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* Animated LFMS brand reveal. The supplied symbol and lettering are separate
-   transparent vectors: neither image can cover the text below it. */
+/* Cinematic LFMS splash. Use the approved transparent logo vectors twice,
+   clipped into their white and red wordmark rows. The two rows fly in from
+   opposite edges before the existing symbol lands with a brief glass crack. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
   display:grid;place-items:center;
@@ -30,18 +31,21 @@
   position:absolute;inset:12% -18%;z-index:-1;
   background:radial-gradient(ellipse 43% 31% at 50% 44%,var(--lfms-launch-mid),transparent 100%);
   opacity:.75;
-  animation:lfms-glow 2600ms ease-in-out both;
+  animation:lfms-glow 3500ms ease-in-out both;
 }
 .lfms-launch__identity {
-  position:relative;display:flex;flex-direction:column;
+  position:relative;z-index:1;display:flex;flex-direction:column;
   align-items:center;justify-content:center;min-width:0;
-  width:min(100%,540px);transform:translateY(-1vh);
+  width:min(100%,540px);
+  transform:translateY(-1vh);
+  animation:lfms-impact-shake 330ms linear 1520ms both;
 }
 .lfms-launch__mark {
   display:block;width:clamp(172px,46vw,300px);height:auto;
   max-height:min(25vh,180px);object-fit:contain;
   filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
-  animation:lfms-mark-enter 850ms cubic-bezier(.16,1,.3,1) both;
+  transform-origin:50% 85%;
+  animation:lfms-mark-enter 980ms cubic-bezier(.18,.8,.2,1) 930ms both;
 }
 .lfms-launch__rule {
   display:block;width:min(172px,47vw);height:2px;
@@ -49,12 +53,24 @@
   border-radius:99px;
   background:linear-gradient(90deg,transparent,var(--lfms-launch-red),transparent);
   transform-origin:50% 50%;
-  animation:lfms-rule-enter 650ms ease-out 480ms both;
+  animation:lfms-rule-enter 430ms ease-out 1910ms both;
+}
+.lfms-launch__wordmark-stage {
+  position:relative;width:min(88vw,520px);
+  aspect-ratio:1125 / 235;max-height:min(18vh,112px);
+  flex:none;
 }
 .lfms-launch__wordmark {
-  display:block;width:min(88vw,520px);height:auto;
-  max-height:min(18vh,112px);object-fit:contain;
-  animation:lfms-wordmark-enter 750ms cubic-bezier(.2,.85,.25,1) 570ms both;
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  object-fit:contain;pointer-events:none;
+}
+.lfms-launch__wordmark--less {
+  clip-path:inset(0 0 43% 0);
+  animation:lfms-wordmark-enter-left 1080ms cubic-bezier(.17,.91,.29,1) 80ms both;
+}
+.lfms-launch__wordmark--strong {
+  clip-path:inset(57% 0 0 0);
+  animation:lfms-wordmark-enter-right 1130ms cubic-bezier(.17,.91,.29,1) 190ms both;
 }
 .lfms-launch__tagline {
   margin:21px 0 0;padding:0;
@@ -62,43 +78,105 @@
   font-size:clamp(10px,2.5vw,12px);font-weight:650;
   line-height:1.45;letter-spacing:.2em;
   text-align:center;white-space:nowrap;
-  animation:lfms-tagline-enter 600ms ease-out 1130ms both;
+  animation:lfms-tagline-enter 650ms ease-out 2360ms both;
 }
+/* Impact is strictly visual: transient highlights, not a persistent
+   damaged-screen texture. Keep their centers around the symbol above type. */
+.lfms-launch__impact-flash {
+  position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse 30% 25% at 50% 40%,rgba(246,250,255,.50),rgba(240,55,37,.12) 30%,transparent 79%);
+  animation:lfms-impact-flash 590ms ease-out 1510ms both;
+}
+.lfms-launch__shockwave {
+  position:absolute;z-index:2;left:50%;top:41%;
+  width:min(57vw,460px);aspect-ratio:1;border-radius:50%;
+  border:2px solid rgba(246,250,255,.7);
+  box-shadow:0 0 22px rgba(240,55,37,.30),inset 0 0 25px rgba(246,250,255,.15);
+  transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;
+  animation:lfms-shockwave 620ms cubic-bezier(.12,.7,.28,1) 1520ms both;
+}
+.lfms-launch__cracks {
+  position:absolute;inset:0;z-index:3;width:100%;height:100%;
+  color:rgba(246,250,255,.80);opacity:0;pointer-events:none;
+  stroke-width:1.4;
+  filter:drop-shadow(0 0 3px rgba(220,244,255,.42));
+  animation:lfms-crack-flash 780ms ease-out 1550ms both;
+}
+.lfms-launch__crack-glint {stroke:var(--lfms-launch-red);stroke-width:1.9;opacity:.75}
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
+@keyframes lfms-wordmark-enter-left {
+  0% {opacity:0;transform:translateX(-110vw) skewX(-14deg);filter:blur(9px)}
+  65% {opacity:1;transform:translateX(3.5%) skewX(2deg);filter:blur(0)}
+  84% {transform:translateX(-1%) skewX(0)}
+  100% {opacity:1;transform:translateX(0);filter:blur(0)}
+}
+@keyframes lfms-wordmark-enter-right {
+  0% {opacity:0;transform:translateX(110vw) skewX(14deg);filter:blur(9px)}
+  66% {opacity:1;transform:translateX(-3.5%) skewX(-2deg);filter:blur(0)}
+  85% {transform:translateX(1%) skewX(0)}
+  100% {opacity:1;transform:translateX(0);filter:blur(0)}
+}
 @keyframes lfms-mark-enter {
-  0% {opacity:0;transform:translateY(24px) scale(.8);filter:blur(8px)}
-  65% {opacity:1}
-  100% {opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
+  0% {opacity:0;transform:perspective(650px) translateY(-87vh) rotate(-11deg) scale(1.58);filter:blur(11px)}
+  52% {opacity:1;filter:blur(1px)}
+  64% {opacity:1;transform:perspective(650px) translateY(6px) rotate(1deg) scale(1.13);filter:blur(0)}
+  78% {transform:translateY(-12px) rotate(-1deg) scale(.96)}
+  91% {transform:translateY(3px) scale(1.015)}
+  100% {opacity:1;transform:translateY(0) rotate(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
+}
+@keyframes lfms-impact-shake {
+  0%,100% {transform:translateY(-1vh) translateX(0)}
+  15% {transform:translateY(calc(-1vh + 4px)) translateX(-5px)}
+  35% {transform:translateY(calc(-1vh - 3px)) translateX(4px)}
+  55% {transform:translateY(calc(-1vh + 2px)) translateX(-2px)}
+  80% {transform:translateY(-1vh) translateX(1px)}
+}
+@keyframes lfms-impact-flash {
+  0%,100% {opacity:0}
+  13% {opacity:.65}
+  45% {opacity:.22}
+}
+@keyframes lfms-shockwave {
+  0% {opacity:0;transform:translate(-50%,-50%) scale(.16)}
+  15% {opacity:.8}
+  100% {opacity:0;transform:translate(-50%,-50%) scale(2.65)}
+}
+@keyframes lfms-crack-flash {
+  0%,100% {opacity:0}
+  13% {opacity:.70}
+  42% {opacity:.56}
+  83% {opacity:.08}
 }
 @keyframes lfms-rule-enter {
   from {opacity:0;transform:scaleX(0)}
   to {opacity:1;transform:scaleX(1)}
 }
-@keyframes lfms-wordmark-enter {
-  from {opacity:0;transform:translateY(17px);filter:blur(4px)}
-  to {opacity:1;transform:translateY(0);filter:blur(0)}
-}
+/* The original trailing flavor-line reveal, timed after the collision. */
 @keyframes lfms-tagline-enter {
   from {opacity:0;transform:translateY(10px)}
   to {opacity:.82;transform:translateY(0)}
 }
 @keyframes lfms-glow {
   0% {opacity:.2;transform:scale(.8)}
-  65% {opacity:.85;transform:scale(1.12)}
+  62% {opacity:.9;transform:scale(1.15)}
   100% {opacity:.65;transform:scale(1)}
 }
 @media(max-height:580px) {
   .lfms-launch__mark {width:min(31vw,170px);max-height:26vh}
   .lfms-launch__rule {margin:5px 0 9px}
-  .lfms-launch__wordmark {max-height:17vh}
+  .lfms-launch__wordmark-stage {max-height:17vh}
   .lfms-launch__tagline {margin-top:12px}
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}
-  .lfms-launch__glow,.lfms-launch__mark,.lfms-launch__rule,
-  .lfms-launch__wordmark,.lfms-launch__tagline {animation:none}
+  .lfms-launch__glow,.lfms-launch__identity,.lfms-launch__mark,
+  .lfms-launch__rule,.lfms-launch__wordmark,.lfms-launch__tagline {
+    animation:none;
+  }
+  .lfms-launch__impact-flash,.lfms-launch__shockwave,.lfms-launch__cracks {
+    display:none;animation:none;
+  }
 }
-
 /* On the Duo the dark launch canvas must cover both safe edges before
    the first app paint, including the former gray left-side band. */
 html:has(.lfms-launch:not([data-closing="true"])) ,

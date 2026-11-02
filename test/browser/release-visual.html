@@ -572,6 +572,19 @@
       if (view === 'health-review') document.querySelector('[data-health-paste-preview]')?.scrollIntoView({ block: 'center' })
       document.activeElement?.blur()
       await settle()
+      if (view.startsWith('weekly-recap')) {
+        const dialog=document.querySelector('dialog.weekly-recap[open]')
+        if(!dialog || !dialog.querySelector('.weekly-recap__brand img') ||
+           !dialog.querySelector('.weekly-recap__scoreline') ||
+           !dialog.querySelector('.weekly-recap__done') ||
+           dialog.querySelectorAll('.weekly-recap__stats > div').length!==4)
+          throw new Error('Weekly recap retains legacy layout instead of LFMS score/metric cards')
+        const rect=dialog.getBoundingClientRect()
+        if(rect.left<-1 || rect.right>window.innerWidth+1 || rect.top<-1 || rect.bottom>window.innerHeight+1)
+          throw new Error('Weekly recap overflows viewport or safe region')
+        if(document.querySelector('[data-lfms-launch]'))
+          throw new Error('Weekly recap opens while LFMS splash exists')
+      }
       if (view === 'food2-dashboard') {
         const neo=mount.querySelector('[data-food-neon="true"]')
         if(!neo || !neo.querySelector('.fn2__neo-close') ||

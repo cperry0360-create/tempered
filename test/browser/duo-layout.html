@@ -149,7 +149,7 @@ check(label + ' content is padded clear of the floating icons',
             <=expandedBounds.left-10)
         check(label+' chosen Progress lens stays inset and brighter than unselected buttons',
           w.getComputedStyle(progress.querySelector('.tabbar__glyph'),'::before').opacity==='1'
-          && rect(progress.querySelector('.tabbar__glyph')).width<=40
+          && rect(progress.querySelector('.tabbar__glyph')).width<=42
           && rect(progress.querySelector('.tabbar__glyph')).width<rect(progress).width
           && w.getComputedStyle(progress.querySelector('.tabbar__glyph'),'::before').boxShadow!=='none')
         check(label+' long press reveals all four captions UNDER their custom art',

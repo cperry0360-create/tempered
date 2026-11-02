@@ -301,3 +301,45 @@ html[data-layout="duo"] .fn2__float {
   .fn2__stats--two .fn2__stat>strong {font-size:23px}
   .fn2__water-actions button {min-width:36px;min-height:32px;padding:0 7px}
 }
+
+
+/* Water goal: the same custom lifting silhouette as the right navigation.
+   A second SVG is clipped from the bottom up, like water filling a vessel. */
+.fn2__stat--water {container:water-card / inline-size}
+.fn2__water-top {display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.fn2__water-readout {display:grid;align-content:center;gap:10px;min-width:0}
+.fn2__water-readout>strong {
+  color:var(--fn-ink);font-size:clamp(24px,3vw,32px);font-weight:850;
+  line-height:1.1;letter-spacing:-.045em;white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.fn2__water-readout>small {color:var(--fn-blue-light);font-size:11px;line-height:1.35}
+.fn2__water-figure {
+  flex:0 0 auto;display:grid;justify-items:center;align-content:center;
+  gap:1px;width:clamp(88px,28%,142px);min-width:0;
+}
+.fn2__water-figure-art {
+  position:relative;width:100%;aspect-ratio:1;overflow:visible;
+}
+.fn2__water-figure-art>span {position:absolute;inset:0;display:grid;place-items:center}
+.fn2__water-figure-art .icon {display:block;width:100%;height:100%;stroke:none}
+.fn2__water-figure-empty {color:color-mix(in srgb,var(--food-v2-blue-light) 22%,var(--food-v2-panel))}
+.fn2__water-figure-fill {
+  color:var(--food-v2-blue-light);
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--food-v2-blue) 55%,transparent));
+  will-change:clip-path;
+  transition:clip-path 2000ms cubic-bezier(.16,1,.3,1);
+}
+.fn2__water-figure-percent {
+  font-size:12px;line-height:1.3;font-weight:830;letter-spacing:.025em;
+  color:var(--fn-blue-light);font-variant-numeric:tabular-nums;
+}
+@container water-card (max-width:300px) {
+  .fn2__water-top {flex-direction:column;align-items:flex-start;gap:8px}
+  .fn2__water-readout {gap:5px}
+  .fn2__water-readout>strong {font-size:24px}
+  .fn2__water-figure {align-self:center;width:min(95px,68%)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .fn2__water-figure-fill {transition:none;will-change:auto}
+}

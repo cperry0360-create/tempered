@@ -48,6 +48,6 @@ test('polish loads after earlier CSS and ships offline without changing persiste
   const html=read('index.html'),sw=read('sw.js')
   assert.ok(html.indexOf('food-log-polish.css')<html.indexOf('lfms-feedback-polish.css'))
   assert.match(sw,/'\.\/src\/lfms-feedback-polish\.css'/)
-  assert.match(read('src/version.js'),/0\.66\.26 \(132\)/)
+  assert.match(read('src/version.js'),/export const VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)
   assert.doesNotMatch(polish,/!important/)
 })

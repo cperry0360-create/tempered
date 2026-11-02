@@ -49,6 +49,7 @@ function perimeter(amount,goal,meals) {
     node.setAttribute('data-segment-start',String(start))
     node.setAttribute('data-segment-length',String(dashLength))
     if(label) node.setAttribute('data-meal',label)
+    if(dashLength<.05) node.setAttribute('visibility','hidden')
     // SVG dash offsets advance the illuminated stroke clockwise along the
     // SAME rounded geometry. This avoids the previous disconnected-edge fill.
     node.setAttribute('stroke-dasharray',String(Math.max(0,dashLength))+' '+String(100-Math.max(0,dashLength)))
@@ -70,7 +71,7 @@ function perimeter(amount,goal,meals) {
     // Four distinct, real meal arcs, and narrow separators at each boundary.
     addPath('fn2__neo-perimeter-live',Math.max(0,actual-trim),position+trim,meal.name.toLowerCase())
     position+=actual
-    if(position>1&&position<99)boundaries.push(position)
+    if(actual>.7&&position>1&&position<99)boundaries.push(position)
   }
   // Older aggregate calorie entries may not have a timestamped food record.
   // Color that real remainder, but never invent its Breakfast/Lunch/Dinner.

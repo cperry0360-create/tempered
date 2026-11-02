@@ -581,9 +581,28 @@
         const rect=neo.getBoundingClientRect()
         if(rect.left < -1 || rect.right > window.innerWidth+1)
           throw new Error('Neon Fuel widget overflows the visual viewport')
+        const track=neo.querySelector('.fn2__neo-perimeter-track')
+        if(!track || [...neo.querySelectorAll('.fn2__neo-perimeter-live')].some(n=>n.getAttribute('d')!==track.getAttribute('d')))
+          throw new Error('Calorie meal segments are not on the same rounded perimeter')
+        if(window.innerWidth>980){
+          const body=neo.querySelector('.fn2__neo-body').getBoundingClientRect()
+          const cells=[...neo.querySelector('.fn2__neo-body').children].map(n=>n.getBoundingClientRect())
+          if(rect.height>440 || body.height>355 || Math.max(...cells.map(x=>x.top))-Math.min(...cells.map(x=>x.top))>24)
+            throw new Error('Wide Fuel widget broke compact single-row reference layout')
+          if(neo.scrollWidth>neo.clientWidth+2)
+            throw new Error('Wide Fuel widget clips its five reference columns')
+        }
         for(const node of neo.querySelectorAll('.fn2__neo-close,.fn2__neo-other')) {
           if(node.getBoundingClientRect().width<44 || node.getBoundingClientRect().height<44)
             throw new Error('Neon Fuel action is below 44px accessibility target')
+        }
+        if(window.innerWidth>740 && window.innerWidth<=980){
+          const footer=neo.querySelector('.fn2__neo-footer').getBoundingClientRect()
+          const nutrients=neo.querySelector('.fn2__neo-nutrients').getBoundingClientRect()
+          if(rect.height>430 || footer.bottom>window.innerHeight-10)
+            throw new Error('Duo inner Fuel card is too tall: bottom of footer offscreen')
+          if(nutrients.height>155)
+            throw new Error('Duo inner vertical nutrient bars make the widget too tall')
         }
         if(window.innerWidth<=540){
           const frame=neo.querySelector('.fn2__neo-outline').getBoundingClientRect()

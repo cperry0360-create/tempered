@@ -30,29 +30,64 @@ function symbol(kind) {
   }
   return svg
 }
-function perimeter(amount,goal) {
-  const progress=clamp(percent(amount,goal))/100
+function perimeter(amount,goal,meals) {
+  // A single, true clockwise rounded-rectangle path gives each meal segment
+  // the correct physical distance on the frame. The blue arcs represent real
+  // calories toward the daily target, NOT four arbitrary quarter-rings.
+  const progress=clamp(percent(amount,goal))
   const svg=document.createElementNS(NS,'svg')
   svg.setAttribute('viewBox','0 0 300 260')
   svg.setAttribute('class','fn2__neo-outline')
   svg.setAttribute('role','img')
-  svg.setAttribute('aria-label',Math.round(progress*100)+'% of calorie target consumed')
-  const segments=[
-    ['M240 246 H58 Q13 246 13 201 V175',0,.28],
-    ['M13 169 V59 Q13 13 59 13 H147',.28,.24],
-    ['M153 13 H242 Q287 13 287 59 V118',.52,.26],
-    ['M287 125 V201 Q287 246 240 246',.78,.22],
-  ]
-  for(const [path,start,length] of segments) {
-    const filled=clamp((progress-start)/length,0,1)
-    for(const track of [true,false]){
-      const node=document.createElementNS(NS,'path')
-      node.setAttribute('d',path)
-      node.setAttribute('class',track?'fn2__neo-perimeter-track':'fn2__neo-perimeter-live')
-      node.setAttribute('pathLength','100')
-      if(!track)node.setAttribute('stroke-dasharray',(Math.round(filled*10000)/100)+' 100')
-      svg.append(node)
-    }
+  svg.setAttribute('aria-label',Math.round(progress)+'% of calorie target consumed across meal segments')
+  const outline='M58 246 H59 Q13 246 13 200 V59 Q13 13 59 13 H241 Q287 13 287 59 V200 Q287 246 241 246 H58'
+  const addPath=(className,dashLength,start=0,label='')=>{
+    const node=document.createElementNS(NS,'path')
+    node.setAttribute('d',outline)
+    node.setAttribute('class',className)
+    node.setAttribute('pathLength','100')
+    node.setAttribute('data-segment-start',String(start))
+    node.setAttribute('data-segment-length',String(dashLength))
+    if(label) node.setAttribute('data-meal',label)
+    if(dashLength<.05) node.setAttribute('visibility','hidden')
+    // SVG dash offsets advance the illuminated stroke clockwise along the
+    // SAME rounded geometry. This avoids the previous disconnected-edge fill.
+    node.setAttribute('stroke-dasharray',String(Math.max(0,dashLength))+' '+String(100-Math.max(0,dashLength)))
+    node.setAttribute('stroke-dashoffset',String(-start))
+    svg.append(node)
+    return node
+  }
+  const track=document.createElementNS(NS,'path')
+  track.setAttribute('d',outline)
+  track.setAttribute('class','fn2__neo-perimeter-track')
+  track.setAttribute('pathLength','100')
+  svg.append(track)
+  let position=0
+  const boundaries=[]
+  for(const meal of meals) {
+    const percentage=goal>0?100*val(meal.calories)/goal:0
+    const actual=clamp(percentage,0,Math.max(0,100-position))
+    const trim=position>0&&actual>1?.42:0
+    // Four distinct, real meal arcs, and narrow separators at each boundary.
+    addPath('fn2__neo-perimeter-live',Math.max(0,actual-trim),position+trim,meal.name.toLowerCase())
+    position+=actual
+    if(actual>.7&&position>1&&position<99)boundaries.push(position)
+  }
+  // Older aggregate calorie entries may not have a timestamped food record.
+  // Color that real remainder, but never invent its Breakfast/Lunch/Dinner.
+  const unassigned=clamp(progress-position,0,100-position)
+  if(unassigned>.01) {
+    addPath('fn2__neo-perimeter-unassigned',Math.max(0,unassigned-.42),position+.42,'unassigned')
+    position+=unassigned
+  }
+  for(const boundary of boundaries) {
+    const node=document.createElementNS(NS,'path')
+    node.setAttribute('d',outline)
+    node.setAttribute('class','fn2__neo-perimeter-separator')
+    node.setAttribute('pathLength','100')
+    node.setAttribute('stroke-dasharray','.7 99.3')
+    node.setAttribute('stroke-dashoffset',String(-boundary+.35))
+    svg.append(node)
   }
   return svg
 }
@@ -105,7 +140,7 @@ export function createFuelNeonWidget({day,calories,protein,calGoal,proGoal,macro
   return el('section.fn2__neo',{'aria-label':'Live nutrition totals',dataset:{foodNeon:'true',dayClosed:String(complete)}},[
     el('div.fn2__neo-body',{},[
       el('div.fn2__neo-calorie',{},[
-        perimeter(calories,calGoal),
+        perimeter(calories,calGoal,mealTotals),
         el('div.fn2__neo-calorie-content',{},[
           el('div.fn2__neo-calorie-label',{},[symbol('flame'),el('strong',{text:'Calories'})]),
           el('strong.fn2__neo-calorie-value',{text:fmt(calories)}),

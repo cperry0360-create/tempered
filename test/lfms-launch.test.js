@@ -6,7 +6,7 @@ const read=(p)=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
 test('launch uses separated transparent approved LFMS symbol and lettering',()=>{
   const html=read('index.html'),word=read('branding/lfms/logo-wordmark.svg'),mark=read('branding/lfms/logo-mark.svg')
   assert.match(html,/class="lfms-launch__mark" src="\.\/branding\/lfms\/logo-mark\.svg"/)
-  assert.match(html,/class="lfms-launch__wordmark" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
+  assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--less" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__tagline">TRAIN · FUEL · RECOVER/)
   assert.doesNotMatch(html,/lfms-launch__caption/)
   assert.match(word,/viewBox="205 547 1125 235"/)

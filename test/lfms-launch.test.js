@@ -20,7 +20,11 @@ test('splash has staggered entrances, no overlapping negative margins, and a rea
   assert.doesNotMatch(css,/margin-top:-/)
   assert.match(js,/2600 - \(performance\.now\(\) - splashStarted\)/)
   assert.match(js,/dismissSplash, 8000/)
-  assert.match(js,/launch\.remove\(\), 520/)
+  assert.match(js,/else setTimeout\(finish, 520\)/)
+  assert.match(js,/launch\.remove\(\)/)
+  assert.match(js,/await dismissSplash\(\)/)
+  assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'),
+    'recap must initialize after launch animation removes the splash')
 })
 test('new launch assets and four-tab finishing styles survive offline deployment',()=>{
   const html=read('index.html'),sw=read('sw.js'),finish=read('src/lfms-finish.css')

@@ -461,7 +461,7 @@ export function createTodayScreen({
     const input = el('input.today-editor__input', {
       type: sleep ? 'number' : 'text', inputmode: 'decimal',
       ...(sleep ? {
-        min: '0', max: '24', step: '0.1',
+        min: '0', max: '24', step: '0.01',
         value: typeof activity.value === 'number' ? String(activity.value) : '',
       } : (mobilityRoutine ? { value: String(mobilityRoutine.minutes) } : {})),
       placeholder: sleep ? 'Hours, e.g. 7.5' : (adding ? `Add ${unit || 'amount'}` : (unit || 'Value')),
@@ -486,7 +486,14 @@ export function createTodayScreen({
       sleep && el('div.today-editor__quick.today-editor__quick--sleep', { 'aria-label': 'Common sleep amounts' },
         [6.5, 7, 7.5, 8, 8.5].map((hours) => el('button.today-editor__chip', {
           type: 'button', dataset: { sleepquick: String(hours) },
-          onclick: () => { input.value = String(hours); input.focus() },
+          'aria-pressed': String(Number(input.value)===hours),
+          onclick: (event) => {
+            input.value = String(hours)
+            input.blur()
+            event.currentTarget.parentElement?.querySelectorAll('[data-sleepquick]').forEach(button => {
+              button.setAttribute('aria-pressed',String(Number(button.dataset.sleepquick)===hours))
+            })
+          },
         }, [`${hours} h`]))),
       mobility && el('div.mobility-routines', { role: 'group', 'aria-label': 'Mobility routines' },
         MOBILITY_ROUTINES.map((routine) => el('button.mobility-routine', {
@@ -614,7 +621,8 @@ export function createTodayScreen({
     }
     openActivityId = activityId
     render()
-    queueMicrotask(() => root.querySelector(`[data-editor="${activityId}"] input`)?.focus())
+    // Sleep presets should be available immediately without raising the iOS keyboard.
+    if (activityId !== 'sleep') queueMicrotask(() => root.querySelector(`[data-editor="${activityId}"] input`)?.focus())
   }
 
   async function record(activity, value, options = {}) {

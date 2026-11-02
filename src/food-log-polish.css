@@ -156,8 +156,8 @@
 .fn2__log-empty p {font-size:13px;line-height:1.5;margin:0;color:var(--fn-muted)}
 .fn2__log-empty button {justify-self:start}
 @media(max-width:650px) {
-  .fn2__history-nav {grid-template-columns:43px minmax(0,1fr) 43px;gap:6px}
-  .fn2__history-today {grid-column:3;grid-row:2;display:none}
+  .fn2__history-nav {grid-template-columns:40px minmax(0,1fr) 40px 57px;gap:5px}
+  .fn2__history-today {grid-column:4;grid-row:1;display:grid;padding:0 4px;font-size:11px}
   .fn2__history-arrow {height:48px;min-height:48px}
   .fn2__history-date input {padding:0 6px;font-size:14px}
   .fn2__history-summary strong {font-size:12px}

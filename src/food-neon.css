@@ -44,7 +44,7 @@
   fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:13;
 }
 .fn2__neo-perimeter-track {stroke:rgba(244,250,255,.93);}
-.fn2__neo-perimeter-separator {fill:none;stroke:rgb(4,21,41);stroke-width:17;stroke-linecap:butt;}
+.fn2__neo-perimeter-separator {fill:none;stroke:rgb(4,21,41);stroke-width:15;stroke-linecap:butt;}
 .fn2__neo-perimeter-unassigned {fill:none;stroke:var(--neo-cyan);stroke-width:13;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(32,192,255,.78));}
 .fn2__neo-perimeter-live {stroke:var(--neo-cyan);filter:drop-shadow(0 0 5px rgba(32,192,255,.78));}
 .fn2__neo-calorie-content {
@@ -290,4 +290,54 @@
   .fn2__neo-nutrient-delta {font-size:clamp(9px,.72vw,12px)}
   .fn2__neo-meal-copy strong {font-size:clamp(11px,1vw,15px)}
   .fn2__neo-meal-pct {font-size:clamp(11px,.96vw,15px)}
+}
+
+
+/* Duo inner CSS viewport is ~890px (the physical screenshot is wider).
+   Keep the reference's visual hierarchy but fit the entire card above the
+   fold: short 3-part header + four slender vertical macro rows + Close Day. */
+@media (min-width:741px) and (max-width:980px) {
+  .fn2__neo {padding:12px 14px 0;border-radius:29px}
+  .fn2__neo-body {
+    grid-template-columns:minmax(0,1.16fr) minmax(0,1.14fr) minmax(0,.78fr);
+    row-gap:7px;padding-bottom:6px;
+  }
+  .fn2__neo-calorie {min-height:187px;padding:0 7px 0 0}
+  .fn2__neo-calorie-content {width:76%;gap:1px;padding:4px 0}
+  .fn2__neo-calorie-label {font-size:13px;gap:5px}
+  .fn2__neo-calorie-label svg {width:20px;height:20px}
+  .fn2__neo-calorie-value {font-size:37px}
+  .fn2__neo-calorie-goal {font-size:11px}
+  .fn2__neo-calorie-rule {margin:3px auto 4px}
+  .fn2__neo-calorie-stats strong {font-size:18px}
+  .fn2__neo-calorie-stats small {font-size:9px}
+  .fn2__neo-meals {gap:4px;padding:0 9px}
+  .fn2__neo-meal {
+    min-height:40px;padding:3px 6px;gap:4px;
+    grid-template-columns:22px minmax(0,1fr) auto;
+    border-radius:10px;
+  }
+  .fn2__neo-meal-icon {width:21px;height:23px}
+  .fn2__neo-meal-icon svg {width:20px;height:20px}
+  .fn2__neo-meal-copy strong {font-size:11px}
+  .fn2__neo-meal-copy small {font-size:9px}
+  .fn2__neo-meal-pct {font-size:11px;padding-left:5px}
+  .fn2__neo-target {min-height:187px;gap:8px;padding:6px 9px}
+  .fn2__neo-target span {font-size:10px}
+  .fn2__neo-target-top,.fn2__neo-target-bottom {gap:5px}
+  .fn2__neo-target-top strong {font-size:16px}
+  .fn2__neo-target-bottom strong {font-size:15px;padding:6px 8px}
+  .fn2__neo-nutrients {min-height:128px;gap:5px;padding:8px 13px 0 0}
+  .fn2__neo-nutrient {gap:3px}
+  .fn2__neo-nutrient-head strong {font-size:12px}
+  .fn2__neo-nutrient-count,.fn2__neo-nutrient-delta {font-size:10px}
+  .fn2__neo-meter {height:12px}
+  .fn2__neo-finish {min-height:128px;padding:2px 5px}
+  .fn2__neo-close {max-width:130px;min-height:97px;padding:8px 6px;gap:5px}
+  .fn2__neo-close strong {font-size:13px}
+  .fn2__neo-check {width:32px;height:32px;border-width:2px}
+  .fn2__neo-check svg {width:21px;height:21px}
+  .fn2__neo-footer {min-height:42px}
+  .fn2__neo-other {font-size:13px;gap:8px}
+  .fn2__neo-other .fn2__neo-symbol {width:20px;height:20px}
 }

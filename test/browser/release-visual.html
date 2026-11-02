@@ -68,7 +68,7 @@
         'food2-dashboard':'fuel', 'food2-journal':'fuel', 'food2-library':'fuel', 'food2-serving':'fuel', 'food2-quicklog':'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
       'progress-habits': 'history', 'progress-cut': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
-      settings: 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
+      settings: 'settings', 'settings-data': 'settings', 'settings-reset': 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
     }
 
     async function installShippedInlineCss() {
@@ -562,6 +562,8 @@
       }
       await settle()
       if (view === 'nutrition-meal') document.querySelector('.nutrition-meal-form')?.scrollIntoView({ block: 'start' })
+      if (view === 'settings-data') mount.querySelector('[data-section="data"]')?.scrollIntoView({ block: 'start' })
+      if (view === 'settings-reset') mount.querySelector('[data-section="reset"]')?.scrollIntoView({ block: 'start' })
       if (view === 'fuel-entry') document.querySelector('.nutrition-panel__add')?.scrollIntoView({ block: 'start' })
       if (view === 'fuel-meals') document.querySelector('.nutrition-panel__meals')?.scrollIntoView({ block: 'start' })
       if (view === 'progress-trends') document.querySelectorAll('.progress-trends')[0]?.closest('.progress-panel')?.scrollIntoView({ block: 'start' })
@@ -573,6 +575,8 @@
       // Compare computed palette tokens, not screenshots or hardcoded hex.
       const deepScreens = {
         settings: '.screen--settings',
+        'settings-data': '.screen--settings',
+        'settings-reset': '.screen--settings',
         'program-builder': '.program-builder',
         mobility: '.mobility-screen',
         summary: '.screen--summary',

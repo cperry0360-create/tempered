@@ -79,7 +79,7 @@
 }
 .weekly-recap__kicker {
   margin:0 0 6px;font-size:9px;letter-spacing:.14em;font-weight:870;
-  color:var(--recap-red);text-transform:uppercase;
+  color:var(--recap-red);
 }
 .weekly-recap__card h2 {
   margin:0 0 9px;color:var(--recap-ink);

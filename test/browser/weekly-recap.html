@@ -38,7 +38,8 @@ try {
     && source.indexOf('await dismissSplash()')<source.indexOf('await installWeeklyRecapRuntime(context)'))
   check('LFMS recap has branded header, score bar, four metric tiles and new primary action',
     !!q('.weekly-recap__mark')
-    && !!q('.weekly-recap__score-track')
+    && !!q('.weekly-recap__scoreline')
+    && (q('.weekly-recap__score')?.textContent.trim()==='—' || !!q('.weekly-recap__score-track'))
     && q('.weekly-recap__stats')?.children.length===4
     && !!q('.weekly-recap__done')
     && !!q('.weekly-recap__progress'))

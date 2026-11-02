@@ -246,3 +246,35 @@
 @media (prefers-reduced-motion:reduce) {
   .session-restbar__progress i {transition:none}
 }
+
+
+/* Compact Duo heights: the left page already explains form and rep range.
+ * Suppress duplicated detail in the right log, preserving its set editor,
+ * best record, 44px check controls and edit menus. */
+@media(min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 {
+    gap:2px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__range,
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__proposal {
+    display:none;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {
+    padding:6px 8px;
+    gap:2px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .setrow-wrap {gap:0}
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .setrow--head {min-height:15px}
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .addset {
+    min-height:29px;padding:2px 8px;
+  }
+  html[data-layout="duo"] body:has(.screen--session[data-half-fold="false"]) .session-restbar {
+    padding:3px 10px;gap:2px 8px;
+  }
+  html[data-layout="duo"] body:has(.screen--session[data-half-fold="false"]) .session-restbar__actions button {
+    min-height:44px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"][data-rest-active="true"] .session-r5__log {
+    padding-bottom:55px;
+  }
+}

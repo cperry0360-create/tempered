@@ -122,6 +122,17 @@ try{
    !!q('.app__body > .today--fuel-style')
    && q('[data-tab="today"]')?.dataset.active==='true'
    && qa('.tabbar__tab').every((button,i)=>button===originalTabs[i]))
+ const todayRoot=q('.app__body > .screen')
+ let samePageEvents=0
+ const samePageListener=e=>{if(e.detail?.tab==='today')samePageEvents++}
+ window.addEventListener('tempered:screen-shown',samePageListener)
+ q('[data-tab="today"]').click()
+ await new Promise(resolve=>setTimeout(resolve,100))
+ check('Today repeat tap only animates the icon and leaves the page untouched',
+   samePageEvents===0 && todayRoot===q('.app__body > .screen')
+   && q('[data-tab="today"]').dataset.tap==='true'
+   && getComputedStyle(q('[data-tab="today"]'),'::after').animationName.includes('lfms-rail-ripple'))
+ window.removeEventListener('tempered:screen-shown',samePageListener)
  check('No runtime errors or unhandled rejections',errors.length===0,errors.join(' | '))
 }catch(e){check('Today Food-style test completes',false,e.stack)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-today-style',passed:checks.every(c=>c.ok),checks})})

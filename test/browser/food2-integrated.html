@@ -52,8 +52,8 @@ try{
  check('neon calorie frame draws four rounded progress segments',qa('.fn2__neo-perimeter-live').length===4)
  check('neon meal allocation uses real timestamped entries, not invented shares',
    qa('.fn2__neo-meal').length===4
-   && qa('.fn2__neo-meal').filter(x=>x.textContent.includes('480 kcal')&&x.textContent.includes('100%')).length===1
-   && qa('.fn2__neo-meal').filter(x=>x.textContent.includes('0 kcal')).length===3)
+   && qa('.fn2__neo-meal').filter(x=>x.querySelector('.fn2__neo-meal-copy small')?.textContent==='480 kcal'&&x.querySelector('.fn2__neo-meal-pct')?.textContent==='100%').length===1
+   && qa('.fn2__neo-meal').filter(x=>x.querySelector('.fn2__neo-meal-copy small')?.textContent==='0 kcal').length===3)
  check('Close Day is inside the neon card, one real button, and Track Other remains present',
    !!q('.fn2__neo [data-diary-finish-today]')
    && qa('[data-diary-finish-today]').length===1

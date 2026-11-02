@@ -519,3 +519,93 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .icon {transform
 @media (prefers-reduced-transparency:reduce) {
   html[data-layout="duo"] #app.app .tabbar__tabs {background:var(--food-v2-panel-2)}
 }
+
+/* LFMS GLASS RAIL v4 — the reserved content gutter grows with the glass.
+   Compact and expanded capsule share one timing curve; no cards sit underneath. */
+html[data-layout="duo"] #app.app .app__body {
+  transition:padding-right 340ms cubic-bezier(.17,.88,.23,1.06);
+}
+html[data-layout="duo"] #app.app:has(.tabbar__tabs[data-holding="true"]) .app__body,
+html[data-layout="duo"] #app.app:has(.tabbar__tab:focus-visible) .app__body {
+  padding-right:calc(var(--duo-rail-width) + var(--duo-gutter) + 60px);
+}
+
+/* Keep the touch target 44px while the visible selection lens sits 7px
+   inside each edge. In expanded mode this becomes an inset oval. */
+html[data-layout="duo"] #app.app .tabbar__tab {
+  isolation:isolate;
+  background:transparent;
+  box-shadow:none;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"],
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] {
+  background:transparent;
+  box-shadow:none;
+  transform:none;
+}
+html[data-layout="duo"] #app.app .tabbar__tab::before {
+  display:block;
+  content:'';
+  position:absolute;
+  inset:3px 7px;
+  border-radius:999px;
+  z-index:-1;
+  pointer-events:none;
+  opacity:0;
+  background:radial-gradient(ellipse at 36% 15%,rgba(253,255,255,.70),rgba(111,202,255,.53) 40%,rgba(25,102,186,.64) 100%);
+  border:1px solid rgba(225,247,255,.69);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.66),inset 0 -2px 5px rgba(6,39,92,.55),0 0 16px rgba(73,171,255,.35);
+  transition:opacity 185ms ease,box-shadow 185ms ease,background 185ms ease;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"]::before {
+  opacity:1;
+}
+html[data-layout="duo"] #app.app .tabbar__tabs[data-holding="true"] .tabbar__tab[data-active="true"]:not([data-peek="true"])::before {
+  opacity:.38;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"]::before {
+  opacity:1;
+  background:radial-gradient(ellipse at 38% 13%,rgba(255,255,255,.84),rgba(129,218,255,.70) 43%,rgba(26,119,215,.78) 100%);
+  border-color:rgba(246,253,255,.89);
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.83),0 0 23px rgba(93,190,255,.58);
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"] .icon,
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .icon {
+  color:#ffffff;
+  filter:drop-shadow(0 1px 3px rgba(6,25,57,.76));
+}
+
+/* A click sends one restrained liquid ripple through the inset lens.
+   The rail nodes remain stable; this can play even on the current tab. */
+html[data-layout="duo"] #app.app .tabbar__tab::after {
+  display:block;
+  content:'';
+  position:absolute;
+  inset:4px 8px;
+  border-radius:999px;
+  z-index:-1;
+  pointer-events:none;
+  opacity:0;
+  background:radial-gradient(ellipse at 38% 25%,rgba(255,255,255,.80),rgba(129,211,255,.52) 46%,rgba(68,154,244,.03) 75%);
+  transform:scale(.75);
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"]::after {
+  animation:lfms-rail-ripple 400ms cubic-bezier(.16,.78,.25,1) both;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .icon {
+  animation:lfms-rail-tap 400ms cubic-bezier(.16,.78,.25,1) both;
+}
+@keyframes lfms-rail-ripple {
+  0% {opacity:0;transform:scale(.75)}
+  25% {opacity:1;transform:scale(.98)}
+  100% {opacity:0;transform:scale(1.24)}
+}
+@keyframes lfms-rail-tap {
+  0%,100% {scale:1}
+  37% {scale:1.19}
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] #app.app .app__body {transition:none}
+  html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"]::after,
+  html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .icon {animation:none}
+}

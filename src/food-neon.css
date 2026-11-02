@@ -378,7 +378,7 @@
   .fn2__neo-calorie-rule {margin:4px auto}
   .fn2__neo-calorie-stats strong {font-size:17px}
   .fn2__neo-calorie-stats small {font-size:8px}
-  .fn2__neo-meals {grid-column:2;grid-row:1;display:grid;grid-template-columns:1fr;gap:5px;padding:0 6px}
+  .fn2__neo-meals {grid-column:2;grid-row:1;display:grid;grid-template-columns:1fr;gap:5px;padding:0 6px;height:200px;align-content:center}
   .fn2__neo-meal {min-height:41px;grid-template-columns:18px minmax(0,1fr) auto;gap:4px;padding:3px 5px;border-radius:10px}
   .fn2__neo-meal-icon {width:18px;height:20px}
   .fn2__neo-meal-icon svg {width:18px;height:18px}

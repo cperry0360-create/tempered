@@ -899,7 +899,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('div.session-r5__stage-totals', {}, [
           el('div', {}, [el('strong',{text:`${done} / ${entry.sets.length}`}),el('small',{text:'Movement sets'})]),
           el('div', {}, [el('strong',{text:`${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)}`}),el('small',{text:'Total sets'})]),
-          el('div', {}, [el('strong',{text:clock(elapsedSeconds()),dataset:{stageClock:'true'}}),el('small',{text:'Elapsed time'})]),
+          el('div', {}, [
+            entry.record?.bestWeight
+              ? el('strong',{text:`${lbs(entry.record.bestWeight.weight)} × ${entry.record.bestWeight.reps}`})
+              : el('strong',{text:clock(elapsedSeconds()),dataset:{stageClock:'true'}}),
+            el('small',{text:entry.record?.bestWeight?'Best set':'Elapsed time'}),
+          ]),
         ]),
         el('div.session-r5__stage-nav', {}, [
           el('button',{type:'button',disabled:focusStageIndex===0,onclick:()=>focusExercise(focusStageIndex-1)},['← Previous']),

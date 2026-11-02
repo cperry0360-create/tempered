@@ -215,3 +215,63 @@
 @media(prefers-reduced-transparency:reduce){
   .fn2__neo {background:var(--food-v2-deep);border-color:var(--neo-blue)}
 }
+
+
+/* Compact screens do NOT squeeze a 300px calorie frame into a half-width
+   column. On the Duo cover / ordinary iPhone, give it the entire first row
+   and move meal badges into a legible two-column grid underneath. */
+@media(max-width:540px) {
+  .fn2__neo {padding:16px 12px 0;border-radius:29px}
+  .fn2__neo-body {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .fn2__neo-calorie {
+    grid-column:1 / -1;grid-row:1;
+    width:min(100%,320px);min-height:264px;
+    justify-self:center;padding:0;
+  }
+  .fn2__neo-outline {width:100%;height:100%}
+  .fn2__neo-calorie-content {width:61%;gap:2px;padding:8px 0}
+  .fn2__neo-calorie-label {font-size:17px;gap:6px}
+  .fn2__neo-calorie-label svg {width:25px;height:25px}
+  .fn2__neo-calorie-value {font-size:clamp(43px,11vw,60px)}
+  .fn2__neo-calorie-goal {font-size:15px}
+  .fn2__neo-calorie-rule {margin:6px 0 9px}
+  .fn2__neo-calorie-stats strong {font-size:23px}
+  .fn2__neo-calorie-stats small {font-size:10px}
+  .fn2__neo-meals {
+    grid-column:1 / -1;grid-row:2;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;padding:5px 0 7px;
+  }
+  .fn2__neo-meal {
+    min-height:58px;grid-template-columns:24px minmax(0,1fr) auto;
+    gap:6px;padding:5px 8px;border-radius:13px;
+  }
+  .fn2__neo-meal-icon {width:24px;height:30px}
+  .fn2__neo-meal-icon svg {width:24px;height:24px}
+  .fn2__neo-meal-copy strong {font-size:12px}
+  .fn2__neo-meal-copy small {font-size:10px}
+  .fn2__neo-meal-pct {font-size:11px;padding-left:5px}
+  .fn2__neo-unassigned {grid-column:1/-1}
+  .fn2__neo-target {
+    grid-column:1;grid-row:3;
+    min-height:132px;display:grid;align-content:center;gap:9px;
+    padding:8px;border-top:1px solid rgba(150,210,255,.33);
+  }
+  .fn2__neo-target-top,.fn2__neo-target-bottom {gap:3px}
+  .fn2__neo-target-top strong {font-size:15px}
+  .fn2__neo-target-line {height:1px;width:94%;justify-self:center}
+  .fn2__neo-target-bottom strong {font-size:15px;padding:6px 9px}
+  .fn2__neo-finish {
+    grid-column:2;grid-row:3;min-height:132px;padding:7px 0 5px;
+    border-top:1px solid rgba(150,210,255,.33);
+  }
+  .fn2__neo-close {min-height:108px;max-width:100%;border-radius:17px;gap:7px}
+  .fn2__neo-close strong {font-size:15px}
+  .fn2__neo-check {width:35px;height:35px}
+  .fn2__neo-check svg {width:24px;height:24px}
+  .fn2__neo-nutrients {grid-column:1 / -1;grid-row:4;gap:12px;padding:14px 1px 8px}
+  .fn2__neo-nutrient-head {gap:5px;flex-wrap:wrap}
+  .fn2__neo-nutrient-head strong {font-size:15px}
+  .fn2__neo-nutrient-count,.fn2__neo-nutrient-delta {font-size:11px}
+  .fn2__neo-footer {min-height:57px}
+}

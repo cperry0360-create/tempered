@@ -224,3 +224,54 @@
 @media(prefers-reduced-motion:reduce) {
   :is(.screen--settings,.program-builder,.mobility-screen,.screen--summary) * {scroll-behavior:auto;}
 }
+
+
+/* Remaining drill-ins: Training details, exercise selection and Progress logs.
+   These selectors are scoped to their modern parent so history/chart rules stay
+   intact while nested panels inherit the same blue-black material. */
+.train--fuel-style :is(
+  .train-r4__details,.train-r4__day-preview,.train-r4__rhythm-week,
+  .train-r4__routine-detail,.train-r4__exercise-preview,.libraryrow
+) {
+  background:var(--food-v2-panel);border-color:var(--food-v2-line);
+  color:var(--food-v2-text);
+}
+.train--fuel-style .train-r4__subheader {
+  background:var(--food-v2-deep);border-bottom:1px solid var(--food-v2-line);
+}
+.train--fuel-style .train-r4__program[data-active-program="true"] .train-r4__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.progress--fuel-style :is(
+  .progress-score-detail__row,.progress-session-detail,
+  .progress-log-row,.progress-lift,.progress-back
+) {
+  border-color:var(--food-v2-line);
+}
+.progress--fuel-style :is(.progress-score-detail__row,.progress-session-detail) {
+  background:var(--food-v2-panel);color:var(--food-v2-text);
+}
+.progress--fuel-style :is(.progress-log-row,.progress-lift) {
+  background:var(--food-v2-panel);
+}
+.progress--fuel-style .progress-cut__eyebrow {color:var(--lfms-accent-red-soft)}
+.progress--fuel-style .progress-back {color:var(--food-v2-blue-light)}
+
+/* Full-screen tools and their nested interactive rows. */
+.plate-calculator__plate-row button {
+  background:var(--food-v2-panel-2);color:var(--food-v2-text);
+  border:1px solid var(--food-v2-line);
+}
+.plate-calculator__modes button:focus-visible,
+.weekly-recap button:focus-visible,
+.quick-cardio button:focus-visible,
+.score-explain__sheet button:focus-visible {
+  outline:2px solid var(--food-v2-blue-light);outline-offset:2px;
+}
+.score-explain__done {background:var(--food-v2-blue);color:var(--food-v2-deep)}
+.setup :is(button,input,select):focus-visible,
+.screen--session :is(button,input,select):focus-visible {
+  outline:2px solid var(--food-v2-blue-light);outline-offset:2px;
+}
+.screen--session .session-r5__eyebrow {color:var(--lfms-accent-red-soft)}
+/* Pure decoration: preserve actual training/calorie statuses and all form data. */

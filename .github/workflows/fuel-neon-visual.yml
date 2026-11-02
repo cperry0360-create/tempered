@@ -2,7 +2,7 @@ name: LFMS Fuel neon visual smoke
 on:
   push:
     branches:
-      - 'chatgpt/fuel-neon-widget-reference-v06620'
+      - 'chatgpt/fuel-*'
   workflow_dispatch:
 jobs:
   fuel-neon-visual:

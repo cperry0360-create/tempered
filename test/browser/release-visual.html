@@ -616,6 +616,16 @@
         }
       }
       if (view === 'food2-dashboard') {
+        const lifter=mount.querySelector('[data-water-goal-figure="true"]')
+        const waterCard=lifter?.closest('.fn2__stat--water')
+        const figureFill=lifter?.querySelector('[data-water-figure-fill="true"]')
+        const lifterGlyphs=lifter?.querySelectorAll('[data-custom-rail-glyph="nav-train"]')
+        if(!lifter||!waterCard||!figureFill||lifterGlyphs?.length!==2 ||
+           lifter.getAttribute('role')!=='meter')
+          throw new Error('Water goal lifter must reuse the exact LFMS rail figure twice')
+        const lr=lifter.getBoundingClientRect(),cr=waterCard.getBoundingClientRect()
+        if(lr.left<cr.left-2 || lr.right>cr.right+2 || lr.bottom>cr.bottom+2)
+          throw new Error('Water goal lifter spills beyond its card')
         const neo=mount.querySelector('[data-food-neon="true"]')
         if(!neo || !neo.querySelector('.fn2__neo-close') ||
             neo.querySelectorAll('.fn2__neo-meal').length!==4 ||

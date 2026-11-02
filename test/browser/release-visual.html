@@ -585,6 +585,16 @@
           if(node.getBoundingClientRect().width<44 || node.getBoundingClientRect().height<44)
             throw new Error('Neon Fuel action is below 44px accessibility target')
         }
+        if(window.innerWidth<=540){
+          const frame=neo.querySelector('.fn2__neo-outline').getBoundingClientRect()
+          const copy=neo.querySelector('.fn2__neo-calorie-content').getBoundingClientRect()
+          const meals=neo.querySelector('.fn2__neo-meals').getBoundingClientRect()
+          if(copy.left<frame.left+frame.width*.14 || copy.right>frame.right-frame.width*.14 ||
+             copy.top<frame.top+frame.height*.13 || copy.bottom>frame.bottom-frame.height*.13)
+            throw new Error('Compact calorie words overflow their segmented frame')
+          if(meals.top<frame.bottom-1)
+            throw new Error('Compact meal tiles collide with calorie frame')
+        }
       }
       if (!mount.firstElementChild) throw new Error('App did not render a surface')
       // Regression gate for the formerly gray/orange drill-down surfaces.

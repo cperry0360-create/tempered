@@ -145,7 +145,7 @@ check(label + ' content is padded clear of the floating icons',
               && w.getComputedStyle(caption).visibility==='visible'
               && ['Today','Train','Fuel','Progress'].includes(caption.textContent.trim())
           })
-          && w.getComputedStyle(q('[data-tab="history"]')).transform!=='none')
+          && w.getComputedStyle(q('[data-tab="history"]'),'::before').opacity==='1')
         progress.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,pointerId:111,button:0,clientY:progressRect.top+progressRect.height/2}))
         progress.click()
         await new Promise(resolve=>setTimeout(resolve,140));await settle()

@@ -367,7 +367,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         dataset: { tab: entry.id, active: 'false', label: entry.label },
         'aria-label': `${entry.label.toLowerCase()} section`,
         onclick: () => navigateFromRail(entry.id),
-      }, [icon(entry.icon), el('span', { text: entry.label })])))
+      }, [
+        // Keep the optical lens anchored to the art, not the taller nav button.
+        el('div.tabbar__glyph', { 'aria-hidden': 'true' }, [icon(entry.icon)]),
+        el('span', { text: entry.label }),
+      ])))
       replace(tabBar, [tabs])
       installRailGesture()
     }

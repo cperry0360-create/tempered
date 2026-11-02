@@ -581,6 +581,15 @@
         const rect=neo.getBoundingClientRect()
         if(rect.left < -1 || rect.right > window.innerWidth+1)
           throw new Error('Neon Fuel widget overflows the visual viewport')
+        if(mount.querySelector('.fn2__float'))
+          throw new Error('Floating Quick Log overlaps the neon card')
+        if(window.innerWidth<=540){
+          const shortcuts=[...mount.querySelectorAll('.fn2__pills button')]
+          if(shortcuts.length!==3 || shortcuts.some(n=>{
+            const b=n.getBoundingClientRect()
+            return b.left<0 || b.right>window.innerWidth+1
+          }))throw new Error('Food shortcut pill is clipped on phone/Duo cover')
+        }
         const track=neo.querySelector('.fn2__neo-perimeter-track')
         if(!track || [...neo.querySelectorAll('.fn2__neo-perimeter-live')].some(n=>n.getAttribute('d')!==track.getAttribute('d')))
           throw new Error('Calorie meal segments are not on the same rounded perimeter')

@@ -584,7 +584,7 @@
       if (Object.prototype.hasOwnProperty.call(deepScreens,view)) {
         const scope = document.querySelector(deepScreens[view])
         const actual = scope && getComputedStyle(scope).getPropertyValue('--surface-1').trim()
-        const expected = getComputedStyle(document.documentElement).getPropertyValue('--food-v2-panel').trim()
+        const expected = getComputedStyle(document.documentElement).getPropertyValue('--lfms-sub-panel').trim()
         if (!scope || actual !== expected)
           throw new Error(`LFMS sub-screen palette missing on ${view}: ${actual} (expected ${expected})`)
       }

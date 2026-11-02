@@ -78,7 +78,18 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let halfFoldIndex = 0
   let focusStageIndex = 0
 
+  // Anchor the rest dock to the actual right-hand logging column.
+  function positionRestDock() {
+    const bar=document.querySelector('[data-session-rest-overlay]')
+    if(!bar || document.documentElement.dataset.layout !== 'duo' || halfFold ||
+       !window.matchMedia('(min-width:740px)').matches) return
+    const column=root.querySelector('.session-r5__log')?.getBoundingClientRect()
+    if(!column || column.width<=0) return
+    bar.style.setProperty('--session-rest-left',Math.round(column.left)+'px')
+    bar.style.setProperty('--session-rest-width',Math.round(column.width)+'px')
+  }
   function syncHalfFoldViewport() {
+    positionRestDock()
     if (!halfFold) return
     const viewport = window.visualViewport
     const visibleBottom = viewport ? viewport.height + viewport.offsetTop : window.innerHeight
@@ -964,7 +975,6 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       el('div.half-fold__logging', {}, [
         exerciseCard(entry, halfFoldIndex),
         movementPicker(),
-        halfFoldIndex === plan.length - 1 && cardioFinisherCard(),
       ]),
     ])
   }
@@ -1175,20 +1185,29 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           visualStage(),
           el('div.session-r5__log', {}, [
             duoLayout && plan.length > 0 && el('div.session-display-tools', {}, [
-              el('span', { text: `Exercise ${focusStageIndex + 1} of ${plan.length} · ${loggedCount()} sets logged` }),
-              halfFoldToggle(),
+              el('button.session-r5__add-movement', {type:'button',
+                 dataset:{action:'add-movement'},onclick:()=>{
+                   addingMovement=true
+                   render()
+                   requestAnimationFrame(()=>root.querySelector('.session-add__search')?.focus())
+                 },
+               }, ['+ Movement']),
+               halfFoldToggle(),
             ]),
             session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
             ...plan.map(exerciseCard),
-            cardioFinisherCard(),
-            movementPicker(),
+            // Cardio has its own screen; the live lifting view stays focused on sets.
+            (!duoLayout || plan.length===0 || addingMovement) && movementPicker(),
           ]),
         ]),
       ]),
 
     ])
     clearBodyOverlays()
-    if (rest) document.body.append(restBar())
+    if (rest) {
+      document.body.append(restBar())
+      positionRestDock()
+    }
     const sheet = confirmingFinish ? finishSheet() : confirmingDiscard ? discardSheet() : null
     if (sheet) document.body.append(sheet)
     syncHalfFoldViewport()

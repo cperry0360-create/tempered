@@ -44,7 +44,7 @@ try{
  check('Neon Fuel reads live calorie, protein targets and remaining amount',
    q('.fn2__neo-calorie-goal')?.textContent==='of '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
    && q('[data-macro="protein"]')?.textContent.includes(String(Math.round(goal('protein_target',135))))
-   && q('.fn2__neo-target-bottom')?.textContent.includes(String(Math.round(goal('calories_logged',2100)-480))))
+   && q('.fn2__neo-target-bottom')?.textContent.includes(Math.round(goal('calories_logged',2100)-480).toLocaleString()))
  check('only Food Library, Quick Log and Meal History shortcuts remain',
    qa('.fn2__pills button').length===3
    && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Quick Log|Meal History')
@@ -52,8 +52,7 @@ try{
  check('neon calorie frame draws four rounded progress segments',qa('.fn2__neo-perimeter-live').length===4)
  check('neon meal allocation uses real timestamped entries, not invented shares',
    qa('.fn2__neo-meal').length===4
-   && qa('.fn2__neo-meal')[1]?.textContent.includes('480 kcal')
-   && qa('.fn2__neo-meal')[1]?.textContent.includes('100%')
+   && qa('.fn2__neo-meal').filter(x=>x.textContent.includes('480 kcal')&&x.textContent.includes('100%')).length===1
    && qa('.fn2__neo-meal').filter(x=>x.textContent.includes('0 kcal')).length===3)
  check('Close Day is inside the neon card, one real button, and Track Other remains present',
    !!q('.fn2__neo [data-diary-finish-today]')
@@ -215,7 +214,7 @@ try{
  check('Closing a sheet restores page scrolling',!document.body.dataset.food2Modal
    && getComputedStyle(scrolling).overflowY!=='hidden')
  await t.app.show('today');await settle(50);await t.app.show('fuel');await settle(100)
- check('switching tabs does not replace stored food data',q('.fn2__metrics')?.textContent.includes('640'))
+ check('switching tabs does not replace stored food data',q('.fn2__neo-calorie-value')?.textContent==='640')
  // The user logged only HALF of a 200-kcal meal. Repeat must work from its
  // original 200-kcal serving, never re-multiply the already eaten 100 kcal.
  await t.daily.addNutrition('2026-10-01',{description:'Half-serving granola',calories:200,protein:16,carbs:25,fat:5,portion:.5})

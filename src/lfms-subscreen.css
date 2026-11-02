@@ -1,0 +1,226 @@
+/* LFMS 0.66.19 — shared deep-screen design system.
+ * This layer is deliberately visual. No storage, session, or form logic changes.
+ * Navy is the canvas; brand red is a punctuation mark, never the default CTA.
+ */
+:root {
+  --lfms-accent-red:var(--lfms-launch-red);
+  --lfms-accent-red-soft:color-mix(in srgb,var(--lfms-accent-red) 77%,white);
+  --lfms-accent-red-wash:color-mix(in srgb,var(--lfms-accent-red) 13%,transparent);
+  --lfms-panel-raised:color-mix(in srgb,var(--food-v2-panel-2) 90%,var(--food-v2-beach-base));
+}
+/* Override the legacy charcoal/orange design *only* for its older workflows.
+   New Today, Train, Fuel, Progress main screens keep their existing LFMS look. */
+:is(
+  .screen--settings,.program-builder,.setup,
+  .screen--summary,.screen--session,.mobility-screen,
+  .weekly-recap,.plate-calculator,.score-explain__sheet,
+  .quick-cardio,.health-paste-overlay,.nutrition-log-overlay
+) {
+  --bg:var(--food-v2-deep);
+  --surface-1:var(--food-v2-panel);
+  --surface-2:var(--food-v2-panel-2);
+  --surface-3:var(--food-v2-beach-base);
+  --hairline:var(--food-v2-line);
+  --text-1:var(--food-v2-text);
+  --text-2:var(--food-v2-muted);
+  --text-3:var(--food-v2-muted);
+  --text:var(--food-v2-text);
+  --train:var(--food-v2-blue);
+  --train-ink:var(--food-v2-blue-light);
+  --acid:var(--food-v2-blue);
+  --accent:var(--food-v2-blue);
+  --on-accent:var(--food-v2-deep);
+  --raised:var(--food-v2-panel-2);
+  --well:var(--food-v2-panel-2);
+  --edge:var(--food-v2-line);
+  --stone:var(--food-v2-line);
+  color-scheme:dark;
+  color:var(--food-v2-text);
+}
+.app__body:has(> :is(.screen--settings,.program-builder,.screen--summary,.screen--session,.setup)) {
+  background:var(--food-v2-deep);
+}
+:is(.screen--settings,.program-builder,.screen--summary,.setup) {
+  background:radial-gradient(ellipse 80% 250px at 45% -120px,var(--food-v2-beach-base),transparent 94%),var(--food-v2-deep);
+  color:var(--food-v2-text);
+  min-width:0;
+}
+:is(.screen--settings,.program-builder,.screen--summary,.setup) :is(h1,h2,h3,strong) {
+  color:var(--food-v2-text);
+}
+/* Settings: real sections instead of the old stack of charcoal rectangles. */
+.screen--settings {gap:14px;padding:clamp(13px,2vw,21px) clamp(12px,2vw,22px) max(70px,env(safe-area-inset-bottom));}
+.screen--settings > .screen__title {font-size:clamp(27px,3.5vw,39px);font-weight:850;letter-spacing:-.045em;display:flex;align-items:center;gap:10px;}
+.screen--settings > .screen__title::after {content:'';width:7px;height:7px;border-radius:50%;background:var(--lfms-accent-red);box-shadow:0 0 13px var(--lfms-accent-red-wash);}
+.screen--settings > .card {
+  min-width:0;padding:clamp(15px,2vw,22px);
+  border:1px solid var(--food-v2-line);
+  border-radius:21px;
+  background:linear-gradient(153deg,var(--lfms-panel-raised),var(--food-v2-panel));
+  box-shadow:0 7px 24px color-mix(in srgb,var(--food-v2-deep) 35%,transparent);
+}
+.screen--settings .block__title {display:flex;align-items:center;gap:9px;color:var(--food-v2-text);font-size:clamp(17px,2vw,22px);letter-spacing:-.025em;}
+.screen--settings .block__title::before {content:'';width:3px;height:16px;border-radius:3px;background:var(--lfms-accent-red);flex:none;}
+.screen--settings .block__hint {color:var(--food-v2-muted);line-height:1.55;}
+.screen--settings .setting {min-width:0;flex-wrap:wrap;gap:5px 12px;}
+.screen--settings .setting__label {color:var(--food-v2-muted);}
+.screen--settings .setting__value {color:var(--food-v2-text);}
+.screen--settings :is(.entry__value,.setup__weeklyselect) {
+  background:var(--food-v2-deep);border:1px solid var(--food-v2-line);
+  border-radius:12px;color:var(--food-v2-text);min-height:44px;
+}
+.screen--settings :is(.button,.setup__cadence) {
+  border:1px solid var(--food-v2-line);border-radius:13px;
+  background:var(--food-v2-panel-2);color:var(--food-v2-text);font-weight:720;
+  min-height:44px;
+}
+.screen--settings .button--primary {
+  background:var(--food-v2-blue);border-color:var(--food-v2-blue);
+  color:var(--food-v2-deep);
+}
+.screen--settings .button--danger {
+  background:var(--lfms-accent-red-wash);
+  color:var(--lfms-accent-red-soft);
+  border-color:color-mix(in srgb,var(--lfms-accent-red) 45%,var(--food-v2-line));
+}
+.screen--settings .appearance__choices {border:1px solid var(--food-v2-line);border-radius:13px;background:var(--food-v2-deep);}
+.screen--settings .appearance__choice {color:var(--food-v2-muted);border-radius:11px;}
+.screen--settings .appearance__choice:has(input:checked) {
+  color:var(--food-v2-text);
+  background:var(--food-v2-beach-base);
+  box-shadow:inset 0 -2px 0 var(--lfms-accent-red);
+}
+.screen--settings .duo-layout-setting {border-color:var(--food-v2-line);}
+.screen--settings .duo-layout-setting__toggle {accent-color:var(--food-v2-blue);}
+.screen--settings .notice {background:var(--food-v2-panel-2);border:1px solid var(--food-v2-line);color:var(--food-v2-text);}
+.screen--settings :is(a,.duo-layout-setting__help a) {color:var(--food-v2-blue-light);}
+
+/* Program Builder: preserve its two-pane editor, replace old gray widgets. */
+.program-builder {gap:15px;}
+.program-builder__eyebrow {color:var(--lfms-accent-red-soft);font-weight:800;letter-spacing:.1em;}
+.program-builder__title {font-weight:850;letter-spacing:-.05em;}
+.program-builder__copy,.program-builder__label {color:var(--food-v2-muted);}
+.program-builder__card {
+  min-width:0;border:1px solid var(--food-v2-line);
+  border-radius:20px;background:linear-gradient(150deg,var(--lfms-panel-raised),var(--food-v2-panel));
+  box-shadow:none;
+}
+.program-builder__back {color:var(--food-v2-blue-light);}
+.program-builder :is(.program-builder__input,.program-builder__small,select,input:not([type='checkbox'])) {
+  background:var(--food-v2-deep);color:var(--food-v2-text);
+  border:1px solid var(--food-v2-line);border-radius:11px;
+}
+.program-builder__day,.program-builder__exercise {
+  background:var(--food-v2-panel-2);border:1px solid var(--food-v2-line);
+  border-radius:13px;color:var(--food-v2-text);
+}
+.program-builder__day[data-selected='true'] {
+  background:color-mix(in srgb,var(--food-v2-blue) 17%,var(--food-v2-panel-2));
+  color:var(--food-v2-text);
+  border-color:var(--food-v2-blue);
+  box-shadow:inset 3px 0 0 var(--lfms-accent-red);
+}
+.program-builder .button {min-height:44px;border-radius:12px;border:1px solid var(--food-v2-line);background:var(--food-v2-panel-2);color:var(--food-v2-text);}
+.program-builder .button--primary {background:var(--food-v2-blue);color:var(--food-v2-deep);border-color:var(--food-v2-blue);}
+
+/* Mobility overlay: native-feeling blue cards, clear focus and a restrained red mark. */
+.mobility-screen-overlay {
+  background:var(--food-v2-deep);
+  color:var(--food-v2-text);
+}
+.mobility-screen {
+  background:radial-gradient(ellipse 90% 225px at 45% -90px,var(--food-v2-beach-base),transparent 92%),var(--food-v2-deep);
+}
+.mobility-screen__head span {color:var(--lfms-accent-red-soft);}
+.mobility-screen__back {background:var(--food-v2-panel-2);border:1px solid var(--food-v2-line);color:var(--food-v2-text);}
+.mobility-screen__hero,.mobility-flow,.mobility-screen__routine {
+  background:var(--food-v2-panel);
+  border:1px solid var(--food-v2-line);
+  border-radius:18px;color:var(--food-v2-text);
+}
+.mobility-screen__hero {background:linear-gradient(135deg,var(--lfms-panel-raised),var(--food-v2-panel));}
+.mobility-screen__hero-art {background:radial-gradient(circle at 30% 25%,var(--food-v2-beach-base),var(--food-v2-panel-2));border:1px solid var(--food-v2-line);}
+.mobility-screen__routine[data-selected='true'] {
+  background:color-mix(in srgb,var(--food-v2-blue) 15%,var(--food-v2-panel));
+  border-color:var(--food-v2-blue);
+  box-shadow:inset 3px 0 0 var(--lfms-accent-red);
+}
+.mobility-screen__routine-mark {color:var(--food-v2-blue-light);}
+.mobility-flow__steps li {border-color:var(--food-v2-line);}
+.mobility-flow__clock {color:var(--food-v2-blue-light);}
+.mobility-flow__timer {background:var(--food-v2-panel-2);color:var(--food-v2-text);border:1px solid var(--food-v2-line);}
+.mobility-flow__complete {background:var(--food-v2-blue);color:var(--food-v2-deep);}
+.mobility-screen :is(button,input,select):focus-visible {
+  outline:2px solid var(--food-v2-blue-light);outline-offset:2px;
+}
+
+/* Workout completion, session details, setup and builder share the same vocabulary. */
+.screen--summary .summary-hero__eyebrow,.screen--summary .summary-records__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.screen--summary .summary-recap .stat,
+.screen--summary .summary-records {
+  background:var(--food-v2-panel);
+  border:1px solid var(--food-v2-line);
+  border-radius:19px;
+}
+.screen--summary .summary-actions {background:var(--food-v2-deep);border:1px solid var(--food-v2-line);}
+.screen--summary .summary-actions .button {
+  background:var(--food-v2-blue);color:var(--food-v2-deep);border-radius:999px;
+}
+.screen--summary .summary-records .badge {color:var(--lfms-accent-red-soft);}
+.screen--session {background:var(--food-v2-deep);color:var(--food-v2-text);}
+.screen--session .session-r5__stage {
+  background:var(--food-v2-panel);border-color:var(--food-v2-line);
+}
+.screen--session .session-r5__progress-segment>span {background:var(--food-v2-blue);}
+.screen--session .session-r5__progress-segment[data-focused='true'] {outline-color:var(--lfms-accent-red);}
+.setup__kicker {color:var(--lfms-accent-red-soft);}
+.setup__card,.setup__program,.setup__cadencerow {
+  background:var(--food-v2-panel);border:1px solid var(--food-v2-line);
+  border-radius:18px;
+}
+.setup :is(.setup__input,.setup__weightinput,.setup__weeklyselect) {
+  background:var(--food-v2-panel-2);border:1px solid var(--food-v2-line);
+}
+.setup__choice,.setup__number,.setup__cadence {background:var(--food-v2-panel-2);color:var(--food-v2-muted);border:1px solid var(--food-v2-line);}
+.setup__choice[data-selected='true'],.setup__cadence[data-selected='true'],
+.setup__program[data-selected='true'] {border-color:var(--food-v2-blue);color:var(--food-v2-text);}
+.setup__number[data-selected='true'] {background:var(--food-v2-blue);color:var(--food-v2-deep);}
+.setup__next {background:var(--food-v2-blue);color:var(--food-v2-deep);}
+.setup__footer {background:var(--food-v2-deep);}
+
+/* Nested popovers: prevent any return to the old flat-gray panels. */
+.score-explain__sheet,.weekly-recap,.plate-calculator,.quick-cardio {
+  background:var(--food-v2-deep);color:var(--food-v2-text);
+}
+.score-explain__sheet :is(p,small),.weekly-recap__muted {color:var(--food-v2-muted);}
+.weekly-recap__header,.plate-calculator__header {background:var(--food-v2-deep);border-bottom:1px solid var(--food-v2-line);}
+.weekly-recap__eyebrow {color:var(--lfms-accent-red-soft);}
+.weekly-recap__card,.plate-calculator__modes,.quick-cardio {
+  background:var(--food-v2-panel);border:1px solid var(--food-v2-line);
+}
+.weekly-recap__score {color:var(--food-v2-blue-light);}
+.plate-calculator__modes button {color:var(--food-v2-muted);}
+.plate-calculator__modes button[aria-selected='true'] {background:var(--food-v2-beach-base);color:var(--food-v2-text);}
+.quick-cardio__eyebrow {color:var(--lfms-accent-red-soft);}
+.quick-cardio__progress-fill {background:var(--food-v2-blue);}
+.quick-cardio__save,.quick-cardio__pause {border-radius:13px;min-height:44px;}
+.quick-cardio__save {background:var(--food-v2-blue);color:var(--food-v2-deep);}
+.health-paste-overlay,.nutrition-log-overlay {background:var(--food-v2-deep);color:var(--food-v2-text);}
+.health-paste-overlay :is(input,textarea,select) {background:var(--food-v2-panel-2);color:var(--food-v2-text);border-color:var(--food-v2-line);}
+
+/* Red punctuation in the four existing modern tabs. Blue remains the action ink. */
+.today--fuel-style .today2__pills button:first-child .icon,
+.train--fuel-style .train-r4__eyebrow,
+.progress--fuel-style .progress-cut__eyebrow {
+  color:var(--lfms-accent-red-soft);
+}
+.progress--fuel-style .progress-cut__phase [data-progress='true'] {background:var(--lfms-accent-red);}
+:where(.screen--settings,.program-builder,.mobility-screen,.screen--summary,.setup)
+:is(button,input,select,textarea):focus-visible {
+  outline:2px solid var(--food-v2-blue-light);outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(.screen--settings,.program-builder,.mobility-screen,.screen--summary) * {scroll-behavior:auto;}
+}

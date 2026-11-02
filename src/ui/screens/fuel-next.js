@@ -26,6 +26,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
   let working=false, undo=null, status='', pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
+  let weightGoalOpen=false,weightGoalValue='',weightGoalError=''
+  let customWaterOpen=false,customWaterValue='',customWaterError='',customWaterSaving=false
   const runtime=el('div.fn2__legacy-runtime')
 
   const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
@@ -65,6 +67,64 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const profile=(await storage.get('profile','profile'))??{id:'profile'}
     await storage.put('profile',{...profile,...values})
     prefs={...profile,...values}
+  }
+  function toggleWeightGoal() {
+    weightGoalOpen=!weightGoalOpen
+    weightGoalValue=prefs.weightGoalLb ? String(prefs.weightGoalLb) : ''
+    weightGoalError=''
+    render()
+    if(weightGoalOpen) requestAnimationFrame(()=>root.querySelector('[data-weight-goal-input]')?.focus())
+  }
+  async function saveWeightGoal(event) {
+    event.preventDefault()
+    const goal=Number(weightGoalValue)
+    if(!weightGoalValue.trim()||!Number.isFinite(goal)||goal<70||goal>700){
+      weightGoalError='Enter a goal between 70 and 700 lb.'
+      render()
+      return
+    }
+    try {
+      await savePrefs({weightGoalLb:Math.round(goal*10)/10})
+      weightGoalOpen=false
+      weightGoalError=''
+      render()
+    } catch {
+      weightGoalError='Unable to save the goal. Try again.'
+      render()
+    }
+  }
+  async function logWater(amount) {
+    await daily.logAt(clock.today(),'water',amount)
+    await refresh()
+  }
+  function toggleCustomWater() {
+    customWaterOpen=!customWaterOpen
+    customWaterError=''
+    render()
+    if(customWaterOpen) requestAnimationFrame(()=>root.querySelector('[data-custom-water-input]')?.focus())
+  }
+  async function saveCustomWater(event) {
+    event.preventDefault()
+    if(customWaterSaving)return
+    const amount=Number(customWaterValue)
+    if(!customWaterValue.trim()||!Number.isFinite(amount)||amount<0.1||amount>200) {
+      customWaterError='Enter 0.1–200 oz.'
+      render()
+      return
+    }
+    customWaterSaving=true
+    try {
+      await daily.logAt(clock.today(),'water',Math.round(amount*10)/10)
+      customWaterOpen=false
+      customWaterValue=''
+      customWaterError=''
+      await refresh()
+    } catch {
+      customWaterError='Unable to log water. Try again.'
+      render()
+    } finally {
+      customWaterSaving=false
+    }
   }
   async function favorite(food) {
     const favoriteSet=new Set(prefs.food2Favorites??[])
@@ -108,6 +168,14 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const macros=nutritionMacroTargets(calGoal,proGoal)
     const lastWeight=[...data.days].filter(x=>x.date<=clock.today()&&n(x.bodyMetrics?.weight)>0)
       .sort((a,b)=>b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
+    const goal=Number(prefs.weightGoalLb)
+    const hasGoal=Number.isFinite(goal)&&goal>=70&&goal<=700
+    const difference=lastWeight&&hasGoal?Math.round((Number(lastWeight)-goal)*10)/10:null
+    const goalComparison=!hasGoal?'Set a goal to compare'
+      :!lastWeight?'Goal: '+goal.toFixed(1)+' lb · log your weight'
+      :difference===0?'At your '+goal.toFixed(1)+' lb goal'
+      :difference>0?difference.toFixed(1)+' lb to goal · '+goal.toFixed(1)+' lb target'
+      :Math.abs(difference).toFixed(1)+' lb below '+goal.toFixed(1)+' lb goal'
     return [
       heading(),week(),
       createFuelNeonWidget({
@@ -118,22 +186,49 @@ export function createFuelNextScreen({ storage,daily,clock }) {
           await refresh()
         },
       }),
-      el('div.fn2__stats',{},[
-        el('section.fn2__stat',{},[
+      el('div.fn2__stats.fn2__stats--two',{},[
+        el('section.fn2__stat.fn2__stat--weight',{},[
           el('h2',{},[icon('body'),' Weight']),
           el('strong',{text:lastWeight?Number(lastWeight).toFixed(1)+' lb':'—'}),
-          el('small',{text:lastWeight?'Latest logged':'Not logged'}),
+          el('small.fn2__weight-comparison',{text:goalComparison}),
+          el('button.fn2__stat-link',{type:'button',
+            'aria-expanded':String(weightGoalOpen),onclick:toggleWeightGoal,
+          },[hasGoal?'Change goal':'Set goal']),
+          weightGoalOpen&&el('form.fn2__stat-form',{onsubmit:saveWeightGoal},[
+            el('label',{},[
+              el('span',{text:'Goal (lb)'}),
+              el('input',{type:'number',min:'70',max:'700',step:'0.1',inputMode:'decimal',
+                value:weightGoalValue,placeholder:'150',dataset:{weightGoalInput:'true'},
+                'aria-label':'Target body weight in pounds',
+                oninput:e=>{weightGoalValue=e.target.value;weightGoalError=''},
+              }),
+            ]),
+            el('button',{type:'submit'},['Save']),
+            weightGoalError&&el('small.fn2__stat-error',{role:'alert',text:weightGoalError}),
+          ]),
         ]),
-        el('section.fn2__stat',{},[
+        el('section.fn2__stat.fn2__stat--water',{},[
           el('h2',{},[icon('water'),' Water']),
           el('strong',{text:fmt(day.waterOz)+' oz'}),
           el('small',{text:'of '+fmt(target('water',120))+' oz goal'}),
-          el('div.fn2__water-actions',{},[8,12,25].map(a=>el('button',{type:'button',onclick:async()=>{await daily.logAt(clock.today(),'water',a);await refresh()}},['+'+a]))),
-        ]),
-        el('section.fn2__stat',{},[
-          el('h2',{},[icon('steps'),' Steps']),
-          el('strong',{text:Number.isFinite(day.steps)?fmt(day.steps):'—'}),
-          el('small',{text:Number.isFinite(day.steps)?'Today':'Not logged'}),
+          el('div.fn2__water-actions',{},[
+            ...[8,12,25].map(a=>el('button',{type:'button',onclick:()=>logWater(a)},['+'+a])),
+            el('button.fn2__water-custom-toggle',{type:'button',
+              'aria-expanded':String(customWaterOpen),onclick:toggleCustomWater,
+            },[customWaterOpen?'Cancel':'+ Custom']),
+          ]),
+          customWaterOpen&&el('form.fn2__stat-form',{onsubmit:saveCustomWater},[
+            el('label',{},[
+              el('span',{text:'Add water (oz)'}),
+              el('input',{type:'number',min:'0.1',max:'200',step:'0.1',inputMode:'decimal',
+                value:customWaterValue,placeholder:'16',dataset:{customWaterInput:'true'},
+                'aria-label':'Custom water amount in ounces',
+                oninput:e=>{customWaterValue=e.target.value;customWaterError=''},
+              }),
+            ]),
+            el('button',{type:'submit',disabled:customWaterSaving},['Add']),
+            customWaterError&&el('small.fn2__stat-error',{role:'alert',text:customWaterError}),
+          ]),
         ]),
       ]),
       macroJournal(day),

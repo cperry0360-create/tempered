@@ -324,3 +324,37 @@
 .progress--fuel-style .progress-lift-detail__chart .trend-chart {
   color:var(--pr2-blue);
 }
+
+
+/* Confirmation, discard and custom-entry sheets are also drill-down UI.
+   Keep destructive choices unmistakable and the safe exit in primary blue. */
+.confirm-overlay {
+  background:color-mix(in srgb,var(--lfms-sub-bg) 84%,transparent);
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+}
+.confirm-sheet {
+  --surface-1:var(--lfms-sub-panel);
+  --surface-2:var(--lfms-sub-raised);
+  --text-1:var(--lfms-sub-text);
+  --text-2:var(--lfms-sub-muted);
+  --text-3:var(--lfms-sub-muted);
+  width:min(100%,520px);
+  padding:20px;border:1px solid var(--lfms-sub-line);
+  border-radius:22px 22px 18px 18px;
+  background:linear-gradient(150deg,var(--lfms-sub-raised),var(--lfms-sub-panel));
+  box-shadow:0 14px 36px color-mix(in srgb,var(--lfms-sub-bg) 38%,transparent);
+  color:var(--lfms-sub-text);
+}
+.confirm-sheet__title {font-weight:840;letter-spacing:-.035em;color:var(--lfms-sub-text);}
+.confirm-sheet__eyebrow {color:var(--lfms-accent-red-soft);font-weight:790;}
+.confirm-sheet__copy {color:var(--lfms-sub-muted);font-size:14px;line-height:1.5;}
+.confirm-sheet__actions .button {
+  min-height:48px;border-radius:13px;font-weight:780;
+}
+.confirm-sheet__keep {background:var(--lfms-sub-blue);border-color:var(--lfms-sub-blue);color:var(--lfms-sub-bg);}
+.confirm-sheet__discard {
+  background:var(--lfms-accent-red-wash);
+  border:1px solid var(--lfms-accent-red);
+  color:var(--lfms-accent-red-soft);
+}

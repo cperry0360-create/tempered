@@ -609,3 +609,94 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .icon {
   html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"]::after,
   html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .icon {animation:none}
 }
+
+
+/* LFMS GLASS RAIL v5: the lens belongs to the glyph, never to the nav row.
+   The glyph keeps the same centered circle in both the 52px compact item and
+   the 67px expanded labeled item. The hit target and captions stay separate. */
+.tabbar__glyph {
+  display:grid;
+  place-items:center;
+}
+html[data-layout="duo"] #app.app .tabbar__tab {
+  background:transparent;
+  box-shadow:none;
+}
+html[data-layout="duo"] #app.app .tabbar__tab::before,
+html[data-layout="duo"] #app.app .tabbar__tab::after {
+  display:none;
+  content:none;
+}
+html[data-layout="duo"] #app.app .tabbar__glyph {
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  box-sizing:border-box;
+  border-radius:999px;
+  margin:0 auto;
+  overflow:visible;
+  transform:translateZ(0);
+  transition:transform 215ms cubic-bezier(.17,1.2,.32,1);
+}
+html[data-layout="duo"] #app.app .tabbar__glyph .icon {
+  position:relative;
+  z-index:2;
+  flex:none;
+  width:27px;
+  height:27px;
+  transform-origin:center;
+}
+html[data-layout="duo"] #app.app .tabbar__glyph::before {
+  content:'';
+  display:block;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  box-sizing:border-box;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:0;
+  border:1px solid rgba(227,247,255,.75);
+  background:radial-gradient(circle at 34% 19%,rgba(248,254,255,.78),rgba(123,208,255,.62) 39%,rgba(22,105,203,.80) 100%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.86),inset 0 -3px 5px rgba(8,45,103,.50),0 0 16px rgba(79,182,255,.42);
+  transition:opacity 190ms ease,box-shadow 190ms ease,background 190ms ease;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"] .tabbar__glyph::before {
+  opacity:1;
+}
+html[data-layout="duo"] #app.app .tabbar__tabs[data-holding="true"] .tabbar__tab[data-active="true"]:not([data-peek="true"]) .tabbar__glyph::before {
+  opacity:.42;
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph::before {
+  opacity:1;
+  border-color:rgba(252,255,255,.96);
+  background:radial-gradient(circle at 34% 18%,rgba(255,255,255,.92),rgba(144,222,255,.75) 43%,rgba(25,118,220,.89) 100%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.96),0 0 23px rgba(91,194,255,.61);
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph {
+  transform:scale(1.055);
+}
+html[data-layout="duo"] #app.app .tabbar__glyph::after {
+  content:'';
+  display:block;
+  position:absolute;
+  inset:-1px;
+  z-index:1;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.74);
+  background:radial-gradient(circle,rgba(255,255,255,.93),rgba(169,231,255,.58) 40%,rgba(86,161,244,.03) 75%);
+}
+html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::after {
+  animation:lfms-rail-ripple 400ms cubic-bezier(.16,.78,.25,1) both;
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] #app.app .tabbar__glyph,
+  html[data-layout="duo"] #app.app .tabbar__glyph::before {transition:none}
+  html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::after {animation:none}
+}

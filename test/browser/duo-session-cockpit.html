@@ -58,6 +58,10 @@ try{
   await wait(120)
   const rest=q('.session-restbar')
   check('set completion opens rest timer with adjustment and skip',Boolean(rest&&rest.querySelectorAll('button').length===3))
+  if(isWide) {
+    const active=q('.session-r5__log .exercise[data-focused="true"]')
+    check('logged set and rest timer both fit without internal set scrolling',Boolean(active&&active.scrollHeight<=active.clientHeight+3),JSON.stringify({scrollHeight:active?.scrollHeight,clientHeight:active?.clientHeight}))
+  }
   if(isWide&&rest){
     const log=q('.session-r5__log')?.getBoundingClientRect(),rect=rest.getBoundingClientRect()
     check('rest dock aligned with the right exercise pane',Boolean(log&&Math.abs(rect.left-log.left)<=3&&Math.abs(rect.width-log.width)<=3),JSON.stringify({dock:[rect.left,rect.width],log:log&&[log.left,log.width]}))

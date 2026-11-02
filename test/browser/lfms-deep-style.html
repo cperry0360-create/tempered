@@ -1,0 +1,82 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>LFMS secondary-screen visual contract</title></head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { createSummaryScreen } from '../../src/ui/screens/summary.js'
+
+const checks=[],errors=[]
+const q=s=>document.querySelector(s)
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const settle=(n=110)=>new Promise(resolve=>setTimeout(resolve,n))
+addEventListener('error',e=>errors.push(e.message))
+addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+const isNavy=node=>node&&getComputedStyle(node).backgroundImage.includes('linear-gradient')
+const swatch=document.createElement('i')
+swatch.style.backgroundColor='var(--lfms-accent-red)'
+document.body.append(swatch)
+try {
+  // Exactly match the production stylesheet order; old small harnesses
+  // intentionally do not import the new design layer.
+  const source=await fetch('../../index.html').then(r=>r.text())
+  const stylesheet=[...source.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(x=>x[1])
+  for(const path of stylesheet){
+    const link=document.createElement('link')
+    link.rel='stylesheet'
+    link.href='../../'+path.replace(/^\.\//,'')
+    document.head.append(link)
+    await new Promise((resolve,reject)=>{link.onload=resolve;link.onerror=()=>reject(new Error('stylesheet missing: '+path))})
+  }
+  check('Production loads the new deep-screen design layer last',
+    stylesheet.at(-1)==='./src/lfms-subscreen.css' &&
+    getComputedStyle(document.documentElement).getPropertyValue('--lfms-accent-red').trim()!=='')
+  const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,1,12))
+  await storage.open()
+  await storage.put('profile',{id:'profile',setupComplete:true,appearance:'dark'})
+  const tempered=await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'settings'})
+  await tempered.app.show('settings')
+  const settings=q('.screen--settings'),cards=[...document.querySelectorAll('.screen--settings > .card')]
+  check('Settings has navy glass panels across sections',cards.length>=6&&cards.every(isNavy),cards.length)
+  const firstTitle=q('.screen--settings .block__title')
+  check('Settings section markers use the logo red',firstTitle &&
+    getComputedStyle(firstTitle,'::before').backgroundColor===getComputedStyle(swatch).backgroundColor)
+  check('Settings retains the full export and restore controls',
+    !!q('[data-action="backup"]')&&!!q('[data-action="restore-picker"]')
+    &&!!q('[data-action="check-updates"]'))
+  check('Settings keeps 44px appearance and action controls',
+    [...document.querySelectorAll('.screen--settings .appearance__choice')].every(x=>x.getBoundingClientRect().height>=44))
+  const program=q('[data-action="program-builder"]')
+  program?.click();await settle(150)
+  check('Program Builder is a two-pane navy editor, not gray setup boxes',
+    !!q('.program-builder__workspace')&&!!q('.program-builder__card')
+    &&isNavy(q('.program-builder__card')))
+  check('Program Builder retains editable title and days',
+    !!q('.program-builder__input')&&!!q('.program-builder__day'))
+  check('Program Builder red eyebrow',!!q('.program-builder__eyebrow')&&
+    getComputedStyle(q('.program-builder__eyebrow')).color!=='rgb(232, 131, 58)')
+  q('.program-builder__back')?.click();await settle()
+  check('Return from editor restores Settings',!!q('.screen--settings'))
+  q('[data-action="rerun-setup"]')?.click();await settle()
+  check('Rerun setup uses blue/navy card grammar',
+    !!q('.setup__card')&&
+    getComputedStyle(q('.setup__card')).borderTopWidth!=='0px')
+  await tempered.app.show('today')
+  q('[data-other="toggle"]')?.click()
+  q('[data-activity="mobility"] .today-item__body')?.click()
+  await settle()
+  check('Mobility drill-in uses navy cards, preserves its close control',
+    !!q('[data-mobility-screen]')&&!!q('.mobility-screen__back')
+    &&getComputedStyle(q('.mobility-screen__hero')).borderTopWidth!=='0px')
+  q('.mobility-screen__back')?.click()
+  const summary=createSummaryScreen({onDone:()=>tempered.app.show('today')})
+  await summary.show({session:{date:'2026-11-01'},durationMinutes:32,setsCompleted:8,totalReps:58,totalVolume:4200,records:{weightPrs:[],volumePrs:[]}})
+  q('.app__body').replaceChildren(summary.root)
+  check('Workout completion uses navy stat tiles',
+    !!q('.screen--summary')&&!!q('.summary-recap .stat')
+    &&getComputedStyle(q('.summary-recap .stat')).borderTopWidth!=='0px')
+  check('No visual audit navigation errors',errors.length===0,errors.join(' | '))
+} catch(e) {check('Deep-screen audit completed',false,e.stack)}
+swatch.remove()
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+ body:JSON.stringify({label:'lfms-deep-style',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

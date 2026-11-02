@@ -6,6 +6,7 @@
 import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
+import { waterWavePath } from '../water-wave.js'
 import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
 import { compressMealPhoto } from '../meal-photo.js'
 import { createFuelNeonWidget } from '../fuel-neon-widget.js'
@@ -30,6 +31,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   let customWaterOpen=false,customWaterValue='',customWaterError='',customWaterSaving=false
   // Keep the prior painted fill across dashboard re-renders, so additions rise smoothly.
   let paintedWaterPercent=0
+  let waterWaveFrame=0
+  let waterWaveId=0
   const runtime=el('div.fn2__legacy-runtime')
 
   const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
@@ -167,7 +170,24 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function waterGoalFigure(amount, goal) {
     const progress=pct(amount,goal)
     const percent=Math.round(progress)
-    const from=Math.max(0,Math.min(100,paintedWaterPercent))
+    // Exact same sidebar SVG on both layers; intersect the blue copy with an
+    // SVG-native wave clip. No glow, overlay rectangle, or spill outside the figure.
+    const filledIcon=icon('nav-train')
+    const ns='http://www.w3.org/2000/svg'
+    const clipId='lfms-water-wave-'+(++waterWaveId)
+    const defs=document.createElementNS(ns,'defs')
+    const clip=document.createElementNS(ns,'clipPath')
+    clip.setAttribute('id',clipId)
+    clip.setAttribute('clipPathUnits','userSpaceOnUse')
+    const wave=document.createElementNS(ns,'path')
+    wave.setAttribute('data-water-wave-path','true')
+    wave.setAttribute('d',waterWavePath(paintedWaterPercent))
+    clip.append(wave)
+    defs.append(clip)
+    const glyph=document.createElementNS(ns,'g')
+    glyph.setAttribute('clip-path','url(#'+clipId+')')
+    while(filledIcon.firstChild)glyph.append(filledIcon.firstChild)
+    filledIcon.append(defs,glyph)
     return el('div.fn2__water-figure',{
       role:'meter',
       'aria-label':'Water goal completion',
@@ -177,10 +197,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     },[
       el('div.fn2__water-figure-art',{'aria-hidden':'true'},[
         el('span.fn2__water-figure-empty',{},[icon('nav-train')]),
-        el('span.fn2__water-figure-fill',{
-          dataset:{waterFigureFill:'true'},
-          style:'clip-path:inset('+(100-from)+'% 0 0 0)',
-        },[icon('nav-train')]),
+        el('span.fn2__water-figure-fill',{dataset:{waterFigureFill:'true'}},[filledIcon]),
       ]),
       el('span.fn2__water-figure-percent',{text:percent+'%'}),
     ])
@@ -647,6 +664,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function go(name){view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
   function render() {
     if(!data)return
+    // Cancel the prior frame before replacing its SVG; the most recently
+    // painted fill is retained as the start of a subsequent water addition.
+    if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)
+    waterWaveFrame=0
     // Portaling out of the scrollable app body prevents fixed sheets from
     // moving/clipping on iOS. The content behind the sheet stays frozen.
     activeOverlay?.remove()
@@ -655,18 +676,30 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():dashboard()),
       el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
     ])
-    // Animate only the blue silhouette; actual water values update immediately.
-    // The previous percent stays as the starting position after any re-render.
+    // Animate SVG-native wave geometry INSIDE the actual lifter paths.
+    // Water updates immediately; only the paint moves over two seconds.
     const figure=root.querySelector('[data-water-goal-figure="true"]')
     if(figure){
-      const fill=figure.querySelector('[data-water-figure-fill="true"]')
+      const wave=figure.querySelector('[data-water-wave-path="true"]')
       const percent=Number(figure.dataset.waterPercent)||0
-      paintedWaterPercent=percent
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
-          if(fill?.isConnected)fill.style.clipPath='inset('+(100-percent)+'% 0 0 0)'
-        })
-      })
+      const from=paintedWaterPercent
+      const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      const started=performance.now()
+      const duration=2000
+      const animate=(now)=>{
+        if(!wave?.isConnected||view!=='dashboard'){waterWaveFrame=0;return}
+        const fraction=reduced?1:Math.min(1,Math.max(0,(now-started)/duration))
+        const eased=1-Math.pow(1-fraction,3)
+        paintedWaterPercent=from+(percent-from)*eased
+        wave.setAttribute('d',waterWavePath(paintedWaterPercent,reduced?0:now/850))
+        if(fraction<1)waterWaveFrame=requestAnimationFrame(animate)
+        else {paintedWaterPercent=percent;waterWaveFrame=0}
+      }
+      // Don't run a constant background loop when water hasn't changed.
+      if(reduced||Math.abs(from-percent)<0.01) {
+        paintedWaterPercent=percent
+        wave?.setAttribute('d',waterWavePath(percent))
+      } else waterWaveFrame=requestAnimationFrame(animate)
     }
     if(sheet) {
       activeOverlay=overlay()
@@ -677,6 +710,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   async function refresh(){await load();render()}
   function deactivate(){
+    if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)
+    waterWaveFrame=0
     sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;view='dashboard'
     activeOverlay?.remove();activeOverlay=null
     delete document.body.dataset.food2Modal

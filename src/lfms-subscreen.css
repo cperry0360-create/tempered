@@ -308,3 +308,19 @@
 }
 .screen--session .session-r5__eyebrow {color:var(--lfms-accent-red-soft)}
 /* Pure decoration: preserve actual training/calorie statuses and all form data. */
+
+
+/* Final drill-down exceptions caught by screenshot review: the old Train
+   prescription cards used global gray, and Lift Detail inherited orange ink. */
+.train--fuel-style .train-r4__day-preview {
+  background:var(--tr2-panel);
+  border:1px solid var(--tr2-line);
+  border-radius:14px;
+  color:var(--tr2-text);
+}
+.train--fuel-style .train-r4__day-preview :is(strong,h3) {color:var(--tr2-text);}
+.train--fuel-style .train-r4__day-preview :is(p,small) {color:var(--tr2-muted);}
+.train--fuel-style .train-r4__details {border-color:var(--tr2-line);}
+.progress--fuel-style .progress-lift-detail__chart .trend-chart {
+  color:var(--pr2-blue);
+}

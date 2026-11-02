@@ -110,7 +110,7 @@ try{
    expanded?.dataset.holding==='true'
    && expanded?.getBoundingClientRect().width>=107
    && topButton.dataset.peek==='true'
-   && getComputedStyle(topButton,'::after').content==='none'
+   && !getComputedStyle(topButton,'::after').content.includes('Today')
    && getComputedStyle(label).opacity==='1'
    && label.getBoundingClientRect().top>=topButton.querySelector('svg').getBoundingClientRect().bottom-1,
    JSON.stringify({holding:expanded?.dataset.holding,peek:topButton.dataset.peek,

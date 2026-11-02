@@ -40,7 +40,7 @@ function perimeter(amount,goal,meals) {
   svg.setAttribute('class','fn2__neo-outline')
   svg.setAttribute('role','img')
   svg.setAttribute('aria-label',Math.round(progress)+'% of calorie target consumed across meal segments')
-  const outline='M58 246 H59 Q13 246 13 200 V59 Q13 13 59 13 H241 Q287 13 287 59 V200 Q287 246 241 246 H58'
+  const outline='M58 13 H242 Q287 13 287 58 V202 Q287 246 242 246 H58 Q13 246 13 202 V58 Q13 13 58 13 Z'
   const addPath=(className,dashLength,start=0,label='')=>{
     const node=document.createElementNS(NS,'path')
     node.setAttribute('d',outline)

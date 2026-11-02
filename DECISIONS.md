@@ -1,3 +1,6 @@
+## 2026-11-02 — Weekly card design token compliance, LFMS 0.66.29
+- Converted the new Today weekly card's literal colors into existing CSS tokens; removed the unsupported uppercase transform. This is presentation-only and leaves the new weekly metrics and other recent commits intact.
+
 ## 2026-11-02 — Today unified week tracking, LFMS 0.66.27
 - **Approved direction:** A single Today card combines the calendar and weekly summary, but it does not reproduce Food's calorie-gauge UI. Reuse the actual shipped nav-train lifter SVG, not a redrawn person, on dates with a completed workout session.
 - **Progress targets:** Show only weekly sessions and habit counts as goal bars. Show working sets and training minutes as actual weekly totals, and sleep as an average over valid logged nights (with an explicit count); remove duplicate session and calories indicators from this training card.

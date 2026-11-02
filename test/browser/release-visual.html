@@ -512,6 +512,16 @@
             if (!capsule || capsule.getBoundingClientRect().width < 105 ||
                 [...capsule.querySelectorAll('.tabbar__tab > span')].some(node=>getComputedStyle(node).opacity!=='1'))
               throw new Error('Long-press expanded rail failed to render four labels')
+            // Guard the exact customer screenshot: the selected halo must sit
+            // ON its icon, not on the taller row or beneath its caption.
+            const glyph=progress.querySelector('.tabbar__glyph')
+            const art=glyph?.querySelector('svg')
+            const bubble=glyph?.getBoundingClientRect()
+            const iconBox=art?.getBoundingClientRect()
+            if (!bubble || !iconBox || Math.abs(bubble.top+bubble.height/2-iconBox.top-iconBox.height/2)>2 ||
+                Math.abs(bubble.left+bubble.width/2-iconBox.left-iconBox.width/2)>2 ||
+                getComputedStyle(glyph,'::before').opacity!=='1')
+              throw new Error('Selected bubble does not cover and center on Progress icon')
           }
           if (view.startsWith('food2-')) {
             if (!mount.querySelector('[data-food-two="true"]')) throw new Error('Food 2.0 opt-in failed to mount')

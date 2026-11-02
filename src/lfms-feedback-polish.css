@@ -1,0 +1,204 @@
+/* LFMS 0.66.26: annotated Meal History, Sleep and Cardio polish.
+   Visual-only changes except for accessible calendar / keyboard-free sleep choices. */
+
+/* Meal History: one compact, touch-friendly date navigator. The actual native
+   date input covers the date capsule, so iOS keeps its own accessible picker. */
+.fn2__history-title {align-items:center;gap:12px}
+.fn2__history-title .fn2__return-fuel {
+  display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;
+  min-width:48px;min-height:48px;padding:0;border-radius:999px;
+  color:var(--fn-ink);
+  border:1px solid rgba(169,221,255,.52);
+  background:radial-gradient(circle at 37% 23%,rgba(225,244,255,.36),rgba(55,134,200,.28) 52%,rgba(9,41,78,.65) 100%);
+  box-shadow:inset 0 2px 1px rgba(248,252,255,.38),0 0 19px rgba(59,159,247,.22);
+}
+.fn2__return-fuel .icon {width:26px;height:26px}
+.fn2__history-nav {
+  display:grid;grid-template-columns:46px minmax(0,1fr) 46px auto;
+  align-items:center;gap:9px;min-width:0;padding:1px 0 5px;
+}
+.fn2__history-arrow,.fn2__history-today,
+.fn2__history-nav .fn2__history-today {
+  grid-row:auto;grid-column:auto;height:46px;min-height:46px;
+  min-width:46px;width:auto;margin:0;padding:0;
+  border-radius:14px;border:1px solid var(--fn-line);
+  background:linear-gradient(155deg,var(--food-v2-panel-2),var(--food-v2-panel));
+  color:var(--fn-blue-light);
+  box-shadow:none;
+}
+.fn2__history-arrow {font-size:27px;line-height:1}
+.fn2__history-nav button:disabled {opacity:.32}
+.fn2__history-today,.fn2__history-nav .fn2__history-today {
+  min-width:61px;padding:0 13px;font-size:12px;font-weight:780;
+  background:var(--food-v2-beach-base);
+}
+.fn2__date-picker {
+  position:relative;display:flex;align-items:center;min-width:0;
+  width:100%;height:46px;box-sizing:border-box;cursor:pointer;
+  border-radius:15px;border:1px solid rgba(102,179,234,.38);
+  background:linear-gradient(140deg,var(--food-v2-panel-2),var(--food-v2-panel));
+}
+.fn2__date-picker-display {
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;min-width:0;padding:0 12px;
+  color:var(--fn-ink);font-size:clamp(12px,1.4vw,16px);
+  font-weight:770;font-variant-numeric:tabular-nums;
+  pointer-events:none;
+}
+.fn2__date-picker-display .icon {flex:none;width:18px;height:18px;color:var(--fn-blue-light)}
+.fn2__date-picker-display span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fn2__date-picker input[type="date"] {
+  appearance:none;-webkit-appearance:none;position:absolute;inset:0;z-index:1;
+  display:block;opacity:0;cursor:pointer;width:100%;height:100%;margin:0;
+  padding:0;border:0;color-scheme:dark;
+}
+.fn2__date-picker:focus-within {outline:2px solid var(--fn-blue-light);outline-offset:2px}
+@media(max-width:650px) {
+  .fn2__history-nav {grid-template-columns:42px minmax(0,1fr) 42px auto;gap:5px}
+  .fn2__history-arrow {min-height:44px;height:44px;min-width:42px}
+  .fn2__date-picker {height:44px}
+  .fn2__date-picker-display {padding:0 6px;gap:5px;font-size:12px}
+  .fn2__date-picker-display .icon {width:15px;height:15px}
+  .fn2__history-nav .fn2__history-today {min-width:48px;height:44px;min-height:44px;padding:0 5px;font-size:11px}
+}
+@media(max-width:360px) {
+  .fn2__date-picker-display .icon {display:none}
+  .fn2__history-nav {gap:4px}
+}
+
+/* Sleep: the same calm LFMS navy as the Today cards, not legacy gray/orange.
+   Preset selection does not focus the field or pop the iOS keyboard. */
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor {
+  box-sizing:border-box;min-width:0;
+  margin:0;padding:12px 14px;gap:11px;
+  background:linear-gradient(145deg,var(--t2-raised),var(--t2-panel));
+  border-top:1px solid var(--t2-line);
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__quick--sleep {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;min-width:0;
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__chip {
+  box-sizing:border-box;min-width:0;min-height:43px;padding:4px 3px;
+  font-size:12px;font-weight:750;line-height:1.2;
+  color:var(--t2-white);border:1px solid var(--t2-line);border-radius:12px;
+  background:var(--t2-panel);box-shadow:none;
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__chip[aria-pressed="true"] {
+  color:var(--t2-white);border-color:var(--t2-light);
+  background:var(--food-v2-beach-base);
+  box-shadow:inset 0 1px 0 rgba(214,241,255,.22);
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__manual {
+  display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:9px;min-width:0;
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__input {
+  box-sizing:border-box;min-width:0;width:100%;min-height:45px;
+  border:1px solid var(--t2-line);border-radius:12px;
+  padding:0 12px;background:var(--t2-panel);color:var(--t2-white);
+  font-size:14px;line-height:1.3;box-shadow:none;outline:none;
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__input:focus {
+  outline:2px solid var(--t2-light);outline-offset:1px;border-color:var(--t2-light);
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__save {
+  min-height:45px;height:45px;padding:0 12px;border-radius:12px;border:0;
+  color:var(--t2-bg);background:var(--t2-blue);font-size:13px;font-weight:830;
+}
+.today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__hint {
+  color:var(--t2-muted);font-size:11px;line-height:1.35;
+}
+@media(max-width:490px) {
+  .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor {padding:11px 10px}
+  .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__quick--sleep {gap:4px}
+  .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__chip {font-size:11px}
+}
+
+/* Cardio is an LFMS screen, not a legacy charcoal-and-orange workout panel. */
+.screen--cardio {
+  --bg:var(--lfms-sub-bg);
+  --surface-1:var(--lfms-sub-panel);
+  --surface-2:var(--lfms-sub-raised);
+  --surface-3:var(--lfms-sub-glow);
+  --hairline:var(--lfms-sub-line);
+  --text-1:var(--lfms-sub-text);
+  --text-2:var(--lfms-sub-muted);
+  --train:var(--lfms-sub-blue);
+  --train-ink:var(--lfms-sub-blue-light);
+  --on-accent:var(--lfms-sub-bg);
+  color:var(--lfms-sub-text);
+  color-scheme:dark;
+  background:transparent;
+}
+.app__body:has(> .screen--cardio) {background:var(--lfms-sub-bg)}
+html[data-layout="duo"] .app__body:has(> .screen--cardio) {background:transparent}
+.screen--cardio .cardio-r5__header {margin-bottom:20px;letter-spacing:0}
+.screen--cardio .cardio-r5__back {
+  border:1px solid rgba(141,207,252,.36);border-radius:999px;
+  background:linear-gradient(155deg,var(--lfms-sub-raised),var(--lfms-sub-panel));
+  color:var(--lfms-sub-text);font-size:13px;
+}
+.screen--cardio .cardio-r5__header-time {
+  border:1px solid var(--lfms-sub-line);border-radius:999px;
+  background:var(--lfms-sub-panel);padding:9px 12px;
+  color:var(--lfms-sub-blue-light);font-weight:800;
+}
+.screen--cardio .cardio-r5__workspace {align-items:stretch;gap:14px}
+.screen--cardio .cardio-r5__stage,
+.screen--cardio .cardio-r5__logger {
+  min-height:0;padding:clamp(18px,2.5vw,30px);border-radius:23px;
+  border:1px solid var(--lfms-sub-line);
+  background:linear-gradient(155deg,var(--lfms-sub-raised),var(--lfms-sub-panel));
+  box-shadow:inset 0 1px rgba(240,250,255,.05);
+}
+.screen--cardio .cardio-r5__stage {gap:13px}
+.screen--cardio .cardio-r5__eyebrow {
+  color:var(--lfms-sub-blue-light);font-size:11px;letter-spacing:.1em;font-weight:800;
+}
+.screen--cardio .cardio-r5__stage-icon {
+  min-height:125px;max-height:148px;
+  border-radius:18px;border:1px solid var(--lfms-sub-line);
+  background:radial-gradient(circle at 50% 20%,var(--lfms-sub-glow),var(--lfms-sub-panel));
+  color:var(--lfms-sub-blue-light);
+}
+.screen--cardio .cardio-r5__stage-icon .icon {width:53px;height:53px}
+.screen--cardio .cardio-r5__stage h1 {
+  color:var(--lfms-sub-text);font-size:clamp(25px,3vw,39px);
+  letter-spacing:-.04em;line-height:1.1;margin:0;
+}
+.screen--cardio .cardio-r5__stage p {font-size:13px;color:var(--lfms-sub-muted);line-height:1.55}
+.screen--cardio .cardio-r5__target {border-top:1px solid var(--lfms-sub-line);margin-top:auto;padding-top:17px;gap:5px}
+.screen--cardio .cardio-r5__target span {color:var(--lfms-sub-blue-light);font-size:10px}
+.screen--cardio .cardio-r5__target strong {color:var(--lfms-sub-text);font-size:clamp(24px,2.7vw,35px)}
+.screen--cardio .cardio-r5__logger {justify-content:center}
+.screen--cardio .cardio-r5__logger h2 {color:var(--lfms-sub-text);font-size:clamp(22px,2.6vw,31px);margin:9px 0 20px}
+.screen--cardio .cardio-r5__countdown {
+  color:var(--lfms-sub-text);font-size:clamp(78px,10vw,140px);
+  letter-spacing:-.075em;font-variant-numeric:tabular-nums;
+}
+.screen--cardio .cardio-r5__progress {margin:25px 0 8px;height:8px;background:var(--lfms-sub-glow)}
+.screen--cardio .cardio-r5__progress>span {background:var(--lfms-sub-blue)}
+.screen--cardio .cardio-r5__elapsed {font-size:12px;color:var(--lfms-sub-muted);margin:4px 0 20px}
+.screen--cardio .cardio-r5__actions button {font-size:14px;min-height:55px;border-radius:14px}
+.screen--cardio .cardio-r5__pause {background:var(--lfms-sub-raised);color:var(--lfms-sub-text);border:1px solid var(--lfms-sub-line)}
+.screen--cardio .cardio-r5__save {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg)}
+.screen--cardio .cardio-r5__status {color:var(--lfms-sub-muted)}
+.screen--cardio button:focus-visible {outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px}
+@media(min-width:740px) {
+  .screen--cardio .cardio-r5__stage,.screen--cardio .cardio-r5__logger {
+    min-height:min(530px,calc(100dvh - 165px));
+  }
+}
+@media(max-width:739px) {
+  .screen--cardio .cardio-r5__stage-icon {min-height:90px;max-height:110px}
+  .screen--cardio .cardio-r5__countdown {font-size:clamp(70px,15vw,105px)}
+}
+
+
+/* Avoid the site's inherited input max-width shortening the invisible
+   native picker hit area. The full visible date capsule must be tappable. */
+.fn2 .fn2__date-picker > input[type="date"] {
+  position:absolute;inset:0;display:block;
+  box-sizing:border-box;width:100%;min-width:100%;max-width:none;
+  height:100%;min-height:0;max-height:none;
+  padding:0;margin:0;border:0;opacity:0;
+}

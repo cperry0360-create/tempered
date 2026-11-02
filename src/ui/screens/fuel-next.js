@@ -144,7 +144,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
         el('button',{type:'button',dataset:{foodLogNav:'true'},'aria-current':view==='log'?'page':null,onclick:()=>go('log')},[icon('plus'),' Log']),
-        el('button',{type:'button',onclick:()=>go('journal')},[icon('journal'),' Meal History']),
+        el('button',{type:'button','aria-current':view==='journal'?'page':null,onclick:()=>go('journal')},[icon('journal'),' Meal History']),
       ]),
     ])
   }
@@ -344,18 +344,33 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const day=data.days.find(row=>row.date===journalDate)??{date:journalDate}
     const ledger=nutritionLedger(day)
     const isToday=journalDate===clock.today()
+    const displayDate=new Date(journalDate+'T12:00:00Z')
+      .toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})
     return [
       heading(),
-      el('div.fn2__title',{},[el('h1',{text:'Meal History'}),el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel'])]),
+      el('div.fn2__title.fn2__history-title',{},[
+        el('h1',{text:'Meal History'}),
+        el('button.fn2__return-fuel',{type:'button','aria-label':'Back to Fuel',
+          title:'Back to Fuel',onclick:()=>go('dashboard')},[
+          icon('nav-fuel'),
+        ]),
+      ]),
       el('nav.fn2__history-nav',{'aria-label':'Browse meal history by date'},[
-        el('button.fn2__history-arrow',{type:'button','aria-label':'Previous day',onclick:()=>shiftJournalDate(-1)},['‹']),
-        el('label.fn2__history-date',{},[
-          el('span',{text:'Viewing date'}),
-          el('input',{type:'date',value:journalDate,max:clock.today(),'aria-label':'Meal history date',
+        el('button.fn2__history-arrow',{type:'button','aria-label':'Previous day',
+          title:'Previous day',onclick:()=>shiftJournalDate(-1)},['‹']),
+        el('label.fn2__date-picker',{},[
+          el('span.fn2__date-picker-display',{},[
+            icon('calendar'),
+            el('span',{text:displayDate}),
+          ]),
+          el('input',{type:'date',value:journalDate,max:clock.today(),
+            'aria-label':'Choose meal history date',
             onchange:event=>setJournalDate(event.target.value)}),
         ]),
-        el('button.fn2__history-arrow',{type:'button','aria-label':'Next day',disabled:isToday,onclick:()=>shiftJournalDate(1)},['›']),
-        el('button.fn2__history-today',{type:'button',disabled:isToday,onclick:()=>setJournalDate(clock.today())},['Today']),
+        el('button.fn2__history-arrow',{type:'button','aria-label':'Next day',title:'Next day',
+          disabled:isToday,onclick:()=>shiftJournalDate(1)},['›']),
+        !isToday&&el('button.fn2__history-today',{type:'button',
+          onclick:()=>setJournalDate(clock.today())},['Today']),
       ]),
       el('div.fn2__history-summary',{},[
         el('strong',{text:fmt(ledger.totals.calories)+' kcal · '+fmt(ledger.totals.protein)+'g protein'}),

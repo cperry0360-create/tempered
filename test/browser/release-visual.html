@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="../../src/food-neon.css" />
   <link rel="stylesheet" href="../../src/weekly-recap-next.css" />
   <link rel="stylesheet" href="../../src/food-log-polish.css" />
+  <link rel="stylesheet" href="../../src/lfms-feedback-polish.css" />
 </head>
 <body>
   <div id="app" class="app"></div>
@@ -597,12 +598,17 @@
           throw new Error('Log form and Favorites overlap or overflow')
       }
       if (view === 'food2-journal') {
-        const label=mount.querySelector('.fn2__history-date > span')
-        const input=mount.querySelector('.fn2__history-date input')
-        if(!label||!input)throw new Error('Meal History date selector missing')
-        const a=label.getBoundingClientRect(),b=input.getBoundingClientRect()
-        if(a.bottom+3>b.top || b.right>innerWidth+1 || b.left<0)
-          throw new Error('Meal History date caption overlaps the calendar input')
+        const picker=mount.querySelector('.fn2__date-picker')
+        const display=picker?.querySelector('.fn2__date-picker-display')
+        const input=picker?.querySelector('input[type="date"]')
+        if(!picker||!display||!input)throw new Error('Meal History compact date selector missing')
+        const a=picker.getBoundingClientRect(),b=input.getBoundingClientRect()
+        const prev=mount.querySelector('[aria-label="Previous day"]')?.getBoundingClientRect()
+        const next=mount.querySelector('[aria-label="Next day"]')?.getBoundingClientRect()
+        if(a.width<90 || Math.abs(a.left-b.left)>2 || Math.abs(a.right-b.right)>2 ||
+           a.right>innerWidth+1 || a.left<0 || (prev&&prev.right>a.left+1) ||
+           (next&&next.left<a.right-1))
+          throw new Error('Meal History calendar picker geometry: '+JSON.stringify({picker:[a.left,a.right,a.width],input:[b.left,b.right,b.width],prev:prev&&[prev.left,prev.right],next:next&&[next.left,next.right],viewport:innerWidth}))
         for(const row of mount.querySelectorAll('.fn2__meal-row')) {
           const a=row.querySelector('.fn2__meal-info')?.getBoundingClientRect()
           const b=row.querySelector('.fn2__meal-menu')?.getBoundingClientRect()

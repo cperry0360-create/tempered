@@ -171,6 +171,10 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     return formatClock(Math.ceil(left))
   }
 
+  function cardioElapsedCopy(seconds) {
+    const whole = Math.max(0, Math.floor(seconds))
+    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2,'0')} elapsed`
+  }
   function cardioMinutes() {
     // Keep real elapsed minutes, including a short session ended early.
     return Math.min(10, Math.round(cardioElapsed() / 60 * 100) / 100)
@@ -199,25 +203,22 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
           disabled: cardioSaving, onclick: async () => {
             cardio = null; checkpointCardio(); await leaveCardio()
           } }, ['← Back']),
-        el('span', { text: 'TEMPERED · CARDIO SESSION' }),
         el('span.cardio-r5__header-time', { text: '10 MIN' }),
       ]),
       el('div.cardio-r5__workspace', {}, [
         el('section.cardio-r5__stage', {}, [
-          el('span.cardio-r5__eyebrow', { text: 'TODAY’S FINISHER' }),
-          el('div.cardio-r5__stage-icon', {}, [icon('train')]),
+          el('span.cardio-r5__eyebrow', { text: 'CARDIO SESSION' }),
+          el('div.cardio-r5__stage-icon', {}, [icon('steps')]),
           el('h1', { text: 'Easy cardio. Strong finish.' }),
-          el('p', { text: 'Incline walking, cycling, or a comfortable stair step. Settle into a pace you can sustain while speaking in full sentences.' }),
+          el('p', { text: 'Walk, cycle, or climb at a pace where you can speak comfortably.' }),
           target && el('div.cardio-r5__target', { dataset: { cardioTarget: 'true' } }, [
             el('span', { text: 'PERSONAL ESTIMATED ZONE 2' }),
             el('strong', { text: `${target.lowBpm}–${target.highBpm} bpm` }),
-            el('small', { text: 'Heart rate is a guide; the talk test comes first.' }),
-          ]),
+            ]),
         ]),
         el('section.cardio-r5__logger', { dataset: { cardioSession: 'true' } }, [
           el('span.cardio-r5__eyebrow', { text: complete ? 'SESSION COMPLETE' : cardio.paused ? 'TIMER PAUSED' : 'IN PROGRESS' }),
           el('h2', { text: '10-minute Zone 2' }),
-          el('p.cardio-r5__subtitle', { text: 'Continuous cardio · no lifting sets' }),
           el('div.cardio-r5__countdown', {
             dataset: { cardioCountdown: 'true' }, role: 'timer', 'aria-live': 'off', text: cardioLabel(),
           }),
@@ -226,7 +227,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
             el('span', { dataset: { cardioProgress: 'true' }, style: `width:${Math.round(elapsed / CARDIO_SECONDS * 100)}%` }),
           ]),
           el('p.cardio-r5__elapsed', { dataset: { cardioElapsed: 'true' },
-            text: `${minutes.toFixed(2)} minutes completed · log any amount` }),
+            text: cardioElapsedCopy(elapsed) }),
           el('div.cardio-r5__actions', {}, [
             !complete && el('button.cardio-r5__pause', { type: 'button', dataset: { action: 'toggle-cardio-pause' },
               onclick: () => {
@@ -258,7 +259,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
             }, [cardioSaving ? 'Saving…' : 'Finish & log']),
           ]),
           el('p.cardio-r5__status', { dataset: { cardioError: 'true' }, role:'status', text:'' }),
-          el('p.cardio-r5__note', { text: 'You can finish early. Actual completed time goes to your Micro cardio log. Your strength workout remains intact.' }),
         ]),
       ]),
     ])
@@ -289,7 +289,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
     const progress = cardioLayer.querySelector('[role="progressbar"]')
     progress?.setAttribute('aria-valuenow', String(Math.floor(elapsed)))
     const elapsedCopy = cardioLayer.querySelector('[data-cardio-elapsed]')
-    if (elapsedCopy) elapsedCopy.textContent = `${cardioMinutes().toFixed(2)} minutes completed · log any amount`
+    if (elapsedCopy) elapsedCopy.textContent = cardioElapsedCopy(elapsed)
     const save = cardioLayer.querySelector('[data-action="save-cardio"]')
     if (save && !cardioSaving) {
       save.disabled = elapsed < 1

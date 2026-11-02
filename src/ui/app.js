@@ -63,6 +63,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   let navigationToken = 0
   let railGesture = null
   let railTimer = null
+  const railPulseTimers = new WeakMap()
   let builder = null
   const openBuilder = async () => show('program-builder')
   const openProgramLibrary = async () => {
@@ -337,6 +338,26 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   }
 
 
+  // Rail taps are feedback, not a command to reload a screen already shown.
+  // Programmatic show() still refreshes when callers explicitly need new data.
+  function pulseRail(tab) {
+    const button = [...tabs.children].find((node) => node.dataset.tab === tab)
+    if (!button) return
+    clearTimeout(railPulseTimers.get(button))
+    button.removeAttribute('data-tap')
+    // Restart the CSS animation on successive rapid taps without rebuilding DOM.
+    void button.offsetWidth
+    button.dataset.tap = 'true'
+    railPulseTimers.set(button, setTimeout(() => button.removeAttribute('data-tap'), 430))
+  }
+
+  function navigateFromRail(tab) {
+    pulseRail(tab)
+    // The active tab retains its current DOM, scroll, open panels, and inputs.
+    if (active === tab && !tabBar.hidden) return
+    return show(tab)
+  }
+
   // Keep navigation nodes stable. Rebuilding four expensive blurred surfaces
   // twice per navigation caused the white flash seen in Duo recordings.
   function renderTabs(tab) {
@@ -345,7 +366,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         type: 'button',
         dataset: { tab: entry.id, active: 'false', label: entry.label },
         'aria-label': `${entry.label.toLowerCase()} section`,
-        onclick: () => show(entry.id),
+        onclick: () => navigateFromRail(entry.id),
       }, [icon(entry.icon), el('span', { text: entry.label })])))
       replace(tabBar, [tabs])
       installRailGesture()
@@ -420,7 +441,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         // Ignore only its subsequent synthetic click, never an ordinary tap.
         suppressGestureClick=true
         setTimeout(()=>{suppressGestureClick=false},600)
-        show(selected)
+        navigateFromRail(selected)
       }
     }
     tabs.addEventListener('pointerup',end)

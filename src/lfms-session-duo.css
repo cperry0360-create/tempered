@@ -256,7 +256,8 @@
     gap:2px;
   }
   html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__range,
-  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__proposal {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__proposal,
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__best {
     display:none;
   }
   html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {

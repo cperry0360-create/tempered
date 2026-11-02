@@ -23,7 +23,7 @@ const TYPES = {
 const VIEWS = [
   'setup-welcome', 'setup-rhythm', 'setup-plan',
   'food2-dashboard', 'food2-journal', 'food2-library', 'food2-serving', 'food2-quicklog',
-  'today', 'train', 'session', 'plate-calculator-weight', 'plate-calculator-build', 'weekly-recap', 'weekly-recap-details', 'weekly-recap-daily', 'weekly-recap-away', 'weekly-recap-quiet', 'fuel', 'fuel-entry', 'fuel-meals',
+  'today', 'rail-expanded', 'train', 'session', 'plate-calculator-weight', 'plate-calculator-build', 'weekly-recap', 'weekly-recap-details', 'weekly-recap-daily', 'weekly-recap-away', 'weekly-recap-quiet', 'fuel', 'fuel-entry', 'fuel-meals',
   'progress-trends', 'progress-score-explain', 'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
   'progress', 'progress-cut', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
   'settings', 'program-builder', 'program-custom-exercise', 'session-custom-exercise', 'summary',
@@ -220,7 +220,7 @@ try {
     const only = argument('--views')?.split(',') ?? null
     const unknown = only?.filter(name => !VIEWS.includes(name)) ?? []
     if (unknown.length) throw new Error('Unknown screenshot views: ' + unknown.join(', '))
-    for (const view of VIEWS.filter((name) => (!only || only.includes(name)) && (DUO_MODE || !name.startsWith('session-half-fold')))) {
+    for (const view of VIEWS.filter((name) => (!only || only.includes(name)) && (DUO_MODE || (!name.startsWith('session-half-fold') && name !== 'rail-expanded')))) {
       const filename = `${viewport.label}-${theme}-${view}.png`
       const destination = join(output, filename)
       const reportPromise = nextReport()

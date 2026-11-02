@@ -62,7 +62,7 @@
         ? new Date(2026, 8, 29, 9, 0, 0) : new Date(2026, 8, 7, 9, 0, 0))
     const route = {
       'weekly-recap': 'today', 'weekly-recap-details': 'today', 'weekly-recap-daily': 'today', 'weekly-recap-away': 'today', 'weekly-recap-quiet': 'today',
-      today: 'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
+      today: 'today', 'rail-expanded':'today', 'today-expanded': 'today', 'today-day-details': 'today', mobility: 'today',
       train: 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', 'train-custom-exercise': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
         'food2-dashboard':'fuel', 'food2-journal':'fuel', 'food2-library':'fuel', 'food2-serving':'fuel', 'food2-quicklog':'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
@@ -499,6 +499,20 @@
           await selectProgressView(tempered, view)
         } else {
           await tempered.app.show(target)
+          if (view === 'rail-expanded') {
+            if (document.documentElement.dataset.layout !== 'duo') throw new Error('Expanded rail reference requires Duo layout')
+            const progress = mount.querySelector('[data-tab="history"]')
+            if (!progress) throw new Error('Progress custom navigation glyph missing')
+            const pos = progress.getBoundingClientRect()
+            progress.dispatchEvent(new PointerEvent('pointerdown', {
+              bubbles:true,pointerId:512,button:0,clientY:pos.top+pos.height/2,
+            }))
+            await new Promise(resolve => setTimeout(resolve,760))
+            const capsule=mount.querySelector('.tabbar__tabs[data-holding="true"]')
+            if (!capsule || capsule.getBoundingClientRect().width < 105 ||
+                [...capsule.querySelectorAll('.tabbar__tab > span')].some(node=>getComputedStyle(node).opacity!=='1'))
+              throw new Error('Long-press expanded rail failed to render four labels')
+          }
           if (view.startsWith('food2-')) {
             if (!mount.querySelector('[data-food-two="true"]')) throw new Error('Food 2.0 opt-in failed to mount')
             if (view === 'food2-library') mount.querySelector('.fn2__pills button:nth-child(1)')?.click()

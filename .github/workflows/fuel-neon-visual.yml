@@ -1,0 +1,24 @@
+name: LFMS Fuel neon visual smoke
+on:
+  push:
+    branches:
+      - 'chatgpt/fuel-neon-widget-reference-v06620'
+  workflow_dispatch:
+jobs:
+  fuel-neon-visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Capture neon Fuel dashboard on Duo and phone
+        run: |
+          node tools/capture-release-screens.js --duo --views food2-dashboard --output artifacts/fuel-neon-duo
+          node tools/capture-release-screens.js --views food2-dashboard --output artifacts/fuel-neon-phone
+      - name: Upload reference verification screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: lfms-fuel-neon-reference
+          path: artifacts/fuel-neon-*/
+          retention-days: 14

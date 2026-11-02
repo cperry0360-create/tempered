@@ -14,6 +14,8 @@ const PRECACHE = [
   './src/train-next.css',
   './src/progress-next.css',
   './src/lfms-finish.css',
+  './src/food-neon.css',
+  './src/ui/fuel-neon-widget.js',
   './src/lfms-subscreen.css',
   './branding/lfms/logo-full.svg',
   './branding/lfms/logo-mark.svg',

@@ -8,6 +8,7 @@ import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
 import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
 import { compressMealPhoto } from '../meal-photo.js'
+import { createFuelNeonWidget } from '../fuel-neon-widget.js'
 
 const PHOTOS = FOOD_PHOTOS
 const n = x => Number.isFinite(Number(x)) ? Math.max(0,Number(x)) : 0
@@ -87,39 +88,6 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ]),
     ])
   }
-  function ring(cal,protein) {
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
-    svg.setAttribute('viewBox','0 0 160 160')
-    svg.setAttribute('role','img')
-    svg.setAttribute('aria-label','Calories '+Math.round(cal)+'%, protein '+Math.round(protein)+'% of goals')
-    for(const [radius,type,percent] of [[69,'cal',cal],[47,'protein',protein]]) {
-      for(const track of [true,false]){
-        const c=document.createElementNS('http://www.w3.org/2000/svg','circle')
-        const perimeter=2*Math.PI*radius
-        for(const [k,v] of Object.entries({cx:80,cy:80,r:radius,fill:'none',class:'fn2__ring-'+type+(track?' fn2__track':''),
-          'stroke-width':track?9:11,transform:'rotate(-90 80 80)',...(track?{}:{'stroke-dasharray':perimeter,'stroke-dashoffset':perimeter*(1-percent/100)})}))c.setAttribute(k,String(v))
-        svg.append(c)
-      }
-    }
-    return el('div.fn2__rings',{},[svg])
-  }
-  function metric(label,amount,goal,unit,extra='') {
-    return el('div.fn2__metric'+extra,{},[
-      el('small',{text:Math.round(pct(amount,goal))+'% of target'}),
-      el('strong',{text:fmt(amount)}),
-      el('span',{text:label}),
-      el('small.fn2__metric-goal',{text:'Target: '+fmt(goal)+' '+unit}),
-    ])
-  }
-  function macro(name,amount,goal) {
-    return el('div.fn2__macro',{},[
-      el('span',{text:name}),
-      el('div.fn2__macro-track',{role:'progressbar','aria-label':name+' progress','aria-valuenow':String(amount),'aria-valuemin':'0','aria-valuemax':String(goal)},[
-        el('i',{style:'width:'+pct(amount,goal)+'%'}),
-      ]),
-      el('small',{text:fmt(amount)+'g / '+fmt(goal)+'g'}),
-    ])
-  }
   function week() {
     const today=clock.today(),date=new Date(today+'T12:00:00Z')
     date.setUTCDate(date.getUTCDate()-(date.getUTCDay()+6)%7)
@@ -142,25 +110,14 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       .sort((a,b)=>b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
     return [
       heading(),week(),
-      el('section.fn2__hero',{'aria-label':'Live nutrition totals'},[
-        el('div.fn2__metrics',{},[
-          metric('Calories Consumed',calories,calGoal,'kcal'),
-          metric('Protein Consumed',protein,proGoal,'g',' fn2__metric--protein'),
-        ]),
-        ring(pct(calories,calGoal),pct(protein,proGoal)),
-        el('div.fn2__macros',{},[
-          macro('Carbs',ledger.totals.carbs,macros.carbs),
-          macro('Fat',ledger.totals.fat,macros.fat),
-          macro('Fiber',ledger.totals.fiber,macros.fiber),
-        ]),
-      ]),
-      el('div.fn2__inline-actions',{},[
-        el('button',{type:'button',onclick:event=>openFullHistory(event.currentTarget)},['Track other nutrients ›']),
-        el('button',{type:'button',dataset:{diaryFinishToday:'true'},onclick:async()=>{
+      createFuelNeonWidget({
+        day,calories,protein,calGoal,proGoal,macros,
+        onOtherNutrients:event=>openFullHistory(event.currentTarget),
+        onCloseDay:async()=>{
           await daily.setNutritionStatus(clock.today(),day.nutritionStatus==='complete'?'partial':'complete')
           await refresh()
-        }},[day.nutritionStatus==='complete'?'✓ Day closed · Reopen':'Close day']),
-      ]),
+        },
+      }),
       el('div.fn2__stats',{},[
         el('section.fn2__stat',{},[
           el('h2',{},[icon('body'),' Weight']),

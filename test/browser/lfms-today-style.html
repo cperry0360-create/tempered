@@ -112,7 +112,8 @@ try{
    && topButton.dataset.peek==='true'
    && !getComputedStyle(topButton,'::after').content.includes('Today')
    && getComputedStyle(label).opacity==='1'
-   && label.getBoundingClientRect().top>=topButton.querySelector('svg').getBoundingClientRect().bottom-1,
+   && label.getBoundingClientRect().top>=topButton.querySelector('svg').getBoundingClientRect().bottom-1
+   && getComputedStyle(topButton.querySelector('.tabbar__glyph'),'::before').opacity==='1',
    JSON.stringify({holding:expanded?.dataset.holding,peek:topButton.dataset.peek,
      width:expanded?.getBoundingClientRect().width,labelOpacity:getComputedStyle(label).opacity}))
  topButton.dispatchEvent(new PointerEvent('pointercancel',{pointerId:91,bubbles:true}))
@@ -131,7 +132,7 @@ try{
  check('Today repeat tap only animates the icon and leaves the page untouched',
    samePageEvents===0 && todayRoot===q('.app__body > .screen')
    && q('[data-tab="today"]').dataset.tap==='true'
-   && getComputedStyle(q('[data-tab="today"]'),'::after').animationName.includes('lfms-rail-ripple'))
+   && getComputedStyle(q('[data-tab="today"] .tabbar__glyph'),'::after').animationName.includes('lfms-rail-ripple'))
  window.removeEventListener('tempered:screen-shown',samePageListener)
  check('No runtime errors or unhandled rejections',errors.length===0,errors.join(' | '))
 }catch(e){check('Today Food-style test completes',false,e.stack)}

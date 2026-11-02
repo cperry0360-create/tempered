@@ -6,7 +6,7 @@ const date = value => new Intl.DateTimeFormat(undefined, { month: 'short', day: 
 /** A read-only report, separate from the live week and the workout screen. */
 export function showWeeklyRecap(report, { onProgress, onClose = () => {} } = {}) {
   const returnFocus = document.activeElement
-  const closeButton = el('button.button', { type: 'button', dataset: { weeklyRecapClose: 'true' }, onclick: () => dialog.close() }, ['Done'])
+  const closeButton = el('button.button.weekly-recap__done', { type: 'button', dataset: { weeklyRecapClose: 'true' }, onclick: () => dialog.close() }, ['Done'])
   const signalLabels = {
     sleepHours: ['Sleep', ' h', 'average'], steps: ['Steps', '', 'average'], waterOz: ['Water', ' oz', 'average'],
     calories: ['Calories', ' kcal', 'average'], proteinGrams: ['Protein', ' g', 'average'],
@@ -34,12 +34,28 @@ export function showWeeklyRecap(report, { onProgress, onClose = () => {} } = {})
     [report.training.sessions && !report.durationSamples ? null : report.training.minutes, 'training min'], [report.training.days, report.training.days === 1 ? 'day with training' : 'days with training'],
   ]
   const dialog = el('dialog.weekly-recap', { 'aria-labelledby': 'weekly-recap-title', dataset: { weeklyRecap: report.start } }, [
-    el('header.weekly-recap__header', {}, [el('div', {}, [el('p.weekly-recap__eyebrow', { text: 'Last week, tempered' }), el('h1', { id: 'weekly-recap-title', text: `${date(report.start)} – ${date(report.end)}` })]), closeButton]),
+    el('header.weekly-recap__header', {}, [
+      el('div.weekly-recap__brand', {}, [
+        el('img.weekly-recap__mark', { src: new URL('../../branding/lfms/logo-mark.svg', import.meta.url).href, alt: '', width: '40', height: '40' }),
+        el('div.weekly-recap__heading', {}, [
+          el('p.weekly-recap__eyebrow', { text: 'LFMS / WEEKLY REVIEW' }),
+          el('h1', { id: 'weekly-recap-title', text: `${date(report.start)} – ${date(report.end)}` }),
+        ]),
+      ]),
+      closeButton,
+    ]),
     el('div.weekly-recap__body', {}, [
-      el('section.weekly-recap__card', {}, [
+      el('section.weekly-recap__card.weekly-recap__card--score', {}, [
+        el('p.weekly-recap__kicker', { text: 'TRAINING HIGHLIGHT' }),
         el('h2', { text: 'Training score' }),
-        el('strong.weekly-recap__score', { text: report.score.score !== null ? `${report.score.score} · ${report.score.grade}` : report.score.away ? 'Away week' : 'Building history' }),
-        report.change !== null && el('p.weekly-recap__muted', { text: report.change === 0 ? 'Level with your prior four-week average' : `${report.change > 0 ? '+' : ''}${report.change} points vs your prior four-week average` }),
+        el('div.weekly-recap__scoreline', {}, [
+          el('strong.weekly-recap__score', { text: report.score.score !== null ? String(report.score.score) : '—' }),
+          el('span.weekly-recap__grade', { text: report.score.score !== null ? report.score.grade : report.score.away ? 'Away week' : 'Building history' }),
+        ]),
+        report.score.score !== null && el('div.weekly-recap__score-track',
+          { role: 'progressbar', 'aria-label': 'Training score', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(report.score.score) },
+          [el('span', { style: `width:${Math.max(0, Math.min(100, report.score.score))}%` })]),
+        report.change !== null && el('p.weekly-recap__delta', { text: report.change === 0 ? 'Level with your prior four-week average' : `${report.change > 0 ? '+' : ''}${report.change} points vs your prior four-week average` }),
         el('p', { text: report.explanation[1] ?? report.explanation[0] }),
         report.score.components.length > 0 && el('details.weekly-recap__breakdown', {}, [el('summary', { text: 'Score breakdown & explanation' }),
         ...report.explanation.map(sentence => el('p', { text: sentence })),
@@ -49,7 +65,8 @@ export function showWeeklyRecap(report, { onProgress, onClose = () => {} } = {})
         ])),
         ]),
       ]),
-      el('section.weekly-recap__card', {}, [
+      el('section.weekly-recap__card.weekly-recap__card--training', {}, [
+        el('p.weekly-recap__kicker', { text: 'TRAINING VOLUME' }),
         el('h2', { text: 'The work you recorded' }),
         el('div.weekly-recap__stats', {}, stats.map(([value, label]) => el('div', {}, [el('strong', { text: value === null ? '—' : number(value) }), el('span', { text: label })]))),
         report.durationSamples < report.training.sessions && el('p.weekly-recap__muted', { text: `Duration recorded for ${report.durationSamples} of ${report.training.sessions} workouts.` }),
@@ -57,11 +74,13 @@ export function showWeeklyRecap(report, { onProgress, onClose = () => {} } = {})
         report.restDays > 0 && el('p', { text: `${report.restDays} rest ${report.restDays === 1 ? 'day' : 'days'} logged. Recovery is part of the process.` }),
         report.training.sessions === 0 && el('p.weekly-recap__muted', { text: 'No completed workouts were recorded for this week.' }),
       ]),
-      el('section.weekly-recap__card', {}, [el('h2', { text: 'Recovery & daily life' }), ...signals,
+      el('section.weekly-recap__card.weekly-recap__card--recovery', {}, [
+        el('p.weekly-recap__kicker', { text: 'BEYOND THE GYM' }),
+        el('h2', { text: 'Recovery & daily life' }), ...signals,
         !signals.length && el('p.weekly-recap__muted', { text: 'No daily measurements were recorded for this week.' }),
         el('p.weekly-recap__muted', { text: 'Averages use logged days only. Blank days are not counted as zero.' }),
       ]),
-      el('button.button.weekly-recap__progress', { type: 'button', onclick: () => { dialog.close(); onProgress?.() } }, ['Open Progress']),
+      el('button.button.weekly-recap__progress', { type: 'button', onclick: () => { dialog.close(); onProgress?.() } }, ['View Progress', '  ›']),
     ]),
   ])
   dialog.addEventListener('close', () => { dialog.remove(); onClose(); if (returnFocus?.isConnected) returnFocus.focus() })

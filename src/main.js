@@ -12,16 +12,26 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 // This overlay lives outside #app so bootstrap cannot instantly erase it.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-let splashDismissed = false
+let splashDone = null
 function dismissSplash() {
-  if (splashDismissed) return
-  splashDismissed = true
-  const remaining = Math.max(0, 2600 - (performance.now() - splashStarted))
-  setTimeout(() => {
-    if (!launch) return
-    launch.dataset.closing = 'true'
-    setTimeout(() => launch.remove(), 520)
-  }, remaining)
+  if (splashDone) return splashDone
+  // Resolve only AFTER the exit transition and DOM removal. A modal shown
+  // during this interval can otherwise cover the LFMS splash artwork.
+  splashDone = new Promise(resolve => {
+    const remaining = Math.max(0, 2600 - (performance.now() - splashStarted))
+    setTimeout(() => {
+      if (!launch) { resolve(); return }
+      launch.dataset.closing = 'true'
+      const finish = () => {
+        launch.remove()
+        window.dispatchEvent(new Event('tempered:splash-finished'))
+        resolve()
+      }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) finish()
+      else setTimeout(finish, 520)
+    }, remaining)
+  })
+  return splashDone
 }
 // Never leave a loading overlay covering a stalled or partially loaded app.
 setTimeout(dismissSplash, 8000)
@@ -37,7 +47,6 @@ bootstrap()
     // supplies a predictable nine-line snapshot, so expose only the explicit
     // review-and-paste bridge in Daily Recap.
     installHealthPasteRuntime(context)
-    await installWeeklyRecapRuntime(context)
     try {
       await installCableMachineRuntime(context)
     } catch (error) {
@@ -45,7 +54,10 @@ bootstrap()
       // never turn a working tracker into a startup failure.
       console.error('[tempered] cable machine setup failed', error)
     }
-    dismissSplash()
+    // Weekly recap is intentionally post-splash: modal focus and its backdrop
+    // should never obscure or interrupt the animated launch artwork.
+    await dismissSplash()
+    await installWeeklyRecapRuntime(context)
   })
   .catch((error) => {
     dismissSplash()

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../src/style.css"></head><body><div id="app"></div><script type="module">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/style.css"><link rel="stylesheet" href="../../src/lfms-subscreen.css"><link rel="stylesheet" href="../../src/weekly-recap-next.css"></head><body><div id="app"></div><script type="module">
 import { bootstrapHarness } from './harness.js'
 import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 import { fixedClock } from '../../src/adapters/clock/clock.js'
@@ -16,8 +16,36 @@ try {
   await storage.put('dayLogs', { date: '2026-10-06', sleepHours: 8, steps: 6000 })
   // Dynamic import ensures the pre-change harness reports the missing feature.
   const { installWeeklyRecapRuntime } = await import('../../src/ui/weekly-recap-runtime.js')
+  const splash=document.createElement('div')
+  splash.dataset.lfmsLaunch=''
+  splash.style.cssText='position:fixed;inset:0;z-index:1000'
+  document.body.append(splash)
   const runtime = await installWeeklyRecapRuntime(context)
-  check('first launch after reset opens prior-week recap', q('[data-weekly-recap][open]') && q('[data-weekly-recap]').textContent.includes('Oct 5'))
+  check('weekly recap never appears over the startup splash',
+    !q('[data-weekly-recap][open]'))
+  splash.dataset.closing='true'
+  window.dispatchEvent(new Event('tempered:screen-shown'))
+  await settle()
+  check('recap is still deferred throughout splash fade-out',
+    !q('[data-weekly-recap][open]'))
+  splash.remove()
+  window.dispatchEvent(new Event('tempered:splash-finished'))
+  await settle()
+  check('first launch after splash opens prior-week recap', q('[data-weekly-recap][open]') && q('[data-weekly-recap]').textContent.includes('Oct 5'))
+  const source=await fetch('../../src/main.js').then(r=>r.text())
+  check('production startup awaits full splash dismissal before recap initialization',
+    source.indexOf('await dismissSplash()')>=0
+    && source.indexOf('await dismissSplash()')<source.indexOf('await installWeeklyRecapRuntime(context)'))
+  check('LFMS recap has branded header, score bar, four metric tiles and new primary action',
+    !!q('.weekly-recap__mark')
+    && !!q('.weekly-recap__scoreline')
+    && (q('.weekly-recap__score')?.textContent.trim()==='—' || !!q('.weekly-recap__score-track'))
+    && q('.weekly-recap__stats')?.children.length===4
+    && !!q('.weekly-recap__done')
+    && !!q('.weekly-recap__progress'))
+  check('red kicker and navy recap cards use the updated visual language',
+    getComputedStyle(q('.weekly-recap__eyebrow')).letterSpacing!=='normal'
+    && getComputedStyle(q('.weekly-recap__card')).borderStyle==='solid')
   check('recap shows recorded training and health data', /6,?000/.test(q('[data-weekly-recap]').textContent) && q('[data-weekly-recap]').textContent.includes('30'))
   q('[data-weekly-recap-close]').click()
   await settle()

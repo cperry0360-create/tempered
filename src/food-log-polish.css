@@ -102,7 +102,39 @@
   min-width:0;margin:0;padding:0;border:0;background:transparent;box-shadow:none;
 }
 .fn2__log-entry .nutrition-panel__meals {display:none}
-.fn2__log-entry .nutrition-meal-form {min-width:0;width:100%}
+.fn2__log-entry .nutrition-meal-form {
+  min-width:0;width:100%;padding:0;gap:10px;
+  background:transparent;border:0;box-shadow:none;
+}
+.fn2__log-entry .nutrition-meal-form__fields {gap:9px}
+.fn2__log-entry .nutrition-meal-field {gap:5px;color:var(--fn-muted);font-weight:720}
+.fn2__log-entry .nutrition-meal-field input {
+  min-height:44px;height:44px;padding:0 11px;
+  border:1px solid var(--fn-line);border-radius:12px;
+  background:var(--food-v2-panel);color:var(--fn-ink);
+  font-size:15px;
+}
+.fn2__log-entry .nutrition-meal-field input::placeholder {color:var(--fn-muted)}
+.fn2__log-entry .nutrition-meal-field input:focus-visible {
+  outline:2px solid var(--fn-blue-light);outline-offset:2px;
+}
+.fn2__log-entry .nutrition-meal-form__tools {gap:9px}
+.fn2__log-entry .nutrition-meal-form__tools > * {
+  min-height:43px;border:1px solid var(--fn-line);
+  border-radius:12px;
+  background:var(--food-v2-beach-base);
+  color:var(--fn-blue-light);font-size:12px;font-weight:760;
+}
+.fn2__log-entry .nutrition-meal-form__tools svg {color:var(--fn-blue-light)}
+.fn2__log-entry .nutrition-meal-form__actions {grid-template-columns:1fr}
+.fn2__log-entry .nutrition-meal-form__add {
+  min-height:47px;border:1px solid rgb(97,195,255);
+  border-radius:13px;color:var(--food-v2-deep);
+  background:linear-gradient(145deg,rgb(90,200,255),rgb(44,142,232));
+  box-shadow:inset 0 1px rgba(239,252,255,.55),0 5px 16px rgba(28,130,223,.25);
+  font-size:15px;font-weight:840;
+}
+.fn2__log-entry .nutrition-meal-form__status {color:var(--fn-muted);font-size:12px}
 .fn2__log-entry .nutrition-meal-form h3 {font-size:18px;letter-spacing:-.03em;margin-top:0}
 .fn2__log-entry .nutrition-meal-form__fields {min-width:0}
 .fn2__log-entry .nutrition-meal-field {min-width:0}

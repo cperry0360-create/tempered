@@ -178,6 +178,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const defs=document.createElementNS(ns,'defs')
     const clip=document.createElementNS(ns,'clipPath')
     clip.setAttribute('id',clipId)
+    clip.setAttribute('data-water-clip','true')
     clip.setAttribute('clipPathUnits','userSpaceOnUse')
     const wave=document.createElementNS(ns,'path')
     wave.setAttribute('data-water-wave-path','true')

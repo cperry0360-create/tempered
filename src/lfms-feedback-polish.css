@@ -192,3 +192,13 @@ html[data-layout="duo"] .app__body:has(> .screen--cardio) {background:transparen
   .screen--cardio .cardio-r5__stage-icon {min-height:90px;max-height:110px}
   .screen--cardio .cardio-r5__countdown {font-size:clamp(70px,15vw,105px)}
 }
+
+
+/* Avoid the site's inherited input max-width shortening the invisible
+   native picker hit area. The full visible date capsule must be tappable. */
+.fn2 .fn2__date-picker > input[type="date"] {
+  position:absolute;inset:0;display:block;
+  box-sizing:border-box;width:100%;min-width:100%;max-width:none;
+  height:100%;min-height:0;max-height:none;
+  padding:0;margin:0;border:0;opacity:0;
+}

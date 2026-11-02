@@ -83,7 +83,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       el('div.fn2__brand',{},[el('img.lfms__fuel-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('b',{text:'LFMS'}),el('small',{text:' / FUEL'})]),
       el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
-        el('button',{type:'button',onclick:()=>openSheet('quick')},[icon('plus'),' Quick Log']),
+        el('button',{type:'button',dataset:{foodLogNav:'true'},'aria-current':view==='log'?'page':null,onclick:()=>go('log')},[icon('plus'),' Log']),
         el('button',{type:'button',onclick:()=>go('journal')},[icon('journal'),' Meal History']),
       ]),
     ])
@@ -166,7 +166,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       el('div.fn2__meal-group-title',{},[
         el('strong',{text:name}),
         el('button',{type:'button','aria-label':'Quick log food for '+name,
-          onclick:()=>openSheet('quick')},['+']),
+          onclick:()=>go('log')},['+']),
       ]),
       ...entries.map(food=>mealRow(food,day.date)),
       entries.length===0&&el('small.fn2__meal-empty',{text:'No meals logged'}),
@@ -393,6 +393,46 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     await storage.put('profile',{...profile,food2Photos:photos})
     prefs={...profile,food2Photos:photos};closeSheet()
   }
+  function logPage() {
+    const favorites=new Set(prefs.food2Favorites??[])
+    const saved=data.foods.all.filter(food=>favorites.has(foodKey(food)))
+    return [
+      heading(),
+      el('div.fn2__title',{},[
+        el('h1',{text:'Log a meal'}),
+        el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel']),
+      ]),
+      // The canonical nutrition form is shown first, never behind Quick Log.
+      // We only hide its duplicated history card; Meal History stays in its
+      // own dedicated page. Existing camera, AI paste and add handlers remain.
+      el('section.fn2__log-entry',{'aria-label':'Log a meal'},[runtime]),
+      el('section.fn2__log-favorites',{'aria-label':'Favorite foods'},[
+        el('div.fn2__log-favorites-head',{},[
+          el('div',{},[
+            el('p.fn2__log-kicker',{text:'SAVED SHORTCUTS'}),
+            el('h2',{text:'Favorites'}),
+          ]),
+          el('button',{type:'button',onclick:()=>{filter='favorites';query='';go('library')}},['Manage favorites ›']),
+        ]),
+        saved.length
+          ?el('div.fn2__log-favorite-list',{},saved.slice(0,24).map(food=>
+            el('button.fn2__log-favorite',{type:'button',
+              'aria-label':'Log favorite '+food.description,
+              onclick:()=>openServing(food)},[
+              thumbnail(food),
+              el('span.fn2__log-favorite-copy',{},[
+                el('strong',{text:food.description}),
+                el('small',{text:fmt(food.calories)+' kcal · '+fmt(food.proteinGrams)+'g protein per serving'}),
+              ]),
+              el('span.fn2__log-favorite-plus',{text:'+'}),
+            ])))
+          :el('div.fn2__log-empty',{},[
+            el('p',{text:'No favorites yet. Star foods in your library for one-tap access here.'}),
+            el('button',{type:'button',onclick:()=>{filter='all';query='';go('library')}},['Browse Food Library']),
+          ]),
+      ]),
+    ]
+  }
   function library() {
     const results=el('div.fn2__food-results',{},libraryRows())
     return [
@@ -418,7 +458,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
   }
   function overlay(){
-    const title={quick:'Quick Log',serving:'Log meal',manual:'Quick Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
+    const title={quick:'Log',serving:'Log meal',manual:'Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
     // A new user has zero frequent foods; several distinct foods may also
     // have no repeat count yet. Quick Log must not become an empty giant sheet.
     const quickFoods=data.foods.top.length?data.foods.top:data.foods.all.slice(0,5)
@@ -474,7 +514,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     activeOverlay?.remove()
     activeOverlay=null
     replace(root,[
-      ...(view==='library'?library():view==='journal'?journal():dashboard()),
+      ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():dashboard()),
       el('div.fn2__status',{role:'status',dataset:{food2Status:'true'},text:status}),
     ])
     if(sheet) {
@@ -482,7 +522,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       document.body.append(activeOverlay)
       document.body.dataset.food2Modal='true'
     } else delete document.body.dataset.food2Modal
-    if(sheet==='manual')mountRuntime()
+    if(sheet==='manual'||view==='log')mountRuntime()
   }
   async function refresh(){await load();render()}
   function deactivate(){

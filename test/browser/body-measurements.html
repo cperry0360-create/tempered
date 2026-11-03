@@ -41,7 +41,11 @@ try {
     Boolean(q('.progress-measure__grid')) && /40.2 in/.test(q('.progress-waist-habit')?.textContent??'')
     && /Every 2 weeks/.test(q('.progress-waist-habit')?.textContent??''))
   await t.app.show('today');await settle()
-  q('[data-activity="waist_measurement"] .today-item__body')?.click();await settle()
+  check('Completed fortnightly measurement retires from the main Daily log',
+    !q('.today-list:not(.today-list--extras) [data-activity="waist_measurement"]'))
+  const optional=q('[data-other="toggle"]')
+  if(optional?.dataset.open!=='true'){optional?.click();await settle()}
+  q('.today-list--extras [data-activity="waist_measurement"] .today-item__body')?.click();await settle()
   check('Reopening check-in retains values rather than wiping them',
     q('[data-measure="waist"]')?.value==='34.4' && q('[data-measure="chest"]')?.value==='40.2')
   set('waist','34.1');set('hips','38.0')

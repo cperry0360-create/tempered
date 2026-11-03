@@ -902,7 +902,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
               onclick:()=>openExerciseArt(entry),
             },[
               el('img',{src:artUrl(entry.exercise.art),alt:`${movementName} exercise reference`,loading:'lazy'}),
-              el('span.session-r5__zoom-hint',{},[icon('maximize-2'),' Enlarge']),
+              el('span.session-r5__zoom-hint',{},[icon('expand'),' Enlarge']),
             ])
           : el('div.session-r5__visual-fallback', {}, [icon('train')]),
         el('div.session-r5__visual-shade'),
@@ -1111,7 +1111,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         el('button.session-art-viewer__close',{
           type:'button',dataset:{sessionArtClose:'true'},'aria-label':'Close exercise photos',
           onclick:closeExerciseArt,
-        },[icon('x')]),
+        },[icon('close')]),
       ]),
       el('img.session-art-viewer__image',{
         src:artUrl(artViewer.art),alt:`${artViewer.name} exercise demonstration`,

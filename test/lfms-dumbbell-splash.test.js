@@ -26,6 +26,9 @@ test('dumbbell art is local vector steel with three separate falling plates',()=
     assert.match(html,new RegExp('class="lfms-launch__plate lfms-launch__plate--'+plate+'"'))
   }
   assert.equal((html.match(/class="lfms-launch__plate lfms-launch__plate--/g)||[]).length,3)
+  assert.match(css,/--lfms-db-home-x:min\(75%,calc\(100vw - 80px\)\)/)
+  assert.match(css,/left:var\(--lfms-db-home-x\)/)
+  assert.doesNotMatch(css,/left:84%;|left:82%;/)
   assert.match(css,/lfms-dumbbell-drop 690ms cubic-bezier/)
   assert.match(css,/lfms-plate-drop 515ms cubic-bezier[^\n]*2110ms both/)
   assert.match(css,/lfms-plate-drop 490ms cubic-bezier[^\n]*2510ms both/)

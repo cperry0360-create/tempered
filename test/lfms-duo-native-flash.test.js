@@ -36,7 +36,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/LFMS_ZIPPER_DURATION_MS = 1160/)
   assert.match(read('src/main.js'),/launch\.dataset\.revealing = 'true'/)
-  assert.match(read('src/version.js'),/0\.66\.56 \(162\)/)
+  assert.match(read('src/version.js'),/0\.66\.57 \(163\)/)
 })
 
 test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{

@@ -23,20 +23,33 @@ try{
   check('app remains hidden behind loading splash until actual wipe',
     getComputedStyle(app).visibility==='hidden'&&getComputedStyle(app).opacity==='0')
   const bar=launch.querySelector('.lfms-launch__barbell-stage')
+  const skin=launch.querySelector('.lfms-launch__skin')
   const tear=launch.querySelector('.lfms-launch__tear-edge')
+  const flap=launch.querySelector('.lfms-launch__peel-flap')
   launch.dataset.revealing='true'
   await wait(70)
   check('reveal makes real app visible BEFORE mask finishes',
     getComputedStyle(app).visibility==='visible'&&getComputedStyle(app).opacity==='1')
-  check('jagged clipping is active while dumbbell pulls tear edge',
-    getComputedStyle(launch).animationName==='lfms-zipper-peel'
+  check('TOP-RIGHT peel clips the skin, not the falling silver bar',
+    getComputedStyle(skin).animationName==='lfms-corner-peel'
     &&getComputedStyle(bar).animationName==='lfms-loaded-scrape'
-    &&getComputedStyle(tear).animationName==='lfms-tear-follow')
-  const start=getComputedStyle(launch).clipPath
+    &&getComputedStyle(tear).animationName==='lfms-tear-follow'
+    &&getComputedStyle(flap).animationName==='lfms-peel-flap'
+    &&!skin.contains(bar)
+    &&getComputedStyle(launch).clipPath==='none')
+  const start=getComputedStyle(skin).clipPath
+  const barStart=bar.getBoundingClientRect()
+  const xStart=parseFloat(getComputedStyle(bar).left)
   await wait(650)
-  const middle=getComputedStyle(launch).clipPath
-  check('screen skin is progressively removed over live dashboard',
-    start!==middle&&middle.startsWith('polygon('))
+  const middle=getComputedStyle(skin).clipPath
+  const barLater=bar.getBoundingClientRect()
+  const xLater=parseFloat(getComputedStyle(bar).left)
+  check('top-right wrapper tears diagonally while loaded barbell falls rightward',
+    start!==middle&&middle.startsWith('polygon(')
+    &&barLater.top>barStart.top+20
+    &&xLater>xStart)
+  check('the barbell remains outside the clipped wrapper during its fall',
+    !skin.contains(bar)&&getComputedStyle(bar).opacity==='1')
   check('reveal never repaints root charcoal as a blue gradient',
     getComputedStyle(document.body).backgroundColor===bg
     &&getComputedStyle(document.body).backgroundImage==='none')

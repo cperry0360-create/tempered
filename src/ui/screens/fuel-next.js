@@ -6,6 +6,7 @@
 import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
+import { mainTabBrand } from '../main-tab-header.js'
 import { waterWavePath } from '../water-wave.js'
 import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
 import { compressMealPhoto } from '../meal-photo.js'
@@ -164,9 +165,13 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }))
   }
   function heading(){
-    return el('div.fn2__heading',{},[
-      el('div.fn2__brand',{},[el('img.lfms__fuel-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('b',{text:'LFMS'}),el('small',{text:' / FUEL'})]),
-      el('nav.fn2__pills',{'aria-label':'Food shortcuts'},[
+    return el('header.fn2__heading',{},[
+      el('div.lfms-main-heading',{},[
+        mainTabBrand('Fuel', {
+          brandClass: 'fn2__brand', markClass: 'lfms__fuel-mark',
+        }),
+      ]),
+      el('nav.fn2__pills.lfms-main-actions',{'aria-label':'Food shortcuts'},[
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
         el('button',{type:'button',dataset:{foodLogNav:'true'},'aria-current':view==='log'?'page':null,onclick:()=>go('log')},[icon('plus'),' Log']),
         el('button',{type:'button','aria-current':view==='journal'?'page':null,onclick:()=>go('journal')},[icon('journal'),' Meal History']),

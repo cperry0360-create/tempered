@@ -76,16 +76,49 @@
     </div>
     <div class="lfms-launch" data-lfms-launch aria-hidden="true">
       <div class="lfms-launch__glow"></div>
-      <div class="lfms-launch__impact-flash"></div>
-      <div class="lfms-launch__shockwave"></div>
-      <svg class="lfms-launch__cracks" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M505 282l-49-39-13-66-46-28-20-65 M492 292l-62-7-46 24-77-13-51 38 M493 300l-30 57-62 27-22 78-45 32 M510 303l35 66-5 56 49 47 8 63 M520 291l75 4 53-25 69 9 70-27 M515 274l38-45 57-20 31-61 46-15 M498 276l4-51-18-39 14-70" />
-          <path class="lfms-launch__crack-glint" d="M505 282l-49-39-13-66 M510 303l35 66-5 56 M520 291l75 4 53-25" />
-        </g>
-      </svg>
       <div class="lfms-launch__identity">
-        <img class="lfms-launch__mark" src="./branding/lfms/logo-mark.svg" alt="" width="675" height="387" />
+        <div class="lfms-launch__mark-stage">
+          <img class="lfms-launch__mark" src="./branding/lfms/logo-mark.svg" alt="" width="675" height="387" />
+          <div class="lfms-launch__impact-flash" aria-hidden="true"></div>
+          <!-- Three neutral, hairline layers: a new fracture emerges on each impact.
+               Fixed to the landing spot rather than moving with the bouncing mark. -->
+          <svg class="lfms-launch__cracks" viewBox="0 0 600 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+            <g class="lfms-launch__glass-phase lfms-launch__glass-phase--first"
+               fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="miter">
+              <!-- Uneven radial faults emanating from the emblem's contact point. -->
+              <path d="M300 208l-24-17-34-10-20-26-37-11-16-33-36-13"/>
+              <path d="M300 208l-28 9-32 2-20 24-38 5-29 34-37 9"/>
+              <path d="M300 208l-12 27-25 28-5 34-26 27-11 39-24 11"/>
+              <path d="M300 208l21 20 9 32 22 25 3 43 28 21 16 49"/>
+              <path d="M300 208l34-7 25 15 39-7 34 14 35-19 42 10"/>
+              <path d="M300 208l10-32 29-17 14-30 39-9 13-43 34-18"/>
+              <path d="M300 208l-4-39 17-33-6-41 12-24-15-38"/>
+              <path d="M300 208l-38-14-18-24-28-12-9-32-40-18"/>
+              <!-- Broken, irregular interior rings, not a drawn circular shockwave. -->
+              <path d="M285 184l-14 20 9 24 25 9 27-16-3-27-25-16-19 6"/>
+              <path d="M273 164l-24 20-9 39 21 34 38 17 46-17 23-35-10-43-38-27-47 12"/>
+            </g>
+            <g class="lfms-launch__glass-phase lfms-launch__glass-phase--second"
+               fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="miter">
+              <!-- The second contact drives branching faults into a wider ring. -->
+              <path d="M240 223l-37-20-37 7-22-14-29 9 M261 257l-14 45-45 8-20 31-38 6"/>
+              <path d="M329 260l42 7 22 30 47 7 30 29 M345 257l9-52 46-25 42-1 30-34"/>
+              <path d="M249 184l-26-28-8-37-35-21 M320 152l-14-31 11-33-20-38"/>
+              <path d="M241 177l-34 33 3 46 36 41 51 12 52-17 46-43-1-54-31-47"/>
+              <path d="M225 267l-25 28 5 48 M392 249l34 10 21 31 M352 292l16 33-8 36"/>
+              <path d="M263 309l-23 42-28 13 M343 291l42 37 7 31"/>
+            </g>
+            <g class="lfms-launch__glass-phase lfms-launch__glass-phase--third"
+               fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="miter">
+              <!-- Final tiny contact splinters existing seams instead of exploding. -->
+              <path d="M271 204l-24-7-15 9 M318 228l29 14 11-4"/>
+              <path d="M288 235l-4 25-15 8 M336 201l24-14 15 4"/>
+              <path d="M207 210l-20-7-12-15 M371 267l20 14 23-3"/>
+              <path d="M298 273l-8 22-16 13 M350 176l24-8 16-19"/>
+              <path d="M300 208l5-12-7-13 M300 208l-10 8-4 13"/>
+            </g>
+          </svg>
+        </div>
         <span class="lfms-launch__rule"></span>
         <div class="lfms-launch__wordmark-stage">
           <img class="lfms-launch__wordmark lfms-launch__wordmark--less" src="./branding/lfms/logo-wordmark.svg" alt="" width="1125" height="235" />

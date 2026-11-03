@@ -4,6 +4,7 @@
 import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
 import { icon } from '../icons.js'
+import { mainTabBrand } from '../main-tab-header.js'
 import { dayBefore, nutritionDayStatus, openNutritionDates } from '../../domain/nutrition-review.js'
 
 export function createFuelScreen({ storage, daily, clock }) {
@@ -483,11 +484,11 @@ export function createFuelScreen({ storage, daily, clock }) {
         el('span', { text: label }),
         el('small', { text: Math.round(target).toLocaleString() + ' g goal' }),
       ])
-    const top = el('div.food-v2__topline', {}, [
-      el('div', {}, [
-        el('h1.screen__title', { text: 'Food' }),
+    const top = el('header.food-v2__topline.lfms-main-section', {}, [
+      el('div.lfms-main-heading', {}, [
+        mainTabBrand('Fuel'),
       ]),
-      el('div.food-v2__header-actions', {}, [
+      el('nav.food-v2__header-actions.lfms-main-actions', { 'aria-label': 'Food shortcuts' }, [
         el('button.food-v2__date', {
           type: 'button', dataset: { foodDate: clock.today() },
           onclick: () => reviewDate(clock.today()),

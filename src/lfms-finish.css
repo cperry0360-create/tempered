@@ -702,23 +702,23 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 
 
-/* LFMS Duo one-canvas fix: Today already had the correct navy tone, but
-   overlapping body/app/subscreen backgrounds could repaint the reserved
-   right rail gutter on Train, Fuel, Progress and deep screens.
-   Paint the SAME gradient once on the root viewport behind BOTH panes.
-   Keep the four-button glass vessel and its press/hold animations untouched. */
+/* LFMS Duo restoration: Today's original background was the approved look.
+   Undo 0.66.39's HTML-root gradient. Paint Today's exact navy gradient on
+   the BODY again for ALL Duo tabs; the right rail and app screens must never
+   paint separate vertical slabs. Preserve the capsule's glass artwork. */
 html[data-layout="duo"],
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) {
-  background-color:var(--food-v2-deep);
-  background-image:
-    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
-    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-  background-repeat:no-repeat;
-  background-size:cover;
-  background-attachment:fixed,fixed;
+  background:var(--food-v2-deep);
 }
 html[data-layout="duo"] body,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) body,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) body {
+  background:
+    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
+    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
+  background-attachment:fixed,fixed;
+  background-repeat:no-repeat;
+  background-size:cover;
+}
 html[data-layout="duo"] #app.app,
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app,
 html[data-layout="duo"] #app.app .app__body,
@@ -732,9 +732,16 @@ html[data-layout="duo"] #app.app .app__body > :is(
   background:transparent;
 }
 html[data-layout="duo"] #app.app .tabbar {
-  background:transparent;
+  background:none;
   border:0;
   box-shadow:none;
   -webkit-backdrop-filter:none;
   backdrop-filter:none;
+}
+/* The full-height right navigation is genuinely clear. Only its contained
+   capsule is glass; no separator pseudo-element may span the sidebar. */
+html[data-layout="duo"] #app.app .tabbar::before,
+html[data-layout="duo"] #app.app .tabbar::after {
+  content:none;
+  display:none;
 }

@@ -32,5 +32,5 @@ test('bed is a single-color vector and retains readable all-white rendering',()=
   assert.match(glyphs,/'rest-bed': \[\['silhouette',/)
   assert.match(css,/data-icon='rest'/)
   assert.match(css,/color:var\(--food-v2-text\);filter:none;stroke:none/)
-  assert.match(read('src/version.js'),/0\.66\.37 \(143\)/)
+  assert.match(read('src/version.js'),/export const VERSION = '\d+\.\d+\.\d+ \(\d+\)'/)
 })

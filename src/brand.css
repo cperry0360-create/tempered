@@ -13,10 +13,9 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS triple-impact glass splash (0.66.52).
-   Preserve BOTH approved wordmark entrance animations. The emblem drops
-   from just above its resting position, lands three times (strong/medium/
-   gentle), leaving fixed, neutral spiderweb hairlines on the glass surface. */
+/* LFMS heavy-impact splash (0.66.53): same word entrances and 3.8s duration,
+   but a higher, faster-feeling logo drop, three emphatic contacts, whole-mark
+   recoil and large colorless screen fractures that stay visible until exit. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
   display:grid;place-items:center;
@@ -39,19 +38,20 @@
   align-items:center;justify-content:center;min-width:0;
   width:min(100%,540px);
   transform:translateY(-1vh);
+  animation:lfms-identity-thud 2720ms linear both;
 }
 /* This stage is stationary: the logo bounces INSIDE it, but the screen
    fractures remain anchored to the glass where the first hit occurred. */
 .lfms-launch__mark-stage {
   position:relative;z-index:1;isolation:isolate;
   display:grid;place-items:center;
-  width:clamp(172px,46vw,300px);
+  width:clamp(190px,53vw,340px);
   max-width:100%;
 }
 .lfms-launch__mark {
   position:relative;z-index:1;
   display:block;width:100%;height:auto;
-  max-height:min(25vh,180px);object-fit:contain;
+  max-height:min(27vh,210px);object-fit:contain;
   filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
   transform-origin:50% 84%;
   will-change:transform;
@@ -94,13 +94,14 @@
    No comic explosion, colored rays, or synthetic circular shockwave. */
 .lfms-launch__impact-flash {
   position:absolute;left:50%;top:50%;
-  z-index:2;width:170%;height:210%;
+  z-index:2;width:265%;height:270%;
   transform:translate(-50%,-50%);
   opacity:0;pointer-events:none;
-  background:radial-gradient(ellipse 32% 24% at 50% 50%,
-    rgba(247,250,253,.32) 0%,
-    rgba(221,231,239,.09) 37%,
-    transparent 84%);
+  background:radial-gradient(ellipse 33% 27% at 50% 50%,
+    rgba(255,255,255,.82) 0%,
+    rgba(233,243,250,.28) 29%,
+    rgba(221,231,239,.06) 56%,
+    transparent 82%);
   animation:lfms-glass-contact 1690ms linear 710ms both;
 }
 /* Genuine screen-style fracture: uneven spokes, irregular partial rings,
@@ -108,27 +109,27 @@
    The crack plane is OVER the logo and does not travel with its rebounds. */
 .lfms-launch__cracks {
   position:absolute;left:50%;top:50%;z-index:3;
-  width:min(550px,190%);height:auto;aspect-ratio:600 / 460;
+  width:min(660px,112vw);height:auto;aspect-ratio:600 / 460;
   transform:translate(-50%,-50%);
   overflow:visible;pointer-events:none;
-  color:rgba(232,240,247,.82);
-  filter:drop-shadow(1px 1px 0 rgba(0,0,0,.66))
-         drop-shadow(-.4px -.4px .65px rgba(251,253,255,.25));
+  color:rgba(238,244,249,.98);
+  filter:drop-shadow(1px 1px 0 rgba(0,0,0,.9))
+         drop-shadow(-.7px -.7px .6px rgba(255,255,255,.44));
 }
 .lfms-launch__glass-phase {
   opacity:0;
-  stroke-width:1.35;
+  stroke-width:2.3;
   vector-effect:non-scaling-stroke;
 }
 .lfms-launch__glass-phase--first {
   animation:lfms-glass-fade 2270ms ease-out 1369ms both;
 }
 .lfms-launch__glass-phase--second {
-  stroke-width:1.08;
+  stroke-width:1.75;
   animation:lfms-glass-fade 1875ms ease-out 1749ms both;
 }
 .lfms-launch__glass-phase--third {
-  stroke-width:.94;
+  stroke-width:1.38;
   animation:lfms-glass-fade 1480ms ease-out 2130ms both;
 }
 .lfms-launch__glass-phase path {
@@ -157,33 +158,48 @@
   85% {transform:translateX(1%) skewX(0)}
   100% {opacity:1;transform:translateX(0);filter:blur(0)}
 }
-/* Three controlled landings: large compression at 39%, smaller at
-   61.5%, tiny final contact at 84%. The logo never starts off-screen. */
+/* Heavy emblem strike: the first fall covers 250px, with a real rebound
+   of 78px before impact 2 and 30px before impact 3. Contact timestamps
+   remain 1369ms, 1749ms, 2130ms so cracks are synchronized exactly. */
 @keyframes lfms-mark-smash {
-  0%   {opacity:0;transform:translateY(-136px) rotate(-7deg) scale(1.08);
-        filter:blur(6px);animation-timing-function:cubic-bezier(.20,.52,.28,1)}
-  10%  {opacity:1;filter:blur(1px)}
-  28%  {transform:translateY(-67px) rotate(-2.5deg) scale(1.025);
-        filter:blur(0);animation-timing-function:cubic-bezier(.72,.07,.91,.59)}
-  39%  {transform:translateY(6px) rotate(.4deg) scaleX(1.075) scaleY(.89);
-        animation-timing-function:cubic-bezier(.19,.68,.32,1)}
-  48%  {transform:translateY(-29px) rotate(-1deg) scale(.97);
-        animation-timing-function:cubic-bezier(.65,.08,.88,.62)}
-  61.5% {transform:translateY(4px) rotate(.15deg) scaleX(1.047) scaleY(.956);
-        animation-timing-function:cubic-bezier(.22,.7,.3,1)}
-  70%  {transform:translateY(-12px) scale(.989);
-        animation-timing-function:cubic-bezier(.71,.02,.89,.66)}
-  84%  {transform:translateY(2px) scaleX(1.02) scaleY(.984);
-        animation-timing-function:cubic-bezier(.3,.73,.35,1)}
-  91%  {transform:translateY(-3px) scale(.998)}
+  0%   {opacity:0;transform:translateY(-250px) rotate(-9deg) scale(1.18);
+        filter:blur(10px);animation-timing-function:cubic-bezier(.1,.38,.28,1)}
+  11%  {opacity:1;filter:blur(3px)}
+  25%  {transform:translateY(-144px) rotate(-5deg) scale(1.11);
+        filter:blur(0);animation-timing-function:cubic-bezier(.83,.02,1,.62)}
+  39%  {transform:translateY(10px) rotate(1deg) scaleX(1.21) scaleY(.76);
+        animation-timing-function:cubic-bezier(.13,.71,.28,1)}
+  49%  {transform:translateY(-78px) rotate(-3.2deg) scale(.94);
+        animation-timing-function:cubic-bezier(.77,.06,.94,.67)}
+  61.5% {transform:translateY(7px) rotate(.5deg) scaleX(1.12) scaleY(.86);
+        animation-timing-function:cubic-bezier(.15,.73,.29,1)}
+  71%  {transform:translateY(-30px) rotate(-1.4deg) scale(.97);
+        animation-timing-function:cubic-bezier(.78,.06,.94,.67)}
+  84%  {transform:translateY(4px) rotate(.1deg) scaleX(1.065) scaleY(.92);
+        animation-timing-function:cubic-bezier(.23,.76,.31,1)}
+  92%  {transform:translateY(-8px) scale(.992)}
   100% {opacity:1;transform:translateY(0) rotate(0) scale(1);
-        filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
+        filter:drop-shadow(0 12px 30px rgba(0,0,0,.32))}
+}
+/* Camera-like jolts, never a separate colored explosion. The whole emblem
+   composition shivers briefly on each landing, then settles in place. */
+@keyframes lfms-identity-thud {
+  0%,49.9%,52.5% {transform:translateY(-1vh) translateX(0) rotate(0)}
+  53.4% {transform:translateY(calc(-1vh + 10px)) translateX(-10px) rotate(.9deg)}
+  54.2% {transform:translateY(calc(-1vh - 6px)) translateX(8px) rotate(-.7deg)}
+  55.1% {transform:translateY(calc(-1vh + 3px)) translateX(-4px) rotate(.4deg)}
+  57%,67.2% {transform:translateY(-1vh) translateX(0) rotate(0)}
+  68.1% {transform:translateY(calc(-1vh + 6px)) translateX(6px) rotate(-.5deg)}
+  69% {transform:translateY(calc(-1vh - 3px)) translateX(-4px) rotate(.3deg)}
+  71%,81.9% {transform:translateY(-1vh) translateX(0) rotate(0)}
+  82.7% {transform:translateY(calc(-1vh + 3px)) translateX(-3px) rotate(.3deg)}
+  84.5%,100% {transform:translateY(-1vh) translateX(0) rotate(0)}
 }
 @keyframes lfms-glass-contact {
-  0%,36%,42%,59%,65%,82%,86%,100% {opacity:0}
-  39% {opacity:.58}
-  61.5% {opacity:.26}
-  84% {opacity:.14}
+  0%,36%,43%,59%,65%,82%,87%,100% {opacity:0}
+  39% {opacity:.96}
+  61.5% {opacity:.68}
+  84% {opacity:.38}
 }
 @keyframes lfms-glass-fracture {
   from {stroke-dashoffset:900}
@@ -191,10 +207,10 @@
 }
 @keyframes lfms-glass-fade {
   0% {opacity:0}
-  4% {opacity:.88}
-  16% {opacity:.71}
-  48% {opacity:.53}
-  77% {opacity:.29}
+  5% {opacity:1}
+  18% {opacity:.94}
+  67% {opacity:.88}
+  86% {opacity:.73}
   100% {opacity:0}
 }
 @keyframes lfms-rule-enter {
@@ -212,7 +228,7 @@
   100% {opacity:.65;transform:scale(1)}
 }
 @media(max-height:580px) {
-  .lfms-launch__mark-stage {width:min(31vw,170px)}
+  .lfms-launch__mark-stage {width:min(35vw,210px)}
   .lfms-launch__mark {max-height:26vh}
   .lfms-launch__rule {margin:5px 0 9px}
   .lfms-launch__wordmark-stage {max-height:17vh}

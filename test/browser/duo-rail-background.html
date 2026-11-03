@@ -59,20 +59,26 @@ try{
    &&backdrop().bottom==='-1px'&&backdrop().left==='-1px',
    JSON.stringify({position:backdrop().position,inset:[backdrop().top,backdrop().right,backdrop().bottom,backdrop().left],
      body:initialRect.width,viewport:innerWidth}))
- const systemRailTone=getComputedStyle(html).getPropertyValue('--lfms-duo-status-backdrop').trim()
- check('Duo edge blends smoothly to the neighboring system status strip',
-   systemRailTone.toLowerCase()==='#081422'
-   &&originalGradient.startsWith('linear-gradient(90deg,')
-   &&originalGradient.includes('rgb(8, 20, 34)')
-   &&(originalGradient.match(/linear-gradient\(/g)||[]).length===2,
-   JSON.stringify({statusTone:systemRailTone,layerCount:(originalGradient.match(/gradient\(/g)||[]).length,
-     edge:originalGradient.slice(0,200)}))
+ check('single full-viewport canvas has the approved Today glow without right-edge feather',
+   originalGradient.startsWith('radial-gradient(')
+   &&(originalGradient.match(/radial-gradient\(/g)||[]).length===1
+   &&(originalGradient.match(/linear-gradient\(/g)||[]).length===1
+   &&!originalGradient.includes('rgb(8, 20, 34)'),
+   JSON.stringify({canvas:originalGradient.slice(0,280)}))
  // Simulate the initial LFMS splash and its dismissal, testing the actual
  // background underneath the 4s animation rather than only settled pages.
  const splash=document.createElement('div')
  splash.className='lfms-launch'
  splash.setAttribute('aria-hidden','true')
  document.body.append(splash)
+ const statusCover=document.createElement('div')
+ statusCover.className='status-bar-cover'
+ document.body.append(statusCover)
+ const clearLaunch=()=>getComputedStyle(splash).backgroundImage==='none'
+   &&getComputedStyle(splash).backgroundColor==='rgba(0, 0, 0, 0)'
+   &&getComputedStyle(splash).boxShadow==='none'
+ check('launch is artwork over the same canvas, never a second opaque backdrop',
+   clearLaunch()&&getComputedStyle(statusCover).display==='none')
  const beforeSplashBg=backdrop().backgroundImage
  const beforeSplashRoot=getComputedStyle(html).backgroundColor
  const beforeSplashBody=getComputedStyle(document.body).backgroundColor
@@ -84,9 +90,11 @@ try{
  const closingBg=backdrop().backgroundImage
  const closingRoot=getComputedStyle(html).backgroundColor
  const closingBody=getComputedStyle(document.body).backgroundColor
- check('Today becomes visible as soon as the splash starts closing',
+ check('Today becomes visible behind the same transparent splash canvas',
    getComputedStyle(app).visibility==='visible'
    &&getComputedStyle(app).opacity==='1'
+   &&clearLaunch()
+   &&getComputedStyle(statusCover).display==='none'
    &&backdrop().backgroundImage===originalGradient)
  check('splash exits in one brief crossfade rather than lingering over empty navy',
    getComputedStyle(splash).transitionDuration.split(',')[0].trim()==='0.18s')

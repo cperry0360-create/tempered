@@ -177,25 +177,15 @@
     display:none;animation:none;
   }
 }
-/* On the Duo the dark launch canvas must cover both safe edges before
-   the first app paint, including the former gray left-side band. */
-html:has(.lfms-launch:not([data-closing="true"])) ,
-html:has(.lfms-launch:not([data-closing="true"])) body {
+/* The regular phone splash retains its original dark presentation.
+   The opt-in Duo paints ONE fixed viewport canvas underneath both the splash
+   and app; its overlay has no separate background or edge mask. Do not switch
+   HTML/BODY paint when the Duo splash opens or closes. */
+html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])),
+html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])) body {
   background:var(--lfms-launch-deep);
 }
-.lfms-launch {
-  left:0;right:0;top:0;bottom:0;
-  width:100vw;min-width:100%;height:100dvh;min-height:100%;
-  background:radial-gradient(ellipse 100% 75% at 50% 43%,var(--lfms-launch-mid),var(--lfms-launch-deep) 87%);
-}
-
-/* The Duo screen has a native status/control strip at its right edge. Match
-   the launch's outer edge to the same solid tone instead of revealing a seam. */
-html:has(.lfms-launch:not([data-closing="true"])),
-html:has(.lfms-launch:not([data-closing="true"])) body {
-  background:var(--lfms-launch-deep);
-}
-html:has(.lfms-launch:not([data-closing="true"])) .status-bar-cover {
+html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])) .status-bar-cover {
   background:var(--lfms-launch-deep);
 }
 .lfms-launch {

@@ -165,18 +165,8 @@ html[data-layout="duo"]:has(.app__body > .fn2) .tabbar {
 .fn2__portal .fn2__quick-food:last-of-type {margin-bottom:0}
 .fn2__portal .fn2__quick-food:active {background:rgba(100,174,234,.24)}
 
-/* Single, permanently mounted LFMS canvas: no paint swap between tabs.
-   Train/Food/Progress no longer expose the retired gray backdrop. */
-html[data-layout="duo"],html[data-layout="duo"] body {
-  background:var(--food-v2-deep);
-}
-html[data-layout="duo"] #app.app,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
-  min-height:100dvh;
-  background:
-    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
-    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-}
+/* The permanent Duo backdrop is defined once below, on BODY::BEFORE.
+   Screen wrappers remain clear; no per-tab, sidebar or status-bar backdrop. */
 html[data-layout="duo"] .app__body {background:transparent}
 html[data-layout="duo"] .app__body > .today--fuel-style,
 html[data-layout="duo"] .app__body > .train--fuel-style,
@@ -184,7 +174,6 @@ html[data-layout="duo"] .app__body > .fn2,
 html[data-layout="duo"] .app__body > .progress--fuel-style {
   background:transparent;
 }
-html[data-layout="duo"] .status-bar-cover {background:var(--lfms-today-status)}
 /* No gray/navy sidebar slab: only a floating capsule with four circles. */
 html[data-layout="duo"] .tabbar,
 html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar,
@@ -702,25 +691,19 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 
 
-/* LFMS Duo fixed backdrop (0.66.41).
-   The original Today gradient is the artwork reference. Its colors remain
-   IDENTICAL to the approved Today view, but the backdrop must not be tied to
-   the app/screen height or to an iOS body background-attachment repainter.
-   One fixed body layer covers the entire viewport, under the fixed right nav,
-   before, during and after the splash. No tab-dependent background layers. */
-
-/* Keep the native first-paint fallback stable while the splash mounts/exits.
-   The old splash CSS changed html/body from nearly black to navy mid-fade. */
+/* LFMS Duo single, permanent viewport canvas (0.66.46).
+   THIS is the only backdrop painted by LFMS during launch, Today, Train,
+   Fuel, Progress and the sidebar. The splash, app wrapper, page wrappers,
+   sidebar gutter and status cover never paint another full-screen surface.
+   An adjacent OS-owned Duo status/control strip is outside the web viewport. */
 html[data-layout="duo"],
-html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])),
-html[data-layout="duo"] body,
-html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])) body {
+html[data-layout="duo"] body {
   background:var(--food-v2-deep);
   background-image:none;
 }
 
-/* Fixed canvas instead of background-attachment:fixed on body, which can
-   composite separately from a translucent position:fixed rail in iOS Safari. */
+/* The approved Today palette sits on one fixed viewport-size canvas, stable
+   even when the app is hidden or still bootstrapping. No edge-color feather. */
 html[data-layout="duo"] body::before {
   content:"";
   display:block;
@@ -733,20 +716,24 @@ html[data-layout="duo"] body::before {
   filter:none;
   transform:none;
   transform-origin:center;
-  /* Unlike the content gradient, the device's adjacent status/control
-     strip has a nearly constant navy. Fade just the rightmost gutter into
-     THAT tone rather than ending the page gradient on a hard vertical edge.
-     Layer order: edge feather, original Today glow, original Today base. */
   background:
-    linear-gradient(90deg,
-      transparent calc(100% - clamp(72px,10vw,126px)),
-      var(--lfms-duo-status-backdrop) 100%),
     radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
     linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-  background-size:100% 100%,100% 100%,100% 100%;
+  background-size:100% 100%,100% 100%;
   background-repeat:no-repeat;
   pointer-events:none;
 }
+
+/* Duo logo/shockwave are graphics on top of the ONE canvas, not another
+   opaque or gradient screen. Keep the standard phone's original splash art. */
+html[data-layout="duo"] .lfms-launch {
+  background:none;
+  background-color:transparent;
+  box-shadow:none;
+}
+/* No second fixed paint in the top safe area. The viewport canvas extends
+   behind the system status text; status-bar-cover stays for normal phones. */
+html[data-layout="duo"] .status-bar-cover {display:none}
 
 /* App, scroll frame and main screens are clear, including the reserved
    right-side gap. The capsule stays a separate frosted-glass element. */

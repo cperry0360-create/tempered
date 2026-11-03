@@ -24,5 +24,6 @@ test('Duo paints the approved Today gradient once, independently of navigation a
   assert.match(css,/transform:none/)
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch:not\(\[data-closing="true"\]\)\) body/)
   assert.match(css,/html\[data-layout="duo"\] #app\.app \.tabbar\s*\{\s*background:transparent/)
-  assert.match(read('src/version.js'),/0\.66\.43 \(149\)/)
+  assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\) #app\.app\s*\{[^}]*opacity:0;[^}]*visibility:hidden;/)
+  assert.match(read('src/version.js'),/0\.66\.44 \(150\)/)
 })

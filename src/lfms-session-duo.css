@@ -303,3 +303,163 @@
     display:none;
   }
 }
+
+
+/* LFMS 0.66.42 — workout photo-first polish and stable rest row.
+   No workout data or set counts are changed by these presentation rules. */
+.session-r5__visual-open {
+  display:block;position:relative;width:100%;height:100%;min-height:0;
+  padding:0;margin:0;border:0;border-radius:0;cursor:zoom-in;
+  background:var(--lfms-sub-panel);overflow:hidden;
+}
+.session-r5__visual-open img {
+  display:block;width:100%;height:100%;object-fit:contain;object-position:center;
+}
+.session-r5__visual-shade,
+.session-r5__image-tag {pointer-events:none}
+.session-r5__zoom-hint {
+  position:absolute;z-index:3;top:10px;right:10px;
+  display:flex;align-items:center;gap:5px;
+  padding:6px 9px;border-radius:10px;
+  background:color-mix(in srgb,var(--lfms-sub-bg) 78%,transparent);
+  color:var(--lfms-sub-text);font:750 11px/1.1 var(--font-ui);
+}
+.session-r5__zoom-hint .icon {width:15px;height:15px}
+.session-r5__visual-open:focus-visible {outline:2px solid var(--lfms-sub-blue-light);outline-offset:-3px}
+
+.session-art-viewer {
+  position:fixed;z-index:250;inset:0;box-sizing:border-box;
+  display:grid;place-items:center;padding:calc(12px + env(safe-area-inset-top,0px))
+    calc(12px + env(safe-area-inset-right,0px))
+    calc(12px + env(safe-area-inset-bottom,0px))
+    calc(12px + env(safe-area-inset-left,0px));
+  background:rgba(1,10,21,.92);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.session-art-viewer__frame {
+  width:min(100%,1140px);max-height:100%;min-height:0;
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;
+  border-radius:18px;border:1px solid var(--lfms-sub-line);
+  padding:10px 12px 11px;background:var(--lfms-sub-panel);
+  color:var(--lfms-sub-text);box-sizing:border-box;
+}
+.session-art-viewer__bar {display:flex;gap:12px;align-items:center;justify-content:space-between}
+.session-art-viewer__bar strong {font-size:clamp(15px,2vw,20px);line-height:1.2}
+.session-art-viewer__close {
+  width:44px;height:44px;flex:none;display:grid;place-items:center;
+  color:var(--lfms-sub-text);border:1px solid var(--lfms-sub-line);
+  background:var(--lfms-sub-raised);border-radius:13px;
+}
+.session-art-viewer__image {
+  width:100%;height:auto;min-height:0;
+  max-height:min(78dvh,820px);object-fit:contain;
+  border-radius:11px;background:var(--lfms-sub-bg);
+  touch-action:pinch-zoom;
+}
+.session-art-viewer__hint {
+  margin:0;text-align:center;color:var(--lfms-sub-muted);
+  font-size:11px;letter-spacing:.02em;
+}
+
+/* Wider artwork and a readable movement header, using the unused left-pane
+   height instead of stealing space from set buttons. */
+@media (min-width:740px) and (orientation:landscape) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__progress-wrap {
+    padding-top:7px;gap:5px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage {
+    grid-template-rows:minmax(168px,48%) minmax(0,1fr);
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage-copy {
+    gap:7px;padding:12px 15px 13px;
+    overflow-y:auto;overscroll-behavior:contain;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage h2 {
+    font-size:clamp(20px,2vw,26px);line-height:1.12;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage-cue p {
+    font-size:12px;line-height:1.35;-webkit-line-clamp:3;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log {
+    gap:8px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {
+    padding:12px 14px 10px;
+    gap:7px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head {
+    min-height:64px;align-items:center;
+    padding:3px 2px 8px;gap:11px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__art {
+    width:60px;height:60px;min-width:60px;
+    border-radius:12px;cursor:zoom-in;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head[data-has-art="true"] {
+    grid-template-columns:60px minmax(0,1fr) 46px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__name {
+    font-size:clamp(20px,1.95vw,25px);line-height:1.16;
+    white-space:normal;overflow-wrap:anywhere;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise-menu__trigger {
+    background:var(--lfms-sub-raised);border:1px solid var(--lfms-sub-line);
+    border-radius:12px;padding:0;display:grid;place-items:center;
+  }
+  /* In-flow rest is a bottom row, never fixed above or across the set grid. */
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.session-restbar[data-inline-rest="true"] {
+    position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none;
+    z-index:2;box-sizing:border-box;
+    flex:0 0 auto;align-self:stretch;width:100%;max-width:none;min-height:0;
+    padding:8px 12px;margin:0;border-radius:14px;
+    display:grid;grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto 5px;gap:6px 11px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"][data-rest-active="true"] .session-r5__log {
+    padding-bottom:0;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.session-restbar .session-restbar__progress {
+    grid-column:1;grid-row:2;width:100%;height:5px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.session-restbar .session-restbar__time {
+    grid-column:1;grid-row:1;align-self:center;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.session-restbar .session-restbar__actions {
+    grid-column:2;grid-row:1 / span 2;align-items:center;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.session-restbar .session-restbar__actions button {
+    min-height:44px;
+  }
+}
+@media (min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage {
+    grid-template-rows:minmax(130px,43%) minmax(0,1fr);
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__stage-copy {
+    padding:8px 11px;gap:4px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {
+    padding:7px 10px;gap:3px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head {
+    min-height:49px;padding:1px 0 4px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__art {
+    width:44px;height:44px;min-width:44px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head[data-has-art="true"] {
+    grid-template-columns:44px minmax(0,1fr) 46px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .exercise--r3 .exercise__name {
+    font-size:18px;
+  }
+}
+
+
+/* At the shortest unfolded Duo height, preserve the full set grid while rest
+   is docked. The optional layout/extra-movement toolbar returns after rest. */
+@media (min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"][data-rest-active="true"] .session-display-tools {
+    display:none;
+  }
+}

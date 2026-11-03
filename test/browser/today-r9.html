@@ -105,10 +105,10 @@
     visibility = 'visible'
     document.dispatchEvent(new Event('visibilitychange'))
     await settle(250)
-    const date = q('.today-heading__date')?.textContent ?? ''
+    const date = q('.screen--today')?.dataset.date ?? ''
     const title = q('.today-heading .screen__title')?.textContent ?? ''
     check('R9.3 midnight plus becoming visible refreshes Today to Wednesday and its workout',
-      q('.screen--today')?.dataset.date === '2026-09-09' && /Wednesday, 9 Sep/.test(date)
+      date === '2026-09-09' && !q('.today-heading__date')
         && title === 'Today' && q('[data-section="next-session"] h2')?.textContent === 'Minimal Legs + Abs'
         && qa('[data-workout-slot]').length === 1
         && !/Workout details are available for today/.test(card()?.textContent ?? ''),

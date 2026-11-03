@@ -35,7 +35,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/dataset\.layout === 'duo' \? 200 : 520/)
-  assert.match(read('src/version.js'),/0\.66\.53 \(159\)/)
+  assert.match(read('src/version.js'),/0\.66\.54 \(160\)/)
 })
 
 test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{

@@ -37,7 +37,7 @@ test('six flat, cartoon bumper plates use red WHITE blue in identical order on b
   }
   assert.doesNotMatch(html,/linearGradient|url\(#lfms-db-|lfms-db-shaft/)
   assert.match(css,/@keyframes lfms-bumper-stack/)
-  assert.match(css,/--lfms-barbell-home-x:calc\(100vw - clamp\(112px,20vw,152px\)\)/)
+  assert.match(css,/--lfms-barbell-home-x:85vw/)
   assert.match(html,/viewBox="0 0 160 700"/)
   assert.match(html,/rect x="74" y="15" width="12" height="670"/)
   assert.match(html,/rect x="69" y="269" width="22" height="162"/)
@@ -45,6 +45,7 @@ test('six flat, cartoon bumper plates use red WHITE blue in identical order on b
   assert.match(css,/height:8\.857%/)
   assert.match(css,/lfms-brand-clear-side 520ms/)
   assert.match(css,/--lfms-brand-scale:\.65/)
+  assert.match(css,/--lfms-barbell-home-x:calc\(100vw - 46px\)/)
 })
 
 test('bottom red/white/blue land before the VERTICAL bar, then top red/white/blue stack',()=>{

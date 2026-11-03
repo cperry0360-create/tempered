@@ -107,12 +107,15 @@ try{
     &&getComputedStyle(launch).backgroundColor==='rgba(0, 0, 0, 0)')
   const clipBefore=getComputedStyle(skin).clipPath
   const barBefore=barbell.getBoundingClientRect()
+  const xBefore=parseFloat(getComputedStyle(barbell).left)
   await sleep(510)
   const clipDuring=getComputedStyle(skin).clipPath
   const barDuring=barbell.getBoundingClientRect()
+  const xDuring=parseFloat(getComputedStyle(barbell).left)
   check('right-corner skin is progressively removed as bar falls down-right',
     clipBefore!==clipDuring&&clipDuring.includes('polygon')
-    &&barDuring.top>barBefore.top+25)
+    &&barDuring.top>barBefore.top+25
+    &&xDuring>=xBefore)
   check('actual barbell is outside the clipped skin, so it cannot vanish in the tear',
     !skin.contains(barbell)&&!skin.contains(tear)&&!skin.contains(flap))
   check('no browser exceptions',errors.length===0,errors.join(' | '))

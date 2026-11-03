@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
+<title>Weekly habits retire without blocking daily completion</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const q=selector=>document.querySelector(selector)
+const settle=(ms=40)=>new Promise(resolve=>setTimeout(resolve,ms))
+async function until(fn){
+  for(let i=0;i<70;i++){if(fn())return true;await settle(40)}
+  return false
+}
+try{
+  const storage=createMemoryStorage()
+  const clock=fixedClock(new Date(2026,10,3,12))
+  const t=await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'today'})
+  const schedule=await t.daily.activitySchedule()
+  for(const [id,setting] of Object.entries(schedule)){
+    if(setting.cadence==='daily'&&id!=='sleep')await t.daily.setCadence(id,'off')
+  }
+  await t.daily.setCadence('sleep','daily',1)
+  await t.daily.setCadence('sauna','weekly',1)
+  await t.daily.setCadence('journal','weekly',2)
+  await t.daily.setCadence('waist_measurement','off')
+  const showToday=async()=>{await t.app.show('train');await t.app.show('today')}
+  const goal=()=>q('.week-dashboard__goal-track[aria-label="Daily habits"]')
+  const sauna=()=>q('[data-section="daily"] [data-activity="sauna"]')
+  const journal=()=>q('[data-section="daily"] [data-activity="journal"]')
+  await showToday()
+  check('unfinished weekly sauna and journal are offered while daily score is 0 of 1',
+    !!sauna() && !!journal() && goal()?.getAttribute('aria-valuemax')==='1'
+    && goal()?.getAttribute('aria-valuenow')==='0')
+  await t.daily.logAt('2026-11-03','sleep',8)
+  await showToday()
+  check('daily habits reach full 100% without completing weekly goals',
+    !!sauna() && !!journal() && goal()?.getAttribute('aria-valuenow')==='1'
+    && goal()?.getAttribute('aria-valuemax')==='1')
+  sauna()?.click()
+  check('weekly sauna disappears right after being logged one of one',
+    await until(()=>!sauna()) && (await t.daily.dayLog('2026-11-03')).saunaLogged===true)
+  check('weekly sauna completion does not alter the one-of-one daily goal',
+    goal()?.getAttribute('aria-valuenow')==='1' && goal()?.getAttribute('aria-valuemax')==='1')
+  journal()?.click()
+  check('weekly two-of-two journal hides for rest of first logged day',
+    await until(()=>!journal()) && (await t.daily.dayLog('2026-11-03')).journalLogged===true)
+  clock.set(new Date(2026,10,4,12))
+  await showToday()
+  check('tomorrow sauna stays retired, but journal offers a second distinct day',
+    !sauna() && !!journal() && journal()?.textContent.includes('1 / 2'))
+  journal()?.click()
+  check('journal retires immediately after second distinct day completes',
+    await until(()=>!journal()) && (await t.daily.dayLog('2026-11-04')).journalLogged===true)
+  clock.set(new Date(2026,10,6,12))
+  await showToday()
+  check('completed weekly goals never recur later within the same week',
+    !sauna() && !journal())
+  clock.set(new Date(2026,10,9,12))
+  await showToday()
+  check('new Monday opens fresh weekly one-of-one and two-of-two goals',
+    !!sauna() && !!journal()
+    && sauna()?.textContent.includes('0 / 1')
+    && journal()?.textContent.includes('0 / 2'))
+  check('weekly source logs remain saved on original calendar dates',
+    (await t.daily.dayLog('2026-11-03')).saunaLogged===true
+    && (await t.daily.dayLog('2026-11-03')).journalLogged===true
+    && (await t.daily.dayLog('2026-11-04')).journalLogged===true)
+}catch(error){check('weekly retirement harness completes',false,error.stack)}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'weekly-habit-retirement',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

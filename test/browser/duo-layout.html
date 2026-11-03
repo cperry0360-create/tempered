@@ -51,7 +51,7 @@ if (params.has('fixture')) {
       check(label + ' floating rail uses an isolated glass capsule on the continuous canvas',
         w.getComputedStyle(q('.tabbar')).backgroundImage === 'none'
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
-        && w.getComputedStyle(d.documentElement).backgroundImage.includes('radial-gradient')
+        && w.getComputedStyle(d.body).backgroundImage.includes('radial-gradient')
          && w.getComputedStyle(q('#app')).backgroundImage==='none')
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
       check(label + ' glass capsule stays fully on screen at the right safe edge',

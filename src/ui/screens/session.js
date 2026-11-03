@@ -776,7 +776,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           type: 'button',
           'aria-label': `Show ${entry.exercise.name} reference`,
           dataset: { art: entry.exercise.id },
-          onclick: () => togglePanel(entry, 'art'),
+          onclick: () => openExerciseArt(entry),
         }, [el('img.exercise__thumb', {
           src: artUrl(entry.exercise.art), alt: '', loading: 'lazy',
         })]),
@@ -895,7 +895,15 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return el('aside.session-r5__stage', { dataset:{stageExercise:entry.exercise.id} }, [
       el('div.session-r5__visual', {}, [
         entry.exercise.art
-          ? el('img', { src:artUrl(entry.exercise.art), alt:`${movementName} exercise reference`, loading:'lazy' })
+          ? el('button.session-r5__visual-open',{
+              type:'button',
+              'aria-label':`Enlarge photos for ${movementName}`,
+              dataset:{action:'enlarge-exercise-art'},
+              onclick:()=>openExerciseArt(entry),
+            },[
+              el('img',{src:artUrl(entry.exercise.art),alt:`${movementName} exercise reference`,loading:'lazy'}),
+              el('span.session-r5__zoom-hint',{},[icon('maximize-2'),' Enlarge']),
+            ])
           : el('div.session-r5__visual-fallback', {}, [icon('train')]),
         el('div.session-r5__visual-shade'),
         el('span.session-r5__image-tag', {text:`MOVEMENT ${focusStageIndex+1} / ${plan.length}`}),
@@ -1083,6 +1091,40 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
   }
 
+  function openExerciseArt(entry) {
+    if(!entry?.exercise?.art)return
+    artViewer={art:entry.exercise.art,name:displayName(entry.exercise,entry.slot)}
+    document.querySelector('[data-session-art-overlay]')?.remove()
+    document.body.append(exerciseArtViewer())
+    document.querySelector('[data-session-art-close]')?.focus()
+  }
+  function closeExerciseArt() {
+    artViewer=null
+    document.querySelector('[data-session-art-overlay]')?.remove()
+    root.querySelector('[data-action="enlarge-exercise-art"]')?.focus({preventScroll:true})
+  }
+  function exerciseArtViewer() {
+    if(!artViewer)return null
+    const frame=el('div.session-art-viewer__frame',{},[
+      el('div.session-art-viewer__bar',{},[
+        el('strong',{text:artViewer.name}),
+        el('button.session-art-viewer__close',{
+          type:'button',dataset:{sessionArtClose:'true'},'aria-label':'Close exercise photos',
+          onclick:closeExerciseArt,
+        },[icon('x')]),
+      ]),
+      el('img.session-art-viewer__image',{
+        src:artUrl(artViewer.art),alt:`${artViewer.name} exercise demonstration`,
+      }),
+      el('p.session-art-viewer__hint',{text:'Pinch to zoom · Tap outside or × to close'}),
+    ])
+    return el('div.session-art-viewer',{
+      role:'dialog','aria-modal':'true','aria-label':`Photos for ${artViewer.name}`,
+      dataset:{sessionOverlay:'true',sessionArtOverlay:'true'},
+      onclick:event=>{if(event.target===event.currentTarget)closeExerciseArt()},
+    },[frame])
+  }
+
   /** The rest bar and confirmation sheets live on <body>, outside the screen:
    *  iOS makes the scrolling app body its own stacking context, so a sheet left
    *  inside it can never rise above the body-level rest bar. */
@@ -1091,6 +1133,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
 
   function minimizeWorkout() {
+    artViewer=null
     // The checkpoint is saved before removing this screen so checked sets,
     // edited fields and remaining exercise slots survive the detour to Today.
     pauseElapsedTimer()
@@ -1226,6 +1269,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
     clearBodyOverlays()
     if (rest && !inlineRestDock) document.body.append(restBar())
+    if (artViewer) document.body.append(exerciseArtViewer())
     const sheet = confirmingFinish ? finishSheet() : confirmingDiscard ? discardSheet() : null
     if (sheet) document.body.append(sheet)
     syncHalfFoldViewport()
@@ -1315,6 +1359,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
      * @param {string|null} [options.exerciseId]  For an ad-hoc single exercise.
      */
     async start({ routine = null, programDay = null, exerciseId = null, slotTask = null, returnTab = 'today' }) {
+      artViewer=null
       halfFold = false
       halfFoldIndex = 0
       focusStageIndex = 0
@@ -1408,6 +1453,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     },
 
     async resume(draft) {
+      artViewer=null
       // Old checkpoints stored an absolute start time, so time spent with the
       // app closed inflated the workout into hundreds of minutes. Missing
       // elapsedSec is intentionally treated as zero rather than repeating it.

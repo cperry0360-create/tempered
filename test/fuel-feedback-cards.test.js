@@ -33,10 +33,12 @@ test('Custom Water validates, saves through existing daily logs, and retains pre
   assert.match(source,/amount<0\.1\|\|amount>200/)
 })
 
-test('Duo nav and content paint one continuous canvas, preserving glass rail',()=>{
-  assert.match(railCSS,/html\[data-layout="duo"\] body::before \{/)
-  assert.match(railCSS,/position:fixed;/)
-  assert.match(railCSS,/background-size:100% 100%,100% 100%/)
+test('Duo nav and content share solid soft-black canvas, preserving glass rail',()=>{
+  assert.ok(railCSS.includes('html[data-layout="duo"] body {'))
+  assert.ok(railCSS.includes('background:var(--lfms-duo-canvas);'))
+  assert.ok(railCSS.includes('html[data-layout="duo"] body::before {'))
+  assert.ok(railCSS.includes('content:none;'))
+  assert.ok(railCSS.includes('display:none;'))
   assert.match(railCSS,/html\[data-layout="duo"\] #app\.app \.tabbar \{\s*background:transparent/)
   assert.match(railCSS,/\.tabbar__glyph/)
 })

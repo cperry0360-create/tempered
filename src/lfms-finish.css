@@ -691,48 +691,33 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 
 
-/* LFMS Duo single, permanent viewport canvas (0.66.46).
-   THIS is the only backdrop painted by LFMS during launch, Today, Train,
-   Fuel, Progress and the sidebar. The splash, app wrapper, page wrappers,
-   sidebar gutter and status cover never paint another full-screen surface.
-   An adjacent OS-owned Duo status/control strip is outside the web viewport. */
+/* LFMS Duo solid charcoal experiment (0.66.47).
+   Paint one flat, stable color across the ENTIRE web viewport. The iOS
+   system-owned right strip cannot render our gradient: using its matching
+   solid fill gives it the best possible chance to look continuous.
+   Preserve all cards, content and glass capsule styling. */
 html[data-layout="duo"],
 html[data-layout="duo"] body {
-  background:var(--food-v2-deep);
+  background:var(--lfms-duo-canvas);
   background-image:none;
 }
 
-/* The approved Today palette sits on one fixed viewport-size canvas, stable
-   even when the app is hidden or still bootstrapping. No edge-color feather. */
+/* Remove the gradient layer entirely rather than hiding it under a color.
+   Root/body provide the only full-screen paint on the Duo. */
 html[data-layout="duo"] body::before {
-  content:"";
-  display:block;
-  position:fixed;
-  inset:-1px;
-  z-index:0;
-  width:auto;
-  height:auto;
-  opacity:1;
-  filter:none;
-  transform:none;
-  transform-origin:center;
-  background:
-    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
-    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-  background-size:100% 100%,100% 100%;
-  background-repeat:no-repeat;
-  pointer-events:none;
+  content:none;
+  display:none;
 }
 
-/* Duo logo/shockwave are graphics on top of the ONE canvas, not another
-   opaque or gradient screen. Keep the standard phone's original splash art. */
+/* The splash contains just branding and the impact animation. It does not
+   create a separate full-screen tint or a large soft radial glow. */
 html[data-layout="duo"] .lfms-launch {
   background:none;
   background-color:transparent;
   box-shadow:none;
 }
-/* No second fixed paint in the top safe area. The viewport canvas extends
-   behind the system status text; status-bar-cover stays for normal phones. */
+html[data-layout="duo"] .lfms-launch__glow {display:none}
+/* No second fixed top safe-area paint. Standard phone mode stays unchanged. */
 html[data-layout="duo"] .status-bar-cover {display:none}
 
 /* App, scroll frame and main screens are clear, including the reserved

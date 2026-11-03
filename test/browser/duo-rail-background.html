@@ -45,26 +45,19 @@ try{
  await wait(30)
  const html=document.documentElement,app=document.getElementById('app')
  const rail=app.querySelector('.tabbar'), capsule=rail?.querySelector('.tabbar__tabs')
- // Compare the actual fixed canvas, not just the colors of an element
- // whose height changes between tabs.
+ // The Duo has one solid color. No gradient canvas or duplicate strip.
+ const canvas=()=>getComputedStyle(document.body).backgroundColor
+ const originalCanvas=canvas()
+ const rootColor=()=>getComputedStyle(document.documentElement).backgroundColor
  const backdrop=()=>getComputedStyle(document.body,'::before')
- const originalGradient=backdrop().backgroundImage
- const initialRect=document.body.getBoundingClientRect()
- check('approved Today gradient paints a fixed full-viewport layer',
-   originalGradient.includes('radial-gradient')&&originalGradient.includes('linear-gradient')
-   &&backdrop().position==='fixed'&&backdrop().content!=='none'
-   &&getComputedStyle(html).backgroundImage==='none'
+ check('soft-black Duo color fills root and body with no gradient layer',
+   originalCanvas==='rgb(16, 24, 32)'
+   &&rootColor()===originalCanvas
    &&getComputedStyle(document.body).backgroundImage==='none'
-   &&backdrop().top==='-1px'&&backdrop().right==='-1px'
-   &&backdrop().bottom==='-1px'&&backdrop().left==='-1px',
-   JSON.stringify({position:backdrop().position,inset:[backdrop().top,backdrop().right,backdrop().bottom,backdrop().left],
-     body:initialRect.width,viewport:innerWidth}))
- check('single full-viewport canvas has the approved Today glow without right-edge feather',
-   originalGradient.startsWith('radial-gradient(')
-   &&(originalGradient.match(/radial-gradient\(/g)||[]).length===1
-   &&(originalGradient.match(/linear-gradient\(/g)||[]).length===1
-   &&!originalGradient.includes('rgb(8, 20, 34)'),
-   JSON.stringify({canvas:originalGradient.slice(0,280)}))
+   &&getComputedStyle(document.documentElement).backgroundImage==='none'
+   &&backdrop().content==='none'&&backdrop().display==='none',
+   JSON.stringify({body:originalCanvas,root:rootColor(),pseudo:backdrop().content}))
+ check('no duplicate canvas behind the LFMS app',backdrop().content==='none')
  // Simulate the initial LFMS splash and its dismissal, testing the actual
  // background underneath the 4s animation rather than only settled pages.
  const splash=document.createElement('div')
@@ -79,15 +72,15 @@ try{
    &&getComputedStyle(splash).boxShadow==='none'
  check('launch is artwork over the same canvas, never a second opaque backdrop',
    clearLaunch()&&getComputedStyle(statusCover).display==='none')
- const beforeSplashBg=backdrop().backgroundImage
+ const beforeSplashBg=canvas()
  const beforeSplashRoot=getComputedStyle(html).backgroundColor
  const beforeSplashBody=getComputedStyle(document.body).backgroundColor
  check('Today stays invisible beneath the open LFMS splash',
    getComputedStyle(app).visibility==='hidden'
    &&getComputedStyle(app).opacity==='0'
-   &&backdrop().backgroundImage===originalGradient)
+   &&canvas()===originalCanvas)
  splash.dataset.closing='true'
- const closingBg=backdrop().backgroundImage
+ const closingBg=canvas()
  const closingRoot=getComputedStyle(html).backgroundColor
  const closingBody=getComputedStyle(document.body).backgroundColor
  check('Today becomes visible behind the same transparent splash canvas',
@@ -95,7 +88,7 @@ try{
    &&getComputedStyle(app).opacity==='1'
    &&clearLaunch()
    &&getComputedStyle(statusCover).display==='none'
-   &&backdrop().backgroundImage===originalGradient)
+   &&canvas()===originalCanvas)
  check('splash exits in one brief crossfade rather than lingering over empty navy',
    getComputedStyle(splash).transitionDuration.split(',')[0].trim()==='0.18s')
  splash.remove()
@@ -103,9 +96,9 @@ try{
  check('Today is fully visible after the LFMS splash is removed',
    getComputedStyle(app).visibility==='visible'
    &&Number(getComputedStyle(app).opacity)>0.99
-   &&backdrop().backgroundImage===originalGradient)
+   &&canvas()===originalCanvas)
  check('no black sidebar flash when LFMS splash closes',
-   beforeSplashBg===closingBg&&closingBg===backdrop().backgroundImage
+   beforeSplashBg===closingBg&&closingBg===canvas()
    &&beforeSplashRoot===closingRoot
    &&beforeSplashBody===closingBody
    &&beforeSplashRoot===getComputedStyle(html).backgroundColor
@@ -120,14 +113,14 @@ try{
    await wait(30)
    const screen=app.querySelector('.app__body > .screen')
    check(tab+' has exactly one background layer and no distinct rail stripe',
-     backdrop().backgroundImage===originalGradient
-     &&backdrop().position==='fixed'
+     canvas()===originalCanvas
+     &&backdrop().content==='none'
      &&getComputedStyle(document.body).backgroundImage==='none'
      &&getComputedStyle(html).backgroundImage==='none'
      &&transparent(app)
      &&transparent(app.querySelector('.app__body'))&&transparent(screen)
      &&transparent(rail),
-     JSON.stringify({tab,canvas:backdrop().backgroundImage,
+     JSON.stringify({tab,canvas:canvas(),
        body:getComputedStyle(document.body).backgroundImage,
        app:getComputedStyle(app).backgroundImage,
        screen:screen&&getComputedStyle(screen).backgroundImage,

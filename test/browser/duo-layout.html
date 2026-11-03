@@ -48,11 +48,12 @@ if (params.has('fixture')) {
     for (const [width, height, right, top] of [[932,656,0,0],[890,626,0,24],[932,656,80,0],[466,678,0,24],[626,890,0,24]]) {
       const d = await load(width,height,`layout=duo&right=${right}&top=${top}`), w = frame.contentWindow
       const q = s => d.querySelector(s), r = s => rect(q(s)), label = `${width}×${height} right ${right}`
-      check(label + ' floating rail uses an isolated glass capsule on the continuous canvas',
+      check(label + ' floating rail uses an isolated glass capsule on solid black',
         w.getComputedStyle(q('.tabbar')).backgroundImage === 'none'
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
-        && w.getComputedStyle(d.body,'::before').backgroundImage.includes('radial-gradient')
-         && w.getComputedStyle(q('#app')).backgroundImage==='none')
+        && w.getComputedStyle(d.body).backgroundColor==='rgb(16, 24, 32)'
+        && w.getComputedStyle(d.body,'::before').content==='none'
+        && w.getComputedStyle(q('#app')).backgroundImage==='none')
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
       check(label + ' glass capsule stays fully on screen at the right safe edge',
         r('.tabbar__tabs').right <= width-right+2
@@ -64,7 +65,7 @@ if (params.has('fixture')) {
   && w.getComputedStyle(q('.tabbar')).backdropFilter==='none'
   && w.getComputedStyle(q('.tabbar')).backgroundColor==='rgba(0, 0, 0, 0)'
   && w.getComputedStyle(d.body).backgroundColor===w.getComputedStyle(d.documentElement).backgroundColor
-  && w.getComputedStyle(d.body,'::before').position==='fixed')
+  && w.getComputedStyle(d.body,'::before').content==='none')
 check(label + ' content is padded clear of the floating icons',
   r('.app__body').right - parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
     <= r('.tabbar').left - 6)

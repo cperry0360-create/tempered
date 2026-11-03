@@ -40,7 +40,9 @@
   --food-v2-action-base: #1266AF;
   --food-v2-action-bright: #338EE2;
   --food-v2-blue-light: #76C3FF;
-  /* The single LFMS Duo viewport canvas uses the original Today colors. */
+  /* Duo solid canvas: the old splash's soft charcoal center, with no gradient. */
+  --lfms-duo-canvas: #101820;
+  /* Retain the Today gradient palette for a possible future reintroduction. */
   --lfms-today-canvas-start: #0B2540;
   --lfms-today-canvas-end: #04101E;
   --lfms-today-status: #102C49;

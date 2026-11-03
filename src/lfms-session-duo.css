@@ -463,3 +463,112 @@
     display:none;
   }
 }
+
+
+/* LFMS 0.66.48 — one charcoal header system across Duo screens.
+   The Today header is the reference: dark solid canvas, white text,
+   restrained blue/red accents and contained right-side actions.
+   No changes to buttons' handlers, screen layout or workout data. */
+html[data-layout="duo"] {
+  --lfms-topbar-surface:var(--lfms-duo-canvas);
+  --lfms-topbar-control:var(--food-v2-panel-2);
+  --lfms-topbar-outline:var(--food-v2-line);
+  --lfms-topbar-ink:var(--food-v2-text);
+  --lfms-topbar-accent:var(--food-v2-blue-light);
+}
+
+/* Existing full-width header surfaces (main tabs + all common drill-ins).
+   Leave Today as-is: its styling is already the approved reference. */
+html[data-layout="duo"] #app.app :is(
+  .train2__heading,
+  .train-r4__subheader,
+  .fn2__heading,
+  .food-v2__topline,
+  .progress-header,
+  .sessionbar--r3,
+  .cardio-r5__header,
+  .mobility-screen__head
+),
+html[data-layout="duo"] :is(
+  .weekly-recap__header,
+  .plate-calculator__header,
+  .fn2__sheet-head,
+  .session-art-viewer__bar
+) {
+  background:var(--lfms-topbar-surface);
+  background-image:none;
+  color:var(--lfms-topbar-ink);
+  border-color:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+
+/* The Train sticky row previously repainted a translucent NAVY strip,
+   overriding the solid charcoal canvas. Never introduce a second blue band. */
+html[data-layout="duo"] #app.app .train--fuel-style .train-calculator-bar,
+html[data-layout="duo"] #app.app .train--fuel-style .train-r4__subheader,
+html[data-layout="duo"] #app.app .screen--session .sessionbar--r3 {
+  background:var(--lfms-topbar-surface);
+  background-image:none;
+  border-color:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+
+/* Some deep screens still painted their original navy behind the bar.
+   Their content cards retain the existing navy/blue visual system. */
+html[data-layout="duo"] #app.app .app__body > :is(
+  .screen--session,.screen--cardio,.mobility-screen
+) { background:transparent; }
+
+/* Top-row controls echo Today's square gear: same raised dark surface,
+   hairline edge and blue-tinted text/icon. Do not restyle the shortcut
+   pills below Fuel/Train headers, their current active states or body CTAs. */
+html[data-layout="duo"] #app.app :is(
+  .train2__heading,.train-r4__subheader,.food-v2__topline,
+  .progress-header,.sessionbar--r3,.cardio-r5__header,.mobility-screen__head
+) :is(button,.plate-calculator-link,.progress-range),
+html[data-layout="duo"] :is(
+  .weekly-recap__header,.plate-calculator__header,
+  .fn2__sheet-head,.session-art-viewer__bar
+) button {
+  background:var(--lfms-topbar-control);
+  background-image:none;
+  border:1px solid var(--lfms-topbar-outline);
+  color:var(--lfms-topbar-accent);
+  border-radius:13px;
+  box-shadow:none;
+}
+
+/* Workout's once-blue Exit/Pause/Minimize/Finish row now matches Today.
+   Preserve the existing 44px touch targets, session timer and controls. */
+html[data-layout="duo"] #app.app .screen--session .sessionbar--r3 :is(
+  .sessionbar__cancel,.sessionbar__timer-toggle,
+  .sessionbar__minimize,.sessionbar__finish
+) {
+  background:var(--lfms-topbar-control);
+  background-image:none;
+  border:1px solid var(--lfms-topbar-outline);
+  color:var(--lfms-topbar-accent);
+  border-radius:13px;
+  box-shadow:none;
+}
+html[data-layout="duo"] #app.app .screen--session .sessionbar__title {
+  color:var(--lfms-topbar-ink);
+}
+html[data-layout="duo"] #app.app .screen--session .sessionbar__elapsed-value {
+  color:var(--lfms-topbar-accent);
+}
+html[data-layout="duo"] #app.app .screen--session .sessionbar__timer-toggle[data-paused="true"] {
+  border-color:var(--lfms-topbar-accent);
+}
+/* Keep keyboard focus visible against soft black. */
+html[data-layout="duo"] #app.app :is(
+  .train2__heading,.train-r4__subheader,.food-v2__topline,
+  .progress-header,.sessionbar--r3
+) button:focus-visible {
+  outline:2px solid var(--lfms-topbar-accent);
+  outline-offset:2px;
+}

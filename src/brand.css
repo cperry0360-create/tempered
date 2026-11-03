@@ -119,10 +119,11 @@ html[data-layout="duo"] .lfms-launch__skin {
    make the loading order real; each has a landing and small rebound. */
 .lfms-launch__barbell-stage {
   position:absolute;z-index:6;
-  /* Viewport-anchored right-side lane. The splash's padded containing block
-     formerly shifted 100% positioning ~40px beyond the actual right edge.
-     Keep an explicit viewport margin, and shift text left independently. */
-  --lfms-barbell-home-x:calc(100vw - clamp(112px,20vw,152px));
+  /* True viewport-anchored right-side lane. Do NOT use percentages of the
+     padded overlay containing block (they shifted the equipment off-screen).
+     85vw leaves the status lane free on Duo; compact phones use a fixed edge
+     inset so the last letter and the barbell stay visually separate. */
+  --lfms-barbell-home-x:85vw;
   left:var(--lfms-barbell-home-x);top:50%;
   width:clamp(63px,min(14vw,21vh),108px);
   aspect-ratio:160 / 700;
@@ -311,7 +312,7 @@ html[data-layout="duo"] .lfms-launch__skin {
 @media(max-width:480px) {
   .lfms-launch__identity {--lfms-brand-scale:.65;--lfms-brand-offset:43px}
   .lfms-launch__barbell-stage {
-    --lfms-barbell-home-x:calc(100vw - 92px);
+    --lfms-barbell-home-x:calc(100vw - 46px);
     width:clamp(66px,min(19vw,18vh),78px)
   }
 }

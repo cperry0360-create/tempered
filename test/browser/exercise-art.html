@@ -60,8 +60,8 @@
           thumbs.map((image) => image.naturalWidth).join(','))
         q('.exercise__art')?.click()
         await new Promise((resolve) => setTimeout(resolve, 40))
-        check('tapping a thumbnail opens the full exercise image panel',
-          q('.panel--art .exercise__full') !== null)
+        check('tapping a thumbnail opens the full-screen exercise image viewer',
+          q('[data-session-art-overlay][role="dialog"] .session-art-viewer__image') !== null)
       } catch (error) {
         check('harness threw', false, String(error?.stack ?? error).slice(0, 300))
       }

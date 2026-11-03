@@ -376,6 +376,16 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tabs {
 .today--fuel-style .today-week--unified .today-week__workout-icon .icon {
   width:21px;height:21px;color:var(--food-v2-text);stroke:none;filter:drop-shadow(0 0 3px rgba(51,177,255,.62));
 }
+/* Rest days use the same all-white, borderless LFMS figure language as
+   completed workout days. The tiny Z glyph stays crisp without blue glow. */
+.today--fuel-style .today-week--unified .today-week__day[data-icon='rest'] .today-week__workout-icon .icon {
+  width:23px;height:23px;color:var(--food-v2-text);filter:none;stroke:none;
+}
+@media(max-width:690px){
+  .today--fuel-style .today-week--unified .today-week__day[data-icon='rest'] .today-week__workout-icon .icon {
+    width:21px;height:21px;
+  }
+}
 .today--fuel-style .today-week--unified .today-week__day[data-future='true'] {opacity:.62}
 .today--fuel-style .week-dashboard__content {
   display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:21px;

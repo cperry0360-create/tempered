@@ -51,7 +51,7 @@ if (params.has('fixture')) {
       check(label + ' floating rail uses an isolated glass capsule on the continuous canvas',
         w.getComputedStyle(q('.tabbar')).backgroundImage === 'none'
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
-        && w.getComputedStyle(d.body).backgroundImage.includes('radial-gradient')
+        && w.getComputedStyle(d.body,'::before').backgroundImage.includes('radial-gradient')
          && w.getComputedStyle(q('#app')).backgroundImage==='none')
       check(label + ' rail reserves the safe inset once', close(r('.tabbar').width, 48 + right))
       check(label + ' glass capsule stays fully on screen at the right safe edge',
@@ -63,7 +63,8 @@ if (params.has('fixture')) {
   && w.getComputedStyle(q('.tabbar')).backgroundImage==='none'
   && w.getComputedStyle(q('.tabbar')).backdropFilter==='none'
   && w.getComputedStyle(q('.tabbar')).backgroundColor==='rgba(0, 0, 0, 0)'
-  && w.getComputedStyle(d.body).backgroundColor==='rgba(0, 0, 0, 0)')
+  && w.getComputedStyle(d.body).backgroundColor===w.getComputedStyle(d.documentElement).backgroundColor
+  && w.getComputedStyle(d.body,'::before').position==='fixed')
 check(label + ' content is padded clear of the floating icons',
   r('.app__body').right - parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
     <= r('.tabbar').left - 6)

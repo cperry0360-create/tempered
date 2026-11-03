@@ -45,11 +45,42 @@ try{
  await wait(30)
  const html=document.documentElement,app=document.getElementById('app')
  const rail=app.querySelector('.tabbar'), capsule=rail?.querySelector('.tabbar__tabs')
- const originalGradient=getComputedStyle(document.body).backgroundImage
- check('Today original body gradient is the shared full-width Duo canvas',
+ // Compare the actual fixed canvas, not just the colors of an element
+ // whose height changes between tabs.
+ const backdrop=()=>getComputedStyle(document.body,'::before')
+ const originalGradient=backdrop().backgroundImage
+ const initialRect=document.body.getBoundingClientRect()
+ check('approved Today gradient paints a fixed full-viewport layer',
    originalGradient.includes('radial-gradient')&&originalGradient.includes('linear-gradient')
-   &&getComputedStyle(document.body).backgroundAttachment.includes('fixed')
-   &&getComputedStyle(html).backgroundImage==='none')
+   &&backdrop().position==='fixed'&&backdrop().content!=='none'
+   &&getComputedStyle(html).backgroundImage==='none'
+   &&getComputedStyle(document.body).backgroundImage==='none'
+   &&backdrop().top==='-1px'&&backdrop().right==='-1px'
+   &&backdrop().bottom==='-1px'&&backdrop().left==='-1px',
+   JSON.stringify({position:backdrop().position,inset:[backdrop().top,backdrop().right,backdrop().bottom,backdrop().left],
+     body:initialRect.width,viewport:innerWidth}))
+ // Simulate the initial LFMS splash and its dismissal, testing the actual
+ // background underneath the 4s animation rather than only settled pages.
+ const splash=document.createElement('div')
+ splash.className='lfms-launch'
+ splash.setAttribute('aria-hidden','true')
+ document.body.append(splash)
+ const beforeSplashBg=backdrop().backgroundImage
+ const beforeSplashRoot=getComputedStyle(html).backgroundColor
+ const beforeSplashBody=getComputedStyle(document.body).backgroundColor
+ splash.dataset.closing='true'
+ const closingBg=backdrop().backgroundImage
+ const closingRoot=getComputedStyle(html).backgroundColor
+ const closingBody=getComputedStyle(document.body).backgroundColor
+ splash.remove()
+ check('no black sidebar flash when LFMS splash closes',
+   beforeSplashBg===closingBg&&closingBg===backdrop().backgroundImage
+   &&beforeSplashRoot===closingRoot
+   &&beforeSplashBody===closingBody
+   &&beforeSplashRoot===getComputedStyle(html).backgroundColor
+   &&beforeSplashBody===getComputedStyle(document.body).backgroundColor,
+   JSON.stringify({root:[beforeSplashRoot,closingRoot],
+     body:[beforeSplashBody,closingBody]}))
  check('glass vessel remains painted, but its surrounding navigation rail is transparent',
    transparent(rail)&&getComputedStyle(capsule).backgroundImage.includes('linear-gradient'))
  const originalCapsule=capsule
@@ -58,12 +89,14 @@ try{
    await wait(30)
    const screen=app.querySelector('.app__body > .screen')
    check(tab+' has exactly one background layer and no distinct rail stripe',
-     getComputedStyle(document.body).backgroundImage===originalGradient
+     backdrop().backgroundImage===originalGradient
+     &&backdrop().position==='fixed'
+     &&getComputedStyle(document.body).backgroundImage==='none'
      &&getComputedStyle(html).backgroundImage==='none'
      &&transparent(app)
      &&transparent(app.querySelector('.app__body'))&&transparent(screen)
      &&transparent(rail),
-     JSON.stringify({tab,html:getComputedStyle(html).backgroundImage,
+     JSON.stringify({tab,canvas:backdrop().backgroundImage,
        body:getComputedStyle(document.body).backgroundImage,
        app:getComputedStyle(app).backgroundImage,
        screen:screen&&getComputedStyle(screen).backgroundImage,

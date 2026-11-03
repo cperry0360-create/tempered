@@ -63,7 +63,8 @@ if (params.has('fixture')) {
   && w.getComputedStyle(q('.tabbar')).backgroundImage==='none'
   && w.getComputedStyle(q('.tabbar')).backdropFilter==='none'
   && w.getComputedStyle(q('.tabbar')).backgroundColor==='rgba(0, 0, 0, 0)'
-  && w.getComputedStyle(d.body).backgroundColor==='rgba(0, 0, 0, 0)')
+  && w.getComputedStyle(d.body).backgroundColor===w.getComputedStyle(d.documentElement).backgroundColor
+  && w.getComputedStyle(d.body,'::before').position==='fixed')
 check(label + ' content is padded clear of the floating icons',
   r('.app__body').right - parseFloat(w.getComputedStyle(q('.app__body')).paddingRight)
     <= r('.tabbar').left - 6)

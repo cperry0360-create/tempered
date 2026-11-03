@@ -14,6 +14,8 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
   assert.match(mark,/viewBox="435 167 675 387"/)
   assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__mark-stage"/)
+  assert.match(html,/class="lfms-launch__skin"/)
+  assert.match(html,/class="lfms-launch__peel-flap"/)
   assert.match(html,/class="lfms-launch__barbell-stage"/)
   assert.match(html,/class="lfms-launch__bar-art"/)
   for(const side of ['bottom','top']) {
@@ -29,7 +31,7 @@ test('splash has staggered entrances, no overlapping negative margins, and a rea
   for(const name of ['rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
   assert.match(css,/lfms-logo-settle/)
   assert.match(css,/prefers-reduced-motion:reduce/)
-  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','zipper-peel','loaded-scrape','tear-follow'])
+  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','corner-peel','loaded-scrape','tear-follow'])
     assert.match(css,new RegExp('lfms-'+name))
   assert.doesNotMatch(css,/lfms-mark-smash|lfms-glass-fracture|lfms-shockwave/)
   assert.match(css,/clip-path:inset\(0 0 43% 0\)/)

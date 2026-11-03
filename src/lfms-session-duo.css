@@ -293,3 +293,13 @@
     gap:3px;
   }
 }
+
+
+/* A plate-loading hint adds a 22px supplemental row after the active set.
+ * Temporarily collapse it ONLY during the bottom rest dock on short Duo
+ * screens; the plate calculator and full hint return once rest completes. */
+@media (min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"][data-rest-active="true"] .exercise--r3 .plates {
+    display:none;
+  }
+}

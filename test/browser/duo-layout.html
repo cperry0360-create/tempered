@@ -48,6 +48,21 @@ if (params.has('fixture')) {
     for (const [width, height, right, top] of [[932,656,0,0],[890,626,0,24],[932,656,80,0],[466,678,0,24],[626,890,0,24]]) {
       const d = await load(width,height,`layout=duo&right=${right}&top=${top}`), w = frame.contentWindow
       const q = s => d.querySelector(s), r = s => rect(q(s)), label = `${width}×${height} right ${right}`
+
+      const mainHeaderOK=name=>{
+        const mark=q('.lfms-main-brand__mark'),title=q('.lfms-main-brand__title'),nav=q('.lfms-main-actions')
+        const buttons=[...nav?.querySelectorAll(':scope > button')??[]]
+        return title?.textContent===name && !!mark
+          && close(rect(mark).width,44) && close(rect(mark).height,36)
+          && w.getComputedStyle(title).fontSize==='26px'
+          && buttons.length>=3
+          && buttons.every(b=>w.getComputedStyle(b).height==='44px'
+            && w.getComputedStyle(b).borderTopLeftRadius==='999px'
+            && w.getComputedStyle(b).backgroundImage.includes('linear-gradient'))
+      }
+      check(label+' Today matches shared LFMS logo, label and glass shortcuts',
+        mainHeaderOK('Today')&&!q('.today-heading__date'))
+
       check(label + ' floating rail uses an isolated glass capsule on solid black',
         w.getComputedStyle(q('.tabbar')).backgroundImage === 'none'
         && w.getComputedStyle(q('.tabbar__tabs')).backgroundImage.includes('linear-gradient')
@@ -182,6 +197,7 @@ check(label + ' content is padded clear of the floating icons',
       }else{
         q('[data-tab="train"]').click();await new Promise(resolve=>setTimeout(resolve,120));await settle()
       }
+      check(label+' Train matches shared LFMS logo, label and glass shortcuts',mainHeaderOK('Train'))
       check(label + ' Train top bar matches Today charcoal and accent control',
         w.getComputedStyle(q('.train-calculator-bar')).backgroundColor==='rgb(16, 24, 32)'
         && w.getComputedStyle(q('.train-calculator-bar')).backgroundImage==='none'
@@ -206,6 +222,7 @@ check(label + ' content is padded clear of the floating icons',
       const header = r('.train-calculator-bar')
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
+      check(label+' Fuel matches shared LFMS logo, label and glass shortcuts',mainHeaderOK('Fuel'))
       check(label + ' Fuel top bar matches Today charcoal',
         w.getComputedStyle(q('.food-v2__topline')).backgroundColor==='rgb(16, 24, 32)'
         && w.getComputedStyle(q('.food-v2__topline')).backgroundImage==='none')
@@ -245,6 +262,8 @@ check(label + ' content is padded clear of the floating icons',
           leftTravel > 500,
           JSON.stringify({leftTravel,rightTravel,scroll:q('.app__body').scrollTop}))
       }
+      await w.tempered.app.show('history'); await settle()
+      check(label+' Progress matches shared LFMS logo, label and glass shortcuts',mainHeaderOK('Progress'))
       await w.tempered.app.show('settings'); await settle()
       q('[data-action="program-builder"]')?.click(); await new Promise(resolve => setTimeout(resolve,180)); await settle()
       check(label + ' Program Builder exposes independent editing panes',

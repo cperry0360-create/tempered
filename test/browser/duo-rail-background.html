@@ -55,7 +55,10 @@ try{
    &&backdrop().position==='fixed'&&backdrop().content!=='none'
    &&getComputedStyle(html).backgroundImage==='none'
    &&getComputedStyle(document.body).backgroundImage==='none'
-   &&initialRect.width>=innerWidth-2)
+   &&backdrop().top==='-1px'&&backdrop().right==='-1px'
+   &&backdrop().bottom==='-1px'&&backdrop().left==='-1px',
+   JSON.stringify({position:backdrop().position,inset:[backdrop().top,backdrop().right,backdrop().bottom,backdrop().left],
+     body:initialRect.width,viewport:innerWidth}))
  // Simulate the initial LFMS splash and its dismissal, testing the actual
  // background underneath the 4s animation rather than only settled pages.
  const splash=document.createElement('div')

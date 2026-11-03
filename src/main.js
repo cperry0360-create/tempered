@@ -28,7 +28,9 @@ function dismissSplash() {
         resolve()
       }
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) finish()
-      else setTimeout(finish, 520)
+      // The Duo handoff has a 180ms exit crossfade: remove only after it
+      // finishes, without leaving the dark splash sitting over a hidden app.
+      else setTimeout(finish, document.documentElement.dataset.layout === 'duo' ? 200 : 520)
     }, remaining)
   })
   return splashDone

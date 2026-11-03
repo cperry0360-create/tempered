@@ -782,19 +782,38 @@ html[data-layout="duo"] #app.app .tabbar::after {
 }
 
 
-/* LFMS Duo launch handoff: Today is fully laid out behind the intro, but
-   must not be visible through its translucent exit. Keep the approved fixed
-   canvas visible beneath the splash; reveal the finished dashboard only after
-   main.js removes the launch element. This does not change the side rail,
-   splash choreography, screen data or the shared background palette. */
-html[data-layout="duo"] #app.app {
-  transition:opacity 180ms ease-out;
-}
-html[data-layout="duo"]:has(.lfms-launch) #app.app {
+/* LFMS Duo seamless launch handoff (0.66.45).
+   Previously the splash faded for 480ms onto an EMPTY navy canvas while #app
+   remained hidden, then Today appeared separately. Paint the finished app as
+   soon as the splash starts closing so the two screens crossfade, never exposing
+   an intermediate dark/black frame. The intro artwork and main canvas stay
+   unchanged, as does the separate right-hand glass rail. */
+html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])) #app.app {
   opacity:0;
   visibility:hidden;
   transition:none;
 }
+/* Today is already rendered and ready behind the splash at exit. */
+html[data-layout="duo"]:has(.lfms-launch[data-closing="true"]) #app.app {
+  opacity:1;
+  visibility:visible;
+  transition:none;
+}
+/* Short, single crossfade with no second animation after overlay removal. */
+html[data-layout="duo"] .lfms-launch[data-closing="true"] {
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 180ms ease-out,visibility 0s linear 180ms;
+}
+/* Disappear brand lettering ahead of the overlay's background to avoid a
+   readable ghost of the logo over the dashboard cards. */
+html[data-layout="duo"] .lfms-launch[data-closing="true"] .lfms-launch__identity {
+  opacity:0;
+  transition:opacity 70ms ease-out;
+}
 @media (prefers-reduced-motion:reduce) {
-  html[data-layout="duo"] #app.app {transition:none}
+  html[data-layout="duo"] .lfms-launch[data-closing="true"],
+  html[data-layout="duo"] .lfms-launch[data-closing="true"] .lfms-launch__identity {
+    transition:none;
+  }
 }

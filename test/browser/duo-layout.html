@@ -182,13 +182,20 @@ check(label + ' content is padded clear of the floating icons',
       }else{
         q('[data-tab="train"]').click();await new Promise(resolve=>setTimeout(resolve,120));await settle()
       }
-      if (wide) check(label + ' Train stacks cards independently', r('.train-r4__sessions') && r('.train-r4__routines') && close(r('.train-r4__sessions').top, r('.train-r4__program').top) && close(r('.train-r4__routines').top, r('.train-r4__sessions').bottom + 16))
+      check(label + ' Train top bar matches Today charcoal and accent control',
+        w.getComputedStyle(q('.train-calculator-bar')).backgroundColor==='rgb(16, 24, 32)'
+        && w.getComputedStyle(q('.train-calculator-bar')).backgroundImage==='none'
+        && w.getComputedStyle(q('.train-calculator-bar .plate-calculator-link')).backgroundColor==='rgb(16, 42, 67)')
+            if (wide) check(label + ' Train stacks cards independently', r('.train-r4__sessions') && r('.train-r4__routines') && close(r('.train-r4__sessions').top, r('.train-r4__program').top) && close(r('.train-r4__routines').top, r('.train-r4__sessions').bottom + 16))
       check(label + ' active plan is explicitly identified', Boolean(q('[data-active-program="true"]')))
       const planRow = q('[data-preview-day]')
       check(label + ' plan rows provide a preview without starting immediately', Boolean(planRow))
       planRow?.click()
       await settle()
-      check(label + ' exercises and sets are visible before starting',
+      check(label + ' workout preview has same charcoal drill-in bar',
+        w.getComputedStyle(q('.train-r4__subheader')).backgroundColor==='rgb(16, 24, 32)'
+        && w.getComputedStyle(q('.train-r4__subheader')).backgroundImage==='none')
+            check(label + ' exercises and sets are visible before starting',
         Boolean(q('[data-program-preview] .train-r4__preview-exercise'))
         && Boolean(q('[data-start-preview]'))
         && !q('.screen--session'))
@@ -199,7 +206,10 @@ check(label + ' content is padded clear of the floating icons',
       const header = r('.train-calculator-bar')
       check(label + ' Train header covers the top edge after scrolling', close(header.top,0) && q('.train-calculator-bar').contains(d.elementFromPoint(header.left + 8, 1)), JSON.stringify({top:header.top,left:header.left,scroll:q('.app__body').scrollTop,hit:d.elementFromPoint(header.left + 8,1)?.className}))
       q('[data-tab="fuel"]').click(); await new Promise(resolve => setTimeout(resolve,120)); await settle()
-      check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
+      check(label + ' Fuel top bar matches Today charcoal',
+        w.getComputedStyle(q('.food-v2__topline')).backgroundColor==='rgb(16, 24, 32)'
+        && w.getComputedStyle(q('.food-v2__topline')).backgroundImage==='none')
+            check(label + ' Fuel fits the available canvas', q('.app__body').scrollWidth <= q('.app__body').clientWidth + 1)
       if (!wide) check(label + ' cover Food cards use the full pane width',
         Math.abs(r('.fuel-r4__energy').width - r('.food-v2__macro-card').width) <= 2
         && Math.abs(r('.food-v2__macro-card').width - r('.food-v2__small-row').width) <= 2)

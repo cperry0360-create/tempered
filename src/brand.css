@@ -123,14 +123,14 @@
   filter:drop-shadow(0 3px 1px rgba(0,0,0,.22));
 }
 /* BOTTOM load, floor upward: RED then WHITE then BLUE. */
-.lfms-launch__plate--bottom-red {top:73%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1330ms both}
-.lfms-launch__plate--bottom-white {top:66%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1640ms both}
-.lfms-launch__plate--bottom-blue {top:59%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1950ms both}
+.lfms-launch__plate--bottom-red {top:78%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1330ms both}
+.lfms-launch__plate--bottom-white {top:71%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1640ms both}
+.lfms-launch__plate--bottom-blue {top:64%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1950ms both}
 /* TOP load, from grip outward: RED then WHITE then BLUE.
    The blue plate ends outermost on each side of the completed barbell. */
-.lfms-launch__plate--top-red {top:34%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3070ms both}
-.lfms-launch__plate--top-white {top:27%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3370ms both}
-.lfms-launch__plate--top-blue {top:20%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3670ms both}
+.lfms-launch__plate--top-red {top:25%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3070ms both}
+.lfms-launch__plate--top-white {top:18%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3370ms both}
+.lfms-launch__plate--top-blue {top:11%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3670ms both}
 .lfms-launch__tear-edge {
   position:absolute;z-index:6;top:-10%;
   height:120%;width:clamp(28px,4vw,50px);

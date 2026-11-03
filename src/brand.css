@@ -167,7 +167,7 @@ html[data-layout="duo"] .lfms-launch__skin {
   width:clamp(110px,27vw,230px);height:clamp(130px,40vh,300px);
   background:linear-gradient(140deg,rgba(244,250,255,.18) 0%,
     rgba(10,21,33,.9) 11%,var(--lfms-launch-mid) 51%,
-    #05090e 100%);
+    var(--lfms-launch-deep) 100%);
   clip-path:polygon(100% 0,100% 100%,16% 12%);
   transform-origin:100% 0%;
   opacity:0;pointer-events:none;

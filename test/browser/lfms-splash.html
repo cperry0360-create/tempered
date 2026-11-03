@@ -90,9 +90,9 @@ try{
     && dbRect.left > wordRect.right + 5,
     JSON.stringify({barLeft:dbRect.left,barRight:dbRect.right,wordRight:wordRect.right,viewport:innerWidth}))
   check('silver bar has Olympic length with exposed center knurl',
-    bar.getAttribute('viewBox')==='0 0 160 560'
-    &&dbRect.height>dbRect.width*3.3
-    &&!!bar.querySelector('rect[x="70"][y="215"]')
+    bar.getAttribute('viewBox')==='0 0 160 700'
+    &&dbRect.height>dbRect.width*4.1
+    &&!!bar.querySelector('rect[x="69"][y="269"]')
     &&getComputedStyle(identity).animationName.includes('lfms-brand-clear-side'),
     JSON.stringify({barWidth:dbRect.width,barHeight:dbRect.height,identityAnimation:getComputedStyle(identity).animationName}))
   launch.dataset.revealing='true'

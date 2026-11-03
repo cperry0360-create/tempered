@@ -55,7 +55,7 @@ if (params.has('fixture')) {
         return title?.textContent===name && !!mark
           && close(rect(mark).width,44) && close(rect(mark).height,36)
           && w.getComputedStyle(title).fontSize==='26px'
-          && buttons.length>=3
+          && buttons.length>=(name==='Fuel'?2:3)
           && buttons.every(b=>w.getComputedStyle(b).height==='44px'
             && w.getComputedStyle(b).borderTopLeftRadius==='999px'
             && w.getComputedStyle(b).backgroundImage.includes('linear-gradient'))

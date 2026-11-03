@@ -35,5 +35,26 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/dataset\.layout === 'duo' \? 200 : 520/)
-  assert.match(read('src/version.js'),/0\.66\.47 \(153\)/)
+  assert.match(read('src/version.js'),/0\.66\.48 \(154\)/)
+})
+
+test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{
+  const css=read('src/lfms-session-duo.css')
+  assert.match(css,/LFMS 0\.66\.48 — one charcoal header system/)
+  assert.match(css,/--lfms-topbar-surface:var\(--lfms-duo-canvas\)/)
+  for(const name of [
+    'train2__heading','train-r4__subheader','fn2__heading',
+    'food-v2__topline','progress-header','sessionbar--r3',
+    'cardio-r5__header','mobility-screen__head',
+    'weekly-recap__header','plate-calculator__header',
+    'fn2__sheet-head','session-art-viewer__bar'
+  ])assert.ok(css.includes('.'+name),name)
+  assert.match(css,/background:var\(--lfms-topbar-surface\)/)
+  assert.match(css,/--lfms-topbar-control:var\(--food-v2-panel-2\)/)
+  assert.match(css,/html\[data-layout="duo"\] #app\.app \.screen--session \.sessionbar--r3/)
+  assert.match(css,/\.screen--session,\.screen--cardio,\.mobility-screen/)
+  // The user-approved Today header and its settings button are untouched.
+  assert.ok(!css.includes('html[data-layout="duo"] .today-heading'))
+  assert.ok(read('src/ui/screens/today.js').includes('button.today-settings'))
+  assert.ok(read('src/ui/screens/session.js').includes('button.sessionbar__finish'))
 })

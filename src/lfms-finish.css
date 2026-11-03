@@ -702,21 +702,39 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 
 
-/* One full-viewport Duo canvas: the right rail uses the exact same painted
-   background as the content rather than exposing a separately colored slab.
-   Keep the floating glass capsule and its active/hold animations intact. */
-html[data-layout="duo"] body {
-  background:
+/* LFMS Duo one-canvas fix: Today already had the correct navy tone, but
+   overlapping body/app/subscreen backgrounds could repaint the reserved
+   right rail gutter on Train, Fuel, Progress and deep screens.
+   Paint the SAME gradient once on the root viewport behind BOTH panes.
+   Keep the four-button glass vessel and its press/hold animations untouched. */
+html[data-layout="duo"],
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) {
+  background-color:var(--food-v2-deep);
+  background-image:
     radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
     linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
+  background-repeat:no-repeat;
+  background-size:cover;
   background-attachment:fixed,fixed;
 }
+html[data-layout="duo"] body,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) body,
 html[data-layout="duo"] #app.app,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app,
+html[data-layout="duo"] #app.app .app__body,
+html[data-layout="duo"] .app__body:has(> :is(.screen--settings,.program-builder,.screen--summary,.screen--session,.setup,.screen--cardio)) {
+  background:transparent;
+}
+html[data-layout="duo"] #app.app .app__body > :is(
+  .today--fuel-style,.train--fuel-style,.fn2,.progress--fuel-style,
+  .screen--settings,.program-builder,.screen--summary,.setup,.screen--cardio
+) {
   background:transparent;
 }
 html[data-layout="duo"] #app.app .tabbar {
   background:transparent;
   border:0;
   box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
 }

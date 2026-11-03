@@ -14,15 +14,20 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
   assert.match(mark,/viewBox="435 167 675 387"/)
   assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__cracks"/)
-  assert.match(html,/class="lfms-launch__shockwave"/)
+  assert.match(html,/class="lfms-launch__mark-stage"/)
+  for(const phase of ['first','second','third']) assert.match(html,
+    new RegExp('lfms-launch__glass-phase--'+phase))
+  assert.doesNotMatch(html,/class="lfms-launch__shockwave"/)
   assert.match(html,/class="lfms-launch__impact-flash"/)
 })
 test('splash has staggered entrances, no overlapping negative margins, and a readable hold',()=>{
   const css=read('src/brand.css'),js=read('src/main.js')
-  for(const name of ['mark','rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
+  for(const name of ['rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
+  assert.match(css,/lfms-mark-smash/)
   assert.match(css,/prefers-reduced-motion:reduce/)
-  for(const name of ['wordmark-enter-left','wordmark-enter-right','impact-shake','impact-flash','shockwave','crack-flash'])
+  for(const name of ['wordmark-enter-left','wordmark-enter-right','mark-smash','glass-contact','glass-fade','glass-fracture'])
     assert.match(css,new RegExp('lfms-'+name))
+  assert.doesNotMatch(css,/@keyframes lfms-shockwave/)
   assert.match(css,/clip-path:inset\(0 0 43% 0\)/)
   assert.match(css,/clip-path:inset\(57% 0 0 0\)/)
 

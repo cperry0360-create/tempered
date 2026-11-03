@@ -732,7 +732,7 @@ html[data-layout="duo"] #app.app .app__body > :is(
   background:transparent;
 }
 html[data-layout="duo"] #app.app .tabbar {
-  background:none;
+  background:transparent;
   border:0;
   box-shadow:none;
   -webkit-backdrop-filter:none;

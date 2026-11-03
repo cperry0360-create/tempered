@@ -765,6 +765,19 @@ html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])) #app.app {
   visibility:hidden;
   transition:none;
 }
+/* The loaded dumbbell's zipper opens directly onto the READY dashboard.
+   Without this, the old Duo launch guard would keep the real app invisible
+   until the wipe ended, producing a black screen behind the moving cut. */
+html[data-layout="duo"]:has(.lfms-launch[data-revealing="true"]) #app.app {
+  opacity:1;
+  visibility:visible;
+  transition:none;
+}
+/* Standard portrait PWA must reveal live app pixels behind the same cut. */
+html:not([data-layout="duo"]):has(.lfms-launch[data-revealing="true"]) #app.app {
+  opacity:1;
+  visibility:visible;
+}
 /* Today is already rendered and ready behind the splash at exit. */
 html[data-layout="duo"]:has(.lfms-launch[data-closing="true"]) #app.app {
   opacity:1;

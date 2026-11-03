@@ -9,33 +9,44 @@ import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 
 // Keep the supplied LFMS launch artwork visible on fast devices, too.
-// This overlay lives outside #app so bootstrap cannot instantly erase it.
+// The overlay is OUTSIDE #app, so the finished dashboard is rendered behind
+// it BEFORE the loaded dumbbell pulls the splash away.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
+const LFMS_PLATES_SETTLED_MS = 3700
+const LFMS_ZIPPER_DURATION_MS = 1160
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
-  // Resolve only AFTER the exit transition and DOM removal. A modal shown
-  // during this interval can otherwise cover the LFMS splash artwork.
+  // The end is a real jagged clip-path erase, not a fade onto an empty canvas.
+  // Never start the wipe before bootstrap and all 3 falling plates are done.
   splashDone = new Promise(resolve => {
-    const remaining = Math.max(0, 3800 - (performance.now() - splashStarted))
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const remaining = reduced ? 0 : Math.max(0, LFMS_PLATES_SETTLED_MS - (performance.now() - splashStarted))
     setTimeout(() => {
       if (!launch) { resolve(); return }
-      launch.dataset.closing = 'true'
       const finish = () => {
         launch.remove()
         window.dispatchEvent(new Event('tempered:splash-finished'))
         resolve()
       }
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) finish()
-      // The Duo handoff has a 180ms exit crossfade: remove only after it
-      // finishes, without leaving the dark splash sitting over a hidden app.
-      else setTimeout(finish, document.documentElement.dataset.layout === 'duo' ? 200 : 520)
+      if (reduced) {
+        launch.dataset.closing = 'true'
+        finish()
+        return
+      }
+      // This also exposes the already-rendered app beneath the moving mask.
+      launch.dataset.revealing = 'true'
+      setTimeout(() => {
+        launch.dataset.closing = 'true'
+        // Let the final zipper frame finish rasterizing, then remove the DOM.
+        setTimeout(finish, 90)
+      }, LFMS_ZIPPER_DURATION_MS)
     }, remaining)
   })
   return splashDone
 }
-// Never leave a loading overlay covering a stalled or partially loaded app.
+// Never leave the splash covering a stalled or partially loaded app.
 setTimeout(dismissSplash, 8000)
 
 registerServiceWorker()

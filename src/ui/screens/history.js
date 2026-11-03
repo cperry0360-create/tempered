@@ -3,6 +3,8 @@
  */
 
 import { el, replace } from '../dom.js'
+import { mainTabBrand } from '../main-tab-header.js'
+import { icon } from '../icons.js'
 import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate, performance } from '../format.js'
 import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
@@ -1262,16 +1264,12 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           : logView()
 
     replace(root, [
-      el('header.progress-header', {}, [
-        el('div.progress2__brand',{},[
-          el('img.progress2__mark',{
-            src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,
-            alt:'',loading:'eager'}),
-          el('div.progress2__heading-copy',{},[
-            el('h1.screen__title',{text:'Progress'}),
-            el('small',{text:'LFMS / YOUR RESULTS'}),
-          ]),
-        ]),
+      el('header.progress-header.lfms-main-heading', {}, [
+        mainTabBrand('Progress', {
+          brandClass: 'progress2__brand',
+          markClass: 'progress2__mark',
+          copyClass: 'progress2__heading-copy',
+        }),
         el('label.progress-range', {}, [
           el('span.progress-range__label', { text: 'Range' }),
           el('select.progress-range__select', {
@@ -1280,14 +1278,15 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           }, RANGES.map((days) => el('option', { value: String(days), selected: days === range }, [days + 'D']))),
         ]),
       ]),
-      el('div.segmented.progress-views', { role: 'group', 'aria-label': 'Progress sections' }, [
-        ['overview', 'Overview'], ['lifts', 'Lifts'], ['habits', 'Habits'], ['log', 'Log'],
-      ].map(([name, label]) => el('button.segmented__option', {
+      el('div.segmented.progress-views.lfms-main-actions', { role: 'group', 'aria-label': 'Progress sections' }, [
+        ['overview', 'Overview', 'chart'], ['lifts', 'Lifts', 'train'],
+        ['habits', 'Habits', 'check'], ['log', 'Log', 'journal'],
+      ].map(([name, label, glyph]) => el('button.segmented__option', {
         type: 'button',
         dataset: { view: name, active: String(view === name) },
         'aria-pressed': String(view === name),
         onclick: () => { selectedScoreComponent = null; view = name; selectedLiftId = null; selectedSessionId = null; render() },
-      }, [label]))),
+      }, [icon(glyph), label]))),
       el('div.progress-content', {}, viewContent),
     ])
     syncScoreExplainSheet()

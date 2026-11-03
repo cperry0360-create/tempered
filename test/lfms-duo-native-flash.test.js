@@ -35,7 +35,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/dataset\.layout === 'duo' \? 200 : 520/)
-  assert.match(read('src/version.js'),/0\.66\.48 \(154\)/)
+  assert.match(read('src/version.js'),/0\.66\.49 \(155\)/)
 })
 
 test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{
@@ -57,4 +57,43 @@ test('Duo top header surfaces share Today charcoal without replacing button acti
   assert.ok(!css.includes('html[data-layout="duo"] .today-heading'))
   assert.ok(read('src/ui/screens/today.js').includes('button.today-settings'))
   assert.ok(read('src/ui/screens/session.js').includes('button.sessionbar__finish'))
+})
+
+
+test('all four main tabs share one actual mountain/title component and glass buttons',()=>{
+  const shared=read('src/ui/main-tab-header.js')
+  const today=read('src/ui/screens/today.js')
+  const train=read('src/ui/screens/train.js')
+  const fuel=read('src/ui/screens/fuel-next.js')
+  const legacyFuel=read('src/ui/screens/fuel.js')
+  const history=read('src/ui/screens/history.js')
+  const css=read('src/lfms-session-duo.css')
+  const screens=[today,train,fuel,history]
+  assert.match(shared,/branding\/lfms\/logo-mark\.svg/)
+  assert.match(shared,/div\.lfms-main-brand/)
+  assert.match(shared,/img\.lfms-main-brand__mark/)
+  assert.match(shared,/h1\.screen__title\.lfms-main-brand__title/)
+  for(const source of screens){
+    assert.match(source,/import \{ mainTabBrand \} from '\.\.\/main-tab-header\.js'/)
+    assert.match(source,/mainTabBrand\(/)
+    assert.match(source,/lfms-main-actions/)
+  }
+  assert.match(today,/mainTabBrand\(isRealToday\(\) \? 'Today' : 'Day review'/)
+  assert.doesNotMatch(today,/el\('p\.today-heading__date'/)
+  assert.match(train,/mainTabBrand\('Train'/)
+  assert.doesNotMatch(train,/LFMS \/ TRAINING/)
+  assert.match(fuel,/mainTabBrand\('Fuel'/)
+  assert.match(legacyFuel,/mainTabBrand\('Fuel'/)
+  assert.ok(legacyFuel.includes('nav.food-v2__header-actions.lfms-main-actions'))
+  assert.ok(legacyFuel.includes('onclick: focusMealEntry'))
+  assert.doesNotMatch(fuel,/small',\{text:' \/ FUEL'/)
+  assert.match(history,/mainTabBrand\('Progress'/)
+  assert.doesNotMatch(history,/LFMS \/ YOUR RESULTS/)
+  for(const metric of ['width:44px','height:36px','font-size:26px','gap:8px','height:44px','border-radius:999px']){
+    assert.ok(css.includes(metric),metric)
+  }
+  assert.match(css,/lfms-main-actions > button/)
+  assert.match(css,/rgba\(199,232,255,\.36\)/)
+  assert.match(css,/progress-views\.lfms-main-actions > button\[data-active="true"\]/)
+  assert.ok(read('sw.js').includes("'./src/ui/main-tab-header.js'"))
 })

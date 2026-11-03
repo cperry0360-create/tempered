@@ -118,6 +118,7 @@ const PRECACHE = [
   './src/ui/health-paste-runtime.js',
   './src/ui/health-snapshot.js',
   './src/ui/dom.js',
+  './src/ui/main-tab-header.js',
   './src/ui/format.js',
   './src/ui/icons.js',
   './src/ui/mobile-interactions.js',

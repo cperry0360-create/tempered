@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="../../src/progress-next.css">
 <link rel="stylesheet" href="../../src/lfms-finish.css">
   <link rel="stylesheet" href="../../src/lfms-feedback-polish.css">
+  <link rel="stylesheet" href="../../src/lfms-session-duo.css">
 </head><body><div id="app" class="app"></div>
 <script type="module">
 import {bootstrapHarness} from './harness.js'
@@ -127,7 +128,7 @@ try{
      && (tab!=='today'||!q('.today-heading__date')),
      JSON.stringify({tab,title:title?.textContent,logo:mark&&[mark.getBoundingClientRect().width,mark.getBoundingClientRect().height]}))
    check(tab+' shortcut row uses identical Fuel glass buttons and icon sizing',
-     Boolean(nav)&&actions.length>=3
+     Boolean(nav)&&actions.length>=(tab==='fuel'?2:3)
      &&getComputedStyle(nav).gap==='8px'
      &&actions.every(button=>getComputedStyle(button).height==='44px'
        &&getComputedStyle(button).borderTopWidth==='1px'

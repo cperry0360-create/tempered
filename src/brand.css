@@ -122,7 +122,7 @@ html[data-layout="duo"] .lfms-launch__skin {
   /* Viewport-anchored right-side lane. The splash's padded containing block
      formerly shifted 100% positioning ~40px beyond the actual right edge.
      Keep an explicit viewport margin, and shift text left independently. */
-  --lfms-barbell-home-x:calc(100vw - clamp(92px,13vw,125px));
+  --lfms-barbell-home-x:calc(100vw - clamp(112px,20vw,152px));
   left:var(--lfms-barbell-home-x);top:50%;
   width:clamp(63px,min(14vw,21vh),108px);
   aspect-ratio:160 / 700;
@@ -306,11 +306,14 @@ html[data-layout="duo"] .lfms-launch__skin {
   .lfms-launch__barbell-stage {width:clamp(62px,min(13vw,20vh),95px)}
 }
 @media(max-width:600px) {
-  .lfms-launch__identity {--lfms-brand-scale:.79;--lfms-brand-offset:58px}
+  .lfms-launch__identity {--lfms-brand-scale:.77;--lfms-brand-offset:72px}
 }
 @media(max-width:480px) {
   .lfms-launch__identity {--lfms-brand-scale:.65;--lfms-brand-offset:43px}
-  .lfms-launch__barbell-stage {width:clamp(66px,min(19vw,18vh),78px)}
+  .lfms-launch__barbell-stage {
+    --lfms-barbell-home-x:calc(100vw - 92px);
+    width:clamp(66px,min(19vw,18vh),78px)
+  }
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}

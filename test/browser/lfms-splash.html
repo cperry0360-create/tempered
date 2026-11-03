@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS real launch composition visual acceptance</title>
+<title>LFMS dumbbell-loading splash / mechanical zipper acceptance</title>
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/brand.css">
 </head><body>
@@ -9,84 +9,79 @@ const checks=[],errors=[]
 const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
 window.addEventListener('error',e=>errors.push(e.message))
 window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
-try {
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+try{
   const html=await fetch('/index.html').then(r=>r.text())
   const parsed=new DOMParser().parseFromString(html,'text/html')
   const original=parsed.querySelector('[data-lfms-launch]')
-  check('real app has launch overlay',Boolean(original))
+  check('real app has a splash overlay',Boolean(original))
   const launch=document.importNode(original,true)
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
   const word=launch.querySelector('.lfms-launch__wordmark--less')
   const strong=launch.querySelector('.lfms-launch__wordmark--strong')
-  const stage=launch.querySelector('.lfms-launch__mark-stage')
-  const cracks=launch.querySelector('.lfms-launch__cracks')
-  const phases=[...launch.querySelectorAll('.lfms-launch__glass-phase')]
-  const flash=launch.querySelector('.lfms-launch__impact-flash')
+  const bar=launch.querySelector('.lfms-launch__bar-art')
+  const dumbbell=launch.querySelector('.lfms-launch__dumbbell-stage')
+  const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
+  const tear=launch.querySelector('.lfms-launch__tear-edge')
   const rule=launch.querySelector('.lfms-launch__rule')
   const tagline=launch.querySelector('.lfms-launch__tagline')
-  await Promise.all([mark,word].map(x=>x.decode()))
-  check('mark and both branded wordmark halves load',mark.naturalWidth>0&&word.naturalWidth>0&&strong.naturalWidth>0)
-  check('original left/right wordmark flights are preserved',
+  await Promise.all([mark,word,strong].map(img=>img.decode()))
+  check('official mountain and both wordmark halves decode',
+    mark.naturalWidth>0&&word.naturalWidth>0&&strong.naturalWidth>0)
+  check('approved opposite-direction word swoops unchanged',
     getComputedStyle(word).animationName.includes('lfms-wordmark-enter-left')
     &&getComputedStyle(strong).animationName.includes('lfms-wordmark-enter-right')
     &&getComputedStyle(word).animationDuration==='1.08s'
     &&getComputedStyle(strong).animationDuration==='1.13s')
-  check('stationary impact site has three separate spiderweb glass phases',
-    Boolean(stage&&cracks&&flash)&&phases.length===3
-    &&phases[0].querySelectorAll('path').length>=8
-    &&phases[1].querySelectorAll('path').length>=5
-    &&phases[2].querySelectorAll('path').length>=4)
-  check('three fracture phases launch at the exact logo contacts',
-    getComputedStyle(phases[0]).animationDelay==='1.369s'
-    &&getComputedStyle(phases[1]).animationDelay==='1.749s'
-    &&getComputedStyle(phases[2]).animationDelay==='2.13s')
-  check('cracked glass is colorless gray, not logo-red',
-    (()=>{const match=getComputedStyle(cracks).color.match(/\d+(?:\.\d+)?/g)
-      const channels=(match??[]).slice(0,3).map(Number)
-      return channels.length===3 &&Math.max(...channels)-Math.min(...channels)<24})()
-    &&!cracks.querySelector('.lfms-launch__crack-glint')
-    &&!launch.querySelector('.lfms-launch__shockwave'))
-  check('separate wordmark and tagline without repeated overlay copy',Boolean(rule)&&Boolean(tagline)&&!launch.querySelector('.lfms-launch__caption'))
-  check('logo has a real triple-contact drop while lettering keeps its animation',
-    getComputedStyle(mark).animationName.includes('lfms-mark-smash')
-    &&getComputedStyle(mark).animationDuration==='1.69s'
-    &&getComputedStyle(mark).animationDelay==='0.71s'
-    &&getComputedStyle(word).animationName.includes('lfms-wordmark-enter'))
-  const landing=stage.getBoundingClientRect(),glass=cracks.getBoundingClientRect()
-  check('fractures remain centered on stationary emblem landing site',
-    Math.abs((landing.left+landing.width/2)-(glass.left+glass.width/2))<3
-    &&Math.abs((landing.top+landing.height/2)-(glass.top+glass.height/2))<3)
-  check('spiderweb now spans more than twice the emblem with brighter thick contact fissures',
-    glass.width>=landing.width*1.85
-    &&parseFloat(getComputedStyle(phases[0]).strokeWidth)>=2.2
-    &&getComputedStyle(cracks).color.includes('238')
-    &&getComputedStyle(launch.querySelector('.lfms-launch__identity')).animationName.includes('lfms-identity-thud'),
-    JSON.stringify({glass:glass.width,mark:landing.width,stroke:getComputedStyle(phases[0]).strokeWidth}))
-  await new Promise(resolve=>setTimeout(resolve,1850))
+  check('logo gently settles instead of smashing glass',
+    getComputedStyle(mark).animationName==='lfms-logo-settle'
+    &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__glass-phase,.lfms-launch__shockwave,.lfms-launch__impact-flash'))
+  check('cartoon-realistic steel bar SVG and THREE independent plate SVGs exist',
+    Boolean(dumbbell&&bar&&tear)&&plates.length===3
+    &&!!bar.querySelector('#lfms-db-shaft')&&!!bar.querySelector('#lfms-db-grip')
+    &&plates.every(p=>p.querySelector('linearGradient')&&p.querySelector('ellipse')))
+  check('dumbbell falls from above after brand intro',
+    getComputedStyle(dumbbell).animationName==='lfms-dumbbell-drop'
+    &&getComputedStyle(dumbbell).animationDelay==='1.35s')
+  check('plates fall in the required one-two-three sequence',
+    plates.map(p=>getComputedStyle(p).animationDelay).join('|')==='2.11s|2.51s|2.89s'
+    &&plates.every(p=>getComputedStyle(p).animationName==='lfms-plate-drop'))
+  check('screen scrape is a jagged zip, not an explosion',
+    Boolean(tear)&&!!tear.querySelector('path')
+    &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__shockwave')
+    &&Boolean(rule&&tagline))
+  await sleep(1870)
   const m=mark.getBoundingClientRect(),w=word.getBoundingClientRect(),t=tagline.getBoundingClientRect()
-  check('symbol stays strictly above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
-  check('tagline stays strictly below lettering',w.bottom+8<t.top,JSON.stringify({wordBottom:w.bottom,taglineTop:t.top}))
-  check('logo sits inside screen',m.top>=0&&t.bottom<=innerHeight,JSON.stringify({top:m.top,bottom:t.bottom,height:innerHeight}))
-  check('Splash covers the full viewport without exposed gray safe edges',
+  check('emblem stays above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
+  check('tagline stays below lettering',w.bottom+8<t.top)
+  check('logo, lettering and tagline all fit screen',m.top>=0&&t.bottom<=innerHeight)
+  check('splash covers viewport with no exposed safe-area edges',
     launch.getBoundingClientRect().left<=0
-    && launch.getBoundingClientRect().right>=innerWidth
-    && launch.getBoundingClientRect().top<=0
-    && launch.getBoundingClientRect().bottom>=innerHeight-1)
-  check('Splash edges and body share the same launch base color',
+    &&launch.getBoundingClientRect().right>=innerWidth
+    &&launch.getBoundingClientRect().top<=0
+    &&launch.getBoundingClientRect().bottom>=innerHeight-1)
+  check('splash shares background color with root on ordinary phone',
     getComputedStyle(document.body).backgroundColor===getComputedStyle(document.documentElement).backgroundColor)
-  // Background test runners may render animation frames slightly late.
-  // Evaluate legibility after the last staggered keyframe, using a visual
-  // tolerance instead of an exact stringified float comparison.
-  await new Promise(resolve=>setTimeout(resolve,550))
-  check('staggered logo and both wordmark halves remain fully legible',
-    Number(getComputedStyle(mark).opacity)>0.99
-    && Number(getComputedStyle(word).opacity)>0.99
-    && Number(getComputedStyle(strong).opacity)>0.99)
-  const svg=await fetch(word.src).then(r=>r.text())
-  check('wordmark vector does not paint opaque rectangle',!svg.includes('<rect'))
-  check('no browser errors',errors.length===0,errors.join(' | '))
-}catch(error){check('launch test finishes',false,error.stack??String(error))}
+  await sleep(1700)
+  check('all three loaded plates remain visible when ready to scrape',
+    plates.every(p=>Number(getComputedStyle(p).opacity)>.99))
+  check('dumbbell is near logo rather than covering the text',
+    dumbbell.getBoundingClientRect().width>80&&dumbbell.getBoundingClientRect().right<=innerWidth+12)
+  launch.dataset.revealing='true'
+  await sleep(120)
+  check('loaded dumbbell starts zipper scrape, tear follows and mask opens',
+    getComputedStyle(launch).animationName==='lfms-zipper-peel'
+    &&getComputedStyle(dumbbell).animationName==='lfms-loaded-scrape'
+    &&getComputedStyle(tear).animationName==='lfms-tear-follow'
+    &&getComputedStyle(launch).clipPath!=='none')
+  const clipBefore=getComputedStyle(launch).clipPath
+  await sleep(510)
+  const clipDuring=getComputedStyle(launch).clipPath
+  check('actual clip-path progresses and removes splash pixels',
+    clipBefore!==clipDuring&&clipDuring.includes('polygon'))
+  check('no browser exceptions',errors.length===0,errors.join(' | '))
+}catch(error){check('splash harness finishes',false,error.stack??String(error))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

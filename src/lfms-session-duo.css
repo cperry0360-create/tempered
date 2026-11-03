@@ -572,3 +572,160 @@ html[data-layout="duo"] #app.app :is(
   outline:2px solid var(--lfms-topbar-accent);
   outline-offset:2px;
 }
+
+
+/* LFMS 0.66.49 — one actual brand/header system for the FOUR main tabs.
+   One component owns logo/title markup. No subtitle, no redundant Today date.
+   All nav rows use Fuel's approved glass-pill material and geometry. */
+html[data-layout="duo"] #app.app .lfms-main-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:46px;
+  gap:12px;
+  border:0;
+  box-shadow:none;
+  color:var(--lfms-topbar-ink);
+}
+html[data-layout="duo"] #app.app .lfms-main-brand {
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:9px;
+  min-width:0;
+  white-space:nowrap;
+}
+html[data-layout="duo"] #app.app .lfms-main-brand__mark {
+  display:block;
+  flex:0 0 44px;
+  width:44px;
+  height:36px;
+  min-width:44px;
+  max-width:44px;
+  max-height:36px;
+  object-fit:contain;
+  object-position:center;
+}
+html[data-layout="duo"] #app.app .lfms-main-brand__copy {
+  display:block;
+  min-width:0;
+}
+html[data-layout="duo"] #app.app .lfms-main-brand__title {
+  display:block;
+  margin:0;
+  padding:0;
+  color:var(--lfms-topbar-ink);
+  font-size:26px;
+  font-weight:850;
+  letter-spacing:-.04em;
+  line-height:1.08;
+  white-space:nowrap;
+}
+/* Two-row Today/Fuel containers should have exactly the same rhythm as
+   Train/Progress, whose title row and shortcut row are siblings. */
+html[data-layout="duo"] #app.app :is(.today-heading,.fn2__heading) {
+  display:grid;
+  align-content:start;
+  gap:13px;
+  background:transparent;
+}
+html[data-layout="duo"] #app.app .today-heading__title-row {
+  display:flex;
+  min-height:46px;
+}
+html[data-layout="duo"] #app.app .fn2__heading > .lfms-main-heading {
+  background:var(--lfms-topbar-surface);
+}
+
+/* Shared glass material — intentionally the same spec as Fuel's Food Library
+   shortcut, not four approximations with different fonts/padding/borders. */
+html[data-layout="duo"] #app.app .lfms-main-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  min-width:0;
+  margin:0;
+  padding:1px 0 4px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  scroll-padding-inline:10px;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+html[data-layout="duo"] #app.app .lfms-main-actions::-webkit-scrollbar {display:none}
+html[data-layout="duo"] #app.app .lfms-main-actions > button {
+  appearance:none;
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  box-sizing:border-box;
+  height:44px;
+  min-height:44px;
+  min-width:0;
+  max-width:none;
+  margin:0;
+  padding:0 13px;
+  white-space:nowrap;
+  border:1px solid rgba(198,231,255,.39);
+  border-radius:999px;
+  background:linear-gradient(145deg,
+    rgba(199,232,255,.36),rgba(83,156,213,.18) 45%,rgba(10,34,63,.35));
+  color:var(--lfms-topbar-ink);
+  box-shadow:inset 0 1.5px 0 rgba(253,255,255,.47),0 9px 24px rgba(0,0,0,.22);
+  font:760 12px/1 var(--font-ui);
+  letter-spacing:0;
+}
+html[data-layout="duo"] #app.app .lfms-main-actions > button .icon {
+  width:16px;
+  height:16px;
+  flex:none;
+  color:var(--lfms-topbar-accent);
+}
+/* Progress is still a selection control, but its active choice is a brighter
+   GLASS button rather than a flat blue rectangle. */
+html[data-layout="duo"] #app.app .progress-views.lfms-main-actions > button[data-active="true"] {
+  color:var(--lfms-topbar-ink);
+  border-color:rgba(172,226,255,.72);
+  background:linear-gradient(145deg,
+    rgba(130,210,255,.53),rgba(42,120,187,.31) 54%,rgba(11,44,76,.46));
+  box-shadow:inset 0 1.5px 0 rgba(253,255,255,.58),0 7px 22px rgba(52,151,236,.18);
+  font-weight:820;
+}
+html[data-layout="duo"] #app.app .lfms-main-actions > button:focus-visible {
+  outline:2px solid var(--lfms-topbar-accent);
+  outline-offset:2px;
+}
+/* Today's gear, Train's calculator and Progress's range control belong to
+   the same top-right slot while retaining their distinct functionality. */
+html[data-layout="duo"] #app.app .lfms-main-heading > :is(button,.plate-calculator-link,.progress-range) {
+  flex:none;
+  min-height:44px;
+  border:1px solid rgba(198,231,255,.39);
+  border-radius:13px;
+  background:linear-gradient(145deg,
+    rgba(199,232,255,.25),rgba(83,156,213,.12) 45%,rgba(10,34,63,.32));
+  color:var(--lfms-topbar-accent);
+  box-shadow:inset 0 1px 0 rgba(253,255,255,.27),0 6px 18px rgba(0,0,0,.18);
+}
+@supports(backdrop-filter:blur(15px)) {
+  html[data-layout="duo"] #app.app .lfms-main-actions > button,
+  html[data-layout="duo"] #app.app .lfms-main-heading > :is(button,.plate-calculator-link,.progress-range) {
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    backdrop-filter:blur(24px) saturate(160%);
+  }
+}
+@media(prefers-reduced-transparency:reduce) {
+  html[data-layout="duo"] #app.app .lfms-main-actions > button,
+  html[data-layout="duo"] #app.app .lfms-main-heading > :is(button,.plate-calculator-link,.progress-range) {
+    background:var(--lfms-topbar-control);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] #app.app .lfms-main-actions > button {transition:none}
+}

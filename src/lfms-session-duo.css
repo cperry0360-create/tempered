@@ -454,3 +454,12 @@
     font-size:18px;
   }
 }
+
+
+/* At the shortest unfolded Duo height, preserve the full set grid while rest
+   is docked. The optional layout/extra-movement toolbar returns after rest. */
+@media (min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .screen--session[data-half-fold="false"][data-rest-active="true"] .session-display-tools {
+    display:none;
+  }
+}

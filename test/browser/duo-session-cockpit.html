@@ -45,7 +45,7 @@ try{
     Boolean(q('.screen--session .setrow__check')&&q('.screen--session input.setrow__num')))
   const menu=q('.session-r5__log .exercise-menu__trigger')
   menu?.click()
-  check('three-dot menu opens with actions',Boolean(q('.screen--session .exercise-menu')&&menu?.getAttribute('aria-expanded')==='true'))
+  check('three-dot menu opens with actions',Boolean(q('.screen--session .exercise-menu')&&q('.screen--session .exercise-menu__trigger')?.getAttribute('aria-expanded')==='true'))
   q('.screen--session .setrow__head-check')?.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))
   check('outside tap closes the menu without requiring a second three-dot tap',
     !q('.screen--session .exercise-menu')&&q('.screen--session .exercise-menu__trigger')?.getAttribute('aria-expanded')==='false')

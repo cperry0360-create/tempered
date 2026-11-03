@@ -114,8 +114,8 @@
       mark?.click(); await settle()
       const restView = (await tempered.daily.week(clock.today())).activities.find((activity) => activity.id === 'rest_day')
       check('weekly mark activities still complete in one tap', restView?.loggedToday === true)
-      const completedRest = await rowFor('rest_day')
-      check('completed habit uses the green check treatment', q('.today-item__icon[data-complete="true"]', completedRest) !== null)
+      check('completed weekly mark retires instead of remaining a daily obligation',
+        !q('[data-section="daily"] .today-list [data-activity="rest_day"]'))
 
       const mobility = await rowFor('mobility')
       q('.today-item__body', mobility)?.click(); await settle()

@@ -96,6 +96,24 @@ export function dailyGoalComplete(activity) {
   return typeof activity.value === 'number' && activity.value >= activity.dailyCap
 }
 
+/** The top Habits counter is DAILY only. Weekly and biweekly targets are
+ * opportunities to log during their period, never daily obligations. */
+export function dailyHabitProgress(activities) {
+  const daily = (activities ?? []).filter((activity) =>
+    activity.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(activity.id))
+  return { done: daily.filter(dailyGoalComplete).length, total: daily.length }
+}
+
+/** A weekly/fortnightly habit is offered only while its period needs more
+ * distinct logged days AND it has not already been recorded on this date.
+ * Once its target is met, it retires without deleting its day log. */
+export function weeklyHabitActionable(activity) {
+  return Boolean(activity)
+    && ['weekly', 'biweekly'].includes(activity.cadence)
+    && activity.complete !== true
+    && activity.loggedToday !== true
+}
+
 function dailyGoalLabel(activity) {
   if (!hasDailyGoal(activity)) return null
   if (!(Number.isFinite(activity?.dailyCap) && activity.dailyCap > 0)) return 'Log body weight to set goal'
@@ -879,11 +897,9 @@ export function createTodayScreen({
       sets: sum.sets + number(item.stats.workingSets),
       minutes: sum.minutes + number(item.stats.minutes),
     }), { sessions: 0, sets: 0, minutes: 0 })
-    const habits = [
-      ...allActivities.filter((a) => a.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(a.id)).map((a) => rowComplete(a)),
-      ...(weekActivities?.activities ?? []).filter((a) => !FUEL_ACTIVITY_IDS.has(a.id)).map((a) => rowComplete(a, a)),
-    ]
-    const habitDone = habits.filter(Boolean).length
+    // This is the selected day's HABITS score, not a blend of daily and
+    // weekly/biweekly obligations. A weekly sauna must never block 100%.
+    const habits = dailyHabitProgress(allActivities)
     const sessionGoal = weekProgram?.program?.days?.length ?? todayProgram?.program?.days?.length ?? 0
     const sleep = averageSleepForWeek(dayLogs, weekTraining.map((item) => item.date))
     const first = parseDate(weekTraining[0]?.date ?? weekStart(selectedDate))
@@ -950,7 +966,7 @@ export function createTodayScreen({
         el('section.week-dashboard__goals', { 'aria-label': 'Goal tracking' }, [
           el('h3', { text: 'GOAL TRACKING' }),
           goalBar('Sessions', totals.sessions, sessionGoal, 'sessions'),
-          goalBar('Habits', habitDone, habits.length, 'habits'),
+          goalBar('Daily habits', habits.done, habits.total, 'habits'),
         ]),
         el('section.week-dashboard__summary', { 'aria-label': 'Weekly totals and averages' }, [
           el('h3', { text: 'WEEKLY TOTALS & AVERAGES' }),
@@ -1283,7 +1299,7 @@ export function createTodayScreen({
       .filter((activity) => activity.cadence === 'daily' && !FUEL_ACTIVITY_IDS.has(activity.id))
       .map((activity) => ({ activity, weekly: null }))
     const weeklyRows = (weekActivities?.activities ?? [])
-      .filter((activity) => !FUEL_ACTIVITY_IDS.has(activity.id))
+      .filter((activity) => !FUEL_ACTIVITY_IDS.has(activity.id) && weeklyHabitActionable(activity))
       .map((activity) => ({ activity, weekly: activity }))
     const rows = [...dailyRows, ...weeklyRows].sort((a, b) => {
       const aDone = rowComplete(a.activity, a.weekly)

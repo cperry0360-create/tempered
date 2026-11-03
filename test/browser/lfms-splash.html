@@ -43,7 +43,7 @@ try {
     &&getComputedStyle(phases[1]).animationDelay==='1.749s'
     &&getComputedStyle(phases[2]).animationDelay==='2.13s')
   check('cracked glass is colorless gray, not logo-red',
-    (()=>{const match=getComputedStyle(cracks).color.match(/\\d+(?:\\.\\d+)?/g)
+    (()=>{const match=getComputedStyle(cracks).color.match(/\d+(?:\.\d+)?/g)
       const channels=(match??[]).slice(0,3).map(Number)
       return channels.length===3 &&Math.max(...channels)-Math.min(...channels)<24})()
     &&!cracks.querySelector('.lfms-launch__crack-glint')

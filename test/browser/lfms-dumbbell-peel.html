@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-layout="duo"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS Duo live-app dumbbell zipper handoff</title>
+<title>LFMS Duo live-app red-white-blue barbell zipper handoff</title>
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/brand.css">
 <link rel="stylesheet" href="../../src/lfms-finish.css">
@@ -22,7 +22,7 @@ try{
     bg==='rgb(16, 24, 32)'&&getComputedStyle(document.body).backgroundImage==='none')
   check('app remains hidden behind loading splash until actual wipe',
     getComputedStyle(app).visibility==='hidden'&&getComputedStyle(app).opacity==='0')
-  const bar=launch.querySelector('.lfms-launch__dumbbell-stage')
+  const bar=launch.querySelector('.lfms-launch__barbell-stage')
   const tear=launch.querySelector('.lfms-launch__tear-edge')
   launch.dataset.revealing='true'
   await wait(70)

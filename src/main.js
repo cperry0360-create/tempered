@@ -10,16 +10,16 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 
 // Keep the supplied LFMS launch artwork visible on fast devices, too.
 // The overlay is OUTSIDE #app, so the finished dashboard is rendered behind
-// it BEFORE the loaded dumbbell pulls the splash away.
+// it BEFORE the loaded barbell pulls the splash away.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-const LFMS_PLATES_SETTLED_MS = 3700
+const LFMS_PLATES_SETTLED_MS = 4390
 const LFMS_ZIPPER_DURATION_MS = 1160
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
   // The end is a real jagged clip-path erase, not a fade onto an empty canvas.
-  // Never start the wipe before bootstrap and all 3 falling plates are done.
+  // Never start the wipe before bootstrap and BOTH stacks of three bumper plates are done.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const remaining = reduced ? 0 : Math.max(0, LFMS_PLATES_SETTLED_MS - (performance.now() - splashStarted))

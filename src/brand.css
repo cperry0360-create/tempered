@@ -13,12 +13,11 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS dumbbell-loading cinematic splash (0.66.54).
-   Preserve the approved two-direction wordmark swoop. The mountain logo
-   settles, a three-dimensional upright dumbbell falls beside it, then
-   three individual plates drop and lock onto the sleeve. The loaded weight
-   becomes the tool that tears the splash aside to reveal the READY app.
-   There is no screen smash, colored crack, flash or decorative explosion. */
+/* LFMS flat logo-style barbell splash (0.66.56).
+   First red/white/blue bumpers stack from the floor upward; the long bar
+   then falls vertically through their center holes; a second red/white/blue
+   set loads on top from the grip outward. The assembled barbell tips over
+   and pulls away the splash like a torn page. No photorealistic chrome. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
   display:grid;place-items:center;
@@ -89,52 +88,49 @@
   animation:lfms-tagline-enter 650ms ease-out 2360ms both;
 }
 
-/* Upright weighted sleeve. All art is inline SVG: no image download,
-   JS layout measurement, or runtime data dependency. */
-.lfms-launch__dumbbell-stage {
+/* Flat bumper plates with bold outlines match the LFMS mountain logo,
+   not a photorealistic metallic render. Six independent, editable SVG parts
+   make the loading order real; each has a landing and small rebound. */
+.lfms-launch__barbell-stage {
   position:absolute;z-index:4;
-  /* Anchor to the actual viewport, not only the fixed splash's min-width.
-     iOS and compact desktop browsers can extend that splash by ~40px. */
-  --lfms-db-home-x:min(75%,calc(100vw - 80px));
-  left:var(--lfms-db-home-x);top:36%;
+  --lfms-barbell-home-x:min(72%,calc(100vw - 86px));
+  left:var(--lfms-barbell-home-x);top:38%;
   width:clamp(108px,29vw,150px);
-  aspect-ratio:160 / 280;
-  transform-origin:50% 55%;
+  aspect-ratio:160 / 320;
   transform:translate(-50%,-50%);
-  filter:drop-shadow(8px 15px 10px rgba(0,0,0,.52));
-  animation:lfms-dumbbell-drop 690ms cubic-bezier(.16,.86,.26,1) 1350ms both;
+  transform-origin:50% 65%;
+  filter:drop-shadow(5px 9px 3px rgba(0,0,0,.28));
   pointer-events:none;
 }
-.lfms-launch__dumbbell {
-  position:relative;
-  width:100%;height:100%;
-  transform-origin:50% 83%;
+.lfms-launch__barbell-stage::before {
+  content:"";position:absolute;
+  bottom:2%;left:18%;width:64%;height:7%;
+  border-radius:50%;background:rgba(0,0,0,.35);
 }
+.lfms-launch__barbell {position:relative;width:100%;height:100%}
 .lfms-launch__bar-art {
-  display:block;position:absolute;inset:0;
-  width:100%;height:100%;
-  overflow:visible;
+  position:absolute;inset:0;z-index:2;
+  display:block;width:100%;height:100%;
+  opacity:0;will-change:transform;
+  animation:lfms-barbell-drop 620ms cubic-bezier(.18,.75,.26,1) 2390ms both;
 }
 .lfms-launch__plate {
-  position:absolute;left:0;width:100%;height:22%;
-  display:block;overflow:visible;
-  opacity:0;
-  filter:drop-shadow(0 6px 4px rgba(0,0,0,.38));
-  will-change:transform;
+  position:absolute;left:0;z-index:3;
+  display:block;width:100%;height:19.375%;
+  overflow:visible;opacity:0;
   transform-origin:50% 55%;
+  will-change:transform;
+  filter:drop-shadow(0 3px 1px rgba(0,0,0,.22));
 }
-.lfms-launch__plate--one {
-  top:63%;
-  animation:lfms-plate-drop 515ms cubic-bezier(.24,.65,.31,1) 2110ms both;
-}
-.lfms-launch__plate--two {
-  top:55%;
-  animation:lfms-plate-drop 490ms cubic-bezier(.24,.65,.31,1) 2510ms both;
-}
-.lfms-launch__plate--three {
-  top:47%;
-  animation:lfms-plate-drop 465ms cubic-bezier(.24,.65,.31,1) 2890ms both;
-}
+/* BOTTOM load, floor upward: RED then WHITE then BLUE. */
+.lfms-launch__plate--bottom-red {top:78%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1330ms both}
+.lfms-launch__plate--bottom-white {top:71%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1640ms both}
+.lfms-launch__plate--bottom-blue {top:64%;animation:lfms-bumper-stack 430ms cubic-bezier(.2,.69,.27,1) 1950ms both}
+/* TOP load, from grip outward: RED then WHITE then BLUE.
+   The blue plate ends outermost on each side of the completed barbell. */
+.lfms-launch__plate--top-red {top:25%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3070ms both}
+.lfms-launch__plate--top-white {top:18%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3370ms both}
+.lfms-launch__plate--top-blue {top:11%;animation:lfms-bumper-stack 410ms cubic-bezier(.2,.69,.27,1) 3670ms both}
 .lfms-launch__tear-edge {
   position:absolute;z-index:6;top:-10%;
   height:120%;width:clamp(28px,4vw,50px);
@@ -150,7 +146,7 @@
   animation:lfms-zipper-peel 1160ms cubic-bezier(.2,.69,.19,1) both;
   will-change:clip-path;
 }
-.lfms-launch[data-revealing="true"] .lfms-launch__dumbbell-stage {
+.lfms-launch[data-revealing="true"] .lfms-launch__barbell-stage {
   animation:lfms-loaded-scrape 1160ms cubic-bezier(.2,.69,.19,1) both;
   filter:drop-shadow(0 14px 12px rgba(0,0,0,.6));
 }
@@ -176,19 +172,21 @@
   86% {transform:translateY(-4px) rotate(-.2deg) scale(1.012)}
   100% {opacity:1;transform:translateY(0) rotate(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
 }
-@keyframes lfms-dumbbell-drop {
-  0% {opacity:0;transform:translate(-50%,calc(-50% - 90vh)) rotate(-11deg)}
-  57% {opacity:1}
-  75% {transform:translate(-50%,calc(-50% + 18px)) rotate(3deg)}
-  89% {transform:translate(-50%,calc(-50% - 10px)) rotate(-1deg)}
-  100% {opacity:1;transform:translate(-50%,-50%) rotate(0)}
+/* Bar arrives AFTER three grounded plates. It stands straight. */
+@keyframes lfms-barbell-drop {
+  0% {opacity:0;transform:translateY(-112vh)}
+  10% {opacity:1}
+  69% {opacity:1;transform:translateY(12px) scaleY(.93)}
+  84% {transform:translateY(-7px) scaleY(1.02)}
+  92% {transform:translateY(3px)}
+  100% {opacity:1;transform:translateY(0) scale(1)}
 }
-@keyframes lfms-plate-drop {
-  0% {opacity:0;transform:translateY(-106vh) rotate(-12deg) scale(1.13)}
-  13% {opacity:1}
-  68% {transform:translateY(12px) rotate(2.5deg) scaleY(.88)}
-  82% {transform:translateY(-8px) rotate(-1deg) scaleY(1.03)}
-  92% {transform:translateY(4px) rotate(.3deg) scaleY(.98)}
+@keyframes lfms-bumper-stack {
+  0% {opacity:0;transform:translateY(-105vh) rotate(-8deg) scale(1.08)}
+  12% {opacity:1}
+  67% {opacity:1;transform:translateY(9px) rotate(1deg) scaleY(.9)}
+  82% {transform:translateY(-5px) rotate(-.5deg) scaleY(1.03)}
+  93% {transform:translateY(2px) rotate(0)}
   100% {opacity:1;transform:translateY(0) rotate(0) scale(1)}
 }
 @keyframes lfms-zipper-peel {
@@ -209,12 +207,12 @@
   }
 }
 @keyframes lfms-loaded-scrape {
-  0% {left:var(--lfms-db-home-x);top:36%;transform:translate(-50%,-50%) rotate(0)}
-  12% {left:9%;top:43%;transform:translate(-50%,-50%) rotate(-67deg) scale(1.09)}
-  28% {left:22%;top:47%;transform:translate(-50%,-50%) rotate(-82deg) scale(1.1)}
-  52% {left:51%;top:54%;transform:translate(-50%,-50%) rotate(-83deg) scale(1.07)}
-  75% {left:80%;top:59%;transform:translate(-50%,-50%) rotate(-83deg) scale(1.04)}
-  100% {left:110%;top:63%;transform:translate(-50%,-50%) rotate(-86deg) scale(1)}
+  0% {left:var(--lfms-barbell-home-x);top:38%;transform:translate(-50%,-50%) rotate(0)}
+  12% {left:65%;top:41%;transform:translate(-50%,-50%) rotate(28deg) scale(1.04)}
+  28% {left:48%;top:50%;transform:translate(-50%,-50%) rotate(65deg) scale(1.07)}
+  52% {left:60%;top:68%;transform:translate(-50%,-50%) rotate(86deg) scale(1.06)}
+  75% {left:86%;top:91%;transform:translate(-50%,-50%) rotate(108deg) scale(1.03)}
+  100% {left:127%;top:125%;transform:translate(-50%,-50%) rotate(125deg) scale(1)}
 }
 @keyframes lfms-tear-follow {
   0%,13% {left:-5%;opacity:0}
@@ -243,19 +241,20 @@
   .lfms-launch__rule {margin:5px 0 9px}
   .lfms-launch__wordmark-stage {max-height:17vh}
   .lfms-launch__tagline {margin-top:12px}
-  .lfms-launch__dumbbell-stage {width:min(27vw,125px);top:34%}
+  .lfms-launch__barbell-stage {width:min(29vw,126px);top:36%}
 }
 @media(max-width:420px) {
-  .lfms-launch__dumbbell-stage {width:clamp(104px,28vw,126px)}
+  .lfms-launch__barbell-stage {width:clamp(103px,28vw,126px)}
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}
   .lfms-launch__glow,.lfms-launch__identity,.lfms-launch__mark,
   .lfms-launch__rule,.lfms-launch__wordmark,.lfms-launch__tagline,
-  .lfms-launch__dumbbell-stage,.lfms-launch__plate {
-    animation:none;opacity:1;transform:none;
+  .lfms-launch__bar-art,.lfms-launch__plate,.lfms-launch__barbell-stage {
+    animation:none;opacity:1;
   }
-  .lfms-launch__dumbbell-stage {transform:translate(-50%,-50%)}
+  .lfms-launch__bar-art,.lfms-launch__plate {transform:none}
+  .lfms-launch__barbell-stage {transform:translate(-50%,-50%)}
   .lfms-launch__tear-edge {display:none}
   .lfms-launch[data-revealing="true"] {animation:none;clip-path:none}
 }

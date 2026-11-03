@@ -14,10 +14,13 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
   assert.match(mark,/viewBox="435 167 675 387"/)
   assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__mark-stage"/)
-  assert.match(html,/class="lfms-launch__dumbbell-stage"/)
+  assert.match(html,/class="lfms-launch__barbell-stage"/)
   assert.match(html,/class="lfms-launch__bar-art"/)
-  for(const plate of ['one','two','three']) assert.match(html,
-    new RegExp('lfms-launch__plate--'+plate))
+  for(const side of ['bottom','top']) {
+    for(const color of ['red','white','blue']) {
+      assert.match(html,new RegExp('lfms-launch__plate--'+side+'-'+color))
+    }
+  }
   assert.match(html,/class="lfms-launch__tear-edge"/)
   assert.doesNotMatch(html,/lfms-launch__cracks|lfms-launch__impact-flash|lfms-launch__shockwave/)
 })
@@ -26,14 +29,14 @@ test('splash has staggered entrances, no overlapping negative margins, and a rea
   for(const name of ['rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
   assert.match(css,/lfms-logo-settle/)
   assert.match(css,/prefers-reduced-motion:reduce/)
-  for(const name of ['wordmark-enter-left','wordmark-enter-right','dumbbell-drop','plate-drop','zipper-peel','loaded-scrape','tear-follow'])
+  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','zipper-peel','loaded-scrape','tear-follow'])
     assert.match(css,new RegExp('lfms-'+name))
   assert.doesNotMatch(css,/lfms-mark-smash|lfms-glass-fracture|lfms-shockwave/)
   assert.match(css,/clip-path:inset\(0 0 43% 0\)/)
   assert.match(css,/clip-path:inset\(57% 0 0 0\)/)
 
   assert.doesNotMatch(css,/margin-top:-/)
-  assert.match(js,/LFMS_PLATES_SETTLED_MS = 3700/)
+  assert.match(js,/LFMS_PLATES_SETTLED_MS = 4390/)
   assert.match(js,/LFMS_ZIPPER_DURATION_MS = 1160/)
   assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
   assert.match(js,/launch\.dataset\.revealing = 'true'/)

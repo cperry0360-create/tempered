@@ -1307,9 +1307,18 @@ export function createTodayScreen({
       return Number(aDone) - Number(bDone)
         || (a.activity.name ?? '').localeCompare(b.activity.name ?? '')
     })
-    const extras = allActivities
-      .filter((activity) => activity.cadence === 'off' && !FUEL_ACTIVITY_IDS.has(activity.id))
-      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+    // Retired weekly marks must never return as a daily task. Numeric check-ins
+    // logged on this selected date may still be EDITED by deliberately opening
+    // the optional logging drawer (e.g. correct a waist measurement).
+    const extras = [
+      ...allActivities
+        .filter((activity) => activity.cadence === 'off' && !FUEL_ACTIVITY_IDS.has(activity.id))
+        .map((activity) => ({ activity, weekly: null })),
+      ...(weekActivities?.activities ?? [])
+        .filter((activity) => activity.loggedToday === true
+          && activity.spec?.entry === 'number' && !FUEL_ACTIVITY_IDS.has(activity.id))
+        .map((activity) => ({ activity, weekly: activity })),
+    ].sort((a, b) => (a.activity.name ?? '').localeCompare(b.activity.name ?? ''))
 
     return el('section.today-card.today-daily-log', { dataset: { section: 'daily' } }, [
       el('h2', { text: 'Daily log' }),
@@ -1322,7 +1331,8 @@ export function createTodayScreen({
         'aria-expanded': String(otherOpen),
         onclick: () => { otherOpen = !otherOpen; render() },
       }, [otherOpen ? '− Close extra logging' : '+ Log something else']),
-      otherOpen && extras.length > 0 && el('div.today-list.today-list--extras', {}, extras.map((activity) => activityItem(activity))),
+      otherOpen && extras.length > 0 && el('div.today-list.today-list--extras', {},
+        extras.map(({ activity, weekly }) => activityItem(activity, weekly))),
       el('button.today-daily-log__more', {
         type: 'button', dataset: { dayDetails: 'open' },
         onclick: () => { dayDetailsOpen = true; render() },

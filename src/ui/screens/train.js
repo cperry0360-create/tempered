@@ -6,6 +6,7 @@ import { el, replace } from '../dom.js'
 import { plateCalculatorButton } from '../plate-calculator.js'
 import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
+import { mainTabBrand } from '../main-tab-header.js'
 import { lbs, since } from '../format.js'
 import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
 
@@ -491,7 +492,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
   }
 
   function trainShortcuts() {
-    return el('nav.train2__pills',{'aria-label':'Training shortcuts'},[
+    return el('nav.train2__pills.lfms-main-actions',{'aria-label':'Training shortcuts'},[
       el('button',{type:'button',onclick:()=>{
         if(todayDay){selectedProgramDay=todayDay;render()}
         else root.querySelector('.train-r4__sessions')?.scrollIntoView({behavior:'smooth',block:'start'})
@@ -515,12 +516,10 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     if (selectedRoutine) { renderRoutine(); return }
     if (rhythmOpen) { renderRhythm(); return }
     replace(root, [
-      el('header.train-calculator-bar.train2__heading', {}, [
-        el('div.train2__brand',{},[
-          el('img',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,
-            alt:'',class:'train2__logo',loading:'eager'}),
-          el('div',{},[el('h1.screen__title',{text:'Train'}),el('small',{text:'LFMS / TRAINING'})]),
-        ]),
+      el('header.train-calculator-bar.train2__heading.lfms-main-heading', {}, [
+        mainTabBrand('Train', {
+          brandClass: 'train2__brand', markClass: 'train2__logo',
+        }),
         plateCalculatorButton(),
       ]),
       trainShortcuts(),

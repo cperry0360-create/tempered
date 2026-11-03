@@ -279,3 +279,17 @@
     padding-bottom:55px;
   }
 }
+
+
+/* Small-landscape final fit adjustment, based on real 507px browser viewport:
+ * reserve the dock without pushing the default four editable sets offscreen. */
+@media(min-width:740px) and (orientation:landscape) and (max-height:700px) {
+  html[data-layout="duo"] .app__body > .screen--session[data-half-fold="false"] {
+    padding-top:calc(58px + env(safe-area-inset-top,0px));
+    padding-bottom:max(6px,env(safe-area-inset-bottom,0px));
+    gap:3px;
+  }
+  html[data-layout="duo"] .screen--session[data-half-fold="false"] .session-r5__log {
+    gap:3px;
+  }
+}

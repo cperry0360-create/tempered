@@ -72,12 +72,13 @@ try{
  // The approved continuous canvas now applies to all four main Duo tabs.
  document.documentElement.dataset.layout='duo'
  const app=q('#app'),today=q('.today--fuel-style'),rail=q('.tabbar')
- check('Duo Today background is one continuous blue-black gradient',
-   getComputedStyle(document.body,'::before').backgroundImage.includes('radial-gradient')
-   && getComputedStyle(document.body,'::before').backgroundImage.includes('linear-gradient')
-   && getComputedStyle(app).backgroundImage==='none'
-   && getComputedStyle(document.documentElement).backgroundImage==='none')
- check('Duo Today content and outer gutter share the same canvas',
+ check('Duo Today background is one continuous soft-black surface',
+    getComputedStyle(document.body).backgroundColor==='rgb(16, 24, 32)'
+    && getComputedStyle(document.body,'::before').content==='none'
+    && getComputedStyle(document.documentElement).backgroundColor==='rgb(16, 24, 32)'
+    && getComputedStyle(app).backgroundImage==='none'
+    && getComputedStyle(document.documentElement).backgroundImage==='none')
+  check('Duo Today content and outer gutter share the same canvas',
    getComputedStyle(today).backgroundColor==='rgba(0, 0, 0, 0)'
    && getComputedStyle(q('.app__body')).backgroundColor==='rgba(0, 0, 0, 0)')
  check('Duo floating rail has only a frosted capsule, no solid backdrop',
@@ -93,19 +94,19 @@ try{
  check('Duo nav labels are prepared for press-and-hold',
    originalTabs.every(x=>x.dataset.label?.length))
 
- const initialCanvas=getComputedStyle(document.body,'::before').backgroundImage
+ const initialCanvas=getComputedStyle(document.body).backgroundColor
  for(const tab of ['train','fuel','history','today']) {
    await t.app.show(tab)
    check(tab+' uses one viewport canvas with no distinct right gutter or screen paint',
-     getComputedStyle(document.body,'::before').backgroundImage===initialCanvas
-     && getComputedStyle(document.body,'::before').position==='fixed'
+     getComputedStyle(document.body).backgroundColor===initialCanvas
+     && getComputedStyle(document.body,'::before').content==='none'
      && getComputedStyle(app).backgroundImage==='none'
      && getComputedStyle(document.documentElement).backgroundImage==='none'
      && getComputedStyle(q('.app__body')).backgroundImage==='none'
      && getComputedStyle(q('.app__body > .screen')).backgroundImage==='none'
      && getComputedStyle(rail).backgroundImage==='none'
      && getComputedStyle(q('.app__body > .screen')).backgroundColor==='rgba(0, 0, 0, 0)',
-     JSON.stringify({tab,canvas:getComputedStyle(document.body,'::before').backgroundImage,
+     JSON.stringify({tab,canvas:getComputedStyle(document.body).backgroundColor,
        initialCanvas,app:getComputedStyle(app).backgroundImage,
        screen:getComputedStyle(q('.app__body > .screen')).backgroundImage}))
    check(tab+' preserves original rail button DOM nodes',

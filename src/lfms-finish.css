@@ -780,3 +780,21 @@ html[data-layout="duo"] #app.app .tabbar::after {
   content:none;
   display:none;
 }
+
+
+/* LFMS Duo launch handoff: Today is fully laid out behind the intro, but
+   must not be visible through its translucent exit. Keep the approved fixed
+   canvas visible beneath the splash; reveal the finished dashboard only after
+   main.js removes the launch element. This does not change the side rail,
+   splash choreography, screen data or the shared background palette. */
+html[data-layout="duo"] #app.app {
+  transition:opacity 180ms ease-out;
+}
+html[data-layout="duo"]:has(.lfms-launch) #app.app {
+  opacity:0;
+  visibility:hidden;
+  transition:none;
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-layout="duo"] #app.app {transition:none}
+}

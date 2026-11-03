@@ -35,7 +35,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/dataset\.layout === 'duo' \? 200 : 520/)
-  assert.match(read('src/version.js'),/0\.66\.49 \(155\)/)
+  assert.match(read('src/version.js'),/0\.66\.50 \(156\)/)
 })
 
 test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{
@@ -93,6 +93,8 @@ test('all four main tabs share one actual mountain/title component and glass but
     assert.ok(css.includes(metric),metric)
   }
   assert.match(css,/lfms-main-actions > button/)
+  // Prevent a nested Fuel action row from being repainted as solid top-row controls.
+  assert.ok(css.includes(') > :is(button,.plate-calculator-link,.progress-range),'))
   assert.match(css,/rgba\(199,232,255,\.36\)/)
   assert.match(css,/progress-views\.lfms-main-actions > button\[data-active="true"\]/)
   assert.ok(read('sw.js').includes("'./src/ui/main-tab-header.js'"))

@@ -84,6 +84,8 @@
       await settle()
       card = q('[data-exercise="rdl"]')
       check('thumbnail opens the full-screen image viewer', Boolean(q('[data-session-art-overlay][role="dialog"] .session-art-viewer__image')))
+      q('[data-session-art-close]')?.click()
+      await settle()
     }
 
     check('Best line preserves load reps and date',

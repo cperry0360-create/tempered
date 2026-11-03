@@ -37,7 +37,7 @@ test('six flat, cartoon bumper plates use red WHITE blue in identical order on b
   }
   assert.doesNotMatch(html,/linearGradient|url\(#lfms-db-|lfms-db-shaft/)
   assert.match(css,/@keyframes lfms-bumper-stack/)
-  assert.match(css,/--lfms-barbell-home-x:calc\(100vw - clamp\(92px,13vw,125px\)\)/)
+  assert.match(css,/--lfms-barbell-home-x:calc\(100vw - clamp\(112px,20vw,152px\)\)/)
   assert.match(html,/viewBox="0 0 160 700"/)
   assert.match(html,/rect x="74" y="15" width="12" height="670"/)
   assert.match(html,/rect x="69" y="269" width="22" height="162"/)

@@ -31,13 +31,16 @@ try {
     startedAt:'2026-11-03T09:00:00.000Z',endedAt:'2026-11-03T09:35:00.000Z',durationMinutes:35})
   await storage.put('setLogs',{id:'finished-set',sessionId:'completed',exerciseId:'bench_press',
     weight:95,reps:8,isWarmup:false,completedAt:'2026-11-03T09:10:00.000Z'})
-  // Sets have been logged, but the Wednesday session has not finished.
+  const clock=fixedClock(new Date(2026,10,5,12))
+  const app=await bootstrapHarness({storage,clock,mount:document.getElementById('app'),initialTab:'today'})
+  // The app deliberately settles orphaned workout sessions on startup.
+  // Introduce an active, partially logged workout AFTER that migration to
+  // test the distinction between logged sets and an explicitly finished day.
   await storage.put('sessions',{id:'partial',date:'2026-11-04',
     startedAt:'2026-11-04T09:00:00.000Z',endedAt:null})
   await storage.put('setLogs',{id:'partial-set',sessionId:'partial',exerciseId:'bench_press',
     weight:95,reps:8,isWarmup:false,completedAt:'2026-11-04T09:10:00.000Z'})
-  const clock=fixedClock(new Date(2026,10,5,12))
-  const app=await bootstrapHarness({storage,clock,mount:document.getElementById('app'),initialTab:'today'})
+  await app.app.show('train')
   await app.app.show('today')
   const week=days()
   check('one week with seven day markers renders',week.length===7)
@@ -52,7 +55,7 @@ try {
     thursday?.dataset.icon==='rest'&&Boolean(thursday.querySelector('svg')))
   check('future days are not labeled as missed workouts',
     friday?.dataset.icon==='upcoming'&&friday.querySelector('.today-week__workout-icon')?.childElementCount===0)
-  const restIcon=wednesday?.querySelector('.today-week__workout-icon svg')
+  const restIcon=monday?.querySelector('.today-week__workout-icon svg')
   const path=restIcon?.querySelector('path')
   const style=restIcon?getComputedStyle(restIcon):null
   check('rest vector is solid white, not blue or a colored tile',

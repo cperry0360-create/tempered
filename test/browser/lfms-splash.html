@@ -23,6 +23,9 @@ try{
   const strong=launch.querySelector('.lfms-launch__wordmark--strong')
   const bar=launch.querySelector('.lfms-launch__bar-art')
   const barbell=launch.querySelector('.lfms-launch__barbell-stage')
+  const skin=launch.querySelector('.lfms-launch__skin')
+  const flap=launch.querySelector('.lfms-launch__peel-flap')
+  const identity=launch.querySelector('.lfms-launch__identity')
   const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
   const tear=launch.querySelector('.lfms-launch__tear-edge')
   const rule=launch.querySelector('.lfms-launch__rule')
@@ -38,8 +41,8 @@ try{
   check('logo gently settles instead of smashing glass',
     getComputedStyle(mark).animationName==='lfms-logo-settle'
     &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__glass-phase,.lfms-launch__shockwave,.lfms-launch__impact-flash'))
-  check('flat cartoon BARBELL and six independent bumper SVGs exist',
-    Boolean(barbell&&bar&&tear)&&plates.length===6
+  check('flat cartoon OLYMPIC BARBELL and six independent bumper SVGs exist',
+    Boolean(barbell&&bar&&tear&&skin&&flap)&&plates.length===6
     &&plates.every(p=>!!p.querySelector('ellipse')&&!p.querySelector('linearGradient'))
     &&!!bar.querySelector('rect'))
   check('each side loads RED WHITE BLUE in order',
@@ -81,21 +84,37 @@ try{
     plates.every(p=>Number(getComputedStyle(p).opacity)>.99)
     &&Number(getComputedStyle(bar).opacity)>.99)
   const dbRect=barbell.getBoundingClientRect()
-  check('assembled barbell fits the viewport beside the wordmark',
-    dbRect.width>=65&&dbRect.right<=innerWidth+12,
-    JSON.stringify({x:dbRect.left,width:dbRect.width,right:dbRect.right,innerWidth,innerHeight}))
+  const wordRect=word.getBoundingClientRect()
+  check('barbell stays in RIGHT lane without touching LFMS lettering',
+    dbRect.width>=65 && dbRect.right<=innerWidth+6
+    && dbRect.left > wordRect.right + 5,
+    JSON.stringify({barLeft:dbRect.left,barRight:dbRect.right,wordRight:wordRect.right,viewport:innerWidth}))
+  check('silver bar has Olympic length with exposed center knurl',
+    bar.getAttribute('viewBox')==='0 0 160 560'
+    &&dbRect.height>dbRect.width*3.3
+    &&!!bar.querySelector('rect[x="70"][y="215"]')
+    &&getComputedStyle(identity).animationName.includes('lfms-brand-clear-side'),
+    JSON.stringify({barWidth:dbRect.width,barHeight:dbRect.height,identityAnimation:getComputedStyle(identity).animationName}))
   launch.dataset.revealing='true'
   await sleep(120)
-  check('loaded dumbbell starts zipper scrape, tear follows and mask opens',
-    getComputedStyle(launch).animationName==='lfms-zipper-peel'
+  check('right-corner tear clips SKIN only while barbell stays visible',
+    getComputedStyle(skin).animationName==='lfms-corner-peel'
     &&getComputedStyle(barbell).animationName==='lfms-loaded-scrape'
     &&getComputedStyle(tear).animationName==='lfms-tear-follow'
-    &&getComputedStyle(launch).clipPath!=='none')
-  const clipBefore=getComputedStyle(launch).clipPath
+    &&getComputedStyle(flap).animationName==='lfms-peel-flap'
+    &&getComputedStyle(launch).clipPath==='none'
+    &&getComputedStyle(skin).clipPath!=='none'
+    &&getComputedStyle(launch).backgroundColor==='rgba(0, 0, 0, 0)')
+  const clipBefore=getComputedStyle(skin).clipPath
+  const barBefore=barbell.getBoundingClientRect()
   await sleep(510)
-  const clipDuring=getComputedStyle(launch).clipPath
-  check('actual clip-path progresses and removes splash pixels',
-    clipBefore!==clipDuring&&clipDuring.includes('polygon'))
+  const clipDuring=getComputedStyle(skin).clipPath
+  const barDuring=barbell.getBoundingClientRect()
+  check('right-corner skin is progressively removed as bar falls down-right',
+    clipBefore!==clipDuring&&clipDuring.includes('polygon')
+    &&barDuring.top>barBefore.top+25)
+  check('actual barbell is outside the clipped skin, so it cannot vanish in the tear',
+    !skin.contains(barbell)&&!skin.contains(tear)&&!skin.contains(flap))
   check('no browser exceptions',errors.length===0,errors.join(' | '))
 }catch(error){check('splash harness finishes',false,error.stack??String(error))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})

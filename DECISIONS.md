@@ -1,3 +1,8 @@
+## 2026-11-02 — LFMS workout completion animation and results, v0.66.38
+- The live identity is **Less Fat More Strong**. Reuse actual LFMS mountain/wordmark and existing nav-train lifter; do not invent a red T, cartoon art, liquid/water splash or confetti.
+- A completed workout with logged sets plays a 2.2s graphical completion reveal that can be tapped to skip; reduced motion bypasses it. It settles on a navy results dashboard with actual time, working sets, reps, volume, detected PRs and optional exercise breakdown.
+- No fake calories, PRs, intensity, deltas, or editing of canonical logs. The empty session continues to bypass celebration. Previous main backed up on backup/lfms-before-workout-finish-reveal-2026-11-02.
+
 ## 2026-11-02 — Weekly card design token compliance, LFMS 0.66.29
 - Converted the new Today weekly card's literal colors into existing CSS tokens; removed the unsupported uppercase transform. This is presentation-only and leaves the new weekly metrics and other recent commits intact.
 

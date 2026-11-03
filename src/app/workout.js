@@ -607,12 +607,26 @@ export function createWorkoutService({ storage, clock, balance }) {
     const levels = Object.fromEntries(ATTRIBUTE_IDS.map((id) => [id, after[id].level]))
 
     const completedSets = workingSets(input.sets)
+    // Only sets settled in this finish count. Micro-set sessions may reuse the
+    // day's session ID, and older sets must not appear twice in this recap.
+    const performed = new Map()
+    for (const set of completedSets) {
+      const prior = performed.get(set.exerciseId) ?? {
+        exerciseId: set.exerciseId,
+        name: exercises.get(set.exerciseId)?.name ?? String(set.exerciseId).replace(/_/g, ' '),
+        sets: 0, reps: 0,
+      }
+      prior.sets += 1
+      prior.reps += Math.max(0, Number(set.reps) || 0)
+      performed.set(set.exerciseId, prior)
+    }
     return {
       session: completed,
       durationMinutes,
       setsCompleted: completedSets.length,
       totalReps: completedSets.reduce((sum, set) => sum + (Number(set.reps) || 0), 0),
       totalVolume,
+      exerciseBreakdown: [...performed.values()],
       awards,
       xpByAttribute: totalsByAttribute(awards),
       xpBySource: totalsBySource(awards),

@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LFMS Workout Completion</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/lfms-workout-complete.css">
+</head><body><div id="app" class="app"></div><script type="module">
+import { createSummaryScreen } from '../../src/ui/screens/summary.js'
+const checks=[],check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+try {
+  let done=0
+  const screen=createSummaryScreen({onDone:()=>{done+=1}})
+  const data={session:{date:'2026-11-02',title:'Push A'},
+    durationMinutes:52,setsCompleted:12,totalReps:97,totalVolume:4820,
+    exerciseBreakdown:[{exerciseId:'bench_press',name:'Bench Press',sets:4,reps:32}],
+    records:{weightPrs:[{exerciseId:'bench_press',weight:135,reps:8}],volumePrs:[]},
+  }
+  await screen.show(data)
+  document.querySelector('#app').replaceChildren(screen.root)
+  const q=(s)=>screen.root.querySelector(s)
+  check('ships LFMS wordmark',q('.finish-v2__brand-wordmark')?.getAttribute('src')?.includes('branding/lfms/logo-wordmark.svg'))
+  check('uses original lifter in splash',!!q('[data-completion-intro] [data-custom-rail-glyph="nav-train"]'))
+  check('graphic splash is skippable',!!q('[data-completion-intro]'))
+  check('canonical stats displayed',screen.root.textContent.includes('52 min')&&screen.root.textContent.includes('4,820 lb'))
+  check('PR matches logged data',q('[data-section="prs"]')?.textContent.includes('Bench Press')&&q('[data-section="prs"]')?.textContent.includes('135 lb'))
+  check('no retired app name in rendered results',!screen.root.textContent.includes('Tempered'))
+  check('details are collapsed initially',q('[data-section="exercise-details"]')?.hidden===true)
+  q('[data-action="view-exercises"]')?.click()
+  check('details expand',q('[data-section="exercise-details"]')?.hidden===false)
+  q('[data-completion-intro]')?.click()
+  check('intro skip works',screen.root.dataset.introSkipped==='true')
+  q('[data-action="done"]')?.click()
+  check('done callback works',done===1)
+  await screen.show({...data,records:{weightPrs:[],volumePrs:[]}})
+  check('no fake PR on ordinary workouts',q('[data-section="prs"]')?.textContent.includes('No new personal records')&&!q('.finish-v2__pr'))
+} catch(e){check('completion harness error',false,String(e?.stack||e).slice(0,700))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'lfms-workout-completion',passed:checks.every(item=>item.ok),checks})})
+</script></body></html>

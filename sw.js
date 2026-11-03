@@ -18,6 +18,7 @@ const PRECACHE = [
   './src/weekly-recap-next.css',
   './src/food-log-polish.css',
   './src/lfms-feedback-polish.css',
+  './src/lfms-workout-complete.css',
   './src/lfms-session-duo.css',
   './src/ui/fuel-neon-widget.js',
   './src/ui/water-wave.js',

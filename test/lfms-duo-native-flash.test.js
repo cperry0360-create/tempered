@@ -65,6 +65,7 @@ test('all four main tabs share one actual mountain/title component and glass but
   const today=read('src/ui/screens/today.js')
   const train=read('src/ui/screens/train.js')
   const fuel=read('src/ui/screens/fuel-next.js')
+  const legacyFuel=read('src/ui/screens/fuel.js')
   const history=read('src/ui/screens/history.js')
   const css=read('src/lfms-session-duo.css')
   const screens=[today,train,fuel,history]
@@ -82,6 +83,9 @@ test('all four main tabs share one actual mountain/title component and glass but
   assert.match(train,/mainTabBrand\('Train'/)
   assert.doesNotMatch(train,/LFMS \/ TRAINING/)
   assert.match(fuel,/mainTabBrand\('Fuel'/)
+  assert.match(legacyFuel,/mainTabBrand\('Fuel'/)
+  assert.ok(legacyFuel.includes('nav.food-v2__header-actions.lfms-main-actions'))
+  assert.ok(legacyFuel.includes('onclick: focusMealEntry'))
   assert.doesNotMatch(fuel,/small',\{text:' \/ FUEL'/)
   assert.match(history,/mainTabBrand\('Progress'/)
   assert.doesNotMatch(history,/LFMS \/ YOUR RESULTS/)

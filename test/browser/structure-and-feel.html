@@ -41,12 +41,12 @@
       check('Today order matches the approved R2 stack',
         structure.slice(0,6).join('|')==='heading|week|next-session|readiness|fuel|daily',
         structure.slice(0,6).join(' | '))
-      check('Today starts with its title row, date, and Settings gear',
+      check('Today starts with its shared title row and Settings gear',
         Boolean(q('.today-heading__title-row .screen__title',screen))
-          && Boolean(q('.today-heading__date',screen))
           && Boolean(q('.today-heading .today-settings',screen)))
-      check('the heading uses Today plus the compact date', q('.screen__title',screen)?.textContent==='Today'
-        && /Tuesday, 29 Sep/.test(q('.today-heading__date',screen)?.textContent??''))
+      check('Today has one title and no redundant date above the week calendar',
+        q('.screen__title',screen)?.textContent==='Today'
+        && !q('.today-heading__date',screen))
 
       const removed=['.today-calendar','[data-summary="daily"]','[data-section="planner"]','[data-section="training"]',
         '[data-daily-recap]','.today-firstweek']

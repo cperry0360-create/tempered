@@ -29,7 +29,7 @@ test('splash has staggered entrances, no overlapping negative margins, and a rea
   assert.doesNotMatch(css,/margin-top:-/)
   assert.match(js,/3800 - \(performance\.now\(\) - splashStarted\)/)
   assert.match(js,/dismissSplash, 8000/)
-  assert.match(js,/else setTimeout\(finish, 520\)/)
+  assert.match(js,/else setTimeout\(finish, document\.documentElement\.dataset\.layout === 'duo' \? 200 : 520\)/)
   assert.match(js,/launch\.remove\(\)/)
   assert.match(js,/await dismissSplash\(\)/)
   assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'),

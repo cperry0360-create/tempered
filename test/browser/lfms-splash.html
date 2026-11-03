@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS dumbbell-loading splash / mechanical zipper acceptance</title>
+<title>LFMS red-white-blue stacked barbell / mechanical zipper acceptance</title>
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/brand.css">
 </head><body>
@@ -22,7 +22,7 @@ try{
   const word=launch.querySelector('.lfms-launch__wordmark--less')
   const strong=launch.querySelector('.lfms-launch__wordmark--strong')
   const bar=launch.querySelector('.lfms-launch__bar-art')
-  const dumbbell=launch.querySelector('.lfms-launch__dumbbell-stage')
+  const barbell=launch.querySelector('.lfms-launch__barbell-stage')
   const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
   const tear=launch.querySelector('.lfms-launch__tear-edge')
   const rule=launch.querySelector('.lfms-launch__rule')
@@ -38,16 +38,25 @@ try{
   check('logo gently settles instead of smashing glass',
     getComputedStyle(mark).animationName==='lfms-logo-settle'
     &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__glass-phase,.lfms-launch__shockwave,.lfms-launch__impact-flash'))
-  check('cartoon-realistic steel bar SVG and THREE independent plate SVGs exist',
-    Boolean(dumbbell&&bar&&tear)&&plates.length===3
-    &&!!bar.querySelector('#lfms-db-shaft')&&!!bar.querySelector('#lfms-db-grip')
-    &&plates.every(p=>p.querySelector('linearGradient')&&p.querySelector('ellipse')))
-  check('dumbbell falls from above after brand intro',
-    getComputedStyle(dumbbell).animationName==='lfms-dumbbell-drop'
-    &&getComputedStyle(dumbbell).animationDelay==='1.35s')
-  check('plates fall in the required one-two-three sequence',
-    plates.map(p=>getComputedStyle(p).animationDelay).join('|')==='2.11s|2.51s|2.89s'
-    &&plates.every(p=>getComputedStyle(p).animationName==='lfms-plate-drop'))
+  check('flat cartoon BARBELL and six independent bumper SVGs exist',
+    Boolean(barbell&&bar&&tear)&&plates.length===6
+    &&plates.every(p=>!!p.querySelector('ellipse')&&!p.querySelector('linearGradient'))
+    &&!!bar.querySelector('rect'))
+  check('each side loads RED WHITE BLUE in order',
+    ['bottom-red','bottom-white','bottom-blue','top-red','top-white','top-blue'].every((c,i)=>
+      plates[i].classList.contains('lfms-launch__plate--'+c))
+    &&plates.map(p=>p.dataset.color).join(',')==='red,white,blue,red,white,blue')
+  check('flat plates use LFMS red white and blue pigment, not metallic gradients',
+    plates.every(p=>{
+      const fill=p.querySelector('ellipse')?.getAttribute('fill')
+      return fill===({red:'#F03725',white:'#F5F9FF',blue:'#359DF3'})[p.dataset.color]
+    }))
+  check('bottom three fall BEFORE the bar, then upper three fall after',
+    plates.map(p=>getComputedStyle(p).animationDelay).join('|')===
+      '1.33s|1.64s|1.95s|3.07s|3.37s|3.67s'
+    &&getComputedStyle(bar).animationName==='lfms-barbell-drop'
+    &&getComputedStyle(bar).animationDelay==='2.39s'
+    &&plates.every(p=>getComputedStyle(p).animationName==='lfms-bumper-stack'))
   check('screen scrape is a jagged zip, not an explosion',
     Boolean(tear)&&!!tear.querySelector('path')
     &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__shockwave')
@@ -64,18 +73,22 @@ try{
     &&launch.getBoundingClientRect().bottom>=innerHeight-1)
   check('splash shares background color with root on ordinary phone',
     getComputedStyle(document.body).backgroundColor===getComputedStyle(document.documentElement).backgroundColor)
-  await sleep(1700)
-  check('all three loaded plates remain visible when ready to scrape',
-    plates.every(p=>Number(getComputedStyle(p).opacity)>.99))
-  const dbRect=dumbbell.getBoundingClientRect()
-  check('dumbbell is near logo rather than covering the text',
+  check('the three ground plates are stacking while the bar has not landed',
+    Number(getComputedStyle(plates[0]).opacity)>.99 &&
+    Number(getComputedStyle(bar).opacity)<.01)
+  await sleep(2500)
+  check('all SIX plates and the vertical bar are visible before the tip',
+    plates.every(p=>Number(getComputedStyle(p).opacity)>.99)
+    &&Number(getComputedStyle(bar).opacity)>.99)
+  const dbRect=barbell.getBoundingClientRect()
+  check('assembled barbell fits the viewport beside the wordmark',
     dbRect.width>=65&&dbRect.right<=innerWidth+12,
     JSON.stringify({x:dbRect.left,width:dbRect.width,right:dbRect.right,innerWidth,innerHeight}))
   launch.dataset.revealing='true'
   await sleep(120)
   check('loaded dumbbell starts zipper scrape, tear follows and mask opens',
     getComputedStyle(launch).animationName==='lfms-zipper-peel'
-    &&getComputedStyle(dumbbell).animationName==='lfms-loaded-scrape'
+    &&getComputedStyle(barbell).animationName==='lfms-loaded-scrape'
     &&getComputedStyle(tear).animationName==='lfms-tear-follow'
     &&getComputedStyle(launch).clipPath!=='none')
   const clipBefore=getComputedStyle(launch).clipPath

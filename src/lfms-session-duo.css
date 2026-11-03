@@ -729,3 +729,26 @@ html[data-layout="duo"] #app.app .lfms-main-heading > :is(button,.plate-calculat
 @media(prefers-reduced-motion:reduce) {
   html[data-layout="duo"] #app.app .lfms-main-actions > button {transition:none}
 }
+
+
+/* The legacy Fuel fallback is still used by several app configurations.
+   It must have the same brand + shortcuts hierarchy as modern Fuel, not
+   put its date/action buttons beside a large, differently styled "Food". */
+html[data-layout="duo"] #app.app .food-v2__topline.lfms-main-section {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-content:start;
+  gap:13px;
+  background:var(--lfms-topbar-surface);
+  border:0;
+  padding:0;
+}
+html[data-layout="duo"] #app.app .food-v2__topline.lfms-main-section .food-v2__header-actions {
+  display:flex;
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  gap:8px;
+}
+html[data-layout="duo"] #app.app .food-v2__topline.lfms-main-section .food-v2__date {
+  display:inline-flex;
+}

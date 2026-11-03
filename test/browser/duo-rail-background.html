@@ -59,6 +59,14 @@ try{
    &&backdrop().bottom==='-1px'&&backdrop().left==='-1px',
    JSON.stringify({position:backdrop().position,inset:[backdrop().top,backdrop().right,backdrop().bottom,backdrop().left],
      body:initialRect.width,viewport:innerWidth}))
+ const systemRailTone=getComputedStyle(html).getPropertyValue('--lfms-duo-status-backdrop').trim()
+ check('Duo edge blends smoothly to the neighboring system status strip',
+   systemRailTone.toLowerCase()==='#081422'
+   &&originalGradient.startsWith('linear-gradient(90deg,')
+   &&originalGradient.includes('rgb(8, 20, 34)')
+   &&(originalGradient.match(/linear-gradient\(/g)||[]).length===2,
+   JSON.stringify({statusTone:systemRailTone,layerCount:(originalGradient.match(/gradient\(/g)||[]).length,
+     edge:originalGradient.slice(0,200)}))
  // Simulate the initial LFMS splash and its dismissal, testing the actual
  // background underneath the 4s animation rather than only settled pages.
  const splash=document.createElement('div')

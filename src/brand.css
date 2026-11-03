@@ -240,7 +240,7 @@
   .lfms-launch__rule {margin:5px 0 9px}
   .lfms-launch__wordmark-stage {max-height:17vh}
   .lfms-launch__tagline {margin-top:12px}
-  .lfms-launch__dumbbell-stage {width:min(22vw,115px);top:34%}
+  .lfms-launch__dumbbell-stage {width:min(27vw,125px);top:34%}
 }
 @media(max-width:420px) {
   .lfms-launch__dumbbell-stage {left:84%;width:clamp(104px,28vw,126px)}

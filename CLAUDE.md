@@ -82,10 +82,10 @@ No build step. No dependencies. Nothing to install.
 - No `package.json`, no lockfile, no `node_modules`.
 - IndexedDB via a thin wrapper in `src/adapters/storage/`.
 - PWA: manifest + hand-maintained `sw.js` at the repo root, installable, works offline.
-- **GitHub Pages is the ONLY production host** serving the repository root from
-  `main` at the `/tempered/` project path. No build command; what is committed
-  is served. `.nojekyll` disables Jekyll processing. **Never deploy or push to
-  Netlify, including as a fallback or preview.** See "Deployment" in `README.md`.
+- **GitHub Pages is the ONLY production host.** Its workflow publishes a
+  runtime-only artifact from `main` at the `/tempered/` project path, with no
+  application compile or bundle step. **Never deploy or push to Netlify,
+  including as a fallback or preview.** See "Deployment" in `README.md`.
 
 Rationale: this app is a few dozen screens of forms and lists over a numeric engine.
 A bundler earns nothing here — there is no dependency tree to resolve, no JSX to

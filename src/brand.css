@@ -261,11 +261,11 @@ html[data-layout="duo"] .lfms-launch__skin {
 @keyframes lfms-loaded-scrape {
   0% {left:var(--lfms-barbell-home-x);top:50%;transform:translate(-50%,-50%) rotate(0)}
   16% {left:var(--lfms-barbell-home-x);top:49%;transform:translate(-50%,-50%) rotate(29deg)}
-  28% {left:85%;top:54%;transform:translate(-50%,-50%) rotate(54deg)}
-  48% {left:87%;top:70%;transform:translate(-50%,-50%) rotate(85deg)}
-  70% {left:95%;top:97%;transform:translate(-50%,-50%) rotate(119deg)}
-  87% {left:113%;top:117%;transform:translate(-50%,-50%) rotate(144deg)}
-  100% {left:131%;top:146%;transform:translate(-50%,-50%) rotate(157deg)}
+  28% {left:93%;top:54%;transform:translate(-50%,-50%) rotate(54deg)}
+  48% {left:96%;top:70%;transform:translate(-50%,-50%) rotate(85deg)}
+  70% {left:109%;top:97%;transform:translate(-50%,-50%) rotate(119deg)}
+  87% {left:129%;top:117%;transform:translate(-50%,-50%) rotate(144deg)}
+  100% {left:148%;top:146%;transform:translate(-50%,-50%) rotate(157deg)}
 }
 @keyframes lfms-tear-follow {
   0%,16% {right:-7px;top:-10%;opacity:0;transform:rotate(0)}

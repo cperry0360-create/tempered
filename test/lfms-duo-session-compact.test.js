@@ -36,5 +36,5 @@ test('old charcoal-orange workout timer is styled with LFMS blue',()=>{
   assert.match(css,/\.session-restbar__actions button/)
   assert.match(read('index.html'),/src\/lfms-session-duo\.css/)
   assert.match(read('sw.js'),/\.\/src\/lfms-session-duo\.css/)
-  assert.match(read('src/version.js'),/0\.66\.34 \(140\)/)
+  assert.match(read('src/version.js'),/0\.66\.35 \(141\)/)
 })

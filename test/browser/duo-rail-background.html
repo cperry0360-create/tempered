@@ -84,11 +84,14 @@ try{
  const closingBg=backdrop().backgroundImage
  const closingRoot=getComputedStyle(html).backgroundColor
  const closingBody=getComputedStyle(document.body).backgroundColor
- check('Today remains invisible throughout the splash fade',
-   getComputedStyle(app).visibility==='hidden'
-   &&getComputedStyle(app).opacity==='0')
+ check('Today becomes visible as soon as the splash starts closing',
+   getComputedStyle(app).visibility==='visible'
+   &&getComputedStyle(app).opacity==='1'
+   &&backdrop().backgroundImage===originalGradient)
+ check('splash exits in one brief crossfade rather than lingering over empty navy',
+   getComputedStyle(splash).transitionDuration.split(',')[0].trim()==='0.18s')
  splash.remove()
- await wait(230)
+ await wait(40)
  check('Today is fully visible after the LFMS splash is removed',
    getComputedStyle(app).visibility==='visible'
    &&Number(getComputedStyle(app).opacity)>0.99

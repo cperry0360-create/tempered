@@ -93,7 +93,10 @@
    JS layout measurement, or runtime data dependency. */
 .lfms-launch__dumbbell-stage {
   position:absolute;z-index:4;
-  left:82%;top:36%;
+  /* Anchor to the actual viewport, not only the fixed splash's min-width.
+     iOS and compact desktop browsers can extend that splash by ~40px. */
+  --lfms-db-home-x:min(75%,calc(100vw - 80px));
+  left:var(--lfms-db-home-x);top:36%;
   width:clamp(108px,29vw,150px);
   aspect-ratio:160 / 280;
   transform-origin:50% 55%;
@@ -206,7 +209,7 @@
   }
 }
 @keyframes lfms-loaded-scrape {
-  0% {left:82%;top:36%;transform:translate(-50%,-50%) rotate(0)}
+  0% {left:var(--lfms-db-home-x);top:36%;transform:translate(-50%,-50%) rotate(0)}
   12% {left:9%;top:43%;transform:translate(-50%,-50%) rotate(-67deg) scale(1.09)}
   28% {left:22%;top:47%;transform:translate(-50%,-50%) rotate(-82deg) scale(1.1)}
   52% {left:51%;top:54%;transform:translate(-50%,-50%) rotate(-83deg) scale(1.07)}
@@ -243,15 +246,7 @@
   .lfms-launch__dumbbell-stage {width:min(27vw,125px);top:34%}
 }
 @media(max-width:420px) {
-  .lfms-launch__dumbbell-stage {left:84%;width:clamp(104px,28vw,126px)}
-  @keyframes lfms-loaded-scrape {
-    0% {left:84%;top:36%;transform:translate(-50%,-50%) rotate(0)}
-    12% {left:9%;top:43%;transform:translate(-50%,-50%) rotate(-67deg) scale(1.09)}
-    28% {left:22%;top:47%;transform:translate(-50%,-50%) rotate(-82deg) scale(1.1)}
-    52% {left:51%;top:54%;transform:translate(-50%,-50%) rotate(-83deg) scale(1.07)}
-    75% {left:80%;top:59%;transform:translate(-50%,-50%) rotate(-83deg) scale(1.04)}
-    100% {left:110%;top:63%;transform:translate(-50%,-50%) rotate(-86deg) scale(1)}
-  }
+  .lfms-launch__dumbbell-stage {width:clamp(104px,28vw,126px)}
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}

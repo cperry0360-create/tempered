@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-layout="duo"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LFMS Duo right rail background acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/nutrition-today.css">
+<link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/refined-ui.css">
+<link rel="stylesheet" href="../../src/food-v2.css">
+<link rel="stylesheet" href="../../src/food-v3.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/workout-r5.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+<link rel="stylesheet" href="../../src/train-next.css">
+<link rel="stylesheet" href="../../src/progress-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+<link rel="stylesheet" href="../../src/lfms-subscreen.css">
+<link rel="stylesheet" href="../../src/food-neon.css">
+<link rel="stylesheet" href="../../src/weekly-recap-next.css">
+<link rel="stylesheet" href="../../src/food-log-polish.css">
+<link rel="stylesheet" href="../../src/lfms-feedback-polish.css">
+<link rel="stylesheet" href="../../src/lfms-workout-complete.css">
+<link rel="stylesheet" href="../../src/lfms-session-duo.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const transparent=element=>element && getComputedStyle(element).backgroundColor==='rgba(0, 0, 0, 0)' &&
+ getComputedStyle(element).backgroundImage==='none'
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+try{
+ const storage=createMemoryStorage()
+ await storage.open()
+ await storage.put('profile',{id:'profile',name:'Duo rail background test',setupComplete:true})
+ const clock=fixedClock(new Date(2026,10,2,14))
+ const fixture=await bootstrapHarness({storage,clock,mount:document.getElementById('app'),initialTab:'today'})
+ await fixture.app.show('today')
+ await wait(30)
+ const html=document.documentElement,app=document.getElementById('app')
+ const rail=app.querySelector('.tabbar'), capsule=rail?.querySelector('.tabbar__tabs')
+ const originalGradient=getComputedStyle(html).backgroundImage
+ check('viewport paints one fixed navy gradient across content and right rail',
+   originalGradient.includes('radial-gradient')&&originalGradient.includes('linear-gradient')
+   &&getComputedStyle(html).backgroundAttachment.includes('fixed'))
+ check('glass vessel remains painted, but its surrounding navigation rail is transparent',
+   transparent(rail)&&getComputedStyle(capsule).backgroundImage.includes('linear-gradient'))
+ const originalCapsule=capsule
+ for(const tab of ['today','train','fuel','history']){
+   await fixture.app.show(tab)
+   await wait(30)
+   const screen=app.querySelector('.app__body > .screen')
+   check(tab+' has exactly one background layer and no distinct rail stripe',
+     getComputedStyle(html).backgroundImage===originalGradient
+     &&transparent(document.body)&&transparent(app)
+     &&transparent(app.querySelector('.app__body'))&&transparent(screen)
+     &&transparent(rail),
+     JSON.stringify({tab,html:getComputedStyle(html).backgroundImage,
+       body:getComputedStyle(document.body).backgroundImage,
+       app:getComputedStyle(app).backgroundImage,
+       screen:screen&&getComputedStyle(screen).backgroundImage,
+       rail:getComputedStyle(rail).backgroundImage}))
+   check(tab+' preserves capsule geometry and glass',
+     capsule===originalCapsule&&getComputedStyle(capsule).backgroundImage.includes('linear-gradient'))
+ }
+ const screen=app.querySelector('.app__body > .screen')
+ check('the rail and main screen share one full-width ancestor without painted divider',
+   !!screen&&app.getBoundingClientRect().right>=rail.getBoundingClientRect().right-1)
+}catch(err){check('Duo seamless rail acceptance harness',false,err?.stack??String(err))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'duo-rail-background',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

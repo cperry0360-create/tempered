@@ -111,6 +111,32 @@ try{
        screen:getComputedStyle(q('.app__body > .screen')).backgroundImage}))
    check(tab+' preserves original rail button DOM nodes',
      qa('.tabbar__tab').every((button,i)=>button===originalTabs[i]))
+   const brand=q('.lfms-main-brand'), mark=q('.lfms-main-brand__mark')
+   const title=q('.lfms-main-brand__title')
+   const nav=q('.lfms-main-actions'), actions=[...nav?.querySelectorAll(':scope > button')??[]]
+   const expectedTitle={today:'Today',train:'Train',fuel:'Fuel',history:'Progress'}[tab]
+   check(tab+' uses identical 44x36 LFMS mountain and 26px white page title',
+     Boolean(brand&&mark&&title)
+     && mark.src.includes('/branding/lfms/logo-mark.svg')
+     && Math.abs(mark.getBoundingClientRect().width-44)<1
+     && Math.abs(mark.getBoundingClientRect().height-36)<1
+     && getComputedStyle(title).fontSize==='26px'
+     && title.textContent.trim()===expectedTitle
+     && getComputedStyle(brand).alignItems==='center'
+     && !brand.querySelector('small')
+     && (tab!=='today'||!q('.today-heading__date')),
+     JSON.stringify({tab,title:title?.textContent,logo:mark&&[mark.getBoundingClientRect().width,mark.getBoundingClientRect().height]}))
+   check(tab+' shortcut row uses identical Fuel glass buttons and icon sizing',
+     Boolean(nav)&&actions.length>=3
+     &&getComputedStyle(nav).gap==='8px'
+     &&actions.every(button=>getComputedStyle(button).height==='44px'
+       &&getComputedStyle(button).borderTopWidth==='1px'
+       &&getComputedStyle(button).borderTopLeftRadius==='999px'
+       &&getComputedStyle(button).fontSize==='12px'
+       &&getComputedStyle(button).backgroundImage.includes('linear-gradient')
+       &&button.querySelector('.icon')?.getBoundingClientRect().width===16),
+     JSON.stringify({tab,buttons:actions.map(b=>({label:b.textContent,height:getComputedStyle(b).height,background:getComputedStyle(b).backgroundImage.slice(0,40)}))}))
+
  }
  const topButton=qa('.tabbar__tab')[0]
  topButton.dispatchEvent(new PointerEvent('pointerdown',{pointerId:91,button:0,bubbles:true,clientY:topButton.getBoundingClientRect().top+22}))

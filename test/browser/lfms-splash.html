@@ -20,15 +20,44 @@ try {
   const mark=launch.querySelector('.lfms-launch__mark')
   const word=launch.querySelector('.lfms-launch__wordmark--less')
   const strong=launch.querySelector('.lfms-launch__wordmark--strong')
+  const stage=launch.querySelector('.lfms-launch__mark-stage')
   const cracks=launch.querySelector('.lfms-launch__cracks')
-  const shock=launch.querySelector('.lfms-launch__shockwave')
+  const phases=[...launch.querySelectorAll('.lfms-launch__glass-phase')]
+  const flash=launch.querySelector('.lfms-launch__impact-flash')
   const rule=launch.querySelector('.lfms-launch__rule')
   const tagline=launch.querySelector('.lfms-launch__tagline')
   await Promise.all([mark,word].map(x=>x.decode()))
   check('mark and both branded wordmark halves load',mark.naturalWidth>0&&word.naturalWidth>0&&strong.naturalWidth>0)
-  check('left/right flights and impact shards are mounted',Boolean(cracks&&shock)&&getComputedStyle(word).animationName.includes('lfms-wordmark-enter-left')&&getComputedStyle(strong).animationName.includes('lfms-wordmark-enter-right')&&getComputedStyle(cracks).animationName.includes('lfms-crack-flash'))
+  check('original left/right wordmark flights are preserved',
+    getComputedStyle(word).animationName.includes('lfms-wordmark-enter-left')
+    &&getComputedStyle(strong).animationName.includes('lfms-wordmark-enter-right')
+    &&getComputedStyle(word).animationDuration==='1.08s'
+    &&getComputedStyle(strong).animationDuration==='1.13s')
+  check('stationary impact site has three separate spiderweb glass phases',
+    Boolean(stage&&cracks&&flash)&&phases.length===3
+    &&phases[0].querySelectorAll('path').length>=8
+    &&phases[1].querySelectorAll('path').length>=5
+    &&phases[2].querySelectorAll('path').length>=4)
+  check('three fracture phases launch at the exact logo contacts',
+    getComputedStyle(phases[0]).animationDelay==='1.369s'
+    &&getComputedStyle(phases[1]).animationDelay==='1.749s'
+    &&getComputedStyle(phases[2]).animationDelay==='2.13s')
+  check('cracked glass is colorless gray, not logo-red',
+    (()=>{const match=getComputedStyle(cracks).color.match(/\\d+(?:\\.\\d+)?/g)
+      const channels=(match??[]).slice(0,3).map(Number)
+      return channels.length===3 &&Math.max(...channels)-Math.min(...channels)<24})()
+    &&!cracks.querySelector('.lfms-launch__crack-glint')
+    &&!launch.querySelector('.lfms-launch__shockwave'))
   check('separate wordmark and tagline without repeated overlay copy',Boolean(rule)&&Boolean(tagline)&&!launch.querySelector('.lfms-launch__caption'))
-  check('entrance animation is present on the real markup',getComputedStyle(mark).animationName.includes('lfms-mark-enter')&&getComputedStyle(word).animationName.includes('lfms-wordmark-enter'))
+  check('logo has a real triple-contact drop while lettering keeps its animation',
+    getComputedStyle(mark).animationName.includes('lfms-mark-smash')
+    &&getComputedStyle(mark).animationDuration==='1.69s'
+    &&getComputedStyle(mark).animationDelay==='0.71s'
+    &&getComputedStyle(word).animationName.includes('lfms-wordmark-enter'))
+  const landing=stage.getBoundingClientRect(),glass=cracks.getBoundingClientRect()
+  check('fractures remain centered on stationary emblem landing site',
+    Math.abs((landing.left+landing.width/2)-(glass.left+glass.width/2))<3
+    &&Math.abs((landing.top+landing.height/2)-(glass.top+glass.height/2))<3)
   await new Promise(resolve=>setTimeout(resolve,1850))
   const m=mark.getBoundingClientRect(),w=word.getBoundingClientRect(),t=tagline.getBoundingClientRect()
   check('symbol stays strictly above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))

@@ -9,6 +9,7 @@
 import { dayBefore, nutritionDayStatus, nutritionHasEntry } from '../../domain/nutrition-review.js'
 import { el, replace } from '../dom.js'
 import { icon, iconForActivity } from '../icons.js'
+import { mainTabBrand } from '../main-tab-header.js'
 import { sortActivities } from '../../domain/activities.js'
 import { trainingReadiness } from '../../domain/readiness.js'
 import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
@@ -1320,7 +1321,7 @@ export function createTodayScreen({
   }
 
   function actionPills() {
-    return el('nav.today2__pills',{'aria-label':'Today shortcuts'},[
+    return el('nav.today2__pills.lfms-main-actions',{'aria-label':'Today shortcuts'},[
       el('button',{type:'button',onclick:()=>scrollSection('next-session')},[icon('train'),' Workout']),
       el('button',{type:'button',onclick:()=>scrollSection('readiness')},[icon('sleep'),' Recovery']),
       el('button',{type:'button',onclick:()=>scrollSection('fuel')},[icon('food'),' Fuel']),
@@ -1338,13 +1339,14 @@ export function createTodayScreen({
 
     replace(root, [
       el('header.today-heading', {}, [
-        el('div.today-heading__title-row', {}, [
-          el('div.lfms__today-brand',{},[el('img.lfms__today-mark',{src:new URL('../../../branding/lfms/logo-mark.svg',import.meta.url).href,alt:'',loading:'eager'}),el('h1.screen__title', { text: isRealToday() ? 'Today' : 'Day review' })]),
+        el('div.today-heading__title-row.lfms-main-heading', {}, [
+          mainTabBrand(isRealToday() ? 'Today' : 'Day review', {
+            brandClass: 'lfms__today-brand', markClass: 'lfms__today-mark',
+          }),
           el('button.today-settings', {
             type: 'button', 'aria-label': 'Settings', title: 'Settings', onclick: onSettings,
           }, [icon('gear')]),
         ]),
-        el('p.today-heading__date', { text: dateLabel(selectedDate) }),
         actionPills(),
       ]),
       yesterdayNutritionReminder(),

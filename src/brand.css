@@ -123,8 +123,8 @@ html[data-layout="duo"] .lfms-launch__skin {
      the logo letters; the brand shrinks/slides LEFT when equipment arrives. */
   --lfms-barbell-home-x:calc(100% - clamp(45px,8vw,69px));
   left:var(--lfms-barbell-home-x);top:50%;
-  width:clamp(73px,14vw,108px);
-  aspect-ratio:160 / 560;
+  width:clamp(63px,min(14vw,21vh),108px);
+  aspect-ratio:160 / 700;
   transform:translate(-50%,-50%);
   transform-origin:50% 78%;
   filter:drop-shadow(5px 9px 3px rgba(0,0,0,.26));
@@ -144,7 +144,7 @@ html[data-layout="duo"] .lfms-launch__skin {
 }
 .lfms-launch__plate {
   position:absolute;left:0;z-index:3;
-  display:block;width:100%;height:11.071%;
+  display:block;width:100%;height:8.857%;
   overflow:visible;opacity:0;
   transform-origin:50% 55%;
   will-change:transform;
@@ -302,11 +302,11 @@ html[data-layout="duo"] .lfms-launch__skin {
   .lfms-launch__rule {margin:5px 0 9px}
   .lfms-launch__wordmark-stage {max-height:17vh}
   .lfms-launch__tagline {margin-top:12px}
-  .lfms-launch__barbell-stage {width:clamp(73px,13.5vw,100px)}
+  .lfms-launch__barbell-stage {width:clamp(62px,min(13vw,20vh),95px)}
 }
 @media(max-width:480px) {
   .lfms-launch__identity {--lfms-brand-scale:.68;--lfms-brand-offset:23px}
-  .lfms-launch__barbell-stage {width:clamp(68px,19vw,82px)}
+  .lfms-launch__barbell-stage {width:clamp(66px,min(19vw,18vh),78px)}
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}

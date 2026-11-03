@@ -43,6 +43,21 @@ try{
     Boolean(q('.session-r5__add-movement')&&q('.session-layout-toggle')))
   check('set inputs and completion buttons remain interactive',
     Boolean(q('.screen--session .setrow__check')&&q('.screen--session input.setrow__num')))
+  const menu=q('.session-r5__log .exercise-menu__trigger')
+  menu?.click()
+  check('three-dot menu opens with actions',Boolean(q('.screen--session .exercise-menu')&&menu?.getAttribute('aria-expanded')==='true'))
+  q('.screen--session .setrow__head-check')?.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))
+  check('outside tap closes the menu without requiring a second three-dot tap',
+    !q('.screen--session .exercise-menu')&&q('.screen--session .exercise-menu__trigger')?.getAttribute('aria-expanded')==='false')
+  const hero=q('[data-action="enlarge-exercise-art"]')
+  if(hero) {
+    hero.click()
+    check('tapping exercise photo opens an accessible full-screen image',
+      Boolean(q('[data-session-art-overlay] [role="dialog"]')||q('[data-session-art-overlay][role="dialog"]')))
+    q('[data-session-art-close]')?.click()
+    check('image close restores workout without losing sets',
+      !q('[data-session-art-overlay]')&&Boolean(q('.screen--session .setrow__check')))
+  }
   const isWide=innerWidth>=740&&innerWidth>innerHeight
   if(isWide&&root){
     const stage=q('.session-r5__stage')?.getBoundingClientRect()
@@ -65,6 +80,12 @@ try{
   if(isWide&&rest){
     const log=q('.session-r5__log')?.getBoundingClientRect(),rect=rest.getBoundingClientRect()
     check('rest dock aligned with the right exercise pane',Boolean(log&&Math.abs(rect.left-log.left)<=3&&Math.abs(rect.width-log.width)<=3),JSON.stringify({dock:[rect.left,rect.width],log:log&&[log.left,log.width]}))
+    const card=q('.session-r5__log .exercise[data-focused="true"]')?.getBoundingClientRect()
+    check('rest is a docked row BELOW the exercise without overlapping set controls',
+      rest.parentElement?.classList.contains('session-r5__log')
+      &&getComputedStyle(rest).position!=='fixed'
+      &&Boolean(card&&rect.top>=card.bottom-2),
+      JSON.stringify({restTop:rect.top,exerciseBottom:card?.bottom,position:getComputedStyle(rest).position}))
     check('rest dock stays inside the visual viewport',rect.bottom<=innerHeight+2&&rect.top>0)
     check('rest timer uses LFMS panel styling',getComputedStyle(rest).backgroundImage.includes('gradient'))
   }

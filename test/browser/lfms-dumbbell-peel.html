@@ -39,13 +39,15 @@ try{
     &&getComputedStyle(launch).clipPath==='none')
   const start=getComputedStyle(skin).clipPath
   const barStart=bar.getBoundingClientRect()
+  const xStart=parseFloat(getComputedStyle(bar).left)
   await wait(650)
   const middle=getComputedStyle(skin).clipPath
   const barLater=bar.getBoundingClientRect()
+  const xLater=parseFloat(getComputedStyle(bar).left)
   check('top-right wrapper tears diagonally while loaded barbell falls rightward',
     start!==middle&&middle.startsWith('polygon(')
     &&barLater.top>barStart.top+20
-    &&barLater.left>barStart.left)
+    &&xLater>xStart)
   check('the barbell remains outside the clipped wrapper during its fall',
     !skin.contains(bar)&&getComputedStyle(bar).opacity==='1')
   check('reveal never repaints root charcoal as a blue gradient',

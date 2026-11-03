@@ -733,10 +733,17 @@ html[data-layout="duo"] body::before {
   filter:none;
   transform:none;
   transform-origin:center;
+  /* Unlike the content gradient, the device's adjacent status/control
+     strip has a nearly constant navy. Fade just the rightmost gutter into
+     THAT tone rather than ending the page gradient on a hard vertical edge.
+     Layer order: edge feather, original Today glow, original Today base. */
   background:
+    linear-gradient(90deg,
+      transparent calc(100% - clamp(72px,10vw,126px)),
+      var(--lfms-duo-status-backdrop) 100%),
     radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
     linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-  background-size:100% 100%,100% 100%;
+  background-size:100% 100%,100% 100%,100% 100%;
   background-repeat:no-repeat;
   pointer-events:none;
 }

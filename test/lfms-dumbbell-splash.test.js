@@ -37,7 +37,14 @@ test('six flat, cartoon bumper plates use red WHITE blue in identical order on b
   }
   assert.doesNotMatch(html,/linearGradient|url\(#lfms-db-|lfms-db-shaft/)
   assert.match(css,/@keyframes lfms-bumper-stack/)
-  assert.match(css,/--lfms-barbell-home-x:min\(72%,calc\(100vw - 86px\)\)/)
+  assert.match(css,/--lfms-barbell-home-x:calc\(100% - clamp\(45px,8vw,69px\)\)/)
+  assert.match(html,/viewBox="0 0 160 560"/)
+  assert.match(html,/rect x="73" y="15" width="14" height="529"/)
+  assert.match(html,/rect x="70" y="215" width="20" height="132"/)
+  assert.match(css,/aspect-ratio:160 \/ 560/)
+  assert.match(css,/height:11\.071%/)
+  assert.match(css,/lfms-brand-clear-side 520ms/)
+  assert.match(css,/--lfms-brand-scale:\.68/)
 })
 
 test('bottom red/white/blue land before the VERTICAL bar, then top red/white/blue stack',()=>{
@@ -54,8 +61,8 @@ test('bottom red/white/blue land before the VERTICAL bar, then top red/white/blu
   const tops=['top-red','top-white','top-blue'].map(delay)
   // Leave the central knurled handle exposed, not covered by giant discs.
   for(const [which,top] of [
-    ['bottom-red','78%'],['bottom-white','71%'],['bottom-blue','64%'],
-    ['top-red','25%'],['top-white','18%'],['top-blue','11%'],
+    ['bottom-red','87%'],['bottom-white','81%'],['bottom-blue','75%'],
+    ['top-red','20%'],['top-white','14%'],['top-blue','8%'],
   ])assert.ok(css.includes('lfms-launch__plate--'+which+' {top:'+top),which)
   assert.deepEqual(bottoms,[1330,1640,1950])
   assert.deepEqual(tops,[3070,3370,3670])
@@ -68,16 +75,22 @@ test('bottom red/white/blue land before the VERTICAL bar, then top red/white/blu
   assert.match(js,/LFMS_ZIPPER_DURATION_MS = 1160/)
 })
 
-test('loaded barbell tips toward lower right and tears into an already-visible app',()=>{
+test('barbell catches top RIGHT corner, pulls a separate canvas skin, exits lower right',()=>{
   const html=read('index.html'),css=read('src/brand.css')
   const finish=read('src/lfms-finish.css'),js=read('src/main.js')
+  assert.match(html,/class="lfms-launch__skin"/)
+  assert.match(html,/class="lfms-launch__peel-flap"/)
   assert.match(html,/class="lfms-launch__tear-edge"/)
-  assert.match(css,/\.lfms-launch\[data-revealing="true"\]/)
-  assert.match(css,/animation:lfms-zipper-peel 1160ms cubic-bezier/)
+  assert.ok(html.indexOf('<!-- /lfms-launch__skin -->')<html.indexOf('class="lfms-launch__barbell-stage"'),
+    'barbell remains outside torn skin to avoid being clipped into pieces')
+  assert.match(css,/\.lfms-launch\[data-revealing="true"\] \.lfms-launch__skin/)
+  assert.match(css,/animation:lfms-corner-peel 1160ms cubic-bezier/)
   assert.match(css,/animation:lfms-loaded-scrape 1160ms cubic-bezier/)
   assert.match(css,/animation:lfms-tear-follow 1160ms cubic-bezier/)
-  assert.match(css,/@keyframes lfms-loaded-scrape[\s\S]*?top:125%;transform:[^\n]*rotate\(125deg\)/)
-  assert.match(css,/@keyframes lfms-zipper-peel[\s\S]*?clip-path:polygon\(102%/)
+  assert.match(css,/animation:lfms-peel-flap 1160ms cubic-bezier/)
+  assert.match(css,/@keyframes lfms-corner-peel[\s\S]*?81% 0%[\s\S]*?0% 100%/)
+  assert.match(css,/@keyframes lfms-loaded-scrape[\s\S]*?top:146%;transform:[^\n]*rotate\(157deg\)/)
+  assert.match(css,/\.lfms-launch \{\s*inset:0;width:100%;height:100%;min-width:0;\s*background:transparent;box-shadow:none;/)
   assert.match(finish,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-revealing="true"\]\) #app\.app/)
   assert.match(js,/launch\.dataset\.revealing = 'true'/)
   assert.match(js,/await dismissSplash\(\)/)
@@ -89,7 +102,7 @@ test('reduced motion skips falling/tear while showing complete barbell',()=>{
   const css=read('src/brand.css'),js=read('src/main.js')
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/)
   assert.match(css,/\.lfms-launch__bar-art,\.lfms-launch__plate \{transform:none\}/)
-  assert.match(css,/\.lfms-launch\[data-revealing="true"\] \{animation:none;clip-path:none\}/)
-  assert.match(css,/\.lfms-launch__tear-edge \{display:none\}/)
+  assert.match(css,/\.lfms-launch\[data-revealing="true"\] \.lfms-launch__skin \{animation:none;clip-path:none\}/)
+  assert.match(css,/\.lfms-launch__tear-edge,\.lfms-launch__peel-flap \{display:none\}/)
   assert.match(js,/if \(reduced\) \{[\s\S]*?launch\.dataset\.closing = 'true'/)
 })

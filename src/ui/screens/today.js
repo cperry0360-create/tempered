@@ -172,6 +172,14 @@ function percent(value, target) {
   return Math.min(100, Math.max(0, Math.round((value / target) * 100)))
 }
 
+/** Calendar-day glyphs are derived from actual completed session counts.
+ * Non-completed days through today show the resting sleeper. Upcoming days
+ * remain unmarked, rather than being falsely labeled missed workouts. */
+export function workoutDayGlyph(dayKey, todayKey, completedSessions) {
+  if(dayKey > todayKey)return null
+  return number(completedSessions) > 0 ? 'nav-train' : 'rest-bed'
+}
+
 function estimateSessionMinutes(day) {
   const exercises = day?.exercises ?? []
   const sets = exercises.reduce((sum, exercise) => sum + (Number(exercise.sets) || 0), 0)
@@ -914,16 +922,18 @@ export function createTodayScreen({
       el('div.today-week__days', { 'aria-label': 'Completed workouts this week' },
         weekTraining.map((item) => {
           const date = parseDate(item.date)
-          const trained = number(item.stats.sessions) > 0
+          const glyph = workoutDayGlyph(item.date, realToday, item.stats.sessions)
+          const trained = glyph === 'nav-train'
           const isToday = item.date === realToday
           const selected = item.date === selectedDate
           const future = item.date > realToday
           return el('button.today-week__day', {
             type: 'button',
             dataset: { trained: String(trained), today: String(isToday),
-              selected: String(selected), future: String(future) },
+              selected: String(selected), future: String(future),
+              icon: glyph === 'nav-train' ? 'workout' : glyph === 'rest-bed' ? 'rest' : 'upcoming' },
             'aria-pressed': String(selected),
-            'aria-label': `${dateLabel(item.date)}: ${trained ? 'workout completed' : 'no completed workout recorded'}`,
+            'aria-label': `${dateLabel(item.date)}: ${trained ? 'workout completed' : future ? 'upcoming day' : 'no completed workout recorded, rest day'}`,
             onclick: () => selectDate(item.date),
           }, [
             el('span.today-week__dow', {
@@ -931,7 +941,7 @@ export function createTodayScreen({
             }),
             el('strong.today-week__num', { text: String(date.getDate()) }),
             el('span.today-week__workout-icon', { 'aria-hidden': 'true' },
-              trained ? [icon('nav-train')] : []),
+              glyph ? [icon(glyph)] : []),
           ])
         })),
       el('div.week-dashboard__content', {}, [

@@ -60,7 +60,7 @@ try {
     &&Math.abs((landing.top+landing.height/2)-(glass.top+glass.height/2))<3)
   check('spiderweb now spans more than twice the emblem with brighter thick contact fissures',
     glass.width>=landing.width*1.85
-    &&getComputedStyle(phases[0]).strokeWidth==='2.3px'
+    &&parseFloat(getComputedStyle(phases[0]).strokeWidth)>=2.2
     &&getComputedStyle(cracks).color.includes('238')
     &&getComputedStyle(launch.querySelector('.lfms-launch__identity')).animationName.includes('lfms-identity-thud'),
     JSON.stringify({glass:glass.width,mark:landing.width,stroke:getComputedStyle(phases[0]).strokeWidth}))

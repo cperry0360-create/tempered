@@ -281,38 +281,9 @@
   .today--fuel-style .today-daily-log__more {width:calc(100% + 22px);margin-inline:-11px}
 }
 
-/* LFMS background: now shared across all four Duo sections.
-   The outer gray app shell, blank canvas below shorter content, and Duo rail
-   are all one continuous blue-black surface while Today is displayed. The
-   desktop/phone layouts and all other tabs retain their existing styling. */
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) {
-  background:var(--food-v2-deep);
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) body {
-  background:var(--food-v2-deep);
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
-  min-height:100dvh;
-  background:
-    radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
-    linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) .app__body,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) .app__body > .today--fuel-style {
-  background:transparent;
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar {
-  background:rgba(4,17,30,.89);
-  border-left:1px solid rgba(92,157,212,.22);
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tab[data-active="true"] {
-  background:rgba(53,157,243,.18);
-  box-shadow:inset 3px 0 0 var(--food-v2-blue);
-  color:var(--food-v2-text);
-}
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) .status-bar-cover {
-  background:var(--lfms-today-status);
-}
+/* The original Today canvas was promoted to a single fixed Duo background
+   in lfms-finish.css. This screen must not repaint the app, rail or status
+   area when it becomes the active tab. */
 
 /* Today's recovery readout uses the same LFMS navy + blue system as the
    rest of the tab. Readiness labels and reasoning stay untouched; the color

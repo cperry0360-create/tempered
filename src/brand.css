@@ -13,9 +13,10 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* Cinematic LFMS splash. Use the approved transparent logo vectors twice,
-   clipped into their white and red wordmark rows. The two rows fly in from
-   opposite edges before the existing symbol lands with a brief glass crack. */
+/* LFMS triple-impact glass splash (0.66.52).
+   Preserve BOTH approved wordmark entrance animations. The emblem drops
+   from just above its resting position, lands three times (strong/medium/
+   gentle), leaving fixed, neutral spiderweb hairlines on the glass surface. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
   display:grid;place-items:center;
@@ -38,14 +39,23 @@
   align-items:center;justify-content:center;min-width:0;
   width:min(100%,540px);
   transform:translateY(-1vh);
-  animation:lfms-impact-shake 330ms linear 1520ms both;
+}
+/* This stage is stationary: the logo bounces INSIDE it, but the screen
+   fractures remain anchored to the glass where the first hit occurred. */
+.lfms-launch__mark-stage {
+  position:relative;z-index:1;isolation:isolate;
+  display:grid;place-items:center;
+  width:clamp(172px,46vw,300px);
+  max-width:100%;
 }
 .lfms-launch__mark {
-  display:block;width:clamp(172px,46vw,300px);height:auto;
+  position:relative;z-index:1;
+  display:block;width:100%;height:auto;
   max-height:min(25vh,180px);object-fit:contain;
   filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
-  transform-origin:50% 85%;
-  animation:lfms-mark-enter 980ms cubic-bezier(.18,.8,.2,1) 930ms both;
+  transform-origin:50% 84%;
+  will-change:transform;
+  animation:lfms-mark-smash 1690ms linear 710ms both;
 }
 .lfms-launch__rule {
   display:block;width:min(172px,47vw);height:2px;
@@ -80,29 +90,60 @@
   text-align:center;white-space:nowrap;
   animation:lfms-tagline-enter 650ms ease-out 2360ms both;
 }
-/* Impact is strictly visual: transient highlights, not a persistent
-   damaged-screen texture. Keep their centers around the symbol above type. */
+/* The contact light is localized to the emblem and neutral (never red).
+   No comic explosion, colored rays, or synthetic circular shockwave. */
 .lfms-launch__impact-flash {
-  position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
-  background:radial-gradient(ellipse 30% 25% at 50% 40%,rgba(246,250,255,.50),rgba(240,55,37,.12) 30%,transparent 79%);
-  animation:lfms-impact-flash 590ms ease-out 1510ms both;
+  position:absolute;left:50%;top:50%;
+  z-index:2;width:170%;height:210%;
+  transform:translate(-50%,-50%);
+  opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse 32% 24% at 50% 50%,
+    rgba(247,250,253,.32) 0%,
+    rgba(221,231,239,.09) 37%,
+    transparent 84%);
+  animation:lfms-glass-contact 1690ms linear 710ms both;
 }
-.lfms-launch__shockwave {
-  position:absolute;z-index:2;left:50%;top:41%;
-  width:min(57vw,460px);aspect-ratio:1;border-radius:50%;
-  border:2px solid rgba(246,250,255,.7);
-  box-shadow:0 0 22px rgba(240,55,37,.30),inset 0 0 25px rgba(246,250,255,.15);
-  transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;
-  animation:lfms-shockwave 620ms cubic-bezier(.12,.7,.28,1) 1520ms both;
-}
+/* Genuine screen-style fracture: uneven spokes, irregular partial rings,
+   branching fissures and refractive shadow. Never derived from logo color.
+   The crack plane is OVER the logo and does not travel with its rebounds. */
 .lfms-launch__cracks {
-  position:absolute;inset:0;z-index:3;width:100%;height:100%;
-  color:rgba(246,250,255,.80);opacity:0;pointer-events:none;
-  stroke-width:1.4;
-  filter:drop-shadow(0 0 3px rgba(220,244,255,.42));
-  animation:lfms-crack-flash 780ms ease-out 1550ms both;
+  position:absolute;left:50%;top:50%;z-index:3;
+  width:min(550px,190%);height:auto;aspect-ratio:600 / 460;
+  transform:translate(-50%,-50%);
+  overflow:visible;pointer-events:none;
+  color:rgba(232,240,247,.82);
+  filter:drop-shadow(1px 1px 0 rgba(0,0,0,.66))
+         drop-shadow(-.4px -.4px .65px rgba(251,253,255,.25));
 }
-.lfms-launch__crack-glint {stroke:var(--lfms-launch-red);stroke-width:1.9;opacity:.75}
+.lfms-launch__glass-phase {
+  opacity:0;
+  stroke-width:1.35;
+  vector-effect:non-scaling-stroke;
+}
+.lfms-launch__glass-phase--first {
+  animation:lfms-glass-fade 2270ms ease-out 1369ms both;
+}
+.lfms-launch__glass-phase--second {
+  stroke-width:1.08;
+  animation:lfms-glass-fade 1875ms ease-out 1749ms both;
+}
+.lfms-launch__glass-phase--third {
+  stroke-width:.94;
+  animation:lfms-glass-fade 1480ms ease-out 2130ms both;
+}
+.lfms-launch__glass-phase path {
+  stroke-dasharray:900;
+  stroke-dashoffset:900;
+}
+.lfms-launch__glass-phase--first path {
+  animation:lfms-glass-fracture 235ms cubic-bezier(.1,.68,.24,1) 1369ms both;
+}
+.lfms-launch__glass-phase--second path {
+  animation:lfms-glass-fracture 205ms cubic-bezier(.1,.68,.24,1) 1749ms both;
+}
+.lfms-launch__glass-phase--third path {
+  animation:lfms-glass-fracture 145ms cubic-bezier(.1,.68,.24,1) 2130ms both;
+}
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
 @keyframes lfms-wordmark-enter-left {
   0% {opacity:0;transform:translateX(-110vw) skewX(-14deg);filter:blur(9px)}
@@ -116,36 +157,45 @@
   85% {transform:translateX(1%) skewX(0)}
   100% {opacity:1;transform:translateX(0);filter:blur(0)}
 }
-@keyframes lfms-mark-enter {
-  0% {opacity:0;transform:perspective(650px) translateY(-87vh) rotate(-11deg) scale(1.58);filter:blur(11px)}
-  52% {opacity:1;filter:blur(1px)}
-  64% {opacity:1;transform:perspective(650px) translateY(6px) rotate(1deg) scale(1.13);filter:blur(0)}
-  78% {transform:translateY(-12px) rotate(-1deg) scale(.96)}
-  91% {transform:translateY(3px) scale(1.015)}
-  100% {opacity:1;transform:translateY(0) rotate(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
+/* Three controlled landings: large compression at 39%, smaller at
+   61.5%, tiny final contact at 84%. The logo never starts off-screen. */
+@keyframes lfms-mark-smash {
+  0%   {opacity:0;transform:translateY(-136px) rotate(-7deg) scale(1.08);
+        filter:blur(6px);animation-timing-function:cubic-bezier(.20,.52,.28,1)}
+  10%  {opacity:1;filter:blur(1px)}
+  28%  {transform:translateY(-67px) rotate(-2.5deg) scale(1.025);
+        filter:blur(0);animation-timing-function:cubic-bezier(.72,.07,.91,.59)}
+  39%  {transform:translateY(6px) rotate(.4deg) scaleX(1.075) scaleY(.89);
+        animation-timing-function:cubic-bezier(.19,.68,.32,1)}
+  48%  {transform:translateY(-29px) rotate(-1deg) scale(.97);
+        animation-timing-function:cubic-bezier(.65,.08,.88,.62)}
+  61.5% {transform:translateY(4px) rotate(.15deg) scaleX(1.047) scaleY(.956);
+        animation-timing-function:cubic-bezier(.22,.7,.3,1)}
+  70%  {transform:translateY(-12px) scale(.989);
+        animation-timing-function:cubic-bezier(.71,.02,.89,.66)}
+  84%  {transform:translateY(2px) scaleX(1.02) scaleY(.984);
+        animation-timing-function:cubic-bezier(.3,.73,.35,1)}
+  91%  {transform:translateY(-3px) scale(.998)}
+  100% {opacity:1;transform:translateY(0) rotate(0) scale(1);
+        filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
 }
-@keyframes lfms-impact-shake {
-  0%,100% {transform:translateY(-1vh) translateX(0)}
-  15% {transform:translateY(calc(-1vh + 4px)) translateX(-5px)}
-  35% {transform:translateY(calc(-1vh - 3px)) translateX(4px)}
-  55% {transform:translateY(calc(-1vh + 2px)) translateX(-2px)}
-  80% {transform:translateY(-1vh) translateX(1px)}
+@keyframes lfms-glass-contact {
+  0%,36%,42%,59%,65%,82%,86%,100% {opacity:0}
+  39% {opacity:.58}
+  61.5% {opacity:.26}
+  84% {opacity:.14}
 }
-@keyframes lfms-impact-flash {
-  0%,100% {opacity:0}
-  13% {opacity:.65}
-  45% {opacity:.22}
+@keyframes lfms-glass-fracture {
+  from {stroke-dashoffset:900}
+  to {stroke-dashoffset:0}
 }
-@keyframes lfms-shockwave {
-  0% {opacity:0;transform:translate(-50%,-50%) scale(.16)}
-  15% {opacity:.8}
-  100% {opacity:0;transform:translate(-50%,-50%) scale(2.65)}
-}
-@keyframes lfms-crack-flash {
-  0%,100% {opacity:0}
-  13% {opacity:.70}
-  42% {opacity:.56}
-  83% {opacity:.08}
+@keyframes lfms-glass-fade {
+  0% {opacity:0}
+  4% {opacity:.88}
+  16% {opacity:.71}
+  48% {opacity:.53}
+  77% {opacity:.29}
+  100% {opacity:0}
 }
 @keyframes lfms-rule-enter {
   from {opacity:0;transform:scaleX(0)}
@@ -162,7 +212,8 @@
   100% {opacity:.65;transform:scale(1)}
 }
 @media(max-height:580px) {
-  .lfms-launch__mark {width:min(31vw,170px);max-height:26vh}
+  .lfms-launch__mark-stage {width:min(31vw,170px)}
+  .lfms-launch__mark {max-height:26vh}
   .lfms-launch__rule {margin:5px 0 9px}
   .lfms-launch__wordmark-stage {max-height:17vh}
   .lfms-launch__tagline {margin-top:12px}
@@ -173,7 +224,8 @@
   .lfms-launch__rule,.lfms-launch__wordmark,.lfms-launch__tagline {
     animation:none;
   }
-  .lfms-launch__impact-flash,.lfms-launch__shockwave,.lfms-launch__cracks {
+  .lfms-launch__mark {transform:none;filter:none}
+  .lfms-launch__impact-flash,.lfms-launch__cracks {
     display:none;animation:none;
   }
 }

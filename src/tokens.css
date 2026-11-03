@@ -44,6 +44,9 @@
   --lfms-today-canvas-start: #0B2540;
   --lfms-today-canvas-end: #04101E;
   --lfms-today-status: #102C49;
+  /* The adjacent Duo system/status rail is a nearly flat navy (#081422 in
+     the provided screenshot). Feather the app canvas INTO that tone. */
+  --lfms-duo-status-backdrop: #081422;
   --lfms-launch-deep: #050505;
   --lfms-launch-mid: #101820;
   --lfms-launch-text: #F7F7F7;

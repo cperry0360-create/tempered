@@ -201,7 +201,7 @@ check(label + ' content is padded clear of the floating icons',
       check(label + ' Train top bar matches Today charcoal and accent control',
         w.getComputedStyle(q('.train-calculator-bar')).backgroundColor==='rgb(16, 24, 32)'
         && w.getComputedStyle(q('.train-calculator-bar')).backgroundImage==='none'
-        && w.getComputedStyle(q('.train-calculator-bar .plate-calculator-link')).backgroundColor==='rgb(16, 42, 67)')
+        && w.getComputedStyle(q('.train-calculator-bar .plate-calculator-link')).backgroundImage.includes('linear-gradient'))
             if (wide) check(label + ' Train stacks cards independently', r('.train-r4__sessions') && r('.train-r4__routines') && close(r('.train-r4__sessions').top, r('.train-r4__program').top) && close(r('.train-r4__routines').top, r('.train-r4__sessions').bottom + 16))
       check(label + ' active plan is explicitly identified', Boolean(q('[data-active-program="true"]')))
       const planRow = q('[data-preview-day]')

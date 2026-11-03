@@ -523,13 +523,15 @@ html[data-layout="duo"] #app.app .app__body > :is(
   .screen--session,.screen--cardio,.mobility-screen
 ) { background:transparent; }
 
-/* Top-row controls echo Today's square gear: same raised dark surface,
+/* Only DIRECT top-row controls echo Today's square gear; nested shortcuts
+   must keep their shared Fuel-style frosted glass material.
+   Same raised dark surface,
    hairline edge and blue-tinted text/icon. Do not restyle the shortcut
    pills below Fuel/Train headers, their current active states or body CTAs. */
 html[data-layout="duo"] #app.app :is(
   .train2__heading,.train-r4__subheader,.food-v2__topline,
   .progress-header,.sessionbar--r3,.cardio-r5__header,.mobility-screen__head
-) :is(button,.plate-calculator-link,.progress-range),
+) > :is(button,.plate-calculator-link,.progress-range),
 html[data-layout="duo"] :is(
   .weekly-recap__header,.plate-calculator__header,
   .fn2__sheet-head,.session-art-viewer__bar

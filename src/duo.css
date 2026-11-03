@@ -57,7 +57,6 @@ html[data-layout="duo"] {
   --duo-rail-width: calc(var(--duo-nav-width) + var(--duo-inset-right));
   --duo-gutter: clamp(12px, 2vw, 20px);
 }
-html[data-layout="duo"] .status-bar-cover { background: var(--bg); }
 html[data-layout="duo"] .app__body {
   box-sizing: border-box;
   width: calc(100% - var(--duo-rail-width));

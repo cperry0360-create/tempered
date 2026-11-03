@@ -52,6 +52,11 @@ test('bottom red/white/blue land before the VERTICAL bar, then top red/white/blu
   }
   const bottoms=['bottom-red','bottom-white','bottom-blue'].map(delay)
   const tops=['top-red','top-white','top-blue'].map(delay)
+  // Leave the central knurled handle exposed, not covered by giant discs.
+  for(const [which,top] of [
+    ['bottom-red','78%'],['bottom-white','71%'],['bottom-blue','64%'],
+    ['top-red','25%'],['top-white','18%'],['top-blue','11%'],
+  ])assert.ok(css.includes('lfms-launch__plate--'+which+' {top:'+top),which)
   assert.deepEqual(bottoms,[1330,1640,1950])
   assert.deepEqual(tops,[3070,3370,3670])
   assert.match(css,/animation:lfms-barbell-drop 620ms cubic-bezier\(\.18,\.75,\.26,1\) 2390ms both/)

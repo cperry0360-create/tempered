@@ -702,25 +702,54 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 
 
-/* LFMS Duo restoration: Today's original background was the approved look.
-   Undo 0.66.39's HTML-root gradient. Paint Today's exact navy gradient on
-   the BODY again for ALL Duo tabs; the right rail and app screens must never
-   paint separate vertical slabs. Preserve the capsule's glass artwork. */
+/* LFMS Duo fixed backdrop (0.66.41).
+   The original Today gradient is the artwork reference. Its colors remain
+   IDENTICAL to the approved Today view, but the backdrop must not be tied to
+   the app/screen height or to an iOS body background-attachment repainter.
+   One fixed body layer covers the entire viewport, under the fixed right nav,
+   before, during and after the splash. No tab-dependent background layers. */
+
+/* Keep the native first-paint fallback stable while the splash mounts/exits.
+   The old splash CSS changed html/body from nearly black to navy mid-fade. */
 html[data-layout="duo"],
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) {
-  background:var(--food-v2-deep);
-}
+html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])),
 html[data-layout="duo"] body,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) body {
+html[data-layout="duo"]:has(.lfms-launch:not([data-closing="true"])) body {
+  background:var(--food-v2-deep);
+  background-image:none;
+}
+
+/* Fixed canvas instead of background-attachment:fixed on body, which can
+   composite separately from a translucent position:fixed rail in iOS Safari. */
+html[data-layout="duo"] body::before {
+  content:"";
+  display:block;
+  position:fixed;
+  inset:-1px;
+  z-index:0;
+  width:auto;
+  height:auto;
+  opacity:1;
+  filter:none;
+  transform:none;
+  transform-origin:center;
   background:
     radial-gradient(ellipse 78% 46% at 40% 0%,rgba(22,67,107,.70) 0%,rgba(11,40,69,.37) 48%,transparent 88%),
     linear-gradient(155deg,var(--lfms-today-canvas-start) 0%,var(--food-v2-deep) 55%,var(--lfms-today-canvas-end) 100%);
-  background-attachment:fixed,fixed;
+  background-size:100% 100%,100% 100%;
   background-repeat:no-repeat;
-  background-size:cover;
+  pointer-events:none;
 }
+
+/* App, scroll frame and main screens are clear, including the reserved
+   right-side gap. The capsule stays a separate frosted-glass element. */
 html[data-layout="duo"] #app.app,
-html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app,
+html[data-layout="duo"]:has(.app__body > .today--fuel-style) #app.app {
+  position:relative;
+  z-index:1;
+  min-height:100dvh;
+  background:transparent;
+}
 html[data-layout="duo"] #app.app .app__body,
 html[data-layout="duo"] .app__body:has(> :is(.screen--settings,.program-builder,.screen--summary,.screen--session,.setup,.screen--cardio)) {
   background:transparent;
@@ -738,8 +767,7 @@ html[data-layout="duo"] #app.app .tabbar {
   -webkit-backdrop-filter:none;
   backdrop-filter:none;
 }
-/* The full-height right navigation is genuinely clear. Only its contained
-   capsule is glass; no separator pseudo-element may span the sidebar. */
+/* Never add a full-height pseudo-element to the navigation gutter. */
 html[data-layout="duo"] #app.app .tabbar::before,
 html[data-layout="duo"] #app.app .tabbar::after {
   content:none;

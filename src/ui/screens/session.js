@@ -77,19 +77,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let halfFold = false
   let halfFoldIndex = 0
   let focusStageIndex = 0
+  let artViewer = null
 
-  // Anchor the rest dock to the actual right-hand logging column.
-  function positionRestDock() {
-    const bar=document.querySelector('[data-session-rest-overlay]')
-    if(!bar || document.documentElement.dataset.layout !== 'duo' || halfFold ||
-       !window.matchMedia('(min-width:740px)').matches) return
-    const column=root.querySelector('.session-r5__log')?.getBoundingClientRect()
-    if(!column || column.width<=0) return
-    bar.style.setProperty('--session-rest-left',Math.round(column.left)+'px')
-    bar.style.setProperty('--session-rest-width',Math.round(column.width)+'px')
-  }
+  // Rest is a real dock row inside the unfolded Duo exercise column.
+  const isInlineRestDock = () => document.documentElement.dataset.layout === 'duo'
+    && !halfFold && window.matchMedia('(min-width:740px) and (orientation:landscape)').matches
   function syncHalfFoldViewport() {
-    positionRestDock()
     if (!halfFold) return
     const viewport = window.visualViewport
     const visibleBottom = viewport ? viewport.height + viewport.offsetTop : window.innerHeight
@@ -193,6 +186,27 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   document.addEventListener('visibilitychange', checkpointWhenHidden)
   window.addEventListener('pagehide', checkpointOnPageHide)
 
+  // Outside taps close the menu without replacing the tapped set input.
+  function dismissExerciseMenu() {
+    if (!openPanel?.endsWith(':menu')) return false
+    openPanel = null
+    root.querySelectorAll('.exercise-menu').forEach(node=>node.remove())
+    root.querySelectorAll('.exercise-menu__trigger[aria-expanded="true"]').forEach(
+      node=>node.setAttribute('aria-expanded','false'))
+    persistDraft()
+    return true
+  }
+  const onOutsideMenuPointer=(event)=>{
+    if(!root.isConnected || !openPanel?.endsWith(':menu'))return
+    if(!event.target.closest?.('.exercise-menu-wrap'))dismissExerciseMenu()
+  }
+  const onSessionKeydown=(event)=>{
+    if(event.key!=='Escape'||!root.isConnected)return
+    if(artViewer){closeExerciseArt();event.preventDefault();return}
+    if(dismissExerciseMenu())event.preventDefault()
+  }
+  document.addEventListener('pointerdown',onOutsideMenuPointer,true)
+  document.addEventListener('keydown',onSessionKeydown)
   const panelKey = (entry, name) => `${entry.exercise.id}:${name}`
   const isOpen = (entry, name) => openPanel === panelKey(entry, name)
   function togglePanel(entry, name) {
@@ -1050,10 +1064,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
   }
 
-  function restBar() {
+  function restBar({inline=false}={}) {
     if (!rest) return null
     const remaining = Math.max(0, (Number(rest.endsAt) - timeSource.now()) / 1000)
-    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true', sessionOverlay: 'true' } }, [
+    return el('div.session-restbar', { dataset: { restBar: 'true', sessionRestOverlay: 'true', ...(inline?{inlineRest:'true'}:{sessionOverlay:'true'}) } }, [
       el('div.session-restbar__progress', {}, [
         el('i', {
           dataset: { restProgress: 'true' },
@@ -1141,6 +1155,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     root.dataset.halfFold = String(halfFold)
     root.dataset.timerPaused = String(timerPaused)
     root.dataset.restActive = String(Boolean(rest))
+    const inlineRestDock=isInlineRestDock()
     const selectedEntry = plan[halfFoldIndex]
     replace(root, [
       el('header.sessionbar.sessionbar--r3', {}, [
@@ -1203,16 +1218,14 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             ...plan.map(exerciseCard),
             // Cardio has its own screen; the live lifting view stays focused on sets.
             (!duoLayout || plan.length===0 || addingMovement) && movementPicker(),
+            inlineRestDock && rest && restBar({inline:true}),
           ]),
         ]),
       ]),
 
     ])
     clearBodyOverlays()
-    if (rest) {
-      document.body.append(restBar())
-      positionRestDock()
-    }
+    if (rest && !inlineRestDock) document.body.append(restBar())
     const sheet = confirmingFinish ? finishSheet() : confirmingDiscard ? discardSheet() : null
     if (sheet) document.body.append(sheet)
     syncHalfFoldViewport()
@@ -1471,6 +1484,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       window.visualViewport?.removeEventListener('resize', syncHalfFoldViewport)
       window.visualViewport?.removeEventListener('scroll', syncHalfFoldViewport)
       window.removeEventListener('resize', syncHalfFoldViewport)
+      document.removeEventListener('pointerdown',onOutsideMenuPointer,true)
+      document.removeEventListener('keydown',onSessionKeydown)
       clearBodyOverlays()
     },
   }

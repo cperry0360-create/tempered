@@ -172,6 +172,14 @@ function percent(value, target) {
   return Math.min(100, Math.max(0, Math.round((value / target) * 100)))
 }
 
+/** Calendar-day glyphs are derived from actual completed session counts.
+ * Non-completed days through today show the resting sleeper. Upcoming days
+ * remain unmarked, rather than being falsely labeled missed workouts. */
+export function workoutDayGlyph(dayKey, todayKey, hasCompletedWorkout) {
+  if(dayKey > todayKey)return null
+  return hasCompletedWorkout ? 'nav-train' : 'rest-bed'
+}
+
 function estimateSessionMinutes(day) {
   const exercises = day?.exercises ?? []
   const sets = exercises.reduce((sum, exercise) => sum + (Number(exercise.sets) || 0), 0)
@@ -199,6 +207,7 @@ export function createTodayScreen({
   let quickPresets = {}
   let trainingStats = { minutes: 0, workingSets: 0, exercises: 0, sessions: 0 }
   let weekTraining = []
+  let completedWorkoutDates = new Set()
   let profile = { id: 'profile' }
   let dayLogs = []
   let openActivityId = null
@@ -914,16 +923,18 @@ export function createTodayScreen({
       el('div.today-week__days', { 'aria-label': 'Completed workouts this week' },
         weekTraining.map((item) => {
           const date = parseDate(item.date)
-          const trained = number(item.stats.sessions) > 0
+          const glyph = workoutDayGlyph(item.date, realToday, completedWorkoutDates.has(item.date))
+          const trained = glyph === 'nav-train'
           const isToday = item.date === realToday
           const selected = item.date === selectedDate
           const future = item.date > realToday
           return el('button.today-week__day', {
             type: 'button',
             dataset: { trained: String(trained), today: String(isToday),
-              selected: String(selected), future: String(future) },
+              selected: String(selected), future: String(future),
+              icon: glyph === 'nav-train' ? 'workout' : glyph === 'rest-bed' ? 'rest' : 'upcoming' },
             'aria-pressed': String(selected),
-            'aria-label': `${dateLabel(item.date)}: ${trained ? 'workout completed' : 'no completed workout recorded'}`,
+            'aria-label': `${dateLabel(item.date)}: ${trained ? 'workout completed' : future ? 'upcoming day' : 'no completed workout recorded, rest day'}`,
             onclick: () => selectDate(item.date),
           }, [
             el('span.today-week__dow', {
@@ -931,7 +942,7 @@ export function createTodayScreen({
             }),
             el('strong.today-week__num', { text: String(date.getDate()) }),
             el('span.today-week__workout-icon', { 'aria-hidden': 'true' },
-              trained ? [icon('nav-train')] : []),
+              glyph ? [icon(glyph)] : []),
           ])
         })),
       el('div.week-dashboard__content', {}, [
@@ -1367,7 +1378,9 @@ export function createTodayScreen({
   async function reload() {
     await disclosureSave
     const dates = weekDates(selectedDate)
-    ;[todayProgram, weekProgram, day, weekActivities, quickPresets, trainingStats, profile, dayLogs, weekTraining, plannerRows] = await Promise.all([
+    const [programToday, programWeek, loadedDay, loadedActivities, loadedPresets,
+      loadedTraining, loadedProfile, loadedLogs, loadedWeekTraining, loadedPlanner,
+      savedSessions] = await Promise.all([
       isRealToday() ? workout.todayTasks() : Promise.resolve(null),
       isRealToday() ? workout.weekStatus() : Promise.resolve(null),
       daily.forDate(selectedDate),
@@ -1378,7 +1391,18 @@ export function createTodayScreen({
       storage.getAll('dayLogs'),
       Promise.all(dates.map(async (date) => ({ date, stats: await workout.dayTrainingStats(date) }))),
       planner ? planner.list(selectedDate) : Promise.resolve([]),
+      storage.getAll('sessions'),
     ])
+    ;[todayProgram, weekProgram, day, weekActivities, quickPresets, trainingStats,
+      profile, dayLogs, weekTraining, plannerRows] = [
+      programToday, programWeek, loadedDay, loadedActivities, loadedPresets,
+      loadedTraining, loadedProfile, loadedLogs, loadedWeekTraining, loadedPlanner,
+    ]
+    // A few logged sets do not turn the rest icon into a workout icon.
+    // Only a session with a saved finish timestamp counts as completed.
+    completedWorkoutDates = new Set(savedSessions
+      .filter(session => session.endedAt && typeof session.date === 'string')
+      .map(session => session.date))
     workoutDisclosure = profile.todayWorkoutDisclosure ?? null
     render()
   }

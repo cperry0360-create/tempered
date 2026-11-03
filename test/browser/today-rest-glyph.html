@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LFMS Today rest and workout day glyph acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/nutrition-today.css">
+<link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/refined-ui.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+</head>
+<body><div id="app" class="app"></div>
+<script type="module">
+import {bootstrapHarness} from './harness.js'
+import {createMemoryStorage} from '../../src/adapters/storage/memory-storage.js'
+import {fixedClock} from '../../src/adapters/clock/clock.js'
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const days=()=>[...document.querySelectorAll('.today-week__day')]
+try {
+  const storage=createMemoryStorage()
+  await storage.open()
+  await storage.put('profile',{id:'profile',name:'Week icon fixture',setupComplete:true})
+  await storage.put('sessions',{id:'completed',date:'2026-11-03',
+    startedAt:'2026-11-03T09:00:00.000Z',endedAt:'2026-11-03T09:35:00.000Z',durationMinutes:35})
+  await storage.put('setLogs',{id:'finished-set',sessionId:'completed',exerciseId:'bench_press',
+    weight:95,reps:8,isWarmup:false,completedAt:'2026-11-03T09:10:00.000Z'})
+  // Sets have been logged, but the Wednesday session has not finished.
+  await storage.put('sessions',{id:'partial',date:'2026-11-04',
+    startedAt:'2026-11-04T09:00:00.000Z',endedAt:null})
+  await storage.put('setLogs',{id:'partial-set',sessionId:'partial',exerciseId:'bench_press',
+    weight:95,reps:8,isWarmup:false,completedAt:'2026-11-04T09:10:00.000Z'})
+  const clock=fixedClock(new Date(2026,10,5,12))
+  const app=await bootstrapHarness({storage,clock,mount:document.getElementById('app'),initialTab:'today'})
+  await app.app.show('today')
+  const week=days()
+  check('one week with seven day markers renders',week.length===7)
+  const monday=week[0],tuesday=week[1],wednesday=week[2],thursday=week[3],friday=week[4]
+  check('past no-workout day shows white sleeping figure',
+    monday?.dataset.icon==='rest'&&Boolean(monday.querySelector('svg')))
+  check('finished Tuesday workout shows original muscle figure',
+    tuesday?.dataset.icon==='workout'&&Boolean(tuesday.querySelector('svg[data-custom-rail-glyph="nav-train"]')))
+  check('Wednesday partial set does NOT falsely show muscle icon',
+    wednesday?.dataset.icon==='rest'&&Boolean(wednesday.querySelector('svg')))
+  check('current day without completed workout shows sleepy figure',
+    thursday?.dataset.icon==='rest'&&Boolean(thursday.querySelector('svg')))
+  check('future days are not labeled as missed workouts',
+    friday?.dataset.icon==='upcoming'&&friday.querySelector('.today-week__workout-icon')?.childElementCount===0)
+  const restIcon=wednesday?.querySelector('.today-week__workout-icon svg')
+  const path=restIcon?.querySelector('path')
+  const style=restIcon?getComputedStyle(restIcon):null
+  check('rest vector is solid white, not blue or a colored tile',
+    Boolean(path&&path.getAttribute('style')?.includes('fill:currentColor;stroke:none')&&
+      style?.filter==='none' && style.color!=='rgba(0, 0, 0, 0)'),
+    JSON.stringify({fill:path?.getAttribute('style'),color:style?.color,filter:style?.filter}))
+  check('day markers have accessible descriptions',week.every(d=>d.getAttribute('aria-label')))
+}catch(e){check('today rest glyph harness ran',false,e.stack??String(e))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'today-rest-glyph',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

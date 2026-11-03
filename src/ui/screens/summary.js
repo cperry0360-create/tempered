@@ -26,7 +26,7 @@ function brand() {
   ])
 }
 function metric(value, label) {
-  return el('div.finish-v2__metric', {}, [
+  return el('div.stat.finish-v2__metric', {}, [
     el('strong.finish-v2__metric-value', { text: value }),
     el('span.finish-v2__metric-label', { text: label }),
   ])
@@ -104,7 +104,7 @@ export function createSummaryScreen({ onDone }) {
               el('h2.block__title', { text: 'Your session' }),
               el('span', { text: 'WORK RECORDED' }),
             ]),
-            el('div.finish-v2__stats', {}, [
+            el('div.stats.finish-v2__stats', {}, [
               metric(duration(summary.durationMinutes), 'TRAINING TIME'),
               metric(String(summary.setsCompleted), 'WORKING SETS'),
               metric(String(summary.totalReps ?? 0), 'REPS'),

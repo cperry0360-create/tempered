@@ -24,10 +24,10 @@ try{
   const bar=launch.querySelector('.lfms-launch__bar-art')
   const barbell=launch.querySelector('.lfms-launch__barbell-stage')
   const skin=launch.querySelector('.lfms-launch__skin')
-  const flap=launch.querySelector('.lfms-launch__peel-flap')
+  const curl=launch.querySelector('.lfms-launch__lift-tab')
   const identity=launch.querySelector('.lfms-launch__identity')
   const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
-  const tear=launch.querySelector('.lfms-launch__tear-edge')
+  const looseArtifacts=launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap')
   const rule=launch.querySelector('.lfms-launch__rule')
   const tagline=launch.querySelector('.lfms-launch__tagline')
   await Promise.all([mark,word,strong].map(img=>img.decode()))
@@ -42,7 +42,7 @@ try{
     getComputedStyle(mark).animationName==='lfms-logo-settle'
     &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__glass-phase,.lfms-launch__shockwave,.lfms-launch__impact-flash'))
   check('flat cartoon OLYMPIC BARBELL and six independent bumper SVGs exist',
-    Boolean(barbell&&bar&&tear&&skin&&flap)&&plates.length===6
+    Boolean(barbell&&bar&&curl&&skin)&&!looseArtifacts&&plates.length===6
     &&plates.every(p=>!!p.querySelector('ellipse')&&!p.querySelector('linearGradient'))
     &&!!bar.querySelector('rect'))
   check('each side loads RED WHITE BLUE in order',
@@ -56,14 +56,15 @@ try{
     }))
   check('bottom three fall BEFORE the bar, then upper three fall after',
     plates.map(p=>getComputedStyle(p).animationDelay).join('|')===
-      '1.33s|1.64s|1.95s|3.07s|3.37s|3.67s'
+      '1.25s|1.51s|1.77s|2.88s|3.16s|3.44s'
     &&getComputedStyle(bar).animationName==='lfms-barbell-drop'
-    &&getComputedStyle(bar).animationDelay==='2.39s'
+    &&getComputedStyle(bar).animationDelay==='2.28s'
     &&plates.every(p=>getComputedStyle(p).animationName==='lfms-bumper-stack'))
-  check('screen scrape is a jagged zip, not an explosion',
-    Boolean(tear)&&!!tear.querySelector('path')
+  check('no stray white wire strokes or detached floating triangular flap',
+    Boolean(curl)&&!looseArtifacts
     &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__shockwave')
-    &&Boolean(rule&&tagline))
+    &&Boolean(rule&&tagline)
+    &&getComputedStyle(curl).opacity==='0')
   await sleep(1870)
   const m=mark.getBoundingClientRect(),w=word.getBoundingClientRect(),t=tagline.getBoundingClientRect()
   check('emblem stays above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
@@ -100,8 +101,7 @@ try{
   check('right-corner tear clips SKIN only while barbell stays visible',
     getComputedStyle(skin).animationName==='lfms-corner-peel'
     &&getComputedStyle(barbell).animationName==='lfms-loaded-scrape'
-    &&getComputedStyle(tear).animationName==='lfms-tear-follow'
-    &&getComputedStyle(flap).animationName==='lfms-peel-flap'
+    &&getComputedStyle(curl).animationName==='lfms-curl-release'
     &&getComputedStyle(launch).clipPath==='none'
     &&getComputedStyle(skin).clipPath!=='none'
     &&getComputedStyle(launch).backgroundColor==='rgba(0, 0, 0, 0)')
@@ -116,8 +116,12 @@ try{
     clipBefore!==clipDuring&&clipDuring.includes('polygon')
     &&barDuring.top>barBefore.top+25
     &&xDuring>=xBefore)
-  check('actual barbell is outside the clipped skin, so it cannot vanish in the tear',
-    !skin.contains(barbell)&&!skin.contains(tear)&&!skin.contains(flap))
+  check('corner peel stays free of white tear wires and shadow artifacts',
+    !launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap')
+    &&getComputedStyle(launch.querySelector('.lfms-launch__barbell-stage'),'::before').content==='none')
+  check('loaded barbell and tiny attached fold stay outside the cut-away skin',
+    !skin.contains(barbell)&&!skin.contains(curl)
+    &&barbell.contains(curl)&&!looseArtifacts)
   check('no browser exceptions',errors.length===0,errors.join(' | '))
 }catch(error){check('splash harness finishes',false,error.stack??String(error))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})

@@ -7,6 +7,7 @@ import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
+import { LFMS_HANDOFF_MS, runBrandHandoff } from './ui/lfms-launch-handoff.js'
 
 
 // Keep the supplied LFMS launch artwork visible on fast devices, too.
@@ -14,8 +15,8 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 // it BEFORE the staged kinetic lettering gives way to Today.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-// Kinetic LFMS: mountain -> edge swoops -> red power signature -> brand lock -> hold -> Today.
-const LFMS_KINETIC_SPLASH_MIN_MS = 3850
+// IGNITION: enormous mountain -> original edge swoops -> red impact -> real Today header.
+const LFMS_KINETIC_SPLASH_MIN_MS = 3350
 const LFMS_KINETIC_SPLASH_EXIT_MS = 340
 let splashDone = null
 function dismissSplash() {
@@ -36,9 +37,20 @@ function dismissSplash() {
         finish()
         return
       }
-      // Crisp fade over the fully rendered Today app; no equipment or tearing.
-      launch.dataset.closing = 'true'
-      setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
+      // Preferred exit: fly the supplied mountain to Today's ACTUAL header
+      // mark while the already-rendered dashboard is revealed beneath it.
+      // If a setup/error screen has no header, use the safe original fade.
+      runBrandHandoff(launch, { duration: LFMS_HANDOFF_MS })
+        .then(used => {
+          if (used) { finish(); return }
+          launch.dataset.closing = 'true'
+          setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
+        })
+        .catch(error => {
+          console.warn('[lfms] logo handoff fallback', error)
+          launch.dataset.closing = 'true'
+          setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
+        })
     }, remaining)
   })
   return splashDone

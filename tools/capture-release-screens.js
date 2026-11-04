@@ -31,6 +31,7 @@ const VIEWS = [
   'today-expanded', 'today-day-details', 'mobility', 'nutrition-meal', 'health-review',
   'health-import', 'nutrition-log', 'session-discard', 'session-finish-rest', 'session-half-fold', 'session-half-fold-rest',
 ]
+const SPLASH_FRAMES = process.argv.includes('--splash-frames')
 const DUO_MODE = process.argv.includes('--duo')
 const VIEWPORTS = DUO_MODE
   ? [
@@ -206,6 +207,48 @@ let cdp = null
 try {
   cdp = await connectCdp(await devToolsPage(debugPort, () => browserError.slice(-1600), 30000))
   await cdp.send('Page.enable')
+  if (SPLASH_FRAMES) {
+    // Inspect the motion itself, not merely the completed dashboard.
+    const sequences = [
+      { label:'iphone-compact',width:390,height:844,
+        route:'/test/browser/lfms-splash.html' },
+      { label:'duo-cover',width:466,height:678,
+        route:'/test/browser/lfms-dumbbell-peel.html' },
+    ]
+    const stamps = [360,1100,2340,3140,3630]
+    for (const viewport of sequences) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: viewport.width,height: viewport.height,deviceScaleFactor:1,
+        mobile:true,screenWidth:viewport.width,screenHeight:viewport.height,
+      })
+      await cdp.send('Emulation.setEmulatedMedia', {
+        features:[{name:'prefers-color-scheme',value:'dark'}],
+      })
+      await cdp.send('Page.navigate',{
+        url:`http://127.0.0.1:${port}${viewport.route}`,
+      })
+      let elapsed=0
+      for (const ms of stamps) {
+        await delay(Math.max(0,ms-elapsed))
+        elapsed=ms
+        const filename=`${viewport.label}-ignition-${String(ms).padStart(4,'0')}.png`
+        const destination=join(output,filename)
+        const screenshot=await cdp.send('Page.captureScreenshot',{
+          format:'png',fromSurface:true,captureBeyondViewport:false,
+        })
+        if (!screenshot.data) throw new Error(`Missing screenshot at ${ms} ms`)
+        await writeFile(destination,Buffer.from(screenshot.data,'base64'))
+        const img=await pngDimensions(destination)
+        if(img.width!==viewport.width||img.height!==viewport.height||img.bytes<3000)
+          throw new Error(`Invalid animation capture ${filename}`)
+        manifest.push({view:'ignition',millis:ms,viewport:viewport.label,...img,file:filename})
+        console.log(`IGNITION FRAME ${filename}`)
+      }
+    }
+    await writeFile(join(output,'splash-manifest.json'),
+      JSON.stringify({generatedAt:new Date().toISOString(),captures:manifest},null,2)+'\n')
+    console.log(`Captured ${manifest.length} cinematic ignition frames`)
+  } else {
   for (const viewport of VIEWPORTS) {
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: viewport.width,
@@ -245,7 +288,8 @@ try {
     }
     }
   }
-  await writeFile(join(output, 'manifest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), captures: manifest }, null, 2)}\n`)
+  }
+  if (!SPLASH_FRAMES) await writeFile(join(output, 'manifest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), captures: manifest }, null, 2)}\n`)
   console.log(`\nRESULT: ${manifest.length} release visuals captured in ${output}`)
 } finally {
   cdp?.close()

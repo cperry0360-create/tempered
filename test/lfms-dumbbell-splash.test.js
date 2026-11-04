@@ -9,10 +9,10 @@ test('real LFMS SVGs remain single-source for the kinetic mark and split wordmar
   for(const side of ['less','strong']) assert.match(h,new RegExp('lfms-launch__wordmark--'+side+'" src="\\./branding/lfms/logo-wordmark.svg"'))
   assert.match(c,/clip-path:inset\(0 0 43% 0\)/)
   assert.match(c,/clip-path:inset\(57% 0 0 0\)/)
-  assert.match(c,/animation:lfms-kinetic-mark 860ms/)
-  assert.match(c,/animation:lfms-kinetic-less 1260ms/)
+  assert.match(c,/animation:lfms-kinetic-mark 930ms/)
+  assert.match(c,/animation:lfms-kinetic-less 1290ms/)
   assert.match(c,/animation:lfms-kinetic-strong 1310ms/)
-  assert.match(c,/animation:lfms-kinetic-sweep 920ms/)
+  assert.match(c,/animation:lfms-ignition-cut 590ms/)
 })
 
 test('all old screen-tear, weights and plate geometry are out of the app and styles',()=>{
@@ -22,8 +22,10 @@ test('all old screen-tear, weights and plate geometry are out of the app and sty
     assert.doesNotMatch(c,pattern)
   }
   assert.doesNotMatch(js,/runCinematicReveal|LFMS_REVEAL_START_MS/)
-  assert.match(h,/class="lfms-launch__sweep"/)
-  assert.match(c,/@keyframes lfms-kinetic-sweep/)
+  assert.doesNotMatch(h,/lfms-launch__sweep/)
+  assert.match(h,/lfms-launch__cinema--top/)
+  assert.match(h,/lfms-launch__cinema--bottom/)
+  assert.match(c,/@keyframes lfms-ignition-cut/)
 })
 
 test('the cinematic gradient belongs to the splash, not the root or Duo rail',()=>{
@@ -38,13 +40,13 @@ test('the cinematic gradient belongs to the splash, not the root or Duo rail',()
 
 test('brief kinetic hold, clean exit, reduced-motion and offline cache version',()=>{
   const c=read('src/brand.css'),main=read('src/main.js'),sw=read('sw.js')
-  assert.match(main,/LFMS_KINETIC_SPLASH_MIN_MS = 3850/)
+  assert.match(main,/LFMS_KINETIC_SPLASH_MIN_MS = 3350/)
   assert.match(main,/LFMS_KINETIC_SPLASH_EXIT_MS = 340/)
   assert.match(main,/setTimeout\(dismissSplash, 8000\)/)
   assert.ok(main.indexOf('await dismissSplash()')<main.indexOf('await installWeeklyRecapRuntime(context)'))
   assert.match(c,/@media\(prefers-reduced-motion:reduce\)/)
-  assert.match(c,/\.lfms-launch__sweep,\.lfms-launch__flash \{display:none\}/)
+  assert.match(c,/\.lfms-launch__flash,\.lfms-launch__cinema \{display:none\}/)
   assert.match(c,/\.lfms-launch__wordmark-stage,\.lfms-launch__lockline \{animation:none;transform:none;opacity:1\}/)
   for(const asset of ['./branding/lfms/logo-mark.svg','./branding/lfms/logo-wordmark.svg']) assert.ok(sw.includes("'"+asset+"'"))
-  assert.match(read('src/version.js'),/0\.66\.64 \(170\)/)
+  assert.match(read('src/version.js'),/0\.66\.65 \(171\)/)
 })

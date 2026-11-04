@@ -1,3 +1,10 @@
+## 2026-11-04 — LFMS IGNITION launch, 0.66.65 (171)
+
+- Replaces the prior underwhelming double-red-beam splash with a more cinematic opening. The real mountain art zooms down from an oversized cinematic frame while top/bottom letterbox bars retract. The actual brand wordmark halves retain their original, long opposite-edge swoops; a single sharp crimson diagonal lands on their impact instead of two overlapping flashes.
+- The breakthrough is a REAL **shared-element handoff**: after the wordmark and tagline settle (~3.35s minimum), a temporary clone of the existing mountain flies from the splash into the precise position of the **real Today header mountain** while the already-rendered Today dashboard is exposed. No fake dashboard, torn canvas, weight, screenshot overlay, or invented graphics; fallback is a short crossfade when a real header isn't available.
+- Keep the gradient fully isolated inside the splash; do not change Duo solid charcoal app root or right status gutter. Preserve reduced-motion immediate reveal, eight-second boot failsafe, weekly recap after launch, and cached offline support. New animation module is service-worker precached. No workout, food, supplement, profile, or local IndexedDB data changes.
+- Phone and Duo browser harnesses now verify actual clone travel and landing on the ready app header, original wordmark motion, viewport coverage, and safe fallback. Rollback: `backup/lfms-before-ignition-20261104`. GitHub Pages only.
+
 ## 2026-11-04 — LFMS red brand-lock splash + Creatine / Other supplements habits, 0.66.64 (170)
 
 - Strengthened Kinetic LFMS beyond a long idle logo hold: the genuine mark and full-viewport opposite-side word swoops remain, but a contained broad red speed-beam now passes *behind* the brand, the lettering makes a precise lock-in movement, and a thin red underbar resolves and stays for the hero moment. Gradient shifts slightly, without restoring a physical weight, tear, or weird white wire. The finished dashboard is already rendered; splash duration roughly 4.2s including the exit. Supports reduced motion and full-width Duo.

@@ -13,389 +13,150 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS barbell splash polish (0.66.58).
-   The approved wordmark & red/white/blue stacks are preserved. A single
-   cohesive animation loads the long center-knurled silver bar, tips it, then
-   peels a clean top-right corner of the splash onto the ALREADY-READY app.
-   No loose wire outlines, detached triangles or phantom ground shadows. */
+/* LFMS 0.66.62 — Kinetic LFMS.
+   Use the ACTUAL brand SVGs, not a second set of invented letters.
+   The splash gradient is deliberately contained within the overlay: the
+   installed Duo's OS-owned right edge and app root remain solid charcoal. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
-  display:grid;place-items:center;
-  padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));
-  overflow:hidden;isolation:isolate;
-  background:transparent;
-  color:var(--lfms-launch-text);
+  /* 100vw includes the scrollbar-reserved strip on Duo; inset alone did not. */
+  width:100vw;height:100dvh;box-sizing:border-box;
+  display:grid;place-items:center;overflow:hidden;isolation:isolate;
   pointer-events:none;user-select:none;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));
+  background:var(--lfms-duo-canvas);color:var(--lfms-launch-text);
   opacity:1;visibility:visible;
-  transition:opacity 480ms ease,visibility 0s linear 480ms;
+  transition:opacity 230ms ease-out,visibility 0s linear 230ms;
 }
-/* The fullscreen skin is the ONLY clipped layer. Its parent overlay remains
-   transparent during the pull, keeping the long barbell visible as it falls.
-   The app underneath has already completed bootstrap when this begins. */
 .lfms-launch__skin {
-  position:absolute;inset:-2px;z-index:1;
-  display:grid;place-items:center;overflow:hidden;
-  background:radial-gradient(ellipse 95% 60% at 50% 42%,
-    var(--lfms-launch-mid) 0%,var(--lfms-launch-deep) 88%);
-  box-shadow:0 0 0 3px var(--lfms-launch-deep);
-  clip-path:inset(0);
+  position:absolute;inset:-2px;display:grid;place-items:center;
+  overflow:hidden;z-index:1;
+  background:
+    radial-gradient(ellipse 70% 48% at 52% 44%,
+      color-mix(in srgb,var(--lfms-today-canvas-start) 78%,var(--lfms-duo-canvas)) 0%,
+      transparent 96%),
+    linear-gradient(147deg,var(--lfms-duo-canvas) 0%,
+      color-mix(in srgb,var(--lfms-launch-deep) 65%,var(--lfms-duo-canvas)) 53%,
+      var(--lfms-duo-canvas) 100%);
 }
+/* The root stays untouched in Duo. A centered gradient is allowed on
+   this TEMPORARY overlay while the app continues painting one solid canvas. */
 html[data-layout="duo"] .lfms-launch__skin {
-  background:var(--lfms-duo-canvas);
-  box-shadow:none;
+  background:
+    radial-gradient(ellipse 67% 48% at 49% 44%,
+      color-mix(in srgb,var(--lfms-today-canvas-start) 75%,var(--lfms-duo-canvas)),
+      transparent 96%),
+    linear-gradient(147deg,var(--lfms-duo-canvas),
+      color-mix(in srgb,var(--lfms-launch-deep) 55%,var(--lfms-duo-canvas)) 50%,
+      var(--lfms-duo-canvas));
 }
-@keyframes lfms-brand-clear-side {
-  0% {transform:translateY(-1vh) translateX(0) scale(1)}
-  100% {
-    transform:translateY(-1vh)
-      translateX(calc(-1 * var(--lfms-brand-offset)))
-      scale(var(--lfms-brand-scale))
-  }
+.lfms-launch__skin::before {
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(132deg,transparent 12%,rgba(168,199,228,.055) 12.25%,transparent 12.5%,transparent 82%,rgba(168,199,228,.04) 82.25%,transparent 82.5%);
 }
-.lfms-launch__glow {
-  position:absolute;inset:12% -18%;z-index:-1;
-  background:radial-gradient(ellipse 43% 31% at 50% 44%,var(--lfms-launch-mid),transparent 100%);
-  opacity:.75;
-  animation:lfms-glow 3500ms ease-in-out both;
+/* One controlled streak passes BEHIND the typography, never dragging it. */
+.lfms-launch__sweep {
+  position:absolute;top:48%;left:0;z-index:1;
+  width:min(82vw,760px);height:2px;border-radius:999px;
+  background:linear-gradient(90deg,transparent 0%,var(--lfms-launch-red) 36%,
+    color-mix(in srgb,var(--lfms-launch-red) 77%,white) 52%,
+    var(--lfms-launch-red) 65%,transparent 100%);
+  box-shadow:0 0 8px rgba(240,55,37,.38);
+  opacity:0;transform-origin:center;
+  animation:lfms-kinetic-sweep 690ms cubic-bezier(.37,.05,.24,1) 560ms both;
+  pointer-events:none;
 }
 .lfms-launch__identity {
-  position:relative;z-index:1;
+  position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-width:0;width:min(100%,540px);
+  width:min(100%,540px);min-width:0;
   transform:translateY(-1vh);
-  --lfms-brand-scale:.82;
-  --lfms-brand-offset:clamp(32px,7vw,65px);
-  animation:lfms-brand-clear-side 520ms ease-out 1150ms both;
 }
 .lfms-launch__mark-stage {
-  position:relative;z-index:1;
-  display:grid;place-items:center;
-  width:clamp(172px,46vw,300px);
-  max-width:100%;
+  width:clamp(172px,48vw,300px);max-width:100%;
+  display:grid;place-items:center;flex:none;
 }
 .lfms-launch__mark {
-  display:block;position:relative;z-index:1;
-  width:100%;height:auto;max-height:min(25vh,180px);
-  object-fit:contain;
-  filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
-  transform-origin:50% 80%;
-  animation:lfms-logo-settle 630ms cubic-bezier(.18,.92,.27,1) 740ms both;
+  display:block;width:100%;height:auto;max-height:min(25vh,180px);
+  object-fit:contain;transform-origin:50% 65%;
+  filter:drop-shadow(0 10px 21px rgba(0,0,0,.25));
+  animation:lfms-kinetic-mark 580ms cubic-bezier(.16,1,.28,1) 150ms both;
 }
 .lfms-launch__rule {
-  display:block;width:min(172px,47vw);height:2px;flex:none;
-  margin:8px 0 18px;border-radius:99px;
+  display:block;width:min(168px,46vw);height:2px;flex:none;
+  margin:10px 0 16px;border-radius:999px;
   background:linear-gradient(90deg,transparent,var(--lfms-launch-red),transparent);
   transform-origin:50% 50%;
-  animation:lfms-rule-enter 430ms ease-out 1910ms both;
+  animation:lfms-kinetic-rule 300ms ease-out 900ms both;
 }
 .lfms-launch__wordmark-stage {
-  position:relative;width:min(88vw,520px);
-  aspect-ratio:1125 / 235;max-height:min(18vh,112px);
-  flex:none;
+  position:relative;width:min(88vw,520px);max-height:min(18vh,112px);
+  aspect-ratio:1125 / 235;flex:none;
 }
 .lfms-launch__wordmark {
-  position:absolute;inset:0;display:block;width:100%;height:100%;
-  object-fit:contain;pointer-events:none;
+  position:absolute;inset:0;display:block;
+  width:100%;height:100%;object-fit:contain;pointer-events:none;
+  will-change:transform,opacity;
 }
 .lfms-launch__wordmark--less {
   clip-path:inset(0 0 43% 0);
-  animation:lfms-wordmark-enter-left 1080ms cubic-bezier(.17,.91,.29,1) 80ms both;
+  animation:lfms-kinetic-less 550ms cubic-bezier(.17,.88,.26,1) 430ms both;
 }
 .lfms-launch__wordmark--strong {
   clip-path:inset(57% 0 0 0);
-  animation:lfms-wordmark-enter-right 1130ms cubic-bezier(.17,.91,.29,1) 190ms both;
+  animation:lfms-kinetic-strong 570ms cubic-bezier(.17,.88,.26,1) 530ms both;
 }
 .lfms-launch__tagline {
-  margin:21px 0 0;padding:0;
-  color:var(--lfms-launch-text);opacity:.82;
-  font-size:clamp(10px,2.5vw,12px);font-weight:650;
-  line-height:1.45;letter-spacing:.2em;
+  margin:19px 0 0;padding:0;
+  color:var(--lfms-launch-text);font-size:clamp(10px,2.5vw,12px);
+  font-weight:650;line-height:1.45;letter-spacing:.2em;
   text-align:center;white-space:nowrap;
-  animation:lfms-tagline-enter 650ms ease-out 2360ms both;
-}
-
-/* Flat bumper plates with bold outlines match the LFMS mountain logo,
-   not a photorealistic metallic render. Six independent, editable SVG parts
-   make the loading order real; each has a landing and small rebound. */
-.lfms-launch__barbell-stage {
-  position:absolute;z-index:6;
-  /* True viewport-anchored right-side lane. Do NOT use percentages of the
-     padded overlay containing block (they shifted the equipment off-screen).
-     85vw leaves the status lane free on Duo; compact phones use a fixed edge
-     inset so the last letter and the barbell stay visually separate. */
-  --lfms-barbell-home-x:85vw;
-  left:var(--lfms-barbell-home-x);top:50%;
-  width:clamp(63px,min(14vw,21vh),108px);
-  aspect-ratio:160 / 700;
-  transform:translate(-50%,-50%);
-  transform-origin:50% 78%;
-  filter:drop-shadow(5px 9px 3px rgba(0,0,0,.26));
-  pointer-events:none;
-}
-.lfms-launch__barbell {position:relative;width:100%;height:100%}
-.lfms-launch__bar-art {
-  position:absolute;inset:0;z-index:2;
-  display:block;width:100%;height:100%;
-  opacity:0;will-change:transform;
-  animation:lfms-barbell-drop 530ms linear 2280ms both;
-}
-.lfms-launch__plate {
-  position:absolute;left:0;z-index:3;
-  display:block;width:100%;height:8.857%;
-  overflow:visible;opacity:0;
-  transform-origin:50% 55%;
-  will-change:transform;
-  filter:drop-shadow(0 3px 1px rgba(0,0,0,.22));
-}
-/* BOTTOM load, floor upward: RED then WHITE then BLUE. */
-.lfms-launch__plate--bottom-red {top:87%;animation:lfms-bumper-stack 395ms linear 1250ms both}
-.lfms-launch__plate--bottom-white {top:81%;animation:lfms-bumper-stack 395ms linear 1510ms both}
-.lfms-launch__plate--bottom-blue {top:75%;animation:lfms-bumper-stack 395ms linear 1770ms both}
-/* TOP load, from grip outward: RED then WHITE then BLUE.
-   The blue plate ends outermost on each side of the completed barbell. */
-.lfms-launch__plate--top-red {top:20%;animation:lfms-bumper-stack 380ms linear 2880ms both}
-.lfms-launch__plate--top-white {top:14%;animation:lfms-bumper-stack 380ms linear 3160ms both}
-.lfms-launch__plate--top-blue {top:8%;animation:lfms-bumper-stack 380ms linear 3440ms both}
-/* The old white zigzag path and separately animated paper triangle made
-   stray "wire" lines. The only fold now belongs to the barbell, so it cannot
-   float elsewhere on the screen as the real splash skin is clipped away. */
-.lfms-launch__lift-tab {
-  position:absolute;z-index:7;left:54%;top:-1.5%;
-  width:clamp(20px,4.2vw,37px);
-  height:clamp(21px,5vw,44px);
-  background:linear-gradient(146deg,rgba(245,250,254,.26) 0%,
-     rgba(128,160,181,.16) 45%,rgba(12,24,35,.64) 100%);
-  clip-path:polygon(0 0,100% 0,94% 96%,16% 39%);
-  transform-origin:0% 0%;
-  transform:rotate(8deg) scale(0);
-  border-radius:2px 3px 8px 10px;
-  opacity:0;pointer-events:none;
-}
-.lfms-launch[data-revealing="true"] .lfms-launch__skin {
-  animation:lfms-corner-peel 1020ms cubic-bezier(.22,.45,.29,.96) both;
-  will-change:clip-path;
-}
-.lfms-launch[data-revealing="true"] .lfms-launch__barbell-stage {
-  animation:lfms-loaded-scrape 1020ms cubic-bezier(.22,.45,.29,.96) both;
-  filter:drop-shadow(0 8px 7px rgba(0,0,0,.36));
-}
-.lfms-launch[data-revealing="true"] .lfms-launch__lift-tab {
-  animation:lfms-curl-release 1020ms linear both;
+  animation:lfms-kinetic-tagline 380ms ease-out 1130ms both;
 }
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
-@keyframes lfms-wordmark-enter-left {
-  0% {opacity:0;transform:translateX(-110vw) skewX(-14deg);filter:blur(9px)}
-  65% {opacity:1;transform:translateX(3.5%) skewX(2deg);filter:blur(0)}
-  84% {transform:translateX(-1%) skewX(0)}
-  100% {opacity:1;transform:translateX(0);filter:blur(0)}
-}
-@keyframes lfms-wordmark-enter-right {
-  0% {opacity:0;transform:translateX(110vw) skewX(14deg);filter:blur(9px)}
-  66% {opacity:1;transform:translateX(-3.5%) skewX(-2deg);filter:blur(0)}
-  85% {transform:translateX(1%) skewX(0)}
-  100% {opacity:1;transform:translateX(0);filter:blur(0)}
-}
-@keyframes lfms-logo-settle {
-  0% {opacity:0;transform:translateY(-110px) rotate(-4deg) scale(1.06);filter:blur(6px)}
-  71% {opacity:1;transform:translateY(5px) rotate(.45deg) scale(.985);filter:blur(0)}
-  86% {transform:translateY(-4px) rotate(-.2deg) scale(1.012)}
-  100% {opacity:1;transform:translateY(0) rotate(0) scale(1);filter:drop-shadow(0 12px 26px rgba(0,0,0,.25))}
-}
-/* Bar arrives AFTER three grounded plates. It stands straight. */
-/* Impacts are aligned and weighty: rapid gravity-like fall, one damped
-   rebound and full stop. No spinning plates or jittering flight path. */
-@keyframes lfms-barbell-drop {
-  0% {opacity:0;transform:translateY(-72vh);animation-timing-function:cubic-bezier(.5,.04,.9,.57)}
-  13% {opacity:1}
-  70% {opacity:1;transform:translateY(7px) scaleY(.975);animation-timing-function:cubic-bezier(.13,.82,.27,1)}
-  87% {transform:translateY(-4px) scaleY(1.012);animation-timing-function:ease-in}
+@keyframes lfms-kinetic-mark {
+  0% {opacity:0;transform:translateY(16px) scale(.90)}
+  61% {opacity:1}
   100% {opacity:1;transform:translateY(0) scale(1)}
 }
-@keyframes lfms-bumper-stack {
-  0% {opacity:0;transform:translateY(-69vh) scale(.985);animation-timing-function:cubic-bezier(.46,.02,.9,.59)}
-  15% {opacity:1}
-  72% {opacity:1;transform:translateY(6px) scaleY(.93);animation-timing-function:cubic-bezier(.16,.79,.28,1)}
-  87% {transform:translateY(-3px) scaleY(1.02);animation-timing-function:ease-in}
-  100% {opacity:1;transform:translateY(0) scale(1)}
+@keyframes lfms-kinetic-less {
+  from {opacity:0;transform:translateX(-30px)}
+  to {opacity:1;transform:translateX(0)}
 }
-/* A low-contrast, gently irregular cut. No independently moving bright
-   strokes and no oversized dark flap over the revealed app. Nine matched
-   vertices interpolate cleanly in iOS Safari. */
-@keyframes lfms-corner-peel {
-  0%,17% {
-    clip-path:polygon(0% 0%,100% 0%,100% 15%,100% 30%,100% 46%,100% 63%,100% 79%,100% 100%,0% 100%);
-  }
-  32% {
-    clip-path:polygon(0% 0%,88% 0%,90% 15%,94% 30%,97% 46%,100% 63%,100% 79%,100% 100%,0% 100%);
-  }
-  52% {
-    clip-path:polygon(0% 0%,64% 0%,70% 15%,76% 30%,82% 46%,90% 63%,95% 79%,100% 100%,0% 100%);
-  }
-  74% {
-    clip-path:polygon(0% 0%,26% 0%,31% 15%,39% 30%,47% 46%,55% 63%,67% 79%,78% 100%,0% 100%);
-  }
-  91% {
-    clip-path:polygon(0% 0%,0% 0%,0% 15%,0% 30%,8% 46%,14% 63%,23% 79%,34% 100%,0% 100%);
-  }
-  100% {
-    clip-path:polygon(0% 0%,0% 0%,0% 15%,0% 30%,0% 46%,0% 63%,0% 79%,0% 100%,0% 100%);
-  }
+@keyframes lfms-kinetic-strong {
+  from {opacity:0;transform:translateX(30px)}
+  to {opacity:1;transform:translateX(0)}
 }
-/* The center never traverses the wordmark: the loaded bar rolls clockwise,
-   catches the upper-right fold, then drops off the BOTTOM-RIGHT together
-   with the departing skin. It stays unmasked as it falls. */
-@keyframes lfms-loaded-scrape {
-  0%  {left:var(--lfms-barbell-home-x);top:50%;transform:translate(-50%,-50%) rotate(0)}
-  17% {left:var(--lfms-barbell-home-x);top:50%;transform:translate(-50%,-50%) rotate(8deg)}
-  32% {left:88%;top:53%;transform:translate(-50%,-50%) rotate(37deg)}
-  52% {left:96%;top:72%;transform:translate(-50%,-50%) rotate(88deg)}
-  74% {left:117%;top:109%;transform:translate(-50%,-50%) rotate(130deg)}
-  91% {left:146%;top:139%;transform:translate(-50%,-50%) rotate(156deg)}
-  100%{left:161%;top:164%;transform:translate(-50%,-50%) rotate(170deg)}
+@keyframes lfms-kinetic-sweep {
+  0% {opacity:0;transform:translate3d(-100vw,19px,0) rotate(-11deg)}
+  18% {opacity:.85}
+  65% {opacity:1}
+  100% {opacity:0;transform:translate3d(135vw,-21px,0) rotate(-11deg)}
 }
-/* A very small folded lip, inseparable from the barbell's own coordinate
-   system. It briefly appears as the bar catches the page and disappears
-   before the device enters the app. */
-@keyframes lfms-curl-release {
-  0%,17% {opacity:0;transform:rotate(8deg) scale(0)}
-  28% {opacity:.48;transform:rotate(-4deg) scale(.87)}
-  48% {opacity:.32;transform:rotate(-16deg) scale(.7)}
-  74% {opacity:.13;transform:rotate(-24deg) scale(.36)}
-  100% {opacity:0;transform:rotate(-30deg) scale(0)}
-}
-@keyframes lfms-rule-enter {
-  from {opacity:0;transform:scaleX(0)}
+@keyframes lfms-kinetic-rule {
+  from {opacity:0;transform:scaleX(.08)}
   to {opacity:1;transform:scaleX(1)}
 }
-@keyframes lfms-tagline-enter {
-  from {opacity:0;transform:translateY(10px)}
+@keyframes lfms-kinetic-tagline {
+  from {opacity:0;transform:translateY(6px)}
   to {opacity:.82;transform:translateY(0)}
 }
-@keyframes lfms-glow {
-  0% {opacity:.2;transform:scale(.8)}
-  62% {opacity:.9;transform:scale(1.15)}
-  100% {opacity:.65;transform:scale(1)}
-}
 @media(max-height:580px) {
-  .lfms-launch__mark-stage {width:min(31vw,170px)}
-  .lfms-launch__mark {max-height:26vh}
-  .lfms-launch__rule {margin:5px 0 9px}
-  .lfms-launch__wordmark-stage {max-height:17vh}
-  .lfms-launch__tagline {margin-top:12px}
-  .lfms-launch__barbell-stage {width:clamp(62px,min(13vw,20vh),95px)}
+  .lfms-launch__mark-stage {width:clamp(110px,22vw,190px)}
+  .lfms-launch__mark {max-height:27vh}
+  .lfms-launch__wordmark-stage {width:min(57vw,390px);max-height:24vh}
+  .lfms-launch__rule {margin:3px 0 7px}
+  .lfms-launch__tagline {margin-top:8px;font-size:9px}
 }
-@media(max-width:600px) {
-  .lfms-launch__identity {--lfms-brand-scale:.77;--lfms-brand-offset:72px}
-}
-@media(max-width:480px) {
-  .lfms-launch__identity {--lfms-brand-scale:.65;--lfms-brand-offset:43px}
-  .lfms-launch__barbell-stage {
-    --lfms-barbell-home-x:calc(100vw - 46px);
-    width:clamp(66px,min(19vw,18vh),78px)
-  }
+@media(max-width:360px) {
+  .lfms-launch__wordmark-stage {width:92vw}
+  .lfms-launch__tagline {font-size:9px;letter-spacing:.16em}
 }
 @media(prefers-reduced-motion:reduce) {
-  .lfms-launch {transition:none}
-  .lfms-launch__glow,.lfms-launch__identity,.lfms-launch__mark,
-  .lfms-launch__rule,.lfms-launch__wordmark,.lfms-launch__tagline,
-  .lfms-launch__bar-art,.lfms-launch__plate,.lfms-launch__barbell-stage {
-    animation:none;opacity:1;
-  }
-  .lfms-launch__identity {transform:translateY(-1vh) translateX(-23px) scale(.75)}
-  .lfms-launch__bar-art,.lfms-launch__plate {transform:none}
-  .lfms-launch__barbell-stage {transform:translate(-50%,-50%)}
-  .lfms-launch__lift-tab {display:none}
-  .lfms-launch[data-revealing="true"] .lfms-launch__skin {animation:none;clip-path:none}
-}
-/* The regular phone splash retains its original dark presentation.
-   The opt-in Duo paints ONE fixed viewport canvas underneath both the splash
-   and app; its overlay has no separate background or edge mask. Do not switch
-   HTML/BODY paint when the Duo splash opens or closes. */
-html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])),
-html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])) body {
-  background:var(--lfms-launch-deep);
-}
-html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])) .status-bar-cover {
-  background:var(--lfms-launch-deep);
-}
-.lfms-launch {
-  inset:-2px;width:auto;height:auto;min-width:calc(100% + 4px);
-  background:
-    linear-gradient(90deg,var(--lfms-launch-deep) 0%,transparent 16%,transparent 84%,var(--lfms-launch-deep) 100%),
-    radial-gradient(ellipse 80% 60% at 50% 42%,var(--lfms-launch-mid),var(--lfms-launch-deep) 90%);
-  box-shadow:0 0 0 3px var(--lfms-launch-deep);
-}
-/* The launch overlay itself must be transparent. Only the .skin owns
-   background pixels so its corner clip can expose the existing app. */
-.lfms-launch {
-  inset:0;width:100%;height:100%;min-width:0;
-  background:transparent;box-shadow:none;
-}
-html[data-layout="duo"] .lfms-launch {
-  background:none;box-shadow:none;
-}
-
-
-/* LFMS 0.66.59: V8 cinematic sequence. All plates form ONE loaded barbell.
-   No falling plate cascade, paper triangle, white zipper or doubled logo. */
-.lfms-launch__barbell-stage {
-  left:86vw;top:53%;
-  transform:translate(-50%,-50%);
-  animation:lfms-v8-loaded-fall 700ms linear 1060ms both;
-}
-.lfms-launch__bar-art,.lfms-launch__plate {animation:none;opacity:1;transform:none}
-.lfms-launch__rule {animation:lfms-rule-enter 430ms ease-out 650ms both}
-.lfms-launch__tagline {animation:lfms-tagline-enter 440ms ease-out 950ms both}
-.lfms-launch__lift-tab {display:none}
-.lfms-launch[data-revealing="true"] .lfms-launch__skin,
-.lfms-launch[data-revealing="true"] .lfms-launch__barbell-stage {animation:none}
-.lfms-launch__peel-strip {
-  position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;
-  opacity:0;transform-origin:0 0;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--lfms-duo-canvas) 90%,var(--food-v2-muted)) 0%,var(--lfms-duo-canvas) 25%,var(--lfms-launch-deep) 100%);
-  filter:drop-shadow(-4px 1px 5px rgba(0,0,0,.3));
-  will-change:clip-path,transform;
-}
-@keyframes lfms-v8-loaded-fall {
-  0% {opacity:0;transform:translate(-50%,calc(-50% - 78vh));animation-timing-function:cubic-bezier(.45,.07,.9,.6)}
-  9% {opacity:1}
-  83% {transform:translate(-50%,-50%);animation-timing-function:ease-out}
-  90% {transform:translate(-50%,calc(-50% + 3.5px))}
-  100% {opacity:1;transform:translate(-50%,-50%)}
-}
-@media(max-width:480px){.lfms-launch__barbell-stage {left:calc(100vw - 46px)}}
-@media(prefers-reduced-motion:reduce){
-  .lfms-launch__barbell-stage {animation:none;opacity:1;transform:translate(-50%,-50%)}
-  .lfms-launch__peel-strip {display:none}
-}
-
-
-/* LFMS splash reset (0.66.61). Temporary premium logo-only intro.
-   Keep the real approved LFMS mark, title and tagline, but remove all
-   failed barbell/plate/tear choreography from the visible experience. */
-.lfms-launch__barbell-stage,.lfms-launch__peel-strip,.lfms-launch__lift-tab {display:none}
-.lfms-launch__skin {animation:none;clip-path:inset(0)}
-.lfms-launch__glow {display:none}
-.lfms-launch__identity {
-  --lfms-brand-scale:1;--lfms-brand-offset:0px;
-  transform:translateY(-1vh);
-  animation:lfms-clean-brand-enter 560ms cubic-bezier(.2,.65,.2,1) both;
-}
-.lfms-launch__mark {
-  opacity:1;transform:none;animation:none;
-  filter:drop-shadow(0 7px 14px rgba(0,0,0,.20));
-}
-.lfms-launch__wordmark--less,.lfms-launch__wordmark--strong {
-  opacity:1;transform:none;filter:none;animation:none;
-}
-.lfms-launch__rule {animation:none;transform:none;opacity:1}
-.lfms-launch__tagline {animation:none;transform:none;opacity:.82}
-.lfms-launch[data-closing="true"] {opacity:0;visibility:hidden;transition:opacity 240ms ease-out,visibility 0s linear 240ms}
-@keyframes lfms-clean-brand-enter {
-  from {opacity:0;transform:translateY(calc(-1vh + 13px)) scale(.97)}
-  to {opacity:1;transform:translateY(-1vh) scale(1)}
-}
-@media(prefers-reduced-motion:reduce) {
-  .lfms-launch__identity {animation:none;opacity:1;transform:translateY(-1vh)}
-  .lfms-launch[data-closing="true"] {transition:none}
+  .lfms-launch,.lfms-launch__mark,.lfms-launch__wordmark,
+  .lfms-launch__rule,.lfms-launch__tagline {animation:none;transition:none}
+  .lfms-launch__sweep {display:none}
+  .lfms-launch__mark,.lfms-launch__wordmark,.lfms-launch__rule {opacity:1;transform:none}
+  .lfms-launch__tagline {opacity:.82;transform:none}
 }

@@ -1,3 +1,9 @@
+## 2026-11-04 — LFMS V8 cinematic splash + red rest figure, 0.66.59 (165)
+
+- Replaced the six separate splash plate drops with one rigid loaded Olympic barbell landing (1.06–1.76s) and a single V8 pull that reveals the already-rendered real Today dashboard (starts after bootstrap and at least 2.05s, duration 1.01s). The narrow skin fold shares the barbell's animation progress. No false black screen, white zipper, second logo, or oversized flying panel; preserve original split lettering and center grip. Reduced motion remains static.
+- Today weekly workout calendar's sleeping/rest figure glows Fuel Close Day red, using scoped icon CSS only; no rest/day classification changes, no habit/workout history edits, and no altered interaction.
+- GitHub Pages-only release; new reveal runtime precached in the offline PWA, existing data model untouched. Rollback branch: `backup/lfms-before-v8-red-rest-20261104`.
+
 ## 2026-11-01 — Food one-tap serving + clean glass rail, 0.66.13 (119)
 
 - Removed the permanent Food Library Log Cart; library takes available full width. + immediately opens a compact, scroll-locked one-meal serving picker with 0.25/0.5/0.75/1/1.5/2/3/4 presets and numeric custom 0.05–20. Calories and protein preview update before explicit save, which uses the existing canonical daily.addNutrition; no writes on cancel. Previously partially logged meals normalize back to per-serving values before repeating.

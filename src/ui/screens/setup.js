@@ -42,6 +42,11 @@ function defaultSchedule(activities, profile) {
       cadence: 'weekly', target: Math.max(1, Math.min(7, Number(raw.target) || 1)),
     }]
     if (raw?.cadence === 'off') return [activity.id, { cadence: 'off', target: 1 }]
+    // A new reminder is offered daily even to existing profiles whose legacy
+    // dailyActivityIds snapshot predates it. An explicit setting still wins.
+    if (['creatine', 'other_supplements'].includes(activity.id)) {
+      return [activity.id, { cadence: 'daily', target: 1 }]
+    }
     return [activity.id, legacy.has(activity.id)
       ? { cadence: 'daily', target: 1 }
       : { cadence: 'off', target: 1 }]

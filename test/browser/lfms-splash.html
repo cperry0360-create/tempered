@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS calm logo-only splash</title>
+<title>LFMS kinetic gradient launch acceptance</title>
 <link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css"></head><body>
 <div id="app" class="app">READY DASHBOARD</div>
 <script type="module">
@@ -16,29 +16,38 @@ try{
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
   const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
-  const logo=launch.querySelector('.lfms-launch__identity')
+  const sweep=launch.querySelector('.lfms-launch__sweep')
   const skin=launch.querySelector('.lfms-launch__skin')
-  const bar=launch.querySelector('.lfms-launch__barbell-stage')
+  const identity=launch.querySelector('.lfms-launch__identity')
   await Promise.all([mark,...words].map(x=>x.decode()))
-  check('original LFMS mountain and wordmark render',mark.naturalWidth>0&&words.every(x=>x.naturalWidth>0))
-  check('temporary intro is clean and quiet',getComputedStyle(logo).animationName==='lfms-clean-brand-enter'
-      &&getComputedStyle(mark).animationName==='none'
-      &&words.every(x=>getComputedStyle(x).animationName==='none'))
-  check('no equipment or tear animation can be seen',getComputedStyle(bar).display==='none'
-      &&getComputedStyle(launch.querySelector('.lfms-launch__lift-tab')).display==='none'
-      &&getComputedStyle(launch.querySelector('.lfms-launch__glow')).display==='none'
-      &&getComputedStyle(skin).clipPath.startsWith('inset('))
-  check('live dashboard is mounted below splash',document.getElementById('app').textContent.includes('READY DASHBOARD'))
-  await wait(750)
-  check('logo remains legible and inside the viewport',logo.getBoundingClientRect().height>70
-    &&logo.getBoundingClientRect().top>=-2
-    &&logo.getBoundingClientRect().bottom<=innerHeight+2)
+  check('same approved LFMS mark and both genuine wordmark halves load',mark.naturalWidth>0&&words.length===2&&words.every(x=>x.naturalWidth>0))
+  check('Kinetic layers animate INDEPENDENTLY with deliberate stagger',
+    getComputedStyle(mark).animationName==='lfms-kinetic-mark'
+    &&getComputedStyle(words[0]).animationName==='lfms-kinetic-less'
+    &&getComputedStyle(words[1]).animationName==='lfms-kinetic-strong'
+    &&getComputedStyle(words[0]).animationDelay==='0.43s'
+    &&getComputedStyle(words[1]).animationDelay==='0.53s')
+  check('one red streak, not an aura or extra animated clutter',
+    Boolean(sweep)&&getComputedStyle(sweep).animationName==='lfms-kinetic-sweep'
+    &&launch.querySelectorAll('.lfms-launch__sweep').length===1
+    &&!launch.querySelector('.lfms-launch__barbell-stage,.lfms-launch__lift-tab,.lfms-launch__plate,.lfms-launch__peel-strip'))
+  check('full-bleed dark-to-navy stage belongs to SKIN, not root',
+    getComputedStyle(skin).backgroundImage.includes('radial-gradient(')
+    &&getComputedStyle(skin).backgroundImage.includes('linear-gradient(')
+    &&getComputedStyle(launch).backgroundImage==='none')
+  await wait(1550)
+  const bounds=identity.getBoundingClientRect(),viewport=innerWidth
+  check('logo settled and fitting in viewport',bounds.left>=-3&&bounds.right<=viewport+3&&bounds.top>=-3&&bounds.bottom<=innerHeight+3,
+    JSON.stringify({x:bounds.left,right:bounds.right,top:bounds.top,bottom:bounds.bottom,viewport}))
+  check('bright LESS FAT and MORE STRONG are both visible before handoff',
+    words.every(x=>Number(getComputedStyle(x).opacity)>.99))
+  check('sweep finished before the app starts showing',Number(getComputedStyle(sweep).opacity)<.02)
   launch.dataset.closing='true'
-  await wait(300)
-  check('clean short fade completes and reveals app',getComputedStyle(launch).opacity==='0'
+  await wait(265)
+  check('fade reveals ready app without geometry tearing',Number(getComputedStyle(launch).opacity)<.02
     &&document.getElementById('app').textContent.includes('READY DASHBOARD'))
-  check('no browser errors',errors.length===0,errors.join(' | '))
+  check('no console errors',errors.length===0,errors.join(' | '))
   launch.remove()
-}catch(e){check('temporary splash harness finished',false,e.stack??String(e))}
+}catch(e){check('kinetic launch harness finished',false,e.stack??String(e))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(x=>x.ok),checks})})
 </script></body></html>

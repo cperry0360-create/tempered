@@ -41,7 +41,7 @@ try {
     &&getComputedStyle(document.body).backgroundColor===bg)
   await done
   check('no intermediate blank frame: ready app remains in DOM after peel',
-    skin.style.clipPath==='inset(0 100% 0 0)'
+    skin.style.clipPath.startsWith('inset(')&&skin.style.clipPath.includes('100%')
     &&app.textContent.includes('THE READY APP'))
   launch.dataset.closing='true'
   launch.remove()

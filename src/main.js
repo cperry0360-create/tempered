@@ -14,16 +14,16 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 // it BEFORE the loaded barbell pulls the splash away.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-// Temporary no-effects opening while a new LFMS splash direction is designed.
-const LFMS_SIMPLE_SPLASH_MIN_MS = 1600
-const LFMS_SIMPLE_SPLASH_EXIT_MS = 260
+// Kinetic LFMS: let the real wordmark/mark movement settle before revealing Today.
+const LFMS_KINETIC_SPLASH_MIN_MS = 1820
+const LFMS_KINETIC_SPLASH_EXIT_MS = 240
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
   // The real app is rendered before this short, straightforward crossfade.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const remaining = reduced ? 0 : Math.max(0, LFMS_SIMPLE_SPLASH_MIN_MS - (performance.now() - splashStarted))
+    const remaining = reduced ? 0 : Math.max(0, LFMS_KINETIC_SPLASH_MIN_MS - (performance.now() - splashStarted))
     setTimeout(() => {
       if (!launch) { resolve(); return }
       const finish = () => {
@@ -36,9 +36,9 @@ function dismissSplash() {
         finish()
         return
       }
-      // Only a clean logo fade. No equipment, paper tear or animated mask.
+      // Crisp fade over the fully rendered Today app; no equipment or tearing.
       launch.dataset.closing = 'true'
-      setTimeout(finish, LFMS_SIMPLE_SPLASH_EXIT_MS)
+      setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
     }, remaining)
   })
   return splashDone

@@ -1,39 +1,48 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-const read = path => readFileSync(new URL('../'+path,import.meta.url),'utf8')
+const read = p => readFileSync(new URL('../'+p,import.meta.url),'utf8')
 
-test('fallback uses the real LFMS brand assets and hides all weight effects',()=>{
-  const h=read('index.html'), c=read('src/brand.css')
-  for(const asset of ['logo-mark.svg','logo-wordmark.svg']) assert.ok(h.includes(asset))
-  assert.match(c,/\.lfms-launch__barbell-stage,\.lfms-launch__peel-strip,\.lfms-launch__lift-tab \{display:none\}/)
-  assert.match(c,/\.lfms-launch__glow \{display:none\}/)
-  assert.match(c,/\.lfms-launch__identity \{[\s\S]*?animation:lfms-clean-brand-enter 560ms/)
-  assert.match(c,/\.lfms-launch__wordmark--less,\.lfms-launch__wordmark--strong \{[\s\S]*?animation:none/)
-  assert.match(c,/\.lfms-launch__skin \{animation:none;clip-path:inset\(0\)\}/)
+test('real LFMS SVGs remain single-source for the kinetic mark and split wordmark',()=>{
+  const h=read('index.html'),c=read('src/brand.css')
+  assert.match(h,/class="lfms-launch__mark" src="\.\/branding\/lfms\/logo-mark\.svg"/)
+  for(const side of ['less','strong']) assert.match(h,new RegExp('lfms-launch__wordmark--'+side+'" src="\\./branding/lfms/logo-wordmark.svg"'))
+  assert.match(c,/clip-path:inset\(0 0 43% 0\)/)
+  assert.match(c,/clip-path:inset\(57% 0 0 0\)/)
+  assert.match(c,/animation:lfms-kinetic-mark 580ms/)
+  assert.match(c,/animation:lfms-kinetic-less 550ms/)
+  assert.match(c,/animation:lfms-kinetic-strong 570ms/)
+  assert.match(c,/animation:lfms-kinetic-sweep 690ms/)
 })
 
-test('no barbell or torn-page runtime is triggered on startup',()=>{
-  const js=read('src/main.js')
-  assert.doesNotMatch(js,/runCinematicReveal\(launch\)|LFMS_REVEAL_START_MS/)
-  assert.match(js,/LFMS_SIMPLE_SPLASH_MIN_MS = 1600/)
-  assert.match(js,/LFMS_SIMPLE_SPLASH_EXIT_MS = 260/)
-  assert.match(js,/launch\.dataset\.closing = 'true'/)
-  assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
-  assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'))
+test('all old screen-tear, weights and plate geometry are out of the app and styles',()=>{
+  const h=read('index.html'),c=read('src/brand.css'),js=read('src/main.js')
+  for(const pattern of [/lfms-launch__barbell-stage/,/lfms-launch__plate/,/lfms-launch__peel-strip/,/lfms-launch__lift-tab/,/lfms-launch__tear-edge/]){
+    assert.doesNotMatch(h,pattern)
+    assert.doesNotMatch(c,pattern)
+  }
+  assert.doesNotMatch(js,/runCinematicReveal|LFMS_REVEAL_START_MS/)
+  assert.match(h,/class="lfms-launch__sweep"/)
+  assert.match(c,/@keyframes lfms-kinetic-sweep/)
 })
 
-test('sleeping figure is vivid solid Food-button red without glow',()=>{
-  const c=read('src/today-next.css'),fuel=read('src/food-neon.css')
-  assert.match(fuel,/--neo-red:rgb\(255,57,78\)/)
-  assert.match(c,/today-week__day\[data-icon='rest'\] \.today-week__workout-icon \.icon \{[\s\S]*?color:rgb\(255,57,78\);stroke:none;filter:none;/)
-  assert.match(c,/today-week__workout-icon::before \{[\s\S]*?content:none;display:none;box-shadow:none;background:none;/)
-  assert.match(read('src/version.js'),/0\.66\.61 \(167\)/)
+test('the cinematic gradient belongs to the splash, not the root or Duo rail',()=>{
+  const c=read('src/brand.css'),f=read('src/lfms-finish.css'),tokens=read('src/tokens.css')
+  assert.match(c,/\.lfms-launch__skin \{[\s\S]*?radial-gradient\([\s\S]*?linear-gradient\(/)
+  assert.match(c,/html\[data-layout="duo"\] \.lfms-launch__skin \{[\s\S]*?radial-gradient\(/)
+  assert.match(c,/var\(--lfms-duo-canvas\)/)
+  assert.match(f,/html\[data-layout="duo"\] body\s*\{[^}]*background:var\(--lfms-duo-canvas\);[^}]*background-image:none;/)
+  assert.match(tokens,/--lfms-duo-canvas:\s*#101820/)
 })
 
-test('no motion is required and PWA still precaches real branding',()=>{
-  const c=read('src/brand.css'),sw=read('sw.js')
-  assert.match(c,/@media\(prefers-reduced-motion:reduce\) \{[\s\S]*?\.lfms-launch__identity \{animation:none;opacity:1/)
-  assert.match(sw,/\.\/branding\/lfms\/logo-mark\.svg/)
-  assert.match(sw,/\.\/branding\/lfms\/logo-wordmark\.svg/)
+test('brief kinetic hold, clean exit, reduced-motion and offline cache version',()=>{
+  const c=read('src/brand.css'),main=read('src/main.js'),sw=read('sw.js')
+  assert.match(main,/LFMS_KINETIC_SPLASH_MIN_MS = 1820/)
+  assert.match(main,/LFMS_KINETIC_SPLASH_EXIT_MS = 240/)
+  assert.match(main,/setTimeout\(dismissSplash, 8000\)/)
+  assert.ok(main.indexOf('await dismissSplash()')<main.indexOf('await installWeeklyRecapRuntime(context)'))
+  assert.match(c,/@media\(prefers-reduced-motion:reduce\)/)
+  assert.match(c,/\.lfms-launch__sweep \{display:none\}/)
+  for(const asset of ['./branding/lfms/logo-mark.svg','./branding/lfms/logo-wordmark.svg']) assert.ok(sw.includes("'"+asset+"'"))
+  assert.match(read('src/version.js'),/0\.66\.62 \(168\)/)
 })

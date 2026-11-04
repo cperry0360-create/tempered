@@ -1,52 +1,61 @@
 <!doctype html>
 <html lang="en" data-layout="duo"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS Duo kinetic gradient handoff</title>
-<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css">
-<link rel="stylesheet" href="../../src/lfms-finish.css"></head><body>
-<div id="app" class="app"><div class="app__body">THE READY APP</div></div>
+<title>LFMS IGNITION real header flight on Duo</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+<style>
+  #app .screen--today {position:relative;height:100vh}
+  #app .lfms-main-brand__mark {position:absolute;left:28px;top:26px;width:34px;height:28px;object-fit:contain}
+</style></head><body>
+<div id="app" class="app"><div class="app__body">
+<section class="screen--today">ACTUAL READY TODAY
+<img class="lfms-main-brand__mark" src="../../branding/lfms/logo-mark.svg" alt="">
+</section></div></div>
 <script type="module">
+import { runBrandHandoff } from '../../src/ui/lfms-launch-handoff.js'
 const checks=[]
 const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
-try{
+try {
   const parsed=new DOMParser().parseFromString(await fetch('/index.html').then(r=>r.text()),'text/html')
   const launch=document.importNode(parsed.querySelector('[data-lfms-launch]'),true)
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const app=document.getElementById('app'),skin=launch.querySelector('.lfms-launch__skin')
-  const background=getComputedStyle(document.body).backgroundColor
-  check('Duo hardware edge still matches charcoal BODY with NO gradient paint on root',
-    background==='rgb(16, 24, 32)'&&getComputedStyle(document.body).backgroundImage==='none')
-  const skinBackground=getComputedStyle(skin).backgroundImage
-  const skinBounds=skin.getBoundingClientRect()
-  check('Duo splash layer paints its own radial and linear gradients',
-    skinBackground.includes('radial-gradient(')&&skinBackground.includes('linear-gradient('),
-    skinBackground.slice(0,300))
-  check('gradient overlay spans the full viewport including both side edges',
-    skinBounds.left<=0&&skinBounds.right>=innerWidth,
-    JSON.stringify({left:skinBounds.left,right:skinBounds.right,width:innerWidth}))
-  check('real app is mounted but not shown before dismiss',
-    getComputedStyle(app).opacity==='0'&&getComputedStyle(app).visibility==='hidden'
-    &&app.textContent.includes('THE READY APP'))
-  check('no mechanics, barbell, tearing or paper edge',!launch.querySelector('.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
-  // Give both word swoops and the red brand-lock payoff time to land.
-  await wait(3230)
-  check('Duo retains full readable lockup until handoff',
-    [...launch.querySelectorAll('.lfms-launch__wordmark')].every(node=>Number(getComputedStyle(node).opacity)>.98)
-    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__sweep')).opacity)<.02
-    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__lockline')).opacity)>.98)
-  launch.dataset.closing='true'
-  await wait(90)
-  check('Duo exposes READY dashboard beneath the fading gradient skin',
-    getComputedStyle(app).visibility==='visible'&&getComputedStyle(app).opacity==='1'
-    &&getComputedStyle(document.body).backgroundColor===background)
-  await wait(290)
-  launch.remove()
-  check('overlay removal preserves real app and original charcoal edge',
+  const dest=app.querySelector('.lfms-main-brand__mark')
+  await dest.decode()
+  const rootColor=getComputedStyle(document.body).backgroundColor
+  check('Duo root and native gutter stay solid charcoal',rootColor==='rgb(16, 24, 32)'
+    &&getComputedStyle(document.body).backgroundImage==='none')
+  const rect=skin.getBoundingClientRect()
+  check('branded gradient fills entire Duo web viewport',rect.left<=0&&rect.right>=innerWidth
+    &&getComputedStyle(skin).backgroundImage.includes('radial-gradient('))
+  check('real Today remains hidden only until splash closing',getComputedStyle(app).visibility==='hidden'
+    &&getComputedStyle(app).opacity==='0')
+  check('no barbell, duplicate screen, ripped canvas, or overlay seam',!launch.querySelector(
+    '.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
+  await wait(3160)
+  check('the logo resolves with the two long readable words before handoff',
+    [...launch.querySelectorAll('.lfms-launch__wordmark')].every(x=>Number(getComputedStyle(x).opacity)>.98))
+  const started=runBrandHandoff(launch,{duration:630})
+  await wait(220)
+  check('Today is revealed beneath the flying logo without an intermediate black screen',
     getComputedStyle(app).visibility==='visible'
-    &&getComputedStyle(document.body).backgroundImage==='none'
-    &&app.textContent.includes('THE READY APP'))
-}catch(e){check('Duo kinetic handoff harness completes',false,e.stack??String(e))}
-await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(x=>x.ok),checks})})
+    &&getComputedStyle(app).opacity==='1'
+    &&!!document.querySelector('[data-lfms-flying-mark]')
+    &&dest.style.visibility==='hidden'
+    &&getComputedStyle(document.body).backgroundColor===rootColor)
+  const used=await started
+  launch.remove()
+  check('header mark arrives and is restored; root remains charcoal',used===true
+    &&!document.querySelector('[data-lfms-flying-mark]')
+    &&dest.style.visibility!=='hidden'
+    &&getComputedStyle(app).visibility==='visible'
+    &&getComputedStyle(document.body).backgroundColor===rootColor
+    &&app.textContent.includes('ACTUAL READY TODAY'))
+}catch(error){check('Duo IGNITION harness finished',false,error.stack??String(error))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

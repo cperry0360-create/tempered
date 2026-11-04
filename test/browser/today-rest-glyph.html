@@ -58,9 +58,9 @@ try {
   const restIcon=monday?.querySelector('.today-week__workout-icon svg')
   const path=restIcon?.querySelector('path')
   const style=restIcon?getComputedStyle(restIcon):null
-  check('sleeping figure uses the requested strong red glow without changing the rest icon',
+  check('sleeping figure uses the vivid solid button-red with NO glow or aura',
     Boolean(path&&path.getAttribute('style')?.includes('fill:currentColor;stroke:none')&&
-      style?.filter.includes('drop-shadow') && style.color==='rgb(255, 74, 94)'),
+      style?.filter==='none' && style.color==='rgb(255, 57, 78)'),
     JSON.stringify({fill:path?.getAttribute('style'),color:style?.color,filter:style?.filter}))
   check('day markers have accessible descriptions',week.every(d=>d.getAttribute('aria-label')))
 }catch(e){check('today rest glyph harness ran',false,e.stack??String(e))}

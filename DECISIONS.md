@@ -1,3 +1,9 @@
+## 2026-11-04 — Stop the barbell tear; use a simple stopgap and rethink LFMS motion
+
+- User and both boys dislike the latest weight/tear splash. No more production iterations of that concept: the physical motion and screen reveal feel disconnected and cartoonish. Replace with a deliberately minimal logo entrance until the next **distinct** direction wins review.
+- Candidate next directions (not yet approved): kinetic LFMS wordmark, iron-forged logo, or a red power-line that integrates with Today. Show moving prototypes before shipping.
+- User requested the sleeping figure be a **bold solid red only**. Remove the prior halo and shadow rather than trying to make the glow subtler. Do not change workout/rest semantics or recorded history. Release 0.66.61 (167).
+
 ## 2026-11-04 — LFMS V8 launch and energetic rest glyph, 0.66.60
 - Replace separate bumper-plate juggling with a *fully loaded* long silver Olympic barbell arriving as one rigid object; preserve six red-white-blue plates and visible central knurl. The approved V8 feel is purposeful and weighty, not springy/cartoonish.
 - Make a single canvas skin reveal mathematically share progress with the falling bar; only a narrow dark fold remains. No duplicated logo, wire/zigzag, full-panel triangle, or fake glass break.

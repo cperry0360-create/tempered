@@ -21,12 +21,14 @@ try{
   const identity=launch.querySelector('.lfms-launch__identity')
   await Promise.all([mark,...words].map(x=>x.decode()))
   check('same approved LFMS mark and both genuine wordmark halves load',mark.naturalWidth>0&&words.length===2&&words.every(x=>x.naturalWidth>0))
-  check('Kinetic layers animate INDEPENDENTLY with deliberate stagger',
+  check('Kinetic mountain and longer words stage on independent timelines',
     getComputedStyle(mark).animationName==='lfms-kinetic-mark'
     &&getComputedStyle(words[0]).animationName==='lfms-kinetic-less'
     &&getComputedStyle(words[1]).animationName==='lfms-kinetic-strong'
-    &&getComputedStyle(words[0]).animationDelay==='0.43s'
-    &&getComputedStyle(words[1]).animationDelay==='0.53s')
+    &&getComputedStyle(words[0]).animationDelay==='0.65s'
+    &&getComputedStyle(words[1]).animationDelay==='0.81s'
+    &&getComputedStyle(words[0]).animationDuration==='1.26s'
+    &&getComputedStyle(words[1]).animationDuration==='1.31s')
   check('one red streak, not an aura or extra animated clutter',
     Boolean(sweep)&&getComputedStyle(sweep).animationName==='lfms-kinetic-sweep'
     &&launch.querySelectorAll('.lfms-launch__sweep').length===1
@@ -35,15 +37,24 @@ try{
     getComputedStyle(skin).backgroundImage.includes('radial-gradient(')
     &&getComputedStyle(skin).backgroundImage.includes('linear-gradient(')
     &&getComputedStyle(launch).backgroundImage==='none')
-  await wait(1550)
+  // Sample the actual mid-animation motion, not only its finished CSS.
+  await wait(740)
+  const wordStage=launch.querySelector('.lfms-launch__wordmark-stage').getBoundingClientRect()
+  const flyingLess=words[0].getBoundingClientRect(),flyingStrong=words[1].getBoundingClientRect()
+  check('original opposite-screen swoops are visible midflight',
+    flyingLess.left<wordStage.left-50&&flyingStrong.left>wordStage.right+50,
+    JSON.stringify({stageLeft:wordStage.left,stageRight:wordStage.right,lessLeft:flyingLess.left,strongLeft:flyingStrong.left}))
+  await wait(2500)
   const bounds=identity.getBoundingClientRect(),viewport=innerWidth
   check('logo settled and fitting in viewport',bounds.left>=-3&&bounds.right<=viewport+3&&bounds.top>=-3&&bounds.bottom<=innerHeight+3,
     JSON.stringify({x:bounds.left,right:bounds.right,top:bounds.top,bottom:bounds.bottom,viewport}))
   check('bright LESS FAT and MORE STRONG are both visible before handoff',
     words.every(x=>Number(getComputedStyle(x).opacity)>.99))
-  check('sweep finished before the app starts showing',Number(getComputedStyle(sweep).opacity)<.02)
+  check('red sweep and tagline have finished before the deliberate hero hold',
+    Number(getComputedStyle(sweep).opacity)<.02
+    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__tagline')).opacity)>.7)
   launch.dataset.closing='true'
-  await wait(265)
+  await wait(365)
   check('fade reveals ready app without geometry tearing',Number(getComputedStyle(launch).opacity)<.02
     &&document.getElementById('app').textContent.includes('READY DASHBOARD'))
   check('no console errors',errors.length===0,errors.join(' | '))

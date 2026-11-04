@@ -1,12 +1,11 @@
 <!doctype html>
 <html lang="en" data-layout="duo"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS V8 Duo live-app handoff</title>
+<title>LFMS temporary logo launch on Duo</title>
 <link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css">
 <link rel="stylesheet" href="../../src/lfms-finish.css"></head><body>
 <div id="app" class="app"><div class="app__body">THE READY APP</div></div>
 <script type="module">
-import { runCinematicReveal } from '../../src/ui/lfms-cinematic-splash.js'
 const checks=[]
 const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
@@ -16,37 +15,25 @@ try {
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const app=document.getElementById('app')
-  const bg=getComputedStyle(document.body).backgroundColor
-  check('Duo keeps one charcoal canvas under splash and app',
-    bg==='rgb(16, 24, 32)'&&getComputedStyle(document.body).backgroundImage==='none')
-  check('Duo app stays concealed until actual reveal',getComputedStyle(app).visibility==='hidden')
-  const bar=launch.querySelector('.lfms-launch__barbell-stage')
   const skin=launch.querySelector('.lfms-launch__skin')
-  bar.style.animation='none'
-  const done=runCinematicReveal(launch)
-  await wait(100)
-  check('reveal immediately exposes real app under the clipped skin',
-    getComputedStyle(app).visibility==='visible'&&getComputedStyle(app).opacity==='1'
-    &&skin.style.clipPath.startsWith('polygon('))
-  const fold=launch.querySelector('.lfms-launch__peel-strip')
-  check('fold is a narrow real strip, not a detached paper triangle or bright wire',
-    !!fold&&getComputedStyle(fold).position==='absolute'
-    &&getComputedStyle(launch.querySelector('.lfms-launch__lift-tab')).display==='none'
-    &&!launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap'))
-  const start=bar.getBoundingClientRect(),clipStart=skin.style.clipPath
-  await wait(440)
-  const later=bar.getBoundingClientRect()
-  check('bar and skin share a moving diagonal reveal without offscreen seam',
-    later.top>start.top+20&&skin.style.clipPath!==clipStart
-    &&getComputedStyle(document.body).backgroundColor===bg)
-  await done
-  check('no intermediate blank frame: ready app remains in DOM after peel',
-    skin.style.clipPath.startsWith('inset(')&&skin.style.clipPath.includes('100%')
-    &&app.textContent.includes('THE READY APP'))
+  const before=getComputedStyle(document.body).backgroundColor
+  check('Duo keeps single solid charcoal viewport',before==='rgb(16, 24, 32)'
+    &&getComputedStyle(document.body).backgroundImage==='none')
+  check('already rendered app stays concealed only while splash visible',
+    getComputedStyle(app).visibility==='hidden'&&app.textContent.includes('THE READY APP'))
+  check('the tear and weight are never part of the visible scene',
+    getComputedStyle(launch.querySelector('.lfms-launch__barbell-stage')).display==='none'
+    &&getComputedStyle(skin).animationName==='none')
   launch.dataset.closing='true'
+  await wait(80)
+  check('closing logo reveals the real app, without any torn panel',
+    getComputedStyle(app).visibility==='visible'&&getComputedStyle(app).opacity==='1'
+    &&!launch.querySelector('.lfms-launch__peel-strip')
+    &&getComputedStyle(document.body).backgroundColor===before)
+  await wait(240)
   launch.remove()
-  check('app stays visible after overlay removal',
-    getComputedStyle(app).visibility==='visible')
-}catch(error){check('V8 Duo handoff harness completes',false,error.stack??String(error))}
-await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks})})
+  check('removal keeps real app visible and unaltered',getComputedStyle(app).visibility==='visible'
+    &&app.textContent.includes('THE READY APP'))
+}catch(e){check('Duo no-tear handoff checks complete',false,e.stack??String(e))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(x=>x.ok),checks})})
 </script></body></html>

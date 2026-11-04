@@ -13,12 +13,12 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 // it BEFORE the loaded barbell pulls the splash away.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-const LFMS_PLATES_SETTLED_MS = 4390
-const LFMS_ZIPPER_DURATION_MS = 1160
+const LFMS_PLATES_SETTLED_MS = 3990
+const LFMS_PEEL_DURATION_MS = 1020
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
-  // The end is a real jagged clip-path erase, not a fade onto an empty canvas.
+  // Peel the splash skin directly onto the already-rendered app; no fake wire or fade.
   // Never start the wipe before bootstrap and BOTH stacks of three bumper plates are done.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -39,9 +39,9 @@ function dismissSplash() {
       launch.dataset.revealing = 'true'
       setTimeout(() => {
         launch.dataset.closing = 'true'
-        // Let the final zipper frame finish rasterizing, then remove the DOM.
+        // Let the peel's last frame render before removing the overlay.
         setTimeout(finish, 90)
-      }, LFMS_ZIPPER_DURATION_MS)
+      }, LFMS_PEEL_DURATION_MS)
     }, remaining)
   })
   return splashDone

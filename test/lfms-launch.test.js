@@ -15,7 +15,6 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
   assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__mark-stage"/)
   assert.match(html,/class="lfms-launch__skin"/)
-  assert.match(html,/class="lfms-launch__peel-flap"/)
   assert.match(html,/class="lfms-launch__barbell-stage"/)
   assert.match(html,/class="lfms-launch__bar-art"/)
   for(const side of ['bottom','top']) {
@@ -23,7 +22,8 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
       assert.match(html,new RegExp('lfms-launch__plate--'+side+'-'+color))
     }
   }
-  assert.match(html,/class="lfms-launch__tear-edge"/)
+  assert.match(html,/class="lfms-launch__lift-tab"/)
+  assert.doesNotMatch(html,/lfms-launch__tear-edge|lfms-launch__peel-flap/)
   assert.doesNotMatch(html,/lfms-launch__cracks|lfms-launch__impact-flash|lfms-launch__shockwave/)
 })
 test('splash has staggered entrances, no overlapping negative margins, and a readable hold',()=>{
@@ -31,15 +31,15 @@ test('splash has staggered entrances, no overlapping negative margins, and a rea
   for(const name of ['rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
   assert.match(css,/lfms-logo-settle/)
   assert.match(css,/prefers-reduced-motion:reduce/)
-  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','corner-peel','loaded-scrape','tear-follow'])
+  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','corner-peel','loaded-scrape','curl-release'])
     assert.match(css,new RegExp('lfms-'+name))
   assert.doesNotMatch(css,/lfms-mark-smash|lfms-glass-fracture|lfms-shockwave/)
   assert.match(css,/clip-path:inset\(0 0 43% 0\)/)
   assert.match(css,/clip-path:inset\(57% 0 0 0\)/)
 
   assert.doesNotMatch(css,/margin-top:-/)
-  assert.match(js,/LFMS_PLATES_SETTLED_MS = 4390/)
-  assert.match(js,/LFMS_ZIPPER_DURATION_MS = 1160/)
+  assert.match(js,/LFMS_PLATES_SETTLED_MS = 3990/)
+  assert.match(js,/LFMS_PEEL_DURATION_MS = 1020/)
   assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
   assert.match(js,/launch\.dataset\.revealing = 'true'/)
   assert.match(js,/setTimeout\(finish, 90\)/)

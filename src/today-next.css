@@ -398,17 +398,13 @@ html[data-layout="duo"]:has(.app__body > .today--fuel-style) .tabbar__tabs {
 }
 
 
-/* Red-alert rest figure: match Fuel's neon-red Close Day while retaining
-   actual calendar data, rest semantics, and the original hit target. */
+/* Bright solid Close Day red; no halo, background, blur, shadow or motion. */
 .today--fuel-style .today-week--unified .today-week__day[data-icon='rest'] .today-week__workout-icon {
-  position:relative;isolation:isolate;
+  position:static;isolation:auto;
 }
 .today--fuel-style .today-week--unified .today-week__day[data-icon='rest'] .today-week__workout-icon::before {
-  content:"";position:absolute;z-index:-1;width:32px;height:28px;border-radius:12px;
-  background:radial-gradient(ellipse,rgba(255,55,78,.36) 0%,rgba(234,30,56,.13) 50%,transparent 74%);
-  box-shadow:0 0 13px rgba(255,45,71,.43);pointer-events:none;
+  content:none;display:none;box-shadow:none;background:none;
 }
 .today--fuel-style .today-week--unified .today-week__day[data-icon='rest'] .today-week__workout-icon .icon {
-  position:relative;color:rgb(255,74,94);stroke:none;
-  filter:drop-shadow(0 0 3px rgba(255,90,108,.92)) drop-shadow(0 0 8px rgba(255,45,71,.78));
+  color:rgb(255,57,78);stroke:none;filter:none;
 }

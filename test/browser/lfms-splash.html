@@ -1,64 +1,44 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS V8 cinematic loaded-bar splash acceptance</title>
+<title>LFMS calm logo-only splash</title>
 <link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css"></head><body>
 <div id="app" class="app">READY DASHBOARD</div>
 <script type="module">
-import { runCinematicReveal, LFMS_REVEAL_START_MS, LFMS_REVEAL_DURATION_MS } from '../../src/ui/lfms-cinematic-splash.js'
 const checks=[],errors=[]
 const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
 window.addEventListener('error',e=>errors.push(e.message))
 window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
-try {
+try{
   const html=await fetch('/index.html').then(r=>r.text())
   const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
   const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
-  const bar=launch.querySelector('.lfms-launch__barbell-stage')
-  const shaft=launch.querySelector('.lfms-launch__bar-art')
-  const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
+  const logo=launch.querySelector('.lfms-launch__identity')
   const skin=launch.querySelector('.lfms-launch__skin')
-  await Promise.all([mark,...words].map(img=>img.decode()))
-  check('official logo and both lettering halves decode',mark.naturalWidth>0&&words.every(x=>x.naturalWidth>0))
-  check('lettering retains original left and right swoops',
-    getComputedStyle(words[0]).animationName==='lfms-wordmark-enter-left'&&getComputedStyle(words[1]).animationName==='lfms-wordmark-enter-right')
-  check('one rigid long silver bar, six installed red-white-blue plates',
-    !!bar&&shaft.getAttribute('viewBox')==='0 0 160 700'
-    &&plates.length===6&&plates.map(x=>x.dataset.color).join(',')==='red,white,blue,red,white,blue'
-    &&getComputedStyle(bar).animationName==='lfms-v8-loaded-fall'
-    &&plates.every(x=>getComputedStyle(x).animationName==='none'&&getComputedStyle(x).opacity==='1')
-    &&getComputedStyle(shaft).animationName==='none')
-  check('red, white and blue physical fills preserved',
-    plates.every(x=>x.querySelector('ellipse')?.getAttribute('fill')===({red:'#F03725',white:'#F5F9FF',blue:'#359DF3'})[x.dataset.color]))
-  check('two-second brand-to-impact hold before 1.01-second reveal',
-    LFMS_REVEAL_START_MS===2050&&LFMS_REVEAL_DURATION_MS===1010)
-  await wait(1840)
-  const barRect=bar.getBoundingClientRect(),wordRect=words[0].getBoundingClientRect()
-  check('loaded barbell lands in its own right lane without covering logo',
-    barRect.height>barRect.width*4&&barRect.right<=innerWidth+6
-    &&barRect.left>wordRect.right,
-    JSON.stringify({barLeft:barRect.left,wordRight:wordRect.right,barRight:barRect.right}))
-  check('no accidental floating wire, shadow or duplicate surface',
-    !launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap,.lfms-launch__cracks,.lfms-launch__shockwave')
-    &&getComputedStyle(launch.querySelector('.lfms-launch__lift-tab')).display==='none')
-  const done=runCinematicReveal(launch)
-  await wait(120)
-  const before=bar.getBoundingClientRect(),cutBefore=skin.style.clipPath
-  check('real skin is clipped; narrow fold is attached in overlay, not a fake dashboard',cutBefore.startsWith('polygon(')
-    &&!!launch.querySelector('.lfms-launch__peel-strip')
-    &&!skin.contains(bar)&&!skin.contains(launch.querySelector('.lfms-launch__peel-strip')))
-  await wait(400)
-  const after=bar.getBoundingClientRect()
-  check('same progress drives tear and falling barbell',
-    skin.style.clipPath!==cutBefore&&after.top>before.top+20)
-  await done
-  check('full dashboard is exposed by the end of the tear',
-    skin.style.clipPath.startsWith('inset(')&&skin.style.clipPath.includes('100%'))
-  check('no browser exceptions',errors.length===0,errors.join(' | '))
+  const bar=launch.querySelector('.lfms-launch__barbell-stage')
+  await Promise.all([mark,...words].map(x=>x.decode()))
+  check('original LFMS mountain and wordmark render',mark.naturalWidth>0&&words.every(x=>x.naturalWidth>0))
+  check('temporary intro is clean and quiet',getComputedStyle(logo).animationName==='lfms-clean-brand-enter'
+      &&getComputedStyle(mark).animationName==='none'
+      &&words.every(x=>getComputedStyle(x).animationName==='none'))
+  check('no equipment or tear animation can be seen',getComputedStyle(bar).display==='none'
+      &&getComputedStyle(launch.querySelector('.lfms-launch__lift-tab')).display==='none'
+      &&getComputedStyle(launch.querySelector('.lfms-launch__glow')).display==='none'
+      &&getComputedStyle(skin).clipPath.startsWith('inset('))
+  check('live dashboard is mounted below splash',document.getElementById('app').textContent.includes('READY DASHBOARD'))
+  await wait(750)
+  check('logo remains legible and inside the viewport',logo.getBoundingClientRect().height>70
+    &&logo.getBoundingClientRect().top>=-2
+    &&logo.getBoundingClientRect().bottom<=innerHeight+2)
+  launch.dataset.closing='true'
+  await wait(300)
+  check('clean short fade completes and reveals app',getComputedStyle(launch).opacity==='0'
+    &&document.getElementById('app').textContent.includes('READY DASHBOARD'))
+  check('no browser errors',errors.length===0,errors.join(' | '))
   launch.remove()
-}catch(error){check('V8 splash harness finishes',false,error.stack??String(error))}
-await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
+}catch(e){check('temporary splash harness finished',false,e.stack??String(e))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(x=>x.ok),checks})})
 </script></body></html>

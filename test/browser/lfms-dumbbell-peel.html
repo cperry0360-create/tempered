@@ -30,11 +30,12 @@ try{
     getComputedStyle(app).opacity==='0'&&getComputedStyle(app).visibility==='hidden'
     &&app.textContent.includes('THE READY APP'))
   check('no mechanics, barbell, tearing or paper edge',!launch.querySelector('.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
-  // Give both restored edge-to-edge word swoops and the red finish time to land.
+  // Give both word swoops and the red brand-lock payoff time to land.
   await wait(3230)
   check('Duo retains full readable lockup until handoff',
     [...launch.querySelectorAll('.lfms-launch__wordmark')].every(node=>Number(getComputedStyle(node).opacity)>.98)
-    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__sweep')).opacity)<.02)
+    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__sweep')).opacity)<.02
+    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__lockline')).opacity)>.98)
   launch.dataset.closing='true'
   await wait(90)
   check('Duo exposes READY dashboard beneath the fading gradient skin',

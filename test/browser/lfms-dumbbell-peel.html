@@ -18,11 +18,14 @@ try{
   const background=getComputedStyle(document.body).backgroundColor
   check('Duo hardware edge still matches charcoal BODY with NO gradient paint on root',
     background==='rgb(16, 24, 32)'&&getComputedStyle(document.body).backgroundImage==='none')
-  check('gradient is isolated to FULL-VIEWPORT launch skin',
-    getComputedStyle(skin).backgroundImage.includes('radial-gradient(')
-    &&getComputedStyle(skin).backgroundImage.includes('linear-gradient(')
-    &&skin.getBoundingClientRect().left<=0
-    &&skin.getBoundingClientRect().right>=innerWidth)
+  const skinBackground=getComputedStyle(skin).backgroundImage
+  const skinBounds=skin.getBoundingClientRect()
+  check('Duo splash layer paints its own radial and linear gradients',
+    skinBackground.includes('radial-gradient(')&&skinBackground.includes('linear-gradient('),
+    skinBackground.slice(0,300))
+  check('gradient overlay spans the full viewport including both side edges',
+    skinBounds.left<=0&&skinBounds.right>=innerWidth,
+    JSON.stringify({left:skinBounds.left,right:skinBounds.right,width:innerWidth}))
   check('real app is mounted but not shown before dismiss',
     getComputedStyle(app).opacity==='0'&&getComputedStyle(app).visibility==='hidden'
     &&app.textContent.includes('THE READY APP'))

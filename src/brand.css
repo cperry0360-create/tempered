@@ -19,6 +19,8 @@
    installed Duo's OS-owned right edge and app root remain solid charcoal. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
+  /* 100vw includes the scrollbar-reserved strip on Duo; inset alone did not. */
+  width:100vw;height:100dvh;box-sizing:border-box;
   display:grid;place-items:center;overflow:hidden;isolation:isolate;
   pointer-events:none;user-select:none;
   padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));

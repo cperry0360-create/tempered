@@ -1,3 +1,9 @@
+## 2026-11-04 — Kinetic LFMS gradient splash, 0.66.62 (168)
+
+- Shipped the approved Kinetic LFMS direction: actual brand mountain snaps into place, actual split wordmark lines enter from opposite directions, one vivid red streak passes behind the artwork, and TRAIN · FUEL · RECOVER resolves. Real Today dashboard is already loaded when a short fade begins (minimum 1.82s, exit 240ms).
+- Splash stage has its own charcoal-to-navy gradient; Duo root and right hardware gutter remain stable solid charcoal. No barbell, fake paper tear, animated plates, secondary logo, white zipper or repeated UI layer. Obsolete barbell markup and the unused tear module removed.
+- Presentation-only change; workouts, food, local IndexedDB, program and recovery data untouched. Reduced-motion bypass and weekly recap sequencing preserved. Backup: `backup/lfms-before-kinetic-gradient-20261104`. GitHub Pages only. Solid-red, no-aura resting figure retained.
+
 ## 2026-11-04 — Replace rejected V8 splash with calm fallback; solid-red sleeping icon, 0.66.61 (167)
 
 - After user and family feedback rejected the V8 screen tear, disable the entire visible barbell, plates, fold and tear choreography. Replace the launch with a short 560ms fade-and-rise of the **original LFMS mountain and wordmark**, hold until real app bootstrap and at least 1.6s, then crossfade to the existing app in 260ms. Do not introduce a new concept into production without motion review. The older experimental source remains dormant for reference only.

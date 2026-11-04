@@ -7,22 +7,21 @@ import { installCableMachineRuntime } from './ui/cable-machine-runtime.js'
 import { installCalorieAiRuntime } from './ui/calorie-ai-runtime.js'
 import { installHealthPasteRuntime } from './ui/health-paste-runtime.js'
 import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
+import { LFMS_REVEAL_START_MS, runCinematicReveal } from './ui/lfms-cinematic-splash.js'
 
 // Keep the supplied LFMS launch artwork visible on fast devices, too.
 // The overlay is OUTSIDE #app, so the finished dashboard is rendered behind
 // it BEFORE the loaded barbell pulls the splash away.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-const LFMS_PLATES_SETTLED_MS = 3990
-const LFMS_PEEL_DURATION_MS = 1020
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
   // Peel the splash skin directly onto the already-rendered app; no fake wire or fade.
-  // Never start the wipe before bootstrap and BOTH stacks of three bumper plates are done.
+  // Never start the wipe before bootstrap and the loaded barbell has landed.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const remaining = reduced ? 0 : Math.max(0, LFMS_PLATES_SETTLED_MS - (performance.now() - splashStarted))
+    const remaining = reduced ? 0 : Math.max(0, LFMS_REVEAL_START_MS - (performance.now() - splashStarted))
     setTimeout(() => {
       if (!launch) { resolve(); return }
       const finish = () => {
@@ -35,13 +34,14 @@ function dismissSplash() {
         finish()
         return
       }
-      // This also exposes the already-rendered app beneath the moving mask.
-      launch.dataset.revealing = 'true'
-      setTimeout(() => {
-        launch.dataset.closing = 'true'
-        // Let the peel's last frame render before removing the overlay.
-        setTimeout(finish, 90)
-      }, LFMS_PEEL_DURATION_MS)
+      // A single V8 pull couples the loaded barbell and its narrow folded edge.
+      // The finished app is already rendered beneath the only clipped splash skin.
+      runCinematicReveal(launch)
+        .catch(error => console.error('[lfms] reveal failed', error))
+        .finally(() => {
+          launch.dataset.closing = 'true'
+          setTimeout(finish, 90)
+        })
     }, remaining)
   })
   return splashDone

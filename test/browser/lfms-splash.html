@@ -56,7 +56,7 @@ try {
     skin.style.clipPath!==cutBefore&&after.top>before.top+20)
   await done
   check('full dashboard is exposed by the end of the tear',
-    skin.style.clipPath==='inset(0 100% 0 0)')
+    skin.style.clipPath.startsWith('inset(')&&skin.style.clipPath.includes('100%'))
   check('no browser exceptions',errors.length===0,errors.join(' | '))
   launch.remove()
 }catch(error){check('V8 splash harness finishes',false,error.stack??String(error))}

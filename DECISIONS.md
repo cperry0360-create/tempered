@@ -1,3 +1,9 @@
+## 2026-11-04 — IGNITION, LFMS launch as a true shared-element transition
+
+- The last release still feels boring despite a longer hold and red beams. Replace decorative repetition with one clear kinetic narrative: oversized mountain appearing as cinematic masks retract; official two-line words swoop from opposing edges; single restrained crimson diagonal punctuates the lock; mountain **actually travels** to Today header while the real dashboard comes into view.
+- Match the destination header's real bounding rectangle at runtime, not hardcoded phone positions. A fixed clone flying above the app is removed when the original header image is restored. If the target is absent (initial setup, a boot error, or unsupported animation), use existing safe fade. Respect reduced motion and keep the splash under ~4s.
+- This is splash UI only. Keep separate Creatine and Other supplements habits and all tracked data unchanged. Release 0.66.65 (171), backup `backup/lfms-before-ignition-20261104`.
+
 ## 2026-11-04 — More dramatic LFMS signature; two independent supplement reminders
 
 - User finds the current long swoop splash boring: keep the original full-screen LESS FAT / MORE STRONG sweeps and gradient, and build a more decisive premium payoff rather than just increasing hold time. Add one transient red beam behind the official logo, a subtle final wordmark snap and crisp red accent under the completed lockup. No light halo, weight/tear, crack, or artificial dashboard.

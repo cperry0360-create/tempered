@@ -45,7 +45,7 @@ try {
   const week=days()
   check('one week with seven day markers renders',week.length===7)
   const monday=week[0],tuesday=week[1],wednesday=week[2],thursday=week[3],friday=week[4]
-  check('past no-workout day shows white sleeping figure',
+  check('past no-workout day shows sleeping figure',
     monday?.dataset.icon==='rest'&&Boolean(monday.querySelector('svg')))
   check('finished Tuesday workout shows original muscle figure',
     tuesday?.dataset.icon==='workout'&&Boolean(tuesday.querySelector('svg[data-custom-rail-glyph="nav-train"]')))
@@ -58,9 +58,9 @@ try {
   const restIcon=monday?.querySelector('.today-week__workout-icon svg')
   const path=restIcon?.querySelector('path')
   const style=restIcon?getComputedStyle(restIcon):null
-  check('rest vector is solid white, not blue or a colored tile',
+  check('sleeping figure uses the requested strong red glow without changing the rest icon',
     Boolean(path&&path.getAttribute('style')?.includes('fill:currentColor;stroke:none')&&
-      style?.filter==='none' && style.color!=='rgba(0, 0, 0, 0)'),
+      style?.filter.includes('drop-shadow') && style.color==='rgb(255, 74, 94)'),
     JSON.stringify({fill:path?.getAttribute('style'),color:style?.color,filter:style?.filter}))
   check('day markers have accessible descriptions',week.every(d=>d.getAttribute('aria-label')))
 }catch(e){check('today rest glyph harness ran',false,e.stack??String(e))}

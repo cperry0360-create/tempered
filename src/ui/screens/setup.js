@@ -32,7 +32,7 @@ const TEMPLATE_OPTIONS = [
 ]
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
-function defaultSchedule(activities, profile) {
+export function defaultSchedule(activities, profile) {
   const legacy = new Set(profile?.dailyActivityIds ?? activities.filter((a) => a.daily === true).map((a) => a.id))
   const stored = profile?.activitySchedule ?? {}
   return Object.fromEntries(activities.map((activity) => {

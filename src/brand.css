@@ -334,3 +334,37 @@ html:not([data-layout="duo"]):has(.lfms-launch:not([data-closing="true"])) .stat
 html[data-layout="duo"] .lfms-launch {
   background:none;box-shadow:none;
 }
+
+
+/* LFMS 0.66.59: V8 cinematic sequence. All plates form ONE loaded barbell.
+   No falling plate cascade, paper triangle, white zipper or doubled logo. */
+.lfms-launch__barbell-stage {
+  left:86vw;top:53%;
+  transform:translate(-50%,-50%);
+  animation:lfms-v8-loaded-fall 700ms linear 1060ms both;
+}
+.lfms-launch__bar-art,.lfms-launch__plate {animation:none;opacity:1;transform:none}
+.lfms-launch__rule {animation:lfms-rule-enter 430ms ease-out 650ms both}
+.lfms-launch__tagline {animation:lfms-tagline-enter 440ms ease-out 950ms both}
+.lfms-launch__lift-tab {display:none}
+.lfms-launch[data-revealing="true"] .lfms-launch__skin,
+.lfms-launch[data-revealing="true"] .lfms-launch__barbell-stage {animation:none}
+.lfms-launch__peel-strip {
+  position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;
+  opacity:0;transform-origin:0 0;
+  background:linear-gradient(90deg,#1b2b37 0%,#627687 42%,#d1dce3 54%,#142331 69%,#09151f 100%);
+  filter:drop-shadow(-4px 1px 5px rgba(0,0,0,.3));
+  will-change:clip-path,transform;
+}
+@keyframes lfms-v8-loaded-fall {
+  0% {opacity:0;transform:translate(-50%,calc(-50% - 78vh));animation-timing-function:cubic-bezier(.45,.07,.9,.6)}
+  9% {opacity:1}
+  83% {transform:translate(-50%,-50%);animation-timing-function:ease-out}
+  90% {transform:translate(-50%,calc(-50% + 3.5px))}
+  100% {opacity:1;transform:translate(-50%,-50%)}
+}
+@media(max-width:480px){.lfms-launch__barbell-stage {left:calc(100vw - 46px)}}
+@media(prefers-reduced-motion:reduce){
+  .lfms-launch__barbell-stage {animation:none;opacity:1;transform:translate(-50%,-50%)}
+  .lfms-launch__peel-strip {display:none}
+}

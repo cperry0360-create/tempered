@@ -17,6 +17,8 @@ try{
   const mark=launch.querySelector('.lfms-launch__mark')
   const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
   const sweep=launch.querySelector('.lfms-launch__sweep')
+  const flash=launch.querySelector('.lfms-launch__flash')
+  const lockline=launch.querySelector('.lfms-launch__lockline')
   const skin=launch.querySelector('.lfms-launch__skin')
   const identity=launch.querySelector('.lfms-launch__identity')
   await Promise.all([mark,...words].map(x=>x.decode()))
@@ -29,8 +31,9 @@ try{
     &&getComputedStyle(words[1]).animationDelay==='0.81s'
     &&getComputedStyle(words[0]).animationDuration==='1.26s'
     &&getComputedStyle(words[1]).animationDuration==='1.31s')
-  check('one red streak, not an aura or extra animated clutter',
+  check('one kinetic red streak and one single-pass signature beam',
     Boolean(sweep)&&getComputedStyle(sweep).animationName==='lfms-kinetic-sweep'
+    &&Boolean(flash)&&getComputedStyle(flash).animationName==='lfms-brand-flash'
     &&launch.querySelectorAll('.lfms-launch__sweep').length===1
     &&!launch.querySelector('.lfms-launch__barbell-stage,.lfms-launch__lift-tab,.lfms-launch__plate,.lfms-launch__peel-strip'))
   check('full-bleed dark-to-navy stage belongs to SKIN, not root',
@@ -44,14 +47,20 @@ try{
   check('original opposite-screen swoops are visible midflight',
     flyingLess.left<wordStage.left-50&&flyingStrong.left>wordStage.right+50,
     JSON.stringify({stageLeft:wordStage.left,stageRight:wordStage.right,lessLeft:flyingLess.left,strongLeft:flyingStrong.left}))
-  await wait(2500)
+  await wait(1700)
+  check('cinematic lock-in adds a short red beam without obscuring the logo',
+    Number(getComputedStyle(flash).opacity)>.2
+    &&getComputedStyle(launch.querySelector('.lfms-launch__wordmark-stage')).animationName==='lfms-wordmark-lock')
+  await wait(1520)
   const bounds=identity.getBoundingClientRect(),viewport=innerWidth
   check('logo settled and fitting in viewport',bounds.left>=-3&&bounds.right<=viewport+3&&bounds.top>=-3&&bounds.bottom<=innerHeight+3,
     JSON.stringify({x:bounds.left,right:bounds.right,top:bounds.top,bottom:bounds.bottom,viewport}))
   check('bright LESS FAT and MORE STRONG are both visible before handoff',
     words.every(x=>Number(getComputedStyle(x).opacity)>.99))
-  check('red sweep and tagline have finished before the deliberate hero hold',
+  check('red flash, final lockline and tagline have resolved before the hero hold',
     Number(getComputedStyle(sweep).opacity)<.02
+    &&Number(getComputedStyle(flash).opacity)<.02
+    &&Number(getComputedStyle(lockline).opacity)>.98
     &&Number(getComputedStyle(launch.querySelector('.lfms-launch__tagline')).opacity)>.7)
   launch.dataset.closing='true'
   await wait(365)

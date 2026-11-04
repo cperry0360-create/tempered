@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS separate daily supplement habits</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/today-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css"></head><body>
+<div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+try{
+  const storage=createMemoryStorage();await storage.open()
+  const profile={id:'profile',setupComplete:true,dailyActivityIds:['sleep'],
+    activitySchedule:{sleep:{cadence:'off',target:1}}}
+  await storage.put('profile',profile)
+  const clock=fixedClock(new Date(2026,10,4,12))
+  const fixture=await bootstrapHarness({storage,clock,mount:document.getElementById('app'),initialTab:'today'})
+  await fixture.app.show('today')
+  const find=id=>document.querySelector('.today-daily-log [data-activity="'+id+'"]')
+  const creatine=find('creatine')
+  const other=find('other_supplements')
+  check('Creatine and Other supplements appear separately in Today > Daily log',
+    !!creatine&&!!other&&creatine!==other
+    &&creatine.textContent.includes('Creatine')&&other.textContent.includes('Other supplements'))
+  check('both offer a one-tap Log action rather than a dosage field',
+    creatine?.dataset.action==='mark'&&other?.dataset.action==='mark'
+    &&creatine?.textContent.includes('Log')&&other?.textContent.includes('Log'))
+  check('other daily habits do not disappear on the new profile',!!find('creatine')&&!!find('other_supplements'))
+  creatine?.click()
+  await wait(190)
+  let log=await storage.get('dayLogs','2026-11-04')
+  check('tapping Creatine records only that checkmark',log?.creatineTaken===true&&log?.otherSupplementsTaken!==true
+    &&find('creatine')?.dataset.complete==='true'&&find('other_supplements')?.dataset.complete==='false')
+  find('other_supplements')?.click()
+  await wait(190)
+  log=await storage.get('dayLogs','2026-11-04')
+  check('Other supplements saves independently and survives re-render',log?.creatineTaken===true&&log?.otherSupplementsTaken===true
+    &&find('other_supplements')?.dataset.complete==='true')
+  check('neither check-in has a numeric dose or inferred health benefit',
+    !('creatineDose' in log)&&!('supplementsDose' in log))
+  const previous=await fixture.daily.forDate('2026-11-03')
+  check('previous days do not get automatically marked',previous.outstanding.some(x=>x.id==='creatine')
+    &&previous.outstanding.some(x=>x.id==='other_supplements'))
+  check('explicit schedule choices remain intact',
+    (await fixture.daily.activitySchedule()).sleep.cadence==='off')
+}catch(error){check('supplement habit browser check completed',false,error.stack??String(error))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'supplements-habits',passed:checks.every(x=>x.ok),checks})})
+</script></body></html>

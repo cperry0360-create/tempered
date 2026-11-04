@@ -1,3 +1,9 @@
+## 2026-11-04 — More dramatic LFMS signature; two independent supplement reminders
+
+- User finds the current long swoop splash boring: keep the original full-screen LESS FAT / MORE STRONG sweeps and gradient, and build a more decisive premium payoff rather than just increasing hold time. Add one transient red beam behind the official logo, a subtle final wordmark snap and crisp red accent under the completed lockup. No light halo, weight/tear, crack, or artificial dashboard.
+- Add **Creatine** and **Other supplements** as separate one-tap Daily Log habits for remembering intake. Each is a boolean marked activity for the chosen date, independent of other nutrition fields and without claiming a dosage or health benefit. Existing profiles default to daily for new IDs unless they expressly configure cadence; preserve existing user choices and all historical records.
+- Continue to use local-first data, reduced-motion support, same Duo charcoal root and system gutter, GitHub Pages-only deploy. Release 0.66.64 (170). Rollback branch `backup/lfms-before-supplement-habits-20261104`.
+
 ## 2026-11-04 — Restore original word swoops and increase LFMS launch drama
 
 - User says Kinetic LFMS is too fast and does not feel dramatic; especially misses the original longer swooping word movement. Restore the previous full-viewport opposite-direction keyframes: initial ±110vw offset, ±14° skew and soft-focus, slight 3.5% overshoot, precise settle.

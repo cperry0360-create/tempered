@@ -38,7 +38,7 @@ test('every mapped field is one the XP engine actually reads', () => {
     'bodyMetricsLogged',
   ])
   for (const [id, spec] of Object.entries(ACTIVITY_FIELDS)) {
-    if (spec.unscored === true) continue // Body circumferences are recorded, not rewarded.
+    if (spec.unscored === true) continue // Measurements and adherence-only supplement checkmarks are recorded, not rewarded.
     const scoredField = spec.scoredField ?? spec.trackedField ?? spec.field
     assert.ok(engineFields.has(scoredField),
       `${id} resolves to ${scoredField}, which nothing scores`)
@@ -192,7 +192,7 @@ test('every activity states how it is entered, so no screen has to guess', () =>
 test('the seed starts with the intended core daily habits', () => {
   const defaults = defaultDailyIds(ACTIVITIES)
   assert.deepEqual([...defaults].sort(),
-    ['sleep', 'steps', 'micro_cardio', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics'].sort(),
+    ['sleep', 'steps', 'micro_cardio', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics', 'creatine', 'other_supplements'].sort(),
     'the first-run daily set should match the intended core habits')
 })
 

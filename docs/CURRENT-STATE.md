@@ -1,3 +1,9 @@
+## 2026-11-04 — LFMS red brand-lock splash + Creatine / Other supplements habits, 0.66.64 (170)
+
+- Strengthened Kinetic LFMS beyond a long idle logo hold: the genuine mark and full-viewport opposite-side word swoops remain, but a contained broad red speed-beam now passes *behind* the brand, the lettering makes a precise lock-in movement, and a thin red underbar resolves and stays for the hero moment. Gradient shifts slightly, without restoring a physical weight, tear, or weird white wire. The finished dashboard is already rendered; splash duration roughly 4.2s including the exit. Supports reduced motion and full-width Duo.
+- **Two separate Daily Log habits:** `Creatine` and `Other supplements` (one-tap marked items, independent calendar-day fields `creatineTaken` and `otherSupplementsTaken` and individual icons). They appear daily by default even on existing profiles whose legacy daily ID list predates them, but explicit OFF or weekly settings are respected. Checkmarks count as daily-habit completion only; no dose or clinical effect is inferred, and no XP is silently generated.
+- No stored dayLogs overwritten; no migration, clearing, or change to logged workouts, nutrition or profile settings. Node + browser tests cover independent storage, re-render and previous day. Rollback: `backup/lfms-before-supplement-habits-20261104`. GitHub Pages only.
+
 ## 2026-11-04 — Longer Kinetic LFMS word swoops, 0.66.63 (169)
 
 - Responding to direct feedback that 0.66.62's kinetic launch was too brief and lacked drama, restored the **original long opposite-edge word swoops** (LESS FAT enters from far left, MORE STRONG from far right with skew, blur, overshoot and settle). Mountain entrance is more deliberate, then one red streak completes the lockup; all original official LFMS SVG artwork is retained.

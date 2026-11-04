@@ -59,6 +59,15 @@ const SHAPES = {
     ['p', 'M6 3v7.5a2.2 2.2 0 0 0 4.4 0V3M8.2 12.7V21'],
     ['p', 'M17.2 3c-1.7 1.4-2.4 3.6-2.4 6.2 0 1.6.8 2.6 2.4 2.8V21'],
   ],
+  creatine: [
+    ['p', 'M4.2 9.5 12 12.6 19.8 9.5 17.4 5.2 6.6 5.2Z'],
+    ['p', 'M6.5 10.4v5.6c0 2.3 2.5 3.9 5.5 3.9s5.5-1.6 5.5-3.9v-5.6'],
+    ['p', 'M7.5 8.2h9M9.4 14.2h5.2'],
+  ],
+  supplements: [
+    ['p', 'M7.2 4.2a4.6 4.6 0 0 1 6.5 0l6.1 6.1a4.6 4.6 0 0 1-6.5 6.5L7.2 10.7a4.6 4.6 0 0 1 0-6.5Z'],
+    ['p', 'M9.8 13.4 16.4 6.8'],
+  ],
   protein: [
     ['c', 12, 12, 3.2],
     ['p', 'M12 4.2v2.6M12 17.2v2.6M4.2 12h2.6M17.2 12h2.6'],
@@ -141,6 +150,8 @@ export function iconForActivity(activityId) {
     calories_logged: 'food',
     alcohol_free: 'check',
     protein_target: 'protein',
+    creatine: 'creatine',
+    other_supplements: 'supplements',
     body_metrics: 'body',
     waist_measurement: 'body',
     steps: 'steps',

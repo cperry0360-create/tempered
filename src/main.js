@@ -14,8 +14,8 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 // it BEFORE the staged kinetic lettering gives way to Today.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-// Kinetic LFMS: mountain -> long opposite-edge word swoops -> red streak -> full lockup hold -> Today.
-const LFMS_KINETIC_SPLASH_MIN_MS = 3560
+// Kinetic LFMS: mountain -> edge swoops -> red power signature -> brand lock -> hold -> Today.
+const LFMS_KINETIC_SPLASH_MIN_MS = 3850
 const LFMS_KINETIC_SPLASH_EXIT_MS = 340
 let splashDone = null
 function dismissSplash() {

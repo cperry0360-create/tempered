@@ -56,6 +56,24 @@
       "help": "Daily goal is at least 0.8 grams per pound of your latest recorded body weight. Add protein through the day."
     },
     {
+      "id": "creatine",
+      "name": "Creatine",
+      "short": "Creatine",
+      "attribute": "vitality",
+      "daily": true,
+      "kind": "marked",
+      "help": "One tap after taking your usual creatine. No dosage or health benefit is inferred."
+    },
+    {
+      "id": "other_supplements",
+      "name": "Other supplements",
+      "short": "Other supplements",
+      "attribute": "vitality",
+      "daily": true,
+      "kind": "marked",
+      "help": "One tap after taking your other supplements. Track separately from creatine."
+    },
+    {
       "id": "alcohol_free",
       "name": "Alcohol-free day",
       "short": "Alcohol-free",

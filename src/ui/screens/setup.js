@@ -32,7 +32,7 @@ const TEMPLATE_OPTIONS = [
 ]
 const clone = (value) => JSON.parse(JSON.stringify(value))
 
-function defaultSchedule(activities, profile) {
+export function defaultSchedule(activities, profile) {
   const legacy = new Set(profile?.dailyActivityIds ?? activities.filter((a) => a.daily === true).map((a) => a.id))
   const stored = profile?.activitySchedule ?? {}
   return Object.fromEntries(activities.map((activity) => {
@@ -42,6 +42,11 @@ function defaultSchedule(activities, profile) {
       cadence: 'weekly', target: Math.max(1, Math.min(7, Number(raw.target) || 1)),
     }]
     if (raw?.cadence === 'off') return [activity.id, { cadence: 'off', target: 1 }]
+    // A new reminder is offered daily even to existing profiles whose legacy
+    // dailyActivityIds snapshot predates it. An explicit setting still wins.
+    if (['creatine', 'other_supplements'].includes(activity.id)) {
+      return [activity.id, { cadence: 'daily', target: 1 }]
+    }
     return [activity.id, legacy.has(activity.id)
       ? { cadence: 'daily', target: 1 }
       : { cadence: 'off', target: 1 }]

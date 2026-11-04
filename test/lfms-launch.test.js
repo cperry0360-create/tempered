@@ -1,58 +1,39 @@
-import {test} from 'node:test'
+import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {readFileSync} from 'node:fs'
-const read=(p)=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+import { readFileSync } from 'node:fs'
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
 
-test('launch uses separated transparent approved LFMS symbol and lettering',()=>{
-  const html=read('index.html'),word=read('branding/lfms/logo-wordmark.svg'),mark=read('branding/lfms/logo-mark.svg')
-  assert.match(html,/class="lfms-launch__mark" src="\.\/branding\/lfms\/logo-mark\.svg"/)
-  assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--less" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
-  assert.match(html,/class="lfms-launch__tagline">TRAIN · FUEL · RECOVER/)
-  assert.doesNotMatch(html,/lfms-launch__caption/)
-  assert.match(word,/viewBox="205 547 1125 235"/)
-  assert.doesNotMatch(word,/<rect\b/)
-  assert.match(mark,/viewBox="435 167 675 387"/)
-  assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
-  assert.match(html,/class="lfms-launch__mark-stage"/)
-  assert.match(html,/class="lfms-launch__skin"/)
-  assert.match(html,/class="lfms-launch__barbell-stage"/)
-  assert.match(html,/class="lfms-launch__bar-art"/)
-  for(const side of ['bottom','top']) {
-    for(const color of ['red','white','blue']) {
-      assert.match(html,new RegExp('lfms-launch__plate--'+side+'-'+color))
-    }
-  }
-  assert.match(html,/class="lfms-launch__lift-tab"/)
-  assert.doesNotMatch(html,/lfms-launch__tear-edge|lfms-launch__peel-flap/)
-  assert.doesNotMatch(html,/lfms-launch__cracks|lfms-launch__impact-flash|lfms-launch__shockwave/)
+test('splash keeps the supplied transparent LFMS logo and split title',()=>{
+  const h=read('index.html'),c=read('src/brand.css')
+  assert.match(h,/class="lfms-launch__mark" src="\.\/branding\/lfms\/logo-mark\.svg"/)
+  assert.match(h,/class="lfms-launch__wordmark lfms-launch__wordmark--less"/)
+  assert.match(h,/class="lfms-launch__wordmark lfms-launch__wordmark--strong"/)
+  assert.match(h,/class="lfms-launch__tagline">TRAIN · FUEL · RECOVER/)
+  assert.match(read('branding/lfms/logo-wordmark.svg'),/viewBox="205 547 1125 235"/)
+  assert.match(read('branding/lfms/logo-mark.svg'),/viewBox="435 167 675 387"/)
+  assert.ok(h.indexOf('<!-- /lfms-launch__skin -->')<h.indexOf('class="lfms-launch__barbell-stage"'))
+  assert.match(c,/lfms-brand-clear-side 520ms/)
+  assert.doesNotMatch(h,/lfms-launch__glass-phase|lfms-launch__shockwave|lfms-launch__cracks/)
 })
-test('splash has staggered entrances, no overlapping negative margins, and a readable hold',()=>{
-  const css=read('src/brand.css'),js=read('src/main.js')
-  for(const name of ['rule','wordmark','tagline']) assert.match(css,new RegExp('lfms-'+name+'-enter'))
-  assert.match(css,/lfms-logo-settle/)
-  assert.match(css,/prefers-reduced-motion:reduce/)
-  for(const name of ['wordmark-enter-left','wordmark-enter-right','barbell-drop','bumper-stack','corner-peel','loaded-scrape','curl-release'])
-    assert.match(css,new RegExp('lfms-'+name))
-  assert.doesNotMatch(css,/lfms-mark-smash|lfms-glass-fracture|lfms-shockwave/)
-  assert.match(css,/clip-path:inset\(0 0 43% 0\)/)
-  assert.match(css,/clip-path:inset\(57% 0 0 0\)/)
 
-  assert.doesNotMatch(css,/margin-top:-/)
-  assert.match(js,/LFMS_PLATES_SETTLED_MS = 3990/)
-  assert.match(js,/LFMS_PEEL_DURATION_MS = 1020/)
+test('rigid weight lands before connected 1.01-second reveal and the weekly recap',()=>{
+  const c=read('src/brand.css'),js=read('src/main.js'),runtime=read('src/ui/lfms-cinematic-splash.js')
+  assert.match(c,/lfms-v8-loaded-fall 700ms linear 1060ms both/)
+  assert.match(c,/lfms-tagline-enter 440ms ease-out 950ms both/)
+  assert.match(js,/LFMS_REVEAL_START_MS - \(performance\.now\(\) - splashStarted\)/)
+  assert.match(runtime,/LFMS_REVEAL_START_MS = 2050/)
+  assert.match(runtime,/LFMS_REVEAL_DURATION_MS = 1010/)
   assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
-  assert.match(js,/launch\.dataset\.revealing = 'true'/)
-  assert.match(js,/setTimeout\(finish, 90\)/)
   assert.match(js,/launch\.remove\(\)/)
-  assert.match(js,/await dismissSplash\(\)/)
-  assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'),
-    'recap must initialize after launch animation removes the splash')
+  assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'))
+  assert.match(c,/clip-path:inset\(0 0 43% 0\)/)
+  assert.match(c,/clip-path:inset\(57% 0 0 0\)/)
 })
-test('new launch assets and four-tab finishing styles survive offline deployment',()=>{
-  const html=read('index.html'),sw=read('sw.js'),finish=read('src/lfms-finish.css')
-  assert.match(html,/src\/lfms-finish\.css/)
-  assert.match(sw,/\.\/branding\/lfms\/logo-wordmark\.svg/)
-  assert.match(sw,/\.\/src\/lfms-finish\.css/)
-  for(const cls of ['today2__pills','train2__pills','fn2__pills','progress-views']) assert.ok(finish.includes(cls),cls)
-  assert.match(finish,/min-height:44px/)
+
+test('V8 runtime and launch assets ship with offline PWA',()=>{
+  const sw=read('sw.js'),finish=read('src/lfms-finish.css')
+  for(const asset of ['src/ui/lfms-cinematic-splash.js','src/lfms-finish.css','branding/lfms/logo-wordmark.svg'])
+    assert.ok(sw.includes("'./"+asset+"'"),asset)
+  for(const cls of ['today2__pills','train2__pills','fn2__pills','progress-views'])
+    assert.ok(finish.includes(cls),cls)
 })

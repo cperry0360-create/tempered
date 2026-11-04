@@ -1,3 +1,9 @@
+## 2026-11-04 — LFMS V8 launch and energetic rest glyph, 0.66.59
+- Replace separate bumper-plate juggling with a *fully loaded* long silver Olympic barbell arriving as one rigid object; preserve six red-white-blue plates and visible central knurl. The approved V8 feel is purposeful and weighty, not springy/cartoonish.
+- Make a single canvas skin reveal mathematically share progress with the falling bar; only a narrow dark fold remains. No duplicated logo, wire/zigzag, full-panel triangle, or fake glass break.
+- Match Food's neon-red Close Day button for the sleeping figure in Today's weekly calendar without altering recorded rest or training data. This is a deliberately energetic visual treatment only.
+- Delay the reveal until actual app bootstrap completes, allow reduced-motion escape, maintain 8s startup failsafe, and keep GitHub Pages as the only host. Rollback: `backup/lfms-before-v8-red-rest-20261104`.
+
 ## 2026-11-02 — LFMS workout completion animation and results, v0.66.38
 - The live identity is **Less Fat More Strong**. Reuse actual LFMS mountain/wordmark and existing nav-train lifter; do not invent a red T, cartoon art, liquid/water splash or confetti.
 - A completed workout with logged sets plays a 2.2s graphical completion reveal that can be tapped to skip; reduced motion bypasses it. It settles on a navy results dashboard with actual time, working sets, reps, volume, detected PRs and optional exercise breakdown.

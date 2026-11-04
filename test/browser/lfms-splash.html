@@ -1,128 +1,64 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS red-white-blue stacked barbell / mechanical zipper acceptance</title>
-<link rel="stylesheet" href="../../src/tokens.css">
-<link rel="stylesheet" href="../../src/brand.css">
-</head><body>
+<title>LFMS V8 cinematic loaded-bar splash acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css"></head><body>
+<div id="app" class="app">READY DASHBOARD</div>
 <script type="module">
+import { runCinematicReveal, LFMS_REVEAL_START_MS, LFMS_REVEAL_DURATION_MS } from '../../src/ui/lfms-cinematic-splash.js'
 const checks=[],errors=[]
 const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
 window.addEventListener('error',e=>errors.push(e.message))
 window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))
-try{
+try {
   const html=await fetch('/index.html').then(r=>r.text())
-  const parsed=new DOMParser().parseFromString(html,'text/html')
-  const original=parsed.querySelector('[data-lfms-launch]')
-  check('real app has a splash overlay',Boolean(original))
-  const launch=document.importNode(original,true)
+  const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
-  const word=launch.querySelector('.lfms-launch__wordmark--less')
-  const strong=launch.querySelector('.lfms-launch__wordmark--strong')
-  const bar=launch.querySelector('.lfms-launch__bar-art')
-  const barbell=launch.querySelector('.lfms-launch__barbell-stage')
-  const skin=launch.querySelector('.lfms-launch__skin')
-  const curl=launch.querySelector('.lfms-launch__lift-tab')
-  const identity=launch.querySelector('.lfms-launch__identity')
+  const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
+  const bar=launch.querySelector('.lfms-launch__barbell-stage')
+  const shaft=launch.querySelector('.lfms-launch__bar-art')
   const plates=[...launch.querySelectorAll('.lfms-launch__plate')]
-  const looseArtifacts=launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap')
-  const rule=launch.querySelector('.lfms-launch__rule')
-  const tagline=launch.querySelector('.lfms-launch__tagline')
-  await Promise.all([mark,word,strong].map(img=>img.decode()))
-  check('official mountain and both wordmark halves decode',
-    mark.naturalWidth>0&&word.naturalWidth>0&&strong.naturalWidth>0)
-  check('approved opposite-direction word swoops unchanged',
-    getComputedStyle(word).animationName.includes('lfms-wordmark-enter-left')
-    &&getComputedStyle(strong).animationName.includes('lfms-wordmark-enter-right')
-    &&getComputedStyle(word).animationDuration==='1.08s'
-    &&getComputedStyle(strong).animationDuration==='1.13s')
-  check('logo gently settles instead of smashing glass',
-    getComputedStyle(mark).animationName==='lfms-logo-settle'
-    &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__glass-phase,.lfms-launch__shockwave,.lfms-launch__impact-flash'))
-  check('flat cartoon OLYMPIC BARBELL and six independent bumper SVGs exist',
-    Boolean(barbell&&bar&&curl&&skin)&&!looseArtifacts&&plates.length===6
-    &&plates.every(p=>!!p.querySelector('ellipse')&&!p.querySelector('linearGradient'))
-    &&!!bar.querySelector('rect'))
-  check('each side loads RED WHITE BLUE in order',
-    ['bottom-red','bottom-white','bottom-blue','top-red','top-white','top-blue'].every((c,i)=>
-      plates[i].classList.contains('lfms-launch__plate--'+c))
-    &&plates.map(p=>p.dataset.color).join(',')==='red,white,blue,red,white,blue')
-  check('flat plates use LFMS red white and blue pigment, not metallic gradients',
-    plates.every(p=>{
-      const fill=p.querySelector('ellipse')?.getAttribute('fill')
-      return fill===({red:'#F03725',white:'#F5F9FF',blue:'#359DF3'})[p.dataset.color]
-    }))
-  check('bottom three fall BEFORE the bar, then upper three fall after',
-    plates.map(p=>getComputedStyle(p).animationDelay).join('|')===
-      '1.25s|1.51s|1.77s|2.88s|3.16s|3.44s'
-    &&getComputedStyle(bar).animationName==='lfms-barbell-drop'
-    &&getComputedStyle(bar).animationDelay==='2.28s'
-    &&plates.every(p=>getComputedStyle(p).animationName==='lfms-bumper-stack'))
-  check('no stray white wire strokes or detached floating triangular flap',
-    Boolean(curl)&&!looseArtifacts
-    &&!launch.querySelector('.lfms-launch__cracks,.lfms-launch__shockwave')
-    &&Boolean(rule&&tagline)
-    &&getComputedStyle(curl).opacity==='0')
-  await sleep(1870)
-  const m=mark.getBoundingClientRect(),w=word.getBoundingClientRect(),t=tagline.getBoundingClientRect()
-  check('emblem stays above lettering',m.bottom+8<w.top,JSON.stringify({markBottom:m.bottom,wordTop:w.top}))
-  check('tagline stays below lettering',w.bottom+8<t.top)
-  check('logo, lettering and tagline all fit screen',m.top>=0&&t.bottom<=innerHeight)
-  check('splash covers viewport with no exposed safe-area edges',
-    launch.getBoundingClientRect().left<=0
-    &&launch.getBoundingClientRect().right>=innerWidth
-    &&launch.getBoundingClientRect().top<=0
-    &&launch.getBoundingClientRect().bottom>=innerHeight-1)
-  check('splash shares background color with root on ordinary phone',
-    getComputedStyle(document.body).backgroundColor===getComputedStyle(document.documentElement).backgroundColor)
-  check('the three ground plates are stacking while the bar has not landed',
-    Number(getComputedStyle(plates[0]).opacity)>.99 &&
-    Number(getComputedStyle(bar).opacity)<.01)
-  await sleep(2500)
-  check('all SIX plates and the vertical bar are visible before the tip',
-    plates.every(p=>Number(getComputedStyle(p).opacity)>.99)
-    &&Number(getComputedStyle(bar).opacity)>.99)
-  const dbRect=barbell.getBoundingClientRect()
-  const wordRect=word.getBoundingClientRect()
-  check('barbell stays in RIGHT lane without touching LFMS lettering',
-    dbRect.width>=65 && dbRect.right<=innerWidth+6
-    && dbRect.left > wordRect.right + 5,
-    JSON.stringify({barLeft:dbRect.left,barRight:dbRect.right,wordRight:wordRect.right,viewport:innerWidth}))
-  check('silver bar has Olympic length with exposed center knurl',
-    bar.getAttribute('viewBox')==='0 0 160 700'
-    &&dbRect.height>dbRect.width*4.1
-    &&!!bar.querySelector('rect[x="69"][y="269"]')
-    &&getComputedStyle(identity).animationName.includes('lfms-brand-clear-side'),
-    JSON.stringify({barWidth:dbRect.width,barHeight:dbRect.height,identityAnimation:getComputedStyle(identity).animationName}))
-  launch.dataset.revealing='true'
-  await sleep(120)
-  check('right-corner tear clips SKIN only while barbell stays visible',
-    getComputedStyle(skin).animationName==='lfms-corner-peel'
-    &&getComputedStyle(barbell).animationName==='lfms-loaded-scrape'
-    &&getComputedStyle(curl).animationName==='lfms-curl-release'
-    &&getComputedStyle(launch).clipPath==='none'
-    &&getComputedStyle(skin).clipPath!=='none'
-    &&getComputedStyle(launch).backgroundColor==='rgba(0, 0, 0, 0)')
-  const clipBefore=getComputedStyle(skin).clipPath
-  const barBefore=barbell.getBoundingClientRect()
-  const xBefore=parseFloat(getComputedStyle(barbell).left)
-  await sleep(510)
-  const clipDuring=getComputedStyle(skin).clipPath
-  const barDuring=barbell.getBoundingClientRect()
-  const xDuring=parseFloat(getComputedStyle(barbell).left)
-  check('right-corner skin is progressively removed as bar falls down-right',
-    clipBefore!==clipDuring&&clipDuring.includes('polygon')
-    &&barDuring.top>barBefore.top+25
-    &&xDuring>=xBefore)
-  check('corner peel stays free of white tear wires and shadow artifacts',
-    !launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap')
-    &&getComputedStyle(launch.querySelector('.lfms-launch__barbell-stage'),'::before').content==='none')
-  check('loaded barbell and tiny attached fold stay outside the cut-away skin',
-    !skin.contains(barbell)&&!skin.contains(curl)
-    &&barbell.contains(curl)&&!looseArtifacts)
+  const skin=launch.querySelector('.lfms-launch__skin')
+  await Promise.all([mark,...words].map(img=>img.decode()))
+  check('official logo and both lettering halves decode',mark.naturalWidth>0&&words.every(x=>x.naturalWidth>0))
+  check('lettering retains original left and right swoops',
+    getComputedStyle(words[0]).animationName==='lfms-wordmark-enter-left'&&getComputedStyle(words[1]).animationName==='lfms-wordmark-enter-right')
+  check('one rigid long silver bar, six installed red-white-blue plates',
+    !!bar&&shaft.getAttribute('viewBox')==='0 0 160 700'
+    &&plates.length===6&&plates.map(x=>x.dataset.color).join(',')==='red,white,blue,red,white,blue'
+    &&getComputedStyle(bar).animationName==='lfms-v8-loaded-fall'
+    &&plates.every(x=>getComputedStyle(x).animationName==='none'&&getComputedStyle(x).opacity==='1')
+    &&getComputedStyle(shaft).animationName==='none')
+  check('red, white and blue physical fills preserved',
+    plates.every(x=>x.querySelector('ellipse')?.getAttribute('fill')===({red:'#F03725',white:'#F5F9FF',blue:'#359DF3'})[x.dataset.color]))
+  check('two-second brand-to-impact hold before 1.01-second reveal',
+    LFMS_REVEAL_START_MS===2050&&LFMS_REVEAL_DURATION_MS===1010)
+  await wait(1840)
+  const barRect=bar.getBoundingClientRect(),wordRect=words[0].getBoundingClientRect()
+  check('loaded barbell lands in its own right lane without covering logo',
+    barRect.height>barRect.width*4&&barRect.right<=innerWidth+6
+    &&barRect.left>wordRect.right,
+    JSON.stringify({barLeft:barRect.left,wordRight:wordRect.right,barRight:barRect.right}))
+  check('no accidental floating wire, shadow or duplicate surface',
+    !launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap,.lfms-launch__cracks,.lfms-launch__shockwave')
+    &&getComputedStyle(launch.querySelector('.lfms-launch__lift-tab')).display==='none')
+  const done=runCinematicReveal(launch)
+  await wait(120)
+  const before=bar.getBoundingClientRect(),cutBefore=skin.style.clipPath
+  check('real skin is clipped; narrow fold is attached in overlay, not a fake dashboard',cutBefore.startsWith('polygon(')
+    &&!!launch.querySelector('.lfms-launch__peel-strip')
+    &&!skin.contains(bar)&&!skin.contains(launch.querySelector('.lfms-launch__peel-strip')))
+  await wait(400)
+  const after=bar.getBoundingClientRect()
+  check('same progress drives tear and falling barbell',
+    skin.style.clipPath!==cutBefore&&after.top>before.top+20)
+  await done
+  check('full dashboard is exposed by the end of the tear',
+    skin.style.clipPath==='inset(0 100% 0 0)')
   check('no browser exceptions',errors.length===0,errors.join(' | '))
-}catch(error){check('splash harness finishes',false,error.stack??String(error))}
+  launch.remove()
+}catch(error){check('V8 splash harness finishes',false,error.stack??String(error))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

@@ -29,7 +29,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.doesNotMatch(css,/--lfms-duo-status-backdrop/)
   assert.doesNotMatch(read('src/tokens.css'),/--lfms-duo-status-backdrop/)
   const brand=read('src/brand.css')
-  assert.ok(brand.includes('html:not([data-layout="duo"]):has(.lfms-launch'))
+  assert.ok(brand.includes('html[data-layout="duo"] .lfms-launch__skin'))
   assert.match(css,/html\[data-layout="duo"\] #app\.app \.tabbar\s*\{\s*background:transparent/)
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch:not\(\[data-closing="true"\]\)\) #app\.app\s*\{[^}]*opacity:0;[^}]*visibility:hidden;/)
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)

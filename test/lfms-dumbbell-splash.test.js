@@ -52,5 +52,5 @@ test('reduced motion and offline handoff still work', () => {
   assert.match(js,/if \(reduced\) \{[\s\S]*?launch\.dataset\.closing = 'true'/)
   assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
   assert.match(sw,/\.\/src\/ui\/lfms-cinematic-splash\.js/)
-  assert.match(read('src/version.js'),/0\.66\.59 \(165\)/)
+  assert.match(read('src/version.js'),/0\.66\.60 \(166\)/)
 })

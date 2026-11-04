@@ -1,3 +1,9 @@
+## 2026-11-04 — Replace rejected V8 splash with calm fallback; solid-red sleeping icon, 0.66.61 (167)
+
+- After user and family feedback rejected the V8 screen tear, disable the entire visible barbell, plates, fold and tear choreography. Replace the launch with a short 560ms fade-and-rise of the **original LFMS mountain and wordmark**, hold until real app bootstrap and at least 1.6s, then crossfade to the existing app in 260ms. Do not introduce a new concept into production without motion review. The older experimental source remains dormant for reference only.
+- Correct the Today weekly calendar resting figure: pure saturated red `rgb(255,57,78)` matching Food's red accent; **no halo, radial gradient, drop shadow, text glow or background tile**. Rest classification and all canonical logs untouched.
+- Reduced-motion static fallback, eight-second launch fail-safe, and deferred weekly recap preserved. GitHub Pages only, local IndexedDB data unchanged.
+
 ## 2026-11-04 — LFMS V8 cinematic splash + red rest figure, 0.66.60 (166)
 
 - Replaced the six separate splash plate drops with one rigid loaded Olympic barbell landing (1.06–1.76s) and a single V8 pull that reveals the already-rendered real Today dashboard (starts after bootstrap and at least 2.05s, duration 1.01s). The narrow skin fold shares the barbell's animation progress. No false black screen, white zipper, second logo, or oversized flying panel; preserve original split lettering and center grip. Reduced motion remains static.

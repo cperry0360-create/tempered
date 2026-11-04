@@ -1,4 +1,4 @@
-## 2026-11-04 — LFMS V8 launch and energetic rest glyph, 0.66.59
+## 2026-11-04 — LFMS V8 launch and energetic rest glyph, 0.66.60
 - Replace separate bumper-plate juggling with a *fully loaded* long silver Olympic barbell arriving as one rigid object; preserve six red-white-blue plates and visible central knurl. The approved V8 feel is purposeful and weighty, not springy/cartoonish.
 - Make a single canvas skin reveal mathematically share progress with the falling bar; only a narrow dark fold remains. No duplicated logo, wire/zigzag, full-panel triangle, or fake glass break.
 - Match Food's neon-red Close Day button for the sleeping figure in Today's weekly calendar without altering recorded rest or training data. This is a deliberately energetic visual treatment only.

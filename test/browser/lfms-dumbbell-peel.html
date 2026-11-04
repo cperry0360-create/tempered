@@ -24,8 +24,8 @@ try{
     getComputedStyle(app).visibility==='hidden'&&getComputedStyle(app).opacity==='0')
   const bar=launch.querySelector('.lfms-launch__barbell-stage')
   const skin=launch.querySelector('.lfms-launch__skin')
-  const tear=launch.querySelector('.lfms-launch__tear-edge')
-  const flap=launch.querySelector('.lfms-launch__peel-flap')
+  const curl=launch.querySelector('.lfms-launch__lift-tab')
+  const loose=launch.querySelector('.lfms-launch__tear-edge,.lfms-launch__peel-flap')
   launch.dataset.revealing='true'
   await wait(70)
   check('reveal makes real app visible BEFORE mask finishes',
@@ -33,9 +33,8 @@ try{
   check('TOP-RIGHT peel clips the skin, not the falling silver bar',
     getComputedStyle(skin).animationName==='lfms-corner-peel'
     &&getComputedStyle(bar).animationName==='lfms-loaded-scrape'
-    &&getComputedStyle(tear).animationName==='lfms-tear-follow'
-    &&getComputedStyle(flap).animationName==='lfms-peel-flap'
-    &&!skin.contains(bar)
+    &&getComputedStyle(curl).animationName==='lfms-curl-release'
+    &&!skin.contains(bar)&&bar.contains(curl)&&!loose
     &&getComputedStyle(launch).clipPath==='none')
   const start=getComputedStyle(skin).clipPath
   const barStart=bar.getBoundingClientRect()
@@ -48,8 +47,9 @@ try{
     start!==middle&&middle.startsWith('polygon(')
     &&barLater.top>barStart.top+20
     &&xLater>xStart)
-  check('the barbell remains outside the clipped wrapper during its fall',
-    !skin.contains(bar)&&getComputedStyle(bar).opacity==='1')
+  check('the barbell and its subtle attached crease remain outside the peeling skin',
+    !skin.contains(bar)&&bar.contains(curl)
+    &&getComputedStyle(bar).opacity==='1'&&!loose)
   check('reveal never repaints root charcoal as a blue gradient',
     getComputedStyle(document.body).backgroundColor===bg
     &&getComputedStyle(document.body).backgroundImage==='none')

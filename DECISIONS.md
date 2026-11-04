@@ -1,3 +1,9 @@
+## 2026-11-04 — Restore original word swoops and increase LFMS launch drama
+
+- User says Kinetic LFMS is too fast and does not feel dramatic; especially misses the original longer swooping word movement. Restore the previous full-viewport opposite-direction keyframes: initial ±110vw offset, ±14° skew and soft-focus, slight 3.5% overshoot, precise settle.
+- Slow the staged sequence to roughly 3.9s including the exit: mountain emerges, two word lines fly in, red streak crosses behind, tagline resolves, then a short hero hold. Keep the splash gradient and real LFMS SVG. Avoid the rejected weight/tear concepts.
+- App remains the existing local-first tracker with no changes to saved data or the solid-red sleeping figure. Duo app ground stays charcoal, while the temporary gradient fills only the splash. Release 0.66.63 (169), backup `backup/lfms-before-long-swoops-20261104`.
+
 ## 2026-11-04 — Approve Kinetic LFMS splash with gradient limited to launch
 
 - User explicitly requested implementing Kinetic LFMS directly in app and said the splash **can have a gradient background**. Use the existing official LFMS mark and wordmark, not the AI-generated mockup logo.

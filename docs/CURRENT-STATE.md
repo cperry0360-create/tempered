@@ -1,3 +1,9 @@
+## 2026-11-04 — Longer Kinetic LFMS word swoops, 0.66.63 (169)
+
+- Responding to direct feedback that 0.66.62's kinetic launch was too brief and lacked drama, restored the **original long opposite-edge word swoops** (LESS FAT enters from far left, MORE STRONG from far right with skew, blur, overshoot and settle). Mountain entrance is more deliberate, then one red streak completes the lockup; all original official LFMS SVG artwork is retained.
+- Intro now holds for at least 3.56s before a 0.32–0.34s fade to the fully loaded real Today dashboard, allowing a clear full-logo hero moment. The splash-only charcoal-to-navy gradient, full Duo viewport coverage, reduced-motion bypass, 8s failsafe, and post-splash weekly recap remain intact.
+- Pure presentation change; no stored workout, nutrition, rest history or settings altered. GitHub Pages only. Rollback branch: `backup/lfms-before-long-swoops-20261104`.
+
 ## 2026-11-04 — Kinetic LFMS gradient splash, 0.66.62 (168)
 
 - Shipped the approved Kinetic LFMS direction: actual brand mountain snaps into place, actual split wordmark lines enter from opposite directions, one vivid red streak passes behind the artwork, and TRAIN · FUEL · RECOVER resolves. Real Today dashboard is already loaded when a short fade begins (minimum 1.82s, exit 240ms).

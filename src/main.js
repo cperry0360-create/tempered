@@ -11,16 +11,16 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 
 // Keep the supplied LFMS launch artwork visible on fast devices, too.
 // The overlay is OUTSIDE #app, so the finished dashboard is rendered behind
-// it BEFORE the loaded barbell pulls the splash away.
+// it BEFORE the staged kinetic lettering gives way to Today.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-// Kinetic LFMS: let the real wordmark/mark movement settle before revealing Today.
-const LFMS_KINETIC_SPLASH_MIN_MS = 1820
-const LFMS_KINETIC_SPLASH_EXIT_MS = 240
+// Kinetic LFMS: mountain -> long opposite-edge word swoops -> red streak -> full lockup hold -> Today.
+const LFMS_KINETIC_SPLASH_MIN_MS = 3560
+const LFMS_KINETIC_SPLASH_EXIT_MS = 340
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
-  // The real app is rendered before this short, straightforward crossfade.
+  // Bootstrap completes behind the splash; give the finished logo a beat before the crossfade.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const remaining = reduced ? 0 : Math.max(0, LFMS_KINETIC_SPLASH_MIN_MS - (performance.now() - splashStarted))

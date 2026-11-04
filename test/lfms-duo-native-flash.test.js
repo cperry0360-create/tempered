@@ -33,7 +33,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/html\[data-layout="duo"\] #app\.app \.tabbar\s*\{\s*background:transparent/)
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch:not\(\[data-closing="true"\]\)\) #app\.app\s*\{[^}]*opacity:0;[^}]*visibility:hidden;/)
   assert.match(css,/html\[data-layout="duo"\]:has\(\.lfms-launch\[data-closing="true"\]\) #app\.app\s*\{[^}]*opacity:1;[^}]*visibility:visible;/)
-  assert.match(css,/transition:opacity 320ms ease-out,visibility 0s linear 320ms/)
+  assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/LFMS_KINETIC_SPLASH_MIN_MS = 3560/)
   assert.match(read('src/main.js'),/launch\.dataset\.closing = 'true'/)
   assert.match(read('src/version.js'),/0\.66\.63 \(169\)/)

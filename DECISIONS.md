@@ -1,3 +1,9 @@
+## 2026-11-04 — Approve Kinetic LFMS splash with gradient limited to launch
+
+- User explicitly requested implementing Kinetic LFMS directly in app and said the splash **can have a gradient background**. Use the existing official LFMS mark and wordmark, not the AI-generated mockup logo.
+- Bring mountain in sharply, resolve LESS FAT/MORE STRONG from opposite sides, pass a single red streak behind the logo and fade into already-rendered Today; keep the whole opening brisk, with reduced-motion support. The temporary charcoal-to-navy gradient applies only to splash, not Duo root/rail.
+- Retire the physically implausible screen tear and weight choreography. Keep the pure red rest figure unchanged. No data storage changes, backup branch `backup/lfms-before-kinetic-gradient-20261104`. Release 0.66.62 (168).
+
 ## 2026-11-04 — Stop the barbell tear; use a simple stopgap and rethink LFMS motion
 
 - User and both boys dislike the latest weight/tear splash. No more production iterations of that concept: the physical motion and screen reveal feel disconnected and cartoonish. Replace with a deliberately minimal logo entrance until the next **distinct** direction wins review.

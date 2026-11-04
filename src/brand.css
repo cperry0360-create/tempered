@@ -13,7 +13,7 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS 0.66.62 — Kinetic LFMS.
+/* LFMS 0.66.63 — Kinetic LFMS: restored long word swoops, staged finish.
    Use the ACTUAL brand SVGs, not a second set of invented letters.
    The splash gradient is deliberately contained within the overlay: the
    installed Duo's OS-owned right edge and app root remain solid charcoal. */
@@ -26,7 +26,7 @@
   padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));
   background:var(--lfms-duo-canvas);color:var(--lfms-launch-text);
   opacity:1;visibility:visible;
-  transition:opacity 230ms ease-out,visibility 0s linear 230ms;
+  transition:opacity 320ms ease-out,visibility 0s linear 320ms;
 }
 .lfms-launch__skin {
   position:absolute;inset:-2px;display:grid;place-items:center;
@@ -64,7 +64,7 @@ html[data-layout="duo"] .lfms-launch__skin {
     var(--lfms-launch-red) 65%,transparent 100%);
   box-shadow:0 0 8px rgba(240,55,37,.38);
   opacity:0;transform-origin:center;
-  animation:lfms-kinetic-sweep 690ms cubic-bezier(.37,.05,.24,1) 560ms both;
+  animation:lfms-kinetic-sweep 920ms cubic-bezier(.34,.06,.25,1) 1990ms both;
   pointer-events:none;
 }
 .lfms-launch__identity {
@@ -81,14 +81,14 @@ html[data-layout="duo"] .lfms-launch__skin {
   display:block;width:100%;height:auto;max-height:min(25vh,180px);
   object-fit:contain;transform-origin:50% 65%;
   filter:drop-shadow(0 10px 21px rgba(0,0,0,.25));
-  animation:lfms-kinetic-mark 580ms cubic-bezier(.16,1,.28,1) 150ms both;
+  animation:lfms-kinetic-mark 860ms cubic-bezier(.18,.92,.27,1) 210ms both;
 }
 .lfms-launch__rule {
   display:block;width:min(168px,46vw);height:2px;flex:none;
   margin:10px 0 16px;border-radius:999px;
   background:linear-gradient(90deg,transparent,var(--lfms-launch-red),transparent);
   transform-origin:50% 50%;
-  animation:lfms-kinetic-rule 300ms ease-out 900ms both;
+  animation:lfms-kinetic-rule 520ms cubic-bezier(.15,.78,.28,1) 2320ms both;
 }
 .lfms-launch__wordmark-stage {
   position:relative;width:min(88vw,520px);max-height:min(18vh,112px);
@@ -97,36 +97,43 @@ html[data-layout="duo"] .lfms-launch__skin {
 .lfms-launch__wordmark {
   position:absolute;inset:0;display:block;
   width:100%;height:100%;object-fit:contain;pointer-events:none;
-  will-change:transform,opacity;
+  will-change:transform,opacity,filter;
 }
 .lfms-launch__wordmark--less {
   clip-path:inset(0 0 43% 0);
-  animation:lfms-kinetic-less 550ms cubic-bezier(.17,.88,.26,1) 430ms both;
+  animation:lfms-kinetic-less 1260ms cubic-bezier(.17,.91,.29,1) 650ms both;
 }
 .lfms-launch__wordmark--strong {
   clip-path:inset(57% 0 0 0);
-  animation:lfms-kinetic-strong 570ms cubic-bezier(.17,.88,.26,1) 530ms both;
+  animation:lfms-kinetic-strong 1310ms cubic-bezier(.17,.91,.29,1) 810ms both;
 }
 .lfms-launch__tagline {
   margin:19px 0 0;padding:0;
   color:var(--lfms-launch-text);font-size:clamp(10px,2.5vw,12px);
   font-weight:650;line-height:1.45;letter-spacing:.2em;
   text-align:center;white-space:nowrap;
-  animation:lfms-kinetic-tagline 380ms ease-out 1130ms both;
+  animation:lfms-kinetic-tagline 500ms ease-out 2480ms both;
 }
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
+/* The mountain settles decisively; the words recover their original
+   opposite-EDGE swoops (skew, deceleration, overshoot and soft focus). */
 @keyframes lfms-kinetic-mark {
-  0% {opacity:0;transform:translateY(16px) scale(.90)}
-  61% {opacity:1}
-  100% {opacity:1;transform:translateY(0) scale(1)}
+  0% {opacity:0;transform:translateY(-72px) rotate(-2.5deg) scale(1.035);filter:blur(4px)}
+  69% {opacity:1;transform:translateY(4px) rotate(.35deg) scale(.99);filter:blur(0)}
+  84% {transform:translateY(-2px) rotate(-.12deg) scale(1.007)}
+  100% {opacity:1;transform:translateY(0) rotate(0) scale(1);filter:drop-shadow(0 10px 21px rgba(0,0,0,.25))}
 }
 @keyframes lfms-kinetic-less {
-  from {opacity:0;transform:translateX(-30px)}
-  to {opacity:1;transform:translateX(0)}
+  0% {opacity:0;transform:translateX(-110vw) skewX(-14deg);filter:blur(9px)}
+  65% {opacity:1;transform:translateX(3.5%) skewX(2deg);filter:blur(0)}
+  84% {transform:translateX(-1%) skewX(0)}
+  100% {opacity:1;transform:translateX(0);filter:blur(0)}
 }
 @keyframes lfms-kinetic-strong {
-  from {opacity:0;transform:translateX(30px)}
-  to {opacity:1;transform:translateX(0)}
+  0% {opacity:0;transform:translateX(110vw) skewX(14deg);filter:blur(9px)}
+  66% {opacity:1;transform:translateX(-3.5%) skewX(-2deg);filter:blur(0)}
+  85% {transform:translateX(1%) skewX(0)}
+  100% {opacity:1;transform:translateX(0);filter:blur(0)}
 }
 @keyframes lfms-kinetic-sweep {
   0% {opacity:0;transform:translate3d(-100vw,19px,0) rotate(-11deg)}

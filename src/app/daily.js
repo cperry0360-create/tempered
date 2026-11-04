@@ -142,8 +142,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   /**
    * Backwards-compatible schedule. Older profiles only know `dailyActivityIds`;
    * those remain daily and everything else stays off until setup is rerun.
-   * Micro cardio is a new default and therefore opts into DAILY once unless the
-   * user has explicitly given it a cadence.
+   * Newly introduced reminder habits opt into DAILY without changing any
+   * existing schedule; explicit per-habit preferences always win.
    */
   async function activitySchedule() {
     const profile = await storage.get('profile', 'profile')
@@ -159,7 +159,9 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
-      if (activity.id === 'micro_cardio') return [activity.id, { cadence: 'daily', target: 1 }]
+      if (['micro_cardio', 'creatine', 'other_supplements'].includes(activity.id)) {
+        return [activity.id, { cadence: 'daily', target: 1 }]
+      }
       if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]
       return [activity.id, legacyDaily.has(activity.id)
         ? { cadence: 'daily', target: 1 }

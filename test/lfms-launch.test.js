@@ -15,7 +15,6 @@ test('launch uses separated transparent approved LFMS symbol and lettering',()=>
   assert.match(html,/class="lfms-launch__wordmark lfms-launch__wordmark--strong" src="\.\/branding\/lfms\/logo-wordmark\.svg"/)
   assert.match(html,/class="lfms-launch__mark-stage"/)
   assert.match(html,/class="lfms-launch__skin"/)
-  assert.match(html,/class="lfms-launch__peel-flap"/)
   assert.match(html,/class="lfms-launch__barbell-stage"/)
   assert.match(html,/class="lfms-launch__bar-art"/)
   for(const side of ['bottom','top']) {

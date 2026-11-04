@@ -368,3 +368,34 @@ html[data-layout="duo"] .lfms-launch {
   .lfms-launch__barbell-stage {animation:none;opacity:1;transform:translate(-50%,-50%)}
   .lfms-launch__peel-strip {display:none}
 }
+
+
+/* LFMS splash reset (0.66.61). Temporary premium logo-only intro.
+   Keep the real approved LFMS mark, title and tagline, but remove all
+   failed barbell/plate/tear choreography from the visible experience. */
+.lfms-launch__barbell-stage,.lfms-launch__peel-strip,.lfms-launch__lift-tab {display:none}
+.lfms-launch__skin {animation:none;clip-path:inset(0)}
+.lfms-launch__glow {display:none}
+.lfms-launch__identity {
+  --lfms-brand-scale:1;--lfms-brand-offset:0px;
+  transform:translateY(-1vh);
+  animation:lfms-clean-brand-enter 560ms cubic-bezier(.2,.65,.2,1) both;
+}
+.lfms-launch__mark {
+  opacity:1;transform:none;animation:none;
+  filter:drop-shadow(0 7px 14px rgba(0,0,0,.20));
+}
+.lfms-launch__wordmark--less,.lfms-launch__wordmark--strong {
+  opacity:1;transform:none;filter:none;animation:none;
+}
+.lfms-launch__rule {animation:none;transform:none;opacity:1}
+.lfms-launch__tagline {animation:none;transform:none;opacity:.82}
+.lfms-launch[data-closing="true"] {opacity:0;visibility:hidden;transition:opacity 240ms ease-out,visibility 0s linear 240ms}
+@keyframes lfms-clean-brand-enter {
+  from {opacity:0;transform:translateY(calc(-1vh + 13px)) scale(.97)}
+  to {opacity:1;transform:translateY(-1vh) scale(1)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .lfms-launch__identity {animation:none;opacity:1;transform:translateY(-1vh)}
+  .lfms-launch[data-closing="true"] {transition:none}
+}

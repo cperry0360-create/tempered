@@ -70,6 +70,8 @@
  * @property {Record<string, number|boolean>} [nutritionCarryover]
  * @property {number|null} [proteinGoalGrams]
  * @property {boolean} [proteinTargetMet]
+ * @property {boolean} [creatineTaken] Creatine checked off on this date.
+ * @property {boolean} [otherSupplementsTaken] Other supplements checked off independently.
  * @property {boolean} [alcoholFree]
  * @property {boolean} [saunaLogged]
  * @property {boolean} [restDay]

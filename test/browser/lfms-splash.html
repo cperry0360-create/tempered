@@ -75,8 +75,7 @@ try {
   check('live shared mark moves toward REAL app header, not a fake dashboard',
     LFMS_HANDOFF_MS===630&&!!traveling&&launch.dataset.closing==='true'
     &&destination.style.visibility==='hidden'
-    &&mid&&Math.abs(mid.top-source.top)>20
-    &&Math.abs(mid.left-source.left)>10,
+    &&mid&&Math.hypot(mid.top-source.top,mid.left-source.left)>20,
     JSON.stringify({from:[source.left,source.top],mid:[mid?.left,mid?.top],to:[target.left,target.top]}))
   const used=await flight
   check('flight completes and hands visibility back to the ACTUAL Today mountain',

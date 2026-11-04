@@ -30,13 +30,17 @@ try{
     getComputedStyle(app).opacity==='0'&&getComputedStyle(app).visibility==='hidden'
     &&app.textContent.includes('THE READY APP'))
   check('no mechanics, barbell, tearing or paper edge',!launch.querySelector('.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
-  await wait(1560)
+  // Give both restored edge-to-edge word swoops and the red finish time to land.
+  await wait(3230)
+  check('Duo retains full readable lockup until handoff',
+    [...launch.querySelectorAll('.lfms-launch__wordmark')].every(node=>Number(getComputedStyle(node).opacity)>.98)
+    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__sweep')).opacity)<.02)
   launch.dataset.closing='true'
   await wait(90)
   check('Duo exposes READY dashboard beneath the fading gradient skin',
     getComputedStyle(app).visibility==='visible'&&getComputedStyle(app).opacity==='1'
     &&getComputedStyle(document.body).backgroundColor===background)
-  await wait(175)
+  await wait(290)
   launch.remove()
   check('overlay removal preserves real app and original charcoal edge',
     getComputedStyle(app).visibility==='visible'

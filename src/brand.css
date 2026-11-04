@@ -352,7 +352,7 @@ html[data-layout="duo"] .lfms-launch {
 .lfms-launch__peel-strip {
   position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;
   opacity:0;transform-origin:0 0;
-  background:linear-gradient(90deg,#1b2b37 0%,#13222e 25%,#09151f 100%);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--lfms-duo-canvas) 90%,var(--food-v2-muted)) 0%,var(--lfms-duo-canvas) 25%,var(--lfms-launch-deep) 100%);
   filter:drop-shadow(-4px 1px 5px rgba(0,0,0,.3));
   will-change:clip-path,transform;
 }

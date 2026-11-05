@@ -1,3 +1,9 @@
+## 2026-11-05 — LFMS live workout cockpit, 0.66.66
+- **Header:** Five compact Liquid Glass icon actions now use the existing side-rail visual language. Holding an icon expands the text label, and the long press is intentionally non-destructive. Normal taps keep Exit confirmation, Pause/Resume, Minimize, Calculator, and Finish confirmation.
+- **Progress:** Replace the old segmented line with tappable movement progress tiles. Focus Stack is the default, with Chapter Cards and Set Matrix reachable through the progress-view switch. All three show the same canonical set completion, and changing presentation doesn't mutate logged workouts.
+- **Preserved:** Original exercise imagery, editable set rows, half-fold mode, inline Duo rest dock, draft checkpoint/restore and performance tracking. Backup: backup/lfms-before-session-glass-progress-2026-11-05.
+- **Follow-up:** Review the live layout and adjust based on marked-up screenshots; the source PDF had no added annotations.
+
 ## 2026-11-04 — IGNITION, LFMS launch as a true shared-element transition
 
 - The last release still feels boring despite a longer hold and red beams. Replace decorative repetition with one clear kinetic narrative: oversized mountain appearing as cinematic masks retract; official two-line words swoop from opposing edges; single restrained crimson diagonal punctuates the lock; mountain **actually travels** to Today header while the real dashboard comes into view.

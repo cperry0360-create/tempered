@@ -22,7 +22,7 @@
  */
 
 import { el, replace } from '../dom.js'
-import { plateCalculatorButton } from '../plate-calculator.js'
+import { openPlateCalculator } from '../plate-calculator.js'
 import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
 import { lbs, performance, clock, since, shortDate } from '../format.js'
@@ -77,6 +77,15 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   let halfFold = false
   let halfFoldIndex = 0
   let focusStageIndex = 0
+  // Display-only choice. Never affects saved set data or session drafts.
+  const PROGRESS_VIEW_KEY = 'lfms.session.progress-style'
+  const savedProgressView = () => {
+    try {
+      const value = globalThis.localStorage?.getItem(PROGRESS_VIEW_KEY)
+      return ['focus','cards','matrix'].includes(value) ? value : 'focus'
+    } catch { return 'focus' }
+  }
+  let progressView = savedProgressView()
   let artViewer = null
 
   // Rest is a real dock row inside the unfolded Duo exercise column.
@@ -864,20 +873,103 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     return plan.reduce((total, entry) => total + entry.sets.filter((s) => s.logged).length, 0)
   }
 
+  /** Replaces the thin line with set-aware movement navigation. */
   function progressRail() {
-    const total = plan.reduce((n, entry) => n + entry.sets.length, 0)
-    return el('div.session-r5__progress', { role: 'progressbar',
-      'aria-label':'Workout sets completed', 'aria-valuemin':'0',
-      'aria-valuemax': String(total), 'aria-valuenow':String(loggedCount()) }, [
-      ...plan.map((entry, index) => {
-        const done=entry.sets.filter(s=>s.logged).length
-        return el('button.session-r5__progress-segment', {
-          type:'button', 'aria-label':`${displayName(entry.exercise,entry.slot)}, ${done} of ${entry.sets.length} sets`,
-          dataset: { focused:String(index === focusStageIndex), complete:String(done===entry.sets.length) },
-          onclick: () => focusExercise(index),
-        }, [el('span', { style:`width:${Math.round(done/Math.max(1,entry.sets.length)*100)}%` })])
-      }),
+    const all = plan.reduce((n, item) => n + item.sets.length, 0)
+    const completed = plan.filter((item) => item.sets.length > 0
+      && item.sets.every((set) => set.logged)).length
+    const views = { focus: 'Focus Stack', cards: 'Chapter Cards', matrix: 'Set Matrix' }
+    return el('section.session-progress', { dataset: { progressView }, 'aria-label': 'Workout movement progress' }, [
+      el('div.session-progress__meta', {}, [
+        el('div.session-progress__counts', {}, [
+          el('strong', { text: 'Movement ' + (focusStageIndex + 1) + ' of ' + plan.length }),
+          el('span', { text: loggedCount() + ' / ' + all + ' sets · ' + completed + ' complete' }),
+        ]),
+        el('button.session-progress__switch', {
+          type: 'button', dataset: { action: 'progress-view' },
+          title: 'Change progress view',
+          'aria-label': 'Progress view ' + views[progressView] + '. Switch to next view.',
+          onclick: () => {
+            const options = ['focus','cards','matrix']
+            progressView = options[(options.indexOf(progressView) + 1) % options.length]
+            try { globalThis.localStorage?.setItem(PROGRESS_VIEW_KEY, progressView) } catch {}
+            render()
+          },
+        }, [icon('swap'), el('span', { text: views[progressView] })]),
+      ]),
+      el('div.session-progress__nodes', { role: 'group', 'aria-label': 'Workout movements' },
+        plan.map((item, index) => {
+          const done = item.sets.filter((set) => set.logged).length
+          const finished = item.sets.length > 0 && done === item.sets.length
+          const name = displayName(item.exercise, item.slot)
+          return el('button.session-progress__node', {
+            type: 'button', title: name,
+            dataset: { movement: String(index + 1),
+              focused: String(index === focusStageIndex), complete: String(finished) },
+            'aria-current': index === focusStageIndex ? 'step' : null,
+            'aria-label': name + ', ' + done + ' of ' + item.sets.length + ' sets logged',
+            onclick: () => focusExercise(index),
+          }, [
+            el('span.session-progress__number', { text: finished ? '✓' : String(index + 1) }),
+            el('strong.session-progress__name', { text: name }),
+            el('span.session-progress__count', { text: done + '/' + item.sets.length }),
+            el('span.session-progress__ticks', { 'aria-hidden': 'true' },
+              item.sets.map((set) => el('i', { dataset: { logged: String(Boolean(set.logged)) } }))),
+          ])
+        })),
     ])
+  }
+
+  /** Press to expand, like the LFMS glass rail. Holding never activates Exit or Finish. */
+  function glassAction({ className, symbol, label, data, ariaLabel, activate }) {
+    let holdTimer = null
+    let closeTimer = null
+    let held = false
+    const button = el('button.session-glass', {
+      class: className, type: 'button', title: label,
+      dataset: { ...(data ?? {}), expanded: 'false' },
+      'aria-label': ariaLabel || label,
+    }, [icon(symbol), el('span.session-glass__label', { text: label })])
+    const cancelTimer = () => {
+      if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null }
+    }
+    button.addEventListener('pointerdown', (event) => {
+      if (event.button > 0 || button.disabled) return
+      cancelTimer()
+      clearTimeout(closeTimer)
+      held = false
+      holdTimer = setTimeout(() => {
+        held = true
+        root.querySelectorAll('.session-glass[data-expanded="true"]').forEach((node) => {
+          if (node !== button) node.dataset.expanded = 'false'
+        })
+        button.dataset.expanded = 'true'
+      }, 300)
+    })
+    button.addEventListener('pointerup', () => {
+      cancelTimer()
+      if (held) closeTimer = setTimeout(() => {
+        button.dataset.expanded = 'false'
+        held = false
+      }, 1200)
+    })
+    button.addEventListener('pointercancel', () => {
+      cancelTimer()
+      button.dataset.expanded = 'false'
+      held = false
+    })
+    button.addEventListener('pointerleave', cancelTimer)
+    button.addEventListener('contextmenu', (event) => event.preventDefault())
+    button.addEventListener('click', (event) => {
+      if (held) {
+        held = false
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        return
+      }
+      activate(event)
+    })
+    return button
   }
 
   function focusExercise(index) {
@@ -1201,49 +1293,39 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     const inlineRestDock=isInlineRestDock()
     const selectedEntry = plan[halfFoldIndex]
     replace(root, [
-      el('header.sessionbar.sessionbar--r3', {}, [
-        el('button.sessionbar__cancel', {
-          type: 'button',
-          dataset: { action: 'cancel-session' },
-          onclick: cancelWorkout,
-        }, ['Exit']),
+      el('header.sessionbar.sessionbar--r3.sessionbar--glass', {}, [
         el('div.sessionbar__center', {}, [
-          el('h1.sessionbar__title', { text: session?.title ?? 'Session' }),
-          el('div.sessionbar__timer-row', {}, [
-            el('span.sessionbar__elapsed-value', {
-              dataset: { sessionElapsed: 'true' },
-              text: clock(elapsedSeconds()),
-            }),
-            el('button.sessionbar__timer-toggle', {
-              type: 'button',
-              dataset: { action: 'toggle-session-timer', paused: String(timerPaused) },
-              'aria-label': timerPaused ? 'Resume workout timer' : 'Pause workout timer',
-              'aria-pressed': String(timerPaused),
-              onclick: toggleWorkoutTimer,
-            }, [timerPaused ? 'Resume' : 'Pause']),
-          ]),
+          el('img.sessionbar__lfms-mark', {
+            src: new URL('../../../branding/lfms/logo-mark.svg', import.meta.url).href,
+            alt: 'Less Fat More Strong',
+          }),
+          el('h1.sessionbar__title', { text: session?.title ?? 'Workout' }),
+          el('span.sessionbar__elapsed-value', {
+            dataset: { sessionElapsed: 'true' }, text: clock(elapsedSeconds()),
+          }),
         ]),
-        el('div.sessionbar__actions', {}, [
-          plateCalculatorButton(),
-          el('button.sessionbar__minimize', {
-            type: 'button', dataset: { action: 'minimize-workout' },
-            'aria-label': 'Minimize workout and log water or food',
-            onclick: minimizeWorkout,
-          }, ['Minimize']),
-          el('button.sessionbar__finish', {
-          type: 'button',
-          dataset: { action: 'finish' },
-          onclick: () => { confirmingFinish = true; render() },
-        }, ['Finish'])]),
+        el('div.sessionbar__actions', { 'aria-label': 'Workout controls' }, [
+          glassAction({ className: 'sessionbar__cancel', symbol: 'close', label: 'Exit',
+            data: { action: 'cancel-session' }, activate: cancelWorkout }),
+          glassAction({ className: 'sessionbar__timer-toggle',
+            symbol: timerPaused ? 'play' : 'pause', label: timerPaused ? 'Resume' : 'Pause',
+            data: { action: 'toggle-session-timer', paused: String(timerPaused) },
+            ariaLabel: timerPaused ? 'Resume workout timer' : 'Pause workout timer',
+            activate: toggleWorkoutTimer }),
+          glassAction({ className: 'sessionbar__minimize', symbol: 'minus', label: 'Minimize',
+            data: { action: 'minimize-workout' },
+            ariaLabel: 'Minimize workout and log water or food', activate: minimizeWorkout }),
+          glassAction({ className: 'plate-calculator-link', symbol: 'calculator', label: 'Calculator',
+            data: { openPlateCalculator: 'true' }, ariaLabel: 'Plate calculator',
+            activate: (event) => openPlateCalculator(event.currentTarget) }),
+          glassAction({ className: 'sessionbar__finish', symbol: 'check', label: 'Finish',
+            data: { action: 'finish' },
+            activate: () => { confirmingFinish = true; render() } }),
+        ]),
       ]),
 
       ...(halfFold ? [halfFoldStage(selectedEntry), halfFoldControls(selectedEntry)] : [
-        plan.length > 0 && el('div.session-r5__progress-wrap', {}, [
-          el('p.session-r5__progress-label', {
-            text:`Exercise ${focusStageIndex+1} of ${plan.length} · ${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)} sets logged`,
-          }),
-          progressRail(),
-        ]),
+        plan.length > 0 && el('div.session-r5__progress-wrap', {}, [progressRail()]),
         el('div.session-r5__workspace', {}, [
           visualStage(),
           el('div.session-r5__log', {}, [

@@ -1,0 +1,54 @@
+<!doctype html><html lang="en" data-layout="duo"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS glass actions and movement progress</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/polish.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/workout-r5.css">
+<link rel="stylesheet" href="../../src/lfms-subscreen.css">
+<link rel="stylesheet" href="../../src/lfms-session-duo.css">
+</head><body><div id="app" class="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks=[],check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const q=s=>document.querySelector(s)
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+try {
+  localStorage.removeItem('lfms.session.progress-style')
+  const storage=createMemoryStorage(); await storage.open()
+  await storage.put('profile',{id:'profile',setupComplete:true,name:'LFMS'})
+  const clock=fixedClock(new Date(2026,10,5,9,0,0))
+  await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'today'})
+  await wait(100)
+  q('.today-workout__start')?.click()
+  await wait(280)
+  check('session opens',!!q('.screen--session'))
+  check('old progress line gone',!q('.screen--session .session-r5__progress-segment'))
+  check('focus progress default',!!q('.session-progress[data-progress-view="focus"] .session-progress__node'))
+  check('all five glass icons present',q('.sessionbar__actions')?.querySelectorAll('.session-glass').length===5)
+  check('all workout actions retained',['cancel-session','toggle-session-timer','minimize-workout','finish'].every(x=>!!q('[data-action="'+x+'"]')))
+  check('calculator still in header',!!q('[data-open-plate-calculator="true"]'))
+  const exit=q('[data-action="cancel-session"]')
+  exit?.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}))
+  await wait(360)
+  check('holding reveals Exit label',exit?.dataset.expanded==='true')
+  exit?.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,button:0}))
+  exit?.click()
+  check('holding Exit did not invoke it',!!q('.screen--session')&&!q('[data-confirm-action="discard"]')&&!q('.session-sheet'))
+  q('[data-action="progress-view"]')?.click()
+  check('chapter cards can be selected',!!q('.session-progress[data-progress-view="cards"]'))
+  q('[data-action="progress-view"]')?.click()
+  check('set matrix can be selected',!!q('.session-progress[data-progress-view="matrix"]'))
+  q('[data-action="progress-view"]')?.click()
+  check('focus stack comes back',!!q('.session-progress[data-progress-view="focus"]'))
+  check('logged inputs remain usable',!!q('.setrow__check')&&!!q('input.setrow__num'))
+  q('[data-action="finish"]')?.click()
+  check('regular Finish tap still confirms',!!q('[data-action="confirm-finish"]'))
+  q('[data-action="cancel-finish"]')?.click()
+  check('Keep going restores logged controls',!!q('.screen--session .setrow__check'))
+} catch(error){check('browser session glass test failed',false,String(error?.stack||error).slice(0,900))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+body:JSON.stringify({label:'lfms-session-glass-progress',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

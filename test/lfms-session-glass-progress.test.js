@@ -1,0 +1,38 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+const read=(path)=>readFileSync(new URL('../'+path, import.meta.url),'utf8')
+const js=read('src/ui/screens/session.js')
+const css=read('src/lfms-session-duo.css')
+test('session progress uses per-movement set-aware tiles, never legacy line',()=>{
+  assert.match(js,/function progressRail\(\)/)
+  assert.match(js,/session-progress__node/)
+  assert.match(js,/item\.sets\.map\(\(set\)/)
+  assert.doesNotMatch(js,/session-r5__progress-segment/)
+  assert.match(js,/progressView = options\[\(options\.indexOf\(progressView\) \+ 1\) % options\.length\]/)
+  assert.match(js,/onclick: \(\) => focusExercise\(index\)/)
+  assert.match(css,/session-progress\[data-progress-view="cards"\]/)
+  assert.match(css,/session-progress\[data-progress-view="matrix"\]/)
+})
+test('glass toolbar has genuine icons and safe long-press preview',()=>{
+  assert.match(js,/symbol: 'close', label: 'Exit'/)
+  assert.match(js,/symbol: 'minus', label: 'Minimize'/)
+  assert.match(js,/symbol: 'check', label: 'Finish'/)
+  assert.match(js,/symbol: timerPaused \? 'play' : 'pause'/)
+  assert.match(js,/symbol: 'calculator', label: 'Calculator'/)
+  assert.match(js,/held = true/)
+  assert.match(js,/event\.stopImmediatePropagation\(\)/)
+  assert.match(js,/activate\(event\)/)
+  assert.match(css,/\.session-glass\[data-expanded="true"\]/)
+  assert.match(css,/backdrop-filter:blur\(20px\) saturate\(155%\)/)
+  assert.match(read('src/ui/icons.js'),/pause: \[\['p', 'M8 5v14M16 5v14'\]\]/)
+})
+test('workout finish, logging, and minimize remain backed by existing service',()=>{
+  assert.match(js,/activate: cancelWorkout/)
+  assert.match(js,/activate: toggleWorkoutTimer/)
+  assert.match(js,/activate: minimizeWorkout/)
+  assert.match(js,/activate: \(\) => \{ confirmingFinish = true; render\(\) \}/)
+  assert.match(js,/openPlateCalculator\(event\.currentTarget\)/)
+  assert.match(js,/const inlineRestDock=isInlineRestDock\(\)/)
+  assert.match(js,/entry\.sets\.map\(\(set, index\) => setRow\(entry, set, index\)\)/)
+})

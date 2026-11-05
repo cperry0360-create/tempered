@@ -1,3 +1,7 @@
+## 2026-11-05 — Short Duo follow-up, 0.66.68
+- Revert the over-broad compact exercise-card override from 0.66.67, which increased set-panel scroll height.
+- Compress only the new progress-view controls on short unfolded Duo screens, retaining 44px selectable movement tiles and showing completion counts, while preserving the earlier compact set logger and inline rest dock.
+
 ## 2026-11-05 — Short unfolded Duo finish and audit refresh (0.66.67)
 - Recover 7–11px of vertical room at short Duo viewport sizes from the active exercise card's internal gaps and padding, preserving the full image, all default set controls, and correctly docked rest timer.
 - Update the browser smoke audit from the deliberately removed progress line to real movement nodes. The deep-style audit now expects the actual final workout CSS layer.

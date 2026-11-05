@@ -1001,19 +1001,39 @@ html[data-layout="duo"] #app.app .food-v2__topline.lfms-main-section .food-v2__d
 }
 
 
-/* Short unfolded Duo: preserve real 44px movement targets and the full exercise
-   image, but reclaim small internal gaps for complete set rows + inline rest. */
-@media(min-width:740px) and (max-height:750px) and (orientation:landscape) {
-  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {
-    padding:8px 12px 6px;gap:4px;
+/* Short unfolded Duo: keep the preexisting compact logging card untouched.
+   The three-view toolbar itself takes less vertical room to preserve set rows. */
+@media(min-width:740px) and (max-height:700px) and (orientation:landscape) {
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress {
+    grid-template-columns:146px minmax(0,1fr);gap:6px;align-items:center;
   }
-  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head {
-    min-height:56px;padding:1px 2px 4px;gap:7px;
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__meta {
+    min-width:0;min-height:0;display:flex;gap:4px;align-items:center;
+    justify-content:space-between;
   }
-  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__art {
-    width:55px;height:55px;min-width:55px;
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__counts {
+    display:grid;gap:0;align-content:center;
   }
-  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head[data-has-art="true"] {
-    grid-template-columns:55px minmax(0,1fr) 42px;
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__counts strong {
+    font-size:10px;line-height:1.1;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__counts span {
+    font-size:9px;line-height:1.15;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__switch {
+    display:grid;place-items:center;flex:0 0 31px;width:31px;
+    min-height:34px;height:34px;padding:0;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__switch span {
+    display:none;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__nodes {
+    padding:0;align-items:stretch;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-progress__node {
+    min-height:44px;height:44px;padding:4px 6px;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-r5__progress-wrap {
+    padding:0;margin:0;
   }
 }

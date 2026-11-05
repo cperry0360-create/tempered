@@ -999,3 +999,21 @@ html[data-layout="duo"] #app.app .food-v2__topline.lfms-main-section .food-v2__d
   #app.app .screen--session .sessionbar--glass .session-glass,
   #app.app .screen--session .sessionbar--glass .session-glass__label {transition:none}
 }
+
+
+/* Short unfolded Duo: preserve real 44px movement targets and the full exercise
+   image, but reclaim small internal gaps for complete set rows + inline rest. */
+@media(min-width:740px) and (max-height:750px) and (orientation:landscape) {
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .session-r5__log>.exercise[data-focused="true"] {
+    padding:8px 12px 6px;gap:4px;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head {
+    min-height:56px;padding:1px 2px 4px;gap:7px;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__art {
+    width:55px;height:55px;min-width:55px;
+  }
+  html[data-layout="duo"] #app.app .screen--session[data-half-fold="false"] .exercise--r3 .exercise__head[data-has-art="true"] {
+    grid-template-columns:55px minmax(0,1fr) 42px;
+  }
+}

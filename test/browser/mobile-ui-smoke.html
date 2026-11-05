@@ -155,8 +155,8 @@
       const session = await waitFor('.screen--session')
       check('Preview starts the real workout session', Boolean(session))
       if (session) {
-        check('workout has a visual stage and subtle progress rail',
-          Boolean(q('.session-r5__stage', session)) && Boolean(q('.session-r5__progress', session)))
+        check('workout has a visual stage and set-aware movement navigation',
+          Boolean(q('.session-r5__stage', session)) && Boolean(q('.session-progress__node', session)))
         thumbSized(q('.setrow__check:not([disabled])', session), 'Set log check')
         thumbSized(q('.exercise-menu__trigger', session), 'Exercise action')
         const savedSetRows = qa('.screen--session .setrow__check').length

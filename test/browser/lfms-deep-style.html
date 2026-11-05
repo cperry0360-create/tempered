@@ -32,7 +32,7 @@ try {
       './src/food-log-polish.css', './src/lfms-workout-complete.css']
       .every((path, index, layers) => stylesheet.includes(path)
         && (index === 0 || stylesheet.indexOf(layers[index - 1]) < stylesheet.indexOf(path)))
-    && stylesheet.at(-1)==='./src/lfms-workout-complete.css' &&
+    && stylesheet.at(-1)==='./src/lfms-session-duo.css' &&
     getComputedStyle(document.documentElement).getPropertyValue('--lfms-accent-red').trim()!=='')
   const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,1,12))
   await storage.open()

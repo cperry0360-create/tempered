@@ -1,3 +1,8 @@
+## 2026-11-05 — Short unfolded Duo finish and audit refresh (0.66.67)
+- Recover 7–11px of vertical room at short Duo viewport sizes from the active exercise card's internal gaps and padding, preserving the full image, all default set controls, and correctly docked rest timer.
+- Update the browser smoke audit from the deliberately removed progress line to real movement nodes. The deep-style audit now expects the actual final workout CSS layer.
+- No workout data changes, no touch target reduction, and no changes to unrelated Today/Food/Sleep/Cardio behavior.
+
 ## 2026-11-05 — LFMS live workout cockpit, 0.66.66
 - **Header:** Five compact Liquid Glass icon actions now use the existing side-rail visual language. Holding an icon expands the text label, and the long press is intentionally non-destructive. Normal taps keep Exit confirmation, Pause/Resume, Minimize, Calculator, and Finish confirmation.
 - **Progress:** Replace the old segmented line with tappable movement progress tiles. Focus Stack is the default, with Chapter Cards and Set Matrix reachable through the progress-view switch. All three show the same canonical set completion, and changing presentation doesn't mutate logged workouts.

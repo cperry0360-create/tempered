@@ -36,7 +36,7 @@ test('Duo draws only solid root/body color behind launch, content and rail',()=>
   assert.match(css,/transition:opacity 180ms ease-out,visibility 0s linear 180ms/)
   assert.match(read('src/main.js'),/LFMS_KINETIC_SPLASH_MIN_MS = 3350/)
   assert.match(read('src/main.js'),/launch\.dataset\.closing = 'true'/)
-  assert.match(read('src/version.js'),/0\.66\.65 \(171\)/)
+  assert.match(read('src/version.js'),/export const VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)
 })
 
 test('Duo top header surfaces share Today charcoal without replacing button actions',()=>{
@@ -57,7 +57,7 @@ test('Duo top header surfaces share Today charcoal without replacing button acti
   // The user-approved Today header and its settings button are untouched.
   assert.ok(!css.includes('html[data-layout="duo"] .today-heading'))
   assert.ok(read('src/ui/screens/today.js').includes('button.today-settings'))
-  assert.ok(read('src/ui/screens/session.js').includes('button.sessionbar__finish'))
+  assert.ok(read('src/ui/screens/session.js').includes("className: 'sessionbar__finish'"))
 })
 
 

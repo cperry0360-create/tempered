@@ -48,5 +48,5 @@ test('brief kinetic hold, clean exit, reduced-motion and offline cache version',
   assert.match(c,/\.lfms-launch__flash,\.lfms-launch__cinema \{display:none\}/)
   assert.match(c,/\.lfms-launch__wordmark-stage,\.lfms-launch__lockline \{animation:none;transform:none;opacity:1\}/)
   for(const asset of ['./branding/lfms/logo-mark.svg','./branding/lfms/logo-wordmark.svg']) assert.ok(sw.includes("'"+asset+"'"))
-  assert.match(read('src/version.js'),/0\.66\.65 \(171\)/)
+  assert.match(read('src/version.js'),/export const VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)
 })

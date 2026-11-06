@@ -120,7 +120,8 @@ test('REGRESSION: R5 Progress uses the fixed recap and removes configurable dash
   assert.match(history, /Recent PRs/)
   assert.match(history, /trendsCard/)
   assert.match(history, /recoveryCard/)
-  assert.match(history, /Copy progress report for ChatGPT/)
+  assert.match(history, /Copy complete analysis for ChatGPT/)
+  assert.match(history, /downloadProgressReport/)
   // R12 replaced sample counts with a plain-language change and a trend line.
   assert.match(history, /summarizeTrend/)
   assert.doesNotMatch(history, /No prior comparison yet|calorieQualitySummary|progress-dashboard/)

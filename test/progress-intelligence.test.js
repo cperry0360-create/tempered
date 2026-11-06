@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../src/domain/progress-intelligence.js'
+import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../src/app/progress-intelligence.js'
 const today='2026-11-06'
 const shift=(date,n)=>{
   const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)

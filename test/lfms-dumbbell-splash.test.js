@@ -40,7 +40,7 @@ test('approved glass hold, clean exit, reduced-motion and offline cache version'
   assert.match(main,/setTimeout\(dismissSplash, 8000\)/)
   assert.ok(main.indexOf('await dismissSplash()')<main.indexOf('await installWeeklyRecapRuntime(context)'))
   assert.match(c,/@media\(prefers-reduced-motion:reduce\)/)
-  assert.match(c,/\.lfms-launch__glass \{display:none\}/)
+  assert.match(c,/\.lfms-launch__glass,\.lfms-launch__sweeper-stage \{display:none\}/)
   assert.match(c,/\.lfms-launch__mark,\.lfms-launch__wordmark \{animation:none;opacity:1;transform:none\}/)
   for(const asset of ['./branding/lfms/logo-mark.svg','./branding/lfms/logo-wordmark.svg']) assert.ok(sw.includes("'"+asset+"'"))
   assert.match(read('src/version.js'),/export const VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)

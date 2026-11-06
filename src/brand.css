@@ -83,6 +83,11 @@ html[data-layout="duo"] .lfms-launch__skin {
   position:absolute;inset:0;margin:auto;z-index:2;
   width:min(100%,46.2085dvh);height:100%;overflow:hidden;
 }
+.lfms-launch__sweeper-stage {
+  position:absolute;inset:0;margin:auto;z-index:4;
+  width:min(100%,46.2085dvh);height:100%;overflow:hidden;
+  pointer-events:none;
+}
 .lfms-launch__cracks {
   fill:none;stroke:rgba(196,235,255,.86);stroke-width:.8;
   stroke-linecap:round;stroke-linejoin:round;
@@ -107,11 +112,13 @@ html[data-layout="duo"] .lfms-launch__skin {
 .lfms-launch__shards polygon:nth-child(4n) {fill:rgba(65,130,170,.65)}
 .lfms-launch__sweeper {
   transform-box:view-box;transform-origin:0 0;opacity:0;
+  will-change:transform,opacity;
   animation:lfms-glass-sweeper 2640ms linear 1430ms both;
 }
 .lfms-launch__sweeper-body,.lfms-launch__sweeper-head,.lfms-launch__broom-head {fill:white}
 .lfms-launch__sweeper-tool {
   transform-box:view-box;transform-origin:15px 623px;
+  will-change:transform;
   animation:lfms-glass-tool 2640ms linear 1430ms both;
 }
 .lfms-launch__sweeper-arm {
@@ -145,7 +152,7 @@ html[data-layout="duo"] .lfms-launch__skin {
   100% {opacity:1;transform:translate3d(0,0,0) rotate(0) scale(1)}
 }
 @keyframes lfms-glass-sweeper {
-  0% {opacity:1;transform:translate3d(-96px,0,0)}
+  0% {opacity:1;transform:translate3d(-51px,0,0)}
   22.7% {opacity:1;transform:translate3d(70px,-1px,0)}
   40% {opacity:1;transform:translate3d(148px,0,0)}
   47.3% {opacity:1;transform:translate3d(153px,-3px,0)}
@@ -155,11 +162,14 @@ html[data-layout="duo"] .lfms-launch__skin {
   100% {opacity:1;transform:translate3d(439px,0,0)}
 }
 @keyframes lfms-glass-tool {
-  0%,40% {transform:rotate(0)}
-  47.3% {transform:rotate(-8deg)}
-  63.6% {transform:rotate(0)}
-  70.8% {transform:rotate(-8deg)}
-  87.9%,100% {transform:rotate(0)}
+  0% {transform:translate3d(-10px,0,0) rotate(2deg)}
+  22.7% {transform:translate3d(0,0,0) rotate(0)}
+  40% {transform:translate3d(10px,0,0) rotate(2deg)}
+  47.3% {transform:translate3d(-26px,-13px,0) rotate(-10deg)}
+  63.6% {transform:translate3d(12px,0,0) rotate(2deg)}
+  70.8% {transform:translate3d(-22px,-13px,0) rotate(-10deg)}
+  87.9% {transform:translate3d(10px,0,0) rotate(2deg)}
+  100% {transform:translate3d(-8px,0,0) rotate(0)}
 }
 @keyframes lfms-glass-pile {
   0%,22.7% {transform:translate3d(0,0,0)}
@@ -175,6 +185,6 @@ html[data-layout="duo"] .lfms-launch__skin {
 }
 @media(prefers-reduced-motion:reduce) {
   .lfms-launch {transition:none}
-  .lfms-launch__glass {display:none}
+  .lfms-launch__glass,.lfms-launch__sweeper-stage {display:none}
   .lfms-launch__mark,.lfms-launch__wordmark {animation:none;opacity:1;transform:none}
 }

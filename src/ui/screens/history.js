@@ -559,7 +559,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       const text=fullProgressReport()
       if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable')
       await globalThis.navigator.clipboard.writeText(text)
-      reportStatus='Full analysis copied · '+Math.round(text.length/1024)+' KB. Paste into ChatGPT to review the evidence and recommendations.'
+      reportStatus='Copied complete analysis · '+Math.round(text.length/1024)+' KB. Paste into ChatGPT to review the evidence and recommendations.'
     } catch {
       reportStatus='Clipboard blocked or report too large. Use Download report instead.'
     }

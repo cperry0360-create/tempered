@@ -1,3 +1,8 @@
+## 2026-11-06 — Reliable Progress AI handoff, 0.66.76 (182)
+
+- **Copy AI prompt** copies the dashboard request and all data when the combined UTF-8 text fits within LFMS’s 32,000-byte clipboard budget. Larger snapshots copy only the instructions and reveal **Save data file** for the complete LFMS JSON in a dated text attachment. Attach that file with the prompt in ChatGPT. Clipboard denial shows selectable instructions and offers the same attachment.
+- The shorter prompt tells ChatGPT to parse and verify the supplied evidence before building a downloadable interactive dashboard. It requests the missing attachment if needed. The on-device HTML report and existing saved data are independent of the AI handoff.
+
 ## 2026-11-06 — AI-authored interactive ChatGPT report prompt and clean clipboard, 0.66.75 (181)
 
 - Keep **Open HTML report** untouched: it is the existing deterministic, read-only on-device viewer and must not be advertised as AI analysis. The separate secondary Progress action is now **Copy prompt + data** and copies a detailed one-paste request for ChatGPT to independently analyze the complete LFMS snapshot and generate a new **interactive HTML dashboard artifact**, with clickable tabs and actual evidence-based AI insights. If HTML generation isn't available in ChatGPT, the prompt requests a rich native interactive report or concise fallback and an honest limitation.

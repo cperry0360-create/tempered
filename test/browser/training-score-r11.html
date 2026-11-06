@@ -42,7 +42,7 @@ try{
  check('Mark away stores the week through the workout service',away.some(p=>p.start==='2026-09-14'&&p.end==='2026-09-20'))
  q('.progress-back')?.click()
  check('the card says why its graded week is older than last week',/Sep 14 away/.test(q('.progress-score')?.textContent),q('.progress-score')?.textContent)
- q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ q('[data-copy-intelligence="true"]')?.click();await new Promise(r=>setTimeout(r,50))
  const copiedData=()=>JSON.parse(copied.slice(copied.lastIndexOf('\n')+1))
  let scoreReport=copiedData().trainingScore
  check('AI report includes the last graded week and reason a newer week was excluded',
@@ -53,7 +53,7 @@ try{
  check('an away week drops out: headline moves to the prior week and the trend shows a gap',/Week of Sep 7/.test(q('.progress-score')?.textContent)&&qa('.progress-score__trend circle').length===11,q('.progress-score')?.textContent)
  q('[data-score-component="weeks"]')?.click();q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50));q('.progress-back')?.click()
  check('Not away restores the week',away.length===0&&/Week of Sep 14/.test(q('.progress-score')?.textContent))
- q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ q('[data-copy-intelligence="true"]')?.click();await new Promise(r=>setTimeout(r,50))
  scoreReport=copiedData().trainingScore
  check('AI report includes training score, grade, this week, four components and prior-week comparison',
    scoreReport.latestGradedWeek.score===100

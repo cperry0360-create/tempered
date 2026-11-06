@@ -2,7 +2,7 @@
 import { ACTIVITY_FIELDS } from '../domain/activities.js'
 import { effectiveLoad } from '../domain/records.js'
 import { estimateOneRepMax } from '../domain/e1rm.js'
-export { formatProgressIntelligencePrompt } from '../domain/progress-intelligence-prompt.js'
+export { prepareProgressIntelligenceHandoff } from '../domain/progress-intelligence-prompt.js'
 const numeric=v=>typeof v==='number'&&Number.isFinite(v)?v:null
 const round=(v,p=1)=>numeric(v)===null?null:Math.round(v*10**p)/10**p
 const avg=values=>{const x=values.filter(v=>numeric(v)!==null);return x.length?round(x.reduce((s,v)=>s+v,0)/x.length,2):null}

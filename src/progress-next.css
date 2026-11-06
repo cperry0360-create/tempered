@@ -297,6 +297,12 @@ html:has(.progress--fuel-style) .score-explain__done {
 }
 .progress--fuel-style .progress-report__recap{grid-column:1/-1;padding:2px 3px;min-height:22px}
 .progress--fuel-style .progress-report__status{grid-column:1/-1;margin:0}
+.progress--fuel-style .progress-report__button--save{grid-column:1/-1;text-align:center}
+.progress-report__prompt{
+  grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box;
+  padding:8px;border:1px solid var(--pr2-line);border-radius:10px;
+  background:var(--pr2-panel);color:var(--pr2-text);font:inherit;font-size:16px;
+}
 .lfms-intelligence-overlay{
   position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;
   background:var(--cut-deep);color:var(--food-v2-text);overscroll-behavior:contain;

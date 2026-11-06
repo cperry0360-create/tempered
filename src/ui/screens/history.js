@@ -12,7 +12,7 @@ import { effectiveLoad } from '../../domain/records.js'
 import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
 import { summarizeTrend } from '../../domain/trend.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
-import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../../app/progress-intelligence.js'
+import { buildProgressIntelligence, prepareProgressIntelligenceHandoff } from '../../app/progress-intelligence.js'
 import { renderProgressIntelligenceHTML } from '../../app/progress-intelligence-html.js'
 import {
   observedProgressDates,
@@ -248,6 +248,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let selectedSessionId = null
   let editingDurationId = null
   let reportStatus = ''
+  let reportAttachment = null
+  let manualReportPrompt = ''
   let reportProfile = {}
   let reportTargets = {}
 
@@ -575,11 +577,18 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       explanation:explanation.sentences,
       methodology:explanation.method,
     }
-return payload
+    return payload
   }
-  function fullProgressReport() {
-    return formatProgressIntelligencePrompt(fullProgressPayload())
+
+  function downloadProgressFile(content, filename, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }))
+    const link = el('a', { href: url, download: filename })
+    document.body.append(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
   }
+
   function openProgressHTMLReport() {
     // Generate from current local records only. Never commit personal report data
     // to GitHub, fetch a remote template, or change saved user state.
@@ -601,14 +610,7 @@ return payload
     save.textContent = 'Save HTML'
     save.setAttribute('aria-label', 'Save this private HTML report to your device')
     save.addEventListener('click', () => {
-      const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'lfms-progress-' + clock.today() + '.html'
-      document.body.append(link)
-      link.click()
-      link.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 60000)
+      downloadProgressFile(html, 'lfms-progress-' + clock.today() + '.html', 'text/html;charset=utf-8')
     })
     const close = document.createElement('button')
     close.type = 'button'
@@ -631,16 +633,22 @@ return payload
     document.documentElement.style.overflow = 'hidden'
     close.focus()
   }
-  async function copyProgressReport() {
+  async function copyProgressReport(event) {
+    const report = fullProgressPayload()
+    const handoff = prepareProgressIntelligenceHandoff(report)
+    event.currentTarget.disabled = true
     try {
-      // Defensive clipboard sanitation for mobile paste fields: only the
-      // final JSON closing brace can end the payload, never blank lines.
-      const text=fullProgressReport().trimEnd()
-      if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable')
-      await globalThis.navigator.clipboard.writeText(text)
-      reportStatus='Copied. Paste into ChatGPT to create your AI dashboard.'
+      await navigator.clipboard.writeText(handoff.prompt)
+      manualReportPrompt = ''
+      reportAttachment = handoff.attachment
+      reportStatus = reportAttachment
+        ? 'Prompt copied. Save the data file, then attach it and paste the prompt into ChatGPT.'
+        : 'Copied. Paste into ChatGPT to create your AI dashboard.'
     } catch {
-      reportStatus='Unable to copy. Check clipboard permissions and try again.'
+      const fallback = handoff.attachment ? handoff : prepareProgressIntelligenceHandoff(report, { attachmentOnly: true })
+      manualReportPrompt = fallback.prompt
+      reportAttachment = fallback.attachment
+      reportStatus = 'Copy the prompt below manually. Save the data file and attach it in ChatGPT with the prompt.'
     }
     render()
   }
@@ -1012,14 +1020,21 @@ return payload
             }, ['Open HTML report']),
             el('button.progress-report__button.progress-report__button--copy', {
               type:'button',dataset:{copyIntelligence:'true'},
-              title:'Copies your current LFMS data and detailed instructions for ChatGPT to build an interactive AI-powered report.',
+              title:'Copy instructions for ChatGPT to build an interactive dashboard from your LFMS history.',
               onclick:copyProgressReport,
-            }, ['Copy prompt + data']),
+            }, ['Copy AI prompt']),
+            reportStatus && el('p.progress-report__status', { role:'status', text:reportStatus }),
+            manualReportPrompt && el('textarea.progress-report__prompt', {
+              readOnly:true, rows:4, 'aria-label':'AI prompt', value:manualReportPrompt,
+            }),
+            reportAttachment && el('button.progress-report__button.progress-report__button--save', {
+              type:'button', dataset:{downloadIntelligence:'true'},
+              onclick:()=>downloadProgressFile(reportAttachment.content, reportAttachment.filename, 'text/plain;charset=utf-8'),
+            }, ['Save data file']),
             el('button.progress-report__recap', {
               type:'button',dataset:{openWeeklyRecap:'true'},
               onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')),
             }, ["Last week's recap ›"]),
-            reportStatus && el('p.progress-report__status', { role:'status', text:reportStatus }),
           ]),
         ]),
       ]),

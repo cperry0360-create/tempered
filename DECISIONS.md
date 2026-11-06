@@ -1,3 +1,7 @@
+## 2026-11-06 — Bound the Progress AI clipboard payload
+
+- Keep one-paste for small histories. At 32,000 UTF-8 bytes, switch to a short prompt and a locally saved text attachment carrying the complete snapshot. This is an LFMS budget chosen to limit mobile paste size. Use an attachment and a selectable prompt when clipboard access is denied. Both paths use the same snapshot schema and preserve all exported observations and completed sets.
+
 ## 2026-11-06 — Fuel calendar selects the day, not an obsolete Nutrition page
 
 - User supplied side-by-side screenshots: current Fuel dashboard is modern neon design but tapping a prior day brings an out-of-date, older Nutrition overlay. Requested identical full Fuel dashboard and food-entry experience populated with whichever day was tapped.

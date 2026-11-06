@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../src/app/progress-intelligence.js'
+import { buildProgressIntelligence, prepareProgressIntelligenceHandoff } from '../src/app/progress-intelligence.js'
 const today='2026-11-06'
 const shift=(date,n)=>{
   const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)
@@ -79,7 +79,9 @@ test('all actual historical days are carried in compact data without photos, ide
   assert.ok(r.coverage.firstTrackedDate)
 })
 test('improved prompt asks for evidence-first priorities, calorie decision, strength plateaus, and supplements',()=>{
-  const p=formatProgressIntelligencePrompt(buildProgressIntelligence(fixture()))
+  const payload=buildProgressIntelligence(fixture())
+  const {prompt:p,attachment}=prepareProgressIntelligenceHandoff(payload)
+  assert.equal(attachment,null)
   for(const word of ['creatine','weight','calorie','plateau','strength','confidence','7','14','30','90'])
     assert.ok(p.toLowerCase().includes(word),word)
   assert.match(p,/do not invent/i)
@@ -95,9 +97,26 @@ test('improved prompt asks for evidence-first priorities, calorie decision, stre
   assert.ok(p.endsWith('}'),'Clipboard ends exactly with the JSON closing brace')
   assert.ok(!/\s$/.test(p),'Clipboard must never have trailing whitespace')
   assert.ok(p.split('\n').length<25,'Clipboard instructions must not add hundreds of lines')
-  const payload=buildProgressIntelligence(fixture())
   assert.deepEqual(JSON.parse(p.slice(p.lastIndexOf('\n')+1)),payload,
     'Whitespace improvements must never remove observations or sets')
   assert.ok(p.length - JSON.stringify(payload).length < 6600,
     'The copy instructions must stay bounded while fully explaining the interactive dashboard')
+})
+
+test('long history gets a short prompt and a complete attachable snapshot',()=>{
+  const source=fixture()
+  for(const day of source.dayLogs){
+    day.nutritionEntries=Array.from({length:9},(_,i)=>({
+      description:`Meal ${i}: ${'食'.repeat(100)}`,calories:150+i,proteinGrams:12,
+    }))
+  }
+  const payload=buildProgressIntelligence(source)
+  const {prompt,attachment}=prepareProgressIntelligenceHandoff(payload)
+  assert.equal(attachment.filename,'lfms-progress-data-2026-11-06.txt')
+  assert.deepEqual(JSON.parse(attachment.content),payload)
+  assert.ok(new TextEncoder().encode(attachment.content).length>32000)
+  assert.ok(prompt.length<6600)
+  assert.ok(prompt.includes(attachment.filename))
+  assert.match(prompt,/ask me to attach/i)
+  assert.doesNotMatch(prompt,/Meal 0|\n\n|\s$/)
 })

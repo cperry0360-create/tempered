@@ -19,7 +19,6 @@ try {
   Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>copied.push(text)}})
   const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,6,11,0))
   const t=await bootstrapHarness({storage,clock,mount:q('#app')})
-  const before=(await storage.getAll('dayLogs')).length
   await t.daily.addNutrition('2026-11-05',{description:'Chicken with rice',calories:1875,protein:145,carbs:170,fat:54},{loggedAt:'2026-11-05T18:00:00.000Z'})
   await t.daily.setNutritionStatus('2026-11-05','complete')
   await t.daily.logAt('2026-11-05','creatine')
@@ -33,7 +32,7 @@ try {
   check('local HTML report and optional copy action stay within LFMS layout',!!q('[data-copy-intelligence="true"]')
     &&!!q('[data-open-html-intelligence="true"]')
     &&!q('[data-download-intelligence="true"]')&&!q('.progress-report__intro')&&!q('.progress-report__privacy')
-    &&q('[data-copy-intelligence="true"]')?.textContent.trim()==='Copy prompt + data')
+    &&q('[data-copy-intelligence="true"]')?.textContent.trim()==='Copy AI prompt')
   const initialLogs=JSON.stringify(await storage.getAll('dayLogs'))
   q('[data-copy-intelligence="true"]')?.click()
   await wait(350)
@@ -80,6 +79,40 @@ try {
   check('HTML viewer closes cleanly',!q('.lfms-intelligence-overlay')&&document.documentElement.style.overflow!=='hidden')
   check('HTML opens without modifying saved records',JSON.stringify(await storage.getAll('dayLogs'))===initialLogs)
   check('weekly recap entry point remains intact',!!q('[data-open-weekly-recap="true"]'))
+
+  const olderDays=Array.from({length:40},(_,i)=>({
+    date:new Date(Date.UTC(2026,9,24-i)).toISOString().slice(0,10),
+    nutritionEntries:Array.from({length:8},(_,j)=>({description:`Meal ${j} ${'食'.repeat(100)}`,calories:200})),
+  }))
+  await storage.putAll('dayLogs',olderDays)
+  await t.app.show('history')
+  const expandedLogs=JSON.stringify(await storage.getAll('dayLogs'))
+  q('[data-copy-intelligence="true"]')?.click()
+  await wait(100)
+  const attachmentPrompt=copied.at(-1)??''
+  check('long histories copy the bounded prompt and ask for the matching file',
+    attachmentPrompt.length<6600&&attachmentPrompt.includes('lfms-progress-data-2026-11-06.txt')
+    &&!attachmentPrompt.includes('Chicken with rice')&&q('.progress-report__status')?.textContent.includes('attach it'))
+  let download
+  const originalClick=HTMLAnchorElement.prototype.click
+  HTMLAnchorElement.prototype.click=function(){download={url:this.href,name:this.download}}
+  try { q('[data-download-intelligence="true"]')?.click() } finally { HTMLAnchorElement.prototype.click=originalClick }
+  const fileText=download ? await fetch(download.url).then(response=>response.text()) : '{}'
+  const snapshot=JSON.parse(fileText)
+  check('Save data file exports the complete local snapshot including old observations and scoring',
+    download?.name==='lfms-progress-data-2026-11-06.txt'
+    &&snapshot.dailyHistory?.length===JSON.parse(expandedLogs).length
+    &&snapshot.dailyHistory.some(day=>day.date===olderDays.at(-1).date&&day.meals.length===8)
+    &&snapshot.dailyHistory.some(day=>day.meals?.some(meal=>meal.description==='Chicken with rice'))
+    &&snapshot.trainingScore?.currentWeek?.week==='2026-11-02')
+  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Denied')}}})
+  q('[data-copy-intelligence="true"]')?.click()
+  await wait(100)
+  check('clipboard denial gives a selectable prompt and still offers the data file',
+    q('textarea[aria-label="AI prompt"]')?.readOnly
+    &&q('textarea[aria-label="AI prompt"]')?.value===attachmentPrompt
+    &&!!q('[data-download-intelligence="true"]'))
+  check('file and clipboard fallback do not modify logs',JSON.stringify(await storage.getAll('dayLogs'))===expandedLogs)
   check('no JavaScript exceptions',errors.length===0,errors.join(' | '))
 }catch(e){check('Progress Intelligence browser suite completed',false,e.stack??String(e))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},

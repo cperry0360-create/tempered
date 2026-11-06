@@ -180,6 +180,34 @@
   background:var(--food-v2-beach-base);color:var(--pr2-light);font-size:12px;font-weight:780;
 }
 .progress--fuel-style .progress-report__status {font-size:11px;color:var(--pr2-muted)}
+/* A single primary analysis action, using the same blue/navy tokens as Progress. */
+.progress--fuel-style .progress-report__button[data-copy-intelligence="true"] {
+  border-color:var(--pr2-line);
+  color:var(--pr2-text);
+  background:var(--food-v2-beach-base);
+  font-size:13px;
+  font-weight:800;
+  text-align:center;
+}
+.progress--fuel-style .progress-report__button[data-copy-intelligence="true"]:focus-visible {
+  outline:2px solid var(--pr2-light);
+  outline-offset:2px;
+}
+.progress--fuel-style .progress-report__recap {
+  justify-self:start;
+  padding:8px 3px;
+  border:0;
+  background:transparent;
+  color:var(--pr2-light);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.progress--fuel-style .progress-report__recap:focus-visible {
+  outline:2px solid var(--pr2-light);
+  outline-offset:2px;
+}
+
 .progress--fuel-style .progress-action,
 .progress--fuel-style .progress-back {color:var(--pr2-light);font-size:13px;font-weight:790;min-height:44px}
 .progress--fuel-style .progress-lift-detail__stat strong {color:var(--pr2-light)}

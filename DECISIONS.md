@@ -1,3 +1,9 @@
+## 2026-11-06 — Fuel calendar selects the day, not an obsolete Nutrition page
+
+- User supplied side-by-side screenshots: current Fuel dashboard is modern neon design but tapping a prior day brings an out-of-date, older Nutrition overlay. Requested identical full Fuel dashboard and food-entry experience populated with whichever day was tapped.
+- Use one `selectedDate` in `createFuelNextScreen` to drive all daily reads and writes: per-day calories/macros/water, closing status, meal logging, historical journal, photos and saved-food portions. Show the selected date and a clear way back to Today. Allow crossing week and month boundaries without jumping to a new screen; a date change is read-only.
+- Keep old overlays for external legacy callers outside Fuel 2. Do not delete or transform persisted logs; preserve today's data when reviewing/editing previous dates. Release 0.66.69 (175). Backup `backup/fuel-before-date-aware-dashboard-20261106`.
+
 ## 2026-11-05 — Short Duo follow-up, 0.66.68
 - Revert the over-broad compact exercise-card override from 0.66.67, which increased set-panel scroll height.
 - Compress only the new progress-view controls on short unfolded Duo screens, retaining 44px selectable movement tiles and showing completion counts, while preserving the earlier compact set logger and inline rest dock.

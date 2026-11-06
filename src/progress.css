@@ -867,3 +867,15 @@ html.sheet-open .app__body { overflow: hidden; }
   .progress-cut__stats { gap: 7px; }
   .progress-cut__metric { padding: 10px; }
 }
+
+/* LFMS Progress Intelligence: full-data AI review controls, read-only. */
+.progress-report__intro {
+  border:1px solid rgba(82,165,220,.3);
+  border-radius:15px;padding:12px 13px;margin:0 0 11px;
+  background:linear-gradient(135deg,rgba(26,90,145,.20),rgba(5,22,38,.10));
+}
+.progress-report__intro strong {font-weight:850;font-size:15px;letter-spacing:-.01em;color:var(--train-ink)}
+.progress-report__intro p {margin:6px 0 0;color:var(--text-2);font-size:12px;line-height:1.5}
+.progress-report__button[data-copy-intelligence="true"] {color:var(--train-ink);font-weight:800}
+.progress-report__button[data-download-intelligence="true"] {color:var(--train-accent,#59bcf6)}
+.progress-report__privacy {font-size:11px;color:var(--text-2);line-height:1.45;margin:6px 3px 11px}

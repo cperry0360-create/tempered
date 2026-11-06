@@ -552,6 +552,28 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         weight:reportProfile.weightGoalLb,
       },
     })
+    // The previous five-line copy included the graded training score and its
+    // arithmetic. Retain that evidence in a compact JSON object, not a second
+    // whitespace-heavy narrative, while preserving the full-history payload.
+    const training=scoreData()
+    const graded=training.headline
+    const explanation=explainTrainingScore(training)
+    payload.trainingScore={
+      latestGradedWeek:graded?{
+        week:graded.week,score:graded.score,grade:graded.grade,deload:graded.deload,
+        components:graded.components.map(c=>({
+          id:c.id,label:c.label,scorePercent:c.value===null?null:Math.round(c.value*1000)/10,
+          weightPercent:Math.round(c.weight*1000)/10,reason:c.reason,
+          formula:c.formula??null,
+        })),
+      }:null,
+      skippedWeeks:training.skipped.map(w=>({week:w.week,reason:w.reason})),
+      currentWeek:training.thisWeek,
+      previousFourWeekAverage:training.average,
+      changeVsPriorFourWeeks:training.change,
+      explanation:explanation.sentences,
+      methodology:explanation.method,
+    }
     return formatProgressIntelligencePrompt(payload)
   }
   async function copyProgressReport() {

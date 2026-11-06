@@ -1,3 +1,8 @@
+## 2026-11-06 — Restore graded training score to compact AI report, 0.66.73 (179)
+
+- Extended the comprehensive Progress clipboard JSON with the last graded training week, numeric score and grade, component percentages and weights, exact plan-adherence and consistency formulas, skipped/away weeks, current-week counts and concise score explanations. This restores evidence lost when LFMS replaced the original five-line copy with full-history intelligence.
+- Kept the same one-button blue/navy UI and no-blank-lines compact text output. Updated the old browser score harness to verify structured JSON rather than searching for retired prose, and added focused clipboard coverage. No writes to app data or changes to training goals. The version bump refreshes the installed PWA service worker.
+
 ## 2026-11-06 — Dense clipboard and analysis output, 0.66.72 (178)
 
 - The Progress copy action no longer includes wide-spaced headings, empty paragraphs or an overly repetitive multi-page instruction prelude. The prompt uses tight single-line sections with no blank lines and directs ChatGPT to use compact plain Markdown (not cards/charts/callouts or excessive vertical whitespace) when producing the report.

@@ -37,9 +37,10 @@ try {
   q('[data-copy-intelligence="true"]')?.click()
   await wait(350)
   const prompt=copied[0]??''
-  check('copy includes substantial evidence-first ChatGPT prompt',
+  check('compact, low-whitespace evidence-first prompt remains complete',
     prompt.length>2200&&prompt.includes('CALORIE TARGET DECISION')
-    &&prompt.includes('CREATINE')&&prompt.includes('LIFT-BY-LIFT AUDIT'))
+    &&prompt.includes('CREATINE')&&prompt.includes('LIFT-BY-LIFT AUDIT')
+    &&prompt.includes('COMPACT PLAIN MARKDOWN')&&!prompt.includes('\n\n'))
   check('payload contains actual meals, habits and body measurements',
     prompt.includes('Chicken with rice')&&prompt.includes('"weight":165.5')
     &&prompt.includes('"creatineTaken":true')&&prompt.includes('"otherSupplementsTaken":true'))

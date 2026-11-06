@@ -103,6 +103,8 @@ const PRECACHE = [
   './src/domain/trend.js',
   './src/domain/progression.js',
   './src/domain/progress-coverage.js',
+  './src/domain/progress-intelligence.js',
+  './src/domain/progress-intelligence-prompt.js',
   './src/domain/readiness.js',
   './src/domain/rank.js',
   './src/domain/records.js',

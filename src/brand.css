@@ -109,16 +109,16 @@ html[data-layout="duo"] .lfms-launch__skin {
   transform-box:view-box;transform-origin:0 0;opacity:0;
   animation:lfms-glass-sweeper 2640ms linear 1430ms both;
 }
-.lfms-launch__sweeper-body,.lfms-launch__sweeper-head,.lfms-launch__broom-head {fill:#fff}
+.lfms-launch__sweeper-body,.lfms-launch__sweeper-head,.lfms-launch__broom-head {fill:white}
 .lfms-launch__sweeper-tool {
   transform-box:view-box;transform-origin:15px 623px;
   animation:lfms-glass-tool 2640ms linear 1430ms both;
 }
 .lfms-launch__sweeper-arm {
-  fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;
+  fill:none;stroke:white;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;
 }
-.lfms-launch__broom {stroke:#fff;stroke-width:3;stroke-linecap:round}
-.lfms-launch__broom-edge {fill:none;stroke:#0b1624;stroke-width:1;stroke-linecap:round}
+.lfms-launch__broom {stroke:white;stroke-width:3;stroke-linecap:round}
+.lfms-launch__broom-edge {fill:none;stroke:var(--lfms-duo-canvas);stroke-width:1;stroke-linecap:round}
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
 
 @keyframes lfms-glass-mark-slam {

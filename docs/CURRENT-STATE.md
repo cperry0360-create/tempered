@@ -1,3 +1,9 @@
+## 2026-11-06 — Live local HTML Progress Intelligence viewer, 0.66.74 (180)
+
+- Progress / Overview now offers **Open HTML report** as its primary action, plus compact **Copy AI analysis** and the existing weekly recap. The new five-tab navy/blue LFMS HTML report displays current locally derived weight, nutrition, habit, training, lifting and evidence metrics with sample counts, confidence caveats and a two-week plan; it supports printing and **Save HTML** from an in-app full-screen viewer.
+- The HTML is **generated entirely on the device** at tap time from the existing read-only Progress Intelligence payload. No user-specific health data is committed to the GitHub Pages repository, no remote requests are made, and the HTML viewer does not edit history, goals or programs. Saved HTML may contain private records and should be handled accordingly.
+- AI clipboard export still carries the complete compact JSON and Markdown prompt for the separate ChatGPT conversational analysis. The local HTML brief is a deterministic in-app report, not AI-generated prose. The new generator is offline precached and versioned in the service worker; tests cover sanitized names, complete tabs, local no-fetch semantics and viewer opening/closing.
+
 ## 2026-11-06 — Restore graded training score to compact AI report, 0.66.73 (179)
 
 - Extended the comprehensive Progress clipboard JSON with the last graded training week, numeric score and grade, component percentages and weights, exact plan-adherence and consistency formulas, skipped/away weeks, current-week counts and concise score explanations. This restores evidence lost when LFMS replaced the original five-line copy with full-history intelligence.

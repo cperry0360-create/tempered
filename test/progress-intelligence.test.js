@@ -85,4 +85,12 @@ test('improved prompt asks for evidence-first priorities, calorie decision, stre
   assert.match(p,/do not invent/i)
   assert.match(p,/do not silently/i)
   assert.match(p,/LFMS_PROGRESS_INTELLIGENCE_V1/)
+  assert.match(p,/COMPACT PLAIN MARKDOWN/)
+  assert.match(p,/No cards, icons, charts/)
+  assert.doesNotMatch(p,/\n\n/,'Clipboard must not create empty paragraphs')
+  const payload=buildProgressIntelligence(fixture())
+  assert.deepEqual(JSON.parse(p.slice(p.lastIndexOf('\n')+1)),payload,
+    'Whitespace improvements must never remove observations or sets')
+  assert.ok(p.length - JSON.stringify(payload).length < 3300,
+    'The copy instructions should stay concise')
 })

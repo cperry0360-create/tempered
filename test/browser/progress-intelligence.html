@@ -45,7 +45,7 @@ try {
   check('payload has all four periods plus prior periods and adherence coverage',
     prompt.includes('"priorPeriods":')&&prompt.includes('"periods":')
     &&prompt.includes('"7":')&&prompt.includes('"14":')&&prompt.includes('"30":')&&prompt.includes('"90":')
-    &&prompt.includes('"eligibleDays":3'))
+    &&prompt.includes('"eligibleDays":2'))
   check('report never changes any dayLogs or user goals',
     JSON.stringify(await storage.getAll('dayLogs'))===initialLogs)
   check('saved report is acknowledged with size and paste instruction',

@@ -85,12 +85,19 @@ test('improved prompt asks for evidence-first priorities, calorie decision, stre
   assert.match(p,/do not invent/i)
   assert.match(p,/do not silently/i)
   assert.match(p,/LFMS_PROGRESS_INTELLIGENCE_V1/)
-  assert.match(p,/COMPACT PLAIN MARKDOWN/)
-  assert.match(p,/No cards, icons, charts/)
+  assert.match(p,/AI-GENERATED INTERACTIVE PROGRESS DASHBOARD/)
+  assert.match(p,/INTERACTIVE HTML dashboard/)
+  assert.match(p,/clickable top navigation/)
+  assert.match(p,/AI judgment/)
+  assert.match(p,/Do NOT paste HTML source/)
+  assert.match(p,/No invented meals/)
   assert.doesNotMatch(p,/\n\n/,'Clipboard must not create empty paragraphs')
+  assert.ok(p.endsWith('}'),'Clipboard ends exactly with the JSON closing brace')
+  assert.ok(!/\s$/.test(p),'Clipboard must never have trailing whitespace')
+  assert.ok(p.split('\n').length<25,'Clipboard instructions must not add hundreds of lines')
   const payload=buildProgressIntelligence(fixture())
   assert.deepEqual(JSON.parse(p.slice(p.lastIndexOf('\n')+1)),payload,
     'Whitespace improvements must never remove observations or sets')
-  assert.ok(p.length - JSON.stringify(payload).length < 3300,
-    'The copy instructions should stay concise')
+  assert.ok(p.length - JSON.stringify(payload).length < 6600,
+    'The copy instructions must stay bounded while fully explaining the interactive dashboard')
 })

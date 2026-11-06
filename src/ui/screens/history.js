@@ -936,7 +936,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
               onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')),
             }, ["Last week's recap ›"]),
             reportStatus && el('p.progress-report__status', { role:'status', text:reportStatus }),
-          ]),        ]),
+          ]),
+        ]),
       ]),
     ].filter(Boolean)
   }

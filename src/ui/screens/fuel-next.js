@@ -25,7 +25,9 @@ const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':
 
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
-  let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=clock.today()
+  // One transient selected date drives dashboard AND entry actions.
+  let selectedDate=clock.today()
+  let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=selectedDate
   let working=false, undo=null, errorMessage='', errorTimer=null, pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
   let weightGoalOpen=false,weightGoalValue='',weightGoalError=''
@@ -36,13 +38,15 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   let waterWaveId=0
   const runtime=el('div.fn2__legacy-runtime')
 
-  const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===clock.today()))refresh().catch(console.error)}
+  const updated = event => {if(root.isConnected&&(!event?.detail?.date||event.detail.date===selectedDate))refresh().catch(console.error)}
   window.addEventListener('tempered:fuel-updated',updated)
   window.addEventListener('tempered:nutrition-review-changed',updated)
 
   async function load() {
-    const [days,now,profile]=await Promise.all([storage.getAll('dayLogs'),daily.forDate(clock.today()),storage.get('profile','profile')])
-    data={days,now,day:days.find(x=>x.date===clock.today())??{date:clock.today()},foods:foodLibrary(days,4)}
+    const date=selectedDate
+    const [days,now,profile]=await Promise.all([storage.getAll('dayLogs'),daily.forDate(date),storage.get('profile','profile')])
+    if(date!==selectedDate)return // Superseded by a faster date selection.
+    data={days,now,day:days.find(x=>x.date===date)??{date},foods:foodLibrary(days,4)}
     prefs=profile??{id:'profile'}
   }
   function target(id,fallback) {
@@ -120,7 +124,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }
   }
   async function logWater(amount) {
-    await daily.logAt(clock.today(),'water',amount)
+    await daily.logAt(selectedDate,'water',amount)
     await refresh()
   }
   function toggleCustomWater() {
@@ -140,7 +144,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     }
     customWaterSaving=true
     try {
-      await daily.logAt(clock.today(),'water',Math.round(amount*10)/10)
+      await daily.logAt(selectedDate,'water',Math.round(amount*10)/10)
       customWaterOpen=false
       customWaterValue=''
       customWaterError=''
@@ -161,7 +165,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   function openFullHistory(trigger) {
     window.dispatchEvent(new CustomEvent('tempered:open-nutrition', {
-      detail:{ trigger, date:clock.today(), focus:'history' },
+      detail:{ trigger, date:selectedDate, focus:'history' },
     }))
   }
   function heading(){
@@ -178,14 +182,58 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ]),
     ])
   }
+  const toISO=date=>date.toISOString().slice(0,10)
+  function shiftDate(date,days) {
+    const utc=new Date(date+'T12:00:00Z')
+    utc.setUTCDate(utc.getUTCDate()+days)
+    return toISO(utc)
+  }
+  function weekStart(date) {
+    const utc=new Date(date+'T12:00:00Z')
+    utc.setUTCDate(utc.getUTCDate()-(utc.getUTCDay()+6)%7)
+    return utc
+  }
+  const formattedDate=date=>new Date(date+'T12:00:00Z')
+    .toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})
+  async function selectFuelDate(date) {
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date>clock.today()||date===selectedDate)return
+    selectedDate=date
+    journalDate=date
+    // Changing the date is navigation. It must never write a dayLog.
+    sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1
+    await refresh()
+  }
+  function dateToolbar() {
+    const today=clock.today(),monday=weekStart(selectedDate),sunday=new Date(monday)
+    sunday.setUTCDate(sunday.getUTCDate()+6)
+    const range=monday.toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})
+      +' – '+sunday.toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})
+    return el('nav.fn2__date-toolbar',{'aria-label':'Choose Fuel day',dataset:{fuelDateToolbar:'true'}},[
+      el('button.fn2__date-week-arrow',{type:'button','aria-label':'Previous week',
+        onclick:()=>selectFuelDate(shiftDate(selectedDate,-7))},['‹']),
+      el('label.fn2__date-picker-inline',{},[
+        el('span.fn2__date-picker-caption',{text:(selectedDate===today?'Today · ':'Viewing · ')+formattedDate(selectedDate)}),
+        el('small',{text:range}),
+        el('input',{type:'date',value:selectedDate,max:today,
+          'aria-label':'Choose Fuel dashboard date',onchange:event=>selectFuelDate(event.target.value)}),
+      ]),
+      el('button.fn2__date-week-arrow',{type:'button','aria-label':'Next week',
+        disabled:selectedDate===today,
+        onclick:()=>selectFuelDate(shiftDate(selectedDate,7)>today?today:shiftDate(selectedDate,7))},['›']),
+      selectedDate!==today&&el('button.fn2__back-today',{type:'button',
+        'aria-label':'Return Fuel to today',onclick:()=>selectFuelDate(today)},['Today']),
+    ])
+  }
   function week() {
-    const today=clock.today(),date=new Date(today+'T12:00:00Z')
-    date.setUTCDate(date.getUTCDate()-(date.getUTCDay()+6)%7)
-    return el('div.fn2__week',{},Array.from({length:7},(_,i)=>{
-      const d=new Date(date);d.setUTCDate(date.getUTCDate()+i)
-      const iso=d.toISOString().slice(0,10)
-      const record=data.days.find(x=>x.date===iso)
-      return el('button',{type:'button',disabled:iso>today,dataset:{today:String(iso===today)},onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-nutrition',{detail:{date:iso}}))},[
+    const today=clock.today(),monday=weekStart(selectedDate)
+    return el('div.fn2__week',{'aria-label':'Fuel days this week'},Array.from({length:7},(_,i)=>{
+      const d=new Date(monday);d.setUTCDate(monday.getUTCDate()+i)
+      const iso=toISO(d),record=data.days.find(x=>x.date===iso)
+      return el('button',{type:'button',disabled:iso>today,
+        'aria-label':formattedDate(iso)+(iso===selectedDate?', selected':''),
+        'aria-pressed':String(iso===selectedDate),
+        dataset:{fuelDate:iso,today:String(iso===today),selected:String(iso===selectedDate)},
+        onclick:()=>selectFuelDate(iso)},[
         el('small',{text:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}),
         el('b',{text:String(d.getUTCDate())}),
         el('i',{text:record?.nutritionStatus==='complete'?'✓':record?.nutritionLogged?'◐':'·'}),
@@ -232,7 +280,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const day=data.day,ledger=nutritionLedger(day)
     const calories=n(day.calories),protein=n(day.proteinGrams),calGoal=target('calories_logged',2100),proGoal=target('protein_target',135)
     const macros=nutritionMacroTargets(calGoal,proGoal)
-    const lastWeight=[...data.days].filter(x=>x.date<=clock.today()&&n(x.bodyMetrics?.weight)>0)
+    const lastWeight=[...data.days].filter(x=>x.date<=selectedDate&&n(x.bodyMetrics?.weight)>0)
       .sort((a,b)=>b.date.localeCompare(a.date))[0]?.bodyMetrics?.weight
     const goal=Number(prefs.weightGoalLb)
     const hasGoal=Number.isFinite(goal)&&goal>=70&&goal<=700
@@ -243,12 +291,12 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       :difference>0?difference.toFixed(1)+' lb to goal · '+goal.toFixed(1)+' lb target'
       :Math.abs(difference).toFixed(1)+' lb below '+goal.toFixed(1)+' lb goal'
     return [
-      heading(),week(),
+      heading(),dateToolbar(),week(),
       createFuelNeonWidget({
         day,calories,protein,calGoal,proGoal,macros,
         onOtherNutrients:event=>openFullHistory(event.currentTarget),
         onCloseDay:async()=>{
-          await daily.setNutritionStatus(clock.today(),day.nutritionStatus==='complete'?'partial':'complete')
+          await daily.setNutritionStatus(selectedDate,day.nutritionStatus==='complete'?'partial':'complete')
           await refresh()
         },
       }),
@@ -344,7 +392,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     return el('section.fn2__macro-journal',{'aria-label':'Daily macro journal'},[
       el('div.fn2__macro-journal-head',{},[
         el('h2',{text:'Macro Journal'}),
-        el('button',{type:'button',onclick:()=>{journalDate=clock.today();go('journal')}},['More ', '›']),
+        el('button',{type:'button',onclick:()=>{journalDate=selectedDate;go('journal')}},['More ', '›']),
       ]),
       el('p.fn2__macro-journal-sub',{text:fmt(ledger.totals.calories)+' kcal · '+fmt(ledger.totals.protein)+'g protein · '+ledger.entries.length+' meals'}),
       el('div.fn2__journal',{},mealSections(day,{inline:true})),
@@ -503,7 +551,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
           el('small',{text:fmt(food.calories)+' kcal · '+fmt(food.proteinGrams)+'g protein per serving'}),
         ]),
       ]),
-      el('p.fn2__caption',{text:'How much did you have? Nothing is logged until you confirm.'}),
+      el('p.fn2__caption',{text:'For '+formattedDate(selectedDate)+' · Choose a portion. Nothing is logged until you confirm.'}),
       el('div.fn2__serving-presets',{'aria-label':'Quick serving amounts'},
         servingChoices.map(amount=>el('button',{type:'button',dataset:{servingPreset:String(amount)},
           'aria-pressed':String(servingAmount===amount),onclick:()=>updateServingAmount(amount,{refresh:true})},
@@ -531,7 +579,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(submit)submit.disabled=true
     try {
       const {lastLoggedAt,loggedAt,id:entryId,source,count,...values}=food
-      await daily.addNutrition(clock.today(),{...values,portion:amount})
+      await daily.addNutrition(selectedDate,{...values,portion:amount})
       servingFood=null;servingAmount=1;sheet='';view=origin
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
@@ -580,7 +628,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     return [
       heading(),
       el('div.fn2__title',{},[
-        el('h1',{text:'Log a meal'}),
+        el('div',{},[
+          el('h1',{text:'Log a meal'}),
+          el('small.fn2__log-date',{dataset:{logDate:selectedDate},text:'For '+formattedDate(selectedDate)}),
+        ]),
         el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel']),
       ]),
       // The canonical nutrition form is shown first, never behind Quick Log.
@@ -618,7 +669,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     const results=el('div.fn2__food-results',{},libraryRows())
     return [
       heading(),
-      el('div.fn2__title',{},[el('h1',{text:'Food Library'}),el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel'])]),
+      el('div.fn2__title',{},[
+        el('div',{},[el('h1',{text:'Food Library'}),el('small.fn2__log-date',{text:'Logging for '+formattedDate(selectedDate)})]),
+        el('button',{type:'button',onclick:()=>go('dashboard')},['Back to Fuel']),
+      ]),
       el('nav.fn2__filters',{'aria-label':'Saved food filters'},[
         ...[['all','All Foods'],['frequent','Frequent'],['recent','Recent'],['favorites','Favorites']].map(([key,label])=>el('button',{
           type:'button','aria-pressed':String(key===filter),onclick:()=>{filter=key;render()},
@@ -635,8 +689,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ]
   }
   function mountRuntime(){
-    runtime.dataset.date=clock.today()
-    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:clock.today()}}))
+    runtime.dataset.date=selectedDate
+    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:selectedDate}}))
   }
   function overlay(){
     const title={quick:'Log',serving:'Log meal',manual:'Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
@@ -690,6 +744,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   function go(name){clearError();view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
   function render() {
     if(!data)return
+    root.dataset.selectedDate=selectedDate
     // Cancel the prior frame before replacing its SVG; the most recently
     // painted fill is retained as the start of a subsequent water addition.
     if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)
@@ -734,7 +789,11 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     } else delete document.body.dataset.food2Modal
     if(sheet==='manual'||view==='log')mountRuntime()
   }
-  async function refresh(){await load();render()}
+  async function refresh(){
+    const date=selectedDate
+    await load()
+    if(date===selectedDate)render()
+  }
   function deactivate(){
     clearError()
     if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)

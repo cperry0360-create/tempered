@@ -503,6 +503,15 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       ]),
     ]
   }
+  // Match a manually selected historical day while preserving the user's
+  // local meal time. Defaulting to clock.nowIso would misdate a backfilled meal.
+  function nutritionTimestamp(date) {
+    if(date===clock.today())return clock.nowIso()
+    const now=new Date(clock.now())
+    const [year,month,day]=date.split('-').map(Number)
+    return new Date(year,month-1,day,now.getHours(),now.getMinutes(),
+      now.getSeconds(),now.getMilliseconds()).toISOString()
+  }
   // A historical entry already contains eaten (possibly fractional) amounts.
   // Convert it back to one-serving values before repeating; otherwise a
   // half-serving meal gets multiplied twice.
@@ -579,7 +588,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(submit)submit.disabled=true
     try {
       const {lastLoggedAt,loggedAt,id:entryId,source,count,...values}=food
-      await daily.addNutrition(selectedDate,{...values,portion:amount})
+      await daily.addNutrition(selectedDate,{...values,portion:amount},{loggedAt:nutritionTimestamp(selectedDate)})
       servingFood=null;servingAmount=1;sheet='';view=origin
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))

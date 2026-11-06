@@ -1,3 +1,10 @@
+## 2026-11-06 — Historical days stay in modern Fuel dashboard, 0.66.69 (175)
+
+- Replaced the main Food 2 weekly calendar's old `tempered:open-nutrition` legacy-overlay behavior with inline selected-date navigation. Choosing a past weekday keeps the exact same neon Fuel dashboard, existing food shortcuts, macros and meal journal while fetching that day's canonical `dayLogs` and actual per-day goals.
+- A compact date toolbar displays the actively selected date, supports week-back/week-forward, native direct date selection and explicit Return to Today. Highlight follows the selected day, not today's date. Never selects future dates. The logging form, Food Library serving picker, water additions, Close Day and meal photo/meal history actions all target the selected day; date selection alone writes nothing. Historical weight display looks backward as of the selected date.
+- Existing embedded meal runtime receives the date and labels previous-day meals correctly; its obsolete "earlier day" legacy-overlay link is removed only inside Food 2. Backfilled serving timestamps carry the chosen calendar date with a local time. Today / Train / Progress and legacy Fuel fallback remain unchanged.
+- No migrations, no data reset, no reclassifying historical entries. Browser and Node regression coverage checks same dashboard, historical meals, custom/saved food and water entry, Close Day, week traversal, date picking and Today restoration. Rollback: `backup/fuel-before-date-aware-dashboard-20261106`. GitHub Pages only.
+
 ## 2026-11-04 — LFMS IGNITION launch, 0.66.65 (171)
 
 - Replaces the prior underwhelming double-red-beam splash with a more cinematic opening. The real mountain art zooms down from an oversized cinematic frame while top/bottom letterbox bars retract. The actual brand wordmark halves retain their original, long opposite-edge swoops; a single sharp crimson diagonal lands on their impact instead of two overlapping flashes.

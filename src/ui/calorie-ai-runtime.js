@@ -677,7 +677,8 @@ export function installCalorieAiRuntime() {
       panel.dataset.nutritionPanel = 'true'
       panel.dataset.date = date
       formTitle.textContent = 'Add a meal'
-      historyTitle.textContent = 'Today’s meals'
+      historyTitle.textContent = date === globalThis.tempered.clock.today()
+        ? 'Today’s meals' : dateLabel(date) + ' meals'
       const earlier = makeButton('nutrition-panel__earlier', 'Log for an earlier day', 'Log or fix meals on an earlier day')
       earlier.dataset.nutritionEarlier = 'true'
       earlier.onclick = () => openNutritionScreen(earlier, shiftedDate(date, -1))
@@ -740,6 +741,9 @@ export function installCalorieAiRuntime() {
       panelScreen = buildNutritionScreen(date, null, { embedded: true })
       slot.replaceChildren(panelScreen)
     }
+    // The modern Fuel day strip is now a native selector. Don't send an
+    // inline Food 2 log session back to the retired Nutrition screen.
+    if (slot.closest('.fn2')) panelScreen.querySelector('[data-nutrition-earlier]')?.remove()
     // DOM order equals visual order. Retained meal fields survive refreshes.
     const add = panelScreen.querySelector('.nutrition-panel__add')
     const meals = panelScreen.querySelector('.nutrition-panel__meals')

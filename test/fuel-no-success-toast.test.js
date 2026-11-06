@@ -7,7 +7,7 @@ const style=readFileSync(new URL('../src/food-next.css',import.meta.url),'utf8')
 
 test('successful meal logging does not leave a banner across Fuel cards',()=>{
   const logging=fuel.slice(fuel.indexOf('  async function logServing()'),fuel.indexOf('  function libraryRows()'))
-  assert.match(logging,/await daily\.addNutrition\(clock\.today\(\)/)
+  assert.match(logging,/await daily\.addNutrition\(selectedDate/)
   assert.match(logging,/await refresh\(\)/)
   assert.match(logging,/clearError\(\)/)
   assert.doesNotMatch(logging,/Logged .*serving/)

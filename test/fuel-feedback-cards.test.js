@@ -29,7 +29,7 @@ test('Custom Water validates, saves through existing daily logs, and retains pre
   assert.match(dashboard,/8,12,25/)
   assert.match(dashboard,/Custom/)
   assert.match(dashboard,/customWaterOpen&&el\('form/)
-  assert.match(source,/daily\.logAt\(clock\.today\(\),'water',Math\.round\(amount\*10\)\/10\)/)
+  assert.match(source,/daily\.logAt\(selectedDate,'water',Math\.round\(amount\*10\)\/10\)/)
   assert.match(source,/amount<0\.1\|\|amount>200/)
 })
 

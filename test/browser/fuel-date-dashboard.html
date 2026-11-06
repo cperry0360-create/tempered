@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS Fuel date-aware dashboard acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/nutrition-today.css">
+<link rel="stylesheet" href="../../src/calm.css">
+<link rel="stylesheet" href="../../src/fuel.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/food-v2.css">
+<link rel="stylesheet" href="../../src/food-v3.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+<link rel="stylesheet" href="../../src/food-neon.css">
+<link rel="stylesheet" href="../../src/food-log-polish.css">
+</head><body><div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { installCalorieAiRuntime } from '../../src/ui/calorie-ai-runtime.js'
+const checks=[],errors=[]
+const check=(name,yes,detail='')=>checks.push({name,ok:Boolean(yes),detail:String(detail??'')})
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+const q=selector=>document.querySelector(selector)
+const qa=selector=>[...document.querySelectorAll(selector)]
+window.addEventListener('error',e=>errors.push(e.message))
+window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
+try {
+  history.replaceState(null,'',location.pathname+'?food2=1')
+  const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,6,13))
+  const t=await bootstrapHarness({storage,clock,mount:q('#app')})
+  installCalorieAiRuntime()
+  await t.daily.addNutrition('2026-11-05',{
+    description:'Yesterday protein bowl',calories:2040,protein:116,carbs:144,fat:82,fiber:11,
+  },{loggedAt:'2026-11-05T18:10:00.000Z'})
+  await t.daily.addNutrition('2026-11-06',{
+    description:'Today protein shake',calories:500,protein:45,carbs:30,fat:12,
+  },{loggedAt:'2026-11-06T10:30:00.000Z'})
+  await t.daily.logAt('2026-11-05','water',20)
+  await t.daily.logAt('2026-11-06','water',40)
+  await t.app.show('fuel')
+  await wait(180)
+  check('initial modern Fuel shows actual today and calorie total',
+    !!q('[data-food-two="true"]')&&q('.fn2')?.dataset.selectedDate==='2026-11-06'
+    &&q('.fn2__neo-calorie-value')?.textContent==='500')
+  check('seven days remain in the original weekly layout with a selected day',
+    qa('.fn2__week button').length===7
+    &&q('.fn2__week [data-fuel-date="2026-11-06"]')?.dataset.selected==='true'
+    &&!!q('[aria-label="Choose Fuel dashboard date"]'))
+
+  const beforeToday=JSON.stringify(await t.daily.dayLog('2026-11-06'))
+  q('.fn2__week [data-fuel-date="2026-11-05"]')?.click()
+  await wait(180)
+  check('past day stays in the SAME Fuel dashboard without legacy Nutrition overlay',
+    q('.fn2')?.dataset.selectedDate==='2026-11-05'
+    &&q('.fn2__neo-calorie-value')?.textContent==='2,040'
+    &&!!q('.fn2__macro-journal')
+    &&!q('.nutrition-log-overlay')
+    &&!q('[data-nutrition-screen]'))
+  check('selected day is visually explicit, with a Today escape',
+    q('.fn2__week [data-fuel-date="2026-11-05"]')?.dataset.selected==='true'
+    &&q('.fn2__week [data-fuel-date="2026-11-06"]')?.dataset.selected==='false'
+    &&q('.fn2__date-picker-caption')?.textContent.includes('Nov 5')
+    &&!!q('.fn2__back-today'))
+  check('selected date drives the entire current neon dashboard and journal',
+    q('.fn2__macro-journal')?.textContent.includes('Yesterday protein bowl')
+    &&q('.fn2__stats')?.textContent.includes('20 oz')
+    &&q('[data-macro="protein"]')?.textContent.includes('116 g'))
+  check('tapping dates never rewrites today or historical day logs',
+    JSON.stringify(await t.daily.dayLog('2026-11-06'))===beforeToday
+    &&(await t.daily.dayLog('2026-11-05')).calories===2040)
+
+  // Close Day, water, and meal entry MUST target the selected historical date.
+  q('.fn2__neo-close')?.click()
+  await wait(140)
+  check('Close Day updates yesterday only, not today',
+    (await t.daily.dayLog('2026-11-05')).nutritionStatus==='complete'
+    &&(await t.daily.dayLog('2026-11-06')).nutritionStatus!=='complete')
+  q('.fn2__water-actions button')?.click()
+  await wait(130)
+  check('water entry updates selected day only',
+    (await t.daily.dayLog('2026-11-05')).waterOz===28
+    &&(await t.daily.dayLog('2026-11-06')).waterOz===40)
+  q('.fn2__pills button:nth-child(2)')?.click()
+  await wait(150)
+  const form=q('.fn2__log-entry [data-nutrition-form]')
+  check('Log keeps the modern form and clearly marks historical date',
+    !!form&&q('[data-log-date="2026-11-05"]')
+    &&q('.fn2__legacy-runtime')?.dataset.date==='2026-11-05'
+    &&q('.nutrition-panel')?.dataset.date==='2026-11-05'
+    &&!q('.nutrition-log-overlay')
+    &&!q('.fn2__log-entry [data-nutrition-earlier]'))
+  if(form){
+    form.querySelector('[data-entry="nutrition_description"]').value='Late yogurt'
+    form.querySelector('[data-entry="nutrition_calories"]').value='100'
+    form.querySelector('[data-entry="nutrition_protein"]').value='12'
+    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))
+  }
+  await wait(310)
+  check('manual meal writes to November 5, preserving today',
+    (await t.daily.dayLog('2026-11-05')).calories===2140
+    &&(await t.daily.dayLog('2026-11-06')).calories===500)
+
+  q('.fn2__title button')?.click()
+  await wait(80)
+  check('returning from Log retains historical neon dashboard',
+    q('.fn2')?.dataset.selectedDate==='2026-11-05'
+    &&q('.fn2__neo-calorie-value')?.textContent==='2,140'
+    &&q('.fn2__macro-journal')?.textContent.includes('Late yogurt'))
+
+  q('.fn2__pills button:nth-child(1)')?.click()
+  await wait(85)
+  check('Food Library retains selected date context',
+    q('.fn2__title')?.textContent.includes('Nov 5'))
+  const row=qa('.fn2__food-row').find(x=>x.textContent.includes('Today protein shake'))
+  row?.querySelector('.fn2__add')?.click()
+  await wait(55)
+  check('saved-food portion picker shows the selected historical date',
+    q('[data-food2-overlay="serving"]')?.textContent.includes('Nov 5'))
+  q('[data-food2-overlay="serving"] [data-serving-submit]')?.click()
+  await wait(250)
+  check('one-tap serving log respects historical date',
+    (await t.daily.dayLog('2026-11-05')).calories===2640
+    &&(await t.daily.dayLog('2026-11-06')).calories===500)
+  q('.fn2__title button')?.click()
+  await wait(80)
+
+  // Week arrows and date input allow reaching earlier weeks without old overlay.
+  q('[aria-label="Previous week"]')?.click()
+  await wait(135)
+  check('previous-week navigation changes the dashboard, not its design',
+    q('.fn2')?.dataset.selectedDate==='2026-10-29'
+    &&!!q('.fn2__neo')
+    &&!q('.nutrition-log-overlay')
+    &&qa('.fn2__week button').length===7)
+  q('[aria-label="Next week"]')?.click()
+  await wait(135)
+  check('next-week returns to same weekday where possible',
+    q('.fn2')?.dataset.selectedDate==='2026-11-05')
+  const input=q('[aria-label="Choose Fuel dashboard date"]')
+  if(input){
+    input.value='2026-11-04'
+    input.dispatchEvent(new Event('change',{bubbles:true}))
+  }
+  await wait(145)
+  check('direct date picker also loads the same modern dashboard',
+    q('.fn2')?.dataset.selectedDate==='2026-11-04'
+    &&!!q('.fn2__macro-journal')
+    &&!q('.nutrition-log-overlay'))
+  q('.fn2__back-today')?.click()
+  await wait(150)
+  check('Today returns to today meals and totals without touching history',
+    q('.fn2')?.dataset.selectedDate==='2026-11-06'
+    &&q('.fn2__neo-calorie-value')?.textContent==='500'
+    &&q('.fn2__week [data-fuel-date="2026-11-06"]')?.dataset.selected==='true'
+    &&(await t.daily.dayLog('2026-11-05')).calories===2640)
+  check('no page exceptions',errors.length===0,errors.join(' | '))
+}catch(error){check('Fuel historical-date acceptance completed',false,error.stack??String(error))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'fuel-date-dashboard',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

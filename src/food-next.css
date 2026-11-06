@@ -343,3 +343,56 @@ html[data-layout="duo"] .fn2__float {
 @media(prefers-reduced-motion:reduce) {
   .fn2__water-figure-fill {filter:none}
 }
+
+/* LFMS 0.66.69 — modern Fuel's selected-date navigation, no legacy screen. */
+.fn2 .fn2__date-toolbar {
+  display:flex;align-items:center;gap:9px;min-width:0;
+  padding:2px 1px 0;
+}
+.fn2 .fn2__date-week-arrow {
+  flex:none;display:grid;place-items:center;width:34px;min-height:36px;
+  padding:0;border:1px solid var(--food-v2-line);border-radius:12px;
+  background:var(--food-v2-panel-2);color:var(--fn-blue-light);
+  font-size:24px;line-height:1;
+}
+.fn2 .fn2__date-week-arrow:disabled {opacity:.3;cursor:default}
+.fn2 .fn2__date-picker-inline {
+  flex:1;min-width:0;position:relative;display:flex;align-items:baseline;
+  justify-content:center;gap:12px;cursor:pointer;
+  border:1px solid var(--food-v2-line);border-radius:12px;
+  padding:7px 12px;background:var(--food-v2-panel-2);
+}
+.fn2 .fn2__date-picker-caption {
+  font-size:clamp(11px,1.1vw,14px);font-weight:780;color:var(--fn-ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.fn2 .fn2__date-picker-inline small {font-size:11px;color:var(--fn-muted);white-space:nowrap}
+.fn2 .fn2__date-picker-inline input {
+  position:absolute;inset:0;width:100%;height:100%;min-width:0;opacity:0;
+  cursor:pointer;
+}
+.fn2 .fn2__date-picker-inline:focus-within {outline:2px solid var(--fn-blue-light);outline-offset:2px}
+.fn2 .fn2__back-today {
+  flex:none;min-height:36px;padding:0 12px;
+  border:1px solid var(--fn-blue);border-radius:999px;
+  color:var(--fn-blue-light);background:var(--food-v2-panel-2);
+  font-size:11px;font-weight:790;
+}
+.fn2 .fn2__week button[data-today="true"]:not([data-selected="true"]) {
+  background:transparent;color:var(--fn-muted);
+}
+.fn2 .fn2__week button[data-selected="true"] {
+  background:var(--food-v2-recent-base);color:var(--fn-ink);
+  box-shadow:inset 0 0 0 1px var(--fn-blue);
+}
+.fn2 .fn2__log-date {
+  display:block;font-size:12px;font-weight:670;
+  color:var(--fn-blue-light);margin-top:4px;
+}
+@media(max-width:560px) {
+  .fn2 .fn2__date-toolbar {gap:5px}
+  .fn2 .fn2__date-picker-inline {gap:4px;padding:6px 8px;flex-direction:column;align-items:center}
+  .fn2 .fn2__date-picker-caption {font-size:11px}
+  .fn2 .fn2__date-picker-inline small {font-size:9px}
+  .fn2 .fn2__back-today {padding:0 9px}
+}

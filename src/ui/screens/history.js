@@ -12,7 +12,7 @@ import { effectiveLoad } from '../../domain/records.js'
 import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
 import { summarizeTrend } from '../../domain/trend.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
-import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../../domain/progress-intelligence.js'
+import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../../app/progress-intelligence.js'
 import {
   observedProgressDates,
   progressDataStart,

@@ -13,6 +13,7 @@ import { trainingScore, explainTrainingScore } from '../../domain/training-score
 import { summarizeTrend } from '../../domain/trend.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
 import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../../app/progress-intelligence.js'
+import { renderProgressIntelligenceHTML } from '../../app/progress-intelligence-html.js'
 import {
   observedProgressDates,
   progressDataStart,
@@ -544,7 +545,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
 
   // The selected range still controls the visible Progress cards, but AI review
   // includes ALL available local history plus independent 7/14/30/90 windows.
-  function fullProgressReport() {
+  function fullProgressPayload() {
     const payload=buildProgressIntelligence({
       today:clock.today(),range,dayLogs,sessions,setLogs,exercises,programs,programStates,
       records,awayPeriods,schedule,activities:daily.activities??[],goals:{
@@ -574,7 +575,61 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       explanation:explanation.sentences,
       methodology:explanation.method,
     }
-    return formatProgressIntelligencePrompt(payload)
+return payload
+  }
+  function fullProgressReport() {
+    return formatProgressIntelligencePrompt(fullProgressPayload())
+  }
+  function openProgressHTMLReport() {
+    // Generate from current local records only. Never commit personal report data
+    // to GitHub, fetch a remote template, or change saved user state.
+    const html = renderProgressIntelligenceHTML(fullProgressPayload())
+    document.querySelector('.lfms-intelligence-overlay')?.remove()
+    const overlay = document.createElement('div')
+    overlay.className = 'lfms-intelligence-overlay'
+    overlay.setAttribute('role', 'dialog')
+    overlay.setAttribute('aria-modal', 'true')
+    overlay.setAttribute('aria-label', 'LFMS Progress Intelligence HTML report')
+    const toolbar = document.createElement('div')
+    toolbar.className = 'lfms-intelligence-overlay__toolbar'
+    const label = document.createElement('strong')
+    label.textContent = 'Progress Intelligence'
+    const controls = document.createElement('div')
+    controls.className = 'lfms-intelligence-overlay__controls'
+    const save = document.createElement('button')
+    save.type = 'button'
+    save.textContent = 'Save HTML'
+    save.setAttribute('aria-label', 'Save this private HTML report to your device')
+    save.addEventListener('click', () => {
+      const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'lfms-progress-' + clock.today() + '.html'
+      document.body.append(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 60000)
+    })
+    const close = document.createElement('button')
+    close.type = 'button'
+    close.textContent = 'Close'
+    const previousOverflow = document.documentElement.style.overflow
+    const dismiss = () => {
+      document.documentElement.style.overflow = previousOverflow
+      overlay.remove()
+    }
+    close.addEventListener('click', dismiss)
+    overlay.addEventListener('keydown', e => { if (e.key === 'Escape') dismiss() })
+    controls.append(save, close)
+    toolbar.append(label, controls)
+    const frame = document.createElement('iframe')
+    frame.title = 'LFMS Progress Intelligence HTML report'
+    frame.setAttribute('sandbox', 'allow-scripts allow-modals')
+    frame.srcdoc = html
+    overlay.append(toolbar, frame)
+    document.body.append(overlay)
+    document.documentElement.style.overflow = 'hidden'
+    close.focus()
   }
   async function copyProgressReport() {
     try {
@@ -948,11 +1003,16 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           trendsCard(current, previous, comparable),
           recovery,
           el('section.progress-report', {}, [
-            el('button.progress-report__button', {
+            el('button.progress-report__button.progress-report__button--html', {
+              type:'button',dataset:{openHtmlIntelligence:'true'},
+              title:'Open a private, formatted HTML report generated from your saved LFMS history.',
+              onclick:openProgressHTMLReport,
+            }, ['Open HTML report']),
+            el('button.progress-report__button.progress-report__button--copy', {
               type:'button',dataset:{copyIntelligence:'true'},
               title:'Copies saved nutrition, workout, habit and health history for review in ChatGPT.',
               onclick:copyProgressReport,
-            }, ['Copy progress analysis']),
+            }, ['Copy AI analysis']),
             el('button.progress-report__recap', {
               type:'button',dataset:{openWeeklyRecap:'true'},
               onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')),

@@ -282,3 +282,39 @@ html:has(.progress--fuel-style) .score-explain__done {
   .progress--fuel-style .progress2__barline>small {font-size:9px}
   .progress--fuel-style .progress-heatmap {gap:3px}
 }
+
+/* Local HTML progress report: compact controls and full-screen private viewer. */
+.progress--fuel-style .progress-report{grid-template-columns:minmax(0,1fr) auto;gap:7px}
+.progress--fuel-style .progress-report__button--html{
+  grid-column:1;min-height:38px;padding:0 12px;
+  border:1px solid rgba(109,191,255,.42);border-radius:11px;
+  background:linear-gradient(125deg,var(--food-v2-recent-base),var(--food-v2-panel-2));color:var(--food-v2-text);
+  font-size:12px;text-align:center;font-weight:850;
+}
+.progress--fuel-style .progress-report__button[data-copy-intelligence="true"]{
+  grid-column:2;min-height:38px;width:auto;padding:0 11px;
+  border-radius:11px;font-size:11px;font-weight:760;
+}
+.progress--fuel-style .progress-report__recap{grid-column:1/-1;padding:2px 3px;min-height:22px}
+.progress--fuel-style .progress-report__status{grid-column:1/-1;margin:0}
+.lfms-intelligence-overlay{
+  position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;
+  background:var(--cut-deep);color:var(--food-v2-text);overscroll-behavior:contain;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+}
+.lfms-intelligence-overlay__toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:9px;
+  flex:none;padding:7px 12px;min-height:48px;border-bottom:1px solid var(--food-v2-line);
+  background:var(--food-v2-panel);font:700 13px -apple-system,BlinkMacSystemFont,sans-serif;
+}
+.lfms-intelligence-overlay__controls{display:flex;align-items:center;gap:8px}
+.lfms-intelligence-overlay__controls button{
+  border:1px solid var(--food-v2-line);background:var(--food-v2-beach-base);color:var(--food-v2-text);
+  padding:8px 11px;border-radius:10px;min-height:34px;font:700 12px -apple-system,sans-serif;
+}
+.lfms-intelligence-overlay__controls button:last-child{background:var(--food-v2-panel-2)}
+.lfms-intelligence-overlay iframe{width:100%;height:100%;min-height:0;flex:1;border:0;background:var(--cut-deep)}
+@media(max-width:370px){
+  .lfms-intelligence-overlay__toolbar{padding-inline:8px;font-size:11px}
+  .lfms-intelligence-overlay__controls button{padding-inline:8px;font-size:11px}
+}

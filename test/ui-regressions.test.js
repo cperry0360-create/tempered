@@ -120,7 +120,8 @@ test('REGRESSION: R5 Progress uses the fixed recap and removes configurable dash
   assert.match(history, /Recent PRs/)
   assert.match(history, /trendsCard/)
   assert.match(history, /recoveryCard/)
-  assert.match(history, /Copy progress analysis/)
+  assert.match(history, /Open HTML report/)
+  assert.match(history, /Copy AI analysis/)
   assert.doesNotMatch(history, /downloadProgressReport|AI Progress Intelligence/)
   // R12 replaced sample counts with a plain-language change and a trend line.
   assert.match(history, /summarizeTrend/)

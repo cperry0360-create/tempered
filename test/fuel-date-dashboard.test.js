@@ -39,7 +39,7 @@ test('selected-date calendar browses across weeks, with explicit Today recovery'
   assert.match(fuel,/selectedDate=date\s+journalDate=date/)
   assert.match(fuel,/const date=selectedDate\s+await load\(\)\s+if\(date===selectedDate\)render\(\)/)
   assert.match(css,/\.fn2 \.fn2__date-toolbar/)
-  assert.match(read('src/version.js'),/0\.66\.69 \(175\)/)
+  assert.match(read('src/version.js'),/VERSION = '[0-9]+\.[0-9]+\.[0-9]+ \([0-9]+\)'/)
 })
 
 test('no historical log is accidentally timestamped with present date',()=>{

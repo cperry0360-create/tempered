@@ -18,9 +18,9 @@ export function formatProgressIntelligencePrompt(report) {
     'ACTION PLAN: End with no more than five prioritized, personalized actions for the NEXT 14 DAYS, with target, reason, confidence, and recheck trigger. Also state what NOT to change yet. Recommendations are advisory only: do not modify app goals, logs or workouts.',
     'EVIDENCE RULES: Cite numeric values, dates, units, and sample counts inside the dashboard itself. Respect periods that overlap and history that starts mid-period; compare like with like. Distinguish estimate versus observation. No invented meals, calories, weigh-ins, supplement intake, workouts, medical diagnoses, or implications of missing data. A lack of data is a finding, not a reason to fabricate certainty.',
     'DATA FORMAT: The final line below is the complete minified JSON report, including full historical daily records, exercise-level sessions/sets and graded training-score details. Use all relevant evidence from it; do not omit raw sets or meals when checking trends. Do not dump the JSON into the visible dashboard; show interpretable findings with an optional evidence drill-down. Keep the exported data private and do not send it to another website.',
-    'LFMS_PROGRESS_DATA_JSON='
+    'LFMS_PROGRESS_DATA_JSON (next line is a complete minified JSON object):'
   ];
   // The JSON is deliberately the LAST characters on the clipboard. No trailing
   // newline, blank paragraphs, Markdown fences, padding or injected whitespace.
-  return lines.join('\n') + JSON.stringify(report);
+  return lines.join('\n') + '\n' + JSON.stringify(report);
 }

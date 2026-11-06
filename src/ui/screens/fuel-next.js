@@ -196,7 +196,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   const formattedDate=date=>new Date(date+'T12:00:00Z')
     .toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})
   async function selectFuelDate(date) {
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date>clock.today()||date===selectedDate)return
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>clock.today()||date===selectedDate)return
     selectedDate=date
     journalDate=date
     // Changing the date is navigation. It must never write a dayLog.

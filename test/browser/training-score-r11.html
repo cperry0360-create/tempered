@@ -43,7 +43,7 @@ try{
  q('.progress-back')?.click()
  check('the card says why its graded week is older than last week',/Sep 14 away/.test(q('.progress-score')?.textContent),q('.progress-score')?.textContent)
  q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
- const copiedData=()=>JSON.parse(copied.slice(copied.lastIndexOf('\\n')+1))
+ const copiedData=()=>JSON.parse(copied.slice(copied.lastIndexOf('\n')+1))
  let scoreReport=copiedData().trainingScore
  check('AI report includes the last graded week and reason a newer week was excluded',
    scoreReport.latestGradedWeek.week==='2026-09-07'
@@ -73,7 +73,7 @@ try{
    JSON.stringify({adherence,consistency}))
  check('AI report preserves scoring methodology without prose padding',
    scoreReport.methodology.some(s=>s.includes('70% planned sets finished, 30% sets that reached the rep minimum'))
-   &&!copied.includes('\\n\\n'))
+   &&!copied.includes('\n\n'))
  const report=copiedData()
  check('recovery readings are included as observed records, not fabricated trends',
    report.dailyHistory.find(d=>d.date==='2026-09-27')?.healthMetrics?.spo2===93

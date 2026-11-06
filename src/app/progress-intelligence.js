@@ -54,7 +54,7 @@ function weightTrend(points){
 function makePeriod(end,days,rows,sessions,sets,start,targets){
   const since=shift(end,1-days)
   const recent=rows.filter(d=>within(d.date,since,end))
-  const known=start?Math.max(0,Math.min(days,span(Math.max(since,start),end)+1)):0
+  const known=start?Math.max(0,Math.min(days,span(since>start?since:start,end)+1)):0
   const calories=recent.filter(observedCalories),protein=recent.filter(observedProtein)
   const closed=calories.filter(d=>d.nutritionStatus==='complete')
   const weight=recent.filter(d=>numeric(d.bodyMetrics?.weight)!==null&&d.bodyMetrics.weight>0)

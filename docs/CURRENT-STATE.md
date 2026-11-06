@@ -1,3 +1,8 @@
+## 2026-11-06 — Dense clipboard and analysis output, 0.66.72 (178)
+
+- The Progress copy action no longer includes wide-spaced headings, empty paragraphs or an overly repetitive multi-page instruction prelude. The prompt uses tight single-line sections with no blank lines and directs ChatGPT to use compact plain Markdown (not cards/charts/callouts or excessive vertical whitespace) when producing the report.
+- All original nutrition days, 7/14/30/90 comparisons, habits, lift summaries and raw recorded training sets remain inside a minified JSON payload; no source data is dropped. Unit/browser acceptance checks validate compactness and full JSON round-trip. No storage migrations or writes.
+
 ## 2026-11-06 — Compact Progress analysis action, 0.66.71 (177)
 
 - Removed the off-brand orange AI Progress Intelligence header, verbose explanation, extra download button and privacy paragraph from Progress Overview. Replaced with one in-theme `Copy progress analysis` action; `Last week's recap` remains a compact, separate text link. Short clipboard status only. The underlying full-history 7/14/30/90-day analytics and AI prompt remain unchanged.

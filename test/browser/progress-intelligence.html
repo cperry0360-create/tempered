@@ -48,6 +48,12 @@ try {
     prompt.includes('"priorPeriods":')&&prompt.includes('"periods":')
     &&prompt.includes('"7":')&&prompt.includes('"14":')&&prompt.includes('"30":')&&prompt.includes('"90":')
     &&prompt.includes('"eligibleDays":2'))
+  const report=JSON.parse(prompt.slice(prompt.lastIndexOf('\\n')+1))
+  check('full clipboard retains scoring methodology and training-grade evidence',
+    !!report.trainingScore
+    &&Array.isArray(report.trainingScore.methodology)
+    &&Array.isArray(report.trainingScore.skippedWeeks)
+    &&report.trainingScore.currentWeek?.week==='2026-11-02')
   check('report never changes any dayLogs or user goals',
     JSON.stringify(await storage.getAll('dayLogs'))===initialLogs)
   check('copy feedback is short, without text-heavy marketing copy',

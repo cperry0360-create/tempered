@@ -55,7 +55,7 @@ try {
   await wait(180)
   check('past day stays in the SAME Fuel dashboard without legacy Nutrition overlay',
     q('.fn2')?.dataset.selectedDate==='2026-11-05'
-    &&q('.fn2__neo-calorie-value')?.textContent==='2040'
+    &&q('.fn2__neo-calorie-value')?.textContent==='2,040'
     &&!!q('.fn2__macro-journal')
     &&!q('.nutrition-log-overlay')
     &&!q('[data-nutrition-screen]'))
@@ -107,7 +107,7 @@ try {
   await wait(80)
   check('returning from Log retains historical neon dashboard',
     q('.fn2')?.dataset.selectedDate==='2026-11-05'
-    &&q('.fn2__neo-calorie-value')?.textContent==='2140'
+    &&q('.fn2__neo-calorie-value')?.textContent==='2,140'
     &&q('.fn2__macro-journal')?.textContent.includes('Late yogurt'))
 
   q('.fn2__pills button:nth-child(1)')?.click()

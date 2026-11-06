@@ -559,27 +559,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       const text=fullProgressReport()
       if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable')
       await globalThis.navigator.clipboard.writeText(text)
-      reportStatus='Copied complete analysis · '+Math.round(text.length/1024)+' KB. Paste into ChatGPT to review the evidence and recommendations.'
+      reportStatus='Copied. Paste into ChatGPT to review.'
     } catch {
-      reportStatus='Clipboard blocked or report too large. Use Download report instead.'
-    }
-    render()
-  }
-  function downloadProgressReport() {
-    try {
-      const text=fullProgressReport()
-      const blob=new Blob([text],{type:'text/plain;charset=utf-8'})
-      const url=URL.createObjectURL(blob)
-      const link=document.createElement('a')
-      link.href=url
-      link.download='LFMS-progress-analysis-'+clock.today()+'.txt'
-      document.body.append(link)
-      link.click()
-      link.remove()
-      setTimeout(()=>URL.revokeObjectURL(url),1500)
-      reportStatus='Analysis file prepared. Attach it to ChatGPT to review all available observations.'
-    } catch {
-      reportStatus='Download could not be prepared. Your saved logs were not changed.'
+      reportStatus='Unable to copy. Check clipboard permissions and try again.'
     }
     render()
   }
@@ -944,23 +926,17 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           trendsCard(current, previous, comparable),
           recovery,
           el('section.progress-report', {}, [
-            el('div.progress-report__intro', {}, [
-              el('strong', { text:'AI Progress Intelligence' }),
-              el('p', { text:'Full available history · 7/14/30/90-day comparisons · weight and calories · lift plateaus · creatine and supplements · recovery. Includes actual dates and sample counts.' }),
-            ]),
             el('button.progress-report__button', {
               type:'button',dataset:{copyIntelligence:'true'},
+              title:'Copies saved nutrition, workout, habit and health history for review in ChatGPT.',
               onclick:copyProgressReport,
-            }, ['Copy complete analysis for ChatGPT']),
-            el('button.progress-report__button', {
-              type:'button',dataset:{downloadIntelligence:'true'},
-              onclick:downloadProgressReport,
-            }, ['Download analysis (.txt)']),
-            el('p.progress-report__privacy', { text:'Includes your logged meals, measurements, health data, and workout history. Review before sharing with an AI service. Photos and personal profile details are excluded.' }),
-            el('button.progress-report__button', { type: 'button', dataset: { openWeeklyRecap: 'true' }, onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')) }, ["Last week's recap"]),
-            reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
-          ]),
-        ]),
+            }, ['Copy progress analysis']),
+            el('button.progress-report__recap', {
+              type:'button',dataset:{openWeeklyRecap:'true'},
+              onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')),
+            }, ["Last week's recap ›"]),
+            reportStatus && el('p.progress-report__status', { role:'status', text:reportStatus }),
+          ]),        ]),
       ]),
     ].filter(Boolean)
   }

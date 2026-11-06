@@ -877,5 +877,5 @@ html.sheet-open .app__body { overflow: hidden; }
 .progress-report__intro strong {font-weight:850;font-size:15px;letter-spacing:-.01em;color:var(--train-ink)}
 .progress-report__intro p {margin:6px 0 0;color:var(--text-2);font-size:12px;line-height:1.5}
 .progress-report__button[data-copy-intelligence="true"] {color:var(--train-ink);font-weight:800}
-.progress-report__button[data-download-intelligence="true"] {color:var(--train-accent,#59bcf6)}
+.progress-report__button[data-download-intelligence="true"] {color:var(--food-v2-blue-light)}
 .progress-report__privacy {font-size:11px;color:var(--text-2);line-height:1.45;margin:6px 3px 11px}

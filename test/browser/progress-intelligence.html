@@ -30,8 +30,9 @@ try {
   await t.daily.logAt('2026-11-06','body_metrics',165.5)
   await t.app.show('history')
   await wait(160)
-  check('new AI Progress Intelligence controls are visible',!!q('[data-copy-intelligence="true"]')
-    &&!!q('[data-download-intelligence="true"]')&&!!q('.progress-report__privacy'))
+  check('one primary progress analysis action stays within existing LFMS layout',!!q('[data-copy-intelligence="true"]')
+    &&!q('[data-download-intelligence="true"]')&&!q('.progress-report__intro')&&!q('.progress-report__privacy')
+    &&q('[data-copy-intelligence="true"]')?.textContent.trim()==='Copy progress analysis')
   const initialLogs=JSON.stringify(await storage.getAll('dayLogs'))
   q('[data-copy-intelligence="true"]')?.click()
   await wait(350)
@@ -48,9 +49,8 @@ try {
     &&prompt.includes('"eligibleDays":2'))
   check('report never changes any dayLogs or user goals',
     JSON.stringify(await storage.getAll('dayLogs'))===initialLogs)
-  check('saved report is acknowledged with size and paste instruction',
-    q('.progress-report__status')?.textContent.includes('Copied')
-    &&q('.progress-report__status')?.textContent.includes('KB'))
+  check('copy feedback is short, without text-heavy marketing copy',
+    q('.progress-report__status')?.textContent==='Copied. Paste into ChatGPT to review.')
   check('weekly recap entry point remains intact',!!q('[data-open-weekly-recap="true"]'))
   check('no JavaScript exceptions',errors.length===0,errors.join(' | '))
 }catch(e){check('Progress Intelligence browser suite completed',false,e.stack??String(e))}

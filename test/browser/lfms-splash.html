@@ -58,11 +58,15 @@ try {
     giant.top<stage.top&&giant.bottom<stage.bottom&&giant.width>=stage.width*.95,
     JSON.stringify({markTop:giant.top,stageTop:stage.top,markWidth:giant.width,stageWidth:stage.width}))
   drop.play()
-  await wait(800)
+  const crackPath=cracks.querySelector('path')
+  const impactAnimations=[crackPath,wordmark].map(element=>element.getAnimations()[0])
+  const originalTimes=impactAnimations.map(animation=>animation.currentTime)
+  for(const animation of impactAnimations) animation.currentTime=900
   check('cracks appear at impact and the wordmark resolves cleanly',
-    Number(getComputedStyle(cracks.querySelector('path')).opacity)>.08
+    Number(getComputedStyle(crackPath).opacity)>.08
     &&Number(getComputedStyle(wordmark).opacity)>.5)
-  await wait(920)
+  impactAnimations.forEach((animation,i)=>{animation.currentTime=originalTimes[i]})
+  await wait(1720)
   const firstSweep=sweeper.getBoundingClientRect()
   check('rounded two-arm figure enters with a real broom after shards land',
     firstSweep.left<innerWidth*.55

@@ -12,6 +12,7 @@ import { effectiveLoad } from '../../domain/records.js'
 import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
 import { summarizeTrend } from '../../domain/trend.js'
 import { estimateOneRepMax } from '../../domain/e1rm.js'
+import { buildProgressIntelligence, formatProgressIntelligencePrompt } from '../../domain/progress-intelligence.js'
 import {
   observedProgressDates,
   progressDataStart,
@@ -246,6 +247,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let selectedSessionId = null
   let editingDurationId = null
   let reportStatus = ''
+  let reportProfile = {}
+  let reportTargets = {}
 
   function selectedDates() {
     return rangeDates(clock.today(), range)
@@ -539,16 +542,44 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     return lines.join('\n')
   }
 
+  // The selected range still controls the visible Progress cards, but AI review
+  // includes ALL available local history plus independent 7/14/30/90 windows.
+  function fullProgressReport() {
+    const payload=buildProgressIntelligence({
+      today:clock.today(),range,dayLogs,sessions,setLogs,exercises,programs,programStates,
+      records,awayPeriods,schedule,activities:daily.activities??[],goals:{
+        calories:reportTargets.calories,protein:reportTargets.protein,
+        weight:reportProfile.weightGoalLb,
+      },
+    })
+    return formatProgressIntelligencePrompt(payload)
+  }
   async function copyProgressReport() {
-    const current = summaryForDates(selectedDates())
-    const previous = summaryForDates(previousDates())
-    const comparable = current.fullCoverage && previous.fullCoverage
     try {
-      if (!globalThis.navigator?.clipboard?.writeText) throw new Error('Clipboard unavailable')
-      await globalThis.navigator.clipboard.writeText(buildProgressReport(current, previous, comparable))
-      reportStatus = 'Copied; paste it into ChatGPT when ready.'
+      const text=fullProgressReport()
+      if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable')
+      await globalThis.navigator.clipboard.writeText(text)
+      reportStatus='Full analysis copied · '+Math.round(text.length/1024)+' KB. Paste into ChatGPT to review the evidence and recommendations.'
     } catch {
-      reportStatus = 'Clipboard access is unavailable.'
+      reportStatus='Clipboard blocked or report too large. Use Download report instead.'
+    }
+    render()
+  }
+  function downloadProgressReport() {
+    try {
+      const text=fullProgressReport()
+      const blob=new Blob([text],{type:'text/plain;charset=utf-8'})
+      const url=URL.createObjectURL(blob)
+      const link=document.createElement('a')
+      link.href=url
+      link.download='LFMS-progress-analysis-'+clock.today()+'.txt'
+      document.body.append(link)
+      link.click()
+      link.remove()
+      setTimeout(()=>URL.revokeObjectURL(url),1500)
+      reportStatus='Analysis file prepared. Attach it to ChatGPT to review all available observations.'
+    } catch {
+      reportStatus='Download could not be prepared. Your saved logs were not changed.'
     }
     render()
   }
@@ -913,10 +944,19 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
           trendsCard(current, previous, comparable),
           recovery,
           el('section.progress-report', {}, [
+            el('div.progress-report__intro', {}, [
+              el('strong', { text:'AI Progress Intelligence' }),
+              el('p', { text:'Full available history · 7/14/30/90-day comparisons · weight and calories · lift plateaus · creatine and supplements · recovery. Includes actual dates and sample counts.' }),
+            ]),
             el('button.progress-report__button', {
-              type: 'button',
-              onclick: () => { copyProgressReport() },
-            }, ['Copy progress report for ChatGPT']),
+              type:'button',dataset:{copyIntelligence:'true'},
+              onclick:copyProgressReport,
+            }, ['Copy complete analysis for ChatGPT']),
+            el('button.progress-report__button', {
+              type:'button',dataset:{downloadIntelligence:'true'},
+              onclick:downloadProgressReport,
+            }, ['Download analysis (.txt)']),
+            el('p.progress-report__privacy', { text:'Includes your logged meals, measurements, health data, and workout history. Review before sharing with an AI service. Photos and personal profile details are excluded.' }),
             el('button.progress-report__button', { type: 'button', dataset: { openWeeklyRecap: 'true' }, onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')) }, ["Last week's recap"]),
             reportStatus && el('p.progress-report__status', { role: 'status', text: reportStatus }),
           ]),
@@ -1303,13 +1343,25 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
 
       awayPeriods = workout.awayPeriods ? await workout.awayPeriods() : []
-      ;[records, exercises, dayLogs, setLogs, schedule] = await Promise.all([
+      let todayActivities
+      ;[records, exercises, dayLogs, setLogs, schedule, reportProfile, todayActivities] = await Promise.all([
         storage.getAll('records'),
         workout.exerciseMap(),
         storage.getAll('dayLogs'),
         storage.getAll('setLogs'),
         daily.activitySchedule(),
+        storage.get('profile','profile'),
+        daily.forDate(clock.today()),
       ])
+      reportProfile ??= {}
+      const activeActivities=[...(todayActivities?.logged??[]),...(todayActivities?.outstanding??[])]
+      const cap=(id)=>Number(activeActivities.find(x=>x.id===id)?.dailyCap)
+      const calorieGoal=Number(reportProfile.calorieTarget)
+      const proteinGoal=Number(reportProfile.proteinTargetGrams)
+      reportTargets={
+        calories:calorieGoal>0?calorieGoal:cap('calories_logged')||null,
+        protein:proteinGoal>0?proteinGoal:cap('protein_target')||null,
+      }
 
       sessionStats = new Map()
       for (const log of setLogs) {

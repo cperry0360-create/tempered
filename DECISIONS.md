@@ -1,3 +1,7 @@
+## 2026-11-06 — Request a PDF for Progress AI reports
+
+- Use a downloadable PDF with a bold, generic design. The report opens without script support and keeps the complete LFMS evidence handoff. The splash concept stays separate from the app pending review.
+
 ## 2026-11-06 — Bound the Progress AI clipboard payload
 
 - Keep one-paste for small histories. At 32,000 UTF-8 bytes, switch to a short prompt and a locally saved text attachment carrying the complete snapshot. This is an LFMS budget chosen to limit mobile paste size. Use an attachment and a selectable prompt when clipboard access is denied. Both paths use the same snapshot schema and preserve all exported observations and completed sets.

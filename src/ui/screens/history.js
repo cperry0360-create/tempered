@@ -643,7 +643,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
       reportAttachment = handoff.attachment
       reportStatus = reportAttachment
         ? 'Prompt copied. Save the data file, then attach it and paste the prompt into ChatGPT.'
-        : 'Copied. Paste into ChatGPT to create your AI dashboard.'
+        : 'Copied. Paste into ChatGPT to create your PDF report.'
     } catch {
       const fallback = handoff.attachment ? handoff : prepareProgressIntelligenceHandoff(report, { attachmentOnly: true })
       manualReportPrompt = fallback.prompt
@@ -1020,7 +1020,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
             }, ['Open HTML report']),
             el('button.progress-report__button.progress-report__button--copy', {
               type:'button',dataset:{copyIntelligence:'true'},
-              title:'Copy instructions for ChatGPT to build an interactive dashboard from your LFMS history.',
+              title:'Copy instructions for ChatGPT to create a PDF report from your LFMS history.',
               onclick:copyProgressReport,
             }, ['Copy AI prompt']),
             reportStatus && el('p.progress-report__status', { role:'status', text:reportStatus }),

@@ -43,16 +43,42 @@ try{
  q('.progress-back')?.click()
  check('the card says why its graded week is older than last week',/Sep 14 away/.test(q('.progress-score')?.textContent),q('.progress-score')?.textContent)
  q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
- check('the report names the latest graded week and why newer weeks are not graded',
-  copied.includes('Training score · latest graded week, Sep 7:')&&copied.includes('Sep 14 was marked away, so Sep 7 is your latest graded week.')&&copied.includes('Weeks after it not graded: Sep 14 (away).'),copied)
+ const copiedData=()=>JSON.parse(copied.slice(copied.lastIndexOf('\\n')+1))
+ let scoreReport=copiedData().trainingScore
+ check('AI report includes the last graded week and reason a newer week was excluded',
+   scoreReport.latestGradedWeek.week==='2026-09-07'
+   &&scoreReport.skippedWeeks.some(w=>w.week==='2026-09-14'&&w.reason==='away')
+   &&scoreReport.explanation.some(s=>s.includes('marked away')),
+   JSON.stringify(scoreReport).slice(0,1200))
  check('an away week drops out: headline moves to the prior week and the trend shows a gap',/Week of Sep 7/.test(q('.progress-score')?.textContent)&&qa('.progress-score__trend circle').length===11,q('.progress-score')?.textContent)
  q('[data-score-component="weeks"]')?.click();q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50));q('.progress-back')?.click()
  check('Not away restores the week',away.length===0&&/Week of Sep 14/.test(q('.progress-score')?.textContent))
  q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
- check('ChatGPT report includes score, grade, delta, this week, explanation and all component reasons',copied.includes('100 / 100 · A')&&copied.includes('This week so far:')&&copied.includes('Score explanation:')&&copied.includes('Score versus prior 4-week average:')&&['Progression:','Plan adherence:','Consistency:','Volume trend:','planned sets','training days'].every(s=>copied.includes(s)),copied)
- check('the report shows the arithmetic inside adherence and consistency',/Plan adherence: \d+% · \d+(\.\d)?% of score · 70% × \d+% of planned sets finished \(\d+ of \d+\) \+ 30% × \d+% of logged sets at the rep minimum \(\d+ of \d+\) = \d+%\./.test(copied)&&/Consistency: [^\n]*70% × \d+% of planned training days/.test(copied),copied)
- check('the report states how the score is built',copied.includes('How the score works:')&&copied.includes('70% planned sets finished, 30% sets that reached the rep minimum'),copied)
- check('recovery lines give latest, usual range and trend, not a bare reading',/Blood oxygen 93% \(usual 9\d–9\d%; below your usual range\)/.test(copied),copied.split('\n').find(l=>l.startsWith('Recovery')))
+ scoreReport=copiedData().trainingScore
+ check('AI report includes training score, grade, this week, four components and prior-week comparison',
+   scoreReport.latestGradedWeek.score===100
+   &&scoreReport.latestGradedWeek.grade==='A'
+   &&scoreReport.currentWeek
+   &&scoreReport.changeVsPriorFourWeeks!==null
+   &&['progression','adherence','consistency','volume'].every(id=>
+      scoreReport.latestGradedWeek.components.some(c=>c.id===id&&c.reason)),
+   JSON.stringify(scoreReport).slice(0,1600))
+ const adherence=scoreReport.latestGradedWeek.components.find(c=>c.id==='adherence')
+ const consistency=scoreReport.latestGradedWeek.components.find(c=>c.id==='consistency')
+ check('AI report retains arithmetic for plan adherence and consistency',
+   adherence?.formula?.includes('70% ×')
+   &&adherence?.formula?.includes('planned sets finished')
+   &&consistency?.formula?.includes('70% ×')
+   &&consistency?.formula?.includes('planned training days'),
+   JSON.stringify({adherence,consistency}))
+ check('AI report preserves scoring methodology without prose padding',
+   scoreReport.methodology.some(s=>s.includes('70% planned sets finished, 30% sets that reached the rep minimum'))
+   &&!copied.includes('\\n\\n'))
+ const report=copiedData()
+ check('recovery readings are included as observed records, not fabricated trends',
+   report.dailyHistory.find(d=>d.date==='2026-09-27')?.healthMetrics?.spo2===93
+   &&report.periods['14'].health.spo2.sampleDays===12,
+   JSON.stringify(report.periods['14'].health.spo2))
  q('[data-view="log"]')?.click();check('existing Log remains available',qa('.progress-log-row').length>0)
  check('no runtime errors',errors.length===0,errors.join('\n'))
  const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map(),awayPeriods:async()=>[]},daily:{activities:[],activitySchedule:async()=>({})}})

@@ -624,7 +624,7 @@ return payload
     toolbar.append(label, controls)
     const frame = document.createElement('iframe')
     frame.title = 'LFMS Progress Intelligence HTML report'
-    frame.setAttribute('sandbox', 'allow-scripts')
+    frame.setAttribute('sandbox', 'allow-scripts allow-modals')
     frame.srcdoc = html
     overlay.append(toolbar, frame)
     document.body.append(overlay)

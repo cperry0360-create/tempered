@@ -1,3 +1,8 @@
+## 2026-11-06 — Approved glass-sweep splash
+
+- Ship the V8-inspired glass impact and rounded white sweeper with three slow broom pushes. Use the existing LFMS artwork and hand off to the actual Today header.
+- Keep reduced-motion support and preserve the prior splash on the rollback branch.
+
 ## 2026-11-06 — Fuel calendar selects the day, not an obsolete Nutrition page
 
 - User supplied side-by-side screenshots: current Fuel dashboard is modern neon design but tapping a prior day brings an out-of-date, older Nutrition overlay. Requested identical full Fuel dashboard and food-entry experience populated with whichever day was tapped.

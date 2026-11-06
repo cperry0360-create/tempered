@@ -5,7 +5,7 @@
  * already-rendered Today header mark. We never move the dashboard, replace it
  * with a look-alike, or touch its data. The snapshot exists only during exit.
  */
-export const LFMS_HANDOFF_MS = 630
+export const LFMS_HANDOFF_MS = 720
 
 export async function runBrandHandoff(launch, { duration = LFMS_HANDOFF_MS } = {}) {
   if (!launch || typeof document === 'undefined') return false

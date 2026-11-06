@@ -1,3 +1,8 @@
+## 2026-11-06 — Approved glass-sweep launch, 0.66.77 (183)
+
+- The LFMS mountain lands, cracks the glass, and sends shards into a floor pile. The rounded white figure clears it in three broom pushes before the logo lands on the actual Today header.
+- Reduced motion skips the sequence. The startup failsafe, offline shell and post-splash recap remain in place. Rollback branch: `backup/lfms-before-glass-sweep-20261106`.
+
 ## 2026-11-06 — AI-authored interactive ChatGPT report prompt and clean clipboard, 0.66.75 (181)
 
 - Keep **Open HTML report** untouched: it is the existing deterministic, read-only on-device viewer and must not be advertised as AI analysis. The separate secondary Progress action is now **Copy prompt + data** and copies a detailed one-paste request for ChatGPT to independently analyze the complete LFMS snapshot and generate a new **interactive HTML dashboard artifact**, with clickable tabs and actual evidence-based AI insights. If HTML generation isn't available in ChatGPT, the prompt requests a rich native interactive report or concise fallback and an honest limitation.

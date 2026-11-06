@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-layout="duo"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS IGNITION real header flight on Duo</title>
+<title>LFMS glass sweep real header flight on Duo</title>
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/brand.css">
 <link rel="stylesheet" href="../../src/lfms-finish.css">
@@ -34,12 +34,19 @@ try {
     &&getComputedStyle(skin).backgroundImage.includes('radial-gradient('))
   check('real Today remains hidden only until splash closing',getComputedStyle(app).visibility==='hidden'
     &&getComputedStyle(app).opacity==='0')
-  check('no barbell, duplicate screen, ripped canvas, or overlay seam',!launch.querySelector(
+  check('no barbell, duplicate screen, ripped canvas, or old red impact seam',!launch.querySelector(
     '.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
-  await wait(3160)
-  check('the logo resolves with the two long readable words before handoff',
-    [...launch.querySelectorAll('.lfms-launch__wordmark')].every(x=>Number(getComputedStyle(x).opacity)>.98))
-  const started=runBrandHandoff(launch,{duration:630})
+  check('Duo gets the approved glass, pile, rounded sweeper and broom',
+    !!launch.querySelector('.lfms-launch__cracks')
+    &&!!launch.querySelector('.lfms-launch__shards')
+    &&!!launch.querySelector('.lfms-launch__sweeper-body')
+    &&launch.querySelectorAll('.lfms-launch__sweeper-arm').length===2
+    &&!!launch.querySelector('.lfms-launch__broom'))
+  await wait(4300)
+  check('the genuine logo resolves after the three slow pushes',
+    Number(getComputedStyle(launch.querySelector('.lfms-launch__wordmark')).opacity)>.98
+    &&getComputedStyle(launch.querySelector('.lfms-launch__sweeper')).animationName==='lfms-glass-sweeper')
+  const started=runBrandHandoff(launch,{duration:720})
   await wait(220)
   check('Today is revealed beneath the flying logo without an intermediate black screen',
     getComputedStyle(app).visibility==='visible'
@@ -55,7 +62,7 @@ try {
     &&getComputedStyle(app).visibility==='visible'
     &&getComputedStyle(document.body).backgroundColor===rootColor
     &&app.textContent.includes('ACTUAL READY TODAY'))
-}catch(error){check('Duo IGNITION harness finished',false,error.stack??String(error))}
+}catch(error){check('Duo glass-sweep harness finished',false,error.stack??String(error))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
   body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

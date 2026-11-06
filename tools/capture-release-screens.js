@@ -215,7 +215,7 @@ try {
       { label:'duo-cover',width:466,height:678,
         route:'/test/browser/lfms-dumbbell-peel.html' },
     ]
-    const stamps = [360,1100,2340,3140,3630]
+    const stamps = [280,820,1500,2400,3350,4200,4700]
     for (const viewport of sequences) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: viewport.width,height: viewport.height,deviceScaleFactor:1,
@@ -231,7 +231,7 @@ try {
       for (const ms of stamps) {
         await delay(Math.max(0,ms-elapsed))
         elapsed=ms
-        const filename=`${viewport.label}-ignition-${String(ms).padStart(4,'0')}.png`
+        const filename=`${viewport.label}-glass-sweep-${String(ms).padStart(4,'0')}.png`
         const destination=join(output,filename)
         const screenshot=await cdp.send('Page.captureScreenshot',{
           format:'png',fromSurface:true,captureBeyondViewport:false,
@@ -242,12 +242,12 @@ try {
         if(img.width!==viewport.width||img.height!==viewport.height||img.bytes<3000)
           throw new Error(`Invalid animation capture ${filename}`)
         manifest.push({view:'ignition',millis:ms,viewport:viewport.label,...img,file:filename})
-        console.log(`IGNITION FRAME ${filename}`)
+        console.log(`GLASS SWEEP FRAME ${filename}`)
       }
     }
     await writeFile(join(output,'splash-manifest.json'),
       JSON.stringify({generatedAt:new Date().toISOString(),captures:manifest},null,2)+'\n')
-    console.log(`Captured ${manifest.length} cinematic ignition frames`)
+    console.log(`Captured ${manifest.length} glass-sweep frames`)
   } else {
   for (const viewport of VIEWPORTS) {
     await cdp.send('Emulation.setDeviceMetricsOverride', {

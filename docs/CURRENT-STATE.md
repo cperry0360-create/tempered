@@ -1,3 +1,11 @@
+## 2026-11-06 — Full-data Progress Intelligence analysis report, 0.66.70 (176)
+
+- The Progress / Overview old five-line clipboard summary becomes a ChatGPT-ready evidence-based report containing ALL locally stored daily observations (food calories/protein/macros and individual meals, weight and body measurements, creatine/other supplements and other daily habits, step/sleep/water/cardio/recovery readings) plus ALL completed training sessions with exercise, sets, reps, effective loads, routine and duration. Never exports user photo data, arbitrary profile data, or writes user history.
+- Deterministic cross-window 7, 14, 30, 90-day current and previous comparisons distinguish observed calories from closed-day calories, sample counts vs calendar days, protein goal and actual, weight observations and defensible lb/week trend, activity and recovery samples. Missing logs are never zero. Supplement checkoff denominators only include dates after 2026-11-04 when the new checkboxes existed, and checkmarks cannot prove biological ingestion.
+- Like-for-like lift x method time series compare the last three comparable session best estimates against the previous three (when enough exposures), with insufficient-evidence, not-recent, flat-candidate, improving and declining categories. Effective load, e1RM and method limitations explained.
+- New AI prompt explicitly requests ranked evidence and confidence, a conservative keep/adjust/insufficient calorie decision, lift-specific plateau recommendations, supplement consistency, and an actionable 14-day plan. The app itself changes no targets. Both Copy and local Download (.txt) options for large payloads; privacy copy asks user to review before sharing. Existing Weekly Recap remains.
+- Rollback branch: `backup/progress-before-intelligence-20261106`. GitHub Pages and offline cache updated. No data schema changes.
+
 ## 2026-11-06 — Historical days stay in modern Fuel dashboard, 0.66.69 (175)
 
 - Replaced the main Food 2 weekly calendar's old `tempered:open-nutrition` legacy-overlay behavior with inline selected-date navigation. Choosing a past weekday keeps the exact same neon Fuel dashboard, existing food shortcuts, macros and meal journal while fetching that day's canonical `dayLogs` and actual per-day goals.

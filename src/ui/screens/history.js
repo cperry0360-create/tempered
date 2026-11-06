@@ -633,10 +633,12 @@ return payload
   }
   async function copyProgressReport() {
     try {
-      const text=fullProgressReport()
+      // Defensive clipboard sanitation for mobile paste fields: only the
+      // final JSON closing brace can end the payload, never blank lines.
+      const text=fullProgressReport().trimEnd()
       if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable')
       await globalThis.navigator.clipboard.writeText(text)
-      reportStatus='Copied. Paste into ChatGPT to review.'
+      reportStatus='Copied. Paste into ChatGPT to create your AI dashboard.'
     } catch {
       reportStatus='Unable to copy. Check clipboard permissions and try again.'
     }
@@ -1010,9 +1012,9 @@ return payload
             }, ['Open HTML report']),
             el('button.progress-report__button.progress-report__button--copy', {
               type:'button',dataset:{copyIntelligence:'true'},
-              title:'Copies saved nutrition, workout, habit and health history for review in ChatGPT.',
+              title:'Copies your current LFMS data and detailed instructions for ChatGPT to build an interactive AI-powered report.',
               onclick:copyProgressReport,
-            }, ['Copy AI analysis']),
+            }, ['Copy prompt + data']),
             el('button.progress-report__recap', {
               type:'button',dataset:{openWeeklyRecap:'true'},
               onclick:()=>window.dispatchEvent(new CustomEvent('tempered:open-weekly-recap')),

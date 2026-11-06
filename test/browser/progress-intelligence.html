@@ -33,15 +33,22 @@ try {
   check('local HTML report and optional copy action stay within LFMS layout',!!q('[data-copy-intelligence="true"]')
     &&!!q('[data-open-html-intelligence="true"]')
     &&!q('[data-download-intelligence="true"]')&&!q('.progress-report__intro')&&!q('.progress-report__privacy')
-    &&q('[data-copy-intelligence="true"]')?.textContent.trim()==='Copy AI analysis')
+    &&q('[data-copy-intelligence="true"]')?.textContent.trim()==='Copy prompt + data')
   const initialLogs=JSON.stringify(await storage.getAll('dayLogs'))
   q('[data-copy-intelligence="true"]')?.click()
   await wait(350)
   const prompt=copied[0]??''
-  check('compact, low-whitespace evidence-first prompt remains complete',
-    prompt.length>2200&&prompt.includes('CALORIE TARGET DECISION')
-    &&prompt.includes('CREATINE')&&prompt.includes('LIFT-BY-LIFT AUDIT')
-    &&prompt.includes('COMPACT PLAIN MARKDOWN')&&!prompt.includes('\n\n'))
+  check('ChatGPT prompt asks for a fresh interactive HTML dashboard with evidence-backed AI insights',
+    prompt.length>2200&&prompt.includes('AI-GENERATED INTERACTIVE PROGRESS DASHBOARD')
+    &&prompt.includes('INTERACTIVE HTML dashboard')
+    &&prompt.includes('clickable top navigation')
+    &&prompt.includes('AI judgment')
+    &&prompt.includes('calorie target')
+    &&prompt.includes('STRENGTH')
+    &&prompt.includes('Do NOT paste HTML source'))
+  check('clipboard has zero blank rows or trailing whitespace',
+    !prompt.includes('\n\n')&&prompt.endsWith('}')
+    &&!(/\s$/.test(prompt))&&prompt.split('\n').length<25)
   check('payload contains actual meals, habits and body measurements',
     prompt.includes('Chicken with rice')&&prompt.includes('"weight":165.5')
     &&prompt.includes('"creatineTaken":true')&&prompt.includes('"otherSupplementsTaken":true'))
@@ -58,7 +65,7 @@ try {
   check('report never changes any dayLogs or user goals',
     JSON.stringify(await storage.getAll('dayLogs'))===initialLogs)
   check('copy feedback is short, without text-heavy marketing copy',
-    q('.progress-report__status')?.textContent==='Copied. Paste into ChatGPT to review.')
+    q('.progress-report__status')?.textContent==='Copied. Paste into ChatGPT to create your AI dashboard.')
   q('[data-open-html-intelligence="true"]')?.click()
   await wait(100)
   const overlay=q('.lfms-intelligence-overlay')

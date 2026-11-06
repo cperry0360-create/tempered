@@ -1,3 +1,8 @@
+## 2026-11-06 — Compact Progress analysis action, 0.66.71 (177)
+
+- Removed the off-brand orange AI Progress Intelligence header, verbose explanation, extra download button and privacy paragraph from Progress Overview. Replaced with one in-theme `Copy progress analysis` action; `Last week's recap` remains a compact, separate text link. Short clipboard status only. The underlying full-history 7/14/30/90-day analytics and AI prompt remain unchanged.
+- Uses existing Progress navy/blue color tokens instead of Train orange, no hard-coded color. No data writes, migrations, or changes to goal/training logic. Backup branch `backup/progress-report-before-compact-20261106`.
+
 ## 2026-11-06 — Full-data Progress Intelligence analysis report, 0.66.70 (176)
 
 - The Progress / Overview old five-line clipboard summary becomes a ChatGPT-ready evidence-based report containing ALL locally stored daily observations (food calories/protein/macros and individual meals, weight and body measurements, creatine/other supplements and other daily habits, step/sleep/water/cardio/recovery readings) plus ALL completed training sessions with exercise, sets, reps, effective loads, routine and duration. Never exports user photo data, arbitrary profile data, or writes user history.

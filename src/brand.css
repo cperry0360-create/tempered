@@ -13,13 +13,11 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS 0.66.65 — IGNITION: camera-scale mountain, edge swoops, and real Today handoff.
-   Use the ACTUAL brand SVGs, not a second set of invented letters.
-   The splash gradient is deliberately contained within the overlay: the
-   installed Duo's OS-owned right edge and app root remain solid charcoal. */
+/* LFMS 0.66.77 — GLASS SWEEP: the genuine mark slams through a temporary
+   glass plane, a rounded white wayfinding figure clears it in three slow
+   pushes, and the real mark still lands on Today's real header. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
-  /* 100vw includes the scrollbar-reserved strip on Duo; inset alone did not. */
   width:100vw;height:100dvh;box-sizing:border-box;
   display:grid;place-items:center;overflow:hidden;isolation:isolate;
   pointer-events:none;user-select:none;
@@ -39,8 +37,6 @@
       color-mix(in srgb,var(--lfms-launch-deep) 65%,var(--lfms-duo-canvas)) 53%,
       var(--lfms-duo-canvas) 100%);
 }
-/* The root stays untouched in Duo. A centered gradient is allowed on
-   this TEMPORARY overlay while the app continues painting one solid canvas. */
 html[data-layout="duo"] .lfms-launch__skin {
   background:
     radial-gradient(ellipse 67% 48% at 49% 44%,
@@ -50,172 +46,135 @@ html[data-layout="duo"] .lfms-launch__skin {
       color-mix(in srgb,var(--lfms-launch-deep) 55%,var(--lfms-duo-canvas)) 50%,
       var(--lfms-duo-canvas));
 }
-/* A subtle shifting gradient is intentional; never paint the actual
-   Duo root or its OS-owned status / right-hand strip. */
 .lfms-launch__skin::before {
-  content:"";position:absolute;inset:-12%;pointer-events:none;z-index:0;
+  content:"";position:absolute;inset:-10%;pointer-events:none;z-index:0;
   background:
-    radial-gradient(ellipse 60% 55% at 38% 62%,rgba(39,86,125,.20),transparent 82%),
-    linear-gradient(133deg,transparent 37%,rgba(28,55,78,.16) 53%,transparent 74%);
-  animation:lfms-gradient-breathe 3800ms ease-in-out both;
-}
-/* A theatrical letterbox opens while the mountain rushes toward the viewer.
-   Both masks stay within the temporary splash; neither changes the real UI. */
-.lfms-launch__cinema {
-  position:absolute;left:0;right:0;height:14.5%;z-index:4;
-  background:var(--lfms-duo-canvas);pointer-events:none;
-  animation:lfms-ignition-curtain 850ms cubic-bezier(.18,.85,.2,1) 100ms both;
-}
-.lfms-launch__cinema--top {top:0;transform-origin:50% 0}
-.lfms-launch__cinema--bottom {bottom:0;transform-origin:50% 100%}
-
-/* Exactly one solid, hard-edged crimson diagonal crosses the stage at the
-   wordmark's impact. No floating glow, giant wave or duplicate slash. */
-.lfms-launch__flash {
-  position:absolute;left:-30vw;top:14%;width:130vw;height:74%;
-  z-index:1;pointer-events:none;opacity:0;
-  background:linear-gradient(108deg,
-    transparent 0%,transparent 38%,rgba(235,47,48,.30) 38.3%,
-    rgba(240,55,37,.24) 47%,rgba(241,44,50,.18) 55%,
-    transparent 55.3%,transparent 100%);
-  transform:translate3d(-110vw,0,0);
-  animation:lfms-ignition-cut 590ms cubic-bezier(.26,.12,.27,1) 2110ms both;
+    radial-gradient(ellipse 48% 10% at 50% 84%,rgba(68,137,183,.25),transparent 75%),
+    radial-gradient(ellipse 58% 52% at 42% 56%,rgba(39,86,125,.16),transparent 82%);
+  filter:blur(8px);
 }
 .lfms-launch__identity {
-  position:relative;z-index:2;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:absolute;left:50%;top:30%;z-index:3;
+  display:flex;flex-direction:column;align-items:center;
   width:min(100%,540px);min-width:0;
-  transform:translateY(-1vh);
+  transform:translateX(-50%);
 }
 .lfms-launch__mark-stage {
-  width:clamp(172px,48vw,300px);max-width:100%;
+  width:clamp(185px,59.5vw,260px);max-width:100%;
   display:grid;place-items:center;flex:none;
 }
 .lfms-launch__mark {
-  display:block;width:100%;height:auto;max-height:min(25vh,180px);
-  object-fit:contain;transform-origin:50% 65%;
-  filter:drop-shadow(0 10px 21px rgba(0,0,0,.25));
-  animation:lfms-kinetic-mark 930ms cubic-bezier(.18,.89,.25,1) 160ms both;
-}
-.lfms-launch__rule {
-  display:block;width:min(168px,46vw);height:2px;flex:none;
-  margin:10px 0 16px;border-radius:999px;
-  background:linear-gradient(90deg,transparent,var(--lfms-launch-red),transparent);
-  transform-origin:50% 50%;
-  animation:lfms-kinetic-rule 490ms cubic-bezier(.15,.78,.28,1) 2440ms both;
+  display:block;width:100%;height:auto;object-fit:contain;
+  transform-origin:50% 100%;will-change:transform;
+  filter:drop-shadow(0 10px 21px rgba(0,0,0,.30));
+  animation:lfms-glass-mark-slam 650ms cubic-bezier(.22,.78,.19,1) both;
 }
 .lfms-launch__wordmark-stage {
-  position:relative;width:min(88vw,520px);max-height:min(18vh,112px);
-  animation:lfms-wordmark-lock 360ms cubic-bezier(.18,.88,.24,1) 2190ms both;
+  position:relative;width:min(71.3vw,315px);margin-top:16px;
   aspect-ratio:1125 / 235;flex:none;
 }
 .lfms-launch__wordmark {
   position:absolute;inset:0;display:block;
   width:100%;height:100%;object-fit:contain;pointer-events:none;
-  will-change:transform,opacity,filter;
+  opacity:0;will-change:transform,opacity;
+  animation:lfms-glass-wordmark 420ms ease-out 590ms both;
 }
-.lfms-launch__wordmark--less {
-  clip-path:inset(0 0 43% 0);
-  animation:lfms-kinetic-less 1290ms cubic-bezier(.17,.91,.29,1) 750ms both;
+.lfms-launch__glass {
+  position:absolute;inset:0;margin:auto;z-index:2;
+  width:min(100%,46.2085dvh);height:100%;overflow:hidden;
 }
-.lfms-launch__wordmark--strong {
-  clip-path:inset(57% 0 0 0);
-  animation:lfms-kinetic-strong 1310ms cubic-bezier(.17,.91,.29,1) 900ms both;
+.lfms-launch__cracks {
+  fill:none;stroke:rgba(196,235,255,.86);stroke-width:.8;
+  stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 3px rgba(73,169,218,.45));
 }
-/* At the instant the words lock, this crisp red accent draws out from
-   the center, then stays on the finished brand for a readable hero frame.
-   No halo, shake, fractured glass, confetti, or phantom wire art. */
-.lfms-launch__lockline {
-  display:block;flex:none;width:min(38vw,230px);height:3px;
-  border-radius:999px;margin:12px 0 0;
-  background:linear-gradient(90deg,transparent 0%,var(--lfms-launch-red) 20%,
-    color-mix(in srgb,var(--lfms-launch-red) 84%,white) 50%,
-    var(--lfms-launch-red) 80%,transparent 100%);
-  transform-origin:50% 50%;
-  animation:lfms-brand-lockline 550ms cubic-bezier(.18,.9,.24,1) 2550ms both;
+.lfms-launch__cracks path {
+  stroke-dasharray:370;stroke-dashoffset:370;opacity:0;
+  animation:lfms-glass-crack 980ms ease-out 650ms both;
 }
-.lfms-launch__tagline {
-  margin:13px 0 0;padding:0;
-  color:var(--lfms-launch-text);font-size:clamp(10px,2.5vw,12px);
-  font-weight:650;line-height:1.45;letter-spacing:.2em;
-  text-align:center;white-space:nowrap;
-  animation:lfms-kinetic-tagline 540ms ease-out 2710ms both;
+.lfms-launch__cracks path:nth-child(2n) {animation-delay:675ms}
+.lfms-launch__cracks path:nth-child(3n) {animation-delay:700ms}
+.lfms-launch__shards {
+  transform-box:view-box;transform-origin:0 0;
+  animation:lfms-glass-pile 2640ms linear 1430ms both;
 }
+.lfms-launch__shards polygon {
+  fill:rgba(105,185,225,.62);stroke:rgba(215,244,255,.88);stroke-width:.65;
+  transform-box:view-box;transform-origin:center;opacity:0;
+  animation:lfms-glass-shard-fall 760ms cubic-bezier(.22,.72,.2,1.02) var(--delay) both;
+}
+.lfms-launch__shards polygon:nth-child(3n) {fill:rgba(160,218,246,.66)}
+.lfms-launch__shards polygon:nth-child(4n) {fill:rgba(65,130,170,.65)}
+.lfms-launch__sweeper {
+  transform-box:view-box;transform-origin:0 0;opacity:0;
+  animation:lfms-glass-sweeper 2640ms linear 1430ms both;
+}
+.lfms-launch__sweeper-body,.lfms-launch__sweeper-head,.lfms-launch__broom-head {fill:white}
+.lfms-launch__sweeper-tool {
+  transform-box:view-box;transform-origin:15px 623px;
+  animation:lfms-glass-tool 2640ms linear 1430ms both;
+}
+.lfms-launch__sweeper-arm {
+  fill:none;stroke:white;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;
+}
+.lfms-launch__broom {stroke:white;stroke-width:3;stroke-linecap:round}
+.lfms-launch__broom-edge {fill:none;stroke:var(--lfms-duo-canvas);stroke-width:1;stroke-linecap:round}
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
-/* The mountain settles decisively; the words recover their original
-   opposite-EDGE swoops (skew, deceleration, overshoot and soft focus). */
-@keyframes lfms-gradient-breathe {
-  0% {opacity:.42;transform:translate3d(-3%,2%,0) scale(1.02)}
-  55% {opacity:.85;transform:translate3d(1%,0,0) scale(1.07)}
-  100% {opacity:.65;transform:translate3d(3%,-1%,0) scale(1.1)}
+
+@keyframes lfms-glass-mark-slam {
+  0% {transform:translate3d(0,-410px,0) scale(1.03);filter:blur(2px)}
+  72% {transform:translate3d(0,8px,0) scale(.985);filter:blur(0)}
+  86% {transform:translate3d(0,-4px,0) scale(1.008)}
+  100% {transform:translate3d(0,0,0) scale(1)}
 }
-@keyframes lfms-ignition-curtain {
-  0% {transform:scaleY(1)}
-  100% {transform:scaleY(0)}
+@keyframes lfms-glass-wordmark {
+  from {opacity:0;transform:translate3d(0,7px,0)}
+  to {opacity:1;transform:translate3d(0,0,0)}
 }
-@keyframes lfms-ignition-cut {
-  0% {opacity:0;transform:translate3d(-110vw,0,0)}
-  18% {opacity:.82}
-  65% {opacity:.78}
-  100% {opacity:0;transform:translate3d(100vw,0,0)}
+@keyframes lfms-glass-crack {
+  0% {stroke-dashoffset:370;opacity:0}
+  13% {opacity:1}
+  58% {stroke-dashoffset:0;opacity:.95}
+  100% {stroke-dashoffset:0;opacity:0}
 }
-@keyframes lfms-brand-lockline {
-  0% {opacity:0;transform:scaleX(.02)}
-  56% {opacity:1;transform:scaleX(1.1)}
-  100% {opacity:1;transform:scaleX(1)}
+@keyframes lfms-glass-shard-fall {
+  0% {opacity:0;transform:translate3d(var(--from-x),-325px,0) rotate(var(--spin)) scale(1.25)}
+  15% {opacity:1}
+  70% {opacity:1;transform:translate3d(0,-18px,0) rotate(6deg) scale(1.08)}
+  87% {transform:translate3d(0,3px,0) rotate(-2deg) scale(.98)}
+  100% {opacity:1;transform:translate3d(0,0,0) rotate(0) scale(1)}
 }
-@keyframes lfms-wordmark-lock {
-  0% {transform:scale(1)}
-  42% {transform:scale(1.024)}
-  100% {transform:scale(1)}
+@keyframes lfms-glass-sweeper {
+  0% {opacity:1;transform:translate3d(-96px,0,0)}
+  22.7% {opacity:1;transform:translate3d(70px,-1px,0)}
+  40% {opacity:1;transform:translate3d(148px,0,0)}
+  47.3% {opacity:1;transform:translate3d(153px,-3px,0)}
+  63.6% {opacity:1;transform:translate3d(236px,0,0)}
+  70.8% {opacity:1;transform:translate3d(240px,-3px,0)}
+  87.9% {opacity:1;transform:translate3d(350px,0,0)}
+  100% {opacity:1;transform:translate3d(439px,0,0)}
 }
-/* The supplied mountain fills the frame first, then slams into the precise
-   identity position. It does not bounce or rotate after landing. */
-@keyframes lfms-kinetic-mark {
-  0% {opacity:0;transform:translate3d(0,65px,0) scale(2.85) rotate(-5deg);filter:blur(10px)}
-  24% {opacity:1;filter:blur(2px)}
-  73% {opacity:1;transform:translate3d(0,-6px,0) scale(.94) rotate(.55deg);filter:blur(0)}
-  89% {transform:translate3d(0,2px,0) scale(1.015) rotate(-.15deg)}
-  100% {opacity:1;transform:translate3d(0,0,0) scale(1) rotate(0);filter:drop-shadow(0 10px 21px rgba(0,0,0,.25))}
+@keyframes lfms-glass-tool {
+  0%,40% {transform:rotate(0)}
+  47.3% {transform:rotate(-8deg)}
+  63.6% {transform:rotate(0)}
+  70.8% {transform:rotate(-8deg)}
+  87.9%,100% {transform:rotate(0)}
 }
-@keyframes lfms-kinetic-less {
-  0% {opacity:0;transform:translateX(-110vw) skewX(-14deg);filter:blur(9px)}
-  65% {opacity:1;transform:translateX(3.5%) skewX(2deg);filter:blur(0)}
-  84% {transform:translateX(-1%) skewX(0)}
-  100% {opacity:1;transform:translateX(0);filter:blur(0)}
-}
-@keyframes lfms-kinetic-strong {
-  0% {opacity:0;transform:translateX(110vw) skewX(14deg);filter:blur(9px)}
-  66% {opacity:1;transform:translateX(-3.5%) skewX(-2deg);filter:blur(0)}
-  85% {transform:translateX(1%) skewX(0)}
-  100% {opacity:1;transform:translateX(0);filter:blur(0)}
-}
-@keyframes lfms-kinetic-rule {
-  from {opacity:0;transform:scaleX(.08)}
-  to {opacity:1;transform:scaleX(1)}
-}
-@keyframes lfms-kinetic-tagline {
-  from {opacity:0;transform:translateY(6px)}
-  to {opacity:.82;transform:translateY(0)}
+@keyframes lfms-glass-pile {
+  0%,22.7% {transform:translate3d(0,0,0)}
+  40%,47.3% {transform:translate3d(30px,0,0)}
+  63.6%,70.8% {transform:translate3d(120px,0,0)}
+  87.9% {transform:translate3d(235px,0,0)}
+  100% {transform:translate3d(360px,0,0)}
 }
 @media(max-height:580px) {
-  .lfms-launch__mark-stage {width:clamp(110px,22vw,190px)}
-  .lfms-launch__mark {max-height:27vh}
-  .lfms-launch__wordmark-stage {width:min(57vw,390px);max-height:24vh}
-  .lfms-launch__rule {margin:3px 0 7px}
-  .lfms-launch__lockline {margin-top:4px;height:2px}
-  .lfms-launch__tagline {margin-top:8px;font-size:9px}
-}
-@media(max-width:360px) {
-  .lfms-launch__wordmark-stage {width:92vw}
-  .lfms-launch__tagline {font-size:9px;letter-spacing:.16em}
+  .lfms-launch__identity {top:23%}
+  .lfms-launch__mark-stage {width:clamp(135px,33vw,210px)}
+  .lfms-launch__wordmark-stage {width:min(49vw,255px);margin-top:7px}
 }
 @media(prefers-reduced-motion:reduce) {
-  .lfms-launch,.lfms-launch__mark,.lfms-launch__wordmark,
-  .lfms-launch__rule,.lfms-launch__tagline {animation:none;transition:none}
-  .lfms-launch__flash,.lfms-launch__cinema {display:none}
-  .lfms-launch__skin::before {animation:none}
-  .lfms-launch__wordmark-stage,.lfms-launch__lockline {animation:none;transform:none;opacity:1}
-  .lfms-launch__mark,.lfms-launch__wordmark,.lfms-launch__rule {opacity:1;transform:none}
-  .lfms-launch__tagline {opacity:.82;transform:none}
+  .lfms-launch {transition:none}
+  .lfms-launch__glass {display:none}
+  .lfms-launch__mark,.lfms-launch__wordmark {animation:none;opacity:1;transform:none}
 }

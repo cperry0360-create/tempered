@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS ignition and live Today flying-mountain acceptance</title>
+<title>LFMS glass sweep and live Today flying-mountain acceptance</title>
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/brand.css">
 <style>
@@ -25,55 +25,65 @@ try {
   for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
   document.body.append(launch)
   const mark=launch.querySelector('.lfms-launch__mark')
-  const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
-  const impact=launch.querySelector('.lfms-launch__flash')
-  const curtains=[...launch.querySelectorAll('.lfms-launch__cinema')]
+  const wordmark=launch.querySelector('.lfms-launch__wordmark')
+  const cracks=launch.querySelector('.lfms-launch__cracks')
+  const shards=launch.querySelector('.lfms-launch__shards')
+  const sweeper=launch.querySelector('.lfms-launch__sweeper')
+  const tool=launch.querySelector('.lfms-launch__sweeper-tool')
   const skin=launch.querySelector('.lfms-launch__skin')
   const destination=document.querySelector('.lfms-main-brand__mark')
-  await Promise.all([mark,...words,destination].map(x=>x.decode()))
-  check('official mountain and separate genuine wordmark halves decode',
-    mark.naturalWidth>0&&words.length===2&&words.every(x=>x.naturalWidth>0))
-  check('screen opens with cinematic curtains and one crimson cut',
-    curtains.length===2
-    &&curtains.every(x=>getComputedStyle(x).animationName==='lfms-ignition-curtain')
-    &&impact&&getComputedStyle(impact).animationName==='lfms-ignition-cut'
-    &&!launch.querySelector('.lfms-launch__sweep,.lfms-launch__barbell-stage,.lfms-launch__peel-strip'))
+  await Promise.all([mark,wordmark,destination].map(x=>x.decode()))
+  check('official mountain and genuine wordmark decode',
+    mark.naturalWidth>0&&wordmark.naturalWidth>0)
+  check('screen opens with native glass art and no rejected red cut',
+    cracks&&shards&&sweeper&&tool
+    &&launch.querySelectorAll('.lfms-launch__sweeper-arm').length===2
+    &&!launch.querySelector('.lfms-launch__flash,.lfms-launch__cinema,.lfms-launch__barbell-stage,.lfms-launch__peel-strip'))
   check('deep gradient stays wholly on branded launch skin',
     getComputedStyle(skin).backgroundImage.includes('radial-gradient(')
     &&getComputedStyle(skin).backgroundImage.includes('linear-gradient('))
-  check('long original wordmark swoops still animate from opposite sides',
-    getComputedStyle(words[0]).animationName==='lfms-kinetic-less'
-    &&getComputedStyle(words[1]).animationName==='lfms-kinetic-strong'
-    &&getComputedStyle(words[0]).animationDelay==='0.75s'
-    &&getComputedStyle(words[1]).animationDelay==='0.9s')
-  await wait(320)
+  check('approved timing is wired to impact, pile and slow sweeper',
+    getComputedStyle(mark).animationName==='lfms-glass-mark-slam'
+    &&getComputedStyle(wordmark).animationName==='lfms-glass-wordmark'
+    &&getComputedStyle(cracks.querySelector('path')).animationName==='lfms-glass-crack'
+    &&getComputedStyle(shards).animationName==='lfms-glass-pile'
+    &&getComputedStyle(sweeper).animationName==='lfms-glass-sweeper'
+    &&getComputedStyle(tool).animationName==='lfms-glass-tool')
+  const drop=mark.getAnimations()[0]
+  drop.pause()
+  drop.currentTime=150
   const stage=launch.querySelector('.lfms-launch__mark-stage').getBoundingClientRect()
   const giant=mark.getBoundingClientRect()
-  check('oversize mountain is a genuine full-screen arrival, not tiny drop',
-    giant.width>stage.width*1.1,
-    JSON.stringify({markWidth:giant.width,stageWidth:stage.width}))
-  await wait(620)
-  const wordStage=launch.querySelector('.lfms-launch__wordmark-stage').getBoundingClientRect()
-  const less=words[0].getBoundingClientRect(),strong=words[1].getBoundingClientRect()
-  check('both word halves travel from far outside their finished bounds',
-    less.left<wordStage.left-30&&strong.left>wordStage.right+30,
-    JSON.stringify({left:less.left,right:strong.left,stageLeft:wordStage.left,stageRight:wordStage.right}))
-  await wait(1390)
-  check('red impact crosses behind intact lettering',
-    Number(getComputedStyle(impact).opacity)>.12
-    &&words.every(w=>Number(getComputedStyle(w).opacity)>.9))
-  await wait(1020)
-  check('impact and curtain are finished, logo is readable and stable',
-    Number(getComputedStyle(impact).opacity)<.02
-    &&words.every(w=>Number(getComputedStyle(w).opacity)>.98)
-    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__lockline')).opacity)>.98)
+  check('mountain is visibly descending toward its impact point',
+    giant.top<stage.top&&giant.bottom<stage.bottom&&giant.width>=stage.width*.95,
+    JSON.stringify({markTop:giant.top,stageTop:stage.top,markWidth:giant.width,stageWidth:stage.width}))
+  drop.play()
+  const crackPath=cracks.querySelector('path')
+  const impactAnimations=[crackPath,wordmark].map(element=>element.getAnimations()[0])
+  const originalTimes=impactAnimations.map(animation=>animation.currentTime)
+  for(const animation of impactAnimations) animation.currentTime=900
+  check('cracks appear at impact and the wordmark resolves cleanly',
+    Number(getComputedStyle(crackPath).opacity)>.08
+    &&Number(getComputedStyle(wordmark).opacity)>.5)
+  impactAnimations.forEach((animation,i)=>{animation.currentTime=originalTimes[i]})
+  await wait(1720)
+  const firstSweep=sweeper.getBoundingClientRect()
+  check('rounded two-arm figure enters with a real broom after shards land',
+    firstSweep.left<innerWidth*.55
+    &&launch.querySelectorAll('.lfms-launch__sweeper-arm').length===2
+    &&!!launch.querySelector('.lfms-launch__broom-head'))
+  await wait(2570)
+  check('three deliberate pushes finish with sweeper and glass off screen',
+    sweeper.getBoundingClientRect().left>innerWidth
+    &&shards.getBoundingClientRect().left>innerWidth*.75
+    &&Number(getComputedStyle(wordmark).opacity)>.98)
   const source=mark.getBoundingClientRect(),target=destination.getBoundingClientRect()
   const flight=runBrandHandoff(launch)
   await wait(220)
   const traveling=document.querySelector('[data-lfms-flying-mark]')
   const mid=traveling?.getBoundingClientRect()
   check('live shared mark moves toward REAL app header, not a fake dashboard',
-    LFMS_HANDOFF_MS===630&&!!traveling&&launch.dataset.closing==='true'
+    LFMS_HANDOFF_MS===720&&!!traveling&&launch.dataset.closing==='true'
     &&destination.style.visibility==='hidden'
     &&mid&&Math.hypot(mid.top-source.top,mid.left-source.left)>20,
     JSON.stringify({from:[source.left,source.top],mid:[mid?.left,mid?.top],to:[target.left,target.top]}))
@@ -84,7 +94,7 @@ try {
   check('no exceptions and underlying dashboard never replaced',errors.length===0
     &&document.getElementById('app').textContent.includes('READY DASHBOARD'),errors.join(' | '))
   launch.remove()
-}catch(e){check('IGNITION acceptance completes',false,e.stack??String(e))}
+}catch(e){check('glass-sweep acceptance completes',false,e.stack??String(e))}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
   body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

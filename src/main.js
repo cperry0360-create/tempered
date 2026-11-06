@@ -10,21 +10,21 @@ import { installWeeklyRecapRuntime } from './ui/weekly-recap-runtime.js'
 import { LFMS_HANDOFF_MS, runBrandHandoff } from './ui/lfms-launch-handoff.js'
 
 
-// Keep the supplied LFMS launch artwork visible on fast devices, too.
-// The overlay is OUTSIDE #app, so the finished dashboard is rendered behind
-// it BEFORE the staged kinetic lettering gives way to Today.
+// Keep the approved LFMS glass-sweep launch visible on fast devices, too.
+// The overlay is OUTSIDE #app, so the real dashboard renders behind it before
+// the supplied mark completes its shared-element landing on Today.
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
-// IGNITION: enormous mountain -> original edge swoops -> red impact -> real Today header.
-const LFMS_KINETIC_SPLASH_MIN_MS = 3350
-const LFMS_KINETIC_SPLASH_EXIT_MS = 340
+// GLASS SWEEP: mark impact -> glass pile -> three deliberate sweeps -> Today.
+const LFMS_GLASS_SWEEP_MIN_MS = 4550
+const LFMS_GLASS_SWEEP_EXIT_MS = 340
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
-  // Bootstrap completes behind the splash; give the finished logo a beat before the crossfade.
+  // Bootstrap completes behind the splash while the sweeper clears the last shards.
   splashDone = new Promise(resolve => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const remaining = reduced ? 0 : Math.max(0, LFMS_KINETIC_SPLASH_MIN_MS - (performance.now() - splashStarted))
+    const remaining = reduced ? 0 : Math.max(0, LFMS_GLASS_SWEEP_MIN_MS - (performance.now() - splashStarted))
     setTimeout(() => {
       if (!launch) { resolve(); return }
       const finish = () => {
@@ -44,12 +44,12 @@ function dismissSplash() {
         .then(used => {
           if (used) { finish(); return }
           launch.dataset.closing = 'true'
-          setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
+          setTimeout(finish, LFMS_GLASS_SWEEP_EXIT_MS)
         })
         .catch(error => {
           console.warn('[lfms] logo handoff fallback', error)
           launch.dataset.closing = 'true'
-          setTimeout(finish, LFMS_KINETIC_SPLASH_EXIT_MS)
+          setTimeout(finish, LFMS_GLASS_SWEEP_EXIT_MS)
         })
     }, remaining)
   })

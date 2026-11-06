@@ -35,7 +35,7 @@ test('mark slams, glass clears in three slow pushes, then the real logo hands of
   assert.match(c,/40%\s*\{[^}]*transform:translate3d\(148px/)
   assert.match(c,/47\.3%\s*\{[^}]*transform:translate3d\(153px/)
   assert.match(c,/70\.8%\s*\{[^}]*transform:translate3d\(240px/)
-  assert.match(c,/100%\s*\{[^}]*transform:translate3d\(500px/)
+  assert.match(c,/100%\s*\{[^}]*transform:translate3d\(600px/)
   assert.match(c,/@keyframes lfms-glass-tool/)
   assert.match(c,/47\.3%\s*\{transform:translate3d\(-26px,-13px,0\) rotate\(-10deg\)/)
   assert.match(c,/70\.8%\s*\{transform:translate3d\(-22px,-13px,0\) rotate\(-10deg\)/)

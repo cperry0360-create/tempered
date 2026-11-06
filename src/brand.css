@@ -159,7 +159,7 @@ html[data-layout="duo"] .lfms-launch__skin {
   63.6% {opacity:1;transform:translate3d(236px,0,0)}
   70.8% {opacity:1;transform:translate3d(240px,-3px,0)}
   87.9% {opacity:1;transform:translate3d(350px,0,0)}
-  100% {opacity:1;transform:translate3d(500px,0,0)}
+  100% {opacity:1;transform:translate3d(600px,0,0)}
 }
 @keyframes lfms-glass-tool {
   0% {transform:translate3d(-10px,0,0) rotate(2deg)}

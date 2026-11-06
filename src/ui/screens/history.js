@@ -1351,7 +1351,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
         storage.getAll('setLogs'),
         daily.activitySchedule(),
         storage.get('profile','profile'),
-        daily.forDate(clock.today()),
+        daily.forDate?.(clock.today()) ?? null,
       ])
       reportProfile ??= {}
       const activeActivities=[...(todayActivities?.logged??[]),...(todayActivities?.outstanding??[])]

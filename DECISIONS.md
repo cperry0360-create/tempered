@@ -1,3 +1,8 @@
+## 2026-11-06 — Put the sweeper in a dedicated foreground SVG layer
+
+- Production inspection showed the sweeper group had computed opacity and geometry but did not paint when composited inside the same animated SVG as the shard pile. Render the figure in a separate, identically scaled foreground SVG with a higher stacking layer.
+- Animate broom reach and lift independently at each reset so the three pushes read as sweeping rather than walking. The glass pile remains below the figure and moves only during floor-contact phases. Release 0.66.78 (184); presentation only.
+
 ## 2026-11-06 — Approved glass-sweep splash
 
 - Ship the V8-inspired glass impact and rounded white sweeper with three slow broom pushes. Use the existing LFMS artwork and hand off to the actual Today header.

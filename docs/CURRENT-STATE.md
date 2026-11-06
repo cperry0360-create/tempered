@@ -1,3 +1,8 @@
+## 2026-11-06 — Visible three-stroke glass sweep, 0.66.78 (184)
+
+- Fix the production glass-sweep regression where the animated SVG group reported visible geometry but did not paint on the splash. The rounded white figure now lives in its own foreground SVG layer above the glass pile.
+- Give the broom an explicit reach, lift and reset between three pushes while the shard pile advances with each floor contact. Keep the approved figure, official LFMS artwork, shared-element Today handoff, reduced-motion path and all local data unchanged.
+
 ## 2026-11-06 — Approved glass-sweep launch, 0.66.77 (183)
 
 - The LFMS mountain lands, cracks the glass, and sends shards into a floor pile. The rounded white figure clears it in three broom pushes before the logo lands on the actual Today header.

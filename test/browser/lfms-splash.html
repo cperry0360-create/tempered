@@ -72,7 +72,7 @@ try {
     firstSweep.left<innerWidth*.55
     &&launch.querySelectorAll('.lfms-launch__sweeper-arm').length===2
     &&!!launch.querySelector('.lfms-launch__broom-head'))
-  await wait(2570)
+  await Promise.all([...sweeper.getAnimations(),...shards.getAnimations()].map(animation=>animation.finished))
   check('three deliberate pushes finish with sweeper and glass off screen',
     sweeper.getBoundingClientRect().left>innerWidth
     &&shards.getBoundingClientRect().left>innerWidth*.75

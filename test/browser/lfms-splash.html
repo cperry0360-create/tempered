@@ -20,9 +20,25 @@ await image.decode()
 check('reviewed emoji asset decodes and paints',image.naturalWidth===960&&image.naturalHeight===540)
 const canvas=document.createElement('canvas');canvas.width=240;canvas.height=135
 const context=canvas.getContext('2d',{willReadFrequently:true})
-const sample=()=>{context.clearRect(0,0,240,135);context.drawImage(image,0,0,240,135);const pixels=context.getImageData(0,0,240,135).data;let visible=0,sum=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i+3]>100)visible++;sum+=pixels[i]*((i%17)+1)+pixels[i+3]}return {visible,sum}}
-const before=sample();await wait(1000);const after=sample()
-check('visible rendered pixels move, rather than only SVG geometry',before.visible>250&&after.visible>250&&before.sum!==after.sum,JSON.stringify({before,after}))
+// Canvas deliberately snapshots an animated HTMLImageElement's default
+// frame. Verify painted pixels and the actual timed WebP frame payloads;
+// do not mistake that browser API behavior for a frozen animation.
+context.drawImage(image,0,0,240,135)
+const pixels=context.getImageData(0,0,240,135).data
+let visible=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>100)visible++
+const bytes=new Uint8Array(await fetch(image.src).then(r=>r.arrayBuffer()))
+const view=new DataView(bytes.buffer),frames=[]
+for(let offset=12;offset+8<=bytes.length;){
+ const tag=String.fromCharCode(...bytes.slice(offset,offset+4)),length=view.getUint32(offset+4,true)
+ if(tag==='ANMF'){
+  const start=offset+8,duration=bytes[start+12]+bytes[start+13]*256+bytes[start+14]*65536
+  let hash=0;for(let i=start+16;i<start+length;i++)hash=(Math.imul(hash,31)+bytes[i])>>>0
+  frames.push({duration,hash})
+ }
+ offset+=8+length+(length%2)
+}
+const duration=frames.reduce((sum,frame)=>sum+frame.duration,0)
+check('painted emoji uses distinct timed animation frames',visible>250&&frames.length>24&&frames[0].hash!==frames[24].hash&&duration>=4900&&duration<=5200,JSON.stringify({visible,frames:frames.length,duration}))
 const rect=image.getBoundingClientRect()
 check('complete stage stays within the viewport',rect.left>=-1&&rect.right<=innerWidth+1&&rect.bottom<=innerHeight+1)
 const first=image.src;cleanup()

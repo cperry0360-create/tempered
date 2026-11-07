@@ -2890,3 +2890,7 @@ logging-speed verification, iOS Simulator build, and mobile/Duo light/dark
 captures pass. The official recap harness passes, resolving the local iframe
 runner limitation without changing the recap feature. Publish the same code
 with these release notes; device-specific hinge and keyboard QA remains open.
+
+## 2026-11-07 — Rendered emoji launch asset
+
+Cory approved pushing the reviewed emoji character. Use the exact reviewed transparent WebP in a foreground stage, with the same responsive proportions as the app preview. Fetch from the versioned offline cache and start a unique local blob URL on each launch; this fixes animated-image final-frame reuse without random network URLs. Allow 7.1 seconds for impact, five-second sweep and handoff preparation, preserving the existing eight-second failsafe. No user data is part of the asset or release.

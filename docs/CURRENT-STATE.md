@@ -1,3 +1,9 @@
+## 2026-11-07 — Emoji sweep launch, 0.66.81 (187)
+
+- Ship the reviewed friendly emoji man with face, clothes and rounded proportions as a transparent rendered sweep asset. Keep the genuine mountain impact, cracks, and shared-element Today header landing.
+- Each launch creates a fresh local blob URL so a cached animation cannot remain on its blank final frame. Precache the asset and player for offline use; bound asset loading and retain reduced-motion, brand fallback, eight-second boot failsafe and post-splash recap.
+- Presentation only. No storage, bootstrap, workout, nutrition, program or health-data changes.
+
 ## 2026-11-07 — Optional Fuel 7-day average, 0.66.80 (186)
 
 - A compact Fuel shortcut opens the same neon dashboard with average daily calories, meal allocation and macros against current targets. The default window is the seven calendar days ending yesterday; arrows browse earlier windows.

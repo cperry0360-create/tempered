@@ -13,9 +13,7 @@
  .fn2__brand .lfms__fuel-mark {width:30px;height:23px}
 }
 
-/* LFMS 0.66.77 — GLASS SWEEP: the genuine mark slams through a temporary
-   glass plane, a rounded white wayfinding figure clears it in three slow
-   pushes, and the real mark still lands on Today's real header. */
+/* LFMS 0.66.81 — approved emoji sweep asset, followed by the real Today handoff. */
 .lfms-launch {
   position:fixed;inset:0;z-index:9999;
   width:100vw;height:100dvh;box-sizing:border-box;
@@ -84,10 +82,11 @@ html[data-layout="duo"] .lfms-launch__skin {
   width:min(100%,46.2085dvh);height:100%;overflow:hidden;
 }
 .lfms-launch__sweeper-stage {
-  position:absolute;inset:0;margin:auto;z-index:4;
-  width:min(100%,46.2085dvh);height:100%;overflow:hidden;
+  position:absolute;left:50%;bottom:3vh;z-index:4;
+  transform:translateX(-50%);width:min(92vw,72dvh);aspect-ratio:16/9;
   pointer-events:none;
 }
+.lfms-launch__emoji-image {display:block;width:100%;height:100%;object-fit:contain}
 .lfms-launch__cracks {
   fill:none;stroke:rgba(196,235,255,.86);stroke-width:.8;
   stroke-linecap:round;stroke-linejoin:round;
@@ -99,33 +98,6 @@ html[data-layout="duo"] .lfms-launch__skin {
 }
 .lfms-launch__cracks path:nth-child(2n) {animation-delay:675ms}
 .lfms-launch__cracks path:nth-child(3n) {animation-delay:700ms}
-.lfms-launch__shards {
-  transform-box:view-box;transform-origin:0 0;
-  animation:lfms-glass-pile 2640ms linear 1430ms both;
-}
-.lfms-launch__shards polygon {
-  fill:rgba(105,185,225,.62);stroke:rgba(215,244,255,.88);stroke-width:.65;
-  transform-box:view-box;transform-origin:center;opacity:0;
-  animation:lfms-glass-shard-fall 760ms cubic-bezier(.22,.72,.2,1.02) var(--delay) both;
-}
-.lfms-launch__shards polygon:nth-child(3n) {fill:rgba(160,218,246,.66)}
-.lfms-launch__shards polygon:nth-child(4n) {fill:rgba(65,130,170,.65)}
-.lfms-launch__sweeper {
-  transform-box:view-box;transform-origin:0 0;opacity:0;
-  will-change:transform,opacity;
-  animation:lfms-glass-sweeper 2640ms linear 1430ms both;
-}
-.lfms-launch__sweeper-body,.lfms-launch__sweeper-head,.lfms-launch__broom-head {fill:white}
-.lfms-launch__sweeper-tool {
-  transform-box:view-box;transform-origin:15px 623px;
-  will-change:transform;
-  animation:lfms-glass-tool 2640ms linear 1430ms both;
-}
-.lfms-launch__sweeper-arm {
-  fill:none;stroke:white;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;
-}
-.lfms-launch__broom {stroke:white;stroke-width:3;stroke-linecap:round}
-.lfms-launch__broom-edge {fill:none;stroke:var(--lfms-duo-canvas);stroke-width:1;stroke-linecap:round}
 .lfms-launch[data-closing="true"] {opacity:0;visibility:hidden}
 
 @keyframes lfms-glass-mark-slam {
@@ -143,40 +115,6 @@ html[data-layout="duo"] .lfms-launch__skin {
   13% {opacity:1}
   58% {stroke-dashoffset:0;opacity:.95}
   100% {stroke-dashoffset:0;opacity:0}
-}
-@keyframes lfms-glass-shard-fall {
-  0% {opacity:0;transform:translate3d(var(--from-x),-325px,0) rotate(var(--spin)) scale(1.25)}
-  15% {opacity:1}
-  70% {opacity:1;transform:translate3d(0,-18px,0) rotate(6deg) scale(1.08)}
-  87% {transform:translate3d(0,3px,0) rotate(-2deg) scale(.98)}
-  100% {opacity:1;transform:translate3d(0,0,0) rotate(0) scale(1)}
-}
-@keyframes lfms-glass-sweeper {
-  0% {opacity:1;transform:translate3d(-51px,0,0)}
-  22.7% {opacity:1;transform:translate3d(70px,-1px,0)}
-  40% {opacity:1;transform:translate3d(148px,0,0)}
-  47.3% {opacity:1;transform:translate3d(153px,-3px,0)}
-  63.6% {opacity:1;transform:translate3d(236px,0,0)}
-  70.8% {opacity:1;transform:translate3d(240px,-3px,0)}
-  87.9% {opacity:1;transform:translate3d(350px,0,0)}
-  100% {opacity:1;transform:translate3d(600px,0,0)}
-}
-@keyframes lfms-glass-tool {
-  0% {transform:translate3d(-10px,0,0) rotate(2deg)}
-  22.7% {transform:translate3d(0,0,0) rotate(0)}
-  40% {transform:translate3d(10px,0,0) rotate(2deg)}
-  47.3% {transform:translate3d(-26px,-13px,0) rotate(-10deg)}
-  63.6% {transform:translate3d(12px,0,0) rotate(2deg)}
-  70.8% {transform:translate3d(-22px,-13px,0) rotate(-10deg)}
-  87.9% {transform:translate3d(10px,0,0) rotate(2deg)}
-  100% {transform:translate3d(-8px,0,0) rotate(0)}
-}
-@keyframes lfms-glass-pile {
-  0%,22.7% {transform:translate3d(0,0,0)}
-  40%,47.3% {transform:translate3d(30px,0,0)}
-  63.6%,70.8% {transform:translate3d(120px,0,0)}
-  87.9% {transform:translate3d(235px,0,0)}
-  100% {transform:translate3d(360px,0,0)}
 }
 @media(max-height:580px) {
   .lfms-launch__identity {top:23%}

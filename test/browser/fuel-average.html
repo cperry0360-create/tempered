@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fuel seven-day average acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/food-next.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
+<link rel="stylesheet" href="../../src/food-neon.css">
+<link rel="stylesheet" href="../../src/food-log-polish.css">
+</head><body><div id="app" class="app"></div><script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+const checks=[],q=s=>document.querySelector(s),wait=()=>new Promise(resolve=>setTimeout(resolve,120))
+const check=(name,ok)=>checks.push({name,ok:!!ok})
+try {
+ history.replaceState(null,'',location.pathname+'?food2=1')
+ const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,7,10))
+ const t=await bootstrapHarness({storage,clock,mount:q('#app')})
+ await t.daily.setCalorieTarget(2100)
+ for(const [date,calories,protein,closed] of [['2026-10-31',2800,140,true],['2026-11-01',2000,180,true],['2026-11-02',300,30,false],['2026-11-07',150,30,false]]) {
+   await t.daily.addNutrition(date,{description:'Acceptance meal',calories,protein,carbs:120,fat:60,fiber:15},{loggedAt:date+'T10:30:00Z'})
+   if(closed)await t.daily.setNutritionStatus(date,'complete')
+ }
+ await t.app.show('fuel');await wait()
+ check('daily dashboard stays compact with one optional average shortcut',!q('.fn2__average-heading')&&q('[data-fuel-average]')&&q('.fn2__neo-calorie-value').textContent==='150')
+ const before=JSON.stringify(await storage.getAll('dayLogs'))
+ q('[data-fuel-average]').click();await wait()
+ check('opens same dashboard using two closed days, excludes today',q('.fn2__neo-calorie-value').textContent==='2,400'&&q('.fn2__average-heading').textContent.includes('Oct 31')&&q('.fn2__average-heading').textContent.includes('Nov 6'))
+ check('reports over-target daily delta and honest coverage',q('.fn2__average-detail').textContent.includes('300 kcal / day over')&&q('.fn2__average-note').textContent.includes('2 closed · 1 partial / open · 4 unrecorded'))
+ check('aggregate view cannot close a day',!q('[data-diary-finish-today]'))
+ q('.fn2__average-basis button:nth-child(2)').click();await wait()
+ check('all recorded mode includes partial data explicitly',q('.fn2__neo-calorie-value').textContent==='1,700'&&q('.fn2__average-note').textContent.includes('unfinished'))
+ q('[aria-label="Previous seven days"]').click();await wait()
+ check('empty prior window stays unknown instead of zero',q('.fn2__neo-calorie-value').textContent==='—')
+ q('[aria-label="Next seven days"]').click();await wait()
+ q('.fn2__average-days button').click();await wait()
+ check('daily drill-down opens historical day',q('.fn2').dataset.selectedDate==='2026-10-31'&&q('.fn2__neo-calorie-value').textContent==='2,800'&&!q('.fn2__average-heading'))
+ check('all averaging and navigation are read-only',before===JSON.stringify(await storage.getAll('dayLogs')))
+ check('no horizontal overflow at supported viewport',document.documentElement.scrollWidth<=innerWidth+1)
+} catch(error){checks.push({name:String(error.stack),ok:false})}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'fuel-average',passed:checks.every(c=>c.ok),checks})})
+</script></body></html>

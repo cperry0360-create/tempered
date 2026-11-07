@@ -11,6 +11,7 @@ import { waterWavePath } from '../water-wave.js'
 import { FOOD_PHOTOS, matchingFoodPhoto } from '../food-photos.js'
 import { compressMealPhoto } from '../meal-photo.js'
 import { createFuelNeonWidget } from '../fuel-neon-widget.js'
+import { fuelAverage, shiftFuelDate } from '../../domain/fuel-average.js'
 
 const PHOTOS = FOOD_PHOTOS
 const n = x => Number.isFinite(Number(x)) ? Math.max(0,Number(x)) : 0
@@ -27,6 +28,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
   // One transient selected date drives dashboard AND entry actions.
   let selectedDate=clock.today()
+  let averageEnd=shiftFuelDate(clock.today(),-1),closedOnly=true
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=selectedDate
   let working=false, undo=null, errorMessage='', errorTimer=null, pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
@@ -179,6 +181,8 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         el('button',{type:'button',onclick:()=>go('library')},[icon('search'),' Food Library']),
         el('button',{type:'button',dataset:{foodLogNav:'true'},'aria-current':view==='log'?'page':null,onclick:()=>go('log')},[icon('plus'),' Log']),
         el('button',{type:'button','aria-current':view==='journal'?'page':null,onclick:()=>go('journal')},[icon('journal'),' Meal History']),
+        el('button',{type:'button',dataset:{fuelAverage:'true'},'aria-current':view==='average'?'page':null,
+          onclick:()=>{averageEnd=selectedDate===clock.today()?shiftFuelDate(selectedDate,-1):selectedDate;go('average')}},[icon('chart'),' 7-day average']),
       ]),
     ])
   }
@@ -351,6 +355,48 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ]),
       ]),
       macroJournal(day),
+    ]
+  }
+  function averageDashboard() {
+    const summary=fuelAverage(data.days,averageEnd,{closedOnly})
+    const calGoal=target('calories_logged',2100),proGoal=target('protein_target',135)
+    const {averages,counts}=summary,delta=averages.calories===null?null:averages.calories-calGoal
+    const short=date=>new Date(date+'T12:00:00Z').toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})
+    const latestEnd=shiftFuelDate(clock.today(),-1)
+    return [heading(),
+      el('section.fn2__average-heading',{},[
+        el('button.fn2__back-today',{type:'button',onclick:()=>go('dashboard')},['‹ Back to daily']),
+        el('h2',{text:'7-day average'}),
+        el('p',{text:short(summary.start)+' – '+short(summary.end)+' · today excluded'}),
+        el('div.fn2__average-controls',{},[
+          el('button',{type:'button','aria-label':'Previous seven days',onclick:()=>{averageEnd=shiftFuelDate(averageEnd,-7);render()}},['‹']),
+          el('div.fn2__average-basis',{role:'group','aria-label':'Average day coverage'},[
+            ...[[true,'Closed days'],[false,'All recorded days']].map(([value,label])=>el('button',{type:'button',
+              'aria-pressed':String(closedOnly===value),onclick:()=>{closedOnly=value;render()}},[label])),
+          ]),
+          el('button',{type:'button','aria-label':'Next seven days',disabled:averageEnd>=latestEnd,
+            onclick:()=>{averageEnd=shiftFuelDate(averageEnd,7)>latestEnd?latestEnd:shiftFuelDate(averageEnd,7);render()}},['›']),
+        ]),
+        el('p.fn2__average-note',{text:summary.closed+' closed · '+(summary.recorded-summary.closed)+' partial / open · '+(7-summary.recorded)+' unrecorded. '+
+          (closedOnly?'Average uses closed days only.':'Includes unfinished logs; this may understate intake.')+' Missing days are excluded.'}),
+      ]),
+      createFuelNeonWidget({day:summary.day,calories:averages.calories,protein:averages.protein,calGoal,proGoal,
+        macros:nutritionMacroTargets(calGoal,proGoal),average:{...averages,included:summary.included},
+        onOtherNutrients:()=>go('dashboard')}),
+      el('section.fn2__average-detail',{},[
+        el('h3',{text:delta===null?'Close a logged day to see your average':
+          'Averaging '+fmt(Math.abs(delta))+' kcal / day '+(delta>0?'over':delta<0?'below':'at')+' your current target'}),
+        el('p',{text:delta===null?'No eligible calorie days in this window.':
+          'Based on '+summary.included+' '+(closedOnly?'closed':'recorded')+' days against your current '+fmt(calGoal)+' kcal target. '+
+          (summary.included<7?'Coverage is incomplete; collect the remaining days before deciding on a target change.':'Review this alongside your weight trend before changing your target.')}),
+        el('small',{text:'Macro sample counts: protein '+counts.protein+', carbs '+counts.carbs+', fat '+counts.fat+', fiber '+counts.fiber+'. Missing nutrients are excluded from their own averages. Meal tiles show the average logged meal calories per included day.'}),
+        el('div.fn2__average-days',{},summary.rows.map(row=>el('button',{type:'button',
+          'aria-label':'View Fuel for '+formattedDate(row.date),onclick:async()=>{view='dashboard';await selectFuelDate(row.date);render()}},[
+          el('span',{text:short(row.date)}),
+          el('strong',{text:row.recorded?fmt(row.observations.calories)+' kcal':'—'}),
+          el('small',{text:row.closed&&row.recorded?'Closed':row.recorded?'Partial / open':'Unrecorded'}),
+        ]))),
+      ]),
     ]
   }
   function grouped(day) {
@@ -763,7 +809,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     activeOverlay?.remove()
     activeOverlay=null
     replace(root,[
-      ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():dashboard()),
+      ...(view==='library'?library():view==='journal'?journal():view==='log'?logPage():view==='average'?averageDashboard():dashboard()),
       el('div.fn2__status',{role:'alert',dataset:{food2Status:'true'},text:errorMessage}),
     ])
     // Animate SVG-native wave geometry INSIDE the actual lifter paths.

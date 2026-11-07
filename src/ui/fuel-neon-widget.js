@@ -114,13 +114,14 @@ function mealTile(meal,total) {
   ])
 }
 function segmentedMeter(name,amount,goal) {
+  const missing=amount===null
   const over=amount>goal && goal>0
   const leftover=Math.round(Math.abs(goal-amount))
   return el('div.fn2__neo-nutrient',{dataset:{macro:name.toLowerCase(),over:String(over)}},[
     el('div.fn2__neo-nutrient-head',{},[
       el('strong',{text:name}),
-      el('span.fn2__neo-nutrient-count',{text:fmt(amount)+' g / '+fmt(goal)+' g'}),
-      el('span.fn2__neo-nutrient-delta',{text:over?'(+'+fmt(leftover)+' g)': '('+fmt(leftover)+' g left)'}),
+      el('span.fn2__neo-nutrient-count',{text:(missing?'—':fmt(amount))+' g / '+fmt(goal)+' g'}),
+      el('span.fn2__neo-nutrient-delta',{text:missing?'No records':over?'(+'+fmt(leftover)+' g)': '('+fmt(leftover)+' g left)'}),
     ]),
     el('div.fn2__neo-meter',{role:'progressbar','aria-label':name+' progress','aria-valuenow':String(amount),
       'aria-valuemin':'0','aria-valuemax':String(goal),'data-color':over?'red':'blue'},
@@ -130,25 +131,25 @@ function segmentedMeter(name,amount,goal) {
       })),
   ])
 }
-export function createFuelNeonWidget({day,calories,protein,calGoal,proGoal,macros,onCloseDay,onOtherNutrients}) {
+export function createFuelNeonWidget({day,calories,protein,calGoal,proGoal,macros,onCloseDay,onOtherNutrients,average=null}) {
   const ledger=nutritionLedger(day)
   const remaining=calGoal-calories
   const complete=day.nutritionStatus==='complete'
   const mealTotals=mealGrouping(ledger)
   const itemized=mealTotals.reduce((t,m)=>t+m.calories,0)
   const rest=calories-itemized
-  return el('section.fn2__neo',{'aria-label':'Live nutrition totals',dataset:{foodNeon:'true',dayClosed:String(complete)}},[
+  return el('section.fn2__neo',{'aria-label':average?'Average daily nutrition':'Live nutrition totals',dataset:{foodNeon:'true',dayClosed:String(complete)}},[
     el('div.fn2__neo-body',{},[
       el('div.fn2__neo-calorie',{},[
         perimeter(calories,calGoal,mealTotals),
         el('div.fn2__neo-calorie-content',{},[
-          el('div.fn2__neo-calorie-label',{},[symbol('flame'),el('strong',{text:'Calories'})]),
-          el('strong.fn2__neo-calorie-value',{text:fmt(calories)}),
-          el('span.fn2__neo-calorie-goal',{text:'of '+fmt(calGoal)+' kcal'}),
+          el('div.fn2__neo-calorie-label',{},[symbol('flame'),el('strong',{text:average?'Daily average':'Calories'})]),
+          el('strong.fn2__neo-calorie-value',{text:calories===null?'—':fmt(calories)}),
+          el('span.fn2__neo-calorie-goal',{text:'of '+fmt(calGoal)+' kcal'+(average?' / day':'')}),
           el('div.fn2__neo-calorie-rule'),
           el('div.fn2__neo-calorie-stats',{},[
-            el('div',{},[el('strong',{text:Math.round(percent(calories,calGoal))+'%'}),el('small',{text:'COMPLETE'})]),
-            el('div',{dataset:{over:String(remaining<0)}},[el('strong',{text:fmt(Math.abs(remaining))}),el('small',{text:remaining<0?'OVER':'REMAINING'})]),
+            el('div',{},[el('strong',{text:calories===null?'—':Math.round(percent(calories,calGoal))+'%'}),el('small',{text:average?'OF TARGET':'COMPLETE'})]),
+            el('div',{dataset:{over:String(remaining<0)}},[el('strong',{text:calories===null?'—':fmt(Math.abs(remaining))}),el('small',{text:remaining<0?'OVER':average?'BELOW':'REMAINING'})]),
           ]),
         ]),
       ]),
@@ -160,18 +161,22 @@ export function createFuelNeonWidget({day,calories,protein,calGoal,proGoal,macro
         el('div.fn2__neo-target-top',{},[el('span',{text:'TARGET'}),el('strong',{text:fmt(calGoal)+' kcal'})]),
         el('div.fn2__neo-target-line'),
         el('div.fn2__neo-target-bottom',{},[
-          el('span',{text:remaining<0?'OVER TARGET':'REMAINING'}),
-          el('strong',{dataset:{over:String(remaining<0)},text:fmt(Math.abs(remaining))+' kcal'}),
+          el('span',{text:remaining<0?'OVER TARGET':average?'BELOW TARGET':'REMAINING'}),
+          el('strong',{dataset:{over:String(remaining<0)},text:calories===null?'—':fmt(Math.abs(remaining))+' kcal'+(average?' / day':'')}),
         ]),
       ]),
       el('div.fn2__neo-nutrients',{},[
         segmentedMeter('Protein',protein,proGoal),
-        segmentedMeter('Carbs',ledger.totals.carbs,macros.carbs),
-        segmentedMeter('Fat',ledger.totals.fat,macros.fat),
-        segmentedMeter('Fiber',ledger.totals.fiber,macros.fiber),
+        segmentedMeter('Carbs',average?average.carbs:ledger.totals.carbs,macros.carbs),
+        segmentedMeter('Fat',average?average.fat:ledger.totals.fat,macros.fat),
+        segmentedMeter('Fiber',average?average.fiber:ledger.totals.fiber,macros.fiber),
       ]),
       el('div.fn2__neo-finish',{},[
-        el('button.fn2__neo-close',{type:'button',dataset:{diaryFinishToday:'true'},
+        average?el('div.fn2__average-coverage',{},[
+          el('strong',{text:average.included+' / 7'}),
+          el('span',{text:'days included'}),
+          el('small',{text:'Current targets · read only'}),
+        ]):el('button.fn2__neo-close',{type:'button',dataset:{diaryFinishToday:'true'},
           'aria-label':complete?'Reopen nutrition day':'Close nutrition day',
           onclick:onCloseDay},[
           el('span.fn2__neo-check',{},[symbol('done')]),
@@ -181,7 +186,7 @@ export function createFuelNeonWidget({day,calories,protein,calGoal,proGoal,macro
     ]),
     el('div.fn2__neo-footer',{},[
       el('button.fn2__neo-other',{type:'button',onclick:onOtherNutrients},[
-        symbol('chart'),el('strong',{text:'Track other nutrients'}),el('span',{text:'›'}),
+        symbol('chart'),el('strong',{text:average?'Back to daily dashboard':'Track other nutrients'}),el('span',{text:'›'}),
       ]),
     ]),
   ])

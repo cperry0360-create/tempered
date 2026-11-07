@@ -1,3 +1,8 @@
+## 2026-11-07 — Optional Fuel 7-day average, 0.66.80 (186)
+
+- A compact Fuel shortcut opens the same neon dashboard with average daily calories, meal allocation and macros against current targets. The default window is the seven calendar days ending yesterday; arrows browse earlier windows.
+- Closed calorie days are the default denominator. A separate All recorded days view flags partial logs. Missing days/nutrients are excluded, sample counts and all seven daily records remain visible, and tapping a record returns to its existing daily dashboard. Viewing averages never changes goals or logs.
+
 ## 2026-11-06 — Visible three-stroke glass sweep, 0.66.78 (184)
 
 - Fix the production glass-sweep regression where the animated SVG group reported visible geometry but did not paint on the splash. The rounded white figure now lives in its own foreground SVG layer above the glass pile.

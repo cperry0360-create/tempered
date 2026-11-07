@@ -21,6 +21,7 @@ const PRECACHE = [
   './src/lfms-workout-complete.css',
   './src/lfms-session-duo.css',
   './src/ui/fuel-neon-widget.js',
+  './src/domain/fuel-average.js',
   './src/ui/water-wave.js',
   './src/lfms-subscreen.css',
   './branding/lfms/logo-full.svg',

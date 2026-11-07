@@ -22,7 +22,7 @@ const TYPES = {
 }
 const VIEWS = [
   'setup-welcome', 'setup-rhythm', 'setup-plan',
-  'food2-dashboard', 'food2-average', 'food2-journal', 'food2-library', 'food2-serving', 'food2-quicklog',
+  'food2-dashboard', 'food2-journal', 'food2-library', 'food2-serving', 'food2-quicklog',
   'today', 'rail-expanded', 'train', 'session', 'plate-calculator-weight', 'plate-calculator-build', 'weekly-recap', 'weekly-recap-details', 'weekly-recap-daily', 'weekly-recap-away', 'weekly-recap-quiet', 'fuel', 'fuel-entry', 'fuel-meals',
   'progress-trends', 'progress-score-explain', 'progress-score-progression', 'progress-score-adherence', 'progress-score-consistency', 'progress-score-volume',
   'progress', 'progress-cut', 'progress-lifts', 'progress-lift-detail', 'progress-habits', 'progress-log', 'progress-log-detail',
@@ -215,7 +215,7 @@ try {
       { label:'duo-cover',width:466,height:678,
         route:'/test/browser/lfms-dumbbell-peel.html' },
     ]
-    const stamps = [280,820,1500,2400,3350,4200,4700]
+    const stamps = [360,1100,2340,3140,3630]
     for (const viewport of sequences) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: viewport.width,height: viewport.height,deviceScaleFactor:1,
@@ -231,7 +231,7 @@ try {
       for (const ms of stamps) {
         await delay(Math.max(0,ms-elapsed))
         elapsed=ms
-        const filename=`${viewport.label}-glass-sweep-${String(ms).padStart(4,'0')}.png`
+        const filename=`${viewport.label}-ignition-${String(ms).padStart(4,'0')}.png`
         const destination=join(output,filename)
         const screenshot=await cdp.send('Page.captureScreenshot',{
           format:'png',fromSurface:true,captureBeyondViewport:false,
@@ -242,12 +242,12 @@ try {
         if(img.width!==viewport.width||img.height!==viewport.height||img.bytes<3000)
           throw new Error(`Invalid animation capture ${filename}`)
         manifest.push({view:'ignition',millis:ms,viewport:viewport.label,...img,file:filename})
-        console.log(`GLASS SWEEP FRAME ${filename}`)
+        console.log(`IGNITION FRAME ${filename}`)
       }
     }
     await writeFile(join(output,'splash-manifest.json'),
       JSON.stringify({generatedAt:new Date().toISOString(),captures:manifest},null,2)+'\n')
-    console.log(`Captured ${manifest.length} glass-sweep frames`)
+    console.log(`Captured ${manifest.length} cinematic ignition frames`)
   } else {
   for (const viewport of VIEWPORTS) {
     await cdp.send('Emulation.setDeviceMetricsOverride', {

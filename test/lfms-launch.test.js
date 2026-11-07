@@ -1,23 +1,47 @@
-import test from 'node:test'
+import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
 
-test('launch uses official brand artwork without characters or impact geometry',()=>{
- const h=read('index.html'),c=read('src/brand.css'),js=read('src/main.js')
- for(const asset of ['logo-mark.svg','logo-wordmark.svg']) assert.ok(h.includes('./branding/lfms/'+asset))
- for(const source of [h,c,js]) assert.doesNotMatch(source,/emoji-sweep|startEmojiSweep|lfms-launch__glass|lfms-launch__cracks|lfms-launch__sweeper|lfms-glass-mark-slam|runBrandHandoff/)
- assert.match(c,/@keyframes lfms-logo-in \{from \{opacity:0\} to \{opacity:1\}\}/)
+test('Kinetic LFMS preserves supplied mountain/wordmark; no invented type or plate art',()=>{
+  const h=read('index.html')
+  assert.match(h,/class="lfms-launch__mark" src="\.\/branding\/lfms\/logo-mark\.svg"/)
+  assert.match(h,/class="lfms-launch__wordmark lfms-launch__wordmark--less"/)
+  assert.match(h,/class="lfms-launch__wordmark lfms-launch__wordmark--strong"/)
+  assert.match(h,/class="lfms-launch__tagline">TRAIN · FUEL · RECOVER/)
+  assert.match(read('branding/lfms/logo-wordmark.svg'),/viewBox="205 547 1125 235"/)
+  assert.match(read('branding/lfms/logo-mark.svg'),/viewBox="435 167 675 387"/)
+  assert.doesNotMatch(h,/lfms-launch__barbell|lfms-launch__plate|lfms-launch__lift-tab/)
 })
-test('short launch preserves post-splash recap and the boot failsafe',()=>{
- const js=read('src/main.js')
- assert.match(js,/LFMS_LAUNCH_MIN_MS = 900/)
- assert.match(js,/LFMS_LAUNCH_EXIT_MS = 240/)
- assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
- assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'))
+
+test('logo and staggered words resolve before clean real-dashboard fade',()=>{
+  const c=read('src/brand.css'),js=read('src/main.js')
+  for(const name of ['mark','less','strong','rule','tagline']) assert.match(c,new RegExp('@keyframes lfms-kinetic-'+name))
+  assert.match(c,/lfms-kinetic-mark 930ms cubic-bezier\(\.18,\.89,\.25,1\) 160ms both/)
+  assert.match(c,/lfms-kinetic-less 1290ms cubic-bezier\(\.17,\.91,\.29,1\) 750ms both/)
+  assert.match(c,/lfms-kinetic-strong 1310ms cubic-bezier\(\.17,\.91,\.29,1\) 900ms both/)
+  assert.match(c,/translateX\(-110vw\) skewX\(-14deg\)/)
+  assert.match(c,/translateX\(110vw\) skewX\(14deg\)/)
+  assert.match(c,/translateX\(3\.5%\) skewX\(2deg\)/)
+  assert.match(c,/translateX\(-3\.5%\) skewX\(-2deg\)/)
+  assert.match(js,/LFMS_KINETIC_SPLASH_MIN_MS = 3350/)
+  assert.match(js,/LFMS_KINETIC_SPLASH_EXIT_MS = 340/)
+  assert.match(c,/@keyframes lfms-ignition-cut/)
+  assert.match(c,/@keyframes lfms-ignition-curtain/)
+  assert.match(js,/runBrandHandoff\(launch, \{ duration: LFMS_HANDOFF_MS \}\)/)
+  assert.match(c,/@keyframes lfms-brand-lockline/)
+  assert.match(c,/@keyframes lfms-wordmark-lock/)
+  assert.match(read('index.html'),/lfms-launch__flash/)
+  assert.match(read('index.html'),/lfms-launch__lockline/)
+  assert.match(js,/LFMS_KINETIC_SPLASH_MIN_MS - \(performance\.now\(\) - splashStarted\)/)
+  assert.match(js,/setTimeout\(finish, LFMS_KINETIC_SPLASH_EXIT_MS\)/)
+  assert.match(js,/setTimeout\(dismissSplash, 8000\)/)
+  assert.ok(js.indexOf('await dismissSplash()')<js.indexOf('await installWeeklyRecapRuntime(context)'))
 })
-test('offline shell retains official logos and drops the retired animation',()=>{
- const sw=read('sw.js')
- for(const asset of ['branding/lfms/logo-wordmark.svg','branding/lfms/logo-mark.svg']) assert.ok(sw.includes("'./"+asset+"'"))
- assert.doesNotMatch(sw,/emoji-sweep/)
+
+test('offline PWA includes source brand assets and remains one app',()=>{
+  const sw=read('sw.js'),f=read('src/lfms-finish.css')
+  for(const asset of ['branding/lfms/logo-wordmark.svg','branding/lfms/logo-mark.svg','src/brand.css','src/lfms-finish.css'])
+    assert.ok(sw.includes("'./"+asset+"'"))
+  for(const cls of ['today2__pills','train2__pills','fn2__pills','progress-views']) assert.ok(f.includes(cls))
 })

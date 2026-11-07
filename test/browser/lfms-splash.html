@@ -1,30 +1,90 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>LFMS quiet launch acceptance</title>
-<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css">
-<style>#app{position:fixed;inset:0;background:var(--lfms-duo-canvas);color:white}</style></head><body>
-<div id="app">READY DASHBOARD</div>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LFMS ignition and live Today flying-mountain acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<style>
+  #app {position:fixed;inset:0;background:#101820;color:#fff}
+  #app .screen--today {position:relative;height:100%}
+  #app .lfms-main-brand__mark {position:absolute;left:27px;top:26px;width:34px;height:28px;object-fit:contain}
+</style></head><body>
+<div id="app" class="app"><section class="screen--today">READY DASHBOARD
+<img class="lfms-main-brand__mark" src="../../branding/lfms/logo-mark.svg" alt="">
+</section></div>
 <script type="module">
-const checks=[];const check=(name,ok)=>checks.push({name,ok:Boolean(ok)})
-const wait=ms=>new Promise(r=>setTimeout(r,ms))
+import { runBrandHandoff,LFMS_HANDOFF_MS } from '../../src/ui/lfms-launch-handoff.js'
+const checks=[],errors=[]
+const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+window.addEventListener('error',e=>errors.push(e.message))
+window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
 try {
- const html=await fetch('/index.html').then(r=>r.text())
- const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
- for(const img of launch.querySelectorAll('img'))img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
- document.body.append(launch)
- await Promise.all([...launch.querySelectorAll('img')].map(img=>img.decode()))
- await wait(550)
- check('both official logos decode and become visible',[...launch.querySelectorAll('img')].every(img=>img.naturalWidth>0&&Number(getComputedStyle(img).opacity)>.99))
- check('no character, glass or impact geometry',!launch.querySelector('svg,[data-lfms-emoji-sweep]')&&launch.querySelectorAll('img').length===2)
- const mark=launch.querySelector('.lfms-launch__mark'),before=mark.getBoundingClientRect()
- await wait(80)
- const after=mark.getBoundingClientRect()
- check('logo stays in place during its fade',Math.abs(before.top-after.top)<1&&Math.abs(before.left-after.left)<1)
- check('complete logo stays inside the viewport',[...launch.querySelectorAll('img')].every(img=>{const r=img.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1}))
- launch.dataset.closing='true';await Promise.all(launch.getAnimations().map(animation=>animation.finished))
- check('quiet exit fades fully without a flying clone',Number(getComputedStyle(launch).opacity)<.01&&!document.querySelector('[data-lfms-flying-mark]'))
- launch.remove()
- check('underlying app remains intact',document.getElementById('app').textContent==='READY DASHBOARD')
-}catch(e){checks.push({name:'launch acceptance completes',ok:false,detail:String(e)})}
-const result={label:'lfms-splash',passed:checks.every(c=>c.ok),checks}
-const summary=document.createElement('pre');summary.id='harness-result';summary.textContent=JSON.stringify(result);document.body.append(summary)
-await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(result)})
+  const html=await fetch('/index.html').then(r=>r.text())
+  const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
+  for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
+  document.body.append(launch)
+  const mark=launch.querySelector('.lfms-launch__mark')
+  const words=[...launch.querySelectorAll('.lfms-launch__wordmark')]
+  const impact=launch.querySelector('.lfms-launch__flash')
+  const curtains=[...launch.querySelectorAll('.lfms-launch__cinema')]
+  const skin=launch.querySelector('.lfms-launch__skin')
+  const destination=document.querySelector('.lfms-main-brand__mark')
+  await Promise.all([mark,...words,destination].map(x=>x.decode()))
+  check('official mountain and separate genuine wordmark halves decode',
+    mark.naturalWidth>0&&words.length===2&&words.every(x=>x.naturalWidth>0))
+  check('screen opens with cinematic curtains and one crimson cut',
+    curtains.length===2
+    &&curtains.every(x=>getComputedStyle(x).animationName==='lfms-ignition-curtain')
+    &&impact&&getComputedStyle(impact).animationName==='lfms-ignition-cut'
+    &&!launch.querySelector('.lfms-launch__sweep,.lfms-launch__barbell-stage,.lfms-launch__peel-strip'))
+  check('deep gradient stays wholly on branded launch skin',
+    getComputedStyle(skin).backgroundImage.includes('radial-gradient(')
+    &&getComputedStyle(skin).backgroundImage.includes('linear-gradient('))
+  check('long original wordmark swoops still animate from opposite sides',
+    getComputedStyle(words[0]).animationName==='lfms-kinetic-less'
+    &&getComputedStyle(words[1]).animationName==='lfms-kinetic-strong'
+    &&getComputedStyle(words[0]).animationDelay==='0.75s'
+    &&getComputedStyle(words[1]).animationDelay==='0.9s')
+  await wait(320)
+  const stage=launch.querySelector('.lfms-launch__mark-stage').getBoundingClientRect()
+  const giant=mark.getBoundingClientRect()
+  check('oversize mountain is a genuine full-screen arrival, not tiny drop',
+    giant.width>stage.width*1.1,
+    JSON.stringify({markWidth:giant.width,stageWidth:stage.width}))
+  await wait(620)
+  const wordStage=launch.querySelector('.lfms-launch__wordmark-stage').getBoundingClientRect()
+  const less=words[0].getBoundingClientRect(),strong=words[1].getBoundingClientRect()
+  check('both word halves travel from far outside their finished bounds',
+    less.left<wordStage.left-30&&strong.left>wordStage.right+30,
+    JSON.stringify({left:less.left,right:strong.left,stageLeft:wordStage.left,stageRight:wordStage.right}))
+  await wait(1390)
+  check('red impact crosses behind intact lettering',
+    Number(getComputedStyle(impact).opacity)>.12
+    &&words.every(w=>Number(getComputedStyle(w).opacity)>.9))
+  await wait(1020)
+  check('impact and curtain are finished, logo is readable and stable',
+    Number(getComputedStyle(impact).opacity)<.02
+    &&words.every(w=>Number(getComputedStyle(w).opacity)>.98)
+    &&Number(getComputedStyle(launch.querySelector('.lfms-launch__lockline')).opacity)>.98)
+  const source=mark.getBoundingClientRect(),target=destination.getBoundingClientRect()
+  const flight=runBrandHandoff(launch)
+  await wait(220)
+  const traveling=document.querySelector('[data-lfms-flying-mark]')
+  const mid=traveling?.getBoundingClientRect()
+  check('live shared mark moves toward REAL app header, not a fake dashboard',
+    LFMS_HANDOFF_MS===630&&!!traveling&&launch.dataset.closing==='true'
+    &&destination.style.visibility==='hidden'
+    &&mid&&Math.hypot(mid.top-source.top,mid.left-source.left)>20,
+    JSON.stringify({from:[source.left,source.top],mid:[mid?.left,mid?.top],to:[target.left,target.top]}))
+  const used=await flight
+  check('flight completes and hands visibility back to the ACTUAL Today mountain',
+    used===true&&!document.querySelector('[data-lfms-flying-mark]')
+    &&destination.style.visibility!=='hidden')
+  check('no exceptions and underlying dashboard never replaced',errors.length===0
+    &&document.getElementById('app').textContent.includes('READY DASHBOARD'),errors.join(' | '))
+  launch.remove()
+}catch(e){check('IGNITION acceptance completes',false,e.stack??String(e))}
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({label:'lfms-splash',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

@@ -29,6 +29,7 @@ const PRECACHE = [
   './branding/lfms/logo-wordmark.svg',
   './branding/lfms/app-icon.svg',
   './src/main.js',
+  './src/ui/lfms-launch-handoff.js',
   './src/tokens.css',
   './src/style.css',
   './src/setup.css',

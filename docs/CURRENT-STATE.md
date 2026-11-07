@@ -1,3 +1,7 @@
+## 2026-11-07 — Restore saved pre-sweeper launch, 0.66.83 (189)
+
+Restore startup animation files exactly from backup/lfms-before-glass-sweep-20261106 (ff6d3c2): IGNITION mountain, original text swoops, red brand lock and real Today header handoff. Keep all later Fuel, Progress, workout and data changes. Restore its launch acceptance checks and capture timing. Retired sweeper assets remain removed.
+
 ## 2026-11-07 — Quiet launch, 0.66.82 (188)
 
 Remove the rejected sweeper, animated WebP and glass impact. Official logo fades in and the overlay fades out over the real app after a 900 ms minimum; reduced motion skips the hold and fade. Keep post-launch recap, boot failsafe and all stored data behavior.

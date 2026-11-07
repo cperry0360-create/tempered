@@ -35,7 +35,7 @@ test('the cinematic gradient belongs to the splash, not the root or Duo rail',()
 
 test('approved glass hold, clean exit, reduced-motion and offline cache version',()=>{
   const c=read('src/brand.css'),main=read('src/main.js'),sw=read('sw.js')
-  assert.match(main,/LFMS_GLASS_SWEEP_MIN_MS = 4550/)
+  assert.match(main,/LFMS_GLASS_SWEEP_MIN_MS = 7100/)
   assert.match(main,/LFMS_GLASS_SWEEP_EXIT_MS = 340/)
   assert.match(main,/setTimeout\(dismissSplash, 8000\)/)
   assert.ok(main.indexOf('await dismissSplash()')<main.indexOf('await installWeeklyRecapRuntime(context)'))

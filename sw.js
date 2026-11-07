@@ -10,6 +10,8 @@ const PRECACHE = [
   './manifest.webmanifest',
   './manifest-duo.webmanifest',
   './src/brand.css',
+  './src/ui/lfms-emoji-sweep.js',
+  './branding/lfms/emoji-sweep.webp',
   './src/today-next.css',
   './src/train-next.css',
   './src/progress-next.css',

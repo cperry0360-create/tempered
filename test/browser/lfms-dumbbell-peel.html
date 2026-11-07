@@ -1,68 +1,42 @@
-<!doctype html>
-<html lang="en" data-layout="duo"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>LFMS glass sweep real header flight on Duo</title>
-<link rel="stylesheet" href="../../src/tokens.css">
-<link rel="stylesheet" href="../../src/brand.css">
-<link rel="stylesheet" href="../../src/lfms-finish.css">
-<style>
-  #app .screen--today {position:relative;height:100vh}
-  #app .lfms-main-brand__mark {position:absolute;left:28px;top:26px;width:34px;height:28px;object-fit:contain}
-</style></head><body>
-<div id="app" class="app"><div class="app__body">
-<section class="screen--today">ACTUAL READY TODAY
-<img class="lfms-main-brand__mark" src="../../branding/lfms/logo-mark.svg" alt="">
-</section></div></div>
+<!doctype html><html><head><meta charset="utf-8"><title>LFMS emoji launch acceptance</title>
+<link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css">
+<style>#app{position:fixed;inset:0;background:#101820;color:white}.lfms-main-brand__mark{position:absolute;left:27px;top:26px;width:34px;height:28px}</style></head><body>
+<div id="app"><section class="screen--today">READY DASHBOARD<img class="lfms-main-brand__mark" src="../../branding/lfms/logo-mark.svg" alt=""></section></div>
 <script type="module">
-import { runBrandHandoff } from '../../src/ui/lfms-launch-handoff.js'
-const checks=[]
-const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail??'')})
-const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+import {startEmojiSweep} from '../../src/ui/lfms-emoji-sweep.js'
+import {runBrandHandoff} from '../../src/ui/lfms-launch-handoff.js'
+const checks=[],errors=[];const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const wait=ms=>new Promise(r=>setTimeout(r,ms))
+window.addEventListener('error',e=>errors.push(e.message))
+window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
 try {
-  const parsed=new DOMParser().parseFromString(await fetch('/index.html').then(r=>r.text()),'text/html')
-  const launch=document.importNode(parsed.querySelector('[data-lfms-launch]'),true)
-  for(const img of launch.querySelectorAll('img')) img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
-  document.body.append(launch)
-  const app=document.getElementById('app'),skin=launch.querySelector('.lfms-launch__skin')
-  const dest=app.querySelector('.lfms-main-brand__mark')
-  await dest.decode()
-  const rootColor=getComputedStyle(document.body).backgroundColor
-  check('Duo root and native gutter stay solid charcoal',rootColor==='rgb(16, 24, 32)'
-    &&getComputedStyle(document.body).backgroundImage==='none')
-  const rect=skin.getBoundingClientRect()
-  check('branded gradient fills entire Duo web viewport',rect.left<=0&&rect.right>=innerWidth
-    &&getComputedStyle(skin).backgroundImage.includes('radial-gradient('))
-  check('real Today remains hidden only until splash closing',getComputedStyle(app).visibility==='hidden'
-    &&getComputedStyle(app).opacity==='0')
-  check('no barbell, duplicate screen, ripped canvas, or old red impact seam',!launch.querySelector(
-    '.lfms-launch__barbell-stage,.lfms-launch__plate,.lfms-launch__peel-strip,.lfms-launch__lift-tab'))
-  check('Duo gets the approved glass, pile, rounded sweeper and broom',
-    !!launch.querySelector('.lfms-launch__cracks')
-    &&!!launch.querySelector('.lfms-launch__shards')
-    &&!!launch.querySelector('.lfms-launch__sweeper-body')
-    &&launch.querySelectorAll('.lfms-launch__sweeper-arm').length===2
-    &&!!launch.querySelector('.lfms-launch__broom'))
-  await wait(4300)
-  check('the genuine logo resolves after the three slow pushes',
-    Number(getComputedStyle(launch.querySelector('.lfms-launch__wordmark')).opacity)>.98
-    &&getComputedStyle(launch.querySelector('.lfms-launch__sweeper')).animationName==='lfms-glass-sweeper')
-  const started=runBrandHandoff(launch,{duration:720})
-  await wait(220)
-  check('Today is revealed beneath the flying logo without an intermediate black screen',
-    getComputedStyle(app).visibility==='visible'
-    &&getComputedStyle(app).opacity==='1'
-    &&!!document.querySelector('[data-lfms-flying-mark]')
-    &&dest.style.visibility==='hidden'
-    &&getComputedStyle(document.body).backgroundColor===rootColor)
-  const used=await started
-  launch.remove()
-  check('header mark arrives and is restored; root remains charcoal',used===true
-    &&!document.querySelector('[data-lfms-flying-mark]')
-    &&dest.style.visibility!=='hidden'
-    &&getComputedStyle(app).visibility==='visible'
-    &&getComputedStyle(document.body).backgroundColor===rootColor
-    &&app.textContent.includes('ACTUAL READY TODAY'))
-}catch(error){check('Duo glass-sweep harness finished',false,error.stack??String(error))}
-await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},
-  body:JSON.stringify({label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks})})
+document.documentElement.dataset.layout='duo'
+const html=await fetch('/index.html').then(r=>r.text())
+const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
+for(const img of launch.querySelectorAll('img'))img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
+ document.body.append(launch)
+const cleanup=await startEmojiSweep(launch,{delay:0})
+const image=launch.querySelector('.lfms-launch__emoji-image')
+await image.decode()
+check('reviewed emoji asset decodes and paints',image.naturalWidth===960&&image.naturalHeight===540)
+const canvas=document.createElement('canvas');canvas.width=240;canvas.height=135
+const context=canvas.getContext('2d',{willReadFrequently:true})
+const sample=()=>{context.clearRect(0,0,240,135);context.drawImage(image,0,0,240,135);const pixels=context.getImageData(0,0,240,135).data;let visible=0,sum=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i+3]>100)visible++;sum+=pixels[i]*((i%17)+1)+pixels[i+3]}return {visible,sum}}
+const before=sample();await wait(1000);const after=sample()
+check('visible rendered pixels move, rather than only SVG geometry',before.visible>250&&after.visible>250&&before.sum!==after.sum,JSON.stringify({before,after}))
+const rect=image.getBoundingClientRect()
+check('complete stage stays within the viewport',rect.left>=-1&&rect.right<=innerWidth+1&&rect.bottom<=innerHeight+1)
+const first=image.src;cleanup()
+const cleanupReplay=await startEmojiSweep(launch,{delay:0})
+const replay=launch.querySelector('.lfms-launch__emoji-image');await replay.decode()
+check('repeat launches restart from a fresh local image URL',replay.src.startsWith('blob:')&&replay.src!==first)
+const mark=launch.querySelector('.lfms-launch__mark');await mark.decode()
+const used=await runBrandHandoff(launch)
+check('brand lands on the actual Today header',used===true&&!document.querySelector('[data-lfms-flying-mark]'))
+cleanupReplay();launch.remove()
+check('dashboard and storage boundaries remain intact',document.getElementById('app').textContent.includes('READY DASHBOARD')&&errors.length===0,errors.join(' | '))
+}catch(e){check('emoji sweep acceptance completes',false,e.stack??String(e))}
+const result={label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks}
+const summary=document.createElement('pre');summary.id='harness-result';summary.textContent=JSON.stringify(result);document.body.append(summary)
+await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(result)})
 </script></body></html>

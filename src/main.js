@@ -1,3 +1,4 @@
+import { startEmojiSweep } from './ui/lfms-emoji-sweep.js'
 import { registerServiceWorker } from './pwa/register.js'
 import { bootstrap } from './app/bootstrap.js'
 import { installSessionGuard } from './ui/session-guard.js'
@@ -16,8 +17,9 @@ import { LFMS_HANDOFF_MS, runBrandHandoff } from './ui/lfms-launch-handoff.js'
 const launch = document.querySelector('[data-lfms-launch]')
 const splashStarted = performance.now()
 // GLASS SWEEP: mark impact -> glass pile -> three deliberate sweeps -> Today.
-const LFMS_GLASS_SWEEP_MIN_MS = 4550
+const LFMS_GLASS_SWEEP_MIN_MS = 7100
 const LFMS_GLASS_SWEEP_EXIT_MS = 340
+const emojiSweep = startEmojiSweep(launch)
 let splashDone = null
 function dismissSplash() {
   if (splashDone) return splashDone
@@ -28,6 +30,7 @@ function dismissSplash() {
     setTimeout(() => {
       if (!launch) { resolve(); return }
       const finish = () => {
+        emojiSweep.then(cleanup => cleanup())
         launch.remove()
         window.dispatchEvent(new Event('tempered:splash-finished'))
         resolve()

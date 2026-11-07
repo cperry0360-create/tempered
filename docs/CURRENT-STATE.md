@@ -1,3 +1,7 @@
+## 2026-11-07 — Quiet launch, 0.66.82 (188)
+
+Remove the rejected sweeper, animated WebP and glass impact. Official logo fades in and the overlay fades out over the real app after a 900 ms minimum; reduced motion skips the hold and fade. Keep post-launch recap, boot failsafe and all stored data behavior.
+
 ## 2026-11-07 — Emoji sweep launch, 0.66.81 (187)
 
 - Ship the reviewed friendly emoji man with face, clothes and rounded proportions as a transparent rendered sweep asset. Keep the genuine mountain impact, cracks, and shared-element Today header landing.

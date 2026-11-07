@@ -1,57 +1,29 @@
-<!doctype html><html><head><meta charset="utf-8"><title>LFMS emoji launch acceptance</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>LFMS quiet launch acceptance</title>
 <link rel="stylesheet" href="../../src/tokens.css"><link rel="stylesheet" href="../../src/brand.css">
-<style>#app{position:fixed;inset:0;background:#101820;color:white}.lfms-main-brand__mark{position:absolute;left:27px;top:26px;width:34px;height:28px}</style></head><body>
-<div id="app"><section class="screen--today">READY DASHBOARD<img class="lfms-main-brand__mark" src="../../branding/lfms/logo-mark.svg" alt=""></section></div>
+<style>#app{position:fixed;inset:0;background:var(--lfms-duo-canvas);color:white}</style></head><body>
+<div id="app">READY DASHBOARD</div>
 <script type="module">
-import {startEmojiSweep} from '../../src/ui/lfms-emoji-sweep.js'
-import {runBrandHandoff} from '../../src/ui/lfms-launch-handoff.js'
-const checks=[],errors=[];const check=(name,ok,detail='')=>checks.push({name,ok:Boolean(ok),detail:String(detail)})
+const checks=[];const check=(name,ok)=>checks.push({name,ok:Boolean(ok)})
 const wait=ms=>new Promise(r=>setTimeout(r,ms))
-window.addEventListener('error',e=>errors.push(e.message))
-window.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)))
 try {
-document.documentElement.dataset.layout='duo'
-const html=await fetch('/index.html').then(r=>r.text())
-const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
-for(const img of launch.querySelectorAll('img'))img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
+ const html=await fetch('/index.html').then(r=>r.text())
+ const launch=document.importNode(new DOMParser().parseFromString(html,'text/html').querySelector('[data-lfms-launch]'),true)
+ for(const img of launch.querySelectorAll('img'))img.src=new URL(img.getAttribute('src'),location.origin+'/index.html').href
  document.body.append(launch)
-const cleanup=await startEmojiSweep(launch,{delay:0})
-const image=launch.querySelector('.lfms-launch__emoji-image')
-await image.decode()
-check('reviewed emoji asset decodes and paints',image.naturalWidth===960&&image.naturalHeight===540)
-const canvas=document.createElement('canvas');canvas.width=240;canvas.height=135
-const context=canvas.getContext('2d',{willReadFrequently:true})
-// Canvas deliberately snapshots an animated HTMLImageElement's default
-// frame. Verify painted pixels and the actual timed WebP frame payloads;
-// do not mistake that browser API behavior for a frozen animation.
-context.drawImage(image,0,0,240,135)
-const pixels=context.getImageData(0,0,240,135).data
-let visible=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>100)visible++
-const bytes=new Uint8Array(await fetch(image.src).then(r=>r.arrayBuffer()))
-const view=new DataView(bytes.buffer),frames=[]
-for(let offset=12;offset+8<=bytes.length;){
- const tag=String.fromCharCode(...bytes.slice(offset,offset+4)),length=view.getUint32(offset+4,true)
- if(tag==='ANMF'){
-  const start=offset+8,duration=bytes[start+12]+bytes[start+13]*256+bytes[start+14]*65536
-  let hash=0;for(let i=start+16;i<start+length;i++)hash=(Math.imul(hash,31)+bytes[i])>>>0
-  frames.push({duration,hash})
- }
- offset+=8+length+(length%2)
-}
-const duration=frames.reduce((sum,frame)=>sum+frame.duration,0)
-check('painted emoji uses distinct timed animation frames',visible>250&&frames.length>24&&frames[0].hash!==frames[24].hash&&duration>=4900&&duration<=5200,JSON.stringify({visible,frames:frames.length,duration}))
-const rect=image.getBoundingClientRect()
-check('complete stage stays within the viewport',rect.left>=-1&&rect.right<=innerWidth+1&&rect.bottom<=innerHeight+1)
-const first=image.src;cleanup()
-const cleanupReplay=await startEmojiSweep(launch,{delay:0})
-const replay=launch.querySelector('.lfms-launch__emoji-image');await replay.decode()
-check('repeat launches restart from a fresh local image URL',replay.src.startsWith('blob:')&&replay.src!==first)
-const mark=launch.querySelector('.lfms-launch__mark');await mark.decode()
-const used=await runBrandHandoff(launch)
-check('brand lands on the actual Today header',used===true&&!document.querySelector('[data-lfms-flying-mark]'))
-cleanupReplay();launch.remove()
-check('dashboard and storage boundaries remain intact',document.getElementById('app').textContent.includes('READY DASHBOARD')&&errors.length===0,errors.join(' | '))
-}catch(e){check('emoji sweep acceptance completes',false,e.stack??String(e))}
+ await Promise.all([...launch.querySelectorAll('img')].map(img=>img.decode()))
+ await wait(550)
+ check('both official logos decode and become visible',[...launch.querySelectorAll('img')].every(img=>img.naturalWidth>0&&Number(getComputedStyle(img).opacity)>.99))
+ check('no character, glass or impact geometry',!launch.querySelector('svg,[data-lfms-emoji-sweep]')&&launch.querySelectorAll('img').length===2)
+ const mark=launch.querySelector('.lfms-launch__mark'),before=mark.getBoundingClientRect()
+ await wait(80)
+ const after=mark.getBoundingClientRect()
+ check('logo stays in place during its fade',Math.abs(before.top-after.top)<1&&Math.abs(before.left-after.left)<1)
+ check('complete logo stays inside the viewport',[...launch.querySelectorAll('img')].every(img=>{const r=img.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1}))
+ launch.dataset.closing='true';await Promise.all(launch.getAnimations().map(animation=>animation.finished))
+ check('quiet exit fades fully without a flying clone',Number(getComputedStyle(launch).opacity)<.01&&!document.querySelector('[data-lfms-flying-mark]'))
+ launch.remove()
+ check('underlying app remains intact',document.getElementById('app').textContent==='READY DASHBOARD')
+}catch(e){checks.push({name:'launch acceptance completes',ok:false,detail:String(e)})}
 const result={label:'lfms-dumbbell-peel',passed:checks.every(c=>c.ok),checks}
 const summary=document.createElement('pre');summary.id='harness-result';summary.textContent=JSON.stringify(result);document.body.append(summary)
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(result)})

@@ -2894,3 +2894,7 @@ with these release notes; device-specific hinge and keyboard QA remains open.
 ## 2026-11-07 — Rendered emoji launch asset
 
 Cory approved pushing the reviewed emoji character. Use the exact reviewed transparent WebP in a foreground stage, with the same responsive proportions as the app preview. Fetch from the versioned offline cache and start a unique local blob URL on each launch; this fixes animated-image final-frame reuse without random network URLs. Allow 7.1 seconds for impact, five-second sweep and handoff preparation, preserving the existing eight-second failsafe. No user data is part of the asset or release.
+
+## 2026-11-09 — Grade execution of the Beach Cut plan
+
+Cory followed the cut prescriptions and questioned penalties for lower volume and steady loads. Keep the existing 30:25 relative weighting of adherence and consistency for the cut, give current-week training days the consistency credit, and show strength and volume separately. Use the saved Beach Cut program identity so the rule applies to existing local copies and their historical weeks. Keep individual unmatched prescriptions visible because a logged set can be extra work or a genuine matching discrepancy.

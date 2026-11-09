@@ -561,11 +561,15 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const explanation=explainTrainingScore(training)
     payload.trainingScore={
       latestGradedWeek:graded?{
-        week:graded.week,score:graded.score,grade:graded.grade,deload:graded.deload,
+        week:graded.week,score:graded.score,grade:graded.grade,deload:graded.deload,cut:graded.cut,
         components:graded.components.map(c=>({
           id:c.id,label:c.label,scorePercent:c.value===null?null:Math.round(c.value*1000)/10,
           weightPercent:Math.round(c.weight*1000)/10,reason:c.reason,
           formula:c.formula??null,
+          ...(c.id === 'adherence' ? {
+            unmatchedSets:c.unmatchedSets,
+            incompleteSlots:c.details.filter(d => d.completed < d.prescribed).map(d => d.reason),
+          } : {}),
         })),
       }:null,
       skippedWeeks:training.skipped.map(w=>({week:w.week,reason:w.reason})),
@@ -666,6 +670,7 @@ return payload
     }
     weeks.forEach((week, index) => {
       if (week.score === null) { flush(); return }
+      if (index > 0 && week.cut !== weeks[index - 1].cut) flush()
       const x = weeks.length === 1 ? 160 : 4 + index / (weeks.length - 1) * 312
       const y = 72 - week.score / 100 * 68
       points.push(x + ',' + y)
@@ -692,7 +697,7 @@ return payload
     const weeks = result.weeks
     return el('section.progress-panel.progress-score', {}, [
       el('div.progress-score__head', {}, [
-        el('h2.progress-panel__title', { text: 'Training score' }),
+        el('h2.progress-panel__title', { text: current?.cut ? 'Cut plan score' : 'Training score' }),
         el('button.progress-score__info', {
           type: 'button', 'aria-label': 'What this score means', dataset: { scoreInfo: 'open' },
           onclick: () => { scoreExplainOpen = true; render() },
@@ -717,11 +722,11 @@ return payload
       }, [
         el('div.progress-score__head', {}, [
           el('strong', { text: component.label }),
-          el('span', { text: component.value === null ? 'Not scored ›' : Math.round(component.value * 100) + '% · ' + Math.round(component.weight * 100) + '% weight ›' }),
+          el('span', { text: component.value === null ? (current.cut && (component.id === 'progression' || component.id === 'volume') ? 'Trend only ›' : 'Not scored ›') : Math.round(component.value * 100) + '% · ' + Math.round(component.weight * 100) + '% weight ›' }),
         ]),
-        el('div.progress-score__bar', {}, [el('span', { style: 'width:' + Math.round((component.value ?? 0) * 100) + '%' })]),
+        (!current.cut || component.value !== null) && el('div.progress-score__bar', {}, [el('span', { style: 'width:' + Math.round((component.value ?? 0) * 100) + '%' })]),
         el('span.progress-score__reason', { text: component.id === 'adherence' && component.prescribed ? component.completed + ' of ' + component.prescribed + ' planned sets · ' + (component.repSets ? Math.round(component.reached / component.repSets * 100) + '% reached rep minimum' : 'no rep samples') : component.reason }),
-      ])),
+      ].filter(Boolean))),
       el('button.progress-score__component.progress-score__weeks-link', {
         type: 'button', dataset: { scoreComponent: 'weeks' },
         onclick: () => { selectedScoreComponent = 'weeks'; render() },
@@ -786,16 +791,23 @@ return payload
     if (selectedScoreComponent === 'weeks') return scoreWeeksView()
     const result = scoreData(), component = result.headline?.components.find(c => c.id === selectedScoreComponent)
     if (!component) { selectedScoreComponent = null; return overviewView() }
+    const cut = result.headline.cut
+    const details = component.id === 'adherence'
+      ? [...component.details].sort((a,b) => (b.prescribed - b.completed) - (a.prescribed - a.completed))
+      : component.details
+    const contextual = cut && (component.id === 'progression' || component.id === 'volume')
     return [el('button.progress-back', { type: 'button', onclick: () => { selectedScoreComponent = null; render() } }, ['‹ Overview']),
       el('section.progress-panel.progress-score-detail', {}, [
         el('h2.progress-panel__title', { text: component.label }),
         el('p.progress-footnote', { text: 'Week of ' + monthDay(result.headline.week) + ' · ' + component.reason }),
-        el('p.progress-footnote', { text: component.value === null ? 'Not scored this week; the other parts share its weight.' : Math.round(component.value * 100) + '% · ' + numberText(component.weight * 100, 0) + '% of the score.' }),
-        ...component.details.map(detail => el('p.progress-score-detail__row', { text: detail.reason })),
-        component.id === 'consistency' && el('p.progress-footnote', { text: 'Days: 70% · weeks reaching the plan: 30%. A training day is 6+ working sets or 30+ minutes, micro sets included.' }),
+        el('p.progress-footnote', { text: contextual ? 'Trend only during Beach Cut.' : component.value === null ? 'Not scored this week; the other parts share its weight.' : Math.round(component.value * 100) + '% · ' + numberText(component.weight * 100, 0) + '% of the score.' }),
+        component.id === 'adherence' && component.prescribed > 0 && component.unmatchedSets > 0
+          && el('p.progress-footnote', { text: component.unmatchedSets + (component.unmatchedSets === 1 ? ' logged working set was' : ' logged working sets were') + ' outside the matched plan totals. Exercises with unmatched planned sets appear first.' }),
+        ...details.map(detail => el('p.progress-score-detail__row', { text: detail.reason })),
+        component.id === 'consistency' && el('p.progress-footnote', { text: (cut ? 'Beach Cut uses this week’s planned days. ' : 'Days: 70% · weeks reaching the plan: 30%. ') + 'A training day is 6+ working sets or 30+ minutes, micro sets included.' }),
         component.id === 'adherence' && el('p.progress-footnote', { text: 'Planned sets finished: 70% · sets reaching their rep minimum: 30%. Swaps, leftovers, and single-movement sessions count.' }),
-        component.id === 'progression' && el('p.progress-footnote', { text: 'Last 2 weeks against the 4 before: up = 100%, within 1% = 60%, down = 0%.' }),
-        component.id === 'volume' && el('p.progress-footnote', { text: 'At least 95% of your recent 4-week average earns full credit.' }),
+        component.id === 'progression' && el('p.progress-footnote', { text: cut ? 'Best efforts in the last 2 weeks compared with the 4 weeks before. Holding within 1% counts as steady.' : 'Last 2 weeks against the 4 before: up = 100%, within 1% = 60%, down = 0%.' }),
+        component.id === 'volume' && el('p.progress-footnote', { text: cut ? 'Beach Cut prescribes fewer sets. The prior weeks are shown for context.' : 'At least 95% of your recent 4-week average earns full credit.' }),
       ].filter(Boolean))]
   }
 

@@ -1,3 +1,8 @@
+## 2026-11-09 — Beach Cut plan score, 0.66.84 (190)
+
+- Beach Cut grades adherence to the prescribed sets and rep minimums plus completion of this week’s training days. Strength and working-set trends remain visible for context. Comparisons use weeks graded with the same rules, and the starting week counts scheduled days from activation.
+- Set matching checks the exercise or documented substitution alongside the slot index. Older logs can still find the right exercise when slots were reordered. The adherence detail shows which planned sets remain unmatched and how many logged sets fall outside the matched totals.
+
 ## 2026-11-07 — Restore saved pre-sweeper launch, 0.66.83 (189)
 
 Restore startup animation files exactly from backup/lfms-before-glass-sweep-20261106 (ff6d3c2): IGNITION mountain, original text swoops, red brand lock and real Today header handoff. Keep all later Fuel, Progress, workout and data changes. Restore its launch acceptance checks and capture timing. Retired sweeper assets remain removed.

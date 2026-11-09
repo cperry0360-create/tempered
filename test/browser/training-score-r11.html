@@ -42,7 +42,7 @@ try{
  check('Mark away stores the week through the workout service',away.some(p=>p.start==='2026-09-14'&&p.end==='2026-09-20'))
  q('.progress-back')?.click()
  check('the card says why its graded week is older than last week',/Sep 14 away/.test(q('.progress-score')?.textContent),q('.progress-score')?.textContent)
- q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ q('.progress-report__button--copy')?.click();await new Promise(r=>setTimeout(r,50))
  const copiedData=()=>JSON.parse(copied.slice(copied.lastIndexOf('\n')+1))
  let scoreReport=copiedData().trainingScore
  check('AI report includes the last graded week and reason a newer week was excluded',
@@ -53,7 +53,7 @@ try{
  check('an away week drops out: headline moves to the prior week and the trend shows a gap',/Week of Sep 7/.test(q('.progress-score')?.textContent)&&qa('.progress-score__trend circle').length===11,q('.progress-score')?.textContent)
  q('[data-score-component="weeks"]')?.click();q('[data-away-toggle="2026-09-14"]')?.click();await new Promise(r=>setTimeout(r,50));q('.progress-back')?.click()
  check('Not away restores the week',away.length===0&&/Week of Sep 14/.test(q('.progress-score')?.textContent))
- q('.progress-report__button')?.click();await new Promise(r=>setTimeout(r,50))
+ q('.progress-report__button--copy')?.click();await new Promise(r=>setTimeout(r,50))
  scoreReport=copiedData().trainingScore
  check('AI report includes training score, grade, this week, four components and prior-week comparison',
    scoreReport.latestGradedWeek.score===100
@@ -84,6 +84,37 @@ try{
  const empty=createHistoryScreen({storage:createMemoryStorage(),clock,workout:{exerciseMap:async()=>new Map(),awayPeriods:async()=>[]},daily:{activities:[],activitySchedule:async()=>({})}})
  q('#app').replaceChildren(empty.root);await empty.refresh()
  check('empty state shows Building history and no fabricated trend points',q('.progress-score__number')?.textContent==='Building history'&&qa('.progress-score__trend circle').length===0&&qa('[data-score-component]').length===1)
+ const cutId='beach-cut-2026'
+ await storage.put('programState',{id:'p',programId:'p',startedOn:'2026-06-29',active:false})
+ await storage.put('programState',{id:cutId,programId:cutId,startedOn:'2026-09-14',active:true})
+ await storage.put('programs',{...program,id:cutId,days:[
+  {id:'d0',name:'First day',exercises:[{exerciseId:'lift',sets:1,repMin:6}]},
+  {id:'d1',name:'Second day',exercises:[{exerciseId:'lift',sets:2,repMin:6},{exerciseId:'other',sets:1,repMin:6}]},
+ ]})
+ for(const session of (await storage.getAll('sessions')).filter(row=>row.date>='2026-09-14')){
+  await storage.put('sessions',{...session,programId:cutId})
+  for(const log of (await storage.getAllByIndex('setLogs','sessionId',session.id))){
+   await storage.put('setLogs',{...log,programId:cutId})
+  }
+ }
+ q('#app').replaceChildren(screen.root);await screen.refresh()
+ q('[data-view="overview"]')?.click()
+ check('Cut score grades this week only and labels strength and volume as trends',
+  q('.progress-score h2')?.textContent==='Cut plan score'&&q('.progress-score__number')?.textContent==='90 · A'
+  &&['progression','volume'].every(id=>{
+   const row=q(`[data-score-component="${id}"]`)
+   return row?.textContent.includes('Trend only')&&!row.querySelector('.progress-score__bar')
+  })&&!q('.progress-score__change'),q('.progress-score')?.textContent)
+ q('[data-score-component="adherence"]')?.click()
+ check('Cut adherence shows the unfilled lift first and distinguishes extra logged sets',
+  q('.progress-score-detail__row')?.textContent.includes('other · Second day: 0 of 1')
+  &&q('.progress-score-detail')?.textContent.includes('1 logged working set was outside the matched plan totals'))
+ q('.progress-back')?.click()
+ q('[data-score-info]')?.click()
+ check('Cut score explains the plan and the weighting',/maintain strength at lower volume/.test(q('.score-explain')?.textContent)
+  &&/Consistency \(45%\)/.test(q('.score-explain')?.textContent))
+ q('.score-explain__done')?.click()
+ check('no runtime errors after cut score drill-down',errors.length===0,errors.join('\n'))
 }catch(e){check('harness completed',false,e.stack)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'training-score-r11',passed:checks.every(c=>c.ok),checks})})
 </script></body></html>

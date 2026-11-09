@@ -64,7 +64,12 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
     const revision = revisions.find(r => r.id === (session?.programRevisionId ?? state.revisionId ?? program.currentRevisionId))
     const snapshot = { ...program, ...(revision?.snapshot ?? {}) }
     const week = Math.min(programWeekIndex(state.startedOn, date, between) + 1, snapshot.weeks ?? 1)
-    return { program: programForWeek(snapshot, week), deload: isDeloadWeek(week, snapshot), state }
+    const resolved = programForWeek(snapshot, week)
+    const cut = resolved.id === 'beach-cut-2026'
+    const weekStart = monday(date)
+    const days = resolved.days.map((day, index) => ({ day, index:dayIndexOf(day, index) }))
+      .filter(({ index }) => !cut || shift(weekStart, index) >= state.startedOn)
+    return { program: resolved, days, cut, deload: isDeloadWeek(week, snapshot) }
   }
   const inWeek = (date, week) => monday(date) === week
   const away = new Set()
@@ -84,30 +89,39 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
   }
   function plannedDays(week) {
     const p = planAt(week === currentStart ? today : shift(week, 6))
-    return p?.program.days?.filter(d => (d.exercises ?? []).some(s => s.sets > 0)).length ?? 0
+    return p?.days.filter(({ day }) => (day.exercises ?? []).some(s => s.sets > 0)).length ?? 0
   }
   /** Planned slots for a week, each filled by that week's matching sets. */
   function fillSlots(plan, weekLogs) {
-    const slots = (plan?.program.days ?? []).flatMap((day, dayPos) => (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex:dayIndexOf(day, dayPos), index, slot })))
-    // Exact slot identity first, then the planned exercise or its recorded substitute,
-    // however it was logged. Each set fills at most one slot, capped at its prescription.
-    const used = new Set(), filled = new Map(slots.map(s => [s, []]))
-    const isPlanned = s => !s.programId && !s.session.programId || (s.programId ?? s.session.programId) === plan?.program.id
-    for (const entry of slots) {
-      for (const log of weekLogs) {
-        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
-        if (!used.has(log) && isPlanned(log) && log.programDayId === entry.dayId && log.slotIndex === entry.index) { used.add(log); filled.get(entry).push(log) }
-      }
+    const slots = (plan?.days ?? []).flatMap(({ day, index:dayIndex }) =>
+      (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex, index, slot, matching:[] })))
+    const unassigned = []
+    const intendedExercise = log => log.substitutedFor ?? log.exerciseId
+    const matches = (entry, log) => intendedExercise(log) === entry.slot.exerciseId
+    const matchesSlot = (entry, log) => matches(entry, log)
+      || entry.slot.rotation?.some(choice => choice?.exerciseId === intendedExercise(log))
+    const hasRoom = entry => entry.matching.length < (entry.slot.sets || 0)
+    for (const log of weekLogs) {
+      const programId = log.programId ?? log.session.programId
+      if (programId && programId !== plan?.program.id) continue
+      const exact = slots.find(entry => entry.dayId === log.programDayId && entry.index === log.slotIndex && matchesSlot(entry, log))
+      // A set with a valid identity stays with that slot, including extra sets.
+      if (!exact) unassigned.push(log)
+      else if (hasRoom(exact)) exact.matching.push(log)
     }
-    for (const entry of slots) {
-      for (const log of weekLogs) {
-        if (filled.get(entry).length >= (entry.slot.sets || 0)) break
-        if (used.has(log) || (log.programDayId != null && log.slotIndex != null && slots.some(o => o.dayId === log.programDayId && o.index === log.slotIndex))) continue
-        if (log.exerciseId === entry.slot.exerciseId || log.substitutedFor === entry.slot.exerciseId) { used.add(log); filled.get(entry).push(log) }
-      }
+    // Legacy indexes can point at a different lift after a revision. Use the
+    // actual planned exercise and prefer the recorded day before week-wide fallback.
+    const withoutDay = []
+    for (const log of unassigned) {
+      const sameDay = slots.find(entry => entry.dayId === log.programDayId && matches(entry, log) && hasRoom(entry))
+      if (sameDay) sameDay.matching.push(log)
+      else withoutDay.push(log)
     }
-    return slots.map(entry => {
-      const { dayId, dayName, dayIndex, slot } = entry, matching = filled.get(entry)
+    for (const log of withoutDay) {
+      const entry = slots.find(slot => matches(slot, log) && hasRoom(slot))
+      if (entry) entry.matching.push(log)
+    }
+    return slots.map(({ dayId, dayName, dayIndex, slot, matching }) => {
       const target = Math.max(0, slot.sets || 0)
       const completed = Math.min(target, matching.length)
       const repSets = matching.filter(s => Number.isFinite(s.reps) && Number.isFinite(s.prescribed?.repMin ?? slot.repMin))
@@ -139,6 +153,7 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
     if (away.has(week)) return { week, away: true, score: null, grade: null, soFar: week === currentStart, deload: false, components: [] }
     const end = week === currentStart ? today : shift(week, 6)
     const plan = planAt(end)
+    const cut = plan?.cut ?? false
     const weekLogs = logs.filter(s => inWeek(s.date, week))
     const recentStart = shift(week, -7), earlierStart = shift(week, -35)
     const history = logs.filter(s => s.date >= earlierStart && s.date <= end && s.reps > 0)
@@ -167,16 +182,21 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
       progressionDetails.push({ exerciseId: rows[0].exerciseId, status, value: status === 'up' ? 1 : status === 'held' ? .6 : 0,
         reason: `${name}${rows[0].method ? ' · ' + rows[0].method : ''}: ${status} · ${before ? `e1RM ${rounded(before)} → ${rounded(after)} lb` : `${oldReps} → ${newReps} reps at the same load`}` })
     }
-    const progression = { id:'progression', label:'Progression', baseWeight:.35,
-      value: plan?.deload ? null : mean(progressionDetails.map(d => d.value)),
-      reason: plan?.deload ? 'Deload: progression rests this week' : progressionDetails.length ? `${progressionDetails.filter(d => d.status === 'up').length} of ${progressionDetails.length} lifts up` : 'Needs 3 sessions per lift across both comparison periods',
+    const improved = progressionDetails.filter(d => d.status === 'up').length
+    const held = progressionDetails.filter(d => d.status === 'held').length
+    const progression = { id:'progression', label:cut ? 'Strength trend' : 'Progression', baseWeight:.35,
+      value: cut || plan?.deload ? null : mean(progressionDetails.map(d => d.value)),
+      reason: plan?.deload && !cut ? 'Deload: progression rests this week'
+        : !progressionDetails.length ? 'Needs 3 sessions per lift across both comparison periods'
+        : cut ? `${improved} improved · ${held} held · ${progressionDetails.length - improved - held} below prior best`
+        : `${improved} of ${progressionDetails.length} lifts up`,
       details: progressionDetails }
     const adherenceDetails = fillSlots(plan, weekLogs)
     const sum = key => adherenceDetails.reduce((n, d) => n + d[key], 0)
     const prescribed = sum('prescribed'), completed = sum('completed'), repSets = sum('repSets'), reached = sum('reached')
     const adherence = { id:'adherence', label:'Plan adherence', baseWeight:.30,
       value: prescribed ? .7 * cap(completed / prescribed) + .3 * (repSets ? cap(reached / repSets) : 0) : null,
-      prescribed, completed, reached, repSets,
+      prescribed, completed, reached, repSets, unmatchedSets:weekLogs.length - completed,
       reason:prescribed ? `${completed} of ${prescribed} planned sets · ${reached} of ${repSets} reached rep minimum` : 'No prescribed working sets for this week', details:adherenceDetails }
     if (prescribed) adherence.formula = `70% × ${pct(cap(completed / prescribed))} of planned sets finished (${completed} of ${prescribed}) + 30% × ${pct(repSets ? cap(reached / repSets) : 0)} of logged sets at the rep minimum (${reached} of ${repSets}) = ${pct(adherence.value)}`
     const days = dayCounts(week), target = plannedDays(week)
@@ -184,32 +204,36 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
     const weekDetails = recentWeeks.map(w => ({ week:w, days:creditedDays(w).days, target:plannedDays(w) })).filter(w => w.target > 0)
     const credit = creditedDays(week)
     const met = weekDetails.filter(w => w.days >= w.target).length, qualified = credit.days
+    const dayCredit = target ? cap(qualified / target) : 0
     const consistency = { id:'consistency', label:'Consistency', baseWeight:.25,
-      value:target ? .7 * cap(qualified / target) + .3 * (weekDetails.length ? met / weekDetails.length : 0) : null,
+      value:target ? (cut ? dayCredit : .7 * dayCredit + .3 * (weekDetails.length ? met / weekDetails.length : 0)) : null,
       days:qualified, plannedDays:target, metWeeks:met, trackedWeeks:weekDetails.length,
       calendarDays:credit.calendar, plannedDaysDone:credit.planned,
-      reason:target ? (credit.planned >= credit.calendar ? `${qualified} of ${target} planned days done` : `${qualified} of ${target} training days`) + ` · ${met} of ${weekDetails.length} weeks met target` : 'No planned training days for this week',
+      reason:target ? (credit.planned >= credit.calendar ? `${qualified} of ${target} planned days done` : `${qualified} of ${target} training days`) + (cut ? '' : ` · ${met} of ${weekDetails.length} weeks met target`) : 'No planned training days for this week',
       details:[...days.map(d => ({ reason:`${d.date}: ${d.sets} working sets · ${rounded(d.minutes)} min · ${d.qualifies ? 'training day' : '6 sets or 30 min counts'}` })), ...weekDetails.map(w => ({ reason:`Week of ${w.week}: ${w.days} of ${w.target} days` }))] }
-    if (target) consistency.formula = `70% × ${pct(cap(qualified / target))} of planned training days (${qualified} of ${target}) + 30% × ${pct(weekDetails.length ? met / weekDetails.length : 0)} of recent weeks that met the plan (${met} of ${weekDetails.length}) = ${pct(consistency.value)}`
+    if (target) consistency.formula = cut
+      ? `${qualified} of ${target} planned training days this week = ${pct(dayCredit)}`
+      : `70% × ${pct(dayCredit)} of planned training days (${qualified} of ${target}) + 30% × ${pct(weekDetails.length ? met / weekDetails.length : 0)} of recent weeks that met the plan (${met} of ${weekDetails.length}) = ${pct(consistency.value)}`
     const prior = [1,2,3,4].map(n => shift(week,-n*7)).filter(w => start && shift(w,6) >= start && !away.has(w))
     const baseline = mean(prior.map(w => logs.filter(s => inWeek(s.date,w)).length))
     const volume = { id:'volume', label:'Volume trend', baseWeight:.10,
-      value:plan?.deload || baseline === null || baseline <= 0 ? null : cap(weekLogs.length / (baseline * .95)),
+      value:cut || plan?.deload || baseline === null || baseline <= 0 ? null : cap(weekLogs.length / (baseline * .95)),
       sets:weekLogs.length, average:baseline,
-      reason:plan?.deload ? 'Deload: volume rests this week' : baseline > 0 ? `${weekLogs.length} sets vs ${rounded(baseline)} avg` : 'Building a prior-week working-set baseline',
+      reason:cut ? `${weekLogs.length} working sets · ${prescribed} planned`
+        : plan?.deload ? 'Deload: volume rests this week' : baseline > 0 ? `${weekLogs.length} sets vs ${rounded(baseline)} avg` : 'Building a prior-week working-set baseline',
       details:[{reason:`Week of ${week}: ${weekLogs.length} working sets`},...prior.map(w => ({ reason:`Week of ${w}: ${logs.filter(s => inWeek(s.date,w)).length} working sets` }))] }
     const components = [progression, adherence, consistency, volume]
     const weight = components.filter(c => c.value !== null).reduce((n,c) => n+c.baseWeight,0)
     for (const component of components) component.weight = component.value === null ? 0 : component.baseWeight / weight
     const score = weight ? Math.round(100 * components.reduce((n,c) => n+(c.value ?? 0)*c.weight,0)) : null
-    return { week, away:false, score, grade:score === null ? null : grade(score), soFar:week === currentStart, deload:plan?.deload ?? false, components, baseline }
+    return { week, away:false, score, grade:score === null ? null : grade(score), soFar:week === currentStart, cut, deload:plan?.deload ?? false, components, baseline }
   }
   const all = []
   if (start) for (let w=monday(start);w<currentStart;w=shift(w,7)) all.push(calculate(w))
   // Never grade an unfinished week: the headline is the last completed, scored week.
   const graded = all.filter(w => !w.away && w.score !== null)
   const headline = graded.at(-1) ?? null
-  const comparison = headline ? graded.filter(w => w.week < headline.week).slice(-4) : []
+  const comparison = headline ? graded.filter(w => w.week < headline.week && w.cut === headline.cut).slice(-4) : []
   const average = mean(comparison.map(w => w.score))
   const current = headline ?? { week: currentStart, away: false, score: null, grade: null, soFar: false, deload: false, components: [] }
   // Completed weeks after the headline that got no grade, so a report can say why the headline is older.
@@ -250,14 +274,18 @@ const shortDay = date => MONTHS[Number(date.slice(5, 7)) - 1] + ' ' + Number(dat
  * @param {ReturnType<typeof trainingScore>} result
  */
 export function explainTrainingScore(result) {
-  const method = [
+  const h = result?.headline
+  const method = h?.cut ? [
+    'Plan adherence (55%): 70% planned sets finished, 30% sets that reached the rep minimum.',
+    'Consistency (45%): training days completed against this week’s plan.',
+    'Strength and volume trends show how your cut is going. The grade measures how closely you followed the week’s plan.',
+  ] : [
     'Progression (35%): your lifts over the last 2 weeks against the 4 weeks before.',
     'Plan adherence (30%): 70% planned sets finished, 30% sets that reached the rep minimum.',
     'Consistency (25%): 70% days trained against your plan, 30% recent weeks that met the plan. A planned day counts once two thirds of its sets are done, on any day; otherwise a day of 6+ working sets or 30+ minutes counts.',
     'Volume trend (10%): working sets against your recent average.',
     'Deload and away weeks skip the parts that would count against rest.',
   ]
-  const h = result?.headline
   if (!h) return { sentences: ['Your first full week will get a score. Until then, this card shows the work you have logged.'], method }
   const lastWeek = shift(monday(result.thisWeek?.week ?? h.week), -7) === h.week
   const sentences = [`${lastWeek ? 'Last week' : 'The week of ' + shortDay(h.week)} scored ${h.score}, ${gradePhrase(h.grade)}.`]
@@ -270,7 +298,8 @@ export function explainTrainingScore(result) {
       : skipped.every(w => w.reason !== 'away') ? (plural ? 'had no plan to grade' : 'had no plan to grade') : 'were away or had no plan to grade'
     sentences.push(`${list} ${why}, so ${shortDay(h.week)} is your latest graded week.`)
   }
-  if (h.deload) sentences.push('It was a deload week, so progression and volume rested.')
+  if (h.cut) sentences.push('The cut plan is built to maintain strength at lower volume.')
+  else if (h.deload) sentences.push('It was a deload week, so progression and volume rested.')
   const scored = h.components.filter(c => c.value !== null)
   // Credit the part that added the most points, not merely the highest percentage.
   const best = [...scored].sort((a, b) => b.value * b.weight - a.value * a.weight)[0]
@@ -287,7 +316,7 @@ export function explainTrainingScore(result) {
       const most = [...byDay].sort((a, b) => b[1] - a[1])[0]
       return `you finished ${c.completed} of ${c.prescribed} planned sets` + (held && most?.[1] > 0 ? `, with the most still to do in ${most[0]}` : '')
     }
-    if (c.id === 'consistency') return `${c.days} of ${c.plannedDays} ${c.plannedDaysDone >= c.calendarDays ? 'planned days done' : 'training days'}` + (held ? `, and ${c.metWeeks} of ${c.trackedWeeks} recent weeks reached the plan` : '')
+    if (c.id === 'consistency') return `${c.days} of ${c.plannedDays} ${c.plannedDaysDone >= c.calendarDays ? 'planned days done' : 'training days'}` + (held && !h.cut ? `, and ${c.metWeeks} of ${c.trackedWeeks} recent weeks reached the plan` : '')
     return `${c.sets} working sets against a ${rounded(c.average)} average`
   }
   if (best) sentences.push(`${best.label} carried it: ${phrase(best, false)}.`)

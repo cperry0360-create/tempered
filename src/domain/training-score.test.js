@@ -92,6 +92,58 @@ test('same-day program switch uses the active plan, not insertion order',async()
  assert.equal((await run(input)).current.components[1].prescribed,4)
 })
 
+test('the Beach Cut grades the current plan while showing lower volume and strength trends', async () => {
+  const input = block({ stalled:true })
+  const priorProgram = input.programs[0]
+  const cut = { ...structuredClone(priorProgram), id:'beach-cut-2026' }
+  cut.days.forEach(day => { day.exercises[0].sets = 1 })
+  input.programs.push(cut)
+  input.programStates[0].active = false
+  input.programStates.push({ programId:cut.id, startedOn:'2026-09-17', active:true })
+  const cutSessions = input.sessions.filter(session => session.date >= '2026-09-21')
+  cutSessions.forEach(session => { session.programId = cut.id })
+  const ids = new Set(cutSessions.map(session => session.id))
+  input.setLogs = input.setLogs.filter(log => !ids.has(log.sessionId) || log.id.endsWith('0'))
+  input.setLogs.filter(log => ids.has(log.sessionId)).forEach(log => { log.programId = cut.id; log.weight = 90 })
+  const result = await run(input)
+  const [strength, adherence, consistency, volume] = result.current.components
+  assert.equal(result.current.score, 100)
+  assert.equal(result.current.grade, 'A')
+  assert.equal(strength.value, null)
+  assert.match(strength.reason, /0 improved/)
+  assert.equal(adherence.completed, 2)
+  assert.equal(adherence.prescribed, 2)
+  assert.equal(consistency.value, 1)
+  assert.equal(volume.value, null)
+  assert.equal(volume.average, 4)
+  assert.match(volume.reason, /2 working sets · 2 planned/)
+  assert.equal(result.average, null, 'no comparison with a different grading method')
+  input.setLogs.pop()
+  assert.ok((await run(input)).current.score < 100, 'a genuinely unlogged planned set still changes the score')
+})
+
+test('legacy indexed sets follow their exercise when an older slot order no longer matches', async () => {
+  const input = block({ stalled:true })
+  const day = input.programs[0].days[0]
+  day.exercises.push({ exerciseId:'other', sets:1, repMin:6, repMax:10 })
+  const session = input.sessions.find(row => row.date === '2026-09-21')
+  const existing = input.setLogs.filter(log => log.sessionId === session.id)
+  existing.forEach(log => { log.slotIndex = 1 })
+  input.setLogs.push({ ...existing[0], id:'alternate', slotIndex:0, exerciseId:'swap', substitutedFor:'other' })
+  const adherence = (await run(input)).current.components[1]
+  assert.deepEqual(adherence.details.slice(0, 2).map(row => row.completed), [2, 1])
+  assert.equal(adherence.completed, 5)
+  assert.equal(adherence.unmatchedSets, 0)
+})
+
+test('an indexed set on an alternate week still counts for its rotating slot', async () => {
+  const input = block({ stalled:true })
+  const slot = input.programs[0].days[0].exercises[0]
+  slot.rotation = [{ exerciseId:'lift' }, { exerciseId:'other' }]
+  const adherence = (await run(input)).current.components[1]
+  assert.equal(adherence.completed, 4)
+})
+
 // ---- R11.1 ---------------------------------------------------------------
 const weekdays=['monday','tuesday','wednesday','thursday','friday']
 function fiveDay({ today='2026-10-01', doneThrough=2, microDay=null, startedOn='2026-09-07' }={}) {

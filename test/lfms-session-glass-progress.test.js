@@ -25,7 +25,7 @@ test('glass toolbar has genuine icons and safe long-press preview',()=>{
   assert.match(js,/activate\(event\)/)
   const glass = read('src/lfms-finish.css')
   assert.match(glass,/\.tabbar__tabs, #app\.app \.sessionbar__actions/)
-  assert.match(glass,/\.tabbar__glyph, #app\.app \.session-glass__glyph/
+  assert.match(glass,/\.tabbar__glyph, #app\.app \.session-glass__glyph/)
   assert.match(read('src/ui/icons.js'),/pause: \[\['p', 'M8 5v14M16 5v14'\]\]/)
 })
 test('workout finish, logging, and minimize remain backed by existing service',()=>{

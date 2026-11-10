@@ -370,25 +370,28 @@ html[data-layout="duo"] #app.app .tabbar {
   -webkit-backdrop-filter:none;
   backdrop-filter:none;
 }
-html[data-layout="duo"] #app.app .tabbar__tabs {
+/* The sidebar and workout toolbar share the glass vessel and optical lens. */
+:is(html[data-layout="duo"] #app.app .tabbar__tabs, #app.app .sessionbar__actions) {
   box-sizing:border-box;
-  width:48px;
-  flex:0 0 auto;
-  align-self:flex-end;
-  gap:4px;
-  padding:7px 1px;
   border:1px solid rgba(231,247,255,.24);
   border-radius:30px;
   background:linear-gradient(140deg,rgba(37,54,74,.86),rgba(11,24,43,.90) 55%,rgba(8,18,35,.88));
   box-shadow:inset 1px 1px 0 rgba(250,254,255,.20),inset -1px -2px 5px rgba(0,0,0,.17),0 12px 32px rgba(0,0,0,.30);
   -webkit-backdrop-filter:blur(24px) saturate(160%);
   backdrop-filter:blur(24px) saturate(160%);
-  transform-origin:right center;
-  transition:width 340ms cubic-bezier(.17,.88,.23,1.06),padding 340ms ease,border-radius 340ms ease,box-shadow 250ms ease;
   touch-action:none;
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
+}
+html[data-layout="duo"] #app.app .tabbar__tabs {
+  width:48px;
+  flex:0 0 auto;
+  align-self:flex-end;
+  gap:4px;
+  padding:7px 1px;
+  transform-origin:right center;
+  transition:width 340ms cubic-bezier(.17,.88,.23,1.06),padding 340ms ease,border-radius 340ms ease,box-shadow 250ms ease;
 }
 html[data-layout="duo"] #app.app .tabbar__tabs::before {
   inset:2px;
@@ -506,7 +509,10 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .icon {transform
   html[data-layout="duo"] #app.app .tabbar__tab > span {transition:none}
 }
 @media (prefers-reduced-transparency:reduce) {
-  html[data-layout="duo"] #app.app .tabbar__tabs {background:var(--food-v2-panel-2)}
+  :is(html[data-layout="duo"] #app.app .tabbar__tabs, #app.app .sessionbar__actions) {
+    background:var(--food-v2-panel-2);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
 }
 
 /* LFMS GLASS RAIL v4 — the reserved content gutter grows with the glass.
@@ -616,7 +622,7 @@ html[data-layout="duo"] #app.app .tabbar__tab::after {
   display:none;
   content:none;
 }
-html[data-layout="duo"] #app.app .tabbar__glyph {
+:is(html[data-layout="duo"] #app.app .tabbar__glyph, #app.app .session-glass__glyph) {
   position:relative;
   isolation:isolate;
   display:grid;
@@ -639,7 +645,7 @@ html[data-layout="duo"] #app.app .tabbar__glyph .icon {
   height:27px;
   transform-origin:center;
 }
-html[data-layout="duo"] #app.app .tabbar__glyph::before {
+:is(html[data-layout="duo"] #app.app .tabbar__glyph, #app.app .session-glass__glyph)::before {
   content:'';
   display:block;
   position:absolute;
@@ -654,19 +660,22 @@ html[data-layout="duo"] #app.app .tabbar__glyph::before {
   box-shadow:inset 0 1px 2px rgba(255,255,255,.86),inset 0 -3px 5px rgba(8,45,103,.50),0 0 16px rgba(79,182,255,.42);
   transition:opacity 190ms ease,box-shadow 190ms ease,background 190ms ease;
 }
-html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"] .tabbar__glyph::before {
+html[data-layout="duo"] #app.app .tabbar__tab[data-active="true"] .tabbar__glyph::before,
+#app.app .session-glass[data-paused="true"] .session-glass__glyph::before {
   opacity:1;
 }
 html[data-layout="duo"] #app.app .tabbar__tabs[data-holding="true"] .tabbar__tab[data-active="true"]:not([data-peek="true"]) .tabbar__glyph::before {
   opacity:.42;
 }
-html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph::before {
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph::before,
+#app.app .session-glass:is([data-expanded="true"],:focus-visible) .session-glass__glyph::before {
   opacity:1;
   border-color:rgba(252,255,255,.96);
   background:radial-gradient(circle at 34% 18%,rgba(255,255,255,.92),rgba(144,222,255,.75) 43%,rgba(25,118,220,.89) 100%);
   box-shadow:inset 0 1px 2px rgba(255,255,255,.96),0 0 23px rgba(91,194,255,.61);
 }
-html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph {
+html[data-layout="duo"] #app.app .tabbar__tab[data-peek="true"] .tabbar__glyph,
+#app.app .session-glass[data-expanded="true"] .session-glass__glyph {
   transform:scale(1.055);
 }
 html[data-layout="duo"] #app.app .tabbar__glyph::after {
@@ -686,7 +695,9 @@ html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::a
 }
 @media(prefers-reduced-motion:reduce) {
   html[data-layout="duo"] #app.app .tabbar__glyph,
-  html[data-layout="duo"] #app.app .tabbar__glyph::before {transition:none}
+  html[data-layout="duo"] #app.app .tabbar__glyph::before,
+  #app.app .session-glass__glyph,
+  #app.app .session-glass__glyph::before {transition:none}
   html[data-layout="duo"] #app.app .tabbar__tab[data-tap="true"] .tabbar__glyph::after {animation:none}
 }
 

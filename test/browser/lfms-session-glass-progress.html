@@ -4,8 +4,10 @@
 <link rel="stylesheet" href="../../src/tokens.css">
 <link rel="stylesheet" href="../../src/style.css">
 <link rel="stylesheet" href="../../src/polish.css">
+<link rel="stylesheet" href="../../src/calm.css">
 <link rel="stylesheet" href="../../src/duo.css">
 <link rel="stylesheet" href="../../src/workout-r5.css">
+<link rel="stylesheet" href="../../src/lfms-finish.css">
 <link rel="stylesheet" href="../../src/lfms-subscreen.css">
 <link rel="stylesheet" href="../../src/lfms-session-duo.css">
 </head><body><div id="app" class="app"></div><script type="module">
@@ -30,13 +32,53 @@ try {
   check('all five glass icons present',q('.sessionbar__actions')?.querySelectorAll('.session-glass').length===5)
   check('all workout actions retained',['cancel-session','toggle-session-timer','minimize-workout','finish'].every(x=>!!q('[data-action="'+x+'"]')))
   check('calculator still in header',!!q('[data-open-plate-calculator="true"]'))
+  const actions=q('.sessionbar__actions')
   const exit=q('[data-action="cancel-session"]')
-  exit?.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}))
-  await wait(360)
-  check('holding reveals Exit label',exit?.dataset.expanded==='true')
-  exit?.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,button:0}))
-  exit?.click()
-  check('holding Exit did not invoke it',!!q('.screen--session')&&!q('[data-confirm-action="discard"]')&&!q('.session-sheet'))
+  const finish=q('[data-action="finish"]')
+  const rail=q('.tabbar__tabs')
+  const pointer=(target,type,coords={})=>target.dispatchEvent(
+    new PointerEvent(type,{bubbles:true,button:0,pointerId:1,...coords}))
+  const pointerClick=target=>target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}))
+  const rect=node=>node.getBoundingClientRect()
+  const progress=q('.session-r5__progress-wrap')
+  const workspace=q('.session-r5__workspace')
+  const wide=innerWidth>=740&&innerWidth>innerHeight
+  const compactWidths=[...actions.children].map(button=>rect(button).width)
+  check('workout actions use the sidebar capsule material',
+    getComputedStyle(actions).backgroundImage===getComputedStyle(rail).backgroundImage
+      &&getComputedStyle(actions).backdropFilter===getComputedStyle(rail).backdropFilter
+      &&getComputedStyle(actions).backgroundImage.includes('gradient'))
+  if(wide) check('Duo header and movement progress align with the workout panels',
+    rect(actions).right<=rect(workspace).right+1&&rect(progress).bottom+4<=rect(workspace).top)
+  check('toolbar blocks text selection and the native hold callout',
+    getComputedStyle(exit).userSelect==='none'
+      &&!exit.dispatchEvent(new Event('selectstart',{bubbles:true,cancelable:true}))
+      &&!exit.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true})))
+  pointer(exit,'pointerdown')
+  await wait(660)
+  const glyph=q('.session-glass__glyph')
+  const label=q('.session-glass__label')
+  check('holding Exit reveals labels below the icons and a circular highlight',
+    actions.dataset.holding==='true'&&exit.dataset.expanded==='true'
+      &&[...actions.querySelectorAll('.session-glass__label')].every(node=>getComputedStyle(node).opacity==='1'&&rect(node).height>=14)
+      &&glyph&&rect(label).top>=rect(glyph).bottom
+      &&getComputedStyle(glyph,'::before').opacity==='1')
+  check('holding does not shift the other buttons horizontally',
+    [...actions.children].every((button,index)=>Math.abs(rect(button).width-compactWidths[index])<1))
+  check('expanded toolbar clears movement progress',rect(actions).bottom<=rect(progress).top)
+  pointer(exit,'pointerup')
+  pointerClick(exit)
+  check('holding Exit did not invoke it',!!q('.screen--session')&&!q('.session-sheet'))
+  check('releasing the hold closes its preview',actions.dataset.holding!=='true')
+  pointer(finish,'pointerdown')
+  pointer(finish,'pointermove',{clientX:24})
+  pointer(finish,'pointerup',{clientX:24})
+  pointerClick(finish)
+  check('dragging off Finish does not confirm',!q('[data-action="confirm-finish"]'))
+  pointer(finish,'pointerdown')
+  await wait(300)
+  pointer(finish,'pointercancel')
+  check('pointer cancellation clears the preview',actions.dataset.holding!=='true')
   q('[data-action="progress-view"]')?.click()
   check('chapter cards can be selected',!!q('.session-progress[data-progress-view="cards"]'))
   q('[data-action="progress-view"]')?.click()

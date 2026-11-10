@@ -1,3 +1,8 @@
+## 2026-11-10 — Sidebar glass for workout controls, 0.66.85 (191)
+
+- Reuse the sidebar capsule and circular highlight for the five workout actions. The horizontal capsule opens down to show all five labels. Holding previews the labels, and a tap or keyboard activation runs the selected action.
+- Keep the unfolded Duo header in the workout layout so the controls, movement tiles, and panels share the same edges. The progress tiles sit below the capsule when it opens, and the rest timer stays docked below the set card.
+
 ## 2026-11-06 — Put the sweeper in a dedicated foreground SVG layer
 
 - Production inspection showed the sweeper group had computed opacity and geometry but did not paint when composited inside the same animated SVG as the shard pile. Render the figure in a separate, identically scaled foreground SVG with a higher stacking layer.

@@ -1,3 +1,8 @@
+## 2026-11-10 — Duo workout controls and spacing, 0.66.85 (191)
+
+- Exit, Pause/Resume, Minimize, Calculator, and Finish share the sidebar glass capsule and circular highlight. Holding reveals labels underneath the icons and blocks text selection and the native callout.
+- The unfolded Duo header sits in flow with the movement progress and workout panels. Set logging and the inline rest timer keep their existing behavior.
+
 ## 2026-11-09 — Beach Cut plan score, 0.66.84 (190)
 
 - Beach Cut grades adherence to the prescribed sets and rep minimums plus completion of this week’s training days. Strength and working-set trends remain visible for context. Comparisons use weeks graded with the same rules, and the starting week counts scheduled days from activation.

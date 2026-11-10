@@ -920,51 +920,54 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     ])
   }
 
-  /** Press to expand, like the LFMS glass rail. Holding never activates Exit or Finish. */
+  /** A hold previews the controls. Only a tap or keyboard activation runs an action. */
   function glassAction({ className, symbol, label, data, ariaLabel, activate }) {
-    let holdTimer = null
-    let closeTimer = null
-    let held = false
+    let press = null
+    let holdTimer
+    let suppressClick = false
     const button = el('button.session-glass', {
-      class: className, type: 'button', title: label,
-      dataset: { ...(data ?? {}), expanded: 'false' },
+      class: className, type: 'button',
+      dataset: { ...(data ?? {}) },
       'aria-label': ariaLabel || label,
-    }, [icon(symbol), el('span.session-glass__label', { text: label })])
-    const cancelTimer = () => {
-      if (holdTimer !== null) { clearTimeout(holdTimer); holdTimer = null }
+    }, [
+      el('span.session-glass__glyph', { 'aria-hidden': 'true' }, [icon(symbol)]),
+      el('span.session-glass__label', { text: label, 'aria-hidden': 'true' }),
+    ])
+    const endPress = (event) => {
+      if (event.pointerId !== press?.id) return
+      clearTimeout(holdTimer)
+      if (button.dataset.expanded === 'true') {
+        button.removeAttribute('data-expanded')
+        button.parentElement?.removeAttribute('data-holding')
+      }
+      press = null
     }
     button.addEventListener('pointerdown', (event) => {
-      if (event.button > 0 || button.disabled) return
-      cancelTimer()
-      clearTimeout(closeTimer)
-      held = false
+      if (event.button !== 0 || press || button.disabled) return
+      suppressClick = false
+      press = { id: event.pointerId, x: event.clientX, y: event.clientY }
+      if (event.isTrusted) button.setPointerCapture?.(event.pointerId)
       holdTimer = setTimeout(() => {
-        held = true
-        root.querySelectorAll('.session-glass[data-expanded="true"]').forEach((node) => {
-          if (node !== button) node.dataset.expanded = 'false'
-        })
+        suppressClick = true
         button.dataset.expanded = 'true'
-      }, 300)
+        button.parentElement?.setAttribute('data-holding', 'true')
+      }, 270)
     })
-    button.addEventListener('pointerup', () => {
-      cancelTimer()
-      if (held) closeTimer = setTimeout(() => {
-        button.dataset.expanded = 'false'
-        held = false
-      }, 1200)
+    button.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== press?.id) return
+      if (Math.hypot(event.clientX - press.x, event.clientY - press.y) <= 10) return
+      suppressClick = true
+      endPress(event)
     })
-    button.addEventListener('pointercancel', () => {
-      cancelTimer()
-      button.dataset.expanded = 'false'
-      held = false
-    })
-    button.addEventListener('pointerleave', cancelTimer)
-    button.addEventListener('contextmenu', (event) => event.preventDefault())
+    button.addEventListener('pointerup', endPress)
+    button.addEventListener('pointercancel', endPress)
+    button.addEventListener('lostpointercapture', endPress)
+    for (const eventName of ['selectstart', 'contextmenu']) {
+      button.addEventListener(eventName, (event) => event.preventDefault())
+    }
     button.addEventListener('click', (event) => {
-      if (held) {
-        held = false
+      if (suppressClick && event.detail > 0) {
         event.preventDefault()
-        event.stopImmediatePropagation()
         return
       }
       activate(event)
@@ -1304,7 +1307,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             dataset: { sessionElapsed: 'true' }, text: clock(elapsedSeconds()),
           }),
         ]),
-        el('div.sessionbar__actions', { 'aria-label': 'Workout controls' }, [
+        el('div.sessionbar__actions', { role: 'group', 'aria-label': 'Workout controls' }, [
           glassAction({ className: 'sessionbar__cancel', symbol: 'close', label: 'Exit',
             data: { action: 'cancel-session' }, activate: cancelWorkout }),
           glassAction({ className: 'sessionbar__timer-toggle',

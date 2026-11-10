@@ -78,6 +78,12 @@ run('duo-session-cockpit.html @ 1120x650', process.execPath, [
   '--window', '1120,650',
 ])
 
+run('lfms-session-glass-progress.html @ 890x626', process.execPath, [
+  'tools/verify-logging-speed.js',
+  '--page', 'test/browser/lfms-session-glass-progress.html',
+  '--window', '890,626',
+])
+
 run('mobile-ui-smoke.html @ 430x932', process.execPath, [
   'tools/verify-logging-speed.js',
   '--page', 'test/browser/mobile-ui-smoke.html',

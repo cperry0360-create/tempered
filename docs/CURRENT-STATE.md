@@ -1,3 +1,7 @@
+## 2026-11-10 — Installed app update delivery, 0.66.86 (192)
+
+- Version 192 ships the Duo workout changes from 191 with a fresh offline asset cache. The update revalidates navigation and reads from the active release's cache, so an older cache cannot supply the workout UI.
+
 ## 2026-11-10 — Duo workout controls and spacing, 0.66.85 (191)
 
 - Exit, Pause/Resume, Minimize, Calculator, and Finish share the sidebar glass capsule and circular highlight. Holding reveals labels underneath the icons and blocks text selection and the native callout.

@@ -1,3 +1,8 @@
+## 2026-11-10 — Refresh installed app assets on update, 0.66.86 (192)
+
+- A reproduced upgrade from 190 to 191 could install the new version module alongside old workout code from the browser's HTTP cache. Bypass that cache during precache installation and limit runtime cache lookups to the active release.
+- Revalidate the app shell on navigation and fall back to the current release's offline copy. Workout drafts and local history stay in their existing stores.
+
 ## 2026-11-10 — Sidebar glass for workout controls, 0.66.85 (191)
 
 - Reuse the sidebar capsule and circular highlight for the five workout actions. The horizontal capsule opens down to show all five labels. Holding previews the labels, and a tap or keyboard activation runs the selected action.

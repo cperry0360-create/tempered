@@ -22,14 +22,18 @@ test('installed PWA checks for updates without trusting the HTTP cache', async (
 
 test('service worker hands a release over atomically instead of mixing asset generations', async () => {
   const worker = await read('sw.js')
-  assert.match(worker, /cache\.addAll\(PRECACHE\)/, 'a release installs only when its whole offline shell is available')
+  assert.match(worker, /PRECACHE\.map\(.*new Request\(.*cache: 'reload'/,
+    'installation bypasses the browser HTTP cache for every offline asset')
+  assert.match(worker, /cache\.addAll\(requests\)/, 'a release installs only when its whole offline shell is available')
   assert.match(worker, /oldTemperedCaches\.length\s*>\s*0/, 'worker detects replacement of an older Tempered cache')
   assert.match(worker, /client\.navigate\(client\.url\)/, 'open app windows restart after a version handoff')
   assert.match(worker, /oldTemperedCaches\.map\(\(key\)\s*=>\s*caches\.delete\(key\)\)/,
     'activation removes only old Tempered caches')
   assert.match(worker, /setTimeout\(\(\)\s*=>\s*controller\.abort\(\),\s*2500\)/,
     'navigations stop waiting on a weak network')
-  assert.match(worker, /caches\.match\(request\)\.then\(\(cached\)\s*=>\s*cached\s*\?\?\s*fetchAndCache\(\)\)/,
+  assert.match(worker, /caches\.match\(SHELL, \{ cacheName: CACHE \}\)/,
+    'offline navigation falls back to the active release shell')
+  assert.match(worker, /caches\.match\(request, \{ cacheName: CACHE \}\)\.then\(\(cached\)\s*=>\s*cached\s*\?\?\s*fetchAndCache\(\)\)/,
     'versioned app assets are served from the complete installed cache')
 })
 

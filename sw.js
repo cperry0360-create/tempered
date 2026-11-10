@@ -181,8 +181,11 @@ const PRECACHE = [
 ]
 
 self.addEventListener('install', (event) => {
+  // GitHub Pages can still have the previous release in the browser's HTTP
+  // cache. Fetch fresh assets before activating a cache for the new version.
+  const requests = PRECACHE.map((path) => new Request(new URL(path, SHELL), { cache: 'reload' }))
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()),
+    caches.open(CACHE).then((cache) => cache.addAll(requests)).then(() => self.skipWaiting()),
   )
 })
 
@@ -196,7 +199,10 @@ self.addEventListener('activate', (event) => {
 
     if (oldTemperedCaches.length > 0) {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      await Promise.allSettled(windows.map((client) => client.navigate(client.url)))
+      // The new worker can serve these navigations once activation finishes.
+      for (const client of windows) {
+        client.navigate(client.url).catch(() => {})
+      }
     }
   })())
 })
@@ -207,7 +213,7 @@ self.addEventListener('fetch', (event) => {
   if (new URL(request.url).origin !== self.location.origin) return
 
   const fetchAndCache = async (signal) => {
-    const response = await fetch(request, signal ? { signal } : undefined)
+    const response = await fetch(request, signal ? { signal, cache: 'no-cache' } : undefined)
     if (response.ok && response.type === 'basic') {
       const cache = await caches.open(CACHE)
       await cache.put(request, response.clone())
@@ -223,7 +229,7 @@ self.addEventListener('fetch', (event) => {
         try {
           return await fetchAndCache(controller.signal)
         } catch {
-          return await caches.match(SHELL) ?? Response.error()
+          return await caches.match(SHELL, { cacheName: CACHE }) ?? Response.error()
         } finally {
           clearTimeout(timeout)
         }
@@ -233,6 +239,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => cached ?? fetchAndCache()),
+    caches.match(request, { cacheName: CACHE }).then((cached) => cached ?? fetchAndCache()),
   )
 })

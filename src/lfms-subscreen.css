@@ -272,7 +272,7 @@
 .train--fuel-style .train-r4__subheader {
   background:var(--lfms-sub-bg);border-bottom:1px solid var(--lfms-sub-line);
 }
-.train--fuel-style .train-r4__subheader .screen__title {color:var(--lfms-sub-text);}
+:root:not([data-layout="duo"]) .train--fuel-style .train-r4__subheader .screen__title {color:var(--lfms-sub-text);}
 .train--fuel-style .train-r4__program[data-active-program="true"] .train-r4__eyebrow {
   color:var(--lfms-accent-red-soft);
 }

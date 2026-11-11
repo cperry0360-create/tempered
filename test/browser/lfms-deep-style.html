@@ -59,6 +59,10 @@ try {
     reminder?.children.length===2
     &&getComputedStyle(reminder.children[0]).backgroundColor==='rgb(53, 157, 243)'
     &&getComputedStyle(reminder.children[1]).backgroundColor==='rgb(16, 42, 67)')
+  await tempered.appearance.setPreference('light')
+  check('Dark Today reminder keeps readable ice-blue copy in Light appearance',
+    getComputedStyle(q('.today-nutrition-reminder__copy span')).color==='rgb(165, 189, 208)')
+  await tempered.appearance.setPreference('dark')
   q('[data-other="toggle"]')?.click()
   q('[data-activity="mobility"] .today-item__body')?.click()
   await settle()
@@ -83,6 +87,11 @@ try {
     exerciseSave && exerciseCancel
     &&getComputedStyle(exerciseSave).backgroundColor==='rgb(53, 157, 243)'
     &&getComputedStyle(exerciseCancel).backgroundColor==='rgb(16, 42, 67)')
+  await tempered.appearance.setPreference('light')
+  check('Exercise library title and light form labels use navy text',
+    [q('.train-r4__subheader .screen__title'), q('.custom-exercise__field')].every(node =>
+      node && getComputedStyle(node).color==='rgb(13, 34, 56)'))
+  await tempered.appearance.setPreference('dark')
   await tempered.app.show('settings')
   const program=q('[data-action="program-builder"]')
   program?.click();await settle(150)

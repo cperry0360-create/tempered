@@ -236,8 +236,10 @@
 .today--fuel-style .today-nutrition-reminder {
   --raised:var(--t2-raised);
   --text:var(--t2-white);
+  --hairline:var(--t2-line);
   border-color:var(--t2-blue);
 }
+.today--fuel-style .today-nutrition-reminder__copy span {color:var(--t2-muted)}
 .today--fuel-style .today-cardio-shortcut {
   background:var(--t2-raised);border-color:var(--t2-line);
   color:var(--t2-white);border-radius:12px;

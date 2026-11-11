@@ -36,7 +36,7 @@ try {
     getComputedStyle(document.documentElement).getPropertyValue('--lfms-accent-red').trim()!=='')
   const storage=createMemoryStorage(),clock=fixedClock(new Date(2026,10,1,12))
   await storage.open()
-  await storage.put('profile',{id:'profile',setupComplete:true,appearance:'dark'})
+  await storage.put('profile',{id:'profile',setupComplete:true,appearance:'dark',nutritionReviewStartOn:'2026-10-31'})
   const tempered=await bootstrapHarness({storage,clock,mount:q('#app'),initialTab:'settings'})
   await tempered.app.show('settings')
   const settings=q('.screen--settings'),cards=[...document.querySelectorAll('.screen--settings > .card')]
@@ -54,6 +54,11 @@ try {
   // Setup also replaces
   // the normal app shell by design and cannot be used as a navigation return.
   await tempered.app.show('today')
+  const reminder=q('.today-nutrition-reminder__actions')
+  check('Review yesterday uses electric blue and Later uses navy',
+    reminder?.children.length===2
+    &&getComputedStyle(reminder.children[0]).backgroundColor==='rgb(53, 157, 243)'
+    &&getComputedStyle(reminder.children[1]).backgroundColor==='rgb(16, 42, 67)')
   q('[data-other="toggle"]')?.click()
   q('[data-activity="mobility"] .today-item__body')?.click()
   await settle()
@@ -69,6 +74,15 @@ try {
   check('Workout completion uses navy stat tiles',
     !!q('.screen--summary')&&!!q('.summary-recap .stat')
     &&getComputedStyle(q('.summary-recap .stat')).borderTopWidth!=='0px')
+  await tempered.app.show('train')
+  q('[data-exercise-library="open"]')?.click()
+  q('[data-create-exercise]')?.click()
+  const exerciseSave=q('.custom-exercise button[type="submit"]')
+  const exerciseCancel=q('.custom-exercise__actions button[type="button"]')
+  check('Train custom exercise submit uses electric blue and Cancel uses navy',
+    exerciseSave && exerciseCancel
+    &&getComputedStyle(exerciseSave).backgroundColor==='rgb(53, 157, 243)'
+    &&getComputedStyle(exerciseCancel).backgroundColor==='rgb(16, 42, 67)')
   await tempered.app.show('settings')
   const program=q('[data-action="program-builder"]')
   program?.click();await settle(150)

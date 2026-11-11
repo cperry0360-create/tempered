@@ -152,7 +152,7 @@ export function createFuelScreen({ storage, daily, clock }) {
       const status = nutritionDayStatus(day, date, model.reviewStart, today)
       const todayItem = date === today
       // Closed is a checked diary, not a day under its calorie target.
-      // Amber means entered but unfinished; red X means the day passed
+      // A half-circle marks an unfinished diary; red X means the day passed
       // without entries. Never label a future day as missed.
       const visual = status === 'closed' ? 'closed'
         : (status === 'open' || (todayItem && status === 'unlogged')) ? 'partial'
@@ -208,9 +208,9 @@ export function createFuelScreen({ storage, daily, clock }) {
           el('p', { text: 'Add anything you have not logged, then mark the day complete. Your totals are not judged against your budget.' }),
         ]),
         el('div.fuel-diary__reminder-actions', {}, [
-          el('button', { type: 'button', dataset: { reviewYesterday: yesterday },
+          el('button.button.button--primary', { type: 'button', dataset: { reviewYesterday: yesterday },
             onclick: () => reviewDate(yesterday) }, ['Review yesterday']),
-          el('button', { type: 'button', onclick: dismissReminder }, ['Later']),
+          el('button.button', { type: 'button', onclick: dismissReminder }, ['Later']),
         ]),
       ]) : null
     return [

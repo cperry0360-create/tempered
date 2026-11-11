@@ -1,27 +1,27 @@
-/* Redesign V1 colour, type, spacing, and shape tokens. */
+/* Shared LFMS colour, type, spacing, and shape tokens. */
 :root {
-  --bg: #1B222C;
-  --surface-1: #242D39;
-  --surface-2: #2F3A48;
-  --surface-3: #3A4656;
-  --hairline: #445164;
-  --tabbar: #161C24;
-  --status-bar: #1B222C;
-  --text-1: #F3F6FA;
-  --text-2: #BCC7D4;
-  --text-3: #A2AEBD;
-  --train: #E8833A;
-  --train-ink: #E8833A;
-  --train-muted: #8A5A3A;
+  --bg: var(--food-v2-deep);
+  --surface-1: var(--food-v2-panel);
+  --surface-2: var(--food-v2-panel-2);
+  --surface-3: var(--food-v2-beach-base);
+  --hairline: var(--food-v2-line);
+  --tabbar: var(--food-v2-panel);
+  --status-bar: var(--lfms-duo-canvas);
+  --text-1: var(--food-v2-text);
+  --text-2: var(--food-v2-muted);
+  --text-3: #8AA9C2;
+  --train: var(--food-v2-blue);
+  --train-ink: var(--food-v2-blue-light);
+  --train-muted: var(--food-v2-beach-base);
   --fuel: #4FB286;
   --fuel-ink: #4FB286;
   --recovery: #5FA8E8;
   --recovery-ink: #5FA8E8;
-  --on-accent: #15191D;
+  --on-accent: var(--food-v2-deep);
   --success-tint: rgba(79,178,134,0.14);
-  --warning: var(--text-2);
-  --danger: var(--text-2);
-  --chart: #7A8592;
+  --warning: var(--train-ink);
+  --danger: var(--food-v3-danger);
+  --chart: #669BC7;
   --food-v2-deep: #061424;
   --food-v2-blue: #359DF3;
   --food-v2-panel: #0D2238;
@@ -30,7 +30,7 @@
   --food-v2-muted: #A5BDD0;
   --food-v2-protein: #F36A9C;
   --food-v3-danger: #F47779;
-  --food-v2-carbs: #F4B84D;
+  --food-v2-carbs: var(--food-v2-blue-light);
   --food-v2-fat: #28C8C5;
   --food-v2-fiber: #72D994;
   --food-v2-text: #F5F9FF;
@@ -76,7 +76,7 @@
   --edge: var(--hairline);
   --edge-strong: var(--hairline);
   --acid: var(--accent);
-  --blue: var(--text-2);
+  --blue: var(--train-ink);
   --active-tint: var(--surface-3);
   --lantern: var(--chart);
   --wisp: var(--chart);
@@ -119,22 +119,21 @@
 }
 
 :root[data-theme="light"] {
-  --bg: #F3F5F8;
+  --bg: #F1F7FD;
   --surface-1: #FFFFFF;
-  --surface-2: #EBEFF4;
-  --surface-3: #DFE5EC;
-  --hairline: #D3DAE3;
+  --surface-2: #E5F0FA;
+  --surface-3: #D4E7F7;
+  --hairline: #B8D1E7;
   --tabbar: #FFFFFF;
-  --status-bar: #161C24;
-  --text-1: #141A22;
-  --text-2: #4A5563;
-  --text-3: #5F6B7A;
-  --train-ink: #A04E0C;
-  --train-muted: #EDC7A6;
+  --text-1: #0D2238;
+  --text-2: #3D5872;
+  --text-3: #476782;
+  --train-ink: var(--food-v2-action-base);
+  --train-muted: #C3DCF4;
   --fuel-ink: #1F7A55;
   --recovery-ink: #2B6CB0;
-  --chart: #9AA5B2;
-  --blue: var(--text-2);
+  --danger: #AA2629;
+  --chart: #4476A0;
   --lantern: var(--chart);
   --wisp: var(--chart);
   --moss: var(--chart);

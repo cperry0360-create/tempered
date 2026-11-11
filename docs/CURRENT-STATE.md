@@ -1,3 +1,7 @@
+## 2026-11-11 — Shared LFMS controls and surfaces, 0.66.87 (193)
+
+- Shared controls and fallback panels use electric blue, navy, and ice blue in both appearances. Today and Fuel use the shared primary and secondary buttons for the open-food-log reminder. Custom exercise saves use the shared primary style across Train, workouts, and Program Builder.
+
 ## 2026-11-10 — Installed app update delivery, 0.66.86 (192)
 
 - Version 192 ships the Duo workout changes from 191 with a fresh offline asset cache. The update revalidates navigation and reads from the active release's cache, so an older cache cannot supply the workout UI.

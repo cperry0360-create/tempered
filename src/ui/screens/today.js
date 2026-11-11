@@ -1282,10 +1282,10 @@ export function createTodayScreen({
         el('span', { text: 'Review anything you have not logged, then close the day.' }),
       ]),
       el('div.today-nutrition-reminder__actions', {}, [
-        el('button', { type: 'button', dataset: { reviewNutritionDate: yesterday },
+        el('button.button.button--primary', { type: 'button', dataset: { reviewNutritionDate: yesterday },
           onclick: () => window.dispatchEvent(new CustomEvent('tempered:open-nutrition',
             { detail: { date: yesterday } })) }, ['Review yesterday']),
-        el('button', { type: 'button', onclick: async () => {
+        el('button.button', { type: 'button', onclick: async () => {
           profile = { ...profile, nutritionReminderDismissedOn: clock.today() }
           await storage.put('profile', profile)
           render()

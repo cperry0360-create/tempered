@@ -354,10 +354,6 @@ button.fuel-food__copy {
   justify-content:space-between; gap:12px; }
 .fuel-diary__reminder strong { font-size:14px; }
 .fuel-diary__reminder p { margin:4px 0 0; color:var(--text-2); font-size:12px; line-height:1.45; }
-.fuel-diary__reminder-actions { display:flex; gap:8px; }
-.fuel-diary__reminder-actions button { min-height:44px; padding:0 13px; background:var(--surface-2);
-  color:var(--text-1); border:0; border-radius:12px; font:650 12px var(--font-ui); }
-.fuel-diary__reminder-actions button:first-child { background:var(--train); color:var(--on-accent); }
 .fuel-diary__backlog { min-width:0; border:1px solid var(--hairline); border-radius:14px; padding:12px;
   background:var(--surface-1); }
 .fuel-diary__backlog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -390,10 +386,10 @@ button.fuel-food__copy {
 .today-nutrition-reminder__copy { display:grid; gap:5px; }
 .today-nutrition-reminder__copy strong { font-size:14px; }
 .today-nutrition-reminder__copy span { font-size:12px; color:var(--text-2); }
-.today-nutrition-reminder__actions { display:flex; gap:8px; }
-.today-nutrition-reminder__actions button { border:0; background:var(--surface-2); color:var(--text-1);
-  border-radius:12px; min-height:44px; padding-inline:13px; font:700 12px var(--font-ui); }
-.today-nutrition-reminder__actions button:first-child { background:var(--train); color:var(--on-accent); }
+:is(.fuel-diary__reminder-actions, .today-nutrition-reminder__actions) { display:flex; flex-wrap:wrap; gap:8px; }
+:is(.fuel-diary__reminder-actions, .today-nutrition-reminder__actions) .button {
+  min-height:44px; padding:0 13px; border-radius:12px; font:700 12px var(--font-ui);
+}
 @media (min-width:740px) {
   html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns:minmax(0,.97fr) minmax(0,1.1fr); }
   html[data-layout="duo"] .fuel-r4__budget-heading > div:first-child strong { font-size:clamp(26px,3vw,39px); }

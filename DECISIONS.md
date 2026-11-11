@@ -1,3 +1,7 @@
+## 2026-11-11 — Apply LFMS branding at the shared token layer
+
+- Use electric blue for primary actions, navy or ice blue for secondary surfaces in the active appearance, and brand red for destructive actions. Use ice blue for the previous amber nutrition accent so the open and missed diary states retain distinct shapes and colors.
+
 ## 2026-11-10 — Refresh installed app assets on update, 0.66.86 (192)
 
 - A reproduced upgrade from 190 to 191 could install the new version module alongside old workout code from the browser's HTTP cache. Bypass that cache during precache installation and limit runtime cache lookups to the active release.

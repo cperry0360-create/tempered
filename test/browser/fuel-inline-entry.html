@@ -67,7 +67,7 @@
     check('closed day renders green check and its actual calories',
       Boolean(q('[data-diary-date="2026-09-28"][data-visual="closed"]'))
       && q('[data-diary-date="2026-09-28"] .food-v3__day-cal')?.textContent === '160')
-    check('unfinished day has amber half-circle while unlogged day has red X',
+    check('unfinished day has a half-circle while unlogged day has an X',
       Boolean(q('[data-diary-date="2026-09-29"][data-visual="partial"]'))
       && Boolean(q('[data-diary-date="2026-09-30"][data-visual="missed"]')))
     check('macro guidance clutter is absent',

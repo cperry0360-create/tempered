@@ -1,5 +1,5 @@
 const APPEARANCE_OPTIONS = new Set(['system', 'light', 'dark'])
-const THEME_COLORS = { light: '#F3F5F8', dark: '#1B222C' }
+const THEME_COLORS = { light: '#F1F7FD', dark: '#101820' }
 
 /** Persisted display preference and system-colour-scheme bridge. */
 export function createAppearanceService({ storage, documentRef = globalThis.document, windowRef = globalThis.window }) {

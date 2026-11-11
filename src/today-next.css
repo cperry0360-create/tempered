@@ -233,7 +233,11 @@
   background:var(--t2-panel);color:var(--t2-light);
   border-color:var(--t2-line);font-size:11px;font-weight:770;
 }
-.today--fuel-style .today-nutrition-reminder {border-color:var(--t2-blue)}
+.today--fuel-style .today-nutrition-reminder {
+  --raised:var(--t2-raised);
+  --text:var(--t2-white);
+  border-color:var(--t2-blue);
+}
 .today--fuel-style .today-cardio-shortcut {
   background:var(--t2-raised);border-color:var(--t2-line);
   color:var(--t2-white);border-radius:12px;

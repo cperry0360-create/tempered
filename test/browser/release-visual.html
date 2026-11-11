@@ -649,7 +649,7 @@
           throw new Error('Floating Quick Log overlaps the neon card')
         if(window.innerWidth<=540){
           const shortcuts=[...mount.querySelectorAll('.fn2__pills button')]
-          if(shortcuts.length!==3 || shortcuts.some(n=>{
+          if(shortcuts.length!==4 || shortcuts.some(n=>{
             const b=n.getBoundingClientRect()
             return b.left<0 || b.right>window.innerWidth+1
           }))throw new Error('Food shortcut pill is clipped on phone/Duo cover')

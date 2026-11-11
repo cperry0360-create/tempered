@@ -138,7 +138,7 @@
       await settle(1200)
       check('cardio has simple Finish & log and live elapsed display',
         (q('.screen--cardio [data-action="save-cardio"]')?.textContent ?? '').includes('Finish & log')
-        && (q('.screen--cardio [data-cardio-elapsed]')?.textContent ?? '').includes('4.08 minutes')
+        && (q('.screen--cardio [data-cardio-elapsed]')?.textContent ?? '').includes('4:05 elapsed')
         && q('.screen--cardio [data-action="save-cardio"]')?.disabled === false)
       q('.screen--cardio [data-action="save-cardio"]')?.click()
       await waitFor('.screen--train')

@@ -421,7 +421,7 @@
 }
 
 
-/* Phone/Duo cover: all three logging shortcuts remain visible without
+/* Phone/Duo cover: all Fuel shortcuts remain visible without
    clipping a right-hand pill behind the viewport edge. */
 @media (max-width:540px) {
   .fn2__pills {flex-wrap:wrap;overflow-x:visible;gap:7px}
@@ -430,22 +430,22 @@
 /* Optional Fuel average page: reuse the daily dashboard, keep the main screen compact. */
 .fn2__average-heading {margin:4px 0 18px}
 .fn2__average-heading h2 {margin:14px 0 4px;font-size:22px}
-.fn2__average-heading p {margin:5px 0;color:var(--muted,#a6bacb);font-size:13px;line-height:1.5}
+.fn2__average-heading p {margin:5px 0;color:var(--fn-muted);font-size:13px;line-height:1.5}
 .fn2__average-controls {display:flex;align-items:center;gap:10px;margin:14px 0}
-.fn2__average-controls button {min-height:44px;border:1px solid #35546c;border-radius:16px;background:#102b41;color:#dcecff;padding:9px 14px;font:inherit}
+.fn2__average-controls button {min-height:44px;border:1px solid var(--fn-line);border-radius:16px;background:var(--fn-raised);color:var(--fn-ink);padding:9px 14px;font:inherit}
 .fn2__average-controls button:disabled {opacity:.35}
 .fn2__average-basis {display:flex;gap:6px;flex:1;flex-wrap:wrap}
-.fn2__average-basis button[aria-pressed="true"] {background:#185477;border-color:#62c5ff;color:#fff}
-.fn2__average-coverage {display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;color:#dcecff;line-height:1.35}
-.fn2__average-coverage strong {font-size:28px;color:#65d6ff}
-.fn2__average-coverage small {font-size:11px;max-width:110px;color:#a6bacb}
-.fn2__average-detail {margin-top:18px;padding:18px;border:1px solid #35546c;border-radius:22px;background:#102539;color:#dcecff}
+.fn2__average-basis button[aria-pressed="true"] {background:var(--food-v2-beach-base);border-color:var(--fn-blue-light);color:var(--fn-ink)}
+.fn2__average-coverage {display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;color:var(--fn-ink);line-height:1.35}
+.fn2__average-coverage strong {font-size:28px;color:var(--fn-blue-light)}
+.fn2__average-coverage small {font-size:11px;max-width:110px;color:var(--fn-muted)}
+.fn2__average-detail {margin-top:18px;padding:18px;border:1px solid var(--fn-line);border-radius:22px;background:var(--food-v2-panel);color:var(--fn-ink)}
 .fn2__average-detail h3 {margin:0 0 8px;font-size:17px}
-.fn2__average-detail p,.fn2__average-detail>small {font-size:13px;line-height:1.5;color:#b8cbda}
+.fn2__average-detail p,.fn2__average-detail>small {font-size:13px;line-height:1.5;color:var(--fn-muted)}
 .fn2__average-days {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:16px}
-.fn2__average-days button {display:flex;flex-direction:column;gap:7px;align-items:center;padding:12px 5px;min-height:88px;min-width:0;border:1px solid #35546c;border-radius:13px;background:#0a1b2b;color:#dcecff;font:inherit;font-size:12px}
+.fn2__average-days button {display:flex;flex-direction:column;gap:7px;align-items:center;padding:12px 5px;min-height:88px;min-width:0;border:1px solid var(--fn-line);border-radius:13px;background:var(--fn-bg);color:var(--fn-ink);font:inherit;font-size:12px}
 .fn2__average-days strong {font-size:13px}
-.fn2__average-days small {color:#9fbacf;font-size:10px}
+.fn2__average-days small {color:var(--fn-muted);font-size:10px}
 @media(max-width:600px) {
   .fn2__average-days {grid-template-columns:repeat(2,minmax(0,1fr))}
   .fn2__average-days button {min-height:64px}

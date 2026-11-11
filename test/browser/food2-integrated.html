@@ -49,9 +49,8 @@ try{
    q('.fn2__neo-calorie-goal')?.textContent==='of '+Math.round(goal('calories_logged',2100)).toLocaleString()+' kcal'
    && q('[data-macro="protein"]')?.textContent.includes(String(Math.round(goal('protein_target',135))))
    && q('.fn2__neo-target-bottom')?.textContent.includes(Math.round(goal('calories_logged',2100)-480).toLocaleString()))
- check('Food Library, Log and Meal History shortcuts remain',
-   qa('.fn2__pills button').length===3
-   && qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Log|Meal History')
+ check('Fuel shortcuts include Food Library, Log, Meal History and the 7-day average',
+   qa('.fn2__pills button').map(x=>x.textContent.trim()).join('|')==='Food Library|Log|Meal History|7-day average')
  check('new style retains existing right-side section navigation',qa('.tabbar__tab').length===4)
  check('calorie perimeter is one clockwise outline with four real meal arcs',
    qa('.fn2__neo-perimeter-live').length===4
@@ -89,7 +88,7 @@ try{
    && (await t.daily.dayLog('2026-10-01')).calories===480)
 
  check('water is canonical data, not sample data',q('.fn2__stat:nth-child(2)')?.textContent.includes('16 oz'))
- check('steps and weight are blank when not logged',q('.fn2__stat:nth-child(3)')?.textContent.includes('—')&&q('.fn2__stat:first-child')?.textContent.includes('—'))
+ check('weight is blank when not logged',q('.fn2__stat--weight strong')?.textContent==='—')
  check('Macro Journal is on the main Food dashboard, below the summaries',
    !!q('.fn2__macro-journal') && !!q('.fn2__stats')
    && q('.fn2__macro-journal').compareDocumentPosition(q('.fn2__stats')) & Node.DOCUMENT_POSITION_PRECEDING)
@@ -99,7 +98,6 @@ try{
    && q('.fn2__macro-journal')?.textContent.includes('Chicken and rice bowl'))
  check('Glass controls retain top Log without a redundant floating overlay',
    getComputedStyle(q('.fn2__pills button')).backgroundImage.includes('linear-gradient')
-   && qa('.fn2__pills button').length===3
    && q('.fn2__pills button:nth-child(2)').textContent.trim()==='Log'
    && q('.fn2__pills button:nth-child(2)').getBoundingClientRect().height>=36
    && !q('.fn2__float')
@@ -185,7 +183,7 @@ try{
  check('undo restores exact canonical meal entry',restored.calories===640&&nutritionLedger(restored).entries.length===2)
  q('.fn2__history-arrow[aria-label="Previous day"]')?.click();await settle(60)
  check('Previous-day Meal History stays in new Food UI and loads prior meals',
-   q('.fn2__history-date input')?.value==='2026-09-30'
+   q('[aria-label="Choose meal history date"]')?.value==='2026-09-30'
    && q('.fn2__journal')?.textContent.includes('Greek yogurt and berries')
    && !q('[data-nutrition-screen]'))
  const historical=qa('.fn2__meal-row').find(x=>x.textContent.includes('Greek yogurt'))
@@ -199,13 +197,13 @@ try{
  check('Historical Undo restores selected day without touching today',
    (await t.daily.dayLog('2026-09-30')).calories===160
    && (await t.daily.dayLog('2026-10-01')).calories===640)
- const dateInput=q('.fn2__history-date input')
+ const dateInput=q('[aria-label="Choose meal history date"]')
  dateInput.value='2026-09-29'
  dateInput.dispatchEvent(new Event('change',{bubbles:true}))
  await settle(50)
- check('Date picker can jump to an earlier day',q('.fn2__history-date input')?.value==='2026-09-29'&&q('.fn2__journal')?.textContent.includes('Greek yogurt'))
+ check('Date picker can jump to an earlier day',q('[aria-label="Choose meal history date"]')?.value==='2026-09-29'&&q('.fn2__journal')?.textContent.includes('Greek yogurt'))
  q('.fn2__history-today')?.click();await settle(50)
- check('Today returns to present without an old-style overlay',q('.fn2__history-date input')?.value==='2026-10-01'&&!q('[data-nutrition-screen]'))
+ check('Today returns to present without an old-style overlay',q('[aria-label="Choose meal history date"]')?.value==='2026-10-01'&&!q('[data-nutrition-screen]'))
  q('.fn2__pills button:nth-child(2)')?.click();await settle(80)
  check('Log opens the original meal form and import/photo actions without a popup',
    !!q('.fn2__log-entry [data-nutrition-form]')

@@ -44,7 +44,7 @@
       const sleepInput = await waitFor('[data-editor="sleep"] [data-entry="sleep"]')
       check('Sleep uses a decimal-friendly number input', sleepInput?.type === 'number' && sleepInput?.inputMode === 'decimal',
         `${sleepInput?.type ?? 'missing'} / ${sleepInput?.inputMode ?? 'missing'}`)
-      check('Sleep input explicitly allows partial hours', sleepInput?.step === '0.1', `step ${sleepInput?.step ?? 'missing'}`)
+      check('Sleep input explicitly allows hundredths of an hour', sleepInput?.step === '0.01', `step ${sleepInput?.step ?? 'missing'}`)
 
       const quicks = qa('[data-editor="sleep"] [data-sleepquick]')
       check('Sleep offers common decimal shortcuts', quicks.length === 5,

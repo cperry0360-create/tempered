@@ -159,7 +159,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
-      if (['micro_cardio', 'creatine', 'other_supplements'].includes(activity.id)) {
+      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility'].includes(activity.id)) {
         return [activity.id, { cadence: 'daily', target: 1 }]
       }
       if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]
@@ -273,7 +273,11 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   async function logAt(date, activityId, value = null, options = {}) {
     const day = await dayLog(date)
     if (date > clock.today() || !ACTIVITY_FIELDS[activityId]) return emptyResult(day)
-    const next = applyActivity(day, activityId, value, options)
+    if (activityId === 'foot_mobility' && value !== 8) return emptyResult(day)
+    const logged = applyActivity(day, activityId, value, options)
+    const next = activityId === 'foot_mobility'
+      ? { ...logged, footMobilityHolds: value }
+      : logged
     const isFood = ['nutrition_logged', 'calories_logged', 'protein_target'].includes(activityId)
     return settleDay(isFood && next !== day ? { ...next, nutritionStatus: 'partial' } : next)
   }

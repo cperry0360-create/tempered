@@ -8,6 +8,7 @@
 
 import { dayBefore, nutritionDayStatus, nutritionHasEntry } from '../../domain/nutrition-review.js'
 import { el, replace } from '../dom.js'
+import { openFootMobility } from '../foot-mobility.js'
 import { icon, iconForActivity } from '../icons.js'
 import { mainTabBrand } from '../main-tab-header.js'
 import { sortActivities } from '../../domain/activities.js'
@@ -650,6 +651,27 @@ export function createTodayScreen({
   }
 
   function activityItem(activity, weekly = null) {
+    if (activity.id === 'foot_mobility') {
+      const complete = rowComplete(activity, weekly)
+      const date = selectedDate
+      return el('div.today-item-wrap', { dataset: { activity: activity.id, complete: String(complete) } }, [
+        el('div.today-item', {}, [
+          el('button.today-item__body', {
+            type: 'button', disabled: complete || !canLogSelected(),
+            onclick: () => openFootMobility({ save: async () => {
+              await daily.logAt(date, activity.id, 8)
+              await reload()
+            } }),
+          }, [
+            compactGlyph(activity, complete),
+            el('span.today-item__main', {}, [
+              el('span.today-item__name', { text: activity.name }),
+              el('span.today-item__meta', { text: complete ? '8 holds logged' : 'Start · About 5 min' }),
+            ]),
+          ]),
+        ]),
+      ])
+    }
     if (activity.spec?.entry === 'mark') return markItem(activity, weekly)
     return numberItem(activity, weekly)
   }

@@ -360,3 +360,15 @@
   border:1px solid var(--lfms-accent-red);
   color:var(--lfms-accent-red-soft);
 }
+
+dialog.foot-mobility {
+  width: min(92vw, 28rem);
+  max-height: 85dvh;
+  margin: auto;
+  overflow: auto;
+  padding: 1rem;
+}
+.foot-mobility::backdrop { background: rgb(0 0 0 / 75%); }
+.foot-mobility__body { display: grid; gap: .6rem; }
+.foot-mobility__body :is(h3, p) { margin: 0; }
+.foot-mobility__body img { width: 100%; height: auto; }

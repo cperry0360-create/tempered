@@ -22,6 +22,7 @@
  */
 
 import { el, replace } from '../dom.js'
+import { FOOT_MOBILITY, FOOT_MOBILITY_INTERVALS, FOOT_MOBILITY_REST } from '../../domain/foot-mobility.js'
 import { openPlateCalculator } from '../plate-calculator.js'
 import { customExerciseForm } from '../custom-exercise-form.js'
 import { icon } from '../icons.js'
@@ -34,8 +35,15 @@ import { clearActiveSessionDraft, loadActiveSessionDraft, saveActiveSessionDraft
  *  wherever the document lives — the app root, /tempered/, or a test harness. */
 const artUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.url).href
 const stretchPhotos = {
-  Straight: new URL('../stretch-photos/foot-calf-straight.jpg', import.meta.url).href,
-  Bent: new URL('../stretch-photos/foot-calf-bent.jpg', import.meta.url).href,
+  straight: new URL('../stretch-photos/foot-calf-straight.jpg', import.meta.url).href,
+  bent: new URL('../stretch-photos/foot-calf-bent.jpg', import.meta.url).href,
+  plantar: new URL('../stretch-photos/plantar-fascia.jpg', import.meta.url).href,
+  roll: new URL('../stretch-photos/arch-roll.jpg', import.meta.url).href,
+}
+const stretchCredits = {
+  plantar: ['Covelli et al., Fig. 1d · Cropped · CC BY 4.0', 'https://doi.org/10.3390/biomedicines12081729'],
+  roll: ['U.S. Marshals Service · Tennis Ball Guide', 'https://www.usmarshals.gov/sites/default/files/media/document/FIT-readiness-program.pdf#page=145'],
+  calf: ['U.S. Public Health Service · APFT Training Guide', 'https://upload.wikimedia.org/wikipedia/commons/f/f6/U._S._Public_Health_Service_Commissioned_Corps_Annual_Physical_Fitness_Test_Training_Guide%2C_version_1.0.pdf#page=26'],
 }
 
 /** What a home gym holds, per side. Editable from the Equipment pill. */
@@ -862,17 +870,17 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       el('header.exercise__head', {}, [
         el('div.exercise__title', {}, [
           el('h2.exercise__name', { text: entry.exercise.name }),
-          el('p.exercise__range', { text: '25 s per hold · 15 s between holds' }),
+          el('p.exercise__range', { text: `${entry.sets.length} × ${clock(entry.sets[0].seconds)}` }),
         ]),
       ]),
       ...entry.sets.map((set, index) => {
         const current = hold?.entry === entry && hold.index === index
         const running = current && hold.endsAt !== null
         return el('div.stretch-hold', { dataset: { done: String(set.logged) } }, [
-          el('strong', { text: `${set.side} leg back · Rep ${set.rep}` }),
+          el('strong', { text: set.label }),
           el('span', {
             dataset: current ? { stretchCountdown: 'true' } : {},
-            text: current ? clock(Math.ceil((running ? Math.max(0, hold.endsAt - timeSource.now()) : hold.remaining) / 1000)) : '0:25',
+            text: current ? clock(Math.ceil((running ? Math.max(0, hold.endsAt - timeSource.now()) : hold.remaining) / 1000)) : clock(set.seconds),
           }),
           set.logged ? el('span', { 'aria-label': 'Complete' }, [icon('check')])
             : el('button.session-r5__add-movement', {
@@ -880,7 +888,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
               onclick: () => {
                 if (running) { pauseStretchHold(); return }
                 if (timerPaused) { timerPaused = false; activateWorkoutScreen() }
-                const remaining = current ? hold.remaining : 25000
+                const remaining = current ? hold.remaining : set.seconds * 1000
                 hold = { entry, index, remaining, endsAt: timeSource.now() + remaining }
                 render()
               },
@@ -1007,7 +1015,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       el('div.session-progress__meta', {}, [
         el('div.session-progress__counts', {}, [
           el('strong', { text: 'Movement ' + (focusStageIndex + 1) + ' of ' + plan.length }),
-          el('span', { text: loggedCount() + ' / ' + all + (stretch ? ' holds · ' : ' sets · ') + completed + ' complete' }),
+          el('span', { text: loggedCount() + ' / ' + all + (stretch ? ' intervals · ' : ' sets · ') + completed + ' complete' }),
         ]),
         el('button.session-progress__switch', {
           type: 'button', dataset: { action: 'progress-view' },
@@ -1031,7 +1039,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             dataset: { movement: String(index + 1),
               focused: String(index === focusStageIndex), complete: String(finished) },
             'aria-current': index === focusStageIndex ? 'step' : null,
-            'aria-label': name + ', ' + done + ' of ' + item.sets.length + (stretch ? ' holds complete' : ' sets logged'),
+            'aria-label': name + ', ' + done + ' of ' + item.sets.length + (stretch ? ' intervals complete' : ' sets logged'),
             onclick: () => focusExercise(index),
           }, [
             el('span.session-progress__number', { text: finished ? '✓' : String(index + 1) }),
@@ -1125,12 +1133,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             ])
           : el('div.session-r5__visual-fallback', {}, [icon('train')]),
         el('div.session-r5__visual-shade'),
-        el('span.session-r5__image-tag', {text:`MOVEMENT ${focusStageIndex+1} / ${plan.length}`}),
+        !stretch && el('span.session-r5__image-tag', {text:`MOVEMENT ${focusStageIndex+1} / ${plan.length}`}),
       ]),
       el('div.session-r5__stage-copy', {}, [
         el('p.session-r5__eyebrow', { text:'CURRENT MOVEMENT' }),
         el('h2', { text:movementName }),
-        el('p.session-r5__stage-target', { text:stretch ? '4 holds · 25 s each' : entry.slot
+        el('p.session-r5__stage-target', { text:stretch ? `${entry.sets.length} × ${clock(entry.sets[0].seconds)}` : entry.slot
           ? `${entry.slot.repMin}–${entry.slot.repMax} reps · ${clock(entry.restSec)} rest`
           : `${entry.sets.length} sets · ${clock(entry.restSec)} rest` }),
         el('div.session-r5__stage-cue', {}, [
@@ -1138,8 +1146,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           el('p', {text:entry.slot?.cue || entry.slot?.setup || entry.proposal?.reason || 'Work through the full range of motion. Control every rep.' }),
         ]),
         el('div.session-r5__stage-totals', {}, [
-          el('div', {}, [el('strong',{text:`${done} / ${entry.sets.length}`}),el('small',{text:stretch ? 'Stretch holds' : 'Movement sets'})]),
-          el('div', {}, [el('strong',{text:`${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)}`}),el('small',{text:stretch ? 'Total holds' : 'Total sets'})]),
+          el('div', {}, [el('strong',{text:`${done} / ${entry.sets.length}`}),el('small',{text:stretch ? 'Movement intervals' : 'Movement sets'})]),
+          el('div', {}, [el('strong',{text:`${loggedCount()} / ${plan.reduce((n,e)=>n+e.sets.length,0)}`}),el('small',{text:stretch ? 'Total intervals' : 'Total sets'})]),
           el('div', {}, [
             entry.record?.bestWeight
               ? el('strong',{text:`${lbs(entry.record.bestWeight.weight)} × ${entry.record.bestWeight.reps}`})
@@ -1148,8 +1156,10 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           ]),
         ]),
         stretch && el('p.stretch-photo-credit', {}, [
-          'Photo: ', el('a', { href: 'https://doi.org/10.3390/biomedicines12081729', target: '_blank', rel: 'noopener', text: 'Covelli et al. (2024), Fig. 1' }),
-          ' · Cropped · ', el('a', { href: 'https://creativecommons.org/licenses/by/4.0/', target: '_blank', rel: 'noopener', text: 'CC BY 4.0' }),
+          el('a', { href: entry.credit[1], text: entry.credit[0], target: '_blank', rel: 'noopener' }),
+          entry.exercise.id === 'plantar-fascia' && el('a', {
+            href: 'https://creativecommons.org/licenses/by/4.0/', text: ' · License', target: '_blank', rel: 'noopener',
+          }),
         ]),
         el('div.session-r5__stage-nav', {}, [
           el('button',{type:'button',disabled:focusStageIndex===0,onclick:()=>focusExercise(focusStageIndex-1)},['← Previous']),
@@ -1453,7 +1463,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           !stretch && glassAction({ className: 'plate-calculator-link', symbol: 'calculator', label: 'Calculator',
             data: { openPlateCalculator: 'true' }, ariaLabel: 'Plate calculator',
             activate: (event) => openPlateCalculator(event.currentTarget) }),
-          stretch && loggedCount() === 8 && glassAction({ className: 'sessionbar__finish',
+          stretch && loggedCount() === FOOT_MOBILITY_INTERVALS && glassAction({ className: 'sessionbar__finish',
             symbol: 'check', label: 'Save stretches', data: { action: 'save-stretches' },
             activate: finish }),
           !stretch && glassAction({ className: 'sessionbar__finish', symbol: 'check', label: 'Finish',
@@ -1479,8 +1489,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             ]),
             session?.deload && el('p.deload', { text: 'Deload week. Hold the weight — recovery is half the work.' }),
             ...(stretch ? [exerciseCard(plan[focusStageIndex], focusStageIndex)] : plan.map(exerciseCard)),
-            stretch && loggedCount() === 8 && el('button.session-r5__add-movement', {
-              type: 'button', disabled: loggedCount() !== 8 || savingStretch, onclick: finish,
+            stretch && loggedCount() === FOOT_MOBILITY_INTERVALS && el('button.session-r5__add-movement', {
+              type: 'button', disabled: loggedCount() !== FOOT_MOBILITY_INTERVALS || savingStretch, onclick: finish,
             }, ['Save to Daily Log']),
             // Cardio has its own screen; the live lifting view stays focused on sets.
             !stretch && (!duoLayout || plan.length===0 || addingMovement) && movementPicker(),
@@ -1545,7 +1555,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
 
   async function finish() {
     if (stretch) {
-      if (savingStretch || loggedCount() !== 8) return
+      if (savingStretch || loggedCount() !== FOOT_MOBILITY_INTERVALS) return
       savingStretch = true
       render()
       try {
@@ -1593,18 +1603,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       stretch = { save }
       root.dataset.stretchSession = 'true'
       session = { title: 'Foot Mobility' }
-      plan = ['Straight', 'Bent'].map((knee) => ({
-        exercise: {
-          id: knee.toLowerCase() + '-knee',
-          name: knee + '-knee calf stretch',
-          unit: 'time',
-          art: stretchPhotos[knee],
-        },
-        slot: {
-          cue: `Hands on the wall, back heel and toes flat. ${knee === 'Bent' ? 'Soften the back knee.' : 'Keep the back knee straight.'} Lean gently. Stop if heel, arch, or big-toe pain starts.`,
-        },
-        restSec: 15,
-        sets: [1, 2].flatMap((rep) => ['Left', 'Right'].map((side) => ({ side, rep, logged: false }))),
+      plan = FOOT_MOBILITY.map(({ id, name, photo, cue, sets }) => ({
+        exercise: { id, name, unit: 'time', art: stretchPhotos[photo] },
+        slot: { cue },
+        credit: stretchCredits[photo] ?? stretchCredits.calf,
+        restSec: FOOT_MOBILITY_REST,
+        sets: sets.map(set => ({ ...set, logged: false })),
       }))
       activateWorkoutScreen()
       render()

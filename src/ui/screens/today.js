@@ -662,7 +662,7 @@ export function createTodayScreen({
             compactGlyph(activity, complete),
             el('span.today-item__main', {}, [
               el('span.today-item__name', { text: activity.name }),
-              el('span.today-item__meta', { text: complete ? '8 holds logged · Open routine' : 'Start · About 5 min' }),
+              el('span.today-item__meta', { text: complete ? 'Done · Open routine' : 'Start · About 5½ min' }),
             ]),
           ]),
         ]),
@@ -1412,7 +1412,7 @@ export function createTodayScreen({
             onclick: () => onStartStretch(selectedDate),
           }, [
             el('strong', { text: 'Foot Mobility' }),
-            el('span', { text: day?.day?.footMobilityDone ? 'Done today · Open routine' : 'Start guided stretches · 5 min' }),
+            el('span', { text: day?.day?.footMobilityDone ? 'Done today · Open routine' : 'Start guided stretches · 5½ min' }),
           ]),
           readinessCard(),
           fuelCard(allActivities),

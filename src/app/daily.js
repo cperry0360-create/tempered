@@ -1,3 +1,4 @@
+import { FOOT_MOBILITY_INTERVALS } from '../domain/foot-mobility.js'
 /**
  * Non-workout logging and cadence.
  *
@@ -273,10 +274,10 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   async function logAt(date, activityId, value = null, options = {}) {
     const day = await dayLog(date)
     if (date > clock.today() || !ACTIVITY_FIELDS[activityId]) return emptyResult(day)
-    if (activityId === 'foot_mobility' && value !== 8) return emptyResult(day)
+    if (activityId === 'foot_mobility' && value !== FOOT_MOBILITY_INTERVALS) return emptyResult(day)
     const logged = applyActivity(day, activityId, value, options)
     const next = activityId === 'foot_mobility'
-      ? { ...logged, footMobilityHolds: value }
+      ? { ...logged, footMobilityIntervals: value }
       : logged
     const isFood = ['nutrition_logged', 'calories_logged', 'protein_target'].includes(activityId)
     return settleDay(isFood && next !== day ? { ...next, nutritionStatus: 'partial' } : next)

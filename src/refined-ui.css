@@ -134,8 +134,6 @@ html[data-layout="duo"] .train-calculator-bar {
 .train-r4__plan-preview {
   border-color: color-mix(in srgb, var(--train) 34%, var(--hairline));
 }
-.train-r4__preview-heading { border-bottom: 1px solid var(--hairline); padding-bottom:12px; }
-.train-r4__preview-heading h2 { font-size: clamp(19px, 2.1vw, 26px); letter-spacing:-.025em; }
 .train-r4__preview-exercise { padding-block: 11px; }
 .train-r4__preview-index {
   display:grid; place-items:center; border-radius:9px;

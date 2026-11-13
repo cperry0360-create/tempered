@@ -280,7 +280,8 @@ html[data-layout="duo"] .train--fuel-style .train-calculator-bar {
    The selected item is the only raised optical lens. No full-height stripe. */
 html[data-layout="duo"] #app.app .app__body {
   width:100%;
-  padding-right:calc(var(--duo-rail-width) + var(--duo-gutter));
+  --duo-content-right:calc(var(--duo-rail-width) + var(--duo-gutter));
+  padding-right:var(--duo-content-right);
 }
 html[data-layout="duo"] #app.app .tabbar,
 html[data-layout="duo"]:has(.app__body>.today--fuel-style) .tabbar,
@@ -522,7 +523,13 @@ html[data-layout="duo"] #app.app .app__body {
 }
 html[data-layout="duo"] #app.app:has(.tabbar__tabs[data-holding="true"]) .app__body,
 html[data-layout="duo"] #app.app:has(.tabbar__tab:focus-visible) .app__body {
-  padding-right:calc(var(--duo-rail-width) + var(--duo-gutter) + 60px);
+  --duo-content-right:calc(var(--duo-rail-width) + var(--duo-gutter) + 60px);
+}
+@media (min-width:600px) and (orientation:landscape) {
+  html[data-layout="duo"] #app.app .app__body:has(> .train--preview) {
+    padding-inline:max(var(--duo-content-right), calc(var(--duo-gutter) + var(--duo-inset-left)));
+    transition:none;
+  }
 }
 
 /* Keep the touch target 44px while the visible selection lens sits 7px

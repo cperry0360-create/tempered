@@ -215,7 +215,7 @@ check(label + ' content is padded clear of the floating icons',
         Boolean(q('[data-program-preview] .train-r4__preview-exercise'))
         && Boolean(q('[data-start-preview]'))
         && !q('.screen--session'))
-      q('.train-r4__plan-preview .train-r4__back')?.click()
+      q('.train-r4__subheader .train-r4__back')?.click()
       await settle()
       check(label + ' user can return to planned sessions', Boolean(q('.train-r4__sessions')))
       q('.app__body').scrollTop = 160; await settle()
@@ -275,6 +275,49 @@ check(label + ' content is padded clear of the floating icons',
         r('.program-builder__editor').top >= r('.program-builder__sidebar').bottom)
       q('[data-action="builder-back"]')?.click(); await settle()
       check(label + ' Builder closes back to Settings', Boolean(q('[data-section="program-library"]')))
+    }
+    for (const [width, height, layout] of [[726,512,'duo'],[890,626,'duo'],[466,678,'duo'],[390,844,'phone'],[430,932,'phone']]) {
+      const right = layout === 'duo' && width >= 600 ? 56 : 0
+      const d = await load(width, height, `layout=${layout}&right=${right}&top=24&view=train`)
+      const q = selector => d.querySelector(selector)
+      const body = q('.app__body')
+      const label = `${width}×${height} workout preview`
+      body.scrollTop = 240
+      const trainScroll = body.scrollTop
+      q('[data-preview-day]').click()
+      await settle()
+      const card = q('[data-program-preview]')
+      const scroller = card.parentElement
+      const start = q('[data-start-preview]')
+      const tabbar = q('.tabbar')
+      const canTapStart = () => {
+        const bounds = rect(start)
+        return bounds.top >= rect(q('.train-r4__subheader')).bottom
+          && bounds.bottom <= (layout === 'phone' ? rect(tabbar).top : height)
+          && start.contains(d.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2))
+      }
+      check(label + ' opens at the top with a single vertical scroll area',
+        body.scrollTop === 0 && scroller.scrollTop === 0
+        && rect(card).top >= rect(q('.train-r4__subheader')).bottom
+        && card.scrollHeight <= card.clientHeight + 1 && body.scrollHeight <= body.clientHeight + 1)
+      check(label + ' card and Start are centered on the unfolded screen',
+        layout !== 'duo' || width < 600 || [card,start].every(node => close(rect(node).x + rect(node).width / 2,width / 2)))
+      check(label + ' Start is tappable immediately', canTapStart())
+      const lastExercise = card.querySelector('.train-r4__preview-exercise:last-child')
+      card.style.paddingBottom = '80px'
+      scroller.scrollTop = scroller.scrollHeight
+      await settle()
+      check(label + ' final exercise scrolls into view while Start stays tappable',
+        scroller.scrollTop > 0 && body.scrollTop === 0
+        && rect(lastExercise).bottom <= rect(scroller).bottom && canTapStart())
+      q('.train-r4__subheader .train-r4__back').click()
+      await settle()
+      check(label + ' returns to the previous Train scroll position', close(body.scrollTop, trainScroll))
+      q('[data-preview-day]').click()
+      await settle()
+      q('[data-start-preview]').click()
+      await settle()
+      check(label + ' Start opens the workout logger', Boolean(q('.screen--session')))
     }
     for (const width of [390,430]) {
       const d = await load(width,844,'view=today'), w = frame.contentWindow

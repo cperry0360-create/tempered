@@ -1,3 +1,7 @@
+## 2026-11-13 — Keep Start visible in workout preview
+
+- Reserve equal side space on unfolded Duo so the preview clears the sidebar and stays centered. Use one scroll area for the workout details and keep Start below it. Show the workout name and summary once, with Back in the header.
+
 ## 2026-11-12 — Distinguish actions from their cards
 
 - Use a medium-blue fill and a visible blue border on navy cards. Light forms use an ice-blue fill with a darker blue border. Keep Today’s button colors tied to its navy cards in both appearance settings.

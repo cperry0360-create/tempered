@@ -1,3 +1,7 @@
+## 2026-11-13 — Workout preview, 0.66.89 (195)
+
+- The preview opens at the top and centers between equal side margins in unfolded Duo. The exercise list scrolls below the header while Start stays visible. Back returns to the previous position on Train.
+
 ## 2026-11-12 — Visible LFMS actions, 0.66.88 (194)
 
 - Daily log quick actions, workout logging, cardio, and shared secondary buttons use a distinct blue fill and edge. Today Save and planner Save use solid electric blue.

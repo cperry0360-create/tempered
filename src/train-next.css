@@ -149,6 +149,7 @@
 .train--fuel-style .train-r4__session-row small {font-size:10px;color:var(--tr2-muted)}
 .train--fuel-style .train-r4__preview-index {background:var(--food-v2-beach-base);color:var(--tr2-light)}
 .train--fuel-style .train-r4__preview-exercise {border-color:var(--tr2-line)}
+.train--fuel-style .train-r4__preview-exercise small {color:var(--tr2-muted)}
 .train--fuel-style .train-r4__last-trained {font-size:10px;color:var(--tr2-light)}
 .train--fuel-style .train-r4__subheader {background:var(--tr2-bg)}
 .train--fuel-style .train-r4__subheader .screen__title {color:var(--tr2-text);font-size:23px}
@@ -156,7 +157,8 @@
 .train--fuel-style .libraryrow {background:var(--tr2-raised);color:var(--tr2-text);border-color:var(--tr2-line)}
 .train--fuel-style .search {background:var(--tr2-raised);color:var(--tr2-text);border:1px solid var(--tr2-line)}
 .train--fuel-style .train-r5__preview-hero {background:var(--tr2-raised);border-color:var(--tr2-line)}
-.train--fuel-style .train-r5__preview-summary h2 {color:var(--tr2-text)}
+.train--fuel-style .train-r5__preview-summary h2 {font-size:clamp(19px,3vw,25px);line-height:1.15}
+.train--preview .train-r4__start {min-height:48px;margin:0;font-size:14px}
 
 /* The right-hand Duo tab rail belongs to the main app and remains untouched. */
 @media(min-width:740px){

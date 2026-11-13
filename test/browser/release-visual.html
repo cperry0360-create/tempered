@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="../../src/weekly-recap-next.css" />
   <link rel="stylesheet" href="../../src/food-log-polish.css" />
   <link rel="stylesheet" href="../../src/lfms-feedback-polish.css" />
+  <link rel="stylesheet" href="../../src/lfms-workout-complete.css" />
   <link rel="stylesheet" href="../../src/lfms-session-duo.css" />
 </head>
 <body>
@@ -446,6 +447,7 @@
             volumePrs: [{ exerciseId: 'seated_row_close', volume: 6400 }],
           },
         })
+        summary.root.dataset.introSkipped = 'true'
         mount.querySelector('.app__body')?.replaceChildren(summary.root)
         const tabs = mount.querySelector('.tabbar')
         if (tabs) tabs.hidden = true

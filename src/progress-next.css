@@ -216,6 +216,17 @@
 .progress--fuel-style .progress-session-detail__set {border-color:var(--pr2-line)}
 .progress--fuel-style .progress-session-detail__set strong {color:var(--pr2-text)}
 .progress--fuel-style .progress-duration__input {background:var(--pr2-panel);border:1px solid var(--pr2-line);color:var(--pr2-text)}
+.progress--fuel-style .progress-session-detail :is(.progress-panel__title,.progress-session-detail__set strong) {
+  color:var(--lfms-sub-text);
+}
+:root[data-theme="light"] .progress--fuel-style .progress-session-detail :is(.progress-session-detail__summary,.progress-action) {
+  color:var(--lfms-sub-blue-light);
+}
+.progress--fuel-style .progress-set-edit .progress-duration__input {
+  background:var(--lfms-sub-raised);
+  border-color:var(--lfms-sub-line);
+  color:var(--lfms-sub-text);
+}
 
 /* Beach Cut uses its original day-level metrics, with the same surfaces and
    blue accent as the rest of LFMS. Never alter missing-data behavior. */

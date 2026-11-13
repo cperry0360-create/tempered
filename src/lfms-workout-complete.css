@@ -82,11 +82,12 @@
   gap:8px;
   padding:12px 0 2px;border:0;border-radius:0;background:linear-gradient(0deg,var(--lfms-today-canvas-end),transparent);box-shadow:none;
 }
-.finish-v2 .finish-v2__edit {
+.finish-v2 .finish-v2__actions .finish-v2__edit {
+  width:auto;
   flex:none;min-height:50px;padding:0 16px;border:1px solid var(--food-v2-line);
-  border-radius:15px;background:var(--food-v2-panel-2);color:var(--food-v2-blue-light);
+  border-radius:15px;background:var(--lfms-sub-raised);color:var(--lfms-sub-blue-light);
 }
-.finish-v2 .finish-v2__done {
+.finish-v2 .finish-v2__actions .finish-v2__done {
   width:min(280px,100%);min-height:50px;border:1px solid var(--lfms-launch-red);border-radius:15px;
   background:var(--lfms-launch-red);color:var(--food-v2-text);font-size:15px;font-weight:840;
 }
@@ -149,7 +150,7 @@
   .finish-v2__emblem .icon {width:49px;height:49px}
   .finish-v2 .finish-v2__card {padding:14px}
   .finish-v2 .finish-v2__actions {justify-content:stretch}
-  .finish-v2 .finish-v2__done {width:100%}
+  .finish-v2 .finish-v2__actions .finish-v2__done {width:auto;flex:1}
   .finish-v2__brand-wordmark {width:138px}
 }
 @media(max-width:380px) {

@@ -1,3 +1,7 @@
+## 2026-11-12 — Visible LFMS actions, 0.66.88 (194)
+
+- Daily log quick actions, workout logging, cardio, and shared secondary buttons use a distinct blue fill and edge. Today Save and planner Save use solid electric blue.
+
 ## 2026-11-11 — Shared LFMS controls and surfaces, 0.66.87 (193)
 
 - Shared controls and fallback panels use electric blue, navy, and ice blue in both appearances. Today and Fuel use the shared primary and secondary buttons for the open-food-log reminder. Custom exercise saves use the shared primary style across Train, workouts, and Program Builder.

@@ -80,12 +80,12 @@
 .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__chip {
   box-sizing:border-box;min-width:0;min-height:43px;padding:4px 3px;
   font-size:12px;font-weight:750;line-height:1.2;
-  color:var(--t2-white);border:1px solid var(--t2-line);border-radius:12px;
-  background:var(--t2-panel);box-shadow:none;
+  color:var(--button-secondary-text);border:1px solid var(--button-secondary-edge);border-radius:12px;
+  background:var(--button-secondary-bg);box-shadow:none;
 }
 .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__chip[aria-pressed="true"] {
-  color:var(--t2-white);border-color:var(--t2-light);
-  background:var(--food-v2-beach-base);
+  color:var(--t2-bg);border-color:var(--t2-light);
+  background:var(--t2-blue);
   box-shadow:inset 0 1px 0 rgba(214,241,255,.22);
 }
 .today--fuel-style .today-item-wrap[data-activity="sleep"] .today-editor__manual {
@@ -179,7 +179,10 @@ html[data-layout="duo"] .app__body:has(> .screen--cardio) {background:transparen
 .screen--cardio .cardio-r5__progress>span {background:var(--lfms-sub-blue)}
 .screen--cardio .cardio-r5__elapsed {font-size:12px;color:var(--lfms-sub-muted);margin:4px 0 20px}
 .screen--cardio .cardio-r5__actions button {font-size:14px;min-height:55px;border-radius:14px}
-.screen--cardio .cardio-r5__pause {background:var(--lfms-sub-raised);color:var(--lfms-sub-text);border:1px solid var(--lfms-sub-line)}
+.screen--cardio .cardio-r5__pause {
+  background:var(--button-secondary-bg);color:var(--button-secondary-text);
+  border:1px solid var(--button-secondary-edge);
+}
 .screen--cardio .cardio-r5__save {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg)}
 .screen--cardio .cardio-r5__status {color:var(--lfms-sub-muted)}
 .screen--cardio button:focus-visible {outline:2px solid var(--lfms-sub-blue-light);outline-offset:2px}

@@ -277,9 +277,9 @@ body::before {
 
 .button {
   appearance: none;
-  border: 0;
-  background: var(--raised);
-  color: var(--text);
+  border: 1px solid var(--button-secondary-edge);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: 800;
@@ -299,7 +299,7 @@ body::before {
 }
 .button .icon { width: 16px; height: 16px; flex: none; }
 
-.button--quiet { background: none; color: var(--text-2); }
+.button--quiet { background: none; color: var(--text-2); border-color: transparent; }
 .button--wide { width: 100%; }
 /* A primary action that carries acid is a pill, never the full width: filling
    the width of a phone with the accent spends the whole 5% budget on one
@@ -1835,6 +1835,7 @@ button.row__act { cursor: pointer; }
 
 .button--danger {
   background: none;
+  border-color: transparent;
   box-shadow: none;
   color: var(--vitality);
 }

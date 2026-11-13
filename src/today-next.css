@@ -11,6 +11,9 @@
   --t2-blue:var(--food-v2-blue);
   --t2-light:var(--food-v2-blue-light);
   --t2-muted:var(--food-v2-muted);
+  --button-secondary-bg:var(--food-v2-beach-base);
+  --button-secondary-edge:var(--recovery);
+  --button-secondary-text:var(--t2-white);
   display:grid;
   align-content:start;
   gap:13px;
@@ -185,7 +188,7 @@
 }
 .today--fuel-style .today-workout__name {font-size:12px;color:var(--t2-white)}
 .today--fuel-style .today-workout__meta {font-size:10px;color:var(--t2-muted)}
-.today--fuel-style .today-workout__action {background:var(--food-v2-beach-base);color:var(--t2-light);font-size:11px}
+.today--fuel-style .today-workout__action {font-size:11px}
 .today--fuel-style .today-workout__group-toggle {
   border-color:var(--t2-line);color:var(--t2-light);
   font-size:11px;font-weight:770;
@@ -195,10 +198,26 @@
   border:0;border-radius:12px;
   min-height:46px;font-size:13px;font-weight:840;
 }
-.today--fuel-style .today-button--secondary {
-  background:var(--food-v2-beach-base);
-  color:var(--t2-light);border:1px solid var(--t2-line);
-  border-radius:11px;
+.today--fuel-style .today-button--secondary {border-radius:11px}
+.today--fuel-style :is(
+  .today-item__quick, .today-workout__action, .today-button--secondary,
+  .today-editor__preset-save, .today-cardio-shortcut
+) {
+  background:var(--button-secondary-bg);
+  border:1px solid var(--button-secondary-edge);
+  color:var(--button-secondary-text);
+}
+.today--fuel-style :is(.today-workout__movement, .today-item--mark):disabled
+  :is(.today-workout__action, .today-item__quick) {
+  background:var(--t2-panel);
+  border-color:var(--t2-line);
+  color:var(--t2-muted);
+}
+.today--fuel-style .today-item__quick {font-weight:700}
+.today--fuel-style .today-editor__save {
+  background:var(--t2-blue);
+  color:var(--t2-bg);
+  font-weight:800;
 }
 .today--fuel-style .today-readiness {border-color:var(--t2-line);background:linear-gradient(150deg,var(--t2-raised),var(--t2-panel));background-color:var(--t2-panel)}
 .today--fuel-style .today-readiness__metric {border-color:var(--t2-line)}
@@ -234,17 +253,11 @@
   border-color:var(--t2-line);font-size:11px;font-weight:770;
 }
 .today--fuel-style .today-nutrition-reminder {
-  --raised:var(--t2-raised);
-  --text:var(--t2-white);
-  --hairline:var(--t2-line);
   border-color:var(--t2-blue);
 }
 .today--fuel-style .today-nutrition-reminder__copy span {color:var(--t2-muted)}
-.today--fuel-style .today-cardio-shortcut {
-  background:var(--t2-raised);border-color:var(--t2-line);
-  color:var(--t2-white);border-radius:12px;
-}
-.today--fuel-style .today-cardio-shortcut span {color:var(--t2-muted)}
+.today--fuel-style .today-cardio-shortcut {border-radius:12px}
+.today--fuel-style .today-cardio-shortcut span {color:var(--t2-white)}
 
 /* Keep Duo navigation owned by the existing layout; never create a second rail. */
 @media(min-width:740px){

@@ -18,6 +18,9 @@
   --recovery: #5FA8E8;
   --recovery-ink: #5FA8E8;
   --on-accent: var(--food-v2-deep);
+  --button-secondary-bg: var(--food-v2-beach-base);
+  --button-secondary-edge: var(--recovery);
+  --button-secondary-text: var(--food-v2-text);
   --success-tint: rgba(79,178,134,0.14);
   --warning: var(--train-ink);
   --danger: var(--food-v3-danger);
@@ -132,6 +135,9 @@
   --train-muted: #C3DCF4;
   --fuel-ink: #1F7A55;
   --recovery-ink: #2B6CB0;
+  --button-secondary-bg: var(--surface-3);
+  --button-secondary-edge: var(--recovery-ink);
+  --button-secondary-text: var(--text-1);
   --danger: #AA2629;
   --chart: #4476A0;
   --lantern: var(--chart);

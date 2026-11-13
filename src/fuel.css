@@ -390,9 +390,6 @@ button.fuel-food__copy {
 :is(.fuel-diary__reminder-actions, .today-nutrition-reminder__actions) .button {
   min-height:44px; padding:0 13px; border-radius:12px; font:700 12px var(--font-ui);
 }
-:is(.fuel-diary__reminder-actions, .today-nutrition-reminder__actions) .button:not(.button--primary) {
-  border:1px solid var(--hairline);
-}
 @media (min-width:740px) {
   html[data-layout="duo"] .fuel-r4__dashboard { grid-template-columns:minmax(0,.97fr) minmax(0,1.1fr); }
   html[data-layout="duo"] .fuel-r4__budget-heading > div:first-child strong { font-size:clamp(26px,3vw,39px); }

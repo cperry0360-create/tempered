@@ -15,6 +15,24 @@ const isNavy=node=>node&&getComputedStyle(node).backgroundImage.includes('linear
 const swatch=document.createElement('i')
 swatch.style.backgroundColor='var(--lfms-accent-red)'
 document.body.append(swatch)
+function luminance(color) {
+  const channels=color.match(/[\d.]+/g).slice(0,3).map(value=>{
+    const srgb=Number(value)/255
+    return srgb<=.04045 ? srgb/12.92 : ((srgb+.055)/1.055)**2.4
+  })
+  return .2126*channels[0]+.7152*channels[1]+.0722*channels[2]
+}
+function contrast(first, second) {
+  const colors=[luminance(first),luminance(second)].sort((a,b)=>b-a)
+  return (colors[0]+.05)/(colors[1]+.05)
+}
+function visibleSecondary(button, panelColor) {
+  if (!button) return false
+  const style=getComputedStyle(button)
+  return parseFloat(style.borderTopWidth)>0
+    && contrast(style.borderTopColor,panelColor)>=3
+    && contrast(style.color,style.backgroundColor)>=4.5
+}
 try {
   // Exactly match the production stylesheet order; old small harnesses
   // intentionally do not import the new design layer.
@@ -53,15 +71,32 @@ try {
   // whose close callback can replace the harness' app instance.
   // Setup also replaces
   // the normal app shell by design and cannot be used as a navigation return.
+  await tempered.daily.setCadence('micro_cardio','daily',1)
+  await tempered.daily.setCadence('other_supplements','daily',1)
+  await tempered.daily.setCadence('sleep','daily',1)
+  await tempered.daily.setCadence('water','daily',1)
   await tempered.app.show('today')
   const reminder=q('.today-nutrition-reminder__actions')
-  check('Review yesterday uses electric blue and Later uses navy',
+  const todayPanel=getComputedStyle(q('.today-daily-log')).backgroundColor
+  const quickSelectors=['micro_cardio','other_supplements','sleep','water']
+    .map(id=>`[data-activity="${id}"] .today-item__quick`)
+  check('Daily log quick-add and Log pills have visible edges and legible labels',
+    quickSelectors.every(selector=>visibleSecondary(q(selector),todayPanel)))
+  check('Review yesterday uses electric blue and Later has a visible blue edge',
     reminder?.children.length===2
     &&getComputedStyle(reminder.children[0]).backgroundColor==='rgb(53, 157, 243)'
-    &&getComputedStyle(reminder.children[1]).backgroundColor==='rgb(16, 42, 67)')
+    &&visibleSecondary(reminder.children[1],todayPanel))
+  q('[data-activity="sleep"] .today-item__quick')?.click()
+  const sleepSave=q('[data-editor="sleep"] [data-action="log"]')
+  check('Daily log Save uses the electric-blue primary style',
+    sleepSave && getComputedStyle(sleepSave).backgroundColor==='rgb(53, 157, 243)')
   await tempered.appearance.setPreference('light')
+  await settle(160)
   check('Dark Today reminder keeps readable ice-blue copy in Light appearance',
     getComputedStyle(q('.today-nutrition-reminder__copy span')).color==='rgb(165, 189, 208)')
+  check('Daily log controls keep their contrast on the navy card in Light appearance',
+    quickSelectors.every(selector=>visibleSecondary(q(selector),todayPanel))
+    &&visibleSecondary(q('.today-nutrition-reminder__actions .button:not(.button--primary)'),todayPanel))
   await tempered.appearance.setPreference('dark')
   q('[data-other="toggle"]')?.click()
   q('[data-activity="mobility"] .today-item__body')?.click()
@@ -83,14 +118,18 @@ try {
   q('[data-create-exercise]')?.click()
   const exerciseSave=q('.custom-exercise button[type="submit"]')
   const exerciseCancel=q('.custom-exercise__actions button[type="button"]')
-  check('Train custom exercise submit uses electric blue and Cancel uses navy',
+  check('Train custom exercise submit uses electric blue and Cancel has a visible blue edge',
     exerciseSave && exerciseCancel
     &&getComputedStyle(exerciseSave).backgroundColor==='rgb(53, 157, 243)'
-    &&getComputedStyle(exerciseCancel).backgroundColor==='rgb(16, 42, 67)')
+    &&visibleSecondary(exerciseCancel,getComputedStyle(q('.custom-exercise')).backgroundColor))
   await tempered.appearance.setPreference('light')
+  await settle(160)
   check('Exercise library title and light form labels use navy text',
     [q('.train-r4__subheader .screen__title'), q('.custom-exercise__field')].every(node =>
       node && getComputedStyle(node).color==='rgb(13, 34, 56)'))
+  check('Train custom exercise Cancel keeps a visible edge on the Light form',
+    visibleSecondary(q('.custom-exercise__actions button[type="button"]'),
+      getComputedStyle(q('.custom-exercise')).backgroundColor))
   await tempered.appearance.setPreference('dark')
   await tempered.app.show('settings')
   const program=q('[data-action="program-builder"]')

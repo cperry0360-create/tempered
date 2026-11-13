@@ -592,7 +592,6 @@ body[data-daily-recap-open='true'] { overflow: hidden; }
 .task-detail__actions { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; }
 .task-detail__actions .button { min-height: 48px; min-width: 0; padding-inline: 11px; }
 .task-detail__delete { color: var(--text-2); }
-.task-detail__save { border-color: var(--text-2); background: var(--surface-1); color: var(--text-2); }
 
 /* ---- Train library sub-screen ----------------------------------------- */
 .train-library-link {

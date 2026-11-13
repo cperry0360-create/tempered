@@ -1,3 +1,7 @@
+## 2026-11-12 — Distinguish actions from their cards
+
+- Use a medium-blue fill and a visible blue border on navy cards. Light forms use an ice-blue fill with a darker blue border. Keep Today’s button colors tied to its navy cards in both appearance settings.
+
 ## 2026-11-11 — Apply LFMS branding at the shared token layer
 
 - Use electric blue for primary actions, navy or ice blue for secondary surfaces in the active appearance, and brand red for destructive actions. Use ice blue for the previous amber nutrition accent so the open and missed diary states retain distinct shapes and colors.

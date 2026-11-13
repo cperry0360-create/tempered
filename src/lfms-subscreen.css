@@ -102,11 +102,12 @@
   background:var(--lfms-sub-bg);border:1px solid var(--lfms-sub-line);
   border-radius:12px;color:var(--lfms-sub-text);min-height:44px;
 }
-.screen--settings :is(.button,.setup__cadence) {
+.screen--settings .setup__cadence {
   border:1px solid var(--lfms-sub-line);border-radius:13px;
   background:var(--lfms-sub-raised);color:var(--lfms-sub-text);font-weight:720;
   min-height:44px;
 }
+.screen--settings .button {border-radius:13px;font-weight:720;}
 .screen--settings .button--primary {
   background:var(--lfms-sub-blue);border-color:var(--lfms-sub-blue);
   color:var(--lfms-sub-bg);
@@ -153,7 +154,7 @@
   border-color:var(--lfms-sub-blue);
   box-shadow:inset 3px 0 0 var(--lfms-accent-red);
 }
-.program-builder .button {min-height:44px;border-radius:12px;border:1px solid var(--lfms-sub-line);background:var(--lfms-sub-raised);color:var(--lfms-sub-text);}
+.program-builder .button {border-radius:12px;}
 .program-builder .button--primary {background:var(--lfms-sub-blue);color:var(--lfms-sub-bg);border-color:var(--lfms-sub-blue);}
 
 /* Mobility overlay: native-feeling blue cards, clear focus and a restrained red mark. */

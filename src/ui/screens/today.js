@@ -1136,7 +1136,7 @@ export function createTodayScreen({
         el('div.task-detail__actions', {}, [
           el('button.button.task-detail__delete', { type: 'button', onclick: () => removePlannerTask(row.id) }, ['Delete']),
           el('button.button', { type: 'button', onclick: close }, ['Cancel']),
-          el('button.button.task-detail__save', {
+          el('button.button.button--primary.task-detail__save', {
             type: 'button', onclick: () => updatePlannerTask(row.id, {
               title: title.value, notes: notes.value, dueDate: due.value, kind,
             }),

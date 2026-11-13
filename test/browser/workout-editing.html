@@ -4,7 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Tempered — workout editing ergonomics</title>
+  <link rel="stylesheet" href="../../src/tokens.css" />
   <link rel="stylesheet" href="../../src/style.css" />
+  <link rel="stylesheet" href="../../src/calm.css" />
+  <link rel="stylesheet" href="../../src/progress.css" />
+  <link rel="stylesheet" href="../../src/lfms-subscreen.css" />
+  <link rel="stylesheet" href="../../src/workout-r5.css" />
   <link rel="stylesheet" href="../../src/polish.css" />
   <link rel="stylesheet" href="../../src/mobile-fixes.css" />
 </head>
@@ -13,6 +18,7 @@
   <script type="module">
     import { bootstrapHarness as bootstrap } from './harness.js'
     import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+    import { createIndexedDbStorage } from '../../src/adapters/storage/indexeddb-storage.js'
     import { fixedClock } from '../../src/adapters/clock/clock.js'
     import { installMobileInteractions } from '../../src/ui/mobile-interactions.js'
 
@@ -96,6 +102,56 @@
       check('the already logged set is never rewritten by a cascade',
         weights[0]?.value === '12' && reps[0]?.value === '16',
         `${weights[0]?.value} × ${reps[0]?.value}`)
+
+      // Use the production storage adapter for the edit and PR rollback.
+      await tempered.app.show('train')
+      const storage = createIndexedDbStorage({ name: 'workout-editing-harness' })
+      const app = await bootstrap({ storage, clock, mount: q('#app') })
+      await storage.put('sessions', { id: 'prior', date: '2026-09-05', endedAt: '2026-09-05T09:30:00' })
+      await storage.put('setLogs', { id: 'previous', sessionId: 'prior', exerciseId: 'squat_bb', weight: 200, reps: 8 })
+      await storage.put('records', { exerciseId: 'squat_bb', bestWeight: { weight: 200, reps: 8, date: '2026-09-05' } })
+      await app.app.startSession({ exerciseId: 'squat_bb' })
+      const enterSet = (weight, repCount) => {
+        const row = q('.screen--session .setrow[data-done="false"]')
+        for (const [field, value] of [['weight', weight], ['reps', repCount]]) {
+          const input = q(`[data-field="${field}"]`, row)
+          input.value = value
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+        }
+        q('.setrow__check', row).click()
+      }
+      enterSet('928', '5')
+      let warning = await waitFor('[data-weight-pr-warning][open]')
+      check('warning compares 928 lb with the 200 lb weight PR', warning.textContent.includes('928 lb') && warning.textContent.includes('200 lb'))
+      check('warning opens before writing the set', (await storage.count('setLogs')) === 1)
+      q('button', warning).click()
+      await settle()
+      check('Edit weight returns to the field without saving', document.activeElement?.dataset.field === 'weight' && (await storage.count('setLogs')) === 1)
+
+      enterSet('928', '5')
+      warning = await waitFor('[data-weight-pr-warning][open]')
+      qa('button', warning)[1].click()
+      await waitFor('.setrow[data-done="true"]')
+      check('Log anyway saves a confirmed set', (await storage.count('setLogs')) === 2)
+      q('[aria-label="Finish"]')?.click()
+      ;(await waitFor('[data-action="confirm-finish"]')).click()
+      ;(await waitFor('[data-completion-intro]')).click()
+      ;(await waitFor('[data-action="edit-workout"]')).click()
+      ;(await waitFor('[data-edit-logged-set]')).click()
+      let form = await waitFor('[data-edit-set-form]')
+      q('[name="weight"]', form).value = '185'
+      q('[name="reps"]', form).value = '6'
+      q('button[type="submit"]', form).click()
+      await settle(200)
+      check('correction updates workout totals and the persisted PR',
+        q('.progress-session-detail__summary')?.textContent.includes('1,110 lb volume') &&
+        (await storage.get('records', 'squat_bb'))?.bestWeight?.weight === 200)
+      check('duration editing stays available', q('.progress-session-detail__duration button')?.textContent === 'Adjust minutes')
+      ;(await waitFor('[data-edit-logged-set]')).click()
+      form = await waitFor('[data-edit-set-form]')
+      q('[name="weight"]', form).value = '555'
+      q('button[type="button"]', form).click()
+      check('Cancel leaves the saved set alone', (await storage.getAll('setLogs')).find((row) => row.id !== 'previous')?.weight === 185)
     } catch (error) {
       check('workout editing harness threw', false, String(error?.stack ?? error).slice(0, 700))
     }

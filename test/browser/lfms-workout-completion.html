@@ -13,7 +13,7 @@ try {
   const data={session:{date:'2026-11-02',title:'Push A'},
     durationMinutes:52,setsCompleted:12,totalReps:97,totalVolume:4820,
     exerciseBreakdown:[{exerciseId:'bench_press',name:'Bench Press',sets:4,reps:32}],
-    records:{weightPrs:[{exerciseId:'bench_press',weight:135,reps:8}],volumePrs:[]},
+    records:{weightPrs:[{exerciseId:'bench_press',weight:135,reps:8}],volumePrs:[{exerciseId:'lateral_raise',volume:927.5}]},
   }
   await screen.show(data)
   document.querySelector('#app').replaceChildren(screen.root)
@@ -23,6 +23,7 @@ try {
   check('graphic splash is skippable',!!q('[data-completion-intro]'))
   check('canonical stats displayed',screen.root.textContent.includes('52 min')&&screen.root.textContent.includes('4,820 lb'))
   check('PR matches logged data',q('[data-section="prs"]')?.textContent.includes('Bench Press')&&q('[data-section="prs"]')?.textContent.includes('135 lb'))
+  check('volume PR explicitly identifies the total',q('[data-section="prs"]')?.textContent.includes('Volume PR · 928 lb total'))
   check('no retired app name in rendered results',!screen.root.textContent.includes('Tempered'))
   check('details are collapsed initially',q('[data-section="exercise-details"]')?.hidden===true)
   q('[data-action="view-exercises"]')?.click()

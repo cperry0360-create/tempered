@@ -292,17 +292,26 @@ export async function installCableMachineRuntime(context) {
 
   const originalLogSet = workout.logSet.bind(workout)
   const originalFinishSession = workout.finishSession.bind(workout)
+  const originalWeightPrWarning = workout.weightPrWarning.bind(workout)
 
-  workout.logSet = async (session, set) => {
+  function loadForSet(set) {
     const exercise = exerciseMap.get(set?.exerciseId)
     if (!machine.enabled || methodForSet(set, exercise) !== 'Cable'
       || !cableExerciseIds.has(set?.exerciseId)
       || !cablePegEnabledForExercise(set.exerciseId, machine)) {
-      return originalLogSet(session, set)
+      return null
     }
-
     const stacks = cableStacksForExercise(set.exerciseId, machine)
-    const load = cableLoadForPeg(set.weight, { profile: machine, stacks })
+    return cableLoadForPeg(set.weight, { profile: machine, stacks })
+  }
+
+  workout.weightPrWarning = (set, loggedHere) => {
+    const load = loadForSet(set)
+    return originalWeightPrWarning(load ? { ...set, weight: load.total } : set, loggedHere)
+  }
+
+  workout.logSet = async (session, set) => {
+    const load = loadForSet(set)
     if (!load) return originalLogSet(session, set)
 
     const stored = await originalLogSet(session, { ...set, weight: load.total })
@@ -317,6 +326,9 @@ export async function installCableMachineRuntime(context) {
       cableEffectiveTotal: load.total,
       cableRatio: load.ratio,
       cableAddOn: load.addOnEnabled,
+      cableProfile: { headWeight: machine.headWeight, plateIncrement: machine.plateIncrement,
+        selectorPositions: machine.selectorPositions, stackCount: machine.stackCount,
+        ratio: machine.ratio, addOnWeight: machine.addOnWeight, addOnEnabled: machine.addOnEnabled },
       cableResistanceKind: 'nominal',
     }
     await storage.put('setLogs', enriched)
@@ -792,6 +804,7 @@ export async function installCableMachineRuntime(context) {
       observer.disconnect()
       workout.logSet = originalLogSet
       workout.finishSession = originalFinishSession
+      workout.weightPrWarning = originalWeightPrWarning
       context[RUNTIME_KEY] = null
     },
   }

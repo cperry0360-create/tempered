@@ -256,3 +256,20 @@ html[data-layout="duo"] .app__body > .train--preview {
   .screen--session .session-r5__stage-totals { display:none; }
   .screen--session .session-r5__stage-cue p { -webkit-line-clamp:2; }
 }
+.weight-pr-warning {
+  position: fixed;
+  inset: auto 0 max(16px, env(safe-area-inset-bottom));
+  width: min(calc(100% - 32px), 430px);
+  max-height: calc(100% - 32px);
+  margin: 0 auto;
+}
+
+.weight-pr-warning::backdrop {
+  background: color-mix(in srgb, var(--lfms-sub-bg) 80%, transparent);
+}
+
+.weight-pr-warning .button[data-acid="secondary"] {
+  border: 1px solid var(--lfms-sub-line);
+  background: var(--lfms-sub-raised);
+  color: var(--lfms-sub-blue-light);
+}

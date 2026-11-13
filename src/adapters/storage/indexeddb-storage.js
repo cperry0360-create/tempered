@@ -109,6 +109,28 @@ export function createIndexedDbStorage(options = {}) {
       await completed(transaction)
     },
 
+    async updateAtomically(stores, update) {
+      if (!db) throw new Error('Storage is not open. Call open() first.')
+      const transaction = db.transaction(stores, 'readwrite')
+      const done = completed(transaction)
+      const table = (name) => transaction.objectStore(name)
+      try {
+        const result = await update({
+          get: (store, key) => promisify(table(store).get(key)),
+          getAll: (store) => promisify(table(store).getAll()),
+          getAllByIndex: (store, index, value) => promisify(table(store).index(index).getAll(value)),
+          put: async (store, value) => { await promisify(table(store).put(value)) },
+          delete: async (store, key) => { await promisify(table(store).delete(key)) },
+        })
+        await done
+        return result
+      } catch (error) {
+        try { transaction.abort() } catch { /* The transaction already ended. */ }
+        await done.catch(() => {})
+        throw error
+      }
+    },
+
     async replaceAll(data) {
       const stores = Object.keys(data)
       for (const store of stores) specFor(store)

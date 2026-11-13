@@ -33,7 +33,7 @@ function metric(value, label) {
 }
 
 /** DOM-only: the workout service is the source of truth for every result. */
-export function createSummaryScreen({ onDone }) {
+export function createSummaryScreen({ onDone, onEditWorkout }) {
   const root = el('div.screen.screen--summary.finish-v2')
   const skipIntro = () => { root.dataset.introSkipped = 'true' }
 
@@ -50,7 +50,7 @@ export function createSummaryScreen({ onDone }) {
         })),
         ...(summary.records?.volumePrs ?? []).map((pr) => ({
           id: pr.exerciseId, type: 'Volume PR',
-          value: volume(pr.volume) + ' lb',
+          value: volume(pr.volume) + ' lb total',
         })),
       ]
       const sessionName = summary.session?.title
@@ -152,6 +152,10 @@ export function createSummaryScreen({ onDone }) {
           el('span', { dataset: { section: 'directive' } }),
         ]),
         el('div.summary-actions.finish-v2__actions', {}, [
+          summary.session?.id && onEditWorkout && el('button.button.finish-v2__edit', {
+            type: 'button', dataset: { action: 'edit-workout' },
+            onclick: () => onEditWorkout(summary.session.id),
+          }, ['Edit sets']),
           el('button.button.button--pill.finish-v2__done', {
             type: 'button', dataset: { action: 'done', acid: 'primary' },
             onclick: onDone,

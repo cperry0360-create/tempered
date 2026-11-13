@@ -125,8 +125,11 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   })
 
   const summary = createSummaryScreen({
-    storage,
     onDone: async () => { await show(returnTab) },
+    onEditWorkout: async (sessionId) => {
+      await show('history')
+      if (active === 'history') history.openWorkout(sessionId)
+    },
   })
   let session = null
 

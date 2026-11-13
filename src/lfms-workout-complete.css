@@ -79,7 +79,12 @@
 .finish-v2__exercise-row span {font-size:11px;color:var(--food-v2-muted);text-align:right}
 .finish-v2 .finish-v2__actions {
   position:sticky;bottom:0;z-index:3;display:flex;justify-content:flex-end;
+  gap:8px;
   padding:12px 0 2px;border:0;border-radius:0;background:linear-gradient(0deg,var(--lfms-today-canvas-end),transparent);box-shadow:none;
+}
+.finish-v2 .finish-v2__edit {
+  flex:none;min-height:50px;padding:0 16px;border:1px solid var(--food-v2-line);
+  border-radius:15px;background:var(--food-v2-panel-2);color:var(--food-v2-blue-light);
 }
 .finish-v2 .finish-v2__done {
   width:min(280px,100%);min-height:50px;border:1px solid var(--lfms-launch-red);border-radius:15px;

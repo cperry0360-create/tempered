@@ -87,6 +87,8 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
   }
   let progressView = savedProgressView()
   let artViewer = null
+  let weightWarningDialog = null
+  let loggingSet = false
 
   // Rest is a real dock row inside the unfolded Duo exercise column.
   const isInlineRestDock = () => document.documentElement.dataset.layout === 'duo'
@@ -210,7 +212,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     if(!event.target.closest?.('.exercise-menu-wrap'))dismissExerciseMenu()
   }
   const onSessionKeydown=(event)=>{
-    if(event.key!=='Escape'||!root.isConnected)return
+    if(event.key!=='Escape'||!root.isConnected||weightWarningDialog?.open)return
     if(artViewer){closeExerciseArt();event.preventDefault();return}
     if(dismissExerciseMenu())event.preventDefault()
   }
@@ -406,6 +408,33 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
     render()
   }
 
+  function confirmWeightPr(entry, warning) {
+    return new Promise((resolve) => {
+      const dialog = el('dialog.confirm-sheet.weight-pr-warning', {
+        'aria-labelledby': 'weight-pr-title', 'aria-describedby': 'weight-pr-copy',
+        dataset: { weightPrWarning: 'true' },
+      }, [
+        el('h2.confirm-sheet__title', { id: 'weight-pr-title', text: 'Check this weight' }),
+        el('p.confirm-sheet__copy', { id: 'weight-pr-copy',
+          text: `${entry.exercise.name} at ${lbs(warning.weight)} lb is ${warning.percent}% above your ${lbs(warning.previous)} lb weight PR.` }),
+        el('div.confirm-sheet__actions', {}, [
+          el('button.button.confirm-sheet__keep', { type: 'button', autofocus: true,
+            onclick: () => dialog.close('edit') }, ['Edit weight']),
+          el('button.button', { type: 'button', dataset: { acid: 'secondary' },
+            onclick: () => dialog.close('log') }, ['Log anyway']),
+        ]),
+      ])
+      dialog.addEventListener('close', () => {
+        dialog.remove()
+        weightWarningDialog = null
+        resolve(dialog.returnValue === 'log')
+      }, { once: true })
+      weightWarningDialog = dialog
+      document.body.append(dialog)
+      dialog.showModal()
+    })
+  }
+
   // --- set row -------------------------------------------------------------
 
   function setRow(entry, set, index) {
@@ -473,7 +502,12 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       type: 'button',
       'aria-label': done ? `Undo set ${index + 1}` : `Log set ${index + 1}`,
       dataset: { log: `${entry.exercise.id}:${index}`, done: String(done) },
+      onpointerdown: (event) => {
+        // Keep the input's change handler from replacing the button before click.
+        if (document.activeElement?.matches('.setrow__num')) event.preventDefault()
+      },
       onclick: async () => {
+        if (loggingSet) return
         if (done) {
           const wasLatestLogged = entry.sets.findLastIndex((other) => other.logged === true) === index
           if (set.logId) {
@@ -510,7 +544,24 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           slotIndex: entry.slotIndex ?? null,
           setIndex: index,
         }
-        const log = await workout.logSet(session, logged)
+        loggingSet = true
+        const focused = document.activeElement
+        if (focused?.matches('.setrow__num')) focused.blur()
+        let log
+        try {
+          const warning = await workout.weightPrWarning(logged, loggedHere)
+          if (warning && !(await confirmWeightPr(entry, warning))) {
+            const weightInput = [...root.querySelectorAll('.setrow__num[data-field="weight"]')]
+              .find((input) => input.dataset.exercise === entry.exercise.id && input.dataset.set === String(index))
+            weightInput?.focus()
+            weightInput?.select()
+            return
+          }
+          if (!root.isConnected) return
+          log = await workout.logSet(session, logged)
+        } finally {
+          loggingSet = false
+        }
         loggedHere.push(log)
         set.logged = true
         set.logId = log.id
@@ -1615,6 +1666,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       window.visualViewport?.removeEventListener('resize', syncHalfFoldViewport)
       window.visualViewport?.removeEventListener('scroll', syncHalfFoldViewport)
       window.removeEventListener('resize', syncHalfFoldViewport)
+      weightWarningDialog?.close()
       document.removeEventListener('pointerdown',onOutsideMenuPointer,true)
       document.removeEventListener('keydown',onSessionKeydown)
       clearBodyOverlays()

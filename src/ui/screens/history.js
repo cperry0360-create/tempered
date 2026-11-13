@@ -247,6 +247,8 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   let selectedLiftId = null
   let selectedSessionId = null
   let editingDurationId = null
+  let editingSets = false
+  let editingSetId = null
   let reportStatus = ''
   let reportProfile = {}
   let reportTargets = {}
@@ -1304,6 +1306,74 @@ return payload
     }, { sets: 0, volume: 0, minutes: 0 })
   }
 
+  function resetWorkoutEditors() {
+    editingDurationId = null
+    editingSets = false
+    editingSetId = null
+  }
+
+  function setEditor(log, index) {
+    const exercise = exercises.get(log.exerciseId)
+    const name = exercise?.name ?? log.exerciseId
+    const load = effectiveLoad(log, exercises)
+    const value = performance({ ...log, weight: load > 0 ? load : null })
+    if (editingSetId !== log.id) {
+      return el('button.button.progress-set-edit__choice', {
+        type: 'button', dataset: { editLoggedSet: log.id },
+        'aria-label': `Edit ${name} set ${index + 1}${value ? ', ' + value : ''}`,
+        onclick: () => { editingSetId = log.id; render() },
+      }, [`Set ${index + 1} · ${value}${log.isWarmup || log.setType === 'warmup' ? ' (warm-up)' : ''}`])
+    }
+
+    const specs = []
+    if (Number.isInteger(log.cablePeg)) specs.push(['cablePeg', 'Selector peg', '1', '1'])
+    else if (exercise?.unit !== 'time' || log.weight != null) specs.push(['weight', 'Weight (lb)', '0', 'any'])
+    if (log.reps != null || (exercise?.unit !== 'time' && exercise?.metric !== 'distance' && log.timeSec == null && log.distance == null)) {
+      specs.push(['reps', 'Reps', '1', '1'])
+    }
+    if (exercise?.unit === 'time' || log.timeSec != null) specs.push(['timeSec', 'Seconds', '0', 'any'])
+    if (exercise?.metric === 'distance' || log.distance != null) specs.push(['distance', 'Distance (ft)', '0', 'any'])
+    const fields = specs.map(([key, label, min, step]) => {
+      const input = el('input.progress-duration__input', {
+        type: 'number', name: key, min, step, inputMode: step === '1' ? 'numeric' : 'decimal', value: log[key] ?? '',
+      })
+      return { key, input, field: el('label.progress-set-edit__field', {}, [label, input]) }
+    })
+    const error = el('p.progress-set-edit__error', { role: 'alert', hidden: true })
+    const save = el('button.button', { type: 'submit', dataset: { acid: 'primary' } }, ['Save set'])
+    const cancel = el('button.button', {
+      type: 'button', dataset: { acid: 'secondary' },
+      onclick: () => { editingSetId = null; render() },
+    }, ['Cancel'])
+    return el('form.progress-set-edit', {
+      dataset: { editSetForm: log.id }, 'aria-label': `Edit ${name} set ${index + 1}`,
+      onsubmit: async (event) => {
+        event.preventDefault()
+        if (save.disabled) return
+        save.disabled = cancel.disabled = true
+        error.hidden = true
+        try {
+          const changes = Object.fromEntries(fields
+            .filter(({ key, input }) => input.value !== String(log[key] ?? ''))
+            .map(({ key, input }) => [key, input.value]))
+          if (Object.keys(changes).length) await workout.editLoggedSet(log.id, changes)
+        } catch (failure) {
+          error.textContent = failure.message || 'Could not save this set. Try again.'
+          error.hidden = false
+          save.disabled = cancel.disabled = false
+          return
+        }
+        editingSetId = null
+        await refresh()
+      },
+    }, [
+      el('strong', { text: `Set ${index + 1}` }),
+      el('div.progress-set-edit__fields', {}, fields.map(({ field }) => field)),
+      error,
+      el('div.progress-set-edit__actions', {}, [cancel, save]),
+    ])
+  }
+
   function sessionSetRows(date) {
     const ids = new Set(daySessions(date).map((session) => session.id))
     const groups = new Map()
@@ -1311,15 +1381,16 @@ return payload
       String(a.completedAt ?? '').localeCompare(String(b.completedAt ?? '')) || (a.setIndex ?? 0) - (b.setIndex ?? 0))) {
       // Keep method variants and warmups visible rather than mixing unlike loads.
       const key = `${log.exerciseId}:${log.method ?? ''}`
-      const group = groups.get(key) ?? { exerciseId: log.exerciseId, method: log.method, values: [] }
+      const group = groups.get(key) ?? { exerciseId: log.exerciseId, method: log.method, values: [], logs: [] }
       const load = effectiveLoad(log, exercises)
       const performed = performance({ ...log, weight: load > 0 ? load : null })
       group.values.push(performed + (log.isWarmup ? ' (warm-up)' : ''))
+      group.logs.push(log)
       groups.set(key, group)
     }
     return [...groups.values()].map((group) => el('div.progress-session-detail__set', {}, [
       el('span', { text: (exercises.get(group.exerciseId)?.name ?? group.exerciseId) + (group.method ? ` · ${group.method}` : '') }),
-      el('strong', { text: group.values.join(', ') }),
+      editingSets ? group.logs.map(setEditor) : el('strong', { text: group.values.join(', ') }),
     ]))
   }
 
@@ -1329,13 +1400,17 @@ return payload
     const entries = daySessions(date)
     return [
       el('button.progress-back', {
-        type: 'button', onclick: () => { selectedSessionId = null; editingDurationId = null; render() },
+        type: 'button', onclick: () => { selectedSessionId = null; resetWorkoutEditors(); render() },
       }, ['‹ Log']),
       el('section.progress-panel.progress-session-detail', {}, [
         el('h2.progress-panel__title', { text: dayName(date) }),
         el('p.progress-session-detail__date', { text: shortDate(date) }),
         el('p.progress-session-detail__summary', { text: [stats.minutes ? duration(stats.minutes) : null,
-          `${stats.sets} sets`, volume(stats.volume) + ' lb'].filter(Boolean).join(' · ') }),
+          `${stats.sets} sets`, volume(stats.volume) + ' lb volume'].filter(Boolean).join(' · ') }),
+        setLogs.some((log) => entries.some((entry) => entry.id === log.sessionId)) && el('button.button.progress-session-detail__edit', {
+          type: 'button', dataset: { action: 'edit-sets', acid: 'secondary' }, 'aria-expanded': String(editingSets),
+          onclick: () => { editingSets = !editingSets; editingSetId = null; render() },
+        }, [editingSets ? 'Done editing sets' : 'Edit sets']),
         el('div.progress-session-detail__sets', {}, sessionSetRows(date)),
         ...entries.map((entry) => el('div.progress-session-detail__duration', {}, [
           el('p.progress-footnote', { text: `${entry.routineName ?? 'Session'} · ${entry.startedAt ? new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(entry.startedAt)) : entry.id} · ${entry.durationMinutes ?? 0} min` }),
@@ -1387,7 +1462,7 @@ return payload
           el('span.progress-range__label', { text: 'Range' }),
           el('select.progress-range__select', {
             'aria-label': 'Progress range',
-            onchange: (event) => { range = Number(event.target.value); selectedLiftId = null; selectedSessionId = null; render() },
+            onchange: (event) => { range = Number(event.target.value); selectedLiftId = null; selectedSessionId = null; resetWorkoutEditors(); render() },
           }, RANGES.map((days) => el('option', { value: String(days), selected: days === range }, [days + 'D']))),
         ]),
       ]),
@@ -1398,53 +1473,62 @@ return payload
         type: 'button',
         dataset: { view: name, active: String(view === name) },
         'aria-pressed': String(view === name),
-        onclick: () => { selectedScoreComponent = null; view = name; selectedLiftId = null; selectedSessionId = null; render() },
+        onclick: () => { selectedScoreComponent = null; view = name; selectedLiftId = null; selectedSessionId = null; resetWorkoutEditors(); render() },
       }, [icon(glyph), label]))),
       el('div.progress-content', {}, viewContent),
     ])
     syncScoreExplainSheet()
   }
 
+  async function refresh() {
+    ;[programs, programStates, revisions] = await Promise.all([storage.getAll('programs'), storage.getAll('programState'), storage.getAll('programRevisions')])
+    const routines = new Map((await storage.getAll('routines')).map((routine) => [routine.id, routine]))
+    sessions = (await storage.getAll('sessions'))
+      .filter((session) => session.endedAt)
+      .map((session) => ({ ...session, routineName: session.routineName ?? routines.get(session.routineId)?.name }))
+      .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
+
+    awayPeriods = workout.awayPeriods ? await workout.awayPeriods() : []
+    let todayActivities
+    ;[records, exercises, dayLogs, setLogs, schedule, reportProfile, todayActivities] = await Promise.all([
+      storage.getAll('records'),
+      workout.exerciseMap(),
+      storage.getAll('dayLogs'),
+      storage.getAll('setLogs'),
+      daily.activitySchedule(),
+      storage.get('profile','profile'),
+      daily.forDate?.(clock.today()) ?? null,
+    ])
+    reportProfile ??= {}
+    const activeActivities=[...(todayActivities?.logged??[]),...(todayActivities?.outstanding??[])]
+    const cap=(id)=>Number(activeActivities.find(x=>x.id===id)?.dailyCap)
+    const calorieGoal=Number(reportProfile.calorieTarget)
+    const proteinGoal=Number(reportProfile.proteinTargetGrams)
+    reportTargets={
+      calories:calorieGoal>0?calorieGoal:cap('calories_logged')||null,
+      protein:proteinGoal>0?proteinGoal:cap('protein_target')||null,
+    }
+
+    sessionStats = new Map()
+    for (const log of setLogs) {
+      if (log.isWarmup) continue
+      const stats = sessionStats.get(log.sessionId) ?? { volume: 0, sets: 0 }
+      const load = effectiveLoad(log, exercises)
+      if (load > 0 && log.reps > 0) stats.volume += load * log.reps
+      stats.sets += 1
+      sessionStats.set(log.sessionId, stats)
+    }
+    render()
+  }
+
   return {
-    root,
-    async refresh() {
-      ;[programs, programStates, revisions] = await Promise.all([storage.getAll('programs'), storage.getAll('programState'), storage.getAll('programRevisions')])
-      const routines = new Map((await storage.getAll('routines')).map((routine) => [routine.id, routine]))
-      sessions = (await storage.getAll('sessions'))
-        .filter((session) => session.endedAt)
-        .map((session) => ({ ...session, routineName: session.routineName ?? routines.get(session.routineId)?.name }))
-        .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
-
-      awayPeriods = workout.awayPeriods ? await workout.awayPeriods() : []
-      let todayActivities
-      ;[records, exercises, dayLogs, setLogs, schedule, reportProfile, todayActivities] = await Promise.all([
-        storage.getAll('records'),
-        workout.exerciseMap(),
-        storage.getAll('dayLogs'),
-        storage.getAll('setLogs'),
-        daily.activitySchedule(),
-        storage.get('profile','profile'),
-        daily.forDate?.(clock.today()) ?? null,
-      ])
-      reportProfile ??= {}
-      const activeActivities=[...(todayActivities?.logged??[]),...(todayActivities?.outstanding??[])]
-      const cap=(id)=>Number(activeActivities.find(x=>x.id===id)?.dailyCap)
-      const calorieGoal=Number(reportProfile.calorieTarget)
-      const proteinGoal=Number(reportProfile.proteinTargetGrams)
-      reportTargets={
-        calories:calorieGoal>0?calorieGoal:cap('calories_logged')||null,
-        protein:proteinGoal>0?proteinGoal:cap('protein_target')||null,
-      }
-
-      sessionStats = new Map()
-      for (const log of setLogs) {
-        if (log.isWarmup) continue
-        const stats = sessionStats.get(log.sessionId) ?? { volume: 0, sets: 0 }
-        const load = effectiveLoad(log, exercises)
-        if (load > 0 && log.reps > 0) stats.volume += load * log.reps
-        stats.sets += 1
-        sessionStats.set(log.sessionId, stats)
-      }
+    root, refresh,
+    openWorkout(sessionId) {
+      if (!sessions.some((entry) => entry.id === sessionId)) return
+      resetWorkoutEditors()
+      view = 'log'
+      selectedSessionId = sessionId
+      editingSets = true
       render()
     },
   }

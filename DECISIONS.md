@@ -1,3 +1,9 @@
+## 2026-11-13 — Correct logged sets and confirm large weight PRs
+
+- Keep Adjust minutes and add Edit sets to the day log and workout recap. Correct the recorded measurement in place, then rebuild the affected lift’s record from completed sets in one transaction. Previously awarded XP is historical.
+- Require both a 20% jump and 10 lb over the same exercise and equipment method’s prior working weight. The 10 lb minimum keeps a typical small jump on a light lift from interrupting logging. An equal or lighter set after a confirmed higher set in the same workout proceeds normally.
+- Recalculate cable load from the selector and original machine settings. For older logs, accept a peg correction when the available setup reproduces the stored load.
+
 ## 2026-11-13 — Keep Start visible in workout preview
 
 - Reserve equal side space on unfolded Duo so the preview clears the sidebar and stays centered. Use one scroll area for the workout details and keep Start below it. Show the workout name and summary once, with Back in the header.

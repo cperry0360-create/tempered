@@ -7,7 +7,8 @@
  */
 
 import { awardsForSession, applyAwards, createInitialState, totalsByAttribute, totalsBySource, totalsByAttributeFromSources } from '../domain/xp-engine.js'
-import { applyRecords, detectRecords, volumeByExercise, workingSets } from '../domain/records.js'
+import { applyRecords, detectRecords, effectiveLoad, volumeByExercise, workingSets } from '../domain/records.js'
+import { cableLoadForPeg } from '../domain/cable-machine.js'
 import { proposeNext } from '../domain/progression.js'
 import { prescribeFromProgram, programWeekIndex, isDeloadWeek, weeklyHardSets, programForWeek } from '../domain/programs.js'
 import { dayTasks, weekTasks, weeklyHardSetsCompleted, isInSameProgramWeek } from '../domain/tasks.js'
@@ -176,6 +177,22 @@ export function createWorkoutService({ storage, clock, balance }) {
       last: await lastPerformance(exerciseId, method),
       record: await methodRecord(exerciseId, method),
     }
+  }
+
+  /** Compare working weight with the best comparable load, before saving it. */
+  async function weightPrWarning(set, loggedHere = []) {
+    if (set.isWarmup || set.setType === 'warmup' || !(set.weight > 0) || !(set.reps > 0)) return null
+    const exercise = await storage.get('exercises', set.exerciseId)
+    const exercises = new Map([[set.exerciseId, exercise]])
+    const weight = effectiveLoad(set, exercises)
+    const method = methodForSet(set, exercise)
+    const record = await methodRecord(set.exerciseId, method)
+    const previous = record?.bestWeight?.weight
+    if (!(previous > 0) || weight - previous < 10 || weight * 5 < previous * 6) return null
+    const alreadyLogged = loggedHere.some((log) => log.exerciseId === set.exerciseId
+      && setUsesMethod(log, exercise, method) && !log.isWarmup && log.setType !== 'warmup'
+      && log.reps > 0 && effectiveLoad(log, exercises) >= weight)
+    return alreadyLogged ? null : { weight, previous, percent: Math.round((weight / previous - 1) * 100) }
   }
 
   /**
@@ -454,6 +471,84 @@ export function createWorkoutService({ storage, clock, balance }) {
     return updated
   }
 
+  /** Correct one measurement and replace its derived record in the same write. */
+  async function editLoggedSet(logId, changes) {
+    return storage.updateAtomically(['setLogs', 'sessions', 'exercises', 'records', 'profile'], async (tx) => {
+      const log = await tx.get('setLogs', logId)
+      if (!log) throw new Error('Set not found')
+      const session = await tx.get('sessions', log.sessionId)
+      if (!session?.endedAt) throw new Error('Only sets in completed workouts can be edited here')
+      const exercise = await tx.get('exercises', log.exerciseId)
+      const updated = { ...log }
+      for (const [field, label] of [['weight', 'Weight'], ['reps', 'Reps'], ['timeSec', 'Seconds'], ['distance', 'Distance'], ['cablePeg', 'Peg']]) {
+        if (!Object.hasOwn(changes, field)) continue
+        const raw = changes[field]
+        const value = raw == null || String(raw).trim() === '' ? null : Number(raw)
+        if (value !== null && (!Number.isFinite(value) || value < 0)) throw new Error(label + ' must be a nonnegative number')
+        if (['reps', 'cablePeg'].includes(field) && (!Number.isInteger(value) || value < 1)) {
+          throw new Error(label + ' must be a positive whole number')
+        }
+        updated[field] = value
+      }
+      if (updated.cablePeg !== log.cablePeg) {
+        if (!Number.isInteger(log.cablePeg)) throw new Error('This set was logged in pounds')
+        const machine = (await tx.get('profile', 'profile'))?.cableMachine
+        const profile = log.cableProfile ?? { ...machine, ratio: log.cableRatio ?? machine?.ratio,
+          addOnEnabled: log.cableAddOn ?? machine?.addOnEnabled }
+        const options = { profile, stacks: log.cableStacks }
+        const original = cableLoadForPeg(log.cablePeg, options)
+        if (!original || Math.abs(original.total - log.weight) > 1e-6) {
+          throw new Error('The original cable setup could not be matched. You can still correct the reps.')
+        }
+        const load = cableLoadForPeg(updated.cablePeg, options)
+        if (!load) throw new Error('Choose a peg within the machine’s range')
+        Object.assign(updated, {
+          weight: load.total, cableStackWeight: load.stackWeight,
+          cablePerHandle: load.perHandle, cableEffectiveTotal: load.total,
+        })
+      } else if (log.cablePeg != null && updated.weight !== log.weight) {
+        throw new Error('Change the selector peg to update this cable weight')
+      }
+      const measured = [updated.reps, updated.timeSec, updated.distance].some((value) => value > 0)
+      if (!measured) throw new Error('Enter a positive rep count, time, or distance')
+
+      const sessions = new Map((await tx.getAll('sessions')).filter((row) => row.endedAt).map((row) => [row.id, row]))
+      const logs = (await tx.getAllByIndex('setLogs', 'exerciseId', log.exerciseId))
+        .map((row) => row.id === logId ? updated : row)
+        .filter((row) => sessions.has(row.sessionId) && row.setType !== 'warmup')
+      const bySession = new Map()
+      for (const row of logs) {
+        const sets = bySession.get(row.sessionId) ?? []
+        sets.push(row)
+        bySession.set(row.sessionId, sets)
+      }
+      const chronological = [...bySession].sort(([a], [b]) =>
+        sessions.get(a).date.localeCompare(sessions.get(b).date)
+        || String(sessions.get(a).startedAt ?? '').localeCompare(String(sessions.get(b).startedAt ?? '')))
+      const exercises = new Map([[log.exerciseId, exercise]])
+      let records = new Map()
+      for (const [id, sets] of chronological) records = applyRecords(records, sets, sessions.get(id).date, exercises)
+      const record = records.get(log.exerciseId)
+      if (record) {
+        // Preserve the physical selector on cable bests that still exist.
+        for (const key of ['bestWeight', 'lastPerformance']) {
+          const best = record[key]
+          const matching = best && logs.find((row) => row.cablePeg != null && !row.isWarmup
+            && effectiveLoad(row, exercises) === best.weight && row.reps === best.reps
+            && sessions.get(row.sessionId).date === best.date)
+          if (matching) Object.assign(best, {
+            cablePeg: matching.cablePeg, cablePerHandle: matching.cablePerHandle, cableStacks: matching.cableStacks,
+          })
+        }
+        await tx.put('records', record)
+      } else {
+        await tx.delete('records', log.exerciseId)
+      }
+      await tx.put('setLogs', updated)
+      return updated
+    })
+  }
+
   /** @param {string} sessionId */
   async function setsFor(sessionId) {
     const logs = await storage.getAllByIndex('setLogs', 'sessionId', sessionId)
@@ -578,8 +673,15 @@ export function createWorkoutService({ storage, clock, balance }) {
       attribute: id, xp: after[id].xp, level: after[id].level, lifetimeSources: after[id].lifetimeSources,
     })))
 
-    const updatedRecords = applyRecords(records, input.sets, session.date, exercises)
-    await storage.putAll('records', [...updatedRecords.values()])
+    await storage.updateAtomically(['records'], async (tx) => {
+      const current = new Map()
+      for (const id of new Set(input.sets.map((set) => set.exerciseId))) {
+        const record = await tx.get('records', id)
+        if (record) current.set(id, record)
+      }
+      const updatedRecords = applyRecords(current, input.sets, session.date, exercises)
+      for (const record of updatedRecords.values()) await tx.put('records', record)
+    })
 
     // What this settlement paid, kept on the session. `docs/11 D` needs "what
     // moved today" and the day log only records the day's own activities; a
@@ -801,7 +903,7 @@ export function createWorkoutService({ storage, clock, balance }) {
   }
 
   return {
-    exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise,
+    exerciseMap, recordMap, lastPerformance, methodPerformance, prepareExercise, weightPrWarning,
     async createExercise(input) {
       const existing = await exerciseMap()
       let suffix = 0
@@ -818,7 +920,7 @@ export function createWorkoutService({ storage, clock, balance }) {
     activeProgram, activateStoredProgram, prepareSlot, exerciseHistory, programGuide, exerciseFrequencyTargets, setExerciseFrequencyTarget,
     awayPeriods, addAwayPeriod, removeAwayPeriod,
     todayTasks, weekStatus, completeSlot, currentWeekLogs, openDaySession, xpToday, dayTrainingStats, trainingRhythm,
-    startSession, logSet, setsFor, finishSession, abortSession, adjustSessionDuration, settleOpenSessions,
+    startSession, logSet, setsFor, finishSession, abortSession, adjustSessionDuration, editLoggedSet, settleOpenSessions,
     /** Removing a logged set, for the mistake that is currently unfixable. */
     async removeSet(logId) { await storage.delete('setLogs', logId) },
     async attributeSummary() {

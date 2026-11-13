@@ -630,6 +630,59 @@
   overflow-wrap: anywhere;
 }
 
+.progress-session-detail__edit {
+  justify-self: start;
+  margin: 8px 0;
+}
+
+.progress-set-edit__choice {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 44px;
+  text-align: left;
+}
+
+.progress-session-detail__edit,
+.progress-set-edit__choice,
+.progress-set-edit__actions button[type="button"] {
+  border: 1px solid var(--lfms-sub-line);
+  border-radius: 12px;
+  background: var(--lfms-sub-raised);
+  color: var(--lfms-sub-blue-light);
+  font-size: 14px;
+}
+
+.progress-set-edit__actions button {
+  flex: 1;
+  width: auto;
+}
+
+.progress-set-edit {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+.progress-set-edit__fields,
+.progress-set-edit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.progress-set-edit__field {
+  display: grid;
+  gap: 4px;
+  color: var(--text-2);
+}
+
+.progress-set-edit__error {
+  margin: 0;
+  color: var(--lfms-accent-red-soft);
+}
+
 .progress-duration {
   display: flex;
   align-items: center;

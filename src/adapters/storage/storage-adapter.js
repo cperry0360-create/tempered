@@ -20,6 +20,7 @@
  * @property {(store: string) => Promise<void>} clear
  * @property {(store: string) => Promise<number>} count
  * @property {(store: string, index: string, value: any) => Promise<any[]>} getAllByIndex
+ * @property {<T>(stores: string[], update: (tx: Pick<StorageAdapter, 'get'|'getAll'|'getAllByIndex'|'put'|'delete'>) => Promise<T>) => Promise<T>} updateAtomically
  */
 
 export {}

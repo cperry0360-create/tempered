@@ -25,6 +25,7 @@ export function createMemoryStorage() {
   /** @type {Map<string, Map<any, any>>} */
   const data = new Map(STORE_NAMES.map((name) => [name, new Map()]))
   let open = false
+  let pendingUpdate = Promise.resolve()
 
   /** @param {string} store */
   function tableFor(store) {
@@ -60,6 +61,19 @@ export function createMemoryStorage() {
 
     async putAll(store, values) {
       for (const value of values) await this.put(store, value)
+    },
+
+    async updateAtomically(stores, update) {
+      const operation = pendingUpdate.then(async () => {
+        const draft = createMemoryStorage()
+        await draft.replaceAll(Object.fromEntries(stores.map((store) => [store, [...tableFor(store).values()]])))
+        const result = await update(draft)
+        const updated = await Promise.all(stores.map(async (store) => [store, await draft.getAll(store)]))
+        await this.replaceAll(Object.fromEntries(updated))
+        return result
+      })
+      pendingUpdate = operation.then(() => {}, () => {})
+      return operation
     },
 
     async replaceAll(replacement) {

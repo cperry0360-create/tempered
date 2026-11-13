@@ -84,6 +84,7 @@ Generating images is not visual sign-off; Codex must open and inspect them.
 | 3 | A user can create and edit a complete program on an iPhone | Complete in 0.34.0 |
 | 4 | Today and Train guide the first week without guilt or schedule debt | Complete in 0.35.0 |
 | 5 | Prove backup, week turnover, edits, and a 14-day daily-driver run | In progress |
+| 6 | Reproduce and fix Today showing leftover sets after completing the Beach Cut workout as presented | Queued. Nov. 13 Upper Specialization logged 19 sets against the shipped 20-set prescription, with one of two triceps pushdown sets recorded. Trace what was offered at session start, including earlier partial sets and plan revisions, before changing completion logic. |
 
 New companion mechanics, more AI handoffs, social features, cloud sync, advanced programming,
 planner expansion, framework migration, and public beta work remain deferred until the Phase 2

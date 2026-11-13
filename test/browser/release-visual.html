@@ -73,7 +73,7 @@
       train: 'train', 'train-preview': 'train', 'train-rhythm': 'train', 'train-program-details': 'train', 'train-routine': 'train', 'train-library': 'train', 'train-custom-exercise': 'train', fuel: 'fuel', 'fuel-entry': 'fuel', 'fuel-meals': 'fuel',
         'food2-dashboard':'fuel', 'food2-average':'fuel', 'food2-journal':'fuel', 'food2-library':'fuel', 'food2-serving':'fuel', 'food2-quicklog':'fuel',
       progress: 'history', 'progress-trends': 'history', 'progress-score-explain': 'history', 'progress-score-progression': 'history', 'progress-score-adherence': 'history', 'progress-score-consistency': 'history', 'progress-score-volume': 'history', 'progress-lifts': 'history', 'progress-lift-detail': 'history',
-      'progress-habits': 'history', 'progress-cut': 'history', 'progress-log': 'history', 'progress-log-detail': 'history',
+      'progress-habits': 'history', 'progress-cut': 'history', 'progress-log': 'history', 'progress-log-detail': 'history', 'progress-edit-set': 'history',
       settings: 'settings', 'settings-data': 'settings', 'settings-reset': 'settings', 'program-builder': 'program-builder', 'program-custom-exercise': 'program-builder',
     }
 
@@ -350,7 +350,12 @@
       mount.querySelector(`.progress-views [data-view="${view}"]`)?.click()
       await settle()
       if (target === 'progress-lift-detail') mount.querySelector('.progress-lift')?.click()
-      if (target === 'progress-log-detail') mount.querySelector('.progress-log-row')?.click()
+      if (target === 'progress-log-detail' || target === 'progress-edit-set') mount.querySelector('.progress-log-row')?.click()
+      if (target === 'progress-edit-set') {
+        mount.querySelector('[data-action="edit-sets"]')?.click()
+        mount.querySelector('[data-edit-logged-set]')?.click()
+        if (!mount.querySelector('[data-edit-set-form]')) throw new Error('Set editor did not open')
+      }
       await settle()
     }
 
@@ -391,11 +396,20 @@
         if (view === 'setup-plan') {
           for (let index = 0; index < 3; index += 1) mount.querySelector('.setup__next')?.click()
         }
-      } else if (view === 'session' || view === 'session-finish-rest' || view === 'session-custom-exercise' || view.startsWith('session-half-fold') || view.startsWith('plate-calculator-')) {
+      } else if (view === 'session' || view === 'session-weight-warning' || view === 'session-finish-rest' || view === 'session-custom-exercise' || view.startsWith('session-half-fold') || view.startsWith('plate-calculator-')) {
         await storage.open()
         await seedSessionReference(storage)
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
         await prepareSessionReference(tempered)
+        if (view === 'session-weight-warning') {
+          const row = mount.querySelector('.setrow[data-done="false"]')
+          const weight = row.querySelector('[data-field="weight"]')
+          weight.value = '928'
+          weight.dispatchEvent(new Event('input', { bubbles: true }))
+          row.querySelector('.setrow__check').click()
+          await settle()
+          if (!document.querySelector('[data-weight-pr-warning][open]')) throw new Error('Weight warning did not open')
+        }
         if (view.startsWith('session-half-fold')) {
           mount.querySelector('[data-half-fold-toggle]')?.click()
           if (mount.querySelector('.screen--session')?.dataset.halfFold !== 'true') throw new Error('Half-fold mode did not open')
@@ -423,9 +437,9 @@
         }
       } else if (view === 'summary') {
         const tempered = await bootstrapHarness({ storage, clock, mount, initialTab: 'train' })
-        const summary = createSummaryScreen({ onDone: () => tempered.app.show('today') })
+        const summary = createSummaryScreen({ onDone: () => tempered.app.show('today'), onEditWorkout: () => {} })
         await summary.show({
-          session: { date: '2026-09-07' }, durationMinutes: 52, setsCompleted: 18,
+          session: { id: 'visual-workout', date: '2026-09-07' }, durationMinutes: 52, setsCompleted: 18,
           totalReps: 144, totalVolume: 18800,
           records: {
             weightPrs: [{ exerciseId: 'rdl', weight: 180, reps: 6 }],

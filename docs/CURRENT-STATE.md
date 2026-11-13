@@ -1,3 +1,8 @@
+## 2026-11-13 — Correct logged sets, 0.66.90 (196)
+
+- Edit an individual set from the workout recap or Progress → Log. Corrections update saved measurements, workout volume, and the exercise’s derived records. The workout date, set identity, and plan attribution are retained.
+- The set check asks for confirmation when a comparable weight PR rises by at least 20% and 10 lb. Volume PRs in the recap show their total explicitly.
+
 ## 2026-11-13 — Workout preview, 0.66.89 (195)
 
 - The preview opens at the top and centers between equal side margins in unfolded Duo. The exercise list scrolls below the header while Start stays visible. Back returns to the previous position on Train.

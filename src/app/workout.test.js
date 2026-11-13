@@ -606,3 +606,69 @@ test('an empty session from today is left alone, since it may be about to receiv
   assert.deepEqual(await workout.settleOpenSessions(), { settled: [], removed: [] })
   assert.ok(await storage.get('sessions', 'today-empty'))
 })
+
+test('editing a settled set replaces the bad PR, volume, and progression history', async () => {
+  const { storage, workout } = await freshApp()
+  const exerciseId = 'squat_bb'
+  await storage.putAll('sessions', [
+    { id: 'earlier', date: '2026-09-02', endedAt: '2026-09-02T18:30:00Z' },
+    { id: 'later', date: '2026-09-04', endedAt: '2026-09-04T18:30:00Z' },
+    { id: 'open', date: '2026-09-04', endedAt: null },
+  ])
+  await storage.putAll('setLogs', [
+    { id: 'prior', sessionId: 'earlier', exerciseId, weight: 200, reps: 8 },
+    { id: 'typo', sessionId: 'later', exerciseId, weight: 928, reps: 5, programDayId: 'friday', slotIndex: 2 },
+    { id: 'good', sessionId: 'later', exerciseId, weight: 185, reps: 4 },
+    { id: 'draft', sessionId: 'open', exerciseId, weight: 300, reps: 8 },
+  ])
+  await storage.put('records', { exerciseId, bestWeight: { weight: 928, reps: 5, date: '2026-09-04' } })
+
+  await assert.rejects(workout.editLoggedSet('draft', { weight: 180 }), /completed/)
+  await assert.rejects(workout.editLoggedSet('typo', { reps: 2.5 }), /whole number/)
+  const corrected = await workout.editLoggedSet('typo', { weight: 182.5, reps: 6 })
+  assert.equal(corrected.slotIndex, 2)
+  assert.equal(corrected.programDayId, 'friday')
+  assert.equal(corrected.weight, 182.5)
+  const record = await storage.get('records', exerciseId)
+  assert.deepEqual(record.bestWeight, { weight: 200, reps: 8, date: '2026-09-02' })
+  assert.deepEqual(record.bestVolume, { volume: 1835, date: '2026-09-04' })
+  assert.ok(record.bestE1RM.value < 300)
+  assert.equal(record.lastPerformance.weight, 185)
+  assert.equal((await storage.get('setLogs', 'draft')).weight, 300)
+})
+
+test('weight warning uses a comparable prior PR, with both a percentage and a pound floor', async () => {
+  const { storage, workout } = await freshApp()
+  await storage.put('sessions', { id: 'prior', date: '2026-09-02', endedAt: '2026-09-02T18:30:00Z' })
+  await storage.putAll('setLogs', [
+    { id: 'db', sessionId: 'prior', exerciseId: 'incline_bench_db', method: 'Dumbbell', weight: 100, reps: 8 },
+    { id: 'bb', sessionId: 'prior', exerciseId: 'incline_bench_db', method: 'Barbell', weight: 200, reps: 8 },
+  ])
+  await storage.put('records', { exerciseId: 'squat_bb', bestWeight: { weight: 20, reps: 10 } })
+  const set = { exerciseId: 'incline_bench_db', method: 'Dumbbell', weight: 120, reps: 8 }
+  assert.deepEqual(await workout.weightPrWarning(set), { weight: 120, previous: 100, percent: 20 })
+  assert.equal(await workout.weightPrWarning({ ...set, weight: 119 }), null)
+  assert.equal(await workout.weightPrWarning({ ...set, method: 'Barbell' }), null)
+  assert.equal(await workout.weightPrWarning({ ...set, method: 'Cable' }), null)
+  assert.equal(await workout.weightPrWarning({ ...set, isWarmup: true }), null)
+  assert.equal(await workout.weightPrWarning({ ...set, exerciseId: 'squat_bb', weight: 25 }), null)
+  assert.equal(await workout.weightPrWarning(set, [{ ...set, weight: 120 }]), null)
+})
+
+test('cable peg corrections retain the original setup and refresh the best peg', async () => {
+  const { storage, workout } = await freshApp()
+  const exerciseId = 'cable_fly'
+  await storage.put('sessions', { id: 'prior', date: '2026-09-02', endedAt: '2026-09-02T18:30:00Z' })
+  const profile = await storage.get('profile', 'profile')
+  await storage.put('profile', { ...profile, cableMachine: { headWeight: 30, addOnEnabled: true } })
+  await storage.put('setLogs', {
+    id: 'cable', sessionId: 'prior', exerciseId, method: 'Cable', weight: 75, reps: 10,
+    cablePeg: 6, cableStacks: 2, cableProfile: { headWeight: 15, addOnEnabled: false },
+  })
+  const updated = await workout.editLoggedSet('cable', { cablePeg: 5, reps: 12 })
+  assert.equal(updated.weight, 65)
+  assert.equal(updated.cablePerHandle, 32.5)
+  assert.equal(updated.cableEffectiveTotal, 65)
+  assert.equal((await storage.get('records', exerciseId)).bestWeight.cablePeg, 5)
+  assert.equal((await storage.get('records', exerciseId)).bestVolume.volume, 780)
+})

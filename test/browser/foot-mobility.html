@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+const checks = []
+function check(name, ok) {
+  checks.push({ name, ok: Boolean(ok) })
+  if (!ok) throw new Error(name)
+}
+
+try {
+  const storage = createMemoryStorage()
+  await storage.open()
+  await storage.put('profile', { id: 'profile', setupComplete: true })
+  const clock = fixedClock(new Date(2026, 10, 13, 12))
+  const { app } = await bootstrapHarness({
+    storage, clock, mount: document.getElementById('app'), initialTab: 'today',
+  })
+
+  for (const [name, selector] of [
+    ['Today card', '[data-action="quick-foot-mobility"]'],
+    ['Daily Log', '[data-activity="foot_mobility"] button'],
+  ]) {
+    const launch = document.querySelector(selector)
+    check(name + ' is available', launch && !launch.disabled)
+    launch.click()
+    check(name + ' opens the workout layout in stretch mode',
+      document.querySelector('.screen--session[data-stretch-session="true"] .session-progress'))
+    await app.show('today')
+  }
+  check('Opening stretches creates no workout sessions', (await storage.getAll('sessions')).length === 0)
+  check('One-hour splint check is available', document.querySelector('[data-activity="foot_splint"]'))
+} catch (error) {
+  checks.push({ name: 'Foot Mobility integration', ok: false, detail: String(error) })
+}
+await fetch('/__report', { method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ label: 'foot-mobility', passed: checks.every((check) => check.ok), checks }) })
+</script>

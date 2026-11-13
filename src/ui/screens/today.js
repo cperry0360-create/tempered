@@ -656,13 +656,13 @@ export function createTodayScreen({
       return el('div.today-item-wrap', { dataset: { activity: activity.id, complete: String(complete) } }, [
         el('div.today-item', {}, [
           el('button.today-item__body', {
-            type: 'button', disabled: complete || !canLogSelected() || !onStartStretch,
+            type: 'button', disabled: !canLogSelected() || !onStartStretch,
             onclick: () => onStartStretch(date),
           }, [
             compactGlyph(activity, complete),
             el('span.today-item__main', {}, [
               el('span.today-item__name', { text: activity.name }),
-              el('span.today-item__meta', { text: complete ? '8 holds logged' : 'Start · About 5 min' }),
+              el('span.today-item__meta', { text: complete ? '8 holds logged · Open routine' : 'Start · About 5 min' }),
             ]),
           ]),
         ]),

@@ -75,7 +75,6 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const train = createTrainScreen({
     workout, storage, clock,
     onStart: (options) => startSession(options),
-    onStartStretch: startStretch,
     onStartCardio: () => launchQuickCardio(),
     onProgramBuilder: openBuilder,
     onProgramLibrary: openProgramLibrary,
@@ -116,6 +115,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
 
   const today = createTodayScreen({
     workout, daily, planner, storage, clock,
+    onStartStretch: startStretch,
     onStart: (options) => startSession(options),
     onStartCardio: () => launchQuickCardio(),
     onOpenSlot: (slot) => slot?.extra

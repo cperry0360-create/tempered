@@ -158,6 +158,8 @@ export function iconForActivity(activityId) {
     steps: 'steps',
     micro_cardio: 'steps',
     mobility: 'mobility',
+    foot_mobility: 'mobility',
+    foot_splint: 'mobility',
     read: 'read',
     study: 'study',
     meditate: 'meditate',

@@ -361,14 +361,18 @@
   color:var(--lfms-accent-red-soft);
 }
 
-dialog.foot-mobility {
-  width: min(92vw, 28rem);
-  max-height: 85dvh;
-  margin: auto;
-  overflow: auto;
-  padding: 1rem;
+.stretch-hold {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 0;
 }
-.foot-mobility::backdrop { background: rgb(0 0 0 / 75%); }
-.foot-mobility__body { display: grid; gap: .6rem; }
-.foot-mobility__body :is(h3, p) { margin: 0; }
-.foot-mobility__body img { width: 100%; height: auto; }
+.stretch-hold[data-done='true'] { opacity: .75; }
+
+.screen--session[data-stretch-session="true"] .session-r5__visual-open img {
+  object-fit: contain;
+  object-position: center;
+}
+.stretch-photo-credit { margin: .65rem 0 0; font-size: .75rem; color: var(--text-2); }
+.stretch-photo-credit a { color: inherit; text-decoration: underline; }

@@ -159,7 +159,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
-      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility'].includes(activity.id)) {
+      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility', 'foot_splint'].includes(activity.id)) {
         return [activity.id, { cadence: 'daily', target: 1 }]
       }
       if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]

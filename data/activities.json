@@ -138,6 +138,13 @@
       "help": "Short cardio bursts throughout the day. Bike, run, stairs or anything else that gets your heart rate up counts."
     },
     {
+      "id": "foot_splint",
+      "name": "Splint session · 1 hour",
+      "attribute": "wind",
+      "daily": false,
+      "kind": "derived"
+    },
+    {
       "id": "foot_mobility",
       "name": "Foot mobility",
       "attribute": "wind",

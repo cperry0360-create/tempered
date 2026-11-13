@@ -8,7 +8,6 @@
 
 import { dayBefore, nutritionDayStatus, nutritionHasEntry } from '../../domain/nutrition-review.js'
 import { el, replace } from '../dom.js'
-import { openFootMobility } from '../foot-mobility.js'
 import { icon, iconForActivity } from '../icons.js'
 import { mainTabBrand } from '../main-tab-header.js'
 import { sortActivities } from '../../domain/activities.js'
@@ -215,7 +214,7 @@ function compactMetric(value, unit, digits = 0) {
 }
 
 export function createTodayScreen({
-  workout, daily, planner, storage, clock, onStart, onStartCardio, onOpenSlot, onSettings, onViewSummary,
+  workout, daily, planner, storage, clock, onStart, onStartStretch, onStartCardio, onOpenSlot, onSettings, onViewSummary,
 }) {
   const root = el('div.screen.screen--today.screen--today-calm.today--fuel-style')
   let realToday = clock.today()
@@ -657,11 +656,8 @@ export function createTodayScreen({
       return el('div.today-item-wrap', { dataset: { activity: activity.id, complete: String(complete) } }, [
         el('div.today-item', {}, [
           el('button.today-item__body', {
-            type: 'button', disabled: complete || !canLogSelected(),
-            onclick: () => openFootMobility({ save: async () => {
-              await daily.logAt(date, activity.id, 8)
-              await reload()
-            } }),
+            type: 'button', disabled: complete || !canLogSelected() || !onStartStretch,
+            onclick: () => onStartStretch(date),
           }, [
             compactGlyph(activity, complete),
             el('span.today-item__main', {}, [
@@ -1410,6 +1406,13 @@ export function createTodayScreen({
             el('span', { text: todayProgram?.program?.cardioTarget
               ? `Zone 2 · ${todayProgram.program.cardioTarget.lowBpm}–${todayProgram.program.cardioTarget.highBpm} bpm`
               : 'Quick timer · logs real minutes' }),
+          ]),
+          onStartStretch && isRealToday() && el('button.today-cardio-shortcut', {
+            type: 'button', dataset: { action: 'quick-foot-mobility' },
+            onclick: () => onStartStretch(selectedDate),
+          }, [
+            el('strong', { text: 'Foot Mobility' }),
+            el('span', { text: day?.day?.footMobilityDone ? 'Done today · Open routine' : 'Start guided stretches · 5 min' }),
           ]),
           readinessCard(),
           fuelCard(allActivities),

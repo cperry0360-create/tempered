@@ -50,9 +50,18 @@ function htmlAssets() {
   return [...html.matchAll(/(?:src|href)="\.\/([^"]+)"/g)].map((match) => match[1])
 }
 
+function moduleAssets(modules) {
+  return [...modules].flatMap((file) => {
+    const source = readFileSync(root + file, 'utf8')
+    return [...source.matchAll(/new URL\('([.][^']+\.(?:jpg|jpeg|png|webp))', import\.meta\.url\)/g)]
+      .map(([, path]) => new URL(path, `file:///${file}`).pathname.slice(1))
+  })
+}
+
 test('the precache list carries nothing the app never loads', () => {
   // Not a correctness bug, but dead entries mislead the next person to edit it.
-  const loaded = new Set([...loadedModules(), ...htmlAssets()])
+  const modules = loadedModules()
+  const loaded = new Set([...modules, ...htmlAssets(), ...moduleAssets(modules)])
   const strays = precache.filter((path) => path.startsWith('src/') && !loaded.has(path))
   assert.deepEqual(strays, [], 'these are precached but never imported')
 })

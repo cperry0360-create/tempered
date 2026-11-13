@@ -75,6 +75,7 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
   const train = createTrainScreen({
     workout, storage, clock,
     onStart: (options) => startSession(options),
+    onStartStretch: startStretch,
     onStartCardio: () => launchQuickCardio(),
     onProgramBuilder: openBuilder,
     onProgramLibrary: openProgramLibrary,
@@ -507,6 +508,21 @@ export function createApp({ mount, workout, daily, planner, maintenance, storage
         renderWorkoutDock()
       },
     })
+  }
+
+  function startStretch(date) {
+    ++navigationToken
+    session?.destroy()
+    session = createSessionScreen({
+      workout, clock,
+      onFinish: () => show('today'),
+    })
+    session.startStretch((holds) => daily.logAt(date, 'foot_mobility', holds))
+    renderWorkoutDock()
+    replace(body, [session.root])
+    tabBar.hidden = true
+    body.scrollTop = 0
+    announce('Foot mobility session')
   }
 
   async function startSession(options) {

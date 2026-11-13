@@ -1,3 +1,8 @@
+## 2026-11-13 — The Grand · Isolation Week, 0.66.92 (198)
+
+- The Program Library includes a one-week machine plan with Sunday, Tuesday, and Thursday sessions. Set it active when ready. Two extra machine workouts are available on demand in Train.
+- Ten machine exercises have offline reference images in the Exercise Library and workout logger. Availability-dependent stations appear in their full workouts and are excluded from required plan work.
+
 ## 2026-11-13 — Correct logged sets, 0.66.90 (196)
 
 - Edit an individual set from the workout recap or Progress → Log. Corrections update saved measurements, workout volume, and the exercise’s derived records. The workout date, set identity, and plan attribution are retained.

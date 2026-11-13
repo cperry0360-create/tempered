@@ -1,5 +1,5 @@
 {
-  "_comment": "Provenance for art/exercises/. Every file is two frames (start, finish) of one movement, taken from the free-exercise-db archive and composited side by side. Nothing here was drawn for Tempered. Keep this file in step with the images: it is the only record of which archive entry a picture came from.",
+  "_comment": "Provenance for art/exercises/. Entries with archiveId show two exercise frames from free-exercise-db. Entries with sourceUrl identify a separate equipment reference.",
   "source": {
     "name": "free-exercise-db",
     "url": "https://github.com/yuhonas/free-exercise-db",
@@ -150,6 +150,93 @@
       "frames": [
         "exercises/Triceps_Pushdown/0.jpg",
         "exercises/Triceps_Pushdown/1.jpg"
+      ]
+    },
+    "pec_deck": {
+      "file": "pec_deck.jpg",
+      "archiveId": "Butterfly",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Butterfly/0.jpg",
+        "exercises/Butterfly/1.jpg"
+      ]
+    },
+    "reverse_pec_deck": {
+      "file": "reverse_pec_deck.jpg",
+      "archiveId": "Reverse_Machine_Flyes",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Reverse_Machine_Flyes/0.jpg",
+        "exercises/Reverse_Machine_Flyes/1.jpg"
+      ]
+    },
+    "leg_curl": {
+      "file": "leg_curl.jpg",
+      "archiveId": "Seated_Leg_Curl",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Seated_Leg_Curl/0.jpg",
+        "exercises/Seated_Leg_Curl/1.jpg"
+      ]
+    },
+    "leg_extension": {
+      "file": "leg_extension.jpg",
+      "archiveId": "Leg_Extensions",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Leg_Extensions/0.jpg",
+        "exercises/Leg_Extensions/1.jpg"
+      ]
+    },
+    "hip_abductor_machine": {
+      "file": "hip_abductor_machine.jpg",
+      "archiveId": "Thigh_Abductor",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Thigh_Abductor/0.jpg",
+        "exercises/Thigh_Abductor/1.jpg"
+      ]
+    },
+    "hip_adductor_machine": {
+      "file": "hip_adductor_machine.jpg",
+      "archiveId": "Thigh_Adductor",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Thigh_Adductor/0.jpg",
+        "exercises/Thigh_Adductor/1.jpg"
+      ]
+    },
+    "lateral_raise_machine": {
+      "file": "lateral_raise_machine.jpg",
+      "sourceUrl": "https://www.renewfit.com/en/lat-raise-fzlr-life-fitness%2Ca393.php",
+      "credit": "Renewfit, Life Fitness Signature FZLR equipment reference",
+      "modifications": "JPEG recompression"
+    },
+    "preacher_curl_machine": {
+      "file": "preacher_curl_machine.jpg",
+      "archiveId": "Machine_Preacher_Curls",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Machine_Preacher_Curls/0.jpg",
+        "exercises/Machine_Preacher_Curls/1.jpg"
+      ]
+    },
+    "triceps_extension_machine": {
+      "file": "triceps_extension_machine.jpg",
+      "archiveId": "Machine_Triceps_Extension",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Machine_Triceps_Extension/0.jpg",
+        "exercises/Machine_Triceps_Extension/1.jpg"
+      ]
+    },
+    "ab_crunch_machine": {
+      "file": "ab_crunch_machine.jpg",
+      "archiveId": "Ab_Crunch_Machine",
+      "revision": "f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5",
+      "frames": [
+        "exercises/Ab_Crunch_Machine/0.jpg",
+        "exercises/Ab_Crunch_Machine/1.jpg"
       ]
     }
   }

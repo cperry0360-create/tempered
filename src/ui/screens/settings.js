@@ -140,6 +140,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             el('span.setting__label', {}, [
               el('strong', { text: program.name }),
               el('small', { text: `${program.weeks ?? 1} weeks · ${program.days?.length ?? 0} sessions/week` }),
+              program.weekStartsOn === 'sunday' && el('small', { text: 'Sunday · Tuesday · Thursday' }),
             ]),
             activeId === program.id
               ? el('span.setting__value', { text: 'Active' })
@@ -151,7 +152,7 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
                   } catch (error) { libraryMessage = error?.message ?? 'Activation failed.' }
                   await load()
                 },
-              }, ['Activate']),
+              }, [program.weekStartsOn === 'sunday' ? 'Set as active plan' : 'Activate']),
           ])),
         libraryMessage && el('p.notice', { text: libraryMessage }),
       ]),

@@ -10,6 +10,8 @@ import { mainTabBrand } from '../main-tab-header.js'
 import { lbs, since } from '../format.js'
 import { buildDailyWorkoutQueue, remainingProgramDay } from '../today-workout.js'
 
+const exerciseArtUrl = (file) => new URL(`../../../art/exercises/${file}`, import.meta.url).href
+
 /**
  * @param {object} deps
  * @param {ReturnType<import('../../app/workout.js').createWorkoutService>} deps.workout
@@ -267,7 +269,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
       el('div.train-r5__preview-hero', {}, [
         el('div.train-r5__preview-art', {}, [
           featured?.art
-            ? el('img', {src:new URL(`../../../art/exercises/${featured.art}`, import.meta.url).href, alt:`${featured.name} exercise reference`, draggable:false})
+            ? el('img', {src:exerciseArtUrl(featured.art), alt:`${featured.name} exercise reference`, draggable:false})
             : el('div.train-r5__preview-fallback', {}, [icon('train')]),
         ]),
         el('div.train-r5__preview-summary', {}, [
@@ -283,7 +285,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
           el('span.train-r4__preview-index', { text: String(index + 1).padStart(2, '0') }),
           el('div', {}, [
             el('strong', { text: slot.name ?? exercises.find((ex) => ex.id === slot.exerciseId)?.name ?? slot.exerciseId }),
-            el('small', { text: `${slot.sets} sets × ${slot.repMin}–${slot.repMax} reps` }),
+            el('small', { text: `${slot.sets} sets × ${slot.repMin}–${slot.repMax} reps${slot.optional ? ' · If available' : ''}` }),
           ]),
         ]))),
       day.finisher && el('p', { dataset: { cardioFinisher: 'true' }, text: day.finisher }),
@@ -363,9 +365,14 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
       type: 'button', dataset: { exercise: exercise.id },
       onclick: () => onStart({ routine: null, exerciseId: exercise.id }),
     }, [
-      el('span.libraryrow__main', {}, [
-        el('span.libraryrow__name', { text: exercise.name }),
-        el('span.libraryrow__meta', { text: [exercise.group, exercise.class].filter(Boolean).join(' · ') }),
+      el('span.libraryrow__exercise', {}, [
+        exercise.art && el('img.libraryrow__art', {
+          src: exerciseArtUrl(exercise.art), alt: '', loading: 'lazy', draggable: false,
+        }),
+        el('span.libraryrow__main', {}, [
+          el('span.libraryrow__name', { text: exercise.name }),
+          el('span.libraryrow__meta', { text: [exercise.group, exercise.class].filter(Boolean).join(' · ') }),
+        ]),
       ]),
       el('span.libraryrow__stats', {}, [
         best && el('span.libraryrow__pr', { text: `PR ${lbs(best.weight)} × ${best.reps}` }),
@@ -395,11 +402,13 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     const routine = selectedRoutine
     const names = (routine?.exercises ?? []).map((item) => {
       const exercise = exercises.find((candidate) => candidate.id === item.id)
-      return exercise?.name ?? item.name ?? item.id
+      const name = exercise?.name ?? item.name ?? item.id
+      return item.repMax ? `${name} · ${item.sets} × ${item.repMin}–${item.repMax}` : name
     })
     replace(root, [
       el('header.train-r4__subheader', {}, [backButton(), el('h1.screen__title', { text: routine?.name ?? 'Routine' }), plateCalculatorButton()]),
       el('section.train-r4__card.train-r4__routine-detail', {}, [
+        routine?.note && el('p', { text: routine.note }),
         el('div.train-r4__routine-exercises', {}, names.map((name) => el('p', { text: name }))),
         el('button.train-r4__secondary', {
           type: 'button', onclick: () => onStart({ routine }),

@@ -228,22 +228,24 @@ export function createWorkoutService({ storage, clock, balance }) {
 
   /** Switch saved programs without touching training history or their prescriptions. */
   async function activateStoredProgram(programId) {
-    const selected = await storage.get('programs', programId)
-    if (!selected?.days?.length) throw new Error('Saved program unavailable.')
-    const states = await storage.getAll('programState')
-    if (states.some((row) => row.active && row.programId === programId)) return selected
-    for (const row of states) {
-      if (!row.active) continue
-      await storage.put('programState', { ...row, active: false })
-      const old = await storage.get('programs', row.programId)
-      if (old) await storage.put('programs', { ...old, status: 'paused' })
-    }
-    await storage.put('programs', { ...selected, status: 'active' })
-    await storage.put('programState', {
-      programId, active: true, startedOn: clock.today(),
-      revisionId: selected.currentRevisionId,
+    return storage.updateAtomically(['programs', 'programState'], async (tx) => {
+      const selected = await tx.get('programs', programId)
+      if (!selected?.days?.length) throw new Error('Saved program unavailable.')
+      const states = await tx.getAll('programState')
+      if (states.some((row) => row.active && row.programId === programId)) return selected
+      for (const row of states) {
+        if (!row.active) continue
+        await tx.put('programState', { ...row, active: false })
+        const old = await tx.get('programs', row.programId)
+        if (old) await tx.put('programs', { ...old, status: 'paused' })
+      }
+      await tx.put('programs', { ...selected, status: 'active' })
+      await tx.put('programState', {
+        programId, active: true, startedOn: clock.today(),
+        revisionId: selected.currentRevisionId,
+      })
+      return selected
     })
-    return selected
   }
 
   /**
@@ -766,6 +768,11 @@ export function createWorkoutService({ storage, clock, balance }) {
     const logs = (await storage.getAll('setLogs')).filter((log) => {
       const date = sessions.get(log.sessionId)?.date
       if (!date) return false
+      if (active.program.weekStartsOn === 'sunday') {
+        const sunday = (key) => weekStart(new Date(Date.parse(key) + 86400000).toISOString().slice(0, 10))
+        return date >= active.state.startedOn && sunday(date) === sunday(today)
+          && (log.programId ?? sessions.get(log.sessionId)?.programId) === active.program.id
+      }
       return isInSameProgramWeek(active.state.startedOn, date, today, daysBetween)
     })
     return { active, logs, sessions }
@@ -778,9 +785,11 @@ export function createWorkoutService({ storage, clock, balance }) {
     const weekday = new Date(`${clock.today()}T00:00:00`).getDay()
     const names = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     const day = active.program.days.find((d) => d.id === names[weekday])
-      ?? active.program.days.find((d) => dayTasks(d, logs).some((t) => !t.done))
-      ?? active.program.days[0]
-    return { ...active, day, tasks: dayTasks(day, logs) }
+      ?? (active.program.weekStartsOn !== 'sunday'
+        && active.program.days.find((d) => dayTasks(d, logs).some((t) => !t.done && !t.slot.optional)))
+    if (!day && active.program.weekStartsOn === 'sunday') return { ...active, day: null, tasks: [] }
+    const selected = day || active.program.days[0]
+    return { ...active, day: selected, tasks: dayTasks(selected, logs) }
   }
 
   /** The whole week: prescribed, done, remaining, and hard sets against target. */

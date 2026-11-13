@@ -28,7 +28,7 @@ export async function seedLibrary(storage, library) {
     }
   }
 
-  const existingExercises = new Set((await storage.getAll('exercises')).map((e) => e.id))
+  const existingExercises = new Map((await storage.getAll('exercises')).map((e) => [e.id, e]))
   const existingRoutines = new Set((await storage.getAll('routines')).map((r) => r.id))
 
   const newExercises = library.exercises.filter((e) => !existingExercises.has(e.id))
@@ -40,17 +40,16 @@ export async function seedLibrary(storage, library) {
   await storage.putAll('exercises', newExercises)
   await storage.putAll('routines', newRoutines)
 
-  // Additive catalogue metadata must also reach an existing install. Methods
-  // and movementName affect presentation only; logged sets and any user-owned
-  // exercise fields remain untouched. Unknown ids are still never overwritten.
+  // Additive catalogue metadata must also reach an existing install.
+  // Keep an existing picture when the catalogue adds one for the same exercise.
   for (const latest of library.exercises) {
-    if (!existingExercises.has(latest.id)) continue
-    if (!Array.isArray(latest.methods) && !latest.movementName) continue
-    const existing = await storage.get('exercises', latest.id)
+    const existing = existingExercises.get(latest.id)
+    if (!existing) continue
     const next = {
       ...existing,
       ...(Array.isArray(latest.methods) ? { methods: [...latest.methods] } : {}),
       ...(latest.movementName ? { movementName: latest.movementName } : {}),
+      ...(!existing.art && latest.art ? { art: latest.art } : {}),
     }
     if (JSON.stringify(existing) !== JSON.stringify(next)) await storage.put('exercises', next)
   }

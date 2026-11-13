@@ -50,14 +50,17 @@ function taskRow(dayEntry, task, kind) {
  * completed checklist rather than making the workout vanish.
  */
 export function buildDailyWorkoutQueue(status, todayKey) {
-  const todayIndex = weekdayIndex(todayKey)
+  const weekday = weekdayIndex(todayKey)
   const days = status?.week?.days ?? []
-  if (todayIndex === null || days.length === 0) {
+  if (weekday === null || days.length === 0) {
     return { active: [], completed: [], rollover: [], today: [], primaryDay: null, scheduledDay: null }
   }
 
+  const sundayFirst = status?.program?.weekStartsOn === 'sunday'
+  const order = (index) => index === null || !sundayFirst ? index : (index + 1) % 7
+  const todayIndex = order(weekday)
   const eligible = days
-    .map((entry) => ({ entry, index: dayIndex(entry.day) }))
+    .map((entry) => ({ entry, index: order(dayIndex(entry.day)) }))
     .filter(({ index }) => index !== null && index <= todayIndex)
     .sort((a, b) => a.index - b.index)
 
@@ -65,11 +68,12 @@ export function buildDailyWorkoutQueue(status, todayKey) {
   const rollover = eligible
     .filter(({ index }) => index < todayIndex)
     .flatMap(({ entry }) => entry.tasks
-      .filter((task) => !task.done)
+      .filter((task) => !task.done && !task.slot.optional)
       .map((task) => taskRow(entry, task, 'rollover')))
 
   const today = todayEntry
-    ? todayEntry.tasks.map((task) => taskRow(todayEntry, task, 'today'))
+    ? todayEntry.tasks.filter((task) => !task.slot.optional || task.done)
+      .map((task) => taskRow(todayEntry, task, 'today'))
     : []
   const todayActive = today.filter((row) => !row.done)
   const completed = today.filter((row) => row.done)

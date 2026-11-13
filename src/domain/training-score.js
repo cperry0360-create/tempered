@@ -94,7 +94,8 @@ export function trainingScore({ today, sessions = [], setLogs = [], programs = [
   /** Planned slots for a week, each filled by that week's matching sets. */
   function fillSlots(plan, weekLogs) {
     const slots = (plan?.days ?? []).flatMap(({ day, index:dayIndex }) =>
-      (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex, index, slot, matching:[] })))
+      (day.exercises ?? []).map((slot, index) => ({ dayId:day.id, dayName:day.name ?? day.id, dayIndex, index, slot, matching:[] }))
+        .filter(({ slot }) => !slot.optional))
     const unassigned = []
     const intendedExercise = log => log.substitutedFor ?? log.exerciseId
     const matches = (entry, log) => intendedExercise(log) === entry.slot.exerciseId

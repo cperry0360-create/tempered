@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Grand isolation week acceptance</title>
+<div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { buildDailyWorkoutQueue } from '../../src/ui/today-workout.js'
+
+const checks = []
+const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail })
+const q = (selector) => document.querySelector(selector)
+async function waitFor(predicate) {
+  for (let i = 0; i < 80; i++) {
+    if (await predicate()) return
+    await new Promise(resolve => setTimeout(resolve, 25))
+  }
+  throw Error('Expected app state did not appear')
+}
+
+try {
+  const storage = createMemoryStorage()
+  const { app, workout } = await bootstrapHarness({ storage, clock: fixedClock(new Date(2026, 10, 22, 9)), mount: q('#app') })
+  const before = (await workout.activeProgram()).program.id
+  check('Installing preserves the current program', before !== 'grand-isolation-week')
+  await app.show('settings')
+  const activate = q('[data-library-program="grand-isolation-week"] button')
+  check('Program library offers Set as active plan', activate.textContent === 'Set as active plan')
+  activate.click()
+  await waitFor(async () => (await workout.activeProgram()).program.id === 'grand-isolation-week')
+  const active = await workout.activeProgram()
+  check('Activation starts Week 1 on Sunday', active.state.startedOn === '2026-11-22' && active.week === 1)
+  check('The three sessions retain their order', active.program.days.map(day => day.id).join() === 'sunday,tuesday,thursday')
+  const status = await workout.weekStatus()
+  const sunday = buildDailyWorkoutQueue(status, '2026-11-22')
+  const tuesday = buildDailyWorkoutQueue(status, '2026-11-24')
+  check('Sunday queues A alone', sunday.primaryDay?.id === 'sunday' && sunday.today.length === 4 && sunday.rollover.length === 0)
+  check('Tuesday has B plus Sunday rollover and no unavailable stations in required work',
+    tuesday.primaryDay?.id === 'tuesday' && tuesday.today.length === 2 && tuesday.rollover.length === 4)
+  await app.show('train')
+  q('[data-exercise-library]').click()
+  const art = q('[data-exercise="leg_extension"] img')
+  art.loading = 'eager'
+  await art.decode()
+  check('Library shows a bundled leg extension image', art.naturalWidth > 0)
+  q('.train-r4__back').click()
+  check('Train has two extras outside the scheduled plan',
+    Boolean(q('[data-routine="grand-hips-abs"]') && q('[data-routine="grand-favorite-machines"]')))
+  q('[data-preview-day="tuesday"]').click()
+  check('Workout preview labels availability-dependent stations', q('[data-program-preview]').textContent.includes('If available'))
+  q('[data-start-preview="tuesday"]').click()
+  await waitFor(() => q('.screen--session [data-art="lateral_raise_machine"]'))
+  check('The workout loads the optional machine and its photo', Boolean(q('[data-art="lateral_raise_machine"] img')))
+} catch (error) {
+  check('Isolation week journey completes', false, error.stack)
+}
+await fetch('/__report', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ label: 'grand-isolation', passed: checks.every(item => item.ok), checks }),
+})
+</script>

@@ -719,6 +719,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       el('p.panel__note', { text: 'Swap in another movement while keeping your set structure.' }),
       el('div.swaplist', {}, library
         .filter((exercise) => exercise.id !== entry.exercise.id)
+        .sort((a, b) => Number(b.id === entry.slot?.substituteExerciseId) - Number(a.id === entry.slot?.substituteExerciseId))
         .slice(0, 40)
         .map((exercise) => el('button.swaplist__option', {
           type: 'button', dataset: { swapto: exercise.id },
@@ -841,11 +842,11 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
           src: artUrl(entry.exercise.art), alt: '', loading: 'lazy',
         })]),
         el('div.exercise__title', {}, [
-          el('h2.exercise__name', { text: displayName(entry.exercise, entry.slot) }),
+          el('h2.exercise__name', { text: displayName(entry.exercise, entry.substitutedFor ? null : entry.slot) }),
           el('button.exercise__range', {
             type: 'button',
             onclick: () => { openPanel = panelKey(entry, 'rest'); render() },
-            text: `${range} · Rest ${clock(entry.restSec)}`,
+            text: `${range} · Rest ${clock(entry.restSec)}${slot?.optional ? ' · If available' : ''}`,
           }),
         ]),
         exerciseMenu(entry, position),
@@ -1579,6 +1580,7 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             ...prepared,
             ...entryDefaults(),
             restSec: entry.rest ?? 150,
+            ...(entry.repMax ? { slot: { sets: entry.sets, repMin: entry.repMin, repMax: entry.repMax } } : {}),
             sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
           })
         }

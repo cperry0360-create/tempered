@@ -1,3 +1,8 @@
+## 2026-11-13 — Resort machine workouts
+
+- Keep the isolation week selectable and use the existing program switch. Keep optional stations out of Today’s required queue and plan adherence. Give the lateral raise slot a reverse pec deck swap and include the two extra workouts as standalone routines.
+- Reuse the existing leg curl and leg extension records so their history follows them. Bundle reference images offline and record their sources in the art manifest.
+
 ## 2026-11-13 — Correct logged sets and confirm large weight PRs
 
 - Keep Adjust minutes and add Edit sets to the day log and workout recap. Correct the recorded measurement in place, then rebuild the affected lift’s record from completed sets in one transaction. Previously awarded XP is historical.

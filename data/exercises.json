@@ -126,6 +126,65 @@
       "name": "Cardio",
       "plan": "Protocol: Balanced \u2014 Upper/Lower",
       "exercises": []
+    },
+    {
+      "id": "grand-hips-abs",
+      "name": "The Grand \u00b7 Hips and Abs",
+      "note": "Use the stations available. You can remove an unlogged exercise from the workout.",
+      "exercises": [
+        {
+          "id": "hip_adductor_machine",
+          "sets": 2,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 75
+        },
+        {
+          "id": "hip_abductor_machine",
+          "sets": 2,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 75
+        },
+        {
+          "id": "ab_crunch_machine",
+          "sets": 2,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 75
+        }
+      ]
+    },
+    {
+      "id": "grand-favorite-machines",
+      "name": "The Grand \u00b7 Favorite Machines",
+      "note": "Two starter picks. Use Add movement to swap in your favorites.",
+      "exercises": [
+        {
+          "id": "pec_deck",
+          "sets": 2,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 75
+        },
+        {
+          "id": "leg_curl",
+          "sets": 2,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 75
+        }
+      ]
     }
   ],
   "exercises": [
@@ -138,7 +197,10 @@
       "pattern": "Knee Bending",
       "unit": "lbs",
       "progression": "linear",
-      "activation": { "quads": 1, "glutes": 1 }
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
     },
     {
       "id": "belt_squat",
@@ -149,7 +211,10 @@
       "pattern": "Knee Bending",
       "unit": "lbs",
       "progression": "linear",
-      "activation": { "quads": 1, "glutes": 1 }
+      "activation": {
+        "quads": 1,
+        "glutes": 1
+      }
     },
     {
       "id": "deadlift_bb",
@@ -185,7 +250,12 @@
       "name": "Chest Press (Barbell)",
       "movementName": "Chest Press",
       "variant": "Barbell",
-      "methods": ["Barbell", "Dumbbell", "Cable", "Machine"],
+      "methods": [
+        "Barbell",
+        "Dumbbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -202,7 +272,12 @@
       "name": "Overhead Press (Dumbbell)",
       "movementName": "Overhead Press",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Barbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "shoulders",
       "class": "compound",
       "pattern": "Vertical Pushing",
@@ -362,7 +437,8 @@
       "progression": "linear",
       "activation": {
         "hamstrings": 1
-      }
+      },
+      "art": "leg_curl.jpg"
     },
     {
       "id": "leg_extension",
@@ -375,7 +451,8 @@
       "progression": "linear",
       "activation": {
         "quads": 1
-      }
+      },
+      "art": "leg_extension.jpg"
     },
     {
       "id": "calf_raise",
@@ -423,7 +500,11 @@
       "name": "Lateral Raise (Cable)",
       "movementName": "Lateral Raise",
       "variant": "Cable",
-      "methods": ["Cable", "Dumbbell", "Machine"],
+      "methods": [
+        "Cable",
+        "Dumbbell",
+        "Machine"
+      ],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Shoulder Abduction",
@@ -552,7 +633,12 @@
       "name": "Incline Barbell Bench Press",
       "movementName": "Incline Bench Press",
       "variant": "Barbell",
-      "methods": ["Barbell", "Dumbbell", "Cable", "Machine"],
+      "methods": [
+        "Barbell",
+        "Dumbbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -570,7 +656,12 @@
       "name": "Flat Dumbbell Bench Press",
       "movementName": "Flat Bench Press",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Barbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -588,7 +679,12 @@
       "name": "Incline Dumbbell Bench Press",
       "movementName": "Incline Bench Press",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Barbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "chest",
       "class": "compound",
       "pattern": "Horizontal Pushing",
@@ -622,7 +718,12 @@
       "name": "Seated Dumbbell Shoulder Press",
       "movementName": "Seated Shoulder Press",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Barbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Barbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "shoulders",
       "class": "compound",
       "pattern": "Vertical Pushing",
@@ -640,7 +741,11 @@
       "name": "Dumbbell Lateral Raise",
       "movementName": "Lateral Raise",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Shoulder Abduction",
@@ -656,7 +761,11 @@
       "name": "Dumbbell Rear-Delt Fly",
       "movementName": "Rear-Delt Fly",
       "variant": "Dumbbell",
-      "methods": ["Dumbbell", "Cable", "Machine"],
+      "methods": [
+        "Dumbbell",
+        "Cable",
+        "Machine"
+      ],
       "group": "shoulders",
       "class": "isolation",
       "pattern": "Horizontal Pulling",
@@ -784,6 +893,118 @@
       "activation": {
         "core": 1.5
       }
+    },
+    {
+      "id": "pec_deck",
+      "name": "Pec Deck",
+      "variant": "Machine",
+      "group": "chest",
+      "class": "isolation",
+      "pattern": "Shoulder Horizontal Adduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "pecs": 1
+      },
+      "art": "pec_deck.jpg"
+    },
+    {
+      "id": "reverse_pec_deck",
+      "name": "Reverse Pec Deck",
+      "variant": "Machine",
+      "group": "shoulders",
+      "class": "isolation",
+      "pattern": "Shoulder Horizontal Abduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "rear_delts": 1
+      },
+      "art": "reverse_pec_deck.jpg"
+    },
+    {
+      "id": "hip_abductor_machine",
+      "name": "Machine Hip Abductor",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Hip Abduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "glutes": 1
+      },
+      "art": "hip_abductor_machine.jpg"
+    },
+    {
+      "id": "hip_adductor_machine",
+      "name": "Machine Hip Adductor",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "isolation",
+      "pattern": "Hip Adduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "adductors": 1
+      },
+      "art": "hip_adductor_machine.jpg"
+    },
+    {
+      "id": "lateral_raise_machine",
+      "name": "Machine Lateral Raise",
+      "variant": "Machine",
+      "group": "shoulders",
+      "class": "isolation",
+      "pattern": "Shoulder Abduction",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "mid_delts": 1
+      },
+      "art": "lateral_raise_machine.jpg"
+    },
+    {
+      "id": "preacher_curl_machine",
+      "name": "Machine Preacher Curl",
+      "variant": "Machine",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Flexion",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "biceps": 1
+      },
+      "art": "preacher_curl_machine.jpg"
+    },
+    {
+      "id": "triceps_extension_machine",
+      "name": "Machine Triceps Extension",
+      "variant": "Machine",
+      "group": "arms",
+      "class": "isolation",
+      "pattern": "Elbow Extension",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "triceps": 1
+      },
+      "art": "triceps_extension_machine.jpg"
+    },
+    {
+      "id": "ab_crunch_machine",
+      "name": "Machine Ab Crunch",
+      "variant": "Machine",
+      "group": "core",
+      "class": "isolation",
+      "pattern": "Spinal Flexion",
+      "unit": "lbs",
+      "progression": "linear",
+      "activation": {
+        "core": 1
+      },
+      "art": "ab_crunch_machine.jpg"
     }
   ],
   "cardio": [

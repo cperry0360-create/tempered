@@ -1053,6 +1053,186 @@
         "kind": "estimated-zone-2",
         "guidance": "Easy conversational pace. Full sentences should feel comfortable; slow down if this feels hard. Do not chase the number in a short finisher."
       }
+    },
+    {
+      "id": "grand-isolation-week",
+      "schemaVersion": 1,
+      "name": "The Grand · Isolation Week",
+      "weeks": 1,
+      "weekStartsOn": "sunday",
+      "note": "Sunday A, Tuesday B, Thursday C. Use a light practice set on unfamiliar machines. Leave 2–3 reps in reserve. If there is no lateral raise machine, use the reverse pec deck or skip the optional slot. Hips and Abs and Favorite Machines are in Train → Extra Routines.",
+      "days": [
+        {
+          "id": "sunday",
+          "weekday": "Sunday",
+          "name": "A · First Pass",
+          "exercises": [
+            {
+              "exerciseId": "pec_deck",
+              "name": "Pec Deck",
+              "sets": 3,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Set the handles at chest height and keep a soft elbow bend. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "leg_curl",
+              "name": "Seated Leg Curl",
+              "sets": 3,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Line your knees up with the pivot and secure the thigh pad. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "leg_extension",
+              "name": "Leg Extension",
+              "sets": 2,
+              "repMin": 12,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Line your knees up with the pivot and place the roller above your ankles. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "reverse_pec_deck",
+              "name": "Reverse Pec Deck",
+              "sets": 2,
+              "repMin": 12,
+              "repMax": 20,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Face the pad and open your arms without shrugging. Leave 2–3 reps in reserve."
+            }
+          ]
+        },
+        {
+          "id": "tuesday",
+          "weekday": "Tuesday",
+          "name": "B · Legs and Delts",
+          "exercises": [
+            {
+              "exerciseId": "leg_extension",
+              "name": "Leg Extension",
+              "sets": 3,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Line your knees up with the pivot and place the roller above your ankles. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "leg_curl",
+              "name": "Seated Leg Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Line your knees up with the pivot and secure the thigh pad. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "hip_abductor_machine",
+              "name": "Machine Hip Abductor",
+              "sets": 2,
+              "repMin": 15,
+              "repMax": 20,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Open your knees against the pads without leaning or bouncing. Leave 2–3 reps in reserve.",
+              "optional": true
+            },
+            {
+              "exerciseId": "lateral_raise_machine",
+              "name": "Machine Lateral Raise",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Lift your upper arms into the pads and keep your shoulders down. Leave 2–3 reps in reserve.",
+              "optional": true,
+              "substituteExerciseId": "reverse_pec_deck"
+            }
+          ]
+        },
+        {
+          "id": "thursday",
+          "weekday": "Thursday",
+          "name": "C · Chest, Delts and Arms",
+          "exercises": [
+            {
+              "exerciseId": "pec_deck",
+              "name": "Pec Deck",
+              "sets": 3,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Set the handles at chest height and keep a soft elbow bend. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "reverse_pec_deck",
+              "name": "Reverse Pec Deck",
+              "sets": 3,
+              "repMin": 12,
+              "repMax": 20,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Face the pad and open your arms without shrugging. Leave 2–3 reps in reserve."
+            },
+            {
+              "exerciseId": "preacher_curl_machine",
+              "name": "Machine Preacher Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Keep your upper arms supported on the pad as you curl. Leave 2–3 reps in reserve.",
+              "optional": true
+            },
+            {
+              "exerciseId": "triceps_extension_machine",
+              "name": "Machine Triceps Extension",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                75,
+                90
+              ],
+              "cue": "Keep your upper arms against the pad and move at the elbows. Leave 2–3 reps in reserve.",
+              "optional": true
+            }
+          ]
+        }
+      ]
     }
   ]
 }

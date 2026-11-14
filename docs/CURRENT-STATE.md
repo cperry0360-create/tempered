@@ -1,3 +1,7 @@
+## 2026-11-14 — Hanging knee raises, 0.66.101 (207)
+
+- Today offers hanging knee raises as an eight-rep task on two separate days each week. Reps add to the selected day through the Daily log.
+
 ## 2026-11-14 — 45-second hangs, 0.66.100 (206)
 
 - Today tracks one continuous 45-second dead hang on two days each week. Dead bugs are retired from the Daily log. Prior entries still round-trip in backups.

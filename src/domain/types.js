@@ -54,6 +54,7 @@
  * @property {number|null} [waterOz]
  * @property {number|null} [steps]
  * @property {number} [pullUpReps] Total pull-up reps for this date.
+ * @property {number} [hangingKneeRaiseReps] Total hanging knee raise reps for this date.
  * @property {number} [deadHangSeconds] Longest continuous hang for this date.
  * @property {number} [deadBugRepsPerSide] Total dead-bug reps logged per side for this date.
  * @property {number} [pushUpReps] Total push-up reps logged for this date.

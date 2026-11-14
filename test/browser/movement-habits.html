@@ -35,7 +35,10 @@ try {
   const quick = (id, amount) => row(id)?.querySelector('[data-quickadd="' + amount + '"]')
   const status = (id) => row(id)?.querySelector('.today-item__meta')?.textContent ?? ''
   check('all movement shortcuts are visible', quick('push_ups', 15) && quick('pull_ups', 5)
-    && quick('dead_hang', 45) && !row('dead_bug'))
+    && quick('dead_hang', 45) && quick('hanging_knee_raise', 8) && !row('dead_bug'))
+  quick('hanging_knee_raise', 8)?.click()
+  check('eight hanging knee raises complete one day', await waitFor(() => !quick('hanging_knee_raise', 8))
+    && (await fixture.daily.dayLog(clock.today())).hangingKneeRaiseReps === 8)
   quick('pull_ups', 5)?.click()
   check('5 pull-ups complete the daily habit', await waitFor(() => row('pull_ups')?.dataset.complete === 'true'))
   row('dead_hang')?.querySelector('.today-item__body')?.click()

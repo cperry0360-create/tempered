@@ -8,6 +8,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
   water: { field: 'waterOz', entry: 'number', mode: 'add' },
   steps: { field: 'steps', entry: 'number', mode: 'replace' },
   micro_cardio: { field: 'microCardioMinutes', entry: 'number', mode: 'add' },
+  push_ups: { field: 'pushUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },
   protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },
@@ -31,6 +32,7 @@ const LIKELY_NEXT = [
   'sleep',
   'steps',
   'micro_cardio',
+  'push_ups',
   'nutrition_logged',
   'calories_logged',
   'alcohol_free',
@@ -78,8 +80,8 @@ export function applyActivity(day, activityId, value = null, options = {}) {
   if (spec.entry === 'mark') return { ...day, [spec.field]: true }
 
   const mode = options.mode ?? spec.mode
-  const entered = positiveNumber(value)
-  if (entered === null) return day
+  const entered = spec.wholeCount ? Number(String(value)) : positiveNumber(value)
+  if (entered === null || (spec.wholeCount && (!Number.isSafeInteger(entered) || entered <= 0))) return day
 
   if (spec.stores === 'bodyMetrics') {
     return {
@@ -90,12 +92,18 @@ export function applyActivity(day, activityId, value = null, options = {}) {
   }
 
   const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0
-  const next = { ...day, [spec.field]: mode === 'add' ? existing + entered : entered }
+  const total = mode === 'add' ? existing + entered : entered
+  if (spec.wholeCount && !Number.isSafeInteger(total)) return day
+  const next = { ...day, [spec.field]: total }
   return spec.trackedField ? { ...next, [spec.trackedField]: true } : next
 }
 
 export function defaultDailyIds(activities) {
   return activities.filter((activity) => activity.daily === true).map((activity) => activity.id)
+}
+
+export function activityAvailableOn(activity, date) {
+  return !activity.dailyFrom || date >= activity.dailyFrom
 }
 
 export function partitionByDaily(activities, dailyIds) {

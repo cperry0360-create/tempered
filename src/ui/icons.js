@@ -157,6 +157,7 @@ export function iconForActivity(activityId) {
     waist_measurement: 'body',
     steps: 'steps',
     micro_cardio: 'steps',
+    push_ups: 'train',
     mobility: 'mobility',
     foot_mobility: 'mobility',
     foot_splint: 'mobility',

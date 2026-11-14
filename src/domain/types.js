@@ -53,6 +53,7 @@
  * @property {number|null} [sleepHours]
  * @property {number|null} [waterOz]
  * @property {number|null} [steps]
+ * @property {number} [pushUpReps] Total push-up reps logged for this date.
  * @property {number|null} [mobilityMinutes]
  * @property {number|null} [readingMinutes]
  * @property {number|null} [studyMinutes]

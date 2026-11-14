@@ -1,3 +1,7 @@
+## 2026-11-14 — Daily push-ups, 0.66.98 (204)
+
+- Today → Daily log tracks 30 push-ups per day. Tap +15 reps, or open the row to log 30 at once or enter another set size. Sets add to the same day's total. The habit is complete at 30 reps.
+
 ## 2026-11-14 — Foot Mobility instructions, 0.66.97 (203)
 
 - Foot Mobility shows the full Form Focus instructions for each stretch. Photo sources and the plantar fascia image license are listed under Settings → Credits.

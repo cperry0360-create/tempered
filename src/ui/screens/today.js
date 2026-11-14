@@ -19,6 +19,7 @@ const FUEL_ACTIVITY_IDS = new Set(['calories_logged', 'protein_target', 'nutriti
 const DEFAULT_QUICK_ADD = Object.freeze({
   water: 20,
   micro_cardio: 2,
+  push_ups: 15,
   mobility: 5,
   read: 10,
   study: 10,
@@ -72,7 +73,7 @@ export const MOBILITY_ROUTINES = Object.freeze([
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
   if (activity.id === 'waist_measurement') return 'in'
-  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal' }[activity.unit] ?? ''
+  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal', reps: 'reps' }[activity.unit] ?? ''
 }
 
 function valueLabel(activity, value) {
@@ -248,6 +249,7 @@ export function createTodayScreen({
   let rolloverOpen = null
   let completedWorkoutOpen = false
   let listeningForDateChange = false
+  let savingPushUps = false
 
   const canLogSelected = () => selectedDate <= realToday
   const isRealToday = () => selectedDate === realToday
@@ -495,12 +497,17 @@ export function createTodayScreen({
     const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
     const sleep = activity.id === 'sleep'
+    const pushUps = activity.id === 'push_ups'
     const mobility = activity.id === 'mobility'
     const mobilityRoutine = mobility
       ? MOBILITY_ROUTINES.find((routine) => routine.id === selectedMobilityRoutineId) ?? null
       : null
+    const submit = () => {
+      if (!pushUps || input.reportValidity()) record(activity, input.value)
+    }
     const input = el('input.today-editor__input', {
-      type: sleep ? 'number' : 'text', inputmode: 'decimal',
+      type: sleep || pushUps ? 'number' : 'text', inputmode: pushUps ? 'numeric' : 'decimal',
+      ...(pushUps ? { min: '1', step: '1', required: true } : {}),
       ...(sleep ? {
         min: '0', max: '24', step: '0.01',
         value: typeof activity.value === 'number' ? String(activity.value) : '',
@@ -512,18 +519,24 @@ export function createTodayScreen({
       onkeydown: (event) => {
         if (event.key === 'Enter') {
           event.preventDefault()
-          record(activity, input.value)
+          submit()
         }
       },
     })
     const preset = quickPresetFor(activity)
-    const presetInput = adding ? el('input.today-editor__preset-input', {
+    const presetInput = adding && !pushUps ? el('input.today-editor__preset-input', {
       type: 'text', inputmode: 'decimal', value: preset === null ? '' : String(preset),
       placeholder: 'Set',
       'aria-label': `Quick add amount for ${activity.name}`,
     }) : null
 
     return el('div.today-editor', { dataset: { editor: activity.id } }, [
+      pushUps && el('div.today-editor__quick', {}, [
+        el('button.today-editor__chip', {
+          type: 'button', disabled: !canLogSelected(),
+          onclick: () => record(activity, activity.dailyCap),
+        }, [`+${activity.dailyCap} reps`]),
+      ]),
       sleep && el('div.today-editor__quick.today-editor__quick--sleep', { 'aria-label': 'Common sleep amounts' },
         [6.5, 7, 7.5, 8, 8.5].map((hours) => el('button.today-editor__chip', {
           type: 'button', dataset: { sleepquick: String(hours) },
@@ -554,7 +567,7 @@ export function createTodayScreen({
         input,
         el('button.today-editor__save', {
           type: 'button', disabled: !canLogSelected(), dataset: { action: 'log' },
-          onclick: () => record(activity, input.value),
+          onclick: submit,
         }, [mobilityRoutine ? 'Log routine' : (adding ? 'Add' : 'Save')]),
       ]),
       presetInput && el('div.today-editor__preset', {}, [
@@ -680,13 +693,20 @@ export function createTodayScreen({
     }
     openActivityId = activityId
     render()
-    // Sleep presets should be available immediately without raising the iOS keyboard.
-    if (activityId !== 'sleep') queueMicrotask(() => root.querySelector(`[data-editor="${activityId}"] input`)?.focus())
+    // Presets should be available immediately without raising the iOS keyboard.
+    if (!['sleep', 'push_ups'].includes(activityId)) {
+      queueMicrotask(() => root.querySelector(`[data-editor="${activityId}"] input`)?.focus())
+    }
   }
 
   async function record(activity, value, options = {}) {
     if (!canLogSelected()) return
-    const result = await daily.logAt(selectedDate, activity.id, value, options)
+    const pushUps = activity.id === 'push_ups'
+    if (pushUps && savingPushUps) return
+    if (pushUps) savingPushUps = true
+    const result = await daily.logAt(selectedDate, activity.id, value, options).finally(() => {
+      if (pushUps) savingPushUps = false
+    })
     const earned = Object.values(result?.xpByAttribute ?? {}).reduce((sum, value) => sum + (Number(value) || 0), 0)
     justEarned = earned > 0 ? {
       id: activity.id,

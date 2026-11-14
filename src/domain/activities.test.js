@@ -83,6 +83,19 @@ test('micro cardio accumulates and earns Wind without creating a workout session
   assert.equal(totals.grit, 0)
 })
 
+test('push-ups record the actual whole reps added in each set', () => {
+  const day = { date: '2026-11-14', steps: 5000 }
+  const first = applyActivity(day, 'push_ups', '15')
+  assert.equal(activityValue(byId('push_ups'), first), 15)
+  assert.equal(applyActivity(first, 'push_ups', 15).pushUpReps, 30)
+  assert.equal(applyActivity(first, 'push_ups', 20).pushUpReps, 35)
+  assert.equal(first.steps, day.steps)
+  for (const value of [null, '', 0, -1, '2.5', '15 reps', Infinity]) {
+    assert.equal(applyActivity(first, 'push_ups', value), first)
+  }
+  assert.deepEqual(awardsForDay(first, {}, balance), awardsForDay(day, {}, balance))
+})
+
 test('a value that describes a state replaces it', () => {
   let day = applyActivity({ date: '2026-09-04' }, 'sleep', 7)
   day = applyActivity(day, 'sleep', 8)
@@ -192,7 +205,7 @@ test('every activity states how it is entered, so no screen has to guess', () =>
 test('the seed starts with the intended core daily habits', () => {
   const defaults = defaultDailyIds(ACTIVITIES)
   assert.deepEqual([...defaults].sort(),
-    ['sleep', 'steps', 'micro_cardio', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics', 'creatine', 'other_supplements'].sort(),
+    ['sleep', 'steps', 'micro_cardio', 'nutrition_logged', 'calories_logged', 'alcohol_free', 'body_metrics', 'creatine', 'other_supplements', 'push_ups'].sort(),
     'the first-run daily set should match the intended core habits')
 })
 

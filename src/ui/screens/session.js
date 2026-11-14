@@ -40,11 +40,6 @@ const stretchPhotos = {
   plantar: new URL('../stretch-photos/plantar-fascia.jpg', import.meta.url).href,
   roll: new URL('../stretch-photos/arch-roll.jpg', import.meta.url).href,
 }
-const stretchCredits = {
-  plantar: ['Covelli et al., Fig. 1d · Cropped · CC BY 4.0', 'https://doi.org/10.3390/biomedicines12081729'],
-  roll: ['U.S. Marshals Service · Tennis Ball Guide', 'https://www.usmarshals.gov/sites/default/files/media/document/FIT-readiness-program.pdf#page=145'],
-  calf: ['U.S. Public Health Service · APFT Training Guide', 'https://upload.wikimedia.org/wikipedia/commons/f/f6/U._S._Public_Health_Service_Commissioned_Corps_Annual_Physical_Fitness_Test_Training_Guide%2C_version_1.0.pdf#page=26'],
-}
 
 /** What a home gym holds, per side. Editable from the Equipment pill. */
 const DEFAULT_PLATES = [45, 35, 25, 10, 5, 2.5, 1.25]
@@ -1155,12 +1150,6 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
             el('small',{text:entry.record?.bestWeight?'Best set':'Elapsed time'}),
           ]),
         ]),
-        stretch && el('p.stretch-photo-credit', {}, [
-          el('a', { href: entry.credit[1], text: entry.credit[0], target: '_blank', rel: 'noopener' }),
-          entry.exercise.id === 'plantar-fascia' && el('a', {
-            href: 'https://creativecommons.org/licenses/by/4.0/', text: ' · License', target: '_blank', rel: 'noopener',
-          }),
-        ]),
         el('div.session-r5__stage-nav', {}, [
           el('button',{type:'button',disabled:focusStageIndex===0,onclick:()=>focusExercise(focusStageIndex-1)},['← Previous']),
           el('button',{type:'button',disabled:focusStageIndex===plan.length-1,onclick:()=>focusExercise(focusStageIndex+1)},[stretch ? 'Next stretch →' : 'Next exercise →']),
@@ -1606,7 +1595,6 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
       plan = FOOT_MOBILITY.map(({ id, name, photo, cue, sets }) => ({
         exercise: { id, name, unit: 'time', art: stretchPhotos[photo] },
         slot: { cue },
-        credit: stretchCredits[photo] ?? stretchCredits.calf,
         restSec: FOOT_MOBILITY_REST,
         sets: sets.map(set => ({ ...set, logged: false })),
       }))

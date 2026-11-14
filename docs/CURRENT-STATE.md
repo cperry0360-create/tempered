@@ -1,3 +1,7 @@
+## 2026-11-14 — Foot Mobility instructions, 0.66.97 (203)
+
+- Foot Mobility shows the full Form Focus instructions for each stretch. Photo sources and the plantar fascia image license are listed under Settings → Credits.
+
 ## 2026-11-13 — The Grand · Isolation Week, 0.66.92 (198)
 
 - The Program Library includes a one-week machine plan with Sunday, Tuesday, and Thursday sessions. Set it active when ready. Two extra machine workouts are available on demand in Train.

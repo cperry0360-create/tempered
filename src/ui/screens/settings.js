@@ -481,6 +481,32 @@ export function createSettingsScreen({ storage, daily, workout, maintenance, clo
             target: '_blank', rel: 'noopener noreferrer', text: 'Creative Commons Attribution-ShareAlike 4.0',
           }),
         ]),
+        el('p.block__hint', {}, [
+          'Plantar fascia stretch photo cropped from ',
+          el('a', {
+            href: 'https://doi.org/10.3390/biomedicines12081729',
+            target: '_blank', rel: 'noopener noreferrer', text: 'Covelli et al. (2024), Figure 1(d)',
+          }),
+          '. © 2024 the authors. ',
+          el('a', {
+            href: 'https://creativecommons.org/licenses/by/4.0/',
+            target: '_blank', rel: 'noopener noreferrer', text: 'Creative Commons Attribution 4.0',
+          }),
+          '.',
+        ]),
+        el('p.block__hint', {}, [
+          'Arch roll photo from the ',
+          el('a', {
+            href: 'https://www.usmarshals.gov/sites/default/files/media/document/FIT-readiness-program.pdf#page=145',
+            target: '_blank', rel: 'noopener noreferrer', text: 'U.S. Marshals Service Tennis Ball Guide',
+          }),
+          '. Calf stretch photos from the ',
+          el('a', {
+            href: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/U._S._Public_Health_Service_Commissioned_Corps_Annual_Physical_Fitness_Test_Training_Guide%2C_version_1.0.pdf#page=26',
+            target: '_blank', rel: 'noopener noreferrer', text: 'U.S. Public Health Service APFT Training Guide',
+          }),
+          '.',
+        ]),
       ]),
 
       el('section.card', { dataset: { section: 'version' } }, [

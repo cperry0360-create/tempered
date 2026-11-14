@@ -266,7 +266,7 @@ export function createTodayScreen({
       const suffix = weekly.loggedToday && !weekly.complete ? ' · done today' : ''
       const period = weekly.cadence === 'biweekly' ? 'fortnight' : 'week'
       if (weekly.spec?.wholeCount) {
-        return `${weekly.weeklyDone}/${weekly.weeklyTarget} this ${period} · ${dailyGoalLabel(activity).replace(' / ', '/')}`
+        return `${weekly.weeklyDone}/${weekly.weeklyTarget} ${period === 'week' ? 'wk' : period} · ${dailyGoalLabel(activity).replace(' / ', '/')}`
       }
       return `${weekly.weeklyDone} / ${weekly.weeklyTarget} this ${period}${suffix}`
     }

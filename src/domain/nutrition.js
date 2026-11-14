@@ -15,6 +15,10 @@ export const NUTRIENTS = Object.freeze([
   { key: 'fiber', entryField: 'fiberGrams', dayField: 'fiberGrams' },
 ])
 
+export const MEAL_GROUPS = Object.freeze({
+  breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snacks: 'Snacks',
+})
+
 const inputKeys = Object.freeze({
   calories: ['calories'],
   proteinGrams: ['proteinGrams', 'protein'],
@@ -94,6 +98,7 @@ function cleanEntry(entry) {
     source: entry.source === 'ai' ? 'ai' : 'manual',
     ...(cleanDescription(entry.description) ? { description: cleanDescription(entry.description) } : {}),
     ...(portion ? { portion } : {}),
+    ...(Object.hasOwn(MEAL_GROUPS, entry.mealGroup) ? { mealGroup: entry.mealGroup } : {}),
     ...nutrients,
   }
 }
@@ -163,6 +168,7 @@ export function addNutritionEntry(day, values, meta) {
     id: meta.id,
     loggedAt: meta.loggedAt,
     source: meta.source,
+    mealGroup: meta.mealGroup,
     description: values?.description ?? meta.description,
     portion,
     ...nutrients,

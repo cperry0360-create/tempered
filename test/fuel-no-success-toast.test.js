@@ -25,7 +25,7 @@ test('genuine failures are accessible, temporary, and cleared on navigation',()=
   assert.match(fuel,/errorTimer=setTimeout\(\(\)=>\{/)
   assert.match(fuel,/},4500\)/)
   assert.match(fuel,/role:'alert',dataset:\{food2Status:'true'\},text:errorMessage/)
-  assert.match(fuel,/function go\(name\)\{clearError\(\)/)
+  assert.match(fuel,/function go\(name,mealGroup=''\)\{\s*clearError\(\)/)
   assert.match(fuel,/function deactivate\(\)\{\s*clearError\(\)/)
   assert.match(fuel,/showError\('Could not remove photo'\)/)
   assert.match(fuel,/showError\('Could not delete meal'\)/)

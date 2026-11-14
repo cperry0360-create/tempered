@@ -1,5 +1,23 @@
-import { nutritionLedger, nutritionSuggestions } from '../domain/nutrition.js'
+import { MEAL_GROUPS, nutritionLedger, nutritionSuggestions } from '../domain/nutrition.js'
+import { el } from './dom.js'
 import { icon } from './icons.js'
+
+export function nutritionMealGroup(entry) {
+  if (Object.hasOwn(MEAL_GROUPS, entry.mealGroup)) return entry.mealGroup
+  const hour = new Date(entry.loggedAt).getHours()
+  if (hour >= 5 && hour < 11) return 'breakfast'
+  if (hour >= 11 && hour < 16) return 'lunch'
+  if (hour >= 16 && hour < 21) return 'dinner'
+  return 'snacks'
+}
+
+export function mealGroupSelect({ mealGroup = '', automatic = true, ...props } = {}) {
+  const options = Object.entries(MEAL_GROUPS)
+  if (automatic) options.unshift(['', 'Automatic (by time)'])
+  const select = el('select', props, options.map(([value, label]) => el('option', { value, text: label })))
+  select.value = mealGroup
+  return select
+}
 
 export const NUTRITION_PHOTO_PROMPT = `Estimate the total calories and macros in the food and drink visible in the attached meal photo or photos for my Tempered food log.
 
@@ -272,7 +290,22 @@ export function installCalorieAiRuntime() {
         setScreenStatus('Could not delete that entry; your saved data was not changed.', 'error')
       }
     }
-    item.append(body, remove)
+    const mealGroup = nutritionMealGroup(entry)
+    const move = mealGroupSelect({
+      mealGroup, automatic: false, 'aria-label': `Move ${entry.description || 'meal'} to`,
+      onchange: async () => {
+        move.disabled = true
+        try {
+          await globalThis.tempered.daily.assignNutritionMeal(date, entry.id, move.value)
+          await renderNutritionData()
+        } catch {
+          move.value = mealGroup
+          move.disabled = false
+          setScreenStatus('Could not move that meal. Try again.', 'error')
+        }
+      },
+    })
+    item.append(body, el('div.nutrition-entry__actions', {}, [move, remove]))
     return item
   }
 
@@ -394,36 +427,23 @@ export function installCalorieAiRuntime() {
 
     const list = screen.querySelector('[data-nutrition-history]')
     const entries = [...ledger.entries].sort((a, b) => b.loggedAt.localeCompare(a.loggedAt))
-    const meals = [
-      { id: 'breakfast', label: 'Breakfast', entries: [] },
-      { id: 'lunch', label: 'Lunch', entries: [] },
-      { id: 'dinner', label: 'Dinner', entries: [] },
-      { id: 'snacks', label: 'Snacks', entries: [] },
-    ]
-    for (const entry of entries) {
-      // Entries already carry their actual logging time; no migration or
-      // inferred meal data is stored. Labels are a visual time-of-day grouping.
-      const hour = new Date(entry.loggedAt).getHours()
-      const group = hour >= 5 && hour < 11 ? meals[0]
-        : hour >= 11 && hour < 16 ? meals[1]
-          : hour >= 16 && hour < 21 ? meals[2] : meals[3]
-      group.entries.push(entry)
-    }
-    const rows = meals.filter(group => group.entries.length > 0).map(group => {
+    const meals = new Map(Object.keys(MEAL_GROUPS).map(id => [id, []]))
+    for (const entry of entries) meals.get(nutritionMealGroup(entry)).push(entry)
+    const rows = [...meals].filter(([, items]) => items.length > 0).map(([id, entries]) => {
       const section = document.createElement('section')
       section.className = 'nutrition-timeline__group'
-      section.dataset.mealGroup = group.id
+      section.dataset.mealGroup = id
       const heading = document.createElement('div')
       heading.className = 'nutrition-timeline__heading'
       const name = document.createElement('strong')
-      name.textContent = group.label
+      name.textContent = MEAL_GROUPS[id]
       const calories = document.createElement('span')
-      calories.textContent = Math.round(group.entries.reduce((sum, entry) =>
+      calories.textContent = Math.round(entries.reduce((sum, entry) =>
         sum + (Number(entry.calories) || 0), 0)).toLocaleString() + ' kcal'
       heading.append(name, calories)
       const items = document.createElement('div')
       items.className = 'nutrition-timeline__items'
-      items.append(...group.entries.map(entry => historyItem(entry, date)))
+      items.append(...entries.map(entry => historyItem(entry, date)))
       section.append(heading, items)
       return section
     })
@@ -584,6 +604,11 @@ export function installCalorieAiRuntime() {
     descriptionLabel.append(descriptionInput)
     fields.append(descriptionLabel)
 
+    const mealSelect = mealGroupSelect({ dataset: { entry: 'nutrition_meal_group' } })
+    fields.append(el('label.nutrition-meal-field.nutrition-meal-field--group', {}, [
+      el('span', { text: 'Assign to' }), mealSelect,
+    ]))
+
     const timeLabel = document.createElement('label')
     timeLabel.className = 'nutrition-meal-field nutrition-meal-field--time'
     timeLabel.innerHTML = '<span>Time</span>'
@@ -649,6 +674,7 @@ export function installCalorieAiRuntime() {
       try {
         await globalThis.tempered.daily.addNutrition(date, values, {
           loggedAt: timestampFor(date, timeInput.value, globalThis.tempered.clock.nowIso()),
+          mealGroup: mealSelect.value,
           source: form.dataset.source,
         })
         for (const input of inputs.values()) input.value = ''
@@ -733,13 +759,18 @@ export function installCalorieAiRuntime() {
   }
 
   /** Fuel asks for the inline panel; it is built once per date and reused across re-renders. */
+  let mountedMealContext = null
   const mountPanel = (event) => {
-    const slot = event?.detail?.slot, date = event?.detail?.date
+    const { slot, date, mealContext = null } = event.detail ?? {}
     if (!slot || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) return
     const isNewPanel = !(panelScreen && panelScreen.dataset.date === date && slot.contains(panelScreen))
     if (isNewPanel) {
       panelScreen = buildNutritionScreen(date, null, { embedded: true })
       slot.replaceChildren(panelScreen)
+    }
+    if (isNewPanel || mountedMealContext !== mealContext) {
+      panelScreen.querySelector('[data-entry="nutrition_meal_group"]').value = mealContext?.mealGroup ?? ''
+      mountedMealContext = mealContext
     }
     // The modern Fuel day strip is now a native selector. Don't send an
     // inline Food 2 log session back to the retired Nutrition screen.

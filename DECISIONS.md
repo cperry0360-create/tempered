@@ -1,3 +1,7 @@
+## 2026-11-14 — Fuel meal assignment
+
+- Store a selected meal category on the nutrition entry and use local time to group older entries and new entries left on Automatic. A move changes only the meal category, keeping diary review, timestamps, photos, and nutrient totals intact.
+
 ## 2026-11-14 — Hanging knee raises, 0.66.101 (207)
 
 - Today offers hanging knee raises as an eight-rep task on two separate days each week. Reps add to the selected day through the Daily log.

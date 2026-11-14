@@ -1,3 +1,8 @@
+## 2026-11-14 — Fuel meal assignment, 0.66.102 (208)
+
+- Fuel’s Log page and saved-food serving picker let you assign an entry to Breakfast, Lunch, Dinner or Snacks. Logging from a meal section preselects that section for manual entries and imports.
+- Open a logged meal’s three-dot menu and use Move to to change its meal category. The Fuel dashboard and history use that same assignment.
+
 ## 2026-11-14 — Hanging knee raises, 0.66.101 (207)
 
 - Today offers hanging knee raises as an eight-rep task on two separate days each week. Reps add to the selected day through the Daily log.

@@ -37,7 +37,7 @@ try{
  q('.fn2__title button')?.click();await settle(30)
  await t.daily.addNutrition('2026-09-29',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-29T08:40:00.000Z'})
  await t.daily.addNutrition('2026-09-30',{description:'Greek yogurt and berries',calories:160,protein:20,carbs:13,fat:2},{loggedAt:'2026-09-30T08:40:00.000Z'})
- await t.daily.addNutrition('2026-10-01',{description:'Chicken and rice bowl',calories:480,protein:39,carbs:52,fat:12},{loggedAt:'2026-10-01T12:30:00.000Z'})
+ await t.daily.addNutrition('2026-10-01',{description:'Chicken and rice bowl',calories:480,protein:39,carbs:52,fat:12},{loggedAt:new Date(2026,9,1,12,30).toISOString()})
  await t.daily.logAt('2026-10-01','water',16)
  await t.app.show('fuel');await settle(260)
  check('Food 2.0 gated view boots without old card stack',!!q('[data-food-two="true"]')&&!q('.food-v2__energy'))
@@ -267,6 +267,49 @@ try{
  check('custom portion saves only after confirmation',
    (await t.daily.dayLog('2026-10-01')).calories>beforeCustom
    && !q('.fn2__overlay'))
+ const group = () => q('[data-entry="nutrition_meal_group"]')
+ const choose = (select,value) => {
+   if(!select)return
+   select.value=value
+   select.dispatchEvent(new Event('change',{bubbles:true}))
+ }
+ const journalRow = (id,description) => qa(`.fn2__meal-group[data-meal-group="${id}"] .fn2__meal-row`)
+   .find(row=>row.textContent.includes(description))
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{async readText(){
+   return 'TEMPERED_DESCRIPTION=MUI omakase\nTEMPERED_CALORIES=1320\nTEMPERED_PROTEIN=60'
+ }}})
+ q('.fn2__title button')?.click();await settle(35)
+ q('[aria-label="Quick log food for Dinner"]')?.click();await settle(60)
+ check('Dinner shortcut opens Log with Dinner already selected',group()?.value==='dinner')
+ q('[data-calorie-ai="paste"]')?.click();await settle(70)
+ check('AI import keeps the chosen meal assignment for review',group()?.value==='dinner'
+   && q('[data-entry="nutrition_calories"]')?.value==='1320')
+ q('[data-action="nutrition-log"]')?.click();await settle(130)
+ const dinnerDay=await t.daily.dayLog(clock.today())
+ const loggedDinner=nutritionLedger(dinnerDay).entries.find(e=>e.description==='MUI omakase')
+ check('Pre-logged dinner stores its meal and the actual midday timestamp',loggedDinner?.mealGroup==='dinner'
+   && new Date(loggedDinner.loggedAt).getHours()===13)
+ q('.fn2__title button')?.click();await settle(55)
+ check('Dashboard journal and calorie tile both show the assigned dinner',!!journalRow('dinner','MUI omakase')
+   && q('.fn2__neo-meal[data-meal="dinner"] small')?.textContent==='1,320 kcal')
+ const lunchRow=journalRow('lunch','Chicken and rice bowl')
+ const sourceEntry=nutritionLedger(dinnerDay).entries.find(e=>e.description==='Chicken and rice bowl')
+ lunchRow?.querySelector('.fn2__meal-menu')?.click();await settle(35)
+ choose(q('.fn2__sheet select'),'dinner');await settle(130)
+ const afterMove=await t.daily.dayLog(clock.today())
+ const moved=nutritionLedger(afterMove).entries.find(e=>e.id===sourceEntry.id)
+ check('Moving a legacy lunch to Dinner keeps the same entry and totals',!journalRow('lunch','Chicken and rice bowl')
+   && !!journalRow('dinner','Chicken and rice bowl') && moved?.loggedAt===sourceEntry.loggedAt
+   && moved?.mealGroup==='dinner' && afterMove.calories===dinnerDay.calories
+   && q('.fn2__neo-meal[data-meal="dinner"] small')?.textContent==='1,800 kcal')
+ journalRow('dinner','MUI omakase')?.querySelector('.fn2__meal-menu')?.click();await settle(35)
+ qa('.fn2__sheet button').find(button=>button.textContent==='Log another in Dinner')?.click();await settle(45)
+ check('Three-dot menu opens a new entry assigned to the same meal',group()?.value==='dinner')
+ choose(group(),'snacks')
+ q('[data-calorie-ai="paste"]')?.click();await settle(55)
+ q('[data-action="nutrition-log"]')?.click();await settle(125)
+ check('Assign to can override the shortcut and persists with the imported entry',
+   nutritionLedger(await t.daily.dayLog(clock.today())).entries.at(-1)?.mealGroup==='snacks')
  check('no browser runtime errors',errors.length===0,errors.join(' | '))
 }catch(error){check('Food 2.0 completed',false,error?.stack??error)}
 await fetch('/__report',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'food2-integrated',passed:checks.every(x=>x.ok),checks})})

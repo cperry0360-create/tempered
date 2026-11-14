@@ -256,6 +256,30 @@ test('deleting nutrition recalculates the day, never revokes XP, and is undoable
   assert.equal(await vitalityXp(storage), paid, 'Undo cannot pay the same finish line twice')
 })
 
+test('meal assignment persists without changing the timestamp, photo, totals or review state', async () => {
+  const { daily, storage } = await freshDay()
+  const date = '2026-09-04'
+  const loggedAt = new Date(2026, 8, 4, 12, 30).toISOString()
+  const added = await daily.addNutrition(date, { calories: 500, protein: 35, portion: .5 }, {
+    loggedAt, source: 'ai', mealGroup: 'dinner',
+  })
+  const [entry] = added.day.nutritionEntries
+  assert.equal(entry.mealGroup, 'dinner')
+  const legacy = await daily.addNutrition(date, { calories: 300 }, { loggedAt })
+  const oldEntry = legacy.day.nutritionEntries[1]
+  assert.equal(oldEntry.mealGroup, undefined)
+  const closed = await daily.setNutritionStatus(date, 'complete')
+  const before = { ...closed, mealPhotos: { [oldEntry.id]: 'saved-photo' } }
+  await storage.put('dayLogs', before)
+  const expected = { ...before, nutritionEntries: [entry, { ...oldEntry, mealGroup: 'dinner' }] }
+  await daily.assignNutritionMeal(date, oldEntry.id, 'dinner')
+  await daily.assignNutritionMeal(date, oldEntry.id, 'dinner')
+  assert.deepEqual(await daily.dayLog(date), expected)
+  const removed = await daily.removeNutrition(date, oldEntry.id)
+  await daily.restoreNutrition(date, removed.removed, removed.index)
+  assert.deepEqual((await daily.dayLog(date)).nutritionEntries, expected.nutritionEntries)
+})
+
 test('waist measurements are user-controlled reminders and preserve numeric history', async () => {
   const { daily, storage, clock } = await freshDay('2026-10-29T12:00:00.000Z')
   const first = (await daily.activitySchedule()).waist_measurement

@@ -156,6 +156,41 @@
       "help": "Log each set as you go. Your daily goal is 30 total reps."
     },
     {
+      "id": "pull_ups",
+      "name": "Pull-ups",
+      "attribute": "might",
+      "daily": true,
+      "dailyFrom": "2026-11-14",
+      "kind": "derived",
+      "unit": "reps",
+      "dailyCap": 5,
+      "quickAmount": 5
+    },
+    {
+      "id": "dead_hang",
+      "name": "Dead hang",
+      "attribute": "might",
+      "daily": false,
+      "dailyFrom": "2026-11-14",
+      "weeklyDefault": 2,
+      "kind": "derived",
+      "unit": "sec",
+      "dailyCap": 60,
+      "quickAmount": 60
+    },
+    {
+      "id": "dead_bug",
+      "name": "Dead bugs",
+      "attribute": "might",
+      "daily": false,
+      "dailyFrom": "2026-11-14",
+      "weeklyDefault": 2,
+      "kind": "derived",
+      "unit": "reps/side",
+      "dailyCap": 5,
+      "quickAmount": 5
+    },
+    {
       "id": "foot_mobility",
       "name": "Foot mobility",
       "attribute": "wind",

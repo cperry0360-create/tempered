@@ -53,6 +53,9 @@
  * @property {number|null} [sleepHours]
  * @property {number|null} [waterOz]
  * @property {number|null} [steps]
+ * @property {number} [pullUpReps] Total pull-up reps for this date.
+ * @property {number} [deadHangSeconds] Longest continuous hang for this date.
+ * @property {number} [deadBugRepsPerSide] Total dead-bug reps logged per side for this date.
  * @property {number} [pushUpReps] Total push-up reps logged for this date.
  * @property {number|null} [mobilityMinutes]
  * @property {number|null} [readingMinutes]

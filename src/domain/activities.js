@@ -9,6 +9,9 @@ export const ACTIVITY_FIELDS = Object.freeze({
   steps: { field: 'steps', entry: 'number', mode: 'replace' },
   micro_cardio: { field: 'microCardioMinutes', entry: 'number', mode: 'add' },
   push_ups: { field: 'pushUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
+  pull_ups: { field: 'pullUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
+  dead_hang: { field: 'deadHangSeconds', entry: 'number', mode: 'replace', bestAttempt: true, wholeCount: true, unscored: true },
+  dead_bug: { field: 'deadBugRepsPerSide', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },
   protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },
@@ -92,7 +95,7 @@ export function applyActivity(day, activityId, value = null, options = {}) {
   }
 
   const existing = typeof day[spec.field] === 'number' ? day[spec.field] : 0
-  const total = mode === 'add' ? existing + entered : entered
+  const total = spec.bestAttempt ? Math.max(existing, entered) : mode === 'add' ? existing + entered : entered
   if (spec.wholeCount && !Number.isSafeInteger(total)) return day
   const next = { ...day, [spec.field]: total }
   return spec.trackedField ? { ...next, [spec.trackedField]: true } : next

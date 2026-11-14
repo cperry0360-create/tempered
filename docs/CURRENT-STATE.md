@@ -1,3 +1,7 @@
+## 2026-11-14 — Pull-ups, dead hangs, and dead bugs, 0.66.99 (205)
+
+- Today → Daily log adds 5 pull-ups daily, a 60-second continuous hang twice a week, and 5 dead bugs per side twice a week as an optional core habit.
+
 ## 2026-11-14 — Daily push-ups, 0.66.98 (204)
 
 - Today → Daily log tracks 30 push-ups per day. Tap +15 reps, or open the row to log 30 at once or enter another set size. Sets add to the same day's total. The habit is complete at 30 reps.

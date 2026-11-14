@@ -1,3 +1,7 @@
+## 2026-11-14 — Pull-ups, dead hangs, and dead bugs
+
+- Count two separate days for each weekly goal. Track the longest hang of each day so several shorter hangs cannot complete a continuous 60-second target. Log dead-bug reps per side and keep the exercises outside programmed workouts.
+
 ## 2026-11-14 — Daily push-ups
 
 - Use a 30-rep target in the Daily log and offer 15 as the one-tap amount for two sets. The row opens a 30-rep shortcut and a custom rep entry. Keep the actual daily count and leave workout records and XP to their existing inputs. Start the habit on release day, with cadence configurable in Settings.

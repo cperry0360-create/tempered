@@ -264,7 +264,11 @@ export function createTodayScreen({
   function statusFor(activity, weekly = null) {
     if (weekly) {
       const suffix = weekly.loggedToday && !weekly.complete ? ' · done today' : ''
-      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} ${weekly.cadence === 'biweekly' ? 'this fortnight' : 'this week'}${suffix}${weekly.spec?.wholeCount ? ' · ' + dailyGoalLabel(activity) : ''}`
+      const period = weekly.cadence === 'biweekly' ? 'fortnight' : 'week'
+      if (weekly.spec?.wholeCount) {
+        return `${weekly.weeklyDone}/${weekly.weeklyTarget} this ${period} · ${dailyGoalLabel(activity).replace(' / ', '/')}`
+      }
+      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} this ${period}${suffix}`
     }
     if (hasDailyGoal(activity)) return dailyGoalLabel(activity)
     if (activity.logged) return valueLabel(activity, activity.value)

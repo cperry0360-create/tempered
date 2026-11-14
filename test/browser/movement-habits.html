@@ -43,7 +43,7 @@ try {
   if (entry) entry.value = '45'
   row('dead_hang')?.querySelector('[data-action="log"]')?.click()
   check('a 45-second hang is recorded without completing the day', await waitFor(() =>
-    status('dead_hang').includes('0 / 2 this week') && status('dead_hang').includes('45 / 60 sec')))
+    status('dead_hang').includes('0/2 this week') && status('dead_hang').includes('45/60 sec')))
   quick('dead_hang', 60)?.click()
   check('a full minute completes one day', await waitFor(() => !quick('dead_hang', 60)
     && Boolean(document.querySelector('.today-daily-log [data-other="toggle"]'))))

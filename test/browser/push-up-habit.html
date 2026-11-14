@@ -29,6 +29,7 @@ try {
   const storage = createIndexedDbStorage({ name: 'push-up-habit-harness' })
   await storage.open()
   await storage.put('profile', { id: 'profile', setupComplete: true, dailyActivityIds: ['sleep'] })
+  await storage.put('dayLogs', { date: '2026-11-12', sleepHours: 8 })
   const fixture = await bootstrapHarness({ clock, storage, mount: document.getElementById('app'), initialTab: 'today' })
   const row = () => document.querySelector('.today-daily-log [data-activity="push_ups"]')
   const status = () => row()?.querySelector('.today-item__meta')?.textContent
@@ -62,6 +63,10 @@ try {
     (await fixture.daily.dayLog('2026-11-14')).pushUpReps === 38
     && (await fixture.daily.dayLog('2026-11-15')).pushUpReps === 30
     && (await storage.getAll('sessions')).length === 0)
+  await fixture.app.show('history')
+  document.querySelector('[data-view="habits"]')?.click()
+  check('Progress measures completion from the day the push-up goal was added',
+    document.querySelector('[data-habit="push_ups"] .progress-habit__meta')?.textContent === '2 of 2 days')
 } catch (error) {
   check('the push-ups journey loads', false, error.stack ?? String(error))
 }

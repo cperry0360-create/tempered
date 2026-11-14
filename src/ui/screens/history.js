@@ -7,7 +7,7 @@ import { mainTabBrand } from '../main-tab-header.js'
 import { icon } from '../icons.js'
 import { emptyState } from '../states.js'
 import { lbs, volume, duration, shortDate, performance } from '../format.js'
-import { ACTIVITY_FIELDS, isLogged } from '../../domain/activities.js'
+import { ACTIVITY_FIELDS, activityAvailableOn, isLogged } from '../../domain/activities.js'
 import { effectiveLoad } from '../../domain/records.js'
 import { trainingScore, explainTrainingScore } from '../../domain/training-score.js'
 import { summarizeTrend } from '../../domain/trend.js'
@@ -278,7 +278,7 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
   }
 
   function habitCompletionForDay(day) {
-    const activities = dailyActivities()
+    const activities = dailyActivities().filter((activity) => activityAvailableOn(activity, day.date))
     if (activities.length === 0) return { done: 0, total: 0, percent: 0 }
     const done = activities.filter((activity) => completedActivity(activity, day)).length
     return { done, total: activities.length, percent: Math.round(done / activities.length * 100) }
@@ -300,11 +300,9 @@ export function createHistoryScreen({ storage, workout, daily, clock }) {
     const trackedDates = observedProgressDates(dates, dataStart)
     const days = daysForDates(trackedDates)
     const dateSet = new Set(trackedDates)
-    const habits = dailyActivities()
-    const opportunities = days.length * habits.length
-    const habitDone = days.reduce((sum, day) => (
-      sum + habits.filter((activity) => completedActivity(activity, day)).length
-    ), 0)
+    const habits = days.map(habitCompletionForDay)
+    const opportunities = habits.reduce((sum, day) => sum + day.total, 0)
+    const habitDone = habits.reduce((sum, day) => sum + day.done, 0)
     const habitRate = opportunities ? Math.round(habitDone / opportunities * 100) : null
     const periodSessions = sessions.filter((session) => dateSet.has(session.date))
     const sessionIds = new Set(periodSessions.map((session) => session.id))
@@ -1107,12 +1105,14 @@ return payload
     if (days.length === 0) {
       return [waistCard, emptyState('No habit history yet', 'Daily habit completion will appear here after you log.')].filter(Boolean)
     }
-    const rows = activities.map((activity) => {
-      const values = days.map((day) => completedActivity(activity, day))
+    const rows = activities.flatMap((activity) => {
+      const values = days.filter((day) => activityAvailableOn(activity, day.date))
+        .map((day) => completedActivity(activity, day))
+      if (values.length === 0) return []
       const done = values.filter(Boolean).length
       const percent = Math.round(done / values.length * 100)
       const streak = streaks(values)
-      return el('article.progress-habit', { dataset: { habit: activity.id } }, [
+      return [el('article.progress-habit', { dataset: { habit: activity.id } }, [
         el('div.progress-habit__head', {}, [
           el('div', {}, [
             el('h3.progress-habit__name', { text: activity.short ?? activity.name }),
@@ -1126,7 +1126,7 @@ return payload
         el('p.progress-habit__streak', {
           text: (streak.current > 0 ? streak.current + ' day streak · ' : '') + 'Best ' + streak.longest + ' days',
         }),
-      ])
+      ])]
     })
     const line = days.length < selectedDates().length
       ? el('p.progress-footnote', { text: 'Showing ' + days.length + ' days since tracking began.' })

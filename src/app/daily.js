@@ -8,7 +8,7 @@ import { FOOT_MOBILITY_INTERVALS } from '../domain/foot-mobility.js'
  */
 
 import {
-  applyActivity, activityValue, isLogged, splitActivities, defaultDailyIds, ACTIVITY_FIELDS,
+  applyActivity, activityValue, isLogged, splitActivities, defaultDailyIds, activityAvailableOn, ACTIVITY_FIELDS,
 } from '../domain/activities.js'
 import {
   awardsForDay, totalsByAttribute, totalsBySource, createInitialState, applyAwards,
@@ -356,9 +356,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   /** Decorate one catalogue row against one day. */
   function decorate(activity, day, schedule, dynamicProteinGoal = null,
     dynamicCalorieTarget = null, dynamicStepTarget = DEFAULT_STEP_TARGET) {
-    const cadence = activity.dailyFrom && day.date < activity.dailyFrom
-      ? 'off'
-      : schedule[activity.id]?.cadence ?? 'off'
+    const cadence = activityAvailableOn(activity, day.date) ? schedule[activity.id]?.cadence ?? 'off' : 'off'
     const decorated = {
       ...activity,
       daily: cadence === 'daily',
@@ -395,7 +393,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       day,
       schedule,
       dailyIds: activities.filter((activity) => schedule[activity.id]?.cadence === 'daily'
-        && (!activity.dailyFrom || date >= activity.dailyFrom)).map((activity) => activity.id),
+        && activityAvailableOn(activity, date)).map((activity) => activity.id),
       outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
       logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
     }
@@ -427,7 +425,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const logs = await storage.getAll('dayLogs')
     const weekly = activities
       .filter((activity) => ['weekly', 'biweekly'].includes(schedule[activity.id]?.cadence)
-        && (!activity.dailyFrom || anchorDate >= activity.dailyFrom))
+        && activityAvailableOn(activity, anchorDate))
       .map((activity) => {
         const settings = schedule[activity.id]
         const target = settings.cadence === 'biweekly' ? 1 : clampTarget(settings.target)

@@ -102,6 +102,10 @@ export function defaultDailyIds(activities) {
   return activities.filter((activity) => activity.daily === true).map((activity) => activity.id)
 }
 
+export function activityAvailableOn(activity, date) {
+  return !activity.dailyFrom || date >= activity.dailyFrom
+}
+
 export function partitionByDaily(activities, dailyIds) {
   const wanted = new Set(dailyIds ?? [])
   const sorted = sortActivities(activities)

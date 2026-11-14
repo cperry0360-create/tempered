@@ -35,25 +35,23 @@ try {
   const quick = (id, amount) => row(id)?.querySelector('[data-quickadd="' + amount + '"]')
   const status = (id) => row(id)?.querySelector('.today-item__meta')?.textContent ?? ''
   check('all movement shortcuts are visible', quick('push_ups', 15) && quick('pull_ups', 5)
-    && quick('dead_hang', 60) && quick('dead_bug', 5))
+    && quick('dead_hang', 45) && !row('dead_bug'))
   quick('pull_ups', 5)?.click()
   check('5 pull-ups complete the daily habit', await waitFor(() => row('pull_ups')?.dataset.complete === 'true'))
   row('dead_hang')?.querySelector('.today-item__body')?.click()
   const entry = row('dead_hang')?.querySelector('input')
-  if (entry) entry.value = '45'
+  if (entry) entry.value = '40'
   row('dead_hang')?.querySelector('[data-action="log"]')?.click()
-  check('a 45-second hang is recorded without completing the day', await waitFor(() =>
-    status('dead_hang').includes('0/2 wk') && status('dead_hang').includes('45/60 sec')))
-  quick('dead_hang', 60)?.click()
-  check('a full minute completes one day', await waitFor(() => !quick('dead_hang', 60)
+  check('a 40-second hang is recorded without completing the day', await waitFor(() =>
+    status('dead_hang').includes('0/2 wk') && status('dead_hang').includes('40/45 sec')))
+  quick('dead_hang', 45)?.click()
+  check('a continuous 45-second hang completes one day', await waitFor(() => !quick('dead_hang', 45)
     && Boolean(document.querySelector('.today-daily-log [data-other="toggle"]'))))
-  quick('dead_bug', 5)?.click()
-  check('dead bugs save reps per side', await waitFor(() => !quick('dead_bug', 5))
-    && (await fixture.daily.dayLog(clock.today())).deadBugRepsPerSide === 5)
   const week = await fixture.daily.week()
-  check('both weekly tasks have one of two days complete', ['dead_hang', 'dead_bug'].every((id) =>
-    week.activities.some((row) => row.id === id && row.weeklyDone === 1 && row.weeklyTarget === 2)))
-  check('the in-app log records the longest continuous hang', (await fixture.daily.dayLog(clock.today())).deadHangSeconds === 60)
+  check('the hang has one of two days complete and dead bugs are absent',
+    week.activities.some((row) => row.id === 'dead_hang' && row.weeklyDone === 1 && row.weeklyTarget === 2)
+    && !week.activities.some((row) => row.id === 'dead_bug'))
+  check('the in-app log records the longest continuous hang', (await fixture.daily.dayLog(clock.today())).deadHangSeconds === 45)
 } catch (error) {
   check('the movement habits journey loads', false, error.stack ?? String(error))
 }

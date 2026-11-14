@@ -1,3 +1,7 @@
+## 2026-11-14 — 45-second hangs, 0.66.100 (206)
+
+- Today tracks one continuous 45-second dead hang on two days each week. Dead bugs are retired from the Daily log. Prior entries still round-trip in backups.
+
 ## 2026-11-14 — Pull-ups, dead hangs, and dead bugs
 
 - Count two separate days for each weekly goal. Track the longest hang of each day so several shorter hangs cannot complete a continuous 60-second target. Log dead-bug reps per side and keep the exercises outside programmed workouts.

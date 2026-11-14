@@ -11,7 +11,6 @@ export const ACTIVITY_FIELDS = Object.freeze({
   push_ups: { field: 'pushUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   pull_ups: { field: 'pullUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   dead_hang: { field: 'deadHangSeconds', entry: 'number', mode: 'replace', bestAttempt: true, wholeCount: true, unscored: true },
-  dead_bug: { field: 'deadBugRepsPerSide', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },
   protein_target: { field: 'proteinGrams', entry: 'number', mode: 'add', scoredField: 'proteinTargetMet' },

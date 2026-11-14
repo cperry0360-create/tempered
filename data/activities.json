@@ -179,6 +179,18 @@
       "quickAmount": 45
     },
     {
+      "id": "hanging_knee_raise",
+      "name": "Hanging knee raises",
+      "attribute": "might",
+      "daily": false,
+      "dailyFrom": "2026-11-14",
+      "weeklyDefault": 2,
+      "kind": "derived",
+      "unit": "reps",
+      "dailyCap": 8,
+      "quickAmount": 8
+    },
+    {
       "id": "foot_mobility",
       "name": "Foot mobility",
       "attribute": "wind",

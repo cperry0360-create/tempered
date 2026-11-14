@@ -160,6 +160,7 @@ export function iconForActivity(activityId) {
     push_ups: 'train',
     pull_ups: 'train',
     dead_hang: 'train',
+    hanging_knee_raise: 'train',
     mobility: 'mobility',
     foot_mobility: 'mobility',
     foot_splint: 'mobility',

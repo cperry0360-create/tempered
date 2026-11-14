@@ -10,6 +10,7 @@ export const ACTIVITY_FIELDS = Object.freeze({
   micro_cardio: { field: 'microCardioMinutes', entry: 'number', mode: 'add' },
   push_ups: { field: 'pushUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   pull_ups: { field: 'pullUpReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
+  hanging_knee_raise: { field: 'hangingKneeRaiseReps', entry: 'number', mode: 'add', wholeCount: true, unscored: true },
   dead_hang: { field: 'deadHangSeconds', entry: 'number', mode: 'replace', bestAttempt: true, wholeCount: true, unscored: true },
   nutrition_logged: { field: 'nutritionLogged', entry: 'mark' },
   calories_logged: { field: 'calories', entry: 'number', mode: 'add', trackedField: 'caloriesLogged' },

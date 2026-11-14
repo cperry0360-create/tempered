@@ -160,7 +160,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
-      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility', 'foot_splint', 'push_ups'].includes(activity.id)) {
+      if (activity.weeklyDefault) return [activity.id, { cadence: 'weekly', target: activity.weeklyDefault }]
+      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility', 'foot_splint', 'push_ups', 'pull_ups'].includes(activity.id)) {
         return [activity.id, { cadence: 'daily', target: 1 }]
       }
       if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]
@@ -272,7 +273,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
 
   /** One activity logged against an explicit calendar date. Future health logs are not allowed. */
   async function logAt(date, activityId, value = null, options = {}) {
-    if (activityId === 'push_ups' && date <= clock.today()) {
+    if (ACTIVITY_FIELDS[activityId]?.wholeCount && date <= clock.today()) {
       return storage.updateAtomically(['dayLogs'], async (tx) => {
         const day = (await tx.get('dayLogs', date)) ?? { date }
         const next = applyActivity(day, activityId, value, options)
@@ -416,11 +417,12 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const proteinGoal = await proteinGoalFor(anchorDate, anchorDay)
     const caloriesGoal = await calorieTarget()
     const stepsGoal = await stepTarget()
-    const completedOnDay = (activity, row) => activity.id === 'protein_target'
-      ? row.proteinTargetMet === true
-      : activity.id === 'push_ups'
-        ? activityValue(activity, row) >= activity.dailyCap
-        : isLogged(activity, row)
+    const completedOnDay = (activity, row) => {
+      if (!activityAvailableOn(activity, row.date)) return false
+      if (activity.id === 'protein_target') return row.proteinTargetMet === true
+      if (ACTIVITY_FIELDS[activity.id]?.wholeCount) return activityValue(activity, row) >= activity.dailyCap
+      return isLogged(activity, row)
+    }
 
     const logs = await storage.getAll('dayLogs')
     const weekly = activities

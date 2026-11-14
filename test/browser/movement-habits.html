@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>LFMS bar and core habits</title>
+  <link rel="stylesheet" href="../../src/tokens.css">
+  <link rel="stylesheet" href="../../src/style.css">
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createIndexedDbStorage } from '../../src/adapters/storage/indexeddb-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+const checks = []
+const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail })
+async function waitFor(predicate) {
+  for (let i = 0; i < 100; i += 1) {
+    if (predicate()) return true
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
+  return false
+}
+
+try {
+  const clock = fixedClock(new Date(2026, 10, 15, 12))
+  const storage = createIndexedDbStorage({ name: 'movement-habits-harness' })
+  await storage.open()
+  await storage.put('profile', { id: 'profile', setupComplete: true, dailyActivityIds: ['sleep'] })
+  await storage.put('dayLogs', { date: '2026-11-12', sleepHours: 8 })
+  const fixture = await bootstrapHarness({ clock, storage, mount: document.getElementById('app'), initialTab: 'today' })
+  const row = (id) => document.querySelector('.today-daily-log [data-activity="' + id + '"]')
+  const quick = (id, amount) => row(id)?.querySelector('[data-quickadd="' + amount + '"]')
+  const status = (id) => row(id)?.querySelector('.today-item__meta')?.textContent ?? ''
+  check('all movement shortcuts are visible', quick('push_ups', 15) && quick('pull_ups', 5)
+    && quick('dead_hang', 60) && quick('dead_bug', 5))
+  quick('pull_ups', 5)?.click()
+  check('5 pull-ups complete the daily habit', await waitFor(() => row('pull_ups')?.dataset.complete === 'true'))
+  row('dead_hang')?.querySelector('.today-item__body')?.click()
+  const entry = row('dead_hang')?.querySelector('input')
+  if (entry) entry.value = '45'
+  row('dead_hang')?.querySelector('[data-action="log"]')?.click()
+  check('a 45-second hang is recorded without completing the day', await waitFor(() =>
+    status('dead_hang').includes('0 / 2 this week') && status('dead_hang').includes('45 / 60 sec')))
+  quick('dead_hang', 60)?.click()
+  check('a full minute completes one day', await waitFor(() => !quick('dead_hang', 60)
+    && Boolean(document.querySelector('.today-daily-log [data-other="toggle"]'))))
+  quick('dead_bug', 5)?.click()
+  check('dead bugs save reps per side', await waitFor(() => !quick('dead_bug', 5))
+    && (await fixture.daily.dayLog(clock.today())).deadBugRepsPerSide === 5)
+  const week = await fixture.daily.week()
+  check('both weekly tasks have one of two days complete', ['dead_hang', 'dead_bug'].every((id) =>
+    week.activities.some((row) => row.id === id && row.weeklyDone === 1 && row.weeklyTarget === 2)))
+  check('the in-app log records the longest continuous hang', (await fixture.daily.dayLog(clock.today())).deadHangSeconds === 60)
+} catch (error) {
+  check('the movement habits journey loads', false, error.stack ?? String(error))
+}
+
+await fetch('/__report', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ label: 'movement-habits', passed: checks.every((item) => item.ok), checks }),
+})
+</script>
+</body>
+</html>

@@ -73,7 +73,7 @@ export const MOBILITY_ROUTINES = Object.freeze([
 function unitLabel(activity) {
   if (activity.id === 'body_metrics') return 'lb'
   if (activity.id === 'waist_measurement') return 'in'
-  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal', reps: 'reps' }[activity.unit] ?? ''
+  return { hours: 'h', min: 'min', oz: 'oz', steps: 'steps', g: 'g', kcal: 'kcal', reps: 'reps', sec: 'sec', 'reps/side': 'reps/side' }[activity.unit] ?? ''
 }
 
 function valueLabel(activity, value) {
@@ -249,22 +249,22 @@ export function createTodayScreen({
   let rolloverOpen = null
   let completedWorkoutOpen = false
   let listeningForDateChange = false
-  let savingPushUps = false
+  const savingMeasurements = new Set()
 
   const canLogSelected = () => selectedDate <= realToday
   const isRealToday = () => selectedDate === realToday
 
   function quickPresetFor(activity) {
-    if (!isAdditiveNumber(activity)) return null
+    if (!isAdditiveNumber(activity)) return activity.quickAmount ?? null
     const stored = Number(quickPresets?.[activity.id])
     if (Number.isFinite(stored) && stored > 0) return stored
-    return DEFAULT_QUICK_ADD[activity.id] ?? null
+    return DEFAULT_QUICK_ADD[activity.id] ?? activity.quickAmount ?? null
   }
 
   function statusFor(activity, weekly = null) {
     if (weekly) {
       const suffix = weekly.loggedToday && !weekly.complete ? ' · done today' : ''
-      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} ${weekly.cadence === 'biweekly' ? 'this fortnight' : 'this week'}${suffix}`
+      return `${weekly.weeklyDone} / ${weekly.weeklyTarget} ${weekly.cadence === 'biweekly' ? 'this fortnight' : 'this week'}${suffix}${weekly.spec?.wholeCount ? ' · ' + dailyGoalLabel(activity) : ''}`
     }
     if (hasDailyGoal(activity)) return dailyGoalLabel(activity)
     if (activity.logged) return valueLabel(activity, activity.value)
@@ -497,17 +497,17 @@ export function createTodayScreen({
     const adding = isAdditiveNumber(activity)
     const unit = unitLabel(activity)
     const sleep = activity.id === 'sleep'
-    const pushUps = activity.id === 'push_ups'
+    const wholeCount = activity.spec?.wholeCount === true
     const mobility = activity.id === 'mobility'
     const mobilityRoutine = mobility
       ? MOBILITY_ROUTINES.find((routine) => routine.id === selectedMobilityRoutineId) ?? null
       : null
     const submit = () => {
-      if (!pushUps || input.reportValidity()) record(activity, input.value)
+      if (!wholeCount || input.reportValidity()) record(activity, input.value)
     }
     const input = el('input.today-editor__input', {
-      type: sleep || pushUps ? 'number' : 'text', inputmode: pushUps ? 'numeric' : 'decimal',
-      ...(pushUps ? { min: '1', step: '1', required: true } : {}),
+      type: sleep || wholeCount ? 'number' : 'text', inputmode: wholeCount ? 'numeric' : 'decimal',
+      ...(wholeCount ? { min: '1', step: '1', required: true } : {}),
       ...(sleep ? {
         min: '0', max: '24', step: '0.01',
         value: typeof activity.value === 'number' ? String(activity.value) : '',
@@ -524,14 +524,14 @@ export function createTodayScreen({
       },
     })
     const preset = quickPresetFor(activity)
-    const presetInput = adding && !pushUps ? el('input.today-editor__preset-input', {
+    const presetInput = adding && !wholeCount ? el('input.today-editor__preset-input', {
       type: 'text', inputmode: 'decimal', value: preset === null ? '' : String(preset),
       placeholder: 'Set',
       'aria-label': `Quick add amount for ${activity.name}`,
     }) : null
 
     return el('div.today-editor', { dataset: { editor: activity.id } }, [
-      pushUps && el('div.today-editor__quick', {}, [
+      activity.id === 'push_ups' && el('div.today-editor__quick', {}, [
         el('button.today-editor__chip', {
           type: 'button', disabled: !canLogSelected(),
           onclick: () => record(activity, activity.dailyCap),
@@ -620,7 +620,7 @@ export function createTodayScreen({
     const adding = isAdditiveNumber(activity)
     const preset = quickPresetFor(activity)
     const unit = unitLabel(activity)
-    const quickText = adding && preset !== null ? `+${preset}${unit ? ` ${unit}` : ''}` : 'Log'
+    const quickText = preset !== null ? `${adding ? '+' : ''}${preset}${unit ? ` ${unit}` : ''}` : 'Log'
 
     return el('div.today-item-wrap', {
       dataset: { open: String(open), activity: activity.id, complete: String(complete) },
@@ -644,12 +644,12 @@ export function createTodayScreen({
         ]),
         canLogSelected() && el('button.today-item__quick', {
           type: 'button',
-          dataset: adding && preset !== null ? { quickadd: String(preset) } : { quicksetup: 'true' },
-          'aria-label': adding && preset !== null
-            ? `Add ${preset} ${activity.unit ?? ''} to ${activity.name}`
+          dataset: preset !== null ? { quickadd: String(preset) } : { quicksetup: 'true' },
+          'aria-label': preset !== null
+            ? `${adding ? 'Add' : 'Log'} ${preset} ${activity.unit ?? ''} for ${activity.name}`
             : `Log ${activity.name}`,
           onclick: () => {
-            if (adding && preset !== null) {
+            if (preset !== null) {
               record(activity, String(preset))
               return
             }
@@ -701,11 +701,12 @@ export function createTodayScreen({
 
   async function record(activity, value, options = {}) {
     if (!canLogSelected()) return
-    const pushUps = activity.id === 'push_ups'
-    if (pushUps && savingPushUps) return
-    if (pushUps) savingPushUps = true
+    const wholeCount = activity.spec?.wholeCount === true
+    const saveKey = selectedDate + activity.id
+    if (wholeCount && savingMeasurements.has(saveKey)) return
+    if (wholeCount) savingMeasurements.add(saveKey)
     const result = await daily.logAt(selectedDate, activity.id, value, options).finally(() => {
-      if (pushUps) savingPushUps = false
+      if (wholeCount) savingMeasurements.delete(saveKey)
     })
     const earned = Object.values(result?.xpByAttribute ?? {}).reduce((sum, value) => sum + (Number(value) || 0), 0)
     justEarned = earned > 0 ? {

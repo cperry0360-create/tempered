@@ -145,6 +145,17 @@
       "kind": "derived"
     },
     {
+      "id": "push_ups",
+      "name": "Push-ups",
+      "attribute": "might",
+      "daily": true,
+      "dailyFrom": "2026-11-14",
+      "kind": "derived",
+      "unit": "reps",
+      "dailyCap": 30,
+      "help": "Log each set as you go. Your daily goal is 30 total reps."
+    },
+    {
       "id": "foot_mobility",
       "name": "Foot mobility",
       "attribute": "wind",

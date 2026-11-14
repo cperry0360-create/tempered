@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>LFMS daily push-ups</title>
+  <link rel="stylesheet" href="../../src/tokens.css">
+  <link rel="stylesheet" href="../../src/style.css">
+</head>
+<body>
+<div id="app" class="app"></div>
+<script type="module">
+import { bootstrapHarness } from './harness.js'
+import { createIndexedDbStorage } from '../../src/adapters/storage/indexeddb-storage.js'
+import { fixedClock } from '../../src/adapters/clock/clock.js'
+
+const checks = []
+const check = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), detail })
+async function waitFor(predicate) {
+  for (let i = 0; i < 100; i += 1) {
+    if (predicate()) return true
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
+  return false
+}
+
+try {
+  const clock = fixedClock(new Date(2026, 10, 15, 12))
+  const storage = createIndexedDbStorage({ name: 'push-up-habit-harness' })
+  await storage.open()
+  await storage.put('profile', { id: 'profile', setupComplete: true, dailyActivityIds: ['sleep'] })
+  const fixture = await bootstrapHarness({ clock, storage, mount: document.getElementById('app'), initialTab: 'today' })
+  const row = () => document.querySelector('.today-daily-log [data-activity="push_ups"]')
+  const status = () => row()?.querySelector('.today-item__meta')?.textContent
+  const quickAdd = () => row()?.querySelector('button[data-quickadd="15"]')
+
+  check('legacy profile shows 0 / 30 reps with a 15-rep shortcut', status() === '0 / 30 reps' && quickAdd())
+  quickAdd()?.click()
+  check('the first set leaves the habit open', await waitFor(() => status() === '15 / 30 reps' && row()?.dataset.complete === 'false'))
+  quickAdd()?.click()
+  check('the next set completes the habit', await waitFor(() => status() === '30 / 30 reps' && row()?.dataset.complete === 'true'))
+  await fixture.app.show('train')
+  await fixture.app.show('today')
+  check('the stored total reappears on Today', status() === '30 / 30 reps' && (await fixture.daily.dayLog(clock.today())).pushUpReps === 30)
+
+  document.querySelector('.today-week__day[aria-label^="Saturday, 14"]')?.click()
+  check('another day has its own empty total', await waitFor(() => status() === '0 / 30 reps'))
+  row()?.querySelector('.today-item__body')?.click()
+  const editor = row()?.querySelector('[data-editor="push_ups"]')
+  const input = editor?.querySelector('input')
+  check('the expanded row keeps the keyboard closed and offers 30 in one tap',
+    input?.inputMode === 'numeric' && document.activeElement !== input && editor?.querySelector('.today-editor__chip')?.textContent === '+30 reps')
+  editor?.querySelector('.today-editor__chip')?.click()
+  check('the one-set shortcut completes the selected day', await waitFor(() => status() === '30 / 30 reps'))
+
+  row()?.querySelector('.today-item__body')?.click()
+  const manual = row()?.querySelector('[data-entry="push_ups"]')
+  if (manual) manual.value = '8'
+  row()?.querySelector('[data-action="log"]')?.click()
+  check('manual sets record actual reps above the goal', await waitFor(() => status() === '38 / 30 reps'))
+  check('dates stay independent and the habit creates no sessions',
+    (await fixture.daily.dayLog('2026-11-14')).pushUpReps === 38
+    && (await fixture.daily.dayLog('2026-11-15')).pushUpReps === 30
+    && (await storage.getAll('sessions')).length === 0)
+} catch (error) {
+  check('the push-ups journey loads', false, error.stack ?? String(error))
+}
+
+await fetch('/__report', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ label: 'push-up-habit', passed: checks.every((item) => item.ok), checks }),
+})
+</script>
+</body>
+</html>

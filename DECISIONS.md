@@ -1,3 +1,7 @@
+## 2026-11-14 — Daily push-ups
+
+- Use a 30-rep target in the Daily log and offer 15 as the one-tap amount for two sets. The row opens a 30-rep shortcut and a custom rep entry. Keep the actual daily count and leave workout records and XP to their existing inputs. Start the habit on release day, with cadence configurable in Settings.
+
 ## 2026-11-14 — Foot Mobility instructions and credits
 
 - Let stretch cues wrap to their full length on phone and Duo. Use the existing scroll area in the unfolded Duo movement panel for short viewports. Keep the photo sources, crop notice, and license in Settings → Credits.

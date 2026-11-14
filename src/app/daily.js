@@ -160,7 +160,7 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
           ...(raw.cadence === 'biweekly' ? { startOn: raw.startOn ?? '2026-10-26' } : {}),
         }]
       }
-      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility', 'foot_splint'].includes(activity.id)) {
+      if (['micro_cardio', 'creatine', 'other_supplements', 'foot_mobility', 'foot_splint', 'push_ups'].includes(activity.id)) {
         return [activity.id, { cadence: 'daily', target: 1 }]
       }
       if (activity.id === 'waist_measurement') return [activity.id, { cadence: 'weekly', target: 1 }]
@@ -272,6 +272,14 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
 
   /** One activity logged against an explicit calendar date. Future health logs are not allowed. */
   async function logAt(date, activityId, value = null, options = {}) {
+    if (activityId === 'push_ups' && date <= clock.today()) {
+      return storage.updateAtomically(['dayLogs'], async (tx) => {
+        const day = (await tx.get('dayLogs', date)) ?? { date }
+        const next = applyActivity(day, activityId, value, options)
+        if (next !== day) await tx.put('dayLogs', next)
+        return emptyResult(next)
+      })
+    }
     const day = await dayLog(date)
     if (date > clock.today() || !ACTIVITY_FIELDS[activityId]) return emptyResult(day)
     if (activityId === 'foot_mobility' && value !== FOOT_MOBILITY_INTERVALS) return emptyResult(day)
@@ -348,7 +356,9 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
   /** Decorate one catalogue row against one day. */
   function decorate(activity, day, schedule, dynamicProteinGoal = null,
     dynamicCalorieTarget = null, dynamicStepTarget = DEFAULT_STEP_TARGET) {
-    const cadence = schedule[activity.id]?.cadence ?? 'off'
+    const cadence = activity.dailyFrom && day.date < activity.dailyFrom
+      ? 'off'
+      : schedule[activity.id]?.cadence ?? 'off'
     const decorated = {
       ...activity,
       daily: cadence === 'daily',
@@ -384,7 +394,8 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       date,
       day,
       schedule,
-      dailyIds: activities.map((a) => a.id).filter((id) => schedule[id]?.cadence === 'daily'),
+      dailyIds: activities.filter((activity) => schedule[activity.id]?.cadence === 'daily'
+        && (!activity.dailyFrom || date >= activity.dailyFrom)).map((activity) => activity.id),
       outstanding: outstanding.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
       logged: logged.map((activity) => decorate(activity, day, schedule, proteinGoal, caloriesGoal, stepsGoal)),
     }
@@ -409,11 +420,14 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     const stepsGoal = await stepTarget()
     const completedOnDay = (activity, row) => activity.id === 'protein_target'
       ? row.proteinTargetMet === true
-      : isLogged(activity, row)
+      : activity.id === 'push_ups'
+        ? activityValue(activity, row) >= activity.dailyCap
+        : isLogged(activity, row)
 
     const logs = await storage.getAll('dayLogs')
     const weekly = activities
-      .filter((activity) => ['weekly', 'biweekly'].includes(schedule[activity.id]?.cadence))
+      .filter((activity) => ['weekly', 'biweekly'].includes(schedule[activity.id]?.cadence)
+        && (!activity.dailyFrom || anchorDate >= activity.dailyFrom))
       .map((activity) => {
         const settings = schedule[activity.id]
         const target = settings.cadence === 'biweekly' ? 1 : clampTarget(settings.target)

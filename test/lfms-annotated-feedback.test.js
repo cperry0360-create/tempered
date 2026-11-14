@@ -22,7 +22,7 @@ test('Meal History exposes accessible compact picker, date arrows and Fuel back 
 })
 
 test('Sleep preset selects hours without automatically raising keyboard',()=>{
-  assert.match(today,/activityId !== 'sleep'\) queueMicrotask/)
+  assert.match(today,/!\['sleep', 'push_ups'\]\.includes\(activityId\)[\s\S]*?queueMicrotask/)
   assert.match(today,/input\.blur\(\)/)
   assert.match(today,/aria-pressed/)
   assert.match(today,/step: '0\.01'/)

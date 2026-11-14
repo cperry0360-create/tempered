@@ -374,5 +374,7 @@
   object-fit: contain;
   object-position: center;
 }
-.stretch-photo-credit { margin: .65rem 0 0; font-size: .75rem; color: var(--text-2); }
-.stretch-photo-credit a { color: inherit; text-decoration: underline; }
+.screen--session[data-stretch-session="true"] .session-r5__stage-cue p {
+  display: block;
+  overflow: visible;
+}

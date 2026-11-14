@@ -1,10 +1,19 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="../../src/tokens.css">
+<link rel="stylesheet" href="../../src/style.css">
+<link rel="stylesheet" href="../../src/duo.css">
+<link rel="stylesheet" href="../../src/workout-r5.css">
+<link rel="stylesheet" href="../../src/brand.css">
+<link rel="stylesheet" href="../../src/lfms-subscreen.css">
+<link rel="stylesheet" href="../../src/lfms-session-duo.css">
 <div id="app" class="app"></div>
 <script type="module">
 import { bootstrapHarness } from './harness.js'
 import { createMemoryStorage } from '../../src/adapters/storage/memory-storage.js'
 import { fixedClock } from '../../src/adapters/clock/clock.js'
+import { FOOT_MOBILITY } from '../../src/domain/foot-mobility.js'
 
 const checks = []
 function check(name, ok) {
@@ -13,6 +22,7 @@ function check(name, ok) {
 }
 
 try {
+  if (innerWidth >= 740 && innerWidth > innerHeight) document.documentElement.dataset.layout = 'duo'
   const storage = createMemoryStorage()
   await storage.open()
   await storage.put('profile', { id: 'profile', setupComplete: true })
@@ -34,6 +44,22 @@ try {
   }
   check('Opening stretches creates no workout sessions', (await storage.getAll('sessions')).length === 0)
   check('One-hour splint check is available', document.querySelector('[data-activity="foot_splint"]'))
+
+  document.querySelector('[data-action="quick-foot-mobility"]').click()
+  for (const [index, movement] of FOOT_MOBILITY.entries()) {
+    document.querySelector('.session-progress__node[data-movement="' + (index + 1) + '"]').click()
+    const stage = document.querySelector('.session-r5__stage')
+    const cue = stage.querySelector('.session-r5__stage-cue p')
+    check(movement.name + ' shows the full Form Focus cue',
+      cue.textContent === movement.cue && cue.clientHeight > 0 && cue.scrollHeight <= cue.clientHeight + 1)
+    check(movement.name + ' keeps source links off the session screen', !stage.querySelector('a'))
+  }
+  await app.show('settings')
+  const credits = document.querySelector('.screen--settings [data-section="credits"]')
+  check('Settings credits link to all stretch photo sources and the CC BY 4.0 license',
+    ['doi.org/10.3390/biomedicines12081729', 'usmarshals.gov', 'wikimedia.org',
+      'creativecommons.org/licenses/by/4.0/'].every(source =>
+      [...credits.querySelectorAll('a')].some(link => link.href.includes(source))))
 } catch (error) {
   checks.push({ name: 'Foot Mobility integration', ok: false, detail: String(error) })
 }

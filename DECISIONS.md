@@ -1,3 +1,7 @@
+## 2026-11-14 — Foot Mobility instructions and credits
+
+- Let stretch cues wrap to their full length on phone and Duo. Use the existing scroll area in the unfolded Duo movement panel for short viewports. Keep the photo sources, crop notice, and license in Settings → Credits.
+
 ## 2026-11-13 — Resort machine workouts
 
 - Keep the isolation week selectable and use the existing program switch. Keep optional stations out of Today’s required queue and plan adherence. Give the lateral raise slot a reverse pec deck swap and include the two extra workouts as standalone routines.

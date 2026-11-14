@@ -1,3 +1,7 @@
+## 2026-11-14 — 45-second hangs, 0.66.100 (206)
+
+- Today tracks one continuous 45-second dead hang on two days each week. Dead bugs are retired from the Daily log. Prior entries still round-trip in backups.
+
 ## 2026-11-14 — Pull-ups, dead hangs, and dead bugs, 0.66.99 (205)
 
 - Today → Daily log adds 5 pull-ups daily, a 60-second continuous hang twice a week, and 5 dead bugs per side twice a week as an optional core habit.

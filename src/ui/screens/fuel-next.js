@@ -3,8 +3,9 @@
  * Actual totals and saved foods use Tempered's canonical stores.
  * Stock photos are illustration only, with guaranteed offline fallbacks.
  */
-import { nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
+import { MEAL_GROUPS, nutritionLedger, nutritionMacroTargets, foodLibrary, searchFoods } from '../../domain/nutrition.js'
 import { el, replace } from '../dom.js'
+import { mealGroupSelect, nutritionMealGroup } from '../calorie-ai-runtime.js'
 import { icon } from '../icons.js'
 import { mainTabBrand } from '../main-tab-header.js'
 import { waterWavePath } from '../water-wave.js'
@@ -22,7 +23,6 @@ const labelTime = iso => {
   const date = new Date(iso)
   return Number.isFinite(date.getTime()) ? date.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) : ''
 }
-const mealType = hour => hour>=5&&hour<11?'Breakfast':hour>=11&&hour<16?'Lunch':hour>=16&&hour<21?'Dinner':'Snacks'
 
 export function createFuelNextScreen({ storage,daily,clock }) {
   const root=el('div.screen.screen--fuel.screen--fuel-r4.fn2',{dataset:{foodTwo:'true'}})
@@ -32,6 +32,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   let data=null, prefs={},view='dashboard',sheet='',filter='all',query='',picked=null, journalDate=selectedDate
   let working=false, undo=null, errorMessage='', errorTimer=null, pickedDate=null, servingFood=null, servingAmount=1, servingOrigin='dashboard'
   let activeOverlay=null
+  let mealContext=null, servingMealGroup=''
   let weightGoalOpen=false,weightGoalValue='',weightGoalError=''
   let customWaterOpen=false,customWaterValue='',customWaterError='',customWaterSaving=false
   // Keep the prior painted fill across dashboard re-renders, so additions rise smoothly.
@@ -400,12 +401,9 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ]
   }
   function grouped(day) {
-    const a=new Map(['Breakfast','Lunch','Dinner','Snacks'].map(x=>[x,[]]))
-    for(const entry of nutritionLedger(day).entries){
-      const hour=new Date(entry.loggedAt).getHours()
-      a.get(mealType(hour)).push(entry)
-    }
-    return a
+    const groups=new Map(Object.keys(MEAL_GROUPS).map(id=>[id,[]]))
+    for(const entry of nutritionLedger(day).entries)groups.get(nutritionMealGroup(entry)).push(entry)
+    return groups
   }
   function mealRow(food,date) {
     return el('div.fn2__meal-row',{},[
@@ -422,11 +420,11 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     ])
   }
   function mealSections(day,{inline=false}={}) {
-    return [...grouped(day)].map(([name,entries])=>el('section.fn2__meal-group'+(inline?' fn2__meal-group--inline':''),{},[
+    return [...grouped(day)].map(([id,entries])=>el('section.fn2__meal-group'+(inline?' fn2__meal-group--inline':''),{dataset:{mealGroup:id}},[
       el('div.fn2__meal-group-title',{},[
-        el('strong',{text:name}),
-        el('button',{type:'button','aria-label':'Quick log food for '+name,
-          onclick:()=>go('log')},['+']),
+        el('strong',{text:MEAL_GROUPS[id]}),
+        el('button',{type:'button','aria-label':'Quick log food for '+MEAL_GROUPS[id],
+          onclick:()=>openMealLog(day.date,id)},['+']),
       ]),
       ...entries.map(food=>mealRow(food,day.date)),
       entries.length===0&&el('small.fn2__meal-empty',{text:'No meals logged'}),
@@ -486,6 +484,21 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
       clearError()
     }catch{showError('Could not delete meal')}finally{working=false}
+  }
+  async function movePicked(select) {
+    if(!picked?.id||!pickedDate||working)return
+    const originalGroup=nutritionMealGroup(picked)
+    working=true
+    select.disabled=true
+    try {
+      await daily.assignNutritionMeal(pickedDate,picked.id,select.value)
+      sheet='';picked=null;pickedDate=null
+      await refresh()
+    } catch {
+      showError('Could not move meal. Try again.')
+      select.value=originalGroup
+      select.disabled=false
+    } finally { working=false }
   }
   async function restore() {
     if(!undo)return
@@ -572,9 +585,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   const servingChoices=[0.25,0.5,0.75,1,1.5,2,3,4]
   const portionLabel=value=>Number(value).toLocaleString(undefined,{maximumFractionDigits:6})
   function servingValid(value) {return Number.isFinite(value)&&value>=0.05&&value<=20}
-  function openServing(food) {
+  function openServing(food,mealGroup=view==='log'?(runtime.querySelector('[data-entry="nutrition_meal_group"]')?.value??''):'') {
     servingFood=repeatableFood(food)
     servingAmount=1
+    servingMealGroup=mealGroup
     servingOrigin=view
     sheet='serving'
     render()
@@ -607,6 +621,10 @@ export function createFuelNextScreen({ storage,daily,clock }) {
         ]),
       ]),
       el('p.fn2__caption',{text:'For '+formattedDate(selectedDate)+' · Choose a portion. Nothing is logged until you confirm.'}),
+      el('label.fn2__serving-custom',{},[
+        el('span',{text:'Assign to'}),
+        mealGroupSelect({mealGroup:servingMealGroup,onchange:e=>{servingMealGroup=e.target.value}}),
+      ]),
       el('div.fn2__serving-presets',{'aria-label':'Quick serving amounts'},
         servingChoices.map(amount=>el('button',{type:'button',dataset:{servingPreset:String(amount)},
           'aria-pressed':String(servingAmount===amount),onclick:()=>updateServingAmount(amount,{refresh:true})},
@@ -634,7 +652,9 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(submit)submit.disabled=true
     try {
       const {lastLoggedAt,loggedAt,id:entryId,source,count,...values}=food
-      await daily.addNutrition(selectedDate,{...values,portion:amount},{loggedAt:nutritionTimestamp(selectedDate)})
+      await daily.addNutrition(selectedDate,{...values,portion:amount},{
+        loggedAt:nutritionTimestamp(selectedDate),mealGroup:servingMealGroup,
+      })
       servingFood=null;servingAmount=1;sheet='';view=origin
       await refresh()
       window.dispatchEvent(new CustomEvent('tempered:nutrition-refresh'))
@@ -745,7 +765,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
   }
   function mountRuntime(){
     runtime.dataset.date=selectedDate
-    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:selectedDate}}))
+    window.dispatchEvent(new CustomEvent('tempered:mount-nutrition-panel',{detail:{slot:runtime,date:selectedDate,mealContext}}))
   }
   function overlay(){
     const title={quick:'Log',serving:'Log meal',manual:'Log',photo:'Choose illustration',actions:'Meal actions','attach-photo':'Meal photo'}[sheet]
@@ -778,9 +798,14 @@ export function createFuelNextScreen({ storage,daily,clock }) {
       pickedDate&&picked&&data.days.find(row=>row.date===pickedDate)?.mealPhotos?.[picked.id]
         &&el('button.fn2__secondary',{type:'button',onclick:removeMealPhoto},['Remove this meal photo']),
     ]:sheet==='actions'?[
+      el('label.fn2__serving-custom',{},[
+        el('span',{text:'Move to'}),
+        mealGroupSelect({mealGroup:nutritionMealGroup(picked),automatic:false,onchange:e=>movePicked(e.target)}),
+      ]),
       el('button.fn2__secondary',{type:'button',onclick:()=>openSheet('attach-photo')},['Add or replace meal photo']),
       el('button.fn2__secondary',{type:'button',onclick:closeSheet},['Back to Meal History']),
-      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;openServing(x)}},['Log this meal again']),
+      el('button.fn2__secondary',{type:'button',onclick:()=>openMealLog(pickedDate,nutritionMealGroup(picked))},['Log another in '+MEAL_GROUPS[nutritionMealGroup(picked)]]),
+      el('button.fn2__secondary',{type:'button',onclick:()=>{const x=picked;picked=null;openServing(x,nutritionMealGroup(x))}},['Log this meal again']),
       el('button.fn2__secondary',{type:'button',onclick:deletePicked},['Delete meal (Undo available)']),
     ]:[runtime]
     return el('div.fn2__overlay.fn2__portal',{dataset:{food2Overlay:sheet},onkeydown:e=>{if(e.key==='Escape')closeSheet()}},[
@@ -796,7 +821,15 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(name==='manual')requestAnimationFrame(()=>activeOverlay?.querySelector('[data-entry="nutrition_description"]')?.focus({preventScroll:true}))
   }
   function closeSheet() {sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
-  function go(name){clearError();view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;render()}
+  function go(name,mealGroup=''){
+    clearError();view=name;sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1
+    mealContext=name==='log'?{mealGroup}:null
+    render()
+  }
+  async function openMealLog(date,mealGroup) {
+    if(date!==selectedDate)await selectFuelDate(date)
+    go('log',mealGroup)
+  }
   function render() {
     if(!data)return
     root.dataset.selectedDate=selectedDate
@@ -854,6 +887,7 @@ export function createFuelNextScreen({ storage,daily,clock }) {
     if(waterWaveFrame)cancelAnimationFrame(waterWaveFrame)
     waterWaveFrame=0
     sheet='';picked=null;pickedDate=null;servingFood=null;servingAmount=1;view='dashboard'
+    mealContext=null
     activeOverlay?.remove();activeOverlay=null
     delete document.body.dataset.food2Modal
   }

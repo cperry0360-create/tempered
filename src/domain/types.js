@@ -36,6 +36,7 @@
  * @property {string} id
  * @property {string} loggedAt
  * @property {'manual'|'ai'} source
+ * @property {'breakfast'|'lunch'|'dinner'|'snacks'} [mealGroup]
  * @property {string} [description] Brief meal name for history and repeat logging.
  * @property {number} [calories]
  * @property {number} [proteinGrams]

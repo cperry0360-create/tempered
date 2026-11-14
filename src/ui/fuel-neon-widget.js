@@ -3,7 +3,8 @@
  * Visual-only adapter over the canonical day ledger and existing goals.
  * No new storage, fields, or invented meal allocations.
  */
-import { nutritionLedger } from '../domain/nutrition.js'
+import { MEAL_GROUPS, nutritionLedger } from '../domain/nutrition.js'
+import { nutritionMealGroup } from './calorie-ai-runtime.js'
 import { el } from './dom.js'
 
 const NS='http://www.w3.org/2000/svg'
@@ -92,15 +93,12 @@ function perimeter(amount,goal,meals) {
   return svg
 }
 function mealGrouping(ledger) {
-  const names=['Breakfast','Lunch','Dinner','Snack']
-  const buckets=new Map(names.map(x=>[x,0]))
+  const buckets=new Map(Object.keys(MEAL_GROUPS).map(id=>[id,0]))
   for(const entry of ledger.entries) {
-    const d=new Date(entry.loggedAt)
-    const h=Number.isFinite(d.getTime())?d.getHours():12
-    const name=h>=5&&h<11?'Breakfast':h>=11&&h<16?'Lunch':h>=16&&h<21?'Dinner':'Snack'
-    buckets.set(name,buckets.get(name)+val(entry.calories))
+    const id=nutritionMealGroup(entry)
+    buckets.set(id,buckets.get(id)+val(entry.calories))
   }
-  return names.map(name=>({name,calories:buckets.get(name)}))
+  return [...buckets].map(([id,calories])=>({name:id==='snacks'?'Snack':MEAL_GROUPS[id],calories}))
 }
 function mealTile(meal,total) {
   const ratio=total>0?100*meal.calories/total:0

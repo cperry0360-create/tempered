@@ -210,7 +210,7 @@
 .screen--fuel-r4 .food-v2__details .nutrition-day-status,
 .screen--fuel-r4 .food-v2__details .nutrition-meal-form__status { color:var(--food-v2-muted); }
 .screen--fuel-r4 .food-v2__details .nutrition-panel__earlier { color:var(--food-v2-blue); }
-.screen--fuel-r4 .food-v2__details .nutrition-meal-field input,
+.screen--fuel-r4 .food-v2__details .nutrition-meal-field :is(input, select),
 .screen--fuel-r4 .food-v2__details .fuel-food__search {
   background:var(--food-v2-panel-2); border:1px solid var(--food-v2-line);
   color:var(--food-v2-text); border-radius:12px;

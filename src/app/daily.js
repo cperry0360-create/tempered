@@ -17,7 +17,7 @@ import { tierName } from '../domain/tiers.js'
 import { rankFromLevels } from '../domain/rank.js'
 import { proteinGoalGrams, proteinGoalMet } from '../domain/protein.js'
 import {
-  addNutritionEntry, nutritionLedger, removeNutritionEntry, restoreNutritionEntry,
+  addNutritionEntry, MEAL_GROUPS, nutritionLedger, removeNutritionEntry, restoreNutritionEntry,
 } from '../domain/nutrition.js'
 
 /** @type {import('../domain/types.js').AttributeId[]} */
@@ -332,8 +332,23 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
       id: options.id ?? nutritionId(day, loggedAt),
       loggedAt,
       source: options.source,
+      mealGroup: options.mealGroup,
     })
     return settleDay({ ...next, nutritionStatus: 'partial', nutritionClosedAt: null })
+  }
+
+  /** Change only the meal category, even on a closed or historical day. */
+  async function assignNutritionMeal(date, entryId, mealGroup) {
+    if (!Object.hasOwn(MEAL_GROUPS, mealGroup)) throw new Error('Choose a meal category')
+    return storage.updateAtomically(['dayLogs'], async (transaction) => {
+      const day = await transaction.get('dayLogs', date)
+      if (date > clock.today() || !nutritionLedger(day).entries.some((entry) => entry.id === entryId)) {
+        throw new Error('This meal is no longer available')
+      }
+      const nutritionEntries = day.nutritionEntries.map((entry) => String(entry?.id) === entryId
+        ? { ...entry, mealGroup } : entry)
+      await transaction.put('dayLogs', { ...day, nutritionEntries })
+    })
   }
 
   /** Remove one itemized meal. Previously paid XP is intentionally never revoked. */
@@ -467,6 +482,6 @@ export function createDailyService({ storage, clock, health, balance, catalogue 
     dailyIds, setDaily, activitySchedule, setCadence, calorieTarget, setCalorieTarget,
     setProteinTargetGrams,
     stepTarget, setStepTarget,
-    quickAddPresets, setQuickAddPreset, addNutrition, removeNutrition, restoreNutrition, setNutritionStatus,
+    quickAddPresets, setQuickAddPreset, addNutrition, assignNutritionMeal, removeNutrition, restoreNutrition, setNutritionStatus,
   }
 }

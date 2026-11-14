@@ -108,14 +108,14 @@
 }
 .fn2__log-entry .nutrition-meal-form__fields {gap:9px}
 .fn2__log-entry .nutrition-meal-field {gap:5px;color:var(--fn-muted);font-weight:720}
-.fn2__log-entry .nutrition-meal-field input {
+.fn2__log-entry .nutrition-meal-field :is(input, select) {
   min-height:44px;height:44px;padding:0 11px;
   border:1px solid var(--fn-line);border-radius:12px;
   background:var(--food-v2-panel);color:var(--fn-ink);
   font-size:15px;
 }
 .fn2__log-entry .nutrition-meal-field input::placeholder {color:var(--fn-muted)}
-.fn2__log-entry .nutrition-meal-field input:focus-visible {
+.fn2__log-entry .nutrition-meal-field :is(input, select):focus-visible {
   outline:2px solid var(--fn-blue-light);outline-offset:2px;
 }
 .fn2__log-entry .nutrition-meal-form__tools {gap:9px}

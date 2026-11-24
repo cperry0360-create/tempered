@@ -49,6 +49,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
   }
 
   function estimateSessionMinutes(day) {
+    if (Number.isFinite(day?.estimatedMinutes) && day.estimatedMinutes > 0) return day.estimatedMinutes
     const movements = day?.exercises ?? []
     const sets = movements.reduce((sum, exercise) => sum + (Number(exercise.sets) || 0), 0)
     return Math.max(15, Math.round(((sets * 2.3) + (movements.length * 1.5)) / 5) * 5)
@@ -402,7 +403,7 @@ export function createTrainScreen({ workout, storage, clock, onStart, onStartCar
     const routine = selectedRoutine
     const names = (routine?.exercises ?? []).map((item) => {
       const exercise = exercises.find((candidate) => candidate.id === item.id)
-      const name = exercise?.name ?? item.name ?? item.id
+      const name = item.name ?? exercise?.name ?? item.id
       return item.repMax ? `${name} · ${item.sets} × ${item.repMin}–${item.repMax}` : name
     })
     replace(root, [

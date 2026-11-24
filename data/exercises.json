@@ -185,6 +185,106 @@
           "rest": 75
         }
       ]
+    },
+    {
+      "id": "grand-full-body-b",
+      "name": "The Grand \u00b7 Full Body B",
+      "note": "45–60 minutes. Upper-body physique priorities with enough leg work for maintenance. Face pulls are an easy warm-up; use 1–2 reps in reserve on compound machines and 0–1 on the final isolation set.",
+      "exercises": [
+        {
+          "id": "face_pull",
+          "name": "Face Pull Warm-Up",
+          "sets": 2,
+          "reps": 15,
+          "repMin": 15,
+          "repMax": 20,
+          "weight": null,
+          "rest": 45
+        },
+        {
+          "id": "incline_bench_bb",
+          "name": "Incline Chest-Press Machine",
+          "method": "Machine",
+          "sets": 3,
+          "reps": 8,
+          "repMin": 8,
+          "repMax": 12,
+          "weight": null,
+          "rest": 105
+        },
+        {
+          "id": "chest_supported_row_machine",
+          "sets": 3,
+          "reps": 8,
+          "repMin": 8,
+          "repMax": 12,
+          "weight": null,
+          "rest": 105
+        },
+        {
+          "id": "lat_pulldown_neutral",
+          "sets": 3,
+          "reps": 8,
+          "repMin": 8,
+          "repMax": 12,
+          "weight": null,
+          "rest": 105
+        },
+        {
+          "id": "leg_press_machine",
+          "sets": 3,
+          "reps": 8,
+          "repMin": 8,
+          "repMax": 12,
+          "weight": null,
+          "rest": 105
+        },
+        {
+          "id": "leg_curl",
+          "sets": 2,
+          "reps": 10,
+          "repMin": 10,
+          "repMax": 15,
+          "weight": null,
+          "rest": 75
+        },
+        {
+          "id": "lateral_raise_machine",
+          "sets": 3,
+          "reps": 12,
+          "repMin": 12,
+          "repMax": 20,
+          "weight": null,
+          "rest": 60
+        },
+        {
+          "id": "reverse_pec_deck",
+          "sets": 2,
+          "reps": 15,
+          "repMin": 15,
+          "repMax": 25,
+          "weight": null,
+          "rest": 60
+        },
+        {
+          "id": "preacher_curl_machine",
+          "sets": 2,
+          "reps": 10,
+          "repMin": 10,
+          "repMax": 15,
+          "weight": null,
+          "rest": 60
+        },
+        {
+          "id": "triceps_extension_machine",
+          "sets": 2,
+          "reps": 10,
+          "repMin": 10,
+          "repMax": 15,
+          "weight": null,
+          "rest": 60
+        }
+      ]
     }
   ],
   "exercises": [
@@ -1005,6 +1105,50 @@
         "core": 1
       },
       "art": "ab_crunch_machine.jpg"
+    },
+    {
+      "id": "chest_supported_row_machine",
+      "name": "Chest-Supported Row Machine",
+      "variant": "Machine",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Horizontal Pulling",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "lats": 1,
+        "rear_delts": 1,
+        "traps": 0.5,
+        "biceps": 0.5
+      }
+    },
+    {
+      "id": "lat_pulldown_neutral",
+      "name": "Neutral-Grip Lat Pulldown",
+      "variant": "Cable",
+      "group": "back",
+      "class": "compound",
+      "pattern": "Vertical Pulling",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "lats": 1,
+        "biceps": 0.5
+      }
+    },
+    {
+      "id": "leg_press_machine",
+      "name": "Leg Press Machine",
+      "variant": "Machine",
+      "group": "legs",
+      "class": "compound",
+      "pattern": "Knee Bending",
+      "unit": "lbs",
+      "progression": "range",
+      "activation": {
+        "quads": 1.5,
+        "glutes": 1
+      }
     }
   ],
   "cardio": [

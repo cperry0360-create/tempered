@@ -38,8 +38,8 @@ try {
   const sunday = buildDailyWorkoutQueue(status, '2026-11-22')
   const tuesday = buildDailyWorkoutQueue(status, '2026-11-24')
   check('Sunday queues A alone', sunday.primaryDay?.id === 'sunday' && sunday.today.length === 4 && sunday.rollover.length === 0)
-  check('Tuesday has B plus Sunday rollover and no unavailable stations in required work',
-    tuesday.primaryDay?.id === 'tuesday' && tuesday.today.length === 2 && tuesday.rollover.length === 4)
+  check('Tuesday has the complete Full Body B plus Sunday rollover',
+    tuesday.primaryDay?.id === 'tuesday' && tuesday.today.length === 10 && tuesday.rollover.length === 4)
   await app.show('train')
   q('[data-exercise-library]').click()
   const art = q('[data-exercise="leg_extension"] img')
@@ -47,13 +47,25 @@ try {
   await art.decode()
   check('Library shows a bundled leg extension image', art.naturalWidth > 0)
   q('.train-r4__back').click()
-  check('Train has two extras outside the scheduled plan',
-    Boolean(q('[data-routine="grand-hips-abs"]') && q('[data-routine="grand-favorite-machines"]')))
+  check('Train has Full Body B and the two earlier extras outside the scheduled plan',
+    Boolean(q('[data-routine="grand-hips-abs"]')
+      && q('[data-routine="grand-full-body-b"]')
+      && q('[data-routine="grand-favorite-machines"]')))
+  q('[data-routine="grand-full-body-b"]').click()
+  check('Standalone routine shows the machine prescription and time cap',
+    q('.train-r4__routine-detail').textContent.includes('45–60 minutes')
+      && q('.train-r4__routine-detail').textContent.includes('Incline Chest-Press Machine · 3 × 8–12'))
+  q('.train-r4__back').click()
   q('[data-preview-day="tuesday"]').click()
-  check('Workout preview labels availability-dependent stations', q('[data-program-preview]').textContent.includes('If available'))
+  check('Workout preview shows the complete 60-minute physique session',
+    q('[data-program-preview]').textContent.includes('10 exercises · 25 sets · ~60 min')
+      && q('[data-program-preview]').textContent.includes('Neutral-Grip Lat Pulldown')
+      && q('[data-program-preview]').textContent.includes('Machine Triceps Extension'))
   q('[data-start-preview="tuesday"]').click()
-  await waitFor(() => q('.screen--session [data-art="lateral_raise_machine"]'))
-  check('The workout loads the optional machine and its photo', Boolean(q('[data-art="lateral_raise_machine"] img')))
+  await waitFor(() => q('.screen--session [data-exercise="incline_bench_bb"][data-method="Machine"]'))
+  check('The workout opens incline pressing as Machine and includes leg press',
+    Boolean(q('.screen--session [data-exercise="incline_bench_bb"][data-method="Machine"]')
+      && q('.screen--session [data-exercise="leg_press_machine"]')))
 } catch (error) {
   check('Isolation week journey completes', false, error.stack)
 }

@@ -2955,3 +2955,9 @@ Cory approved pushing the reviewed emoji character. Use the exact reviewed trans
 ## 2026-11-09 — Grade execution of the Beach Cut plan
 
 Cory followed the cut prescriptions and questioned penalties for lower volume and steady loads. Keep the existing 30:25 relative weighting of adherence and consistency for the cut, give current-week training days the consistency credit, and show strength and volume separately. Use the saved Beach Cut program identity so the rule applies to existing local copies and their historical weeks. Keep individual unmatched prescriptions visible because a logged set can be extra work or a genuine matching discrepancy.
+
+## 2026-11-24 — Replace the vacation Tuesday placeholder with Full Body B
+
+Cory reported that the vacation prescriptions felt like random fragments rather than a useful 45–60 minute training session. Replace The Grand program's four-movement Tuesday placeholder with the agreed upper-body-biased full-body workout: face pulls, incline machine press, chest-supported row, neutral-grip pulldown, leg press, leg curl, lateral raise, reverse pec deck, preacher curl, and triceps extension. The face pulls are two easy preparatory sets; the remaining 23 sets preserve the physique priorities of upper chest, lats/upper back, side delts, and arms while keeping legs at maintenance volume.
+
+Ship the identical prescription as `grand-full-body-b` in Extra Routines so it can be started even when another program is active. Bump the seeded vacation program to schema 2 so existing installations receive the new Tuesday prescription while retaining the program start date, completed sessions, logs, and carried starting weights. Preserve the incline press's canonical movement identity and prescribe its Machine method instead of creating a duplicate exercise. Standalone routines therefore pass their saved method into session preparation and prefer their explicit display name in the preview.

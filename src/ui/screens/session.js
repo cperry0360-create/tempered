@@ -1687,13 +1687,16 @@ export function createSessionScreen({ workout, clock: timeSource, onFinish, onMi
         for (const entry of wanted) {
           const prepared = await workout.prepareExercise(entry.id, {
             sets: entry.sets, reps: entry.reps, weight: entry.weight, distance: entry.distance,
-          })
+          }, entry.method ?? null)
           if (!prepared.exercise) continue
           plan.push({
             ...prepared,
             ...entryDefaults(),
             restSec: entry.rest ?? 150,
-            ...(entry.repMax ? { slot: { sets: entry.sets, repMin: entry.repMin, repMax: entry.repMax } } : {}),
+            ...(entry.repMax ? { slot: {
+              sets: entry.sets, repMin: entry.repMin, repMax: entry.repMax,
+              ...(entry.name ? { name: entry.name } : {}),
+            } } : {}),
             sets: prepared.proposal.sets.map((set) => ({ ...set, logged: false, logId: null })),
           })
         }

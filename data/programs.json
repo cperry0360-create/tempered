@@ -1056,11 +1056,11 @@
     },
     {
       "id": "grand-isolation-week",
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "name": "The Grand · Isolation Week",
       "weeks": 1,
       "weekStartsOn": "sunday",
-      "note": "Sunday A, Tuesday B, Thursday C. Use a light practice set on unfamiliar machines. Leave 2–3 reps in reserve. If there is no lateral raise machine, use the reverse pec deck or skip the optional slot. Hips and Abs and Favorite Machines are in Train → Extra Routines.",
+      "note": "Sunday A, Tuesday B, Thursday C. Tuesday is a 45–60 minute upper-body-biased full-body session. Use a light practice set on unfamiliar machines. Hips and Abs, Full Body B, and Favorite Machines are also in Train → Extra Routines.",
       "days": [
         {
           "id": "sunday",
@@ -1120,44 +1120,81 @@
         {
           "id": "tuesday",
           "weekday": "Tuesday",
-          "name": "B · Legs and Delts",
+          "name": "B · Full Body Physique",
+          "estimatedMinutes": 60,
           "exercises": [
             {
-              "exerciseId": "leg_extension",
-              "name": "Leg Extension",
-              "sets": 3,
-              "repMin": 10,
-              "repMax": 15,
-              "restSec": [
-                75,
-                90
-              ],
-              "cue": "Line your knees up with the pivot and place the roller above your ankles. Leave 2–3 reps in reserve."
-            },
-            {
-              "exerciseId": "leg_curl",
-              "name": "Seated Leg Curl",
-              "sets": 2,
-              "repMin": 10,
-              "repMax": 15,
-              "restSec": [
-                75,
-                90
-              ],
-              "cue": "Line your knees up with the pivot and secure the thigh pad. Leave 2–3 reps in reserve."
-            },
-            {
-              "exerciseId": "hip_abductor_machine",
-              "name": "Machine Hip Abductor",
+              "exerciseId": "face_pull",
+              "name": "Face Pull Warm-Up",
               "sets": 2,
               "repMin": 15,
               "repMax": 20,
               "restSec": [
-                75,
-                90
+                45,
+                60
               ],
-              "cue": "Open your knees against the pads without leaning or bouncing. Leave 2–3 reps in reserve.",
-              "optional": true
+              "cue": "Use a light load. Pull toward eye level, rotate the hands apart, and stay well short of failure."
+            },
+            {
+              "exerciseId": "incline_bench_bb",
+              "name": "Incline Chest-Press Machine",
+              "method": "Machine",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "restSec": [
+                90,
+                120
+              ],
+              "cue": "Set the seat so the handles start at upper-chest height. Finish with 1–2 reps in reserve."
+            },
+            {
+              "exerciseId": "chest_supported_row_machine",
+              "name": "Chest-Supported Row Machine",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "restSec": [
+                90,
+                120
+              ],
+              "cue": "Keep the chest on the pad, drive the elbows back, and finish with 1–2 reps in reserve."
+            },
+            {
+              "exerciseId": "lat_pulldown_neutral",
+              "name": "Neutral-Grip Lat Pulldown",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "restSec": [
+                90,
+                120
+              ],
+              "cue": "Drive the elbows down and control the overhead stretch. Finish with 1–2 reps in reserve."
+            },
+            {
+              "exerciseId": "leg_press_machine",
+              "name": "Leg Press Machine",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "restSec": [
+                90,
+                120
+              ],
+              "cue": "Use a comfortable depth, keep the hips against the pad, and finish with 1–2 reps in reserve."
+            },
+            {
+              "exerciseId": "leg_curl",
+              "name": "Seated or Lying Leg Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                60,
+                75
+              ],
+              "cue": "Keep the hips anchored and control the return. Take the final set to about 0–1 reps in reserve."
             },
             {
               "exerciseId": "lateral_raise_machine",
@@ -1166,12 +1203,46 @@
               "repMin": 12,
               "repMax": 20,
               "restSec": [
-                75,
-                90
+                60,
+                75
               ],
-              "cue": "Lift your upper arms into the pads and keep your shoulders down. Leave 2–3 reps in reserve.",
-              "optional": true,
-              "substituteExerciseId": "reverse_pec_deck"
+              "cue": "Lead with the elbows, keep the shoulders down, and take the final set to about 0–1 reps in reserve."
+            },
+            {
+              "exerciseId": "reverse_pec_deck",
+              "name": "Reverse Pec Deck",
+              "sets": 2,
+              "repMin": 15,
+              "repMax": 25,
+              "restSec": [
+                60,
+                75
+              ],
+              "cue": "Face the pad and open the arms without shrugging. Take the final set to about 0–1 reps in reserve."
+            },
+            {
+              "exerciseId": "preacher_curl_machine",
+              "name": "Machine Preacher Curl",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                60,
+                75
+              ],
+              "cue": "Keep the upper arms supported and control the lowering. Take the final set to about 0–1 reps in reserve."
+            },
+            {
+              "exerciseId": "triceps_extension_machine",
+              "name": "Machine Triceps Extension",
+              "sets": 2,
+              "repMin": 10,
+              "repMax": 15,
+              "restSec": [
+                60,
+                75
+              ],
+              "cue": "Keep the upper arms supported and extend smoothly. Take the final set to about 0–1 reps in reserve."
             }
           ]
         },

@@ -1,3 +1,9 @@
+## 2026-11-24 — Vacation Full Body B, 0.66.103 (209)
+
+- The Grand vacation program now uses a complete 45–60 minute Tuesday session built around upper chest, upper back/lats, side and rear delts, arms, and lower-body maintenance. It includes two easy face-pull opening sets followed by 23 main sets.
+- The same workout is available on demand as The Grand · Full Body B under Train → Extra Routines. Existing installations receive the updated seeded vacation program without changing its start date or prior workout history.
+- Standalone routines now retain an explicitly prescribed equipment method and display name, so the incline press opens as a machine movement rather than reverting to the barbell default.
+
 ## 2026-11-14 — Fuel meal assignment, 0.66.102 (208)
 
 - Fuel’s Log page and saved-food serving picker let you assign an entry to Breakfast, Lunch, Dinner or Snacks. Logging from a meal section preselects that section for manual entries and imports.
